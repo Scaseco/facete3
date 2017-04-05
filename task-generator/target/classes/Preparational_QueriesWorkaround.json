@@ -1,0 +1,305 @@
+{"For_All" :
+	[ 
+		{
+		"variable" : "minTime" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> SELECT ((?time) AS ?min)  WHERE { ?connection lc:departureTime ?time . } ORDER BY ASC(?time) LIMIT 1"
+		} 
+	,		
+		{
+		"variable" : "maxTime" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> SELECT ((?time) AS ?min)  WHERE { ?connection lc:departureTime ?time . } ORDER BY DESC(?time) LIMIT 1"
+		}
+	, 
+		{
+		"variable" : "maxLat" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> SELECT ((?lat) AS ?min)  WHERE { ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat . } ORDER BY DESC(?lat) LIMIT 1"
+		}
+	,
+		{
+		"variable" : "minLat" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> SELECT ((?lat) AS ?min)  WHERE { ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat . } ORDER BY ASC(?lat) LIMIT 1"
+		}
+	, 
+		{
+		"variable" : "maxLong" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> SELECT (( ?long) AS ?max)  WHERE { ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . } ORDER BY DESC(?long) LIMIT 1"
+		}
+	,
+		{
+		"variable" : "minLong" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> SELECT (( ?long) AS ?min)  WHERE { ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . } ORDER BY ASC(?long) LIMIT 1"
+		}
+	, 
+		{"variable" : "delayMax" ,
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT(MAX(?value) AS ?max )  WHERE {  ?delay lcd:delayValue ?value . FILTER(?value > 'PT0S'^^xsd:duration) }"
+		}
+	] 
+,
+"Scenario_1" :
+	{ 
+		"station_1":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime))) }" ,
+		"parameters" : "lat_lower_1d, lat_upper_1d, long_lower_1d, long_upper_1d , time_start_1b , time_end_1b"
+		}
+	, 
+		"station_1b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime)) }" ,
+		"parameters" : "lat_lower_1d, lat_upper_1d, long_lower_1d, long_upper_1d , time_start_1b , time_end_1b"
+		}
+	, 
+		"count_station_1":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "lat_lower_1,lat_upper_1, long_lower_1, long_upper_1"
+		}
+	, 
+		"count_station_1b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop . ?connection lc:departureTime ?time . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ;  gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) && (%s^^xsd:dateTime < ?time ) )) }" ,
+		"parameters" : "lat_lower_1,lat_upper_1, long_lower_1, long_upper_1 , time_start_1 "
+		}
+	, 
+		"count_route_1":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route WHERE { ?connection lc:departureStop ?stop ; gtfs:route ?route . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s< str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "lat_lower_1,lat_upper_1, long_lower_1, long_upper_1 "
+		}
+	,
+		"count_route_1b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?connection lc:departureStop ?stop . ?connection lc:departureTime ?time . ?connection gtfs:route ?route. ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime)) }" ,
+		"parameters" : "lat_lower_1,lat_upper_1, long_lower_1, long_upper_1 , time_start_1 , time_end_1"
+		}
+	} 
+,
+"Scenario_2" :
+	{
+		"count_station_2":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lcd:departureDelay ?delay ; lc:departureStop ?stop . ?stop gtfs:parentStation ?station . ?station rdfs:label ?stationName . }" ,
+		"parameters" : null
+		}
+	, 
+		"count_station_2b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lcd:departureDelay ?delay ; lc:departureStop ?stop . ?stop gtfs:parentStation ?station . ?station rdfs:label ?stationName . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . }" ,
+		"parameters" : "reason_2"
+		}
+	, 
+		"count_station_2c":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lcd:departureDelay ?delay ; lc:departureStop ?stop . ?stop gtfs:parentStation ?station . ?station rdfs:label ?stationName . }" ,
+		"parameters" : null
+		}
+	, 
+		"count_route_2":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE {  ?connection gtfs:route ?route .  }" ,
+		"parameters" : null
+		}
+	}
+,
+"Scenario_3" :
+	{
+		"station_3":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time ; lcd:departureDelay ?delay . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s .FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) )) }" ,
+		"parameters" : "reason_3b, lat_lower_3, lat_upper_3, long_lower_3, long_upper_3"
+		}
+	,
+		"count_route_3":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?connection lc:departureStop ?stop ; gtfs:route ?route . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station <http://www.w3.org/2000/01/rdf-schema#label> %s . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "station_3 , lat_lower_3,lat_upper_3, long_lower_3, long_upper_3"
+		}
+	,
+		"count_station_3":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) )) }" ,
+		"parameters" : "lat_lower_3, lat_upper_3, long_lower_3, long_upper_3"
+		}
+	}
+,
+"Scenario_4" :
+	{
+		"station_4":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time ; lcd:departureDelay ?delay . ?delay lcd:delayValue ?value . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime) && (?value < %s^^xsd:duration))) }" ,
+		"parameters" : "lat_lower_4b, lat_upper_4b, long_lower_4b, long_upper_4b , time_start_4 , time_end_4, delay_4"
+		}
+	, 
+		"count_station_4":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE {?connection lc:departureStop ?stop . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ))  }" ,
+		"parameters" : "lat_lower_4,lat_upper_4, long_lower_4, long_upper_4"
+		}
+	, 
+		"count_route_4":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?connection lc:departureStop ?stop ; gtfs:route ?route . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat . FILTER(((%s < str(?lat)) && (str(?lat) < %s)) ) }" ,
+		"parameters" : "lat_lower_4,lat_upper_4"
+		}
+	,
+		"reason_4":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> SELECT DISTINCT ?reasonClass WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time ; lcd:departureDelay ?delay . ?delay lcd:delayValue ?value ; lcd:delayReason ?reason .  ?reason a ?reasonClass . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?lat)) && ( str(?lat) < %s) && (%s < str(?long)) && ( str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime) && (?value < %s^^xsd:duration))) }" ,
+		"parameters" : "lat_lower_4, lat_upper_4, long_lower_4, long_upper_4 , time_start_4 , time_end_4, delay_4"
+		}
+	,
+		"reason_4b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> SELECT DISTINCT ?reasonClass WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time ; lcd:departureDelay ?delay . ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?station rdfs:label %s . ?delay lcd:delayValue ?value ; lcd:delayReason ?reason .  ?reason a ?reasonClass . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?lat)) && ( str(?lat) < %s) && (%s < str(?long)) && ( str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime) && (?value < %s^^xsd:duration))) }" ,
+		"parameters" : "station_4 , lat_lower_4b, lat_upper_4b, long_lower_4b, long_upper_4b , time_start_4 , time_end_4, delay_4"
+		}
+	}
+,
+"Scenario_5" :
+	{
+		"route_5":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?connection lc:departureStop ?stop ; lc:departureTime ?time ; gtfs:route ?route ; lcd:departureDelay ?delay . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime ) ) ) }" ,
+		"parameters" : "reason_5b, lat_lower_5,lat_upper_5, long_lower_5, long_upper_5, time_lower_5, time_upper_5"
+		}
+	, 
+		"count_route_5":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?connection lc:departureStop ?stop ; gtfs:route ?route . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "long_lower_5, long_upper_5"
+		}
+	, 
+		"count_station_5":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection lc:departureStop ?stop ; gtfs:route %s . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "route_5, lat_lower_5,lat_upper_5, long_lower_5, long_upper_5"
+		}
+	}
+,
+"Scenario_6" :
+	{
+		"reason_6":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?reasonClass  WHERE { ?connection a lc:Connection ; lc:departureStop ?stop ; lc:arrivalTime ?time ; lcd:arrivalDelay ?delay . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime ) ) ) }" ,
+		"parameters" : "lat_lower_6,lat_upper_6, long_lower_6, long_upper_6, time_lower_6 , time_upper_6 "
+		}
+	,
+		"station_6":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop ; lc:arrivalTime ?time ; lcd:arrivalDelay ?delay . ?delay lcd:delayValue ?value; lcd:delayReason ?reason . ?reason a %s . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) && (%s^^xsd:dateTime < ?time ) && (?time < %s^^xsd:dateTime ) && (%s^^xsd:duration < ?value ) && (?value < %s^^xsd:duration ) ) ) }" ,
+		"parameters" : "reason_6, lat_lower_6,lat_upper_6, long_lower_6, long_upper_6, time_lower_6c , time_upper_6c , delay_lower_6, delay_upper_6b"
+		}
+	, 
+		"count_station_6":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) ) ) }" ,
+		"parameters" : "lat_lower_6,lat_upper_6"
+		}
+	, 
+		"count_station_6b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : " lat_lower_6,lat_upper_6, long_lower_6, long_upper_6"
+		}
+	, 
+		"count_station_6c":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : " lat_lower_6,lat_upper_6, long_lower_6, long_upper_6"
+		}		
+	}
+,
+"Scenario_7" :
+	{
+		"route_7":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#>  PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureTime ?time ; lcd:departureDelay ?delay . ?route a gtfs:Route. ?delay lcd:delayReason ?reason . ?reason a %s . FILTER(( (%s^^xsd:dateTime < ?time) && (?time < %s^^xsd:dateTime ) )) }" ,
+		"parameters" : "reason_7, time_lower_7b , time_upper_7b"
+		}
+	}
+,
+"Scenario_8" :
+	{
+		"station_8":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop ; lcd:departureDelay ?delay . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "lat_lower_8,lat_upper_8, long_lower_8, long_upper_8"
+		}
+	, 
+		"count_station_8":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "lat_lower_8,lat_upper_8, long_lower_8, long_upper_8"
+		}
+	, 
+		"count_reason_8":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> SELECT ?reasonClass WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop ; lcd:departureDelay ?delay . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label %s . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "station_8 ,lat_lower_8,lat_upper_8, long_lower_8, long_upper_8"
+		}
+		, 
+		"count_reason_8b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> SELECT ?reasonClass WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop ; lcd:departureDelay ?delay . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label %s . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "station_8 ,lat_lower_8,lat_upper_8, long_lower_8, long_upper_8"
+		}
+		, 
+		"count_station_8b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?connection a lc:Connection ; gtfs:route ?route ; lc:departureStop ?stop . ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long ; gtfs:parentStation ?station . ?station rdfs:label ?stationName . FILTER(((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) ) ) }" ,
+		"parameters" : "lat_lower_8,lat_upper_8, long_lower_8, long_upper_8"
+		}
+	}
+,
+"Scenario_9" :
+	{
+		"reason_9":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?reasonClass  WHERE { ?delay a lcd:Delay ; lcd:delayReason ?reason ; lcd:delayValue ?value . ?reason a ?reasonClass . ?connection lcd:departureDelay ?delay ; lc:arrivalTime ?time . FILTER( ((%s^^xsd:dateTime < ?time) && (?time < %s^^xsd:dateTime ) && (%s^^xsd:duration < ?value ) ) ) }" ,
+		"parameters" : "time_lower_9, time_upper_9 , delay_lower_9"
+		}
+	,	
+		"reason_9b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?reasonClass  WHERE { ?delay a lcd:Delay ; lcd:delayReason ?reason ; lcd:delayValue ?value . ?reason a ?reasonClass . ?connection lcd:departureDelay ?delay ; lc:arrivalTime ?time . FILTER( ((%s^^xsd:dateTime < ?time) && (?time < %s^^xsd:dateTime ) && (%s^^xsd:duration < ?value ) ) ) }" ,
+		"parameters" : "time_lower_9, time_upper_9 , delay_lower_9"
+		}
+	,
+		"count_station_9":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT ?stationName  WHERE { ?delay a lcd:Delay ; lcd:delayReason ?reason . ?reason a %s . ?connection lcd:departureDelay ?delay ; lc:departureStop ?stop . ?stop gtfs:parentStation ?station . ?station rdfs:label ?stationName . }" ,
+		"parameters" : "reason_9"
+		}
+	, 
+		"count_station_9b":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT ?stationName  WHERE { ?delay a lcd:Delay ; lcd:delayReason ?reason . ?reason a %s . ?connection lcd:departureDelay ?delay ; lc:departureStop ?stop . ?stop gtfs:parentStation ?station . ?station rdfs:label ?stationName . }" ,
+		"parameters" : "reason_9"
+		}
+	, 
+		"count_route_9":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?delay a lcd:Delay ; lcd:delayReason ?reason . ?reason a %s . ?connection lcd:departureDelay ?delay ; gtfs:route ?route . }" ,
+		"parameters" : "reason_9"
+		}
+	}
+,
+"Scenario_10" :
+	{
+		"station_10":{ 
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName2  WHERE { ?station2 a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName2 . ?stop a gtfs:Stop ; gtfs:parentStation ?station ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . ?stop2 a gtfs:Stop ; gtfs:parentStation ?station2 . ?connection a lc:Connection ; lc:departureStop ?stop2 ; lc:arrivalStop ?stop . FILTER( ((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) )) }" ,
+		"parameters" : "lat_lower_10b,lat_upper_10b, long_lower_10b, long_upper_10b"
+		}
+	, 
+		"station_10b":{ 
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName2  WHERE { ?station2 a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName2 . ?stop a gtfs:Stop ; gtfs:parentStation ?station ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . ?stop2 a gtfs:Stop ; gtfs:parentStation ?station2 . ?connection a lc:Connection ; lc:departureStop ?stop2 ; lc:arrivalStop ?stop . FILTER( ((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) )) }" ,
+		"parameters" : "lat_lower_10b,lat_upper_10b, long_lower_10b, long_upper_10b"
+		}
+	, 
+		"station_10c":{ 
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#>  PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?station2 a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> %s . ?stop a gtfs:Stop ; gtfs:parentStation ?station ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . ?stop2 a gtfs:Stop ; gtfs:parentStation ?station2 . ?connection a lc:Connection ; lc:departureStop ?stop2 ; lc:arrivalStop ?stop . FILTER( ((%s < str(?lat)) && ( str(?lat) < %s) && (%s < str(?long)) && ( str(?long) < %s) )) }" ,
+		"parameters" : "station_10b, lat_lower_10b,lat_upper_10b, long_lower_10b, long_upper_10b"
+		}
+	, 
+		"count_route_10":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?stop a gtfs:Stop ; gtfs:parentStation ?station ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ; <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . ?connection a lc:Connection ; lc:departureStop ?stop ; gtfs:route ?route. FILTER( ((%s < str(?lat)) && (str(?lat) < %s) && (%s < str(?long)) && (str(?long) < %s) )) }" ,
+		"parameters" : "lat_lower_10,lat_upper_10, long_lower_10, long_upper_10"
+		}
+	}
+,
+"Scenario_11" :
+	{
+		"station_11":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?stationName2  WHERE { ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?connection lc:departureStop ?stop ; lcd:departureDelay ?delay ; gtfs:route ?route. ?station2 a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName2 . ?stop2 a gtfs:Stop ; gtfs:parentStation ?station2 . ?connection2 lc:departureStop ?stop2 ; gtfs:route ?route. ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s .  }LIMIT 100" ,
+		"parameters" : "reason_11"
+		}
+	, 
+		"route_11":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?connection lc:departureStop ?stop ; lcd:departureDelay ?delay ; gtfs:route ?route . ?delay lcd:delayReason ?reason ; lcd:delayValue ?value . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . FILTER( ( ?value < %s^^xsd:duration  ) ) }" ,
+		"parameters" : "reason_11, delay_upper_11"
+		}
+	, 
+		"count_route_11":{ 
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?connection lc:departureStop ?stop ; lcd:departureDelay ?delay ; gtfs:route ?route . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . }" ,
+		"parameters" : "reason_11"
+		}
+	, 
+		"count_route_11b":{ 
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?connection lc:departureStop ?stop ; lcd:departureDelay ?delay ; gtfs:route ?route . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . }" ,
+		"parameters" : "reason_11"
+		}
+	, 
+		"count_route_11c":{ 
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?route  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?connection lc:departureStop ?stop ; lcd:departureDelay ?delay ; gtfs:route ?route . ?delay lcd:delayReason ?reason . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . }" ,
+		"parameters" : "reason_11"
+		}
+	, 
+		"count_trip_11":{
+		"query" : "PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#> PREFIX gtfs: <http://vocab.gtfs.org/terms#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#> PREFIX td: <http://purl.org/td/transportdisruption#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>  SELECT DISTINCT ?trip  WHERE { ?station a gtfs:Station ; <http://www.w3.org/2000/01/rdf-schema#label> ?stationName . ?stop a gtfs:Stop ; gtfs:parentStation ?station . ?connection lc:departureStop ?stop ; lcd:departureDelay ?delay ; gtfs:trip ?trip ; gtfs:route %s . ?delay lcd:delayReason ?reason ; lcd:delayValue ?value . ?reason a ?reasonClass . ?reasonClass rdfs:subClassOf* %s . FILTER( ( ?value < %s^^xsd:duration  ) ) }" ,
+		"parameters" : "route_11 , reason_11, delay_upper_11"
+		}
+	}
+}

@@ -1,0 +1,609 @@
+# --- Faceted Browsing Benchmark ---
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix qb: <http://purl.org/linked-data/cube#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix hobbit: <http://w3id.org/hobbit/vocab#> .
+@prefix exp: <http://w3id.org/hobbit/experiments#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sys: <http://w3id.org/system> .
+@prefix bench: <http://w3id.org/bench> .
+
+bench:facetedBrowsing a    hobbit:Benchmark;
+    rdfs:label "Faceted Browsing Benchmark"@en;
+    rdfs:comment    "The Faceted Browsing benchmark checks existing solutions for their capabilities of enabling faceted browsing through large-scale RDF datasets, that is, it analyses their efficiency in navigating through large datasets, where the navigation is driven by intelligent iterative restrictions"@en;
+    hobbit:imageName    "xxxxxxxxxxxxxxxxx";
+    hobbit:version "V1.1";
+    hobbit:hasApi    bench:xxxxxxxxxxxApi;
+    hobbit:hasParameter bench:xxxxxxxxxxxxDataFormat ;
+    hobbit:measuresKPI bench:precision_total ;
+    hobbit:measuresKPI bench:recall_total ;
+    hobbit:measuresKPI bench:fmeasure_total ;
+    hobbit:measuresKPI bench:query_per_second_score_total ;
+    hobbit:measuresKPI bench:precision_choke_point1 ;
+    hobbit:measuresKPI bench:recall_choke_point1 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point1 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point1 ;
+    hobbit:measuresKPI bench:precision_choke_point2 ;
+    hobbit:measuresKPI bench:recall_choke_point2 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point2 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point2 ;
+    hobbit:measuresKPI bench:precision_choke_point3 ;
+    hobbit:measuresKPI bench:recall_choke_point3 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point3 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point3 ;
+    hobbit:measuresKPI bench:precision_choke_point4 ;
+    hobbit:measuresKPI bench:recall_choke_point4 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point4 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point4 ;
+    hobbit:measuresKPI bench:precision_choke_point5 ;
+    hobbit:measuresKPI bench:recall_choke_point5 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point5 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point5 ;
+    hobbit:measuresKPI bench:precision_choke_point6 ;
+    hobbit:measuresKPI bench:recall_choke_point6 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point6 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point6 ;
+    hobbit:measuresKPI bench:precision_choke_point7 ;
+    hobbit:measuresKPI bench:recall_choke_point7 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point7 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point7 ;
+    hobbit:measuresKPI bench:precision_choke_point8 ;
+    hobbit:measuresKPI bench:recall_choke_point8 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point8 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point8 ;
+    hobbit:measuresKPI bench:precision_choke_point9 ;
+    hobbit:measuresKPI bench:recall_choke_point9 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point9 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point9 ;
+    hobbit:measuresKPI bench:precision_choke_point10 ;
+    hobbit:measuresKPI bench:recall_choke_point10 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point10 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point10 ;
+    hobbit:measuresKPI bench:precision_choke_point11 ;
+    hobbit:measuresKPI bench:recall_choke_point11 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point11 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point11 ;
+    hobbit:measuresKPI bench:precision_choke_point12 ;
+    hobbit:measuresKPI bench:recall_choke_point12 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point12 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point12 ;
+    hobbit:measuresKPI bench:precision_choke_point13 ;
+    hobbit:measuresKPI bench:recall_choke_point13 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point13 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point13 ;
+    hobbit:measuresKPI bench:precision_choke_point14 ;
+    hobbit:measuresKPI bench:recall_choke_point14 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point14 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point14 ;
+    hobbit:measuresKPI bench:precision_choke_point15 ;
+    hobbit:measuresKPI bench:recall_choke_point15 ;
+    hobbit:measuresKPI bench:fmeasure_choke_point15 ;
+    hobbit:measuresKPI bench:query_per_second_score_choke_point15 ;
+    hobbit:measuresKPI bench:count_per_second_score;
+    hobbit:measuresKPI bench:count_overall_error;
+    hobbit:measuresKPI bench:count_average_error;
+    hobbit:measuresKPI bench:count_overall_error_ratio;
+    hobbit:measuresKPI bench:count_average_error_ratio.
+
+
+bench:precision_total a hobbit:KPI;
+    rdfs:label "Total precision"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) over all instance retrieval queries"@en;
+    rdfs:range    xsd:float .
+
+bench:recall_total a hobbit:KPI;
+    rdfs:label "Total recall"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) over all instance retrieval queries"@en;
+    rdfs:range    xsd:float .
+
+bench:fmeasure_total a hobbit:KPI;
+    rdfs:label "Total F-measure"@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float .
+        
+bench:query_per_second_score_total a hobbit:KPI;
+    rdfs:label "Total Query per second score"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float .
+        
+bench:precision_choke_point1 a hobbit:KPI;
+    rdfs:label "Precision for choke point 1"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 1"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point1.
+
+bench:recall_choke_point1 a hobbit:KPI;
+    rdfs:label "Recall for choke point 1"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point 1"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point1.
+
+bench:fmeasure_choke_point1 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 1 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 1 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point1.
+        
+bench:query_per_second_score_choke_point1 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 1"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point1.
+
+bench:choke_point1 a bench:ChokePoint ;
+    rdfs:label "choke_point 1"
+    rdfs:comment "Choke point 1 measures the performance for xxxxxxxxxxxx transitions ."@en 
+
+
+bench:precision_choke_point2 a hobbit:KPI;
+    rdfs:label "Precision for choke point 2"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 2"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point2.
+
+bench:recall_choke_point2 a hobbit:KPI;
+    rdfs:label "Recall for chokepoint2"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for chokepoint2"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point2.
+
+bench:fmeasure_choke_point2 a hobbit:KPI;
+    rdfs:label "F-measure for choke  point 2 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke  point 2 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point2.
+        
+bench:query_per_second_score_choke_point2 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_ point 2"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point2.
+
+bench:choke_point2 a bench:ChokePoint ;
+    rdfs:label "choke_ point 2"
+    rdfs:comment "Choke  point 2 measures the performance for xxxxxxxxxxxx transitions ."@en 
+
+
+
+bench:precision_choke_point3 a hobbit:KPI;
+    rdfs:label "Precision for choke  point 3"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke  point 3"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point3.
+
+bench:recall_choke_point3 a hobbit:KPI;
+    rdfs:label "Recall for choke  point3"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke  point3"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point3.
+
+bench:fmeasure_choke_point3 a hobbit:KPI;
+    rdfs:label "F-measure for choke   point 3 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke   point 3 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point3.
+        
+bench:query_per_second_score_choke_point3 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_  point 3"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point3.
+
+bench:choke_point3 a bench:ChokePoint ;
+    rdfs:label "choke_point 3"
+    rdfs:comment "Choke point 3 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point4 a hobbit:KPI;
+    rdfs:label "Precision for choke point 4"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 4"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point4.
+
+bench:recall_choke_point4 a hobbit:KPI;
+    rdfs:label "Recall for choke point4"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point 4"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point4.
+
+bench:fmeasure_choke_ point4 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 4 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for choke point 4 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point4.
+        
+bench:query_per_second_score_choke_point4 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 4"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point4.
+
+bench:choke_point4 a bench:ChokePoint ;
+    rdfs:label "choke_point 4"
+    rdfs:comment "Choke point 4 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+
+bench:precision_choke_point5 a hobbit:KPI;
+    rdfs:label "Precision for choke point 5"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 5"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point5.
+
+bench:recall_choke_point5 a hobbit:KPI;
+    rdfs:label "Recall for choke point5"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point5"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point5.
+
+bench:fmeasure_choke_point5 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 5 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 5 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point5.
+        
+bench:query_per_second_score_choke_point5 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 5"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point5.
+
+bench:choke_point5 a bench:ChokePoint ;
+    rdfs:label "choke_point 5"
+    rdfs:comment "Choke point 5 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point6 a hobbit:KPI;
+    rdfs:label "Precision for choke point 6"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 6"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point6.
+
+bench:recall_choke_point6 a hobbit:KPI;
+    rdfs:label "Recall for choke point6"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point6"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point6.
+
+bench:fmeasure_choke_point6 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 6 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 6 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point6.
+        
+bench:query_per_second_score_choke_point6 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 6"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point6.
+
+bench:choke_point6 a bench:ChokePoint ;
+    rdfs:label "choke_point 6"
+    rdfs:comment "Choke point 6 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point7 a hobbit:KPI;
+    rdfs:label "Precision for choke point 7"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 7"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point7.
+
+bench:recall_choke_point7 a hobbit:KPI;
+    rdfs:label "Recall for choke point7"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point7"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point7.
+
+bench:fmeasure_choke_point7 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 7 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 7 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point7.
+        
+bench:query_per_second_score_choke_point7 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 7"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point7.
+
+bench:choke_point7 a bench:ChokePoint ;
+    rdfs:label "choke_point 7"
+    rdfs:comment "Choke point 7 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point8 a hobbit:KPI;
+    rdfs:label "Precision for choke point 8"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 8"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point8.
+
+bench:recall_choke_point8 a hobbit:KPI;
+    rdfs:label "Recall for choke point8"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point8"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point8.
+
+bench:fmeasure_choke_point8 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 8 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 8 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point8.
+        
+bench:query_per_second_score_choke_point8 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 8"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point8.
+
+bench:choke_point8 a bench:ChokePoint ;
+    rdfs:label "choke_point 8"
+    rdfs:comment "Choke point 8 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point9 a hobbit:KPI;
+    rdfs:label "Precision for choke point 9"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 9"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point9.
+
+bench:recall_choke_point9 a hobbit:KPI;
+    rdfs:label "Recall for choke point9"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point9"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point9.
+
+bench:fmeasure_choke_point9 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 9 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 9 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point9.
+        
+bench:query_per_second_score_choke_point9 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 9"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point9.
+
+bench:choke_point9 a bench:ChokePoint ;
+    rdfs:label "choke_point 9"
+    rdfs:comment "Choke point 9 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point10 a hobbit:KPI;
+    rdfs:label "Precision for choke point 10"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 10"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point10.
+
+bench:recall_choke_point10 a hobbit:KPI;
+    rdfs:label "Recall for choke point10"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point10"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point10.
+
+bench:fmeasure_choke_point10 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 10 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 10 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point10.
+        
+bench:query_per_second_score_choke_point10 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 10"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point10.
+
+bench:choke_point10 a bench:ChokePoint ;
+    rdfs:label "choke_point 10"
+    rdfs:comment "Choke point 10 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point11 a hobbit:KPI;
+    rdfs:label "Precision for choke point 11"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 11"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point11.
+
+bench:recall_choke_point11 a hobbit:KPI;
+    rdfs:label "Recall for choke point11"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point11"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point11.
+
+bench:fmeasure_choke_point11 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 11 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 11 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point11.
+        
+bench:query_per_second_score_choke_point11 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 11"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point11.
+
+bench:choke_point11 a bench:ChokePoint ;
+    rdfs:label "choke_point 11"
+    rdfs:comment "Choke point 11 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point12 a hobbit:KPI;
+    rdfs:label "Precision for choke point 12"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 12"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point12.
+
+bench:recall_choke_point12 a hobbit:KPI;
+    rdfs:label "Recall for choke point12"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point12"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point12.
+
+bench:fmeasure_choke_point12 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 12 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 12 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point12.
+        
+bench:query_per_second_score_choke_point12 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 12"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point12.
+
+bench:choke_point12 a bench:ChokePoint ;
+    rdfs:label "choke_point 12"
+    rdfs:comment "Choke point 12 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point13 a hobbit:KPI;
+    rdfs:label "Precision for choke point 13"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 13"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point13.
+
+bench:recall_choke_point13 a hobbit:KPI;
+    rdfs:label "Recall for choke point13"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point13"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point13.
+
+bench:fmeasure_choke_point13 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 13 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 13 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point13.
+        
+bench:query_per_second_score_choke_point13 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 13"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point13.
+
+bench:choke_point13 a bench:ChokePoint ;
+    rdfs:label "choke_point 13"
+    rdfs:comment "Choke point 13 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+
+bench:precision_choke_point14 a hobbit:KPI;
+    rdfs:label "Precision for choke point 14"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 14"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point14.
+
+bench:recall_choke_point14 a hobbit:KPI;
+    rdfs:label "Recall for choke point14"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point14"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point14.
+
+bench:fmeasure_choke_point14 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 14 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 14 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point14.
+        
+bench:query_per_second_score_choke_point14 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 14"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point14.
+
+bench:choke_point14 a bench:ChokePoint ;
+    rdfs:label "choke_point 14"
+    rdfs:comment "Choke point 14 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:precision_choke_point15 a hobbit:KPI;
+    rdfs:label "Precision for choke point 15"@en;
+    rdfs:comment    "Precision = TP / (TP + FP) for choke point 15"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point15.
+
+bench:recall_choke_point15 a hobbit:KPI;
+    rdfs:label "Recall for choke point15"@en;
+    rdfs:comment    "Recall = TP / (TP + FN) for choke point15"@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point15.
+
+bench:fmeasure_choke_point15 a hobbit:KPI;
+    rdfs:label "F-measure for choke point 15 "@en;
+    rdfs:comment    "F-measure, the harmonic mean of precision and recall, for  choke point 15 "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point15.
+        
+bench:query_per_second_score_choke_point15 a hobbit:KPI;
+    rdfs:label "Query per second score for choke_point 15"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all instance retrieval queries "@en;
+    rdfs:range    xsd:float ;
+    bench:measuresChokePoint bench:choke_point15.
+
+bench:choke_point15 a bench:ChokePoint ;
+    rdfs:label "choke_point 15"
+    rdfs:comment "Choke point 15 measures the performance for xxxxxxxxxxxx transitions ."@en
+
+
+bench:measuresChokePoint a rdfs:Property ;
+    rdfs:comment "This property specifies the choke point measured by the property KPI "@en;
+    rdfs:domain hobbit:KPI ;
+    rdfs:range bench:ChokePoint .
+
+
+bench:count_per_second_score a hobbit:KPI;
+    rdfs:label "Count per second score for count queries"@en;
+    rdfs:comment    "Query per second score, which measures the number of queries answered per second, over all count queries. "@en;
+    rdfs:range    xsd:float .
+
+bench:count_overall_error a hobbit:KPI;
+    rdfs:label "Count error over all count queries"@en;
+    rdfs:comment    "Measures the accumulated error for all count queries "@en;
+    rdfs:range    xsd:long .
+
+bench:count_average_error a hobbit:KPI;
+    rdfs:label "Average count error over all count queries"@en;
+    rdfs:comment    "Measures the average error over all count queries "@en;
+    rdfs:range    xsd:float .
+
+bench:count_overall_error_ratio a hobbit:KPI;
+    rdfs:label "Error ratio over all count queries"@en;
+    rdfs:comment  "Measures the ratio between the accumulated error over the sum of all returned values of count queries ."@en;
+    rdfs:range    xsd:float .
+
+bench:bench:count_average_error_ratio a hobbit:KPI;
+    rdfs:label "Average error ratio over all count queries"@en;
+    rdfs:comment  "Measures the average of all ratios between error and count value ."@en;
+    rdfs:range    xsd:float .
+
+
+bench:xxxxxxxxxxxApi a hobbit:API .
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+bench:lanceDataFormat  a    hobbit:ConfigurableParameter;
+    rdfs:label    "Lance dataset format"@en;
+    rdfs:comment    "......."@en;
+            rdfs:range bench:DataFormat;
+    hobbit:hasDefaultValue bench:Turtle .
+
+
+bench:DataFormat  a owl:Class ;
+            rdfs:label    "Lance dataset format"@en;
+    rdfs:comment    "......."@en .
+
+
+bench:RDF_XML a bench:DataFormat ;
+            rdfs:label    "RDF_XML dataset format"@en;
+    rdfs:comment    "......."@en .
+
+
+bench:N3 a bench:DataFormat ;
+            rdfs:label    "N3 dataset format"@en;
+    rdfs:comment    "......."@en .
+
+
+bench:Turtle a bench:DataFormat ;
+            rdfs:label    "Turtle dataset format"@en;
+    rdfs:comment    "......."@en .

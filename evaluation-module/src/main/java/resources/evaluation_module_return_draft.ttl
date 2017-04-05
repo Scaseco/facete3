@@ -1,0 +1,81 @@
+# --- Experiment ---
+
+exp:FacetedBrowsingExp10 a hobbit:Experiment ;
+    hobbit:involvesSystemInstance sys:limesV1; # TO FILL IN CORRECTLY
+    hobbit:involvesBenchmark bench:facetedBrowsing; # TO FILL IN CORRECTLY
+    hobbit:wasCarriedOut <http://example.org/ExampleHardware> ; # TO FILL IN CORRECTLY
+    hobbit:startTime "2016-11-31T22:57:00"^^xsd:dateTime ; # TO FILL IN CORRECTLY
+    hobbit:endTime "2016-11-31T23:01:00"^^xsd:dateTime ; # TO FILL IN CORRECTLY
+    hobbit:hobbitPlatformVersion "V1.3" ; # TO FILL IN CORRECTLY
+    hobbit:isPartOf hobbit:OAEILinkingChallenge ; # TO FILL IN CORRECTLY
+    bench:lanceDataFormat bench:RDF_XML; # TO FILL IN CORRECTLY
+    bench:precision_total "0.5"^^xsd:float ;
+    bench:recall_total "0.5"^^xsd:float;
+    bench:fmeasure_total "0.5"^^xsd:float;
+    bench:query_per_second_score_total "0.5"^^xsd:float;
+    bench:precision_choke_point1 "0.5"^^xsd:float;
+    bench:recall_choke_point1 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point1 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point1 "0.5"^^xsd:float;
+    bench:precision_choke_point2 "0.5"^^xsd:float; 
+    bench:recall_choke_point2 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point2 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point2 "0.5"^^xsd:float;
+    bench:precision_choke_point3 "0.5"^^xsd:float;
+    bench:recall_choke_point3 "0.5"^^xsd:float;     
+    bench:fmeasure_choke_point3 "0.5"^^xsd:float;    
+    bench:query_per_second_score_choke_point3 "0.5"^^xsd:float; 
+    bench:precision_choke_point4 "0.5"^^xsd:float; 
+    bench:recall_choke_point4 "0.5"^^xsd:float;     
+    bench:fmeasure_choke_point4 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point4 "0.5"^^xsd:float;
+    bench:precision_choke_point5 "0.5"^^xsd:float; 
+    bench:recall_choke_point5 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point5 "0.5"^^xsd:float; 
+    bench:query_per_second_score_choke_point5 "0.5"^^xsd:float;
+    bench:precision_choke_point6 "0.5"^^xsd:float; 
+    bench:recall_choke_point6 "0.5"^^xsd:float;  
+    bench:fmeasure_choke_point6 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point6 "0.5"^^xsd:float;
+    bench:precision_choke_point7 "0.5"^^xsd:float;
+    bench:recall_choke_point7 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point7 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point7 "0.5"^^xsd:float;
+    bench:precision_choke_point8 "0.5"^^xsd:float; 
+    bench:recall_choke_point8 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point8 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point8 "0.5"^^xsd:float; 
+    bench:precision_choke_point9 "0.5"^^xsd:float;  
+    bench:recall_choke_point9 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point9 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point9 "0.5"^^xsd:float;
+    bench:precision_choke_point10 "0.5"^^xsd:float;    
+    bench:recall_choke_point10 "0.5"^^xsd:float; 
+    bench:fmeasure_choke_point10 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point10 "0.5"^^xsd:float; 
+    bench:precision_choke_point11 "0.5"^^xsd:float;
+    bench:recall_choke_point11 "0.5"^^xsd:float;     
+    bench:fmeasure_choke_point11 "0.5"^^xsd:float;
+    bench:query_per_second_score_choke_point11 "0.5"^^xsd:float; 
+    bench:precision_choke_point12 "0.5"^^xsd:float;
+    bench:recall_choke_point12 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point12 "0.5"^^xsd:float; 
+    bench:query_per_second_score_choke_point12 ; 
+    bench:precision_choke_point13 "0.5"^^xsd:float; 
+    bench:recall_choke_point13 "0.5"^^xsd:float; 
+    bench:fmeasure_choke_point13 "0.5"^^xsd:float; 
+    bench:query_per_second_score_choke_point13 "0.5"^^xsd:float; 
+    bench:precision_choke_point14 "0.5"^^xsd:float;  
+    bench:recall_choke_point14 "0.5"^^xsd:float;
+    bench:fmeasure_choke_point14 "0.5"^^xsd:float;  
+    bench:query_per_second_score_choke_point14 "0.5"^^xsd:float;
+    bench:precision_choke_point15 "0.5"^^xsd:float; 
+    bench:recall_choke_point15 "0.5"^^xsd:float; 
+    bench:fmeasure_choke_point15 "0.5"^^xsd:float ;
+    bench:query_per_second_score_choke_point15 "0.5"^^xsd:float;
+    bench:count_per_second_score "0.5"^^xsd:float; 
+    bench:count_overall_error "1000"^^xsd:long;
+    bench:count_average_error "0.5"^^xsd:float;  
+    bench:count_overall_error_ratio "0.5"^^xsd:float; 
+    bench:count_average_error_ratio "0.5"^^xsd:float;	
+    hobbit:terminatedWithError error:nullPointerException . 
