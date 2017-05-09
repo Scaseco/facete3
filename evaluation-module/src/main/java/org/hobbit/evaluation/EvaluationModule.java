@@ -57,7 +57,7 @@ public class EvaluationModule extends AbstractEvaluationModule {
     protected void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
                                              long responseReceivedTimestamp) throws Exception {
 
-        
+
         /* receivedData SHOULD NOT STILL CONTAIN TASKID? IF IT DOES CHANGE BACK TO:
         ByteBuffer bufferRec = ByteBuffer.wrap(receivedData);
         String taskidRec = RabbitMQUtils.readString(bufferRec);
@@ -101,7 +101,10 @@ public class EvaluationModule extends AbstractEvaluationModule {
         ArrayList<String> receivedDataInstances = new ArrayList<>(Arrays.asList(resultsArray));
         ArrayList<String> expectedDataInstances = new ArrayList<>(Arrays.asList(goldsArray));
 
-
+        ArrayList<String> empties = new ArrayList<>();
+        empties.add("");
+        receivedDataInstances.removeAll(empties);
+        expectedDataInstances.removeAll(empties);
         QueryID key = new QueryID(Integer.parseInt(scenario), Integer.parseInt(query));
 
         if (!scenario.contains("0") || (scenario.contains("10"))) {
@@ -125,6 +128,11 @@ public class EvaluationModule extends AbstractEvaluationModule {
             if(responseReceivedTimestamp == 0L){
                 queriesWithTimeout.add(new QueryID(Integer.parseInt(scenario),Integer.parseInt(query)));
             }
+
+            if(responseReceivedTimestamp-taskSentTimestamp < 0L){
+                LOGGER.error("RESPONSE TIME BEFORE TASK WAS SENT. RESPONSE TIME: "+responseReceivedTimestamp+"TASK SENT TIME: "+taskSentTimestamp );
+            }
+
 
             evalCPTs.put(key, new InstancesEvalHelper(tp, fn, fp, time_needed));
 
@@ -160,7 +168,7 @@ public class EvaluationModule extends AbstractEvaluationModule {
             int current_error = Math.abs(receivedCount - expectedCount);
 
             count_error += current_error;
-            count_error_ratio += (double) current_error / expectedCount;
+            count_error_ratio += (double) current_error / Math.max(expectedCount,1);
             sum_of_correct_count_results += expectedCount;
         }
     }
@@ -183,7 +191,7 @@ public class EvaluationModule extends AbstractEvaluationModule {
         // 1.a.i) Time score in queries per second
         // ______________________________________
 
-        overall_query_per_second_score = (double)  number_of_queries / evalOverall.getTime();
+        overall_query_per_second_score = (double)  1000*number_of_queries / evalOverall.getTime();
 
         // ______________________________________
         // 1.a.ii) Precision, recall, F1-measure
@@ -192,9 +200,11 @@ public class EvaluationModule extends AbstractEvaluationModule {
 
         // Compute precision, recall and f1-measure
 
-        overall_precision = (double) evalOverall.getTP() / (evalOverall.getTP() + evalOverall.getFP());
-        overall_recall = (double) evalOverall.getTP() / (evalOverall.getTP() + evalOverall.getFN());
-        overall_f1 = 2 * overall_precision * overall_recall / (overall_precision + overall_recall);
+        overall_precision = (evalOverall.getTP()==0 && evalOverall.getFP()==0) ? 0.0 :
+                (double) evalOverall.getTP() / (evalOverall.getTP() + evalOverall.getFP());
+        overall_recall = (evalOverall.getTP()==0 && evalOverall.getFN()==0) ? 0.0 :
+                (double) evalOverall.getTP() / (evalOverall.getTP() + evalOverall.getFN());
+        overall_f1 =(overall_recall ==0 && overall_precision==0) ? 0.0 : 2 * overall_precision * overall_recall / (overall_precision + overall_recall);
 
 
         // ______________________________________
@@ -232,14 +242,18 @@ public class EvaluationModule extends AbstractEvaluationModule {
                     current_chokePT_number_of_queries += 1;
                 } catch(NullPointerException e){
                     currentChokePT_eval.add(0,0,0,0);
+                    LOGGER.info("Query selection went wrong.");
                 }
             }
 
 
-            double current_chokePT_query_per_second_score = (double) current_chokePT_number_of_queries / currentChokePT_eval.getTime();
-            double current_chokePT_precision = (double) currentChokePT_eval.getTP() / (currentChokePT_eval.getTP() + currentChokePT_eval.getFP());
-            double current_chokePT_recall = (double) currentChokePT_eval.getTP() / (currentChokePT_eval.getTP() + currentChokePT_eval.getFN());
-            double current_chokePT_f1 = 2 * current_chokePT_precision * current_chokePT_recall / (current_chokePT_precision + current_chokePT_recall);
+            double current_chokePT_query_per_second_score = (double) 1000 * current_chokePT_number_of_queries / currentChokePT_eval.getTime();
+            double current_chokePT_precision = (currentChokePT_eval.getTP()==0 && currentChokePT_eval.getFP()==0) ? 0 :
+                    (double) currentChokePT_eval.getTP() / (currentChokePT_eval.getTP() + currentChokePT_eval.getFP());
+            double current_chokePT_recall = (currentChokePT_eval.getTP()==0 && currentChokePT_eval.getFN()==0) ? 0 :
+                    (double) currentChokePT_eval.getTP() / (currentChokePT_eval.getTP() + currentChokePT_eval.getFN());
+            double current_chokePT_f1 = (current_chokePT_recall==0 && current_chokePT_precision==0) ? 0 :
+                    2 * current_chokePT_precision * current_chokePT_recall / (current_chokePT_precision + current_chokePT_recall);
 
             chokePT_query_per_second_score.put(key, current_chokePT_query_per_second_score);
             chokePT_precision.put(key, current_chokePT_precision);
@@ -258,7 +272,7 @@ public class EvaluationModule extends AbstractEvaluationModule {
         // ______________________________________
 
 
-        double count_per_second_score = (double) number_of_counts / count_time_needed;
+        double count_per_second_score = (double) 1000 * number_of_counts / count_time_needed;
 
         // ______________________________________
         // 2.a.ii) Correctness of counts
@@ -292,4 +306,3 @@ public class EvaluationModule extends AbstractEvaluationModule {
     }
 
 }
-

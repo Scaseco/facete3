@@ -6,8 +6,24 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.ReaderRIOT;
+import org.apache.jena.riot.lang.PipedRDFIterator;
+import org.apache.jena.riot.lang.PipedRDFStream;
+import org.apache.jena.riot.lang.PipedTriplesStream;
+import org.apache.jena.riot.lang.ReaderTriX;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFLib;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.QuadDataAcc;
+import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractSequencingTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
@@ -23,6 +39,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +57,9 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
     private static HashMap<String, ArrayList<String>> reasonClasses = new HashMap();
     private static ArrayList<String> allReasons = new ArrayList<String>();
 
+    private Semaphore startTaskGenMutex = new Semaphore(0);
+    private Semaphore terminateMutex = new Semaphore(0);
+    private final int maxParallelProcessedMsgs=1;
     // next Task id
     private long nextTaskId = 0;
     // a hashmap to hold variables that have to be pre-computed
@@ -60,10 +82,17 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
     @Override
     public void init() throws Exception {
         super.init();
+
         Map env = System.getenv();
         if (!env.containsKey("VIRTUOSO_GOLD_SERVICE_URL")) {
             throw new IllegalArgumentException("Couldn\'t get \"VIRTUOSO_GOLD_SERVICE_URL\" from the environment. Aborting.");
         } else this.VIRTUOSO_GOLD_SERVICE_URL = env.get("VIRTUOSO_GOLD_SERVICE_URL").toString();
+
+        if (!env.containsKey("SEED_PARAMETER")) {
+            throw new IllegalArgumentException("Couldn\'t get \"SEED_PARAMETER\" from the environment. Aborting.");
+        } else {
+            this.randomSeed = Integer.parseInt(env.get("SEED_PARAMETER").toString());
+        }
 
         LOGGER.info("INITIALIZING REASONS...");
         initializeReasonClasses();
@@ -94,7 +123,7 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
                     String taskIdString = getNextTaskId();
                     LOGGER.info("ASSIGNED TASKID--: " + taskIdString);
                     //LOGGER.info("NEXT TASKID--: " + nextTaskId);
-                    setTaskIdToWaitFor(taskIdString);
+                    //setTaskIdToWaitFor(taskIdString);
                     // retrieve query string and replace the parameters
                     String replacedQuery = "";
                     String querySparql = (String) (query.getValue()).get("query");
@@ -126,7 +155,7 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
                     LOGGER.info("Waiting for acknowledgment..");
                     //waitForAck();
                     //adding time delay to simulate sequential order
-                    TimeUnit.MILLISECONDS.sleep(500);
+                    TimeUnit.MILLISECONDS.sleep(1500);
                     LOGGER.info("Acknoledgment done!");
                 }
             }
@@ -211,8 +240,8 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
         // load parameters from resources file
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         InputStream variablesFile = classloader.getResourceAsStream("variables.json");
-        InputStream preQueriesFile = classloader.getResourceAsStream("Preparational_QueriesWorkaround.json");
-        InputStream sparqlQueriesFile = classloader.getResourceAsStream("SPARQL_QueriesWorkaround.json");
+        InputStream preQueriesFile = classloader.getResourceAsStream("Preparational_Queries_decimalLatLong_and_improved.json");
+        InputStream sparqlQueriesFile = classloader.getResourceAsStream("SPARQL_Queries_decimalLatLong.json");
         try {
             variables = new ObjectMapper().readValue(variablesFile, HashMap.class);
             preQueries = new ObjectMapper().readValue(preQueriesFile, HashMap.class);
@@ -347,11 +376,13 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
             String valueNode = null;
             if (nodefinalValue!=null) {
                 valueNode = nodefinalValue.toString();
+                LOGGER.error("String value node: " + valueNode);
             }
             //LOGGER.error("String : " + nodefinalValue.toString());
             if (valueNode!=null) {
                 if (valueNode.contains("date")) {
                     String dateString = valueNode.split("\\.")[0];
+                    LOGGER.error("data: " + dateString);
                     Date fastDate = null;
                     FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
                     try {
@@ -367,7 +398,7 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
                     finalValue = valueNode.split("\\^")[0];
                 }
                 else{
-                    finalValue = valueNode;
+                    finalValue = valueNode.split("\\^")[0];
                 }
             }
         }
@@ -504,29 +535,34 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
         return s.hasNext() ? s.next() : "";
     }
 
-    /*
-    public static void main(String[] args) throws Exception {
-        String sc = "0";
-        if (!sc.contains("0") || sc.contains("10")){
-            System.out.println("asdf");
+
+    @Override
+    public void run() throws Exception {
+        sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
+        // Wait for the start message
+        startTaskGenMutex.acquire();
+        generateTask(new byte[]{});
+        sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
+    }
+
+    @Override    public void receiveCommand(byte command, byte[] data) {
+        // If this is the signal to start the data generation
+        if (command == Commands.TASK_GENERATOR_START_SIGNAL) {
+            LOGGER.info("Received signal to start.");
+            // release the mutex
+            startTaskGenMutex.release();
+        } else if (command == Commands.TASK_GENERATION_FINISHED) {
+            LOGGER.info("Received signal to finish.");
+
+                terminateMutex.release();
+
+        } else if (command == Commands.DATA_GENERATION_FINISHED){
+            LOGGER.info("Data generation finished");
 
         }
-        if (!sc.equals("0")){
-            System.out.println("ww");
-        }
-        byte[] data = null;
-        // read resource file with queries
-        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        InputStream dataStream = classloader.getResourceAsStream("lc.ttl");
-        data = org.apache.commons.io.IOUtils.toByteArray(dataStream);
-        FacetedTaskGenerator t1 = new FacetedTaskGenerator();
-        //t1.insertTrainingDataToVirtuoso();
-        //System.out.println("INSERTED TRAINING DATA!!");
-        t1.initializeParameters();
-        //t1.computeParameters();
-        //t1.init();
-        t1.generateTask(data);
-    }*/
+        super.receiveCommand(command, data);
+    }
+
 }
 
 class ValueComparator implements Comparator<String> {
