@@ -145,9 +145,12 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
                     byte[] resultsByteArray = adjustFormat(taskIdString,
                             scenarioName, Integer.toString(queryid), expectedResult);
 
+
+                    byte[] task = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(replacedQuery)});
+
                     // send task to systemAdapter
                     sendTaskToSystemAdapter(taskIdString,
-                            RabbitMQUtils.writeString(replacedQuery));
+                            task);
                     // send task and expected result to eval storage
                     sendTaskToEvalStorage(taskIdString,
                             System.currentTimeMillis(),
@@ -536,21 +539,14 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
     }
 
 
-    @Override
-    public void run() throws Exception {
-        sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
-        // Wait for the start message
-        startTaskGenMutex.acquire();
-        generateTask(new byte[]{});
-        sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
-    }
+
 
     @Override    public void receiveCommand(byte command, byte[] data) {
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATOR_START_SIGNAL) {
             LOGGER.info("Received signal to start.");
             // release the mutex
-            startTaskGenMutex.release();
+            // startTaskGenMutex.release();
         } else if (command == Commands.TASK_GENERATION_FINISHED) {
             LOGGER.info("Received signal to finish.");
 
@@ -559,6 +555,9 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
         } else if (command == Commands.DATA_GENERATION_FINISHED){
             LOGGER.info("Data generation finished");
 
+        } else if (command == (byte) 150 ){
+            try { TimeUnit.SECONDS.sleep(5); } catch (InterruptedException e) {}
+            startTaskGenMutex.release();
         }
         super.receiveCommand(command, data);
     }
