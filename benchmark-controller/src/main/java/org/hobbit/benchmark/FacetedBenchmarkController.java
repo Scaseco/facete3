@@ -151,6 +151,9 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         waitForTaskGenToFinish();
         LOGGER.info("WAITING FOR SYSTEM ...");
         waitForSystemToFinish();
+        this.stopContainer(containerName);
+
+
         // Create the evaluation module
         String evalModuleImageName = "git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image";
         String[] envVariables = new String[]{"NO_VAR=true"};
@@ -165,6 +168,176 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         sendResultModel(resultModel);
     }
 
+   /* protected void insertTrainingDataToVirtuoso() throws Exception{
+        LOGGER.info("Starting inserting data");
+        String GRAPH_URI = "http://www.virtuoso-graph.com";
+        String ENDPOINT = "http://"+containerName +":8890/sparql";
+        String username = "dba";
+        String password = "dba";
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        InputStream trainingData = classloader.getResourceAsStream("TrainingData.ttl");
+        //cannot insert td ontology due to an error concerning blank nodes in the ttl file
+        //as virtuoso cannot handle insert data with blank nodes
+        //To test add tdOnto in dataToAdd list
+        InputStream tdOnto = classloader.getResourceAsStream("td-ontology.ttl");
+        List<InputStream> dataToAdd = Arrays.asList(tdOnto, trainingData);
+
+        // authenticated client
+        CredentialsProvider provider = new BasicCredentialsProvider();
+        UsernamePasswordCredentials credentials
+                = new UsernamePasswordCredentials(username, password);
+        provider.setCredentials(AuthScope.ANY, credentials);
+
+        HttpClient client = HttpClientBuilder.create()
+                .setDefaultCredentialsProvider(provider)
+                .build();
+        HttpOp.setDefaultHttpClient(client);
+        for (int i =0; i<dataToAdd.size();i++){// InputStream input : dataToAdd) {
+            Model rdfModel = ModelFactory.createDefaultModel();
+            rdfModel.read(dataToAdd.get(i), null, "TTL");
+            StmtIterator it = rdfModel.listStatements();
+
+            QuadDataAcc quads = new QuadDataAcc();
+            quads.setGraph(NodeFactory.createURI(GRAPH_URI));
+
+            // add triples from file into quads
+            while (it.hasNext()) {
+                Triple triple = it.next().asTriple();
+                quads.addTriple(triple);
+            }
+            // insertion in chunks (virtuoso seems cannot handle batches larger than 1000)
+            List<List<Quad>> chunks = org.apache.commons.collections4.ListUtils.partition(quads.getQuads(), 1000);
+            //System.out.println(chunks.size());
+            for (List<Quad> chunk : chunks) {
+                QuadDataAcc quadChunk = new QuadDataAcc(chunk);
+                //System.out.println(quadChunk.getQuads().get(0).asTriple().toString());
+                String query = (new UpdateDataInsert(quadChunk)).toString(rdfModel);
+                if (i==0) { //change this to 0 to insert td ontology with virtjdbc
+                    String url = "jdbc:virtuoso://"+containerName+":1111";
+                    //replace INSERT DATA with INSERT for virtuoso compatibility
+                    query = query.replace("INSERT DATA", "INSERT");
+                    VirtGraph set = new VirtGraph (url, username, password); //connection refused / no solution
+                    VirtuosoUpdateRequest vur = VirtuosoUpdateFactory.create(query, set);
+                    vur.exec();
+                }else {
+                    //execute insert query to virtuoso
+                    UpdateProcessor update = UpdateExecutionFactory.createRemoteForm(UpdateFactory.create(query), ENDPOINT+"-auth");
+                    ((UpdateProcessRemoteForm)update).setAuthentication(username,password.toCharArray());
+                    update.execute();
+                }
+            }
+        }
+
+    }
+
+/*
+
+ */
+   /* protected void insertDataWithScript() throws Exception{
+        // We insert data to virtuoso instance using the isl
+        // commands tool by executing a scipt
+        //docker cp load_data_virtuoso.sh my-virtuoso:/usr/local/virtuoso-opensource/var/lib/virtuoso/db/load_data.sh
+        String filesPath = System.getProperty("user.dir")+"/src/main/resources/load_data_virtuoso.sh";
+        System.out.println(System.getProperty("user.dir"));
+        containerName = "my-virtuoso";
+        String command1 = "docker cp "+filesPath+" "+containerName+":/usr/local/virtuoso-opensource/var/lib/virtuoso/db/load_data.sh";
+        String command2 = "docker cp TrainingData.ttl "+containerName+":/usr/local/virtuoso-opensource/var/lib/virtuoso/db/trainingdata.ttl";
+        String command3 = "docker cp td-ontology.ttl "+containerName+":/usr/local/virtuoso-opensource/var/lib/virtuoso/db/td.ttl";
+        String command4 = "docker exec -i "+containerName+" bash -c 'chmod +x load_data.sh'";
+        List<String> commadsList = Arrays.asList(command1, command2, command3, command4);
+
+
+        String[] command = {"docker", "cp", filesPath, containerName+":/usr/local/virtuoso-opensource/var/lib/virtuoso/db/load_data.sh"};
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.inheritIO();
+        Process proc = pb.start();
+        InputStream is = proc.getInputStream();
+        OutputStream os = proc.getOutputStream();
+
+        BufferedReader reader
+                = new BufferedReader(new InputStreamReader(is));
+
+        BufferedWriter writer
+                = new BufferedWriter(new OutputStreamWriter(os));
+        writer.write("pwd");
+        writer.flush();
+        String line = "";
+        while ((line = reader.readLine()) != null) {
+            System.out.print(line + "\n");
+        }
+
+        proc.waitFor();
+
+        for (String commandw : commadsList){
+            //Runtime rt = Runtime.getRuntime();
+            //System.out.println(command);
+
+
+        }
+
+
+
+    }
+
+*/
+
+
+
+   /* @Override
+    public void receiveCommand(byte command, byte[] data) {
+
+        switch (command) {
+            case Commands.START_BENCHMARK_SIGNAL: {
+                startBenchmarkMutex.release();
+                systemContainerId = RabbitMQUtils.readString(data);
+                break;
+            }
+            case Commands.DATA_GENERATOR_READY_SIGNAL: {
+                LOGGER.debug("Received DATA_GENERATOR_READY_SIGNAL");
+                dataGenReadyMutex.release();
+                break;
+            }
+            case Commands.TASK_GENERATOR_READY_SIGNAL: {
+                LOGGER.debug("Received TASK_GENERATOR_READY_SIGNAL");
+                taskGenReadyMutex.release();
+                break;
+            }
+            case Commands.EVAL_STORAGE_READY_SIGNAL: {
+                LOGGER.debug("Received EVAL_STORAGE_READY_SIGNAL");
+                evalStoreReadyMutex.release();
+                break;
+            }
+            case Commands.DOCKER_CONTAINER_TERMINATED: {
+                ByteBuffer buffer = ByteBuffer.wrap(data);
+                String containerName = RabbitMQUtils.readString(buffer);
+                int exitCode = buffer.get();
+                containerTerminated(containerName, exitCode);
+                break;
+            }
+            case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
+                setResultModel(RabbitMQUtils.readModel(data));
+                LOGGER.info("model size = " + resultModel.size());
+            }
+
+            //case (byte)150: {
+            //    try {
+            //        LOGGER.info("Starting Task Generator...");
+            //        sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
+            //        LOGGER.info("WAITING FOR TASK GENERATOR ...");
+            //    } catch (IOException e) {
+            //        e.printStackTrace();
+             //   }
+            // }
+        }
+        super.receiveCommand(command, data);
+    }
+    */
+
+    /*public static void main(String[] args) throws Exception {
+        FacetedBenchmarkController fb = new FacetedBenchmarkController();
+        fb.insertDataWithScript();
+    }
+*/
 
 
 }
