@@ -57,8 +57,8 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
     private static HashMap<String, ArrayList<String>> reasonClasses = new HashMap();
     private static ArrayList<String> allReasons = new ArrayList<String>();
 
-    private Semaphore startTaskGenMutex = new Semaphore(0);
-    private Semaphore terminateMutex = new Semaphore(0);
+    // private Semaphore startTaskGenMutex = new Semaphore(0);
+    // private Semaphore terminateMutex = new Semaphore(0);
     private final int maxParallelProcessedMsgs=1;
     // next Task id
     private long nextTaskId = 0;
@@ -538,10 +538,21 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
         return s.hasNext() ? s.next() : "";
     }
 
+/*
 
 
+    @Override
+    public void run() throws Exception {
+        sendToCmdQueue(Commands.TASK_GENERATOR_READY_SIGNAL);
+        // Wait for the start message
+        startTaskGenMutex.acquire();
+        generateTask(new byte[]{});
+        sendToCmdQueue(Commands.TASK_GENERATION_FINISHED);
+    }
+*/
 
-    @Override    public void receiveCommand(byte command, byte[] data) {
+
+/*    @Override    public void receiveCommand(byte command, byte[] data) {
         // If this is the signal to start the data generation
         if (command == Commands.TASK_GENERATOR_START_SIGNAL) {
             LOGGER.info("Received signal to start.");
@@ -562,6 +573,7 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
         super.receiveCommand(command, data);
     }
 
+*/
 }
 
 class ValueComparator implements Comparator<String> {
