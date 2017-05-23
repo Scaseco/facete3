@@ -12,6 +12,8 @@ import org.hobbit.core.components.AbstractDataGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,7 +30,9 @@ import java.util.concurrent.TimeUnit;
 public class SampleDataGenerator extends AbstractDataGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleDataGenerator.class);
     Model rdfModel;
-    
+    private Semaphore generateTasks = new Semaphore(0);
+
+
     @Override
     public void init() throws Exception {
         // Always init the super class first!
@@ -46,7 +51,7 @@ public class SampleDataGenerator extends AbstractDataGenerator {
         List<Statement> stms = new ArrayList<>();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         final InputStream tdOntology = classloader.getResourceAsStream("td.ttl");
-        final InputStream trainingData = classloader.getResourceAsStream("training_latest.ttl");
+        final InputStream trainingData = classloader.getResourceAsStream("training.ttl");
         List<InputStream> dataToAdd = Arrays.asList(tdOntology, trainingData);
         // large datasets must be splitted in smaller
         // create chunks
@@ -74,21 +79,7 @@ public class SampleDataGenerator extends AbstractDataGenerator {
             List<List<Statement>> stms_chunks = org.apache.commons.collections4.ListUtils.partition(stms, 10000);
             for (List<Statement> chunk : stms_chunks) {
                 Model chunkRdfModel = ModelFactory.createDefaultModel();
-                /*
-                *@prefix lc: <http://semweb.mmlab.be/ns/linkedconnections#>.
-                @prefix lcd: <http://semweb.mmlab.be/ns/linked-connections-delay#>.
-                @prefix td: <http://purl.org/td/transportdisruption#>.
-                @prefix gtfs: <http://vocab.gtfs.org/terms#>.
-                @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
-                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-
-                chunkRdfModel.setNsPrefix("lc", "http://semweb.mmlab.be/ns/linkedconnections#");
-                chunkRdfModel.setNsPrefix("lcd", "http://semweb.mmlab.be/ns/linked-connections-delay#");
-                chunkRdfModel.setNsPrefix("td", "http://purl.org/td/transportdisruption#");
-                chunkRdfModel.setNsPrefix("gtfs", "http://vocab.gtfs.org/terms#");
-                chunkRdfModel.setNsPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
-                chunkRdfModel.setNsPrefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
-                */
+            
                 chunkRdfModel.add(chunk);
                 //LOGGER.info("CModel: " + chunkRdfModel);
                 byte[] data;
@@ -115,28 +106,34 @@ public class SampleDataGenerator extends AbstractDataGenerator {
                 byte[] dataWithGraph = RabbitMQUtils.writeByteArrays(null, wrapper, data);
                 sendDataToSystemAdapter(dataWithGraph);
 
-                //old version
-                // the data can be sent to the task generator(s) ...
-                //sendDataToTaskGenerator(data);
-                // ... and/or to the system
-                //sendDataToSystemAdapter(data);
+             
             }
         }
         sendToCmdQueue((byte)151);
-        ///////////////////////////////////////
-        // INITIAL VERSION BELOW
-        ////////////////////////
-        /*
-        Model rdfModel = ModelFactory.createDefaultModel();
-        rdfModel.read(trainingData, null, "TTL");
-        byte[] data;
-        // Create your data here
-        data = RabbitMQUtils.writeModel(rdfModel);
-        LOGGER.info("CONVERTED MODEL TO BYTE. SENDING TO TASKG");
-        // the data can be sent to the task generator(s) ...
-        sendDataToTaskGenerator(data);
-        // ... and/or to the system
-        sendDataToSystemAdapter(data);
-        */
+
+        generateTasks.acquire();
+
+
+
     }
+
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        if (command == (byte) 150 ) {
+            byte[] emptyByte = {};
+            try {
+                sendDataToTaskGenerator(emptyByte);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            generateTasks.release();
+
+
+
+        }
+        super.receiveCommand(command, data);
+    }
+
+
 }
+
