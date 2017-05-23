@@ -85,7 +85,7 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         // Create virtuoso instance which will hold gold standard dataset
 
         LOGGER.info("Starting creating Virtuoso");
-        String goldVirtuoso = "git.project-hobbit.eu:4567/gkatsibras/facetedgoldvirtuoso/image";
+        String goldVirtuoso = "git.project-hobbit.eu:4567/henning.petzka/facetedgoldvirtuoso/image";
         String[] envVariables = new String[]{"DBA_PASSWORD=dba","SPARQL_UPDATE=true", "DEFAULT_GRAPH=http://www.virtuoso-graph.com"};
         containerName = this.createContainer(goldVirtuoso, envVariables);
         LOGGER.info("Created virtuoso container ("+containerName+") for computation of gold standard.");
@@ -121,7 +121,7 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
 
         LOGGER.info("Creating Evaluation Storage ...");
         String EVALUATION_STORAGE_IMG = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0";
-        envVariables = new String[]{"ACKNOWLEDGEMENT_FLAG_KEY=true"};
+        envVariables = new String[]{"ACKNOWLEDGEMENT_FLAG=true"};
         createEvaluationStorage(EVALUATION_STORAGE_IMG, envVariables);
 
         waitForComponentsToInitialize();
@@ -142,6 +142,7 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
     protected void executeBenchmark() throws Exception {
         // give the start signals
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
+        sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
         // wait for the data generators to finish their work
         LOGGER.info("WAITING FOR DATA GENERATOR ...");
         waitForDataGenToFinish();
@@ -150,6 +151,9 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         waitForTaskGenToFinish();
         LOGGER.info("WAITING FOR SYSTEM ...");
         waitForSystemToFinish();
+        this.stopContainer(containerName);
+
+
         // Create the evaluation module
         String evalModuleImageName = "git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image";
         String[] envVariables = new String[]{"NO_VAR=true"};
@@ -164,7 +168,7 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         sendResultModel(resultModel);
     }
 
-    protected void insertTrainingDataToVirtuoso() throws Exception{
+   /* protected void insertTrainingDataToVirtuoso() throws Exception{
         LOGGER.info("Starting inserting data");
         String GRAPH_URI = "http://www.virtuoso-graph.com";
         String ENDPOINT = "http://"+containerName +":8890/sparql";
@@ -226,7 +230,10 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
 
     }
 
-    protected void insertDataWithScript() throws Exception{
+/*
+
+ */
+   /* protected void insertDataWithScript() throws Exception{
         // We insert data to virtuoso instance using the isl
         // commands tool by executing a scipt
         //docker cp load_data_virtuoso.sh my-virtuoso:/usr/local/virtuoso-opensource/var/lib/virtuoso/db/load_data.sh
@@ -272,8 +279,11 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
 
     }
 
+*/
 
-    @Override
+
+
+   /* @Override
     public void receiveCommand(byte command, byte[] data) {
 
         switch (command) {
@@ -308,23 +318,27 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
                 setResultModel(RabbitMQUtils.readModel(data));
                 LOGGER.info("model size = " + resultModel.size());
             }
-            case (byte)150: {
-                try {
-                    LOGGER.info("Starting Task Generator...");
-                    sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
-                    LOGGER.info("WAITING FOR TASK GENERATOR ...");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+
+            //case (byte)150: {
+            //    try {
+            //        LOGGER.info("Starting Task Generator...");
+            //        sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
+            //        LOGGER.info("WAITING FOR TASK GENERATOR ...");
+            //    } catch (IOException e) {
+            //        e.printStackTrace();
+             //   }
+            // }
         }
         super.receiveCommand(command, data);
     }
+    */
 
-    public static void main(String[] args) throws Exception {
+    /*public static void main(String[] args) throws Exception {
         FacetedBenchmarkController fb = new FacetedBenchmarkController();
         fb.insertDataWithScript();
     }
+*/
 
 
 }
+

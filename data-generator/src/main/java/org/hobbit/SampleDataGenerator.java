@@ -12,6 +12,8 @@ import org.hobbit.core.components.AbstractDataGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,7 +30,9 @@ import java.util.concurrent.TimeUnit;
 public class SampleDataGenerator extends AbstractDataGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleDataGenerator.class);
     Model rdfModel;
-    
+    private Semaphore generateTasks = new Semaphore(0);
+
+
     @Override
     public void init() throws Exception {
         // Always init the super class first!
@@ -46,7 +51,7 @@ public class SampleDataGenerator extends AbstractDataGenerator {
         List<Statement> stms = new ArrayList<>();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         final InputStream tdOntology = classloader.getResourceAsStream("td.ttl");
-        final InputStream trainingData = classloader.getResourceAsStream("training_latest.ttl");
+        final InputStream trainingData = classloader.getResourceAsStream("training.ttl");
         List<InputStream> dataToAdd = Arrays.asList(tdOntology, trainingData);
         // large datasets must be splitted in smaller
         // create chunks
@@ -123,6 +128,8 @@ public class SampleDataGenerator extends AbstractDataGenerator {
             }
         }
         sendToCmdQueue((byte)151);
+
+        generateTasks.acquire();
         ///////////////////////////////////////
         // INITIAL VERSION BELOW
         ////////////////////////
@@ -138,5 +145,26 @@ public class SampleDataGenerator extends AbstractDataGenerator {
         // ... and/or to the system
         sendDataToSystemAdapter(data);
         */
+
+
+
     }
+
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        if (command == (byte) 150 ) {
+            byte[] emptyByte = {};
+            try {
+                // to invoke the tak generator to start
+                sendDataToTaskGenerator(emptyByte);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            generateTasks.release();
+        }
+        super.receiveCommand(command, data);
+    }
+
+
 }
+
