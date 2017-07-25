@@ -78,11 +78,15 @@
             <groupId>virtuoso</groupId>
             <artifactId>virtjdbc4</artifactId>
             <version>4</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/lib/virtjdbc4.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>virtuoso</groupId>
             <artifactId>virt-jena</artifactId>
             <version>3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/lib/virt_jena3.jar</systemPath>
         </dependency>
 
         <!-- Apache Jena -->
@@ -135,6 +139,23 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <!-- <classpathPrefix>lib</classpathPrefix> -->
+                            <!-- <mainClass>test.org.Cliente</mainClass> -->
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>lib/virt_jena3.jar lib/virtjdbc4.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
             </plugin>
 
         </plugins>

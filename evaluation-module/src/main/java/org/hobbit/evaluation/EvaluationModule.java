@@ -1,11 +1,16 @@
 package org.hobbit.evaluation;
 
+import org.apache.commons.io.Charsets;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.components.AbstractEvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -50,12 +55,12 @@ public class EvaluationModule extends AbstractEvaluationModule {
         count_time_needed = 0;
         queriesWithTimeout = new ArrayList<>();
 
-        timeOut = 1000000; // max time to answer a query in ms
+        timeOut = 60000; // max time to answer a query in ms
     }
 
     @Override
     protected void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
-                                             long responseReceivedTimestamp) throws Exception {
+                                    long responseReceivedTimestamp) throws Exception {
 
 
         /* receivedData SHOULD NOT STILL CONTAIN TASKID? IF IT DOES CHANGE BACK TO:
@@ -65,8 +70,26 @@ public class EvaluationModule extends AbstractEvaluationModule {
 
         */
         LOGGER.info("Evaluating response...");
-        String resultsString = RabbitMQUtils.readString(receivedData);
-        LOGGER.info("resultsString: "+ resultsString);
+
+        // change to sending around JSON.
+        //
+        // OLD:
+        // String resultsString = RabbitMQUtils.readString(receivedData);
+
+        // NEW:
+        InputStream inReceived = new ByteArrayInputStream(receivedData);
+
+        String resultsString;
+        try {
+            ResultSet received = ResultSetFactory.fromJSON(inReceived);
+            byte[] resultsBytes = formatResultData(received);
+            resultsString = RabbitMQUtils.readString(resultsBytes);
+        } catch ( org.apache.jena.atlas.json.JsonParseException e){
+            resultsString="";
+        }
+
+
+        // LOGGER.info("resultsString: "+ resultsString);
         /*DOES GOLD STILL CONTAIN TASKID?
         YES, BY OUR OWN DEF IN TASK GENERATOR. SHOULD PROBABLY TAKE OUT TASKID OUT OF ADJUSTFORMAT METHOD IN  TASK GENERATOR
         IF CHANGED, JUST DO:
@@ -85,7 +108,7 @@ public class EvaluationModule extends AbstractEvaluationModule {
         LOGGER.info("query: "+ query);
 
         String goldsString = RabbitMQUtils.readString(bufferExp);
-        LOGGER.info("goldsString: "+ goldsString);
+        // LOGGER.info("goldsString: "+ goldsString);
 
         TimeUnit.MILLISECONDS.sleep(500);
         String[] resultsArray = resultsString.split(",");
@@ -169,6 +192,7 @@ public class EvaluationModule extends AbstractEvaluationModule {
 
             count_error += current_error;
             count_error_ratio += (double) current_error / Math.max(expectedCount,1);
+
             sum_of_correct_count_results += expectedCount;
         }
     }
@@ -272,16 +296,16 @@ public class EvaluationModule extends AbstractEvaluationModule {
         // ______________________________________
 
 
-        double count_per_second_score = (double) 1000 * number_of_counts / count_time_needed;
+        double count_per_second_score = count_time_needed!=0? (double) 1000 * number_of_counts / count_time_needed : 0.0;
 
         // ______________________________________
         // 2.a.ii) Correctness of counts
         // ______________________________________
 
         long overall_error = count_error;
-        double average_error = (double) count_error/number_of_counts;
-        double overall_error_ratio =(double)  count_error/sum_of_correct_count_results;
-        double average_error_ratio =  count_error_ratio/number_of_counts;
+        double average_error = number_of_counts!=0 ? (double) count_error/number_of_counts : -1.0;
+        double overall_error_ratio =sum_of_correct_count_results!=0 ? (double)  count_error/sum_of_correct_count_results : -1.0;
+        double average_error_ratio =  number_of_counts !=0 ? count_error_ratio/number_of_counts : -1.0;
 
 
         // create a rdf model which will hold the results
@@ -305,4 +329,17 @@ public class EvaluationModule extends AbstractEvaluationModule {
 
     }
 
+    private byte[] formatResultData(ResultSet result){
+        StringBuilder listString = new StringBuilder();
+        while(result.hasNext()) {
+            String value = (result.next().get(result.getResultVars().get(0)).toString());
+            listString.append(value+",");
+        }
+        byte[] resultsByteArray = listString.toString().getBytes(Charsets.UTF_8);
+        return resultsByteArray;
+    }
+
 }
+
+
+

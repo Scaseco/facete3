@@ -113,7 +113,7 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         String taskGeneratorImageName = "git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image";
         int numberOfTaskGenerators = 1;
         envVariables = new String[]{"TASK_GENERATOR_TRUE=1000","VIRTUOSO_GOLD_SERVICE_URL=http://"+containerName+":8890/sparql",
-                                    SEED_PARAMETER+"="+Integer.toString(seedValue)};
+                SEED_PARAMETER+"="+Integer.toString(seedValue)};
 
         LOGGER.info("CreatingTaskGenerator ...");
         createTaskGenerators(taskGeneratorImageName, numberOfTaskGenerators, envVariables);
@@ -122,7 +122,7 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         LOGGER.info("Creating Evaluation Storage ...");
         String EVALUATION_STORAGE_IMG = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0";
         envVariables = new String[]{"ACKNOWLEDGEMENT_FLAG=true"};
-        createEvaluationStorage(EVALUATION_STORAGE_IMG, envVariables);
+        createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, envVariables);
 
         waitForComponentsToInitialize();
 

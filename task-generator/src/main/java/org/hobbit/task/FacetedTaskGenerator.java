@@ -149,16 +149,17 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
                     byte[] task = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(replacedQuery)});
 
                     // send task to systemAdapter
+                    long timestamp= System.currentTimeMillis();
                     sendTaskToSystemAdapter(taskIdString,
                             task);
-                    // send task and expected result to eval storage
                     sendTaskToEvalStorage(taskIdString,
-                            System.currentTimeMillis(),
+                            timestamp,
                             resultsByteArray);
+                    // send task and expected result to eval storage
                     LOGGER.info("Waiting for acknowledgment..");
                     //waitForAck();
                     //adding time delay to simulate sequential order
-                    TimeUnit.MILLISECONDS.sleep(1500);
+                    // TimeUnit.MILLISECONDS.sleep(1500);
                     LOGGER.info("Acknoledgment done!");
                 }
             }
