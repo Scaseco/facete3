@@ -47,7 +47,7 @@ public class FacetedSystemAdapter extends AbstractSystemAdapter {
     private byte[] receivedData = null;
     private String VIRTUOSO_TEST_SERVICE_URL;//= "http://localhost:8890/sparql";
     private String VIRTUOSO_GRAPH_IRI = "http://testdata.org";
-    private String virtusoContainerName;
+    private String containerName;
     private Semaphore terminateMutex = new Semaphore(0);
     private int chunkCounter = 0;
     // private Semaphore allDataSemaphore = new Semaphore(1);
@@ -59,7 +59,7 @@ public class FacetedSystemAdapter extends AbstractSystemAdapter {
 
         String goldVirtuoso = "git.project-hobbit.eu:4567/henning.petzka/facetedgoldvirtuoso/image";
         String[] envVariables = new String[]{"DBA_PASSWORD=dba","SPARQL_UPDATE=true","DEFAULT_GRAPH=" + VIRTUOSO_GRAPH_IRI};
-        String containerName = this.createContainer(goldVirtuoso, envVariables);
+        containerName = this.createContainer(goldVirtuoso, envVariables);
         VIRTUOSO_TEST_SERVICE_URL = "http://"+containerName+":8890/sparql";
         TimeUnit.SECONDS.sleep(59);
 
@@ -100,6 +100,8 @@ public class FacetedSystemAdapter extends AbstractSystemAdapter {
         ResultSet currentSizeQuery = executeSparqlQuery("select (count(?x) as ?c) where {?x ?o ?p}");
         String resultString = currentSizeQuery.nextSolution().toString();
         LOGGER.info(resultString);
+
+
 
         /* if (chunkCounter == 20) {
             try {
@@ -176,14 +178,50 @@ public class FacetedSystemAdapter extends AbstractSystemAdapter {
         // If this is the signal to start the data generation
         if (command == (byte) 151) {
             try {
+
                 sendToCmdQueue((byte) 150);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-    
+        super.receiveCommand(command, data);
+
+        //if (command == Commands.TASK_GENERATION_FINISHED) {
+            // release the mutex
+        //    terminateMutex.release();
+        // }
+            //try {sendToCmdQueue((byte) 300);} catch (java.io.IOException x){
+            //    LOGGER.info("ERROR IN MESSAGING");
+           // }
+        //super.receiveCommand(command, data);
     }
 
+    /*@Override
+    public void run() throws Exception {
+        sendToCmdQueue(Commands.SYSTEM_READY_SIGNAL);
+
+        // Thread.sleep(300000);
+         terminateMutex.acquire();
+        // wait until all messages have been read from the queue and all sent
+        // messages have been consumed
+        while ((taskGen2SystemQueue.messageCount() + dataGen2SystemQueue.messageCount()
+                + system2EvalStoreQueue.messageCount()) > 0) {
+            Thread.sleep(1000);
+        }
+        // Collect all open mutex counts to make sure that there is no message
+        // that is still processed
+        //Thread.sleep(1000);
+
+    }
+
+*/
+
+    @Override
+    public void close() throws IOException {
+        this.stopContainer(containerName);
+        super.close();
+
+    }
 
 }
 
