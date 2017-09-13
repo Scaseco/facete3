@@ -39,6 +39,19 @@
           </transformers>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+            <manifestEntries>
+              <Class-Path>lib/virt_jena3.jar lib/virtjdbc4.jar</Class-Path>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <repositories>
@@ -57,7 +70,28 @@
       <name>Apache Repository</name>
       <url>https://repository.apache.org/content/repositories/releases/</url>
     </repository>
+    <repository>
+      <id>in-project-virtjdbc</id>
+      <name>In Project Repo for VirtJDBC</name>
+      <url>file://${project.basedir}/src/main/resources/lib</url>
+    </repository>
   </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>virtuoso</groupId>
+      <artifactId>virtjdbc4</artifactId>
+      <version>4</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/src/main/resources/lib/virtjdbc4.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>virtuoso</groupId>
+      <artifactId>virt-jena</artifactId>
+      <version>3</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/src/main/resources/lib/virt_jena3.jar</systemPath>
+    </dependency>
+  </dependencies>
   <properties>
     <maven.compiler.source>1.7</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

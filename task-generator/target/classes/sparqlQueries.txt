@@ -1,8 +1,0 @@
-PREFIX lc: <http://semweb.mmlab.be/ns/linkedconnections#>
-SELECT DISTINCT ?connection 
- WHERE {
-  ?connection lc:departureStop ?stop .
-  ?stop <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat ;
-      <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long . 
-  FILTER((("0.3" < ?lat) && (?lat < "1.7") && ("0.3" < ?long) && (?long < "1.7") ) )
-  }
