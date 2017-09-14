@@ -17,12 +17,12 @@
     </properties>
 
     <modules>
-        <module>system-adapter</module>
-        <module>data-generator</module>
-        <module>task-generator</module>
-        <module>evaluation-module</module>
-        <module>benchmark-controller</module>
-        <module>hobbit-simulator</module>
+        <module>faceted-benchmark-system-adapter</module>
+        <module>faceted-benchmark-data-generator</module>
+        <module>faceted-benchmark-task-generator</module>
+        <module>faceted-benchmark-evaluation-module</module>
+        <module>faceted-benchmark-benchmark-controller</module>
+        <module>faceted-benchmark-platform-simulator</module>
     </modules>
 
     <dependencyManagement>
@@ -106,6 +106,14 @@
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.11</version>
+                <!-- <scope>test</scope> -->
+            </dependency>
+
 
         </dependencies>
     </dependencyManagement>
