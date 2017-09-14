@@ -1,0 +1,16 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix hobbit: <http://w3id.org/hobbit/vocab#> .
+@prefix ex: <http://example.org/> .
+@prefix bench: <http://w3id.org/bench#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:FacetedSystemInstanceHenningTest a  hobbit:SystemInstance; 
+    rdfs:label  "A test system instance for Faceted Browsing Benchmark, which cheats on data integration to avoid a problem of virtuoso"@en;
+    rdfs:comment    "This system cheats by using the gold standard version of virtuoso"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/henning.petzka/facetedsystemtest";
+    hobbit:implementsAPI bench:FacetedApi ;
+    hobbit:instanceOf ex:FacetedTestSystem.
+
+ex:FacetedTestSystem a hobbit:System ;
+    rdfs:label  "A test system for Faceted Browsing Benchmark"@en;
+    rdfs:comment    "This is my own system defined in a simple way"@en.
