@@ -9,6 +9,8 @@
     <packaging>pom</packaging>
 
     <properties>
+        <slf4j.version>1.7.24</slf4j.version>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -20,6 +22,7 @@
         <module>task-generator</module>
         <module>evaluation-module</module>
         <module>benchmark-controller</module>
+        <module>hobbit-simulator</module>
     </modules>
 
     <dependencyManagement>
@@ -30,11 +33,30 @@
                 <version>0.8.6</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-core</artifactId>
                 <version>3.1.1</version>
+            </dependency>
+
+            <!-- HOBBIT Core -->
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>core</artifactId>
+                <version>1.0.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>platform-controller</artifactId>
+                <version>1.0.12</version>
+            </dependency>
+
+            <!-- RabbitMQ -->
+            <dependency>
+                <groupId>com.rabbitmq</groupId>
+                <artifactId>amqp-client</artifactId>
+                <version>3.6.0</version>
             </dependency>
 
             <!-- Java IO -->
@@ -52,21 +74,6 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>4.3.4</version>
-            </dependency>
-
-            <!-- HOBBIT Core -->
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>core</artifactId>
-                <!-- <version>LATEST</version> -->
-                <version>1.0.5</version>
-            </dependency>
-
-            <!-- RabbitMQ -->
-            <dependency>
-                <groupId>com.rabbitmq</groupId>
-                <artifactId>amqp-client</artifactId>
-                <version>3.6.0</version>
             </dependency>
 
             <dependency>
@@ -90,8 +97,14 @@
             <!-- log4j -->
             <dependency>
                 <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>1.7.24</version>
+                <version>${slf4j.version}</version>
             </dependency>
 
         </dependencies>
