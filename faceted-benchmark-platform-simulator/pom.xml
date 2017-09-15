@@ -12,6 +12,12 @@
     </parent>
 
     <dependencies>
+        <dependency>
+            <groupId>org.hobbit</groupId>
+            <artifactId>faceted-benchmark-bundle</artifactId>
+        </dependency>
+
+
         <!-- Hobbit core -->
         <dependency>
             <groupId>org.hobbit</groupId>

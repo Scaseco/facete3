@@ -13,34 +13,14 @@
     </parent>
 
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-    </properties>
-
-    <repositories>
-        <repository>
-            <id>maven.aksw.internal</id>
-            <name>University Leipzig, AKSW Maven2 Repository</name>
-            <url>http://maven.aksw.org/repository/internal</url>
-        </repository>
-        <repository>
-            <id>maven.aksw.snapshots</id>
-            <name>University Leipzig, AKSW Maven2 Repository</name>
-            <url>http://maven.aksw.org/repository/snapshots</url>
-        </repository>
+<!--
         <repository>
             <id>Apache Repo</id>
             <name>Apache Repository</name>
             <url>https://repository.apache.org/content/repositories/releases/</url>
         </repository>
-        <repository>
-            <id>in-project-virtjdbc</id>
-            <name>In Project Repo for VirtJDBC</name>
-            <url>file://${project.basedir}/src/main/resources/lib</url>
-        </repository>
-    </repositories>
+-->
+
     <dependencies>
         <dependency>
             <groupId>org.apache.jena</groupId>
@@ -80,18 +60,13 @@
 
 
         <dependency>
-            <groupId>virtuoso</groupId>
+            <groupId>org.hobbit</groupId>
             <artifactId>virtjdbc4</artifactId>
-            <version>4</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/virtjdbc4.jar</systemPath>
         </dependency>
+
         <dependency>
-            <groupId>virtuoso</groupId>
-            <artifactId>virt-jena</artifactId>
-            <version>3</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/virt_jena3.jar</systemPath>
+            <groupId>org.hobbit</groupId>
+            <artifactId>virt_jena3</artifactId>
         </dependency>
 
         <!-- Apache Jena -->
@@ -104,63 +79,12 @@
         </dependency>
 
     </dependencies>
+
     <build>
-
         <plugins>
-
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.4.3</version>
-                <configuration>
-                    <!-- filter all the META-INF files of other artifacts -->
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                    <transformers>
-                        <transformer
-                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <manifestEntries>
-                                <X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
-                                <X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
-                            </manifestEntries>
-                        </transformer>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                    </transformers>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <!-- <classpathPrefix>lib</classpathPrefix> -->
-                            <!-- <mainClass>test.org.Cliente</mainClass> -->
-                        </manifest>
-                        <manifestEntries>
-                            <Class-Path>lib/virt_jena3.jar lib/virtjdbc4.jar</Class-Path>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
             </plugin>
         </plugins>
     </build>

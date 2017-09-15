@@ -23,10 +23,37 @@
         <module>faceted-benchmark-evaluation-module</module>
         <module>faceted-benchmark-benchmark-controller</module>
         <module>faceted-benchmark-platform-simulator</module>
+        <module>faceted-benchmark-bundle</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>faceted-benchmark-benchmark-controller</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>faceted-benchmark-data-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>faceted-benchmark-task-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>faceted-benchmark-bundle</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+
             <dependency>
                 <groupId>org.aksw.commons</groupId>
                 <artifactId>aksw-commons-collections</artifactId>
@@ -77,20 +104,17 @@
             </dependency>
 
             <dependency>
-                <groupId>virtuoso</groupId>
+                <groupId>org.hobbit</groupId>
                 <artifactId>virtjdbc4</artifactId>
-                <version>4</version>
-                <scope>system</scope>
-                <systemPath>${project.basedir}/src/main/resources/lib/virtjdbc4.jar</systemPath>
+                <version>1.0.0</version>
             </dependency>
 
             <dependency>
-                <groupId>virtuoso</groupId>
-                <artifactId>virt-jena</artifactId>
-                <version>3</version>
-                <scope>system</scope>
-                <systemPath>${project.basedir}/src/main/resources/lib/virt_jena3.jar</systemPath>
+                <groupId>org.hobbit</groupId>
+                <artifactId>virt_jena3</artifactId>
+                <version>1.0.0</version>
             </dependency>
+
 
             <!-- Apache Jena -->
 
