@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>faceted-benchmark-task-generator</artifactId>
+    <artifactId>faceted-benchmark-core</artifactId>
 
     <parent>
         <groupId>org.hobbit</groupId>
@@ -18,29 +17,17 @@
             <artifactId>jena-sparql-api-core</artifactId>
         </dependency>
 
-        <!-- Java IO -->
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
+            <groupId>org.aksw.commons</groupId>
+            <artifactId>aksw-commons-collections</artifactId>
         </dependency>
-        <!-- HOBBIT Core -->
+
         <dependency>
             <groupId>org.hobbit</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>virtjdbc4</artifactId>
         </dependency>
-        <!-- RabbitMQ -->
-        <dependency>
-            <groupId>com.rabbitmq</groupId>
-            <artifactId>amqp-client</artifactId>
-        </dependency>
-        <!-- log4j -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-        </dependency>
-
-
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -49,6 +36,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>

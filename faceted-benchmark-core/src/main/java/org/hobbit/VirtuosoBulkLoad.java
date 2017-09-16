@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_benchmark.main;
+package org.hobbit;
 
 import java.io.File;
 import java.io.FileNotFoundException;

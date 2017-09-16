@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <jena-sparql-api.version>3.4.0-1</jena-sparql-api.version>
+        <jena-sparql-api.version>3.4.0-2-SNAPSHOT</jena-sparql-api.version>
         <slf4j.version>1.7.24</slf4j.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -18,6 +18,7 @@
     </properties>
 
     <modules>
+        <module>faceted-benchmark-core</module>
         <module>faceted-benchmark-system-adapter</module>
         <module>faceted-benchmark-data-generator</module>
         <module>faceted-benchmark-task-generator</module>
@@ -92,11 +93,23 @@
                 <version>3.4.0</version>
             </dependency>
 
+<!--             <dependency> -->
+<!--             <groupId>org.apache.jena</groupId> -->
+<!--             <artifactId>apache-jena-libs</artifactId> -->
+<!--             <version>3.4.0</version> -->
+<!--             </dependency> -->
+
             <!-- HOBBIT Core -->
             <dependency>
                 <groupId>org.hobbit</groupId>
                 <artifactId>core</artifactId>
                 <version>1.0.6</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.jena</groupId>
+                        <artifactId>apache-jena-libs</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -113,21 +126,21 @@
             </dependency>
 
             <!-- Java IO -->
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>2.5</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-collections4</artifactId>
-                <version>4.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>4.3.4</version>
-            </dependency>
+<!--             <dependency> -->
+<!--                 <groupId>commons-io</groupId> -->
+<!--                 <artifactId>commons-io</artifactId> -->
+<!--                 <version>2.5</version> -->
+<!--             </dependency> -->
+<!--             <dependency> -->
+<!--                 <groupId>org.apache.commons</groupId> -->
+<!--                 <artifactId>commons-collections4</artifactId> -->
+<!--                 <version>4.0</version> -->
+<!--             </dependency> -->
+<!--             <dependency> -->
+<!--                 <groupId>org.apache.httpcomponents</groupId> -->
+<!--                 <artifactId>httpclient</artifactId> -->
+<!--                 <version>4.3.4</version> -->
+<!--             </dependency> -->
 
             <dependency>
                 <groupId>org.hobbit</groupId>
@@ -209,22 +222,6 @@
                     </executions>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <configuration>
-                        <archive>
-                            <manifest>
-                                <addClasspath>true</addClasspath>
-                                <!-- <classpathPrefix>lib</classpathPrefix> -->
-                                <!-- <mainClass>test.org.Cliente</mainClass> -->
-                            </manifest>
-                            <manifestEntries>
-                                <Class-Path>lib/virt_jena3.jar lib/virtjdbc4.jar</Class-Path>
-                            </manifestEntries>
-                        </archive>
-                    </configuration>
-                </plugin>
 
             </plugins>
         </pluginManagement>
