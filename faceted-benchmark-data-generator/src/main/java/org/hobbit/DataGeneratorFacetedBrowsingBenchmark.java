@@ -31,8 +31,8 @@ import com.google.common.collect.Streams;
  * Revised by Claus Stadler 14/09/2017.
  * Created by gkatsimpras on 28/2/2017.
  */
-public class SampleDataGenerator extends AbstractDataGenerator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SampleDataGenerator.class);
+public class DataGeneratorFacetedBrowsingBenchmark extends AbstractDataGenerator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataGeneratorFacetedBrowsingBenchmark.class);
 
     protected int batchSize = 10000;
 

@@ -1,16 +1,18 @@
 package org.hobbit.benchmark;
 
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.*;
-
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Resource;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractBenchmarkController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.TimeUnit;
+
 
 
 /**
@@ -24,6 +26,11 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
 
     private String SEED_PARAMETER = "SEED_PARAMETER";
     private int seedValue = 1234;
+
+
+    @Resource
+    protected SparqlServiceSupplier sparqlServiceSupplier;
+
 
     @Override
     public void init() throws Exception {
@@ -44,47 +51,30 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
                     "Couldn't get the seed for the mimicking algorithm seed from the parameter model. Using the default value.");
             seedValue = 1234;
         }
-        // Create virtuoso instance which will hold gold standard dataset
 
-        LOGGER.info("Starting creating Virtuoso");
-        String goldVirtuoso = "git.project-hobbit.eu:4567/henning.petzka/facetedgoldvirtuoso/image";
-        String[] envVariables = new String[]{"DBA_PASSWORD=dba","SPARQL_UPDATE=true", "DEFAULT_GRAPH=http://www.virtuoso-graph.com"};
-        containerName = this.createContainer(goldVirtuoso, envVariables);
-        LOGGER.info("Created virtuoso container ("+containerName+") for computation of gold standard.");
+        // Spawn a SPARQL endpoint for for reference data
+        SparqlService sparqlService = sparqlServiceSupplier.get();
 
-        TimeUnit.SECONDS.sleep(15);
-        ResultSet currentSizeQuery = executeSparqlQuery("select (count(?x) as ?c) where {?x ?o ?p}");
-        String resultString = currentSizeQuery.nextSolution().toString();
-        LOGGER.info(resultString);
-        // Create the other components
-        // Create data generators
-        LOGGER.info("Starting creating data generator");
-        String dataGeneratorImageName = "git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image";
-        int numberOfDataGenerators = 1;
-        envVariables = new String[]{"NODE_MEM=1000",};
-        createDataGenerators(dataGeneratorImageName, numberOfDataGenerators, envVariables);
-        // give some time for virtuoso instance to initialize and load dataset
-
-        // Added dataset when building virtuoso docker image so below lines are commented out
-        //LOGGER.info("Start inserting data to virtuoso");
-        //insertTrainingDataToVirtuoso();
-        //LOGGER.info("Done inserting Data to virtuoso!");
-        /////////////////////////////////////////////
-
-        // Create task generators
-        String taskGeneratorImageName = "git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image";
-        int numberOfTaskGenerators = 1;
-        envVariables = new String[]{"TASK_GENERATOR_TRUE=1000","VIRTUOSO_GOLD_SERVICE_URL=http://"+containerName+":8890/sparql",
-                SEED_PARAMETER+"="+Integer.toString(seedValue)};
-
-        LOGGER.info("CreatingTaskGenerator ...");
-        createTaskGenerators(taskGeneratorImageName, numberOfTaskGenerators, envVariables);
+        
+        // Invoke the data generator and store 
+        
+        // Somehow get hold of a bulk loader feature
+        // (maybe jena rdf connection?)
+        
+        RDFDatasetConnection conn = sparqlService.getFoo();
+        
 
 
-        LOGGER.info("Creating Evaluation Storage ...");
-        String EVALUATION_STORAGE_IMG = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0";
-        envVariables = new String[]{"ACKNOWLEDGEMENT_FLAG=true"};
-        createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, envVariables);
+        // Request a data supplier for the reference data (required for generating tasks)
+
+        // Load the data into the SPARQL service
+
+        // Request the data supplier for the benchmark data
+
+
+
+
+
 
         waitForComponentsToInitialize();
 
@@ -130,6 +120,64 @@ public class FacetedBenchmarkController extends AbstractBenchmarkController {
         sendResultModel(resultModel);
     }
 
+
+
+
+
+    public void startSparqlService() {
+
+
+        LOGGER.info("Starting creating Virtuoso");
+        String goldVirtuoso = "git.project-hobbit.eu:4567/henning.petzka/facetedgoldvirtuoso/image";
+        String[] envVariables = new String[]{"DBA_PASSWORD=dba","SPARQL_UPDATE=true", "DEFAULT_GRAPH=http://www.virtuoso-graph.com"};
+        containerName = this.createContainer(goldVirtuoso, envVariables);
+        LOGGER.info("Created virtuoso container ("+containerName+") for computation of gold standard.");
+
+        TimeUnit.SECONDS.sleep(15);
+        ResultSet currentSizeQuery = executeSparqlQuery("select (count(?x) as ?c) where {?x ?o ?p}");
+        String resultString = currentSizeQuery.nextSolution().toString();
+        LOGGER.info(resultString);
+        // Create the other components
+        // Create data generators
+    }
+
+    public void startDataGenerator() {
+        LOGGER.info("Starting creating data generator");
+        String dataGeneratorImageName = "git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image";
+        int numberOfDataGenerators = 1;
+        envVariables = new String[]{"NODE_MEM=1000",};
+        createDataGenerators(dataGeneratorImageName, numberOfDataGenerators, envVariables);
+        // give some time for virtuoso instance to initialize and load dataset
+
+        // Added dataset when building virtuoso docker image so below lines are commented out
+        //LOGGER.info("Start inserting data to virtuoso");
+        //insertTrainingDataToVirtuoso();
+        //LOGGER.info("Done inserting Data to virtuoso!");
+        /////////////////////////////////////////////
+
+    }
+
+    public void startEvalStorage() {
+
+        LOGGER.info("Creating Evaluation Storage ...");
+        String EVALUATION_STORAGE_IMG = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0";
+        envVariables = new String[]{"ACKNOWLEDGEMENT_FLAG=true"};
+        createEvaluationStorage(DEFAULT_EVAL_STORAGE_IMAGE, envVariables);
+
+    }
+
+    public void startTaskGenerator() {
+
+        // Create task generators
+        String taskGeneratorImageName = "git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image";
+        int numberOfTaskGenerators = 1;
+        envVariables = new String[]{"TASK_GENERATOR_TRUE=1000","VIRTUOSO_GOLD_SERVICE_URL=http://"+containerName+":8890/sparql",
+                SEED_PARAMETER+"="+Integer.toString(seedValue)};
+
+        LOGGER.info("CreatingTaskGenerator ...");
+        createTaskGenerators(taskGeneratorImageName, numberOfTaskGenerators, envVariables);
+
+    }
 
 
 }

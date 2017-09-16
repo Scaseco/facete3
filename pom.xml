@@ -9,6 +9,7 @@
     <packaging>pom</packaging>
 
     <properties>
+        <jena-sparql-api.version>3.4.0-1</jena-sparql-api.version>
         <slf4j.version>1.7.24</slf4j.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -28,6 +29,24 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>de.javakaffee</groupId>
+                <artifactId>kryo-serializers</artifactId>
+                <version>0.41</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-core</artifactId>
+                <version>${jena-sparql-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-server-standalone</artifactId>
+                <version>${jena-sparql-api.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.hobbit</groupId>
@@ -55,6 +74,13 @@
 
 
             <dependency>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-client</artifactId>
+                <version>8.9.0</version>
+            </dependency>
+
+
+            <dependency>
                 <groupId>org.aksw.commons</groupId>
                 <artifactId>aksw-commons-collections</artifactId>
                 <version>0.8.6</version>
@@ -63,7 +89,7 @@
             <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-core</artifactId>
-                <version>3.1.1</version>
+                <version>3.4.0</version>
             </dependency>
 
             <!-- HOBBIT Core -->
@@ -107,6 +133,7 @@
                 <groupId>org.hobbit</groupId>
                 <artifactId>virtjdbc4</artifactId>
                 <version>1.0.0</version>
+                <!-- <scope>runtime</scope> -->
             </dependency>
 
             <dependency>
