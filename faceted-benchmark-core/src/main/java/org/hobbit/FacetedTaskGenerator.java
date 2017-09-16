@@ -26,6 +26,7 @@ import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.script.ScriptEngine;
@@ -268,6 +269,8 @@ public class FacetedTaskGenerator {
      * @author gkatsimpras
      */
     private void computeParameters() {
+        Random random = new Random(randomSeed);
+
         // compute variables For_All
         List<Map<String, String>> forAll = (List<Map<String, String>>)preQueries.get("For_All");
         for (Map<String, String> entry : forAll){
@@ -310,7 +313,7 @@ public class FacetedTaskGenerator {
                     }
                     // pick a random row from the results as final answer
                     if (!resultRows.isEmpty()) {
-                        resultText = resultRows.get(new Random(randomSeed).nextInt(resultRows.size()));
+                        resultText = resultRows.get(random.nextInt(resultRows.size()));
                     }
                     else{
                         resultText = "";
@@ -324,7 +327,7 @@ public class FacetedTaskGenerator {
                     //System.out.println(globalVariables.get(commandVars[0].trim()));
                     long minTime = ((Calendar) globalVariables.get(commandVars[0].trim())).getTimeInMillis();
                     long maxTime = ((Calendar) globalVariables.get(commandVars[1].trim())).getTimeInMillis();
-                    Random random = new Random();
+                    //Random random = new Random();
 
                     long randomTime = minTime +
                             (long)(random.nextDouble()*(maxTime - minTime));
@@ -623,7 +626,17 @@ public class FacetedTaskGenerator {
 
         gen.setQueryConn(queryConn);
         gen.initializeParameters();
-        gen.generateTasks().forEach(task -> System.out.println(task));
+        List<String> a = gen.generateTasks().collect(Collectors.toList());
+        List<String> b = gen.generateTasks().collect(Collectors.toList());
+        List<String> c = gen.generateTasks().collect(Collectors.toList());
+
+        System.out.println(a.size());
+        System.out.println(a.equals(b));
+        System.out.println(a.equals(c));
+//        gen.generateTasks().forEach(task -> System.out.println(task));
+//        System.out.println(gen.generateTasks().count());
+//        System.out.println(gen.generateTasks().count());
+//        System.out.println(gen.generateTasks().count());
     }
 }
 
