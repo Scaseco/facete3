@@ -13,9 +13,10 @@ public class OmitSimilarItems<T>
     protected Consumer<? super T> itemDelegate;
     protected Consumer<Long> skipCountDelegate;
 
+    // TODO Turn these into Optionals
     protected T firstDistinguishedItem = null;
-    protected T mostRecentlySkippedItem = null;
-    protected long itemSkipCount = 0;
+    protected T recentlySkippedItem = null;
+    protected long numSkippedItems = 0;
 
     public OmitSimilarItems(Consumer<? super T> itemDelegate, Consumer<Long> skipCountDelegate, BiPredicate<? super T, ? super T> isTooSimilar) {
         super();
@@ -30,24 +31,44 @@ public class OmitSimilarItems<T>
 
         boolean skip = isTooSimilar.test(firstDistinguishedItem, item);
         if(skip) {
-            mostRecentlySkippedItem = item;
-            ++itemSkipCount;
+            recentlySkippedItem = item;
+            ++numSkippedItems;
         } else {
 
-            if(mostRecentlySkippedItem != null) {
-                if(itemSkipCount > 1) {
-                    skipCountDelegate.accept(itemSkipCount);
+            if(numSkippedItems > 0) { // implies recentlySkippedItem != null
+                boolean recentlySkippedItemDiffersFromCurrentOne = !isTooSimilar.test(recentlySkippedItem, item);
+                if(recentlySkippedItemDiffersFromCurrentOne) {
+                    // We are going to pass on the prior item after all, so decrement the skip count
+                    --numSkippedItems;
                 }
-                itemDelegate.accept(mostRecentlySkippedItem);
-                //System.out.println(lineSkipped);
-                mostRecentlySkippedItem = null;
-                itemSkipCount = 0;
+
+                if(numSkippedItems > 0) {
+                    skipCountDelegate.accept(numSkippedItems);
+                }
+
+                // Send out the prior item if it differs significantly from the current one
+                if(recentlySkippedItemDiffersFromCurrentOne) {
+                    itemDelegate.accept(recentlySkippedItem);
+                }
             }
+
             itemDelegate.accept(item);
             firstDistinguishedItem = item;
+
+            recentlySkippedItem = null;
+            numSkippedItems = 0;
         }
     }
 
+//    public static int tmp(String a, String b) {
+//        int result = StringUtils.getLevenshteinDistance(a, b);
+//        System.out.println("  | " + a);
+//        System.out.println("  | " + b);
+//        System.out.println("  | " + "---------------------------------------");
+//        System.out.println("  | " + result);
+//        return result;
+//
+//    }
     public static Consumer<String> forStrings(int maxLevenshteinDistance, Consumer<String> delegate) {
         BiPredicate<String, String> predicate =
             (a, b) -> a == null || b == null

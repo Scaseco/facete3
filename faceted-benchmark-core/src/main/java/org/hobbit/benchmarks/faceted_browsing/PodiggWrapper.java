@@ -1,13 +1,10 @@
 package org.hobbit.benchmarks.faceted_browsing;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.GraphUtils;
@@ -23,25 +20,14 @@ public class PodiggWrapper {
 
     public static void exec(String basePath, Path outputFolder, Map<String, String> env) throws IOException, InterruptedException {
         String cmd = basePath + "/bin/generate-env";
-        //./generate-env /tmp/podigg
-        ProcessBuilder pb = new ProcessBuilder(cmd, outputFolder.toAbsolutePath().toString());
-        Map<String, String> penv = pb.environment();
+
+        ProcessBuilder processBuilder = new ProcessBuilder(cmd, outputFolder.toAbsolutePath().toString());
+        Map<String, String> penv = processBuilder.environment();
         penv.putAll(env);
-        //pb.directory("myDir");
 
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-        Consumer<String> lineHandler = OmitSimilarItems.forStrings(6, System.out::println);
-
-        String line;
-        while((line = br.readLine()) != null) {
-            lineHandler.accept(line);
-        }
-
-        p.waitFor();
+        SimpleProcessExecutor.wrap(processBuilder)
+            .setOutputSink(System.out::println) //logger::debug)
+            .execute();
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
