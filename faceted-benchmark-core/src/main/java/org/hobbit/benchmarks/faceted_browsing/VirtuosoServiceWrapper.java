@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -19,16 +20,18 @@ import org.ini4j.InvalidFileFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
  * A service wrapper instance manages a single underlying service process.
+ *
+ * TODO Factory all the system command + health checking stuff out into an AbstractSystemService
  *
  * @author raven
  *
  */
 public class VirtuosoServiceWrapper
-    extends AbstractService
+    extends AbstractIdleService
 {
     private static final Logger logger = LoggerFactory.getLogger(VirtuosoServiceWrapper.class);
 
@@ -41,13 +44,13 @@ public class VirtuosoServiceWrapper
     protected Path workingPath;
 
     protected Duration healthCheckInterval = Duration.ofSeconds(3);
-//    protected int healthCheckRetries = 10;
+    // protected int healthCheckRetries = 10;
 
     // The parsed ini file, used to read out ports
     protected transient Ini virtIni;
     protected transient Preferences virtIniPrefs;
 
-    protected transient Process[] process = {null};
+    protected transient Process[] process = { null };
 
     public Duration getHealthCheckInterval() {
         return healthCheckInterval;
@@ -58,20 +61,20 @@ public class VirtuosoServiceWrapper
         return this;
     }
 
-//    public int getHealthCheckRetries() {
-//        return healthCheckRetries;
-//    }
-//
-//    public VirtuosoServiceWrapper setHealthCheckRetries(int healthCheckRetries) {
-//        this.healthCheckRetries = healthCheckRetries;
-//        return this;
-//    }
-
+    // public int getHealthCheckRetries() {
+    // return healthCheckRetries;
+    // }
+    //
+    // public VirtuosoServiceWrapper setHealthCheckRetries(int
+    // healthCheckRetries) {
+    // this.healthCheckRetries = healthCheckRetries;
+    // return this;
+    // }
 
     // A single instance of the shutdown hook thread
     protected Thread shutdownHookThread = new Thread(() -> {
         System.err.println("Shutdown hook: terminating virtuoso process");
-        if(process[0] != null) {
+        if (process[0] != null) {
             process[0].destroy();
         }
     });
@@ -85,8 +88,8 @@ public class VirtuosoServiceWrapper
     }
 
     /**
-     * The default connection is some application specific connection.
-     * At minimum it should enable health check queries.
+     * The default connection is some application specific connection. At
+     * minimum it should enable health check queries.
      *
      *
      *
@@ -104,9 +107,8 @@ public class VirtuosoServiceWrapper
         SparqlService httpSparqlService = FluentSparqlService.http(endpointUrl).create();
 
         RDFConnection result = new RDFConnectionModular(
-            new SparqlQueryConnectionJsa(httpSparqlService.getQueryExecutionFactory()),
-            new SparqlUpdateConnectionJsa(httpSparqlService.getUpdateExecutionFactory()),
-            null);
+                new SparqlQueryConnectionJsa(httpSparqlService.getQueryExecutionFactory()),
+                new SparqlUpdateConnectionJsa(httpSparqlService.getUpdateExecutionFactory()), null);
 
         System.out.println(odbcPort + " --- " + httpPort);
 
@@ -120,13 +122,15 @@ public class VirtuosoServiceWrapper
      */
     public boolean performHealthCheck() {
         boolean result = false;
-        try(RDFConnection conn = createDefaultConnection()) {
+        try (RDFConnection conn = createDefaultConnection()) {
 
             // A very basic select query, which all SPARQL systems
-            // should be capable to process quickly, as usually it does not match anything
-            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", (qs) -> {});
+            // should be capable to process quickly, as usually it does not
+            // match anything
+            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", (qs) -> {
+            });
             result = true;
-        } catch(Exception e) {
+        } catch (Exception e) {
             logger.debug("Health check failed with reason: ", e);
         }
 
@@ -145,19 +149,17 @@ public class VirtuosoServiceWrapper
      * @throws IOException
      * @throws InterruptedException
      */
-    protected void startImpl() throws IOException, InterruptedException  {
+    @Override
+    protected void startUp() throws IOException, InterruptedException {
         // Attempt to read the ini file
         virtIni = new Ini(virtIniPath.toFile());
         virtIniPrefs = new IniPreferences(virtIni);
-
 
         Runtime.getRuntime().addShutdownHook(shutdownHookThread);
 
         ProcessBuilder pb = new ProcessBuilder(virtExecPath.toString(), "-c", virtIniPath.toString(), "-f");
         pb.directory(workingPath.toFile());
-        process[0] = SimpleProcessExecutor.wrap(pb)
-            .setService(true)
-            .execute();
+        process[0] = SimpleProcessExecutor.wrap(pb).setService(true).execute();
 
         // Some simple retry policy on the health check
         // TODO Use async retry library (or something similar) for
@@ -166,33 +168,35 @@ public class VirtuosoServiceWrapper
         // Start another thread that determines when the service becomes healthy
         try {
             boolean r = false;
-            //for(int i = 0; ; ++i) {
-            while(process[0] != null && process[0].isAlive()) {
+            // for(int i = 0; ; ++i) {
+            while (process[0] != null && process[0].isAlive()) {
                 long millis = healthCheckInterval.toMillis();
                 Thread.sleep(millis);
                 r = performHealthCheck();
-                if(r) {
+                if (r) {
                     break;
                 }
             }
-        } catch(InterruptedException e) {
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
             // If startup gets interrupted, shut down the service
-            //throw new RuntimeException(e);
+            // throw new RuntimeException(e);
         }
     }
 
-    protected void stopImpl() {
+    @Override
+    protected void shutDown() {
 
         // Things may get better with Java 9
         process[0].destroy();
 
         try {
-            while(process[0].isAlive()) {
+            while (process[0].isAlive()) {
                 // Waiting for process to die
                 long millis = healthCheckInterval.toMillis();
                 Thread.sleep(millis);
             }
-        } catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
@@ -201,43 +205,48 @@ public class VirtuosoServiceWrapper
         Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
     }
 
-
-    @Override
-    protected void doStart() {
-        try {
-            startImpl();
-            notifyStarted();
-        } catch(Exception e) {
-            notifyFailed(e);
-        }
-    }
-
-    @Override
-    protected void doStop() {
-        try {
-            stopImpl();
-            notifyStopped();
-        } catch(Exception e) {
-            notifyFailed(e);
-        }
-    }
+//    @Override
+//    protected void doStart() {
+//        try {
+//            startImpl();
+//            notifyStarted();
+//        } catch (Exception e) {
+//            notifyFailed(e);
+//        }
+//    }
+//
+//    @Override
+//    protected void doStop() {
+//        try {
+//            stopImpl();
+//            notifyStopped();
+//        } catch (Exception e) {
+//            notifyFailed(e);
+//        }
+//    }
 
     public static void main(String[] args) throws Exception {
         VirtuosoServiceWrapper virtService = new VirtuosoServiceWrapper(
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit_1112_8891/virtuoso.ini"));
 
-        //CompletableFuture<Boolean> startupFuture = virtWrap.start();
+        // CompletableFuture<Boolean> startupFuture = virtWrap.start();
 
         virtService.startAsync();
         logger.info("Waiting for startup..");
-        virtService.awaitRunning();
+        try {
+            virtService.awaitRunning(1, TimeUnit.MILLISECONDS);
+        } catch(Exception e) {
+            logger.info("Failure", e);
+            virtService.stopAsync();
+            return;
+        }
         logger.info("Startup complete");
 
-// Alternative callback style
-//        startupFuture.thenAccept(status -> {
-//            System.out.println("Service is healthy");
-//        });
+        // Alternative callback style
+        // startupFuture.thenAccept(status -> {
+        // System.out.println("Service is healthy");
+        // });
 
         virtService.createDefaultConnection();
 
