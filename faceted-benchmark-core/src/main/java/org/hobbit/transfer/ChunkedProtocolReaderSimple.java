@@ -14,7 +14,9 @@ import java.nio.ByteBuffer;
 public class ChunkedProtocolReaderSimple
     implements ChunkedProtocolReader
 {
-    protected long MAGIC_STREAM_CODE = 666999333;
+    public ChunkedProtocolReaderSimple() {
+
+    }
 
     @Override
     public boolean isStreamRecord(ByteBuffer byteBuffer) {
@@ -23,7 +25,7 @@ public class ChunkedProtocolReaderSimple
             result = false;
         } else {
             long header = byteBuffer.getLong(0);
-            result = header == MAGIC_STREAM_CODE;
+            result = header == ChunkedProtocolWriterSimple.MAGIC_STREAM_CODE;
         }
 
         return result;
@@ -63,6 +65,5 @@ public class ChunkedProtocolReaderSimple
         byteBuffer.position(16);
         return byteBuffer;
     }
-
 
 }

@@ -26,13 +26,14 @@ public class SparqlServiceSupplierDocker
     public SparqlService get() {
         // Start a new container
 
-        SparqlService result = FluentSparqlService.from(
-                FluentQueryExecutionFactory.http(serviceUrl,datasetDescription).create(),
-                FluentUpdateExecutionFactory.http(serviceUrl, datasetDescription).create());
-
+//        SparqlService result = FluentSparqlService.from(
+//                FluentQueryExecutionFactory.http(serviceUrl,datasetDescription).create(),
+//                FluentUpdateExecutionFactory.http(serviceUrl, datasetDescription).create());
+//
         // TODO Terminate container on close
 
 
+        SparqlService result = null;
         return result;
     }
 }

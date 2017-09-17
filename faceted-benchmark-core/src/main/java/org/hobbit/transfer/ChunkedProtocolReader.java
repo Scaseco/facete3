@@ -47,4 +47,5 @@ public interface ChunkedProtocolReader {
      * @return
      */
     ByteBuffer getPayload(ByteBuffer byteBuffer);
+
 }
