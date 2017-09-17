@@ -36,6 +36,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -596,7 +597,7 @@ public class FacetedTaskGenerator {
 
     public static void main(String[] args) throws SQLException, IOException {
 
-        StaticTripleSupplier supplier = new StaticTripleSupplier("lc.ttl");
+        //StaticTripleSupplier supplier = new StaticTripleSupplier("lc.ttl");
 
         String url = "jdbc:virtuoso://localhost:1112";
         String targetGraphIri = "http://mygraph.org/";
@@ -607,7 +608,7 @@ public class FacetedTaskGenerator {
             VirtuosoBulkLoad.dropGraph(conn, targetGraphIri, true);
             VirtuosoBulkLoad.checkpoint(conn);
 
-            Stream<Triple> stream = supplier.generate();
+            Stream<Triple> stream = GraphUtils.createTripleStream("lc.ttl");
 
             VirtuosoBulkLoad.load(conn, stream, "http://mygraph.org/", 10000);
             VirtuosoBulkLoad.checkpoint(conn);
