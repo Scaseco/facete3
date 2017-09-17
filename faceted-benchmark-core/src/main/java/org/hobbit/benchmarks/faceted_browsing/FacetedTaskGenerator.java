@@ -53,6 +53,7 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -605,6 +606,7 @@ public class FacetedTaskGenerator {
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit_1112_8891/virtuoso.ini"));
 
         service.setOutputSink(logger::info);
+
 
         service.startAsync();
         try {

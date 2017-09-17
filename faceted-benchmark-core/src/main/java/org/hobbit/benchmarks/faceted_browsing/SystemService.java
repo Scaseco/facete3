@@ -9,7 +9,7 @@ import com.google.common.util.concurrent.Service;
  * It enables redirecting the process output,
  * such as to System.out::println or logger::debug.
  *
- * API may be extended to cater for handling of stderr and stdout separately
+ * API may be extended to cater for handling stderr and stdout separately
  *
  * @author Claus Stadler
  *
