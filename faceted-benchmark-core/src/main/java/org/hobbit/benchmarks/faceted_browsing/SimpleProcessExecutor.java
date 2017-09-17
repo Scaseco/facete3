@@ -11,6 +11,8 @@ public class SimpleProcessExecutor {
     protected Consumer<String> outputSink;
     protected UnaryOperator<Consumer<String>> similarityRemover;
 
+    protected boolean isService;
+
     public SimpleProcessExecutor(ProcessBuilder processBuilder) {
         this.processBuilder = processBuilder;
         this.outputSink = System.out::println;
@@ -35,24 +37,52 @@ public class SimpleProcessExecutor {
         return this;
     }
 
-    public void execute() throws IOException, InterruptedException {
-        Consumer<String> sink = similarityRemover == null
-                ? outputSink
-                : similarityRemover.apply(outputSink);
+    public boolean isService() {
+        return isService;
+    }
 
+    public SimpleProcessExecutor setService(boolean isService) {
+        this.isService = isService;
+        return this;
+    }
+
+    public void watchProcessOutput(Process p) {
+        try {
+            Consumer<String> sink = similarityRemover == null
+                    ? outputSink
+                    : similarityRemover.apply(outputSink);
+
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            String line;
+            while((line = br.readLine()) != null) {
+                sink.accept(line);
+            }
+
+            p.waitFor();
+            int exitValue = p.exitValue();
+            sink.accept("Process terminated with exit code " + exitValue);
+        }
+        catch(IOException e) {
+            // Probably just the process died, so ignore
+        }
+        catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Process execute() throws IOException, InterruptedException {
         processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
 
-        BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-        String line;
-        while((line = br.readLine()) != null) {
-            sink.accept(line);
+        if(isService) {
+            new Thread(() -> watchProcessOutput(p)).start();
+        } else {
+            watchProcessOutput(p);
         }
 
-        p.waitFor();
-        int exitValue = p.exitValue();
-        sink.accept("Process terminated with exit code " + exitValue);
+        return p;
     }
 
     public static SimpleProcessExecutor wrap(ProcessBuilder processBuilder) {
