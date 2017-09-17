@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.prefs.Preferences;
 
@@ -20,13 +19,17 @@ import org.ini4j.InvalidFileFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.AbstractService;
+
 /**
  * A service wrapper instance manages a single underlying service process.
  *
  * @author raven
  *
  */
-public class VirtuosoServiceWrapper {
+public class VirtuosoServiceWrapper
+    extends AbstractService
+{
     private static final Logger logger = LoggerFactory.getLogger(VirtuosoServiceWrapper.class);
 
     protected ExecutorService executorService;
@@ -38,7 +41,7 @@ public class VirtuosoServiceWrapper {
     protected Path workingPath;
 
     protected Duration healthCheckInterval = Duration.ofSeconds(3);
-    protected int healthCheckRetries = 10;
+//    protected int healthCheckRetries = 10;
 
     // The parsed ini file, used to read out ports
     protected transient Ini virtIni;
@@ -55,14 +58,14 @@ public class VirtuosoServiceWrapper {
         return this;
     }
 
-    public int getHealthCheckRetries() {
-        return healthCheckRetries;
-    }
-
-    public VirtuosoServiceWrapper setHealthCheckRetries(int healthCheckRetries) {
-        this.healthCheckRetries = healthCheckRetries;
-        return this;
-    }
+//    public int getHealthCheckRetries() {
+//        return healthCheckRetries;
+//    }
+//
+//    public VirtuosoServiceWrapper setHealthCheckRetries(int healthCheckRetries) {
+//        this.healthCheckRetries = healthCheckRetries;
+//        return this;
+//    }
 
 
     // A single instance of the shutdown hook thread
@@ -81,8 +84,18 @@ public class VirtuosoServiceWrapper {
         this.workingPath = virtIniPath.getParent();
     }
 
-    public RDFConnection createDefaultConnection() throws InvalidFileFormatException, IOException {
-        // Parse the ini4j
+    /**
+     * The default connection is some application specific connection.
+     * At minimum it should enable health check queries.
+     *
+     *
+     *
+     * @return
+     * @throws InvalidFileFormatException
+     * @throws IOException
+     */
+    public RDFConnection createDefaultConnection() {
+        // Autoconfigure URLs based on the ini file
         long odbcPort = virtIniPrefs.node("Parameters").getLong("ServerPort", -1);
         long httpPort = virtIniPrefs.node("HTTPServer").getLong("ServerPort", -1);
 
@@ -100,7 +113,12 @@ public class VirtuosoServiceWrapper {
         return result;
     }
 
-    public boolean defaultHealthCheck() {
+    /**
+     * Perform a health check on the service
+     *
+     * @return
+     */
+    public boolean performHealthCheck() {
         boolean result = false;
         try(RDFConnection conn = createDefaultConnection()) {
 
@@ -127,11 +145,7 @@ public class VirtuosoServiceWrapper {
      * @throws IOException
      * @throws InterruptedException
      */
-    public synchronized CompletableFuture<Boolean> start() throws IOException, InterruptedException  {
-        if(process[0] != null) {
-            throw new IllegalStateException("Process already started.");
-        }
-
+    protected void startImpl() throws IOException, InterruptedException  {
         // Attempt to read the ini file
         virtIni = new Ini(virtIniPath.toFile());
         virtIniPrefs = new IniPreferences(virtIni);
@@ -145,62 +159,79 @@ public class VirtuosoServiceWrapper {
             .setService(true)
             .execute();
 
-        // Start another thread that determines when the service becomes healthy
-
         // Some simple retry policy on the health check
         // TODO Use async retry library (or something similar) for
         // having a powerful api for crafting retry policies
-        CompletableFuture<Boolean> result = CompletableFuture.supplyAsync(() -> {
+
+        // Start another thread that determines when the service becomes healthy
+        try {
             boolean r = false;
-            try {
-                for(int i = 0; i < healthCheckRetries; ++i) {
-                    long millis = healthCheckInterval.toMillis();
-                    Thread.sleep(millis);
-                    r = defaultHealthCheck();
-                    if(r) {
-                        break;
-                    }
+            //for(int i = 0; ; ++i) {
+            while(process[0] != null && process[0].isAlive()) {
+                long millis = healthCheckInterval.toMillis();
+                Thread.sleep(millis);
+                r = performHealthCheck();
+                if(r) {
+                    break;
                 }
-            } catch(InterruptedException e) {
-                // If startup gets interrupted, shut down the service
-                //throw new RuntimeException(e);
             }
-
-            // If the service never became healthy in time, we stop it again
-            if(r == false) {
-                stop();
-            }
-
-            return r;
-        });
-
-        return result;
-    }
-
-    public synchronized void stop() {
-
-        if(process[0] == null) {
-            throw new IllegalStateException("Service was already stopped");
-        } else {
-
-            // Things may get better with Java 9
-            process[0].destroy();
-            process[0] = null;
-
-            Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
+        } catch(InterruptedException e) {
+            // If startup gets interrupted, shut down the service
+            //throw new RuntimeException(e);
         }
     }
 
+    protected void stopImpl() {
+
+        // Things may get better with Java 9
+        process[0].destroy();
+
+        try {
+            while(process[0].isAlive()) {
+                // Waiting for process to die
+                long millis = healthCheckInterval.toMillis();
+                Thread.sleep(millis);
+            }
+        } catch(InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        process[0] = null;
+
+        Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
+    }
+
+
+    @Override
+    protected void doStart() {
+        try {
+            startImpl();
+            notifyStarted();
+        } catch(Exception e) {
+            notifyFailed(e);
+        }
+    }
+
+    @Override
+    protected void doStop() {
+        try {
+            stopImpl();
+            notifyStopped();
+        } catch(Exception e) {
+            notifyFailed(e);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
-        VirtuosoServiceWrapper virtWrap = new VirtuosoServiceWrapper(
+        VirtuosoServiceWrapper virtService = new VirtuosoServiceWrapper(
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit_1112_8891/virtuoso.ini"));
 
-        CompletableFuture<Boolean> startupFuture = virtWrap.start();
+        //CompletableFuture<Boolean> startupFuture = virtWrap.start();
 
+        virtService.startAsync();
         logger.info("Waiting for startup..");
-        CompletableFuture.allOf(startupFuture).join();
+        virtService.awaitRunning();
         logger.info("Startup complete");
 
 // Alternative callback style
@@ -208,10 +239,12 @@ public class VirtuosoServiceWrapper {
 //            System.out.println("Service is healthy");
 //        });
 
-        virtWrap.createDefaultConnection();
+        virtService.createDefaultConnection();
 
         Thread.sleep(5000);
+        virtService.stopAsync();
         System.err.println("Stopping...");
-        virtWrap.stop();
+        virtService.awaitTerminated();
     }
+
 }
