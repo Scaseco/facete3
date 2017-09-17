@@ -1,4 +1,4 @@
-package org.hobbit;
+package org.hobbit.benchmarks.faceted_browsing;
 
 import java.io.File;
 import java.io.FileNotFoundException;

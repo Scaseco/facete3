@@ -2,22 +2,20 @@ package org.hobbit;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.utils.StreamUtils;
+import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.util.ModelUtils;
 import org.hobbit.core.components.AbstractDataGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
@@ -34,6 +32,7 @@ import com.google.common.collect.Streams;
 public class DataGeneratorFacetedBrowsingBenchmark extends AbstractDataGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataGeneratorFacetedBrowsingBenchmark.class);
 
+    protected Supplier<Stream<Triple>> tripleStreamSupplier;
     protected int batchSize = 10000;
 
     @Override
@@ -46,10 +45,10 @@ public class DataGeneratorFacetedBrowsingBenchmark extends AbstractDataGenerator
     protected void generateData() throws Exception {
         LOGGER.info("Starting data generation.");
 
-        List<String> resourceNames = Arrays.asList("td-ontology.ttl", "TrainingData.ttl");
+        //List<String> resourceNames = Arrays.asList("td-ontology.ttl", "TrainingData.ttl");
 
         long batchCount = 0;
-        for(String resourceName : resourceNames) {
+        //for(String resourceName : resourceNames) {
 
             LOGGER.info("  Attempting to load static data resource: " + resourceName);
             TypedInputStream in = RDFDataMgr.open(resourceName);
@@ -59,7 +58,7 @@ public class DataGeneratorFacetedBrowsingBenchmark extends AbstractDataGenerator
             Entry<Long, Long> recordAndChunkCounts = this.sendTriples(it, batchSize);
 
             batchCount += recordAndChunkCounts.getKey();
-        }
+        //}
 
         sendToCmdQueue((byte)151, RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeLong(batchCount)}, RabbitMQUtils.writeLong(1)));
     }
@@ -76,18 +75,9 @@ public class DataGeneratorFacetedBrowsingBenchmark extends AbstractDataGenerator
         StreamUtils
             .mapToBatch(stream, batchSize)
             .peek(x -> batchCount.incrementAndGet())
-            .map(batch -> {
-                Model batchModel = ModelFactory.createDefaultModel();
-
-                batch.stream()
-                    .map(triple -> ModelUtils.tripleToStatement(batchModel, triple))
-                    .forEach(batchModel::add);
-
-                long recordCountDelta = batchModel.size();
-                recordCount.addAndGet(recordCountDelta);
-
-                return batchModel;
-            })
+            .map(GraphUtils::toMemGraph)
+            .peek(graph -> recordCount.addAndGet(graph.size()))
+            .map(ModelFactory::createModelForGraph)
             .map(batchModel -> {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 RDFDataMgr.write(baos, batchModel, RDFFormat.TURTLE);

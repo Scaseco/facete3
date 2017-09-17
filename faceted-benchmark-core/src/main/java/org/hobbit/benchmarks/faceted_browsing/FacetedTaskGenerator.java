@@ -1,4 +1,4 @@
-package org.hobbit;
+package org.hobbit.benchmarks.faceted_browsing;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -61,10 +61,10 @@ public class FacetedTaskGenerator {
 
     // arrays for reason classes and sub reason instances
     private static Map<String, List<String>> reasonClasses = new HashMap<>();
-    private static List<String> allReasons = new ArrayList<String>();
+    private static List<String> allReasons = new ArrayList<>();
 
     // a hashmap to hold variables that have to be pre-computed
-    private Map<String,Object> globalVariables = new HashMap<String,Object>();
+    private Map<String, Object> globalVariables = new HashMap<>();
     private Map<String, List<Map<String, String>>> variables = null;
     private Map<String, Object> preQueries = null;
     private Map<String, List<Map<String, Map<String, String>>>>  scenarios = null;
