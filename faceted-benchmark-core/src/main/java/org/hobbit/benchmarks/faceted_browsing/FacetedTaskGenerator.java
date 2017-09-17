@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -21,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.TreeMap;
@@ -58,7 +61,7 @@ import com.google.gson.reflect.TypeToken;
  * @author gkatsimpras
  */
 public class FacetedTaskGenerator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FacetedTaskGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(FacetedTaskGenerator.class);
 
     // arrays for reason classes and sub reason instances
     private static Map<String, List<String>> reasonClasses = new HashMap<>();
@@ -95,12 +98,12 @@ public class FacetedTaskGenerator {
 
 
     public void init() throws Exception {
-        LOGGER.info("INITIALIZING REASONS...");
+        logger.info("INITIALIZING REASONS...");
         initializeReasonClasses();
-        LOGGER.info("INITIALIZING PARAMETERS...");
+        logger.info("INITIALIZING PARAMETERS...");
         loadParameterFiles();
         computeParameters();
-        LOGGER.info("DONE!");
+        logger.info("DONE!");
     }
 //
 //    LOGGER.info("Executing query for gold standard...");
@@ -396,19 +399,19 @@ public class FacetedTaskGenerator {
                 String valueNode = null;
                 if (nodefinalValue!=null) {
                     valueNode = nodefinalValue.toString();
-                    LOGGER.error("String value node: " + valueNode);
+                    logger.error("String value node: " + valueNode);
                 }
                 //LOGGER.error("String : " + nodefinalValue.toString());
                 if (valueNode!=null) {
                     if (valueNode.contains("date")) {
                         String dateString = valueNode.split("\\.")[0];
-                        LOGGER.error("data: " + dateString);
+                        logger.error("data: " + dateString);
                         Date fastDate = null;
                         FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
                         try {
                             fastDate = fastDateFormat.parse(dateString);
                         } catch (ParseException e) {
-                            LOGGER.error("Error while parsing date format!");
+                            logger.error("Error while parsing date format!");
                         }
                         Calendar c = Calendar.getInstance();
                         c.setTime(fastDate);
@@ -595,7 +598,22 @@ public class FacetedTaskGenerator {
         this.queryConn = queryConn;
     }
 
-    public static void main(String[] args) throws SQLException, IOException {
+    public static void main(String[] args) throws SQLException, IOException, TimeoutException {
+
+        SparqlBasedSystemService service = new VirtuosoSystemService(
+                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
+                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit_1112_8891/virtuoso.ini"));
+
+        service.setOutputSink(logger::info);
+
+        service.startAsync();
+        try {
+            service.awaitRunning(60, TimeUnit.SECONDS);
+        } catch(Exception e) {
+            logger.debug("Timeout waiting for service, stopping.");
+            service.stopAsync();
+            service.awaitTerminated(60, TimeUnit.SECONDS);
+        }
 
         //StaticTripleSupplier supplier = new StaticTripleSupplier("lc.ttl");
 
@@ -634,6 +652,11 @@ public class FacetedTaskGenerator {
         System.out.println(a.size());
         System.out.println(a.equals(b));
         System.out.println(a.equals(c));
+
+
+        service.stopAsync();
+        service.awaitTerminated(10, TimeUnit.SECONDS);
+
 //        gen.generateTasks().forEach(task -> System.out.println(task));
 //        System.out.println(gen.generateTasks().count());
 //        System.out.println(gen.generateTasks().count());

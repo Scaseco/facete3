@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -30,12 +31,11 @@ import com.google.common.util.concurrent.AbstractIdleService;
  * @author raven
  *
  */
-public class VirtuosoServiceWrapper
+public class VirtuosoSystemService
     extends AbstractIdleService
+    implements SparqlBasedSystemService
 {
-    private static final Logger logger = LoggerFactory.getLogger(VirtuosoServiceWrapper.class);
-
-    protected ExecutorService executorService;
+    private static final Logger logger = LoggerFactory.getLogger(VirtuosoSystemService.class);
 
     protected Path virtExecPath;
     protected Path virtIniPath;
@@ -50,13 +50,24 @@ public class VirtuosoServiceWrapper
     protected transient Ini virtIni;
     protected transient Preferences virtIniPrefs;
 
-    protected transient Process[] process = { null };
+    protected transient Process process;
+
+    protected Consumer<String> outputSink;
+
+    public Consumer<String> getOutputSink() {
+        return outputSink;
+    }
+
+    public VirtuosoSystemService setOutputSink(Consumer<String> outputSink) {
+        this.outputSink = outputSink;
+        return this;
+    }
 
     public Duration getHealthCheckInterval() {
         return healthCheckInterval;
     }
 
-    public VirtuosoServiceWrapper setHealthCheckInterval(Duration healthCheckInterval) {
+    public VirtuosoSystemService setHealthCheckInterval(Duration healthCheckInterval) {
         this.healthCheckInterval = healthCheckInterval;
         return this;
     }
@@ -73,13 +84,19 @@ public class VirtuosoServiceWrapper
 
     // A single instance of the shutdown hook thread
     protected Thread shutdownHookThread = new Thread(() -> {
+        // Not sure if we still have a logger during shutdown
         System.err.println("Shutdown hook: terminating virtuoso process");
-        if (process[0] != null) {
-            process[0].destroy();
+        if(isRunning()) {
+            stopAsync();
+            try {
+                awaitTerminated(10, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new RuntimeException(e);
+            }
         }
     });
 
-    public VirtuosoServiceWrapper(Path virtExecPath, Path virtIniPath) {
+    public VirtuosoSystemService(Path virtExecPath, Path virtIniPath) {
         super();
         this.virtExecPath = virtExecPath;
         this.virtIniPath = virtIniPath;
@@ -159,7 +176,11 @@ public class VirtuosoServiceWrapper
 
         ProcessBuilder pb = new ProcessBuilder(virtExecPath.toString(), "-c", virtIniPath.toString(), "-f");
         pb.directory(workingPath.toFile());
-        process[0] = SimpleProcessExecutor.wrap(pb).setService(true).execute();
+        process = SimpleProcessExecutor.wrap(pb)
+                .setService(true)
+                // Delegate output to whatever the current sink is
+                .setOutputSink(x -> { if(outputSink != null) { outputSink.accept(x); }})
+                .execute();
 
         // Some simple retry policy on the health check
         // TODO Use async retry library (or something similar) for
@@ -169,7 +190,7 @@ public class VirtuosoServiceWrapper
         try {
             boolean r = false;
             // for(int i = 0; ; ++i) {
-            while (process[0] != null && process[0].isAlive()) {
+            while (process.isAlive()) {
                 long millis = healthCheckInterval.toMillis();
                 Thread.sleep(millis);
                 r = performHealthCheck();
@@ -187,11 +208,12 @@ public class VirtuosoServiceWrapper
     @Override
     protected void shutDown() {
 
-        // Things may get better with Java 9
-        process[0].destroy();
+        // Things may get better with Java 9, such as having an event when the process
+        // terminates which would enable us to exit immediately without polling delay
+        process.destroy();
 
         try {
-            while (process[0].isAlive()) {
+            while (process.isAlive()) {
                 // Waiting for process to die
                 long millis = healthCheckInterval.toMillis();
                 Thread.sleep(millis);
@@ -200,33 +222,12 @@ public class VirtuosoServiceWrapper
             throw new RuntimeException(e);
         }
 
-        process[0] = null;
-
+        process = null;
         Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
     }
 
-//    @Override
-//    protected void doStart() {
-//        try {
-//            startImpl();
-//            notifyStarted();
-//        } catch (Exception e) {
-//            notifyFailed(e);
-//        }
-//    }
-//
-//    @Override
-//    protected void doStop() {
-//        try {
-//            stopImpl();
-//            notifyStopped();
-//        } catch (Exception e) {
-//            notifyFailed(e);
-//        }
-//    }
-
     public static void main(String[] args) throws Exception {
-        VirtuosoServiceWrapper virtService = new VirtuosoServiceWrapper(
+        VirtuosoSystemService virtService = new VirtuosoSystemService(
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit_1112_8891/virtuoso.ini"));
 
@@ -235,7 +236,7 @@ public class VirtuosoServiceWrapper
         virtService.startAsync();
         logger.info("Waiting for startup..");
         try {
-            virtService.awaitRunning(1, TimeUnit.MILLISECONDS);
+            virtService.awaitRunning(10, TimeUnit.SECONDS);
         } catch(Exception e) {
             logger.info("Failure", e);
             virtService.stopAsync();
