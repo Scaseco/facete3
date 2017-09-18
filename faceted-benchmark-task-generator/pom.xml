@@ -14,8 +14,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-core</artifactId>
+            <groupId>org.hobbit</groupId>
+            <artifactId>faceted-benchmark-core</artifactId>
         </dependency>
 
         <!-- HOBBIT Core -->

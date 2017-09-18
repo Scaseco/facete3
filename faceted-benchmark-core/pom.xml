@@ -17,7 +17,14 @@
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
-        <!-- Used for e.g. recursive removal of directories, such as benchmark data -->
+        <dependency>
+            <groupId>org.hobbit</groupId>
+            <artifactId>hobbit-sdk</artifactId>
+        </dependency>
+
+
+        <!-- Used for e.g. recursive removal of directories, such as benchmark
+            data -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>

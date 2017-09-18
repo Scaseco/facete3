@@ -26,10 +26,19 @@
         <module>faceted-benchmark-benchmark-controller</module>
         <module>faceted-benchmark-platform-simulator</module>
         <module>faceted-benchmark-bundle</module>
+
+        <module>hobbit-sdk</module>
+        <module>hobbit-platform-sdk</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>org.hobbit</groupId>
+                <artifactId>hobbit-sdk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>de.javakaffee</groupId>
@@ -102,6 +111,12 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
+                <version>4.3.11.RELEASE </version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
                 <version>4.3.11.RELEASE </version>
             </dependency>
 

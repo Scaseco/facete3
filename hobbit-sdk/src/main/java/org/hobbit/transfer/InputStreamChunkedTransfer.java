@@ -8,11 +8,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 
 /**
- * Do not use;
+ * DO NOT USE.
  *
- * Channels.newInputStream(...) with a readableByteChannelSimple argument instead
+ * Use Channels.newInputStream(...) with a readableByteChannelSimple argument instead
  *
- * use ReadableByteChannelSimple instead
+
  * @author raven
  *
  */

@@ -3,7 +3,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>faceted-benchmark-data-generator</artifactId>
+    <artifactId>faceted-benchmark-hobbit-platform-integration</artifactId>
 
     <parent>
         <groupId>org.hobbit</groupId>
@@ -13,26 +13,37 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.hobbit</groupId>
-            <artifactId>faceted-benchmark-core</artifactId>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
+        <!-- Used for e.g. recursive removal of directories, such as benchmark data -->
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-<!-- 			<version>4.3.11.RELEASE </version> -->
+            <artifactId>spring-core</artifactId>
+        </dependency>
+
+        <!-- Parsing of virtuoso.ini files -->
+        <dependency>
+            <groupId>org.ini4j</groupId>
+            <artifactId>ini4j</artifactId>
+            <version>0.5.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.commons</groupId>
+            <artifactId>aksw-commons-collections</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.hobbit</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>virtjdbc4</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>com.rabbitmq</groupId>
-            <artifactId>amqp-client</artifactId>
-        </dependency>
-
     </dependencies>
 
     <build>

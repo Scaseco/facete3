@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing.task_generation;
+package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -64,8 +64,8 @@ import com.google.gson.reflect.TypeToken;
  * This is the Task Generator class.
  * @author gkatsimpras
  */
-public class FacetedTaskGenerator {
-    private static final Logger logger = LoggerFactory.getLogger(FacetedTaskGenerator.class);
+public class FacetedTaskGeneratorOld {
+    private static final Logger logger = LoggerFactory.getLogger(FacetedTaskGeneratorOld.class);
 
     // arrays for reason classes and sub reason instances
     private static Map<String, List<String>> reasonClasses = new HashMap<>();
@@ -641,7 +641,7 @@ public class FacetedTaskGenerator {
 
 
 
-        FacetedTaskGenerator gen = new FacetedTaskGenerator();
+        FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
 
         SparqlQueryConnection queryConn = new RDFConnectionModular(
                 new SparqlQueryConnectionJsa(

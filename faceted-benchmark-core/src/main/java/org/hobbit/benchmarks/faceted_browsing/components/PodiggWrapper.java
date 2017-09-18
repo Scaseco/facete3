@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing.data_generation;
+package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.IOException;
 import java.nio.file.Path;

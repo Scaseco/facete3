@@ -3,7 +3,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>faceted-benchmark-data-generator</artifactId>
+    <artifactId>hobbit-sdk</artifactId>
 
     <parent>
         <groupId>org.hobbit</groupId>
@@ -12,15 +12,10 @@
     </parent>
 
     <dependencies>
-        <dependency>
-            <groupId>org.hobbit</groupId>
-            <artifactId>faceted-benchmark-core</artifactId>
-        </dependency>
 
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-<!-- 			<version>4.3.11.RELEASE </version> -->
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-core</artifactId>
         </dependency>
 
         <dependency>
@@ -29,8 +24,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.rabbitmq</groupId>
-            <artifactId>amqp-client</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
         </dependency>
 
     </dependencies>

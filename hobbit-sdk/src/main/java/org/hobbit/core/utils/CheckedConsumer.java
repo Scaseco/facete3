@@ -1,4 +1,4 @@
-package org.hobbit;
+package org.hobbit.core.utils;
 
 import java.util.function.Consumer;
 
