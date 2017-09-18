@@ -24,8 +24,10 @@ public class ObservableByteChannel
     @Override
     public int write(ByteBuffer src) throws IOException {
         for(Consumer<ByteBuffer> listener : observers) {
-            ByteBuffer tmp = src.duplicate();
-            listener.accept(tmp);
+            //new Thread(() -> {
+                ByteBuffer tmp = src.duplicate();
+                listener.accept(tmp);
+            //}).start();
         }
         return src.position();
     }

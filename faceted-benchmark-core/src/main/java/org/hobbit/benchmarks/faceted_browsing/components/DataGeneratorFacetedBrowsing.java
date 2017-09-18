@@ -1,6 +1,7 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -100,6 +101,12 @@ public class DataGeneratorFacetedBrowsing
 
         Entry<Long, Long> result = new SimpleEntry<>(recordCount.get(), batchCount.get());
         return result;
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+
     }
 
 }

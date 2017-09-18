@@ -2,54 +2,64 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.hobbit.interfaces.TaskGenerator;
+import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
 @Component
 public class FacetedTaskGenerator
     implements TaskGenerator
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FacetedTaskGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(FacetedTaskGenerator.class);
 
-    @Resource
+    @Resource(name="preparationSparqlService")
     protected SparqlBasedSystemService preparationSparqlService;
 
-    @Resource
-    protected SparqlBasedSystemService evaluationSparqlService;
+    @Resource(name="commandChannel")
+    protected WritableByteChannel commandChannel;
+
+    @Resource(name="dataChannel")
+    protected WritableByteChannel dataChannel;
+
+    //@Resource(name="referenceSparqlService")
+    //protected SparqlBasedSystemService referenceSparqlService;
 
 //    @Resource
 //    protected
+    protected ServiceManager serviceManager;
 
     protected StreamManager streamManager;
 
     @Override
     public void init() throws Exception {
-        ServiceManager serviceManager = new ServiceManager(Arrays.asList(preparationSparqlService, evaluationSparqlService));
+        // Avoid duplicate services
+        Set<Service> services = Sets.newIdentityHashSet();
+        services.addAll(Arrays.asList(
+                preparationSparqlService
+                //referenceSparqlService
+        ));
 
-        try {
-            // If we need to replay a large dataset, startup may take a while
-            serviceManager.awaitHealthy(120, TimeUnit.SECONDS);
-        } catch(Exception e) {
-            LOGGER.error("Could not start the sparql service");
-            serviceManager.stopAsync();
-            serviceManager.awaitStopped(60, TimeUnit.SECONDS);
-            throw new RuntimeException(e);
-        }
+        serviceManager = new ServiceManager(services);
 
+        streamManager = new InputStreamManagerImpl(dataChannel);
 
-        /**
+        /*
          * The protocol here is:
          * We expect data to arrive exactly once in the form of a stream.
          *
@@ -73,7 +83,10 @@ public class FacetedTaskGenerator
             }
         });
 
-        serviceManager.startAsync();
+
+        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
+                60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
+
     }
 
 
@@ -94,5 +107,15 @@ public class FacetedTaskGenerator
     public void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void close() throws IOException {
+        serviceManager.stopAsync();
+        try {
+            serviceManager.awaitStopped(60, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -1,8 +1,10 @@
 package org.hobbit.transfer;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +35,21 @@ public class InputStreamManagerImpl
 
     public InputStreamManagerImpl(Consumer<ByteBuffer> controlChannel) {
         this.controlChannel = controlChannel;
+
+
+        this.readProtocol = new ChunkedProtocolReaderSimple();
+        this.controlProtocol = new ChunkedProtocolControlSimple();
+    }
+
+    public InputStreamManagerImpl(WritableByteChannel controlChannel) {
+        this.controlChannel = t -> {
+            try {
+                // Note: We assume that the channel always consumes all bytes
+                controlChannel.write(t);
+            } catch (IOException e) {
+                throw new RuntimeException();
+            }
+        };
 
 
         this.readProtocol = new ChunkedProtocolReaderSimple();

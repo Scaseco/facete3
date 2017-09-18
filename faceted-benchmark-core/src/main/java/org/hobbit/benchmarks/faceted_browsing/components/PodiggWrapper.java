@@ -31,18 +31,29 @@ public class PodiggWrapper {
             .execute();
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+
+    public static Stream<Triple> test() {
         Map<String, String> params = new HashMap<String, String>();
         params.put("GTFS_GEN_SEED", "123");
 
         Path outputFolder = Paths.get("/tmp/podigg");
         //FileSystemUtils.deleteRecursively(outputFolder.toFile());
 
-        exec("/home/raven/Projects/Eclipse/podigg-lc-bin", outputFolder, params);
+        try {
+            exec("/home/raven/Projects/Eclipse/podigg-lc-bin", outputFolder, params);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         Path datasetFile = outputFolder.resolve("lc.ttl");
 
-        Stream<Triple> triples = GraphUtils.createTripleStream(datasetFile.toString());
-        System.out.println("Triples: " + triples.count());
+        Stream<Triple> result = GraphUtils.createTripleStream(datasetFile.toString());
+
+        return result;
+    }
+
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        System.out.println("Triples: " + test().count());
     }
 }
