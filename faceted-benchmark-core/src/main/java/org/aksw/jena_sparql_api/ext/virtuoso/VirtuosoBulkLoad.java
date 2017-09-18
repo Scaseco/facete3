@@ -111,19 +111,19 @@ public class VirtuosoBulkLoad {
 
     public static void load(Connection conn, Stream<Triple> triples, String targetGraphIri, int batchSize) throws IOException, SQLException {
         File file = File.createTempFile("virt-bulk-load-", ".nt");
+        file.deleteOnExit();
 
-
-        Thread thread = new Thread(() -> file.delete());
+        //Thread thread = new Thread(() -> file.delete());
         try {
-            Runtime.getRuntime().addShutdownHook(thread);
+            //Runtime.getRuntime().addShutdownHook(thread);
 
             streamToFile(triples, batchSize, file);
             load(conn, file, targetGraphIri);
 
         } finally {
-            Runtime.getRuntime().removeShutdownHook(thread);
-            thread.run();
-            //file.delete()
+            //Runtime.getRuntime().removeShutdownHook(thread);
+            //thread.run();
+            file.delete();
         }
     }
 
