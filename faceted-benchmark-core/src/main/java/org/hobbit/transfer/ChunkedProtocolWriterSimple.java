@@ -6,6 +6,7 @@ public class ChunkedProtocolWriterSimple
     implements ChunkedProtocolWriter
 {
     public static final long MAGIC_STREAM_CODE = 666999333;
+    public static final int MIN_MESSAGE_LENGTH = 20;
 
     protected int streamId;
     protected long sequenceId = 1;
@@ -52,11 +53,12 @@ public class ChunkedProtocolWriterSimple
     }
 
     public String toString(ByteBuffer buffer) {
-        String result =
-                buffer.getLong(0) + " " +
-                buffer.getInt(8) + " " +
-                buffer.getLong(12) + " " +
-                (buffer.position() - 20) + " bytes of payload";
+        String result = "[" +
+                buffer.getLong(0) + ", " +
+                buffer.getInt(8) + ", " +
+                buffer.getLong(12) + ", " +
+                // .limit()
+                (buffer.position() - 20) + " bytes of payload]";
 
         return result;
     }

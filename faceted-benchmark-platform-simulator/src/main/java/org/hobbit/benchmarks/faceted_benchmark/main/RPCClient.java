@@ -59,11 +59,13 @@ public class RPCClient {
         sm.registerCallback((in) -> {
             System.out.println("Got a data stream");
 
-            List<Object> items = StreamUtils.readObjectStream(in, new Kryo())
-                    .collect(Collectors.toList());
+            int[] count = {0};
+            StreamUtils.readObjectStream(in, new Kryo())
+                    .peek(x -> ++count[0])
+                    .forEach(x -> System.out.println("Got item: " + x));
                 //String result = " foobar ";
             //System.out.println(items);
-            response.offer("" + items);
+            response.offer("" + count[0]);
         });
 
 

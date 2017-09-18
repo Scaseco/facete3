@@ -2,6 +2,7 @@ package org.hobbit.transfer;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
@@ -69,8 +70,11 @@ public class OutputStreamChunkedTransfer
 
     @Override
     public void flush() throws IOException {
-        int pos = dataBuffer.position();
+//        int pos = dataBuffer.position();
 
+//        dataBuffer.rewind();
+//        ByteBuffer slice = dataBuffer.slice();
+//        slice.limit(pos);
 //        ByteBuffer p
 //        byte[] msgData = new byte[pos];
 //        dataBuffer.rewind();

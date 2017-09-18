@@ -3,8 +3,9 @@ package org.hobbit.benchmarks.faceted_benchmark.main;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.hobbit.transfer.ChunkedProtocolWriterSimple;
 import org.hobbit.transfer.OutputStreamChunkedTransfer;
@@ -51,7 +52,14 @@ public class RPCServer {
                             new ChunkedProtocolWriterSimple(666),
                             md -> {
                                 try {
-                                    channel.basicPublish("", properties.getReplyTo(), replyProps, md.array());
+                                    int pos = md.position();
+                                    System.out.println("pos = " + pos);
+                                    byte[] msgData = new byte[pos];
+                                    md.rewind();
+                                    md.get(msgData);
+                                    md.position(pos); // Reset position because we are nice
+                                    System.out.println("data = " + Arrays.toString(msgData));
+                                    channel.basicPublish("", properties.getReplyTo(), replyProps, msgData);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
@@ -71,8 +79,9 @@ public class RPCServer {
                     finally {
 //                        channel.basicPublish( "", properties.getReplyTo(), replyProps, response.getBytes("UTF-8"));
 
-                        List<Object> items = Arrays.asList("this", "is", "a", "test", 123, new Integer[]{1, 2, 3});
-                        StreamUtils.writeObjectStream(out, items.stream(), new Kryo(), false);
+                        //List<Object> items = Arrays.asList("this", "is", "a", "test", 123, new Integer[]{1, 2, 3});
+                        Stream<Object> stream = IntStream.range(0, 1000000).mapToObj(x -> x);
+                        StreamUtils.writeObjectStream(out, stream, new Kryo(), false);
                         out.close();
 
                         channel.basicAck(envelope.getDeliveryTag(), false);

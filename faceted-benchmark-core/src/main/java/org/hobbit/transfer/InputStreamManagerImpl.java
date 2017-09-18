@@ -103,6 +103,10 @@ public class InputStreamManagerImpl
             if(in != null) {
                 ByteBuffer payload = readProtocol.getPayload(buffer);
                 try {
+                    boolean isLastChunk = readProtocol.isLastChunk(buffer);
+                    if(isLastChunk) {
+                        in.setLastBatchSeen();
+                    }
                     in.appendDataToQueue(payload);
                 } catch(InterruptedException e) {
                     throw new RuntimeException(e);

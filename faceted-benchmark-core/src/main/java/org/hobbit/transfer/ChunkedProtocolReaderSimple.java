@@ -21,7 +21,7 @@ public class ChunkedProtocolReaderSimple
     @Override
     public boolean isStreamRecord(ByteBuffer byteBuffer) {
         boolean result;
-        if(byteBuffer.limit() < 16) {
+        if(byteBuffer.limit() < ChunkedProtocolWriterSimple.MIN_MESSAGE_LENGTH) {
             result = false;
         } else {
             long header = byteBuffer.getLong(0);
@@ -65,7 +65,7 @@ public class ChunkedProtocolReaderSimple
 
     @Override
     public ByteBuffer getPayload(ByteBuffer byteBuffer) {
-        byteBuffer.position(16);
+        byteBuffer.position(ChunkedProtocolWriterSimple.MIN_MESSAGE_LENGTH);
         return byteBuffer;
     }
 
