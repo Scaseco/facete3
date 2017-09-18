@@ -16,8 +16,8 @@ public class HobbitLocalConfig {
      * @return
      */
     @Bean
-    public DefaultCommandHandler defaultCommandHandler(ObservableByteChannel cmdQueue) {
-        DefaultCommandHandler result = new DefaultCommandHandler(BenchmarkControllerFacetedBrowsing.class);
+    public PseudoHobbitPlatformController defaultCommandHandler(ObservableByteChannel cmdQueue) {
+        PseudoHobbitPlatformController result = new PseudoHobbitPlatformController(BenchmarkControllerFacetedBrowsing.class);
         cmdQueue.addObserver(result);
         return result;
     }

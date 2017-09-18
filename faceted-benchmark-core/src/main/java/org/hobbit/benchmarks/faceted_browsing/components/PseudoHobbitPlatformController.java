@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.IOUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
@@ -13,10 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-public class DefaultCommandHandler
+public class PseudoHobbitPlatformController
     implements Consumer<ByteBuffer>
 {
-    private static final Logger logger = LoggerFactory.getLogger(DefaultCommandHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(PseudoHobbitPlatformController.class);
 
     @Autowired
     protected ApplicationContext ctx;
@@ -26,7 +27,7 @@ public class DefaultCommandHandler
 
     protected Class<? extends BenchmarkController> benchmarkControllerClass;
 
-    public DefaultCommandHandler(Class<? extends BenchmarkController> benchmarkControllerClass) {
+    public PseudoHobbitPlatformController(Class<? extends BenchmarkController> benchmarkControllerClass) {
         super();
         this.benchmarkControllerClass = benchmarkControllerClass;
     }
@@ -46,7 +47,6 @@ public class DefaultCommandHandler
             buffer.get(dst, 0, dst.length);
 
             result = new SimpleEntry<>(b, dst);
-            //buffer.position(pos);
         }
 
         buffer.position(pos);
@@ -76,12 +76,19 @@ public class DefaultCommandHandler
                     benchmarkController = benchmarkControllerClass.newInstance();
                     ctx.getAutowireCapableBeanFactory().autowireBean(benchmarkController);
 
-                    // Register the benchmark controller as a listener to the command queue
-                    // FIXME Somehow unregister the component when done...
-                    cmdQueue.addObserver(buffer -> forwardToHobbit(buffer, benchmarkController::receiveCommand));
+                    Consumer<ByteBuffer> observer = buffer -> forwardToHobbit(buffer, benchmarkController::receiveCommand);
 
-                    benchmarkController.executeBenchmark();
+                    try {
+                        // Register the benchmark controller as a listener to the command queue
+                        cmdQueue.addObserver(observer);
 
+                        benchmarkController.executeBenchmark();
+                    } finally {
+                        IOUtils.closeQuietly(benchmarkController);
+
+                        // After the benchmark controller served its purpose, deregister it from events
+                        cmdQueue.removeObserver(observer);
+                    }
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -90,6 +97,8 @@ public class DefaultCommandHandler
         }
 
     }
+
+
 
 
 

@@ -1,5 +1,6 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
@@ -62,6 +63,12 @@ public class BenchmarkControllerFacetedBrowsing
 //        // this.resultModel.add(...);
 //        // Send the resultModul to the platform controller and terminate
 //        sendResultModel(resultModel);
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+
     }
 }
 
