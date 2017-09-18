@@ -2,6 +2,7 @@ package org.hobbit.benchmarks.faceted_benchmark.main;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 
 import org.hobbit.transfer.InputStreamChunkedTransfer;
 
@@ -20,7 +21,7 @@ public class InputStreamRabbitMQ
     protected String consumerTag;
 
     public InputStreamRabbitMQ(Channel channel, String queueName, boolean autoAck, String consumerTag) throws IOException {
-        super();
+        super(null);
         this.channel = channel;
         this.queueName = queueName;
         this.autoAck = autoAck;

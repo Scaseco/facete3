@@ -1,50 +1,44 @@
 package org.hobbit.task;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang3.time.FastDateFormat;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.ReaderRIOT;
-import org.apache.jena.riot.lang.PipedRDFIterator;
-import org.apache.jena.riot.lang.PipedRDFStream;
-import org.apache.jena.riot.lang.PipedTriplesStream;
-import org.apache.jena.riot.lang.ReaderTriX;
-import org.apache.jena.riot.system.StreamRDF;
-import org.apache.jena.riot.system.StreamRDFLib;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.modify.request.QuadDataAcc;
-import org.hobbit.core.Commands;
-import org.hobbit.core.components.AbstractSequencingTaskGenerator;
-import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.xml.bind.DatatypeConverter;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.RDFNode;
+import org.hobbit.core.components.AbstractSequencingTaskGenerator;
+import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * This is the Task Generator class.
@@ -476,9 +470,9 @@ public class FacetedTaskGenerator extends AbstractSequencingTaskGenerator {
      */
     private ResultSet executeSparqlQuery(String query){
         ResultSet result;
-        HttpAuthenticator authenticator = new SimpleAuthenticator("dba", "dba".toCharArray());
-        QueryExecution queryEx = QueryExecutionFactory.sparqlService(VIRTUOSO_GOLD_SERVICE_URL,
-                query, VIRTUOSO_GRAPHS, VIRTUOSO_GRAPHS, authenticator);
+        //HttpAuthenticator authenticator = new SimpleAuthenticator("dba", "dba".toCharArray());
+        QueryExecution queryEx = null; //QueryExecutionFactory.sparqlService(VIRTUOSO_GOLD_SERVICE_URL,
+                //query, VIRTUOSO_GRAPHS, VIRTUOSO_GRAPHS, null); //authenticator);
         queryEx.setTimeout(VIRTUOSO_TIMEOUT_SECS, TimeUnit.SECONDS) ;
 
         result = queryEx.execSelect();

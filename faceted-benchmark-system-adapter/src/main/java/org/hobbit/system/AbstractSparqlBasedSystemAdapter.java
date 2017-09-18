@@ -5,11 +5,11 @@ import org.hobbit.core.components.AbstractSystemAdapter;
 public abstract class AbstractSparqlBasedSystemAdapter
     extends AbstractSystemAdapter
 {
-    public abstract receiveDataStream(InputStream in) {
+//    public abstract receiveDataStream(InputStream in) {
+//
+//    }
 
-    }
 
-    
 
     /**
      * Data events are interpreted as (bulk) loading requests.
@@ -19,15 +19,15 @@ public abstract class AbstractSparqlBasedSystemAdapter
      */
     @Override
     public void receiveGeneratedData(byte[] bytes) {
-        
+
         // Make sure the message indicates a streaming protocol
-        if(streamManager.isStartOfStream(bytes)) {
-            streamManager.newStream();
-            //InputStream in = new InputStreamChunkedTransfer();
-            //receiveDataStream();
-        }
-        
-        streamManager.handle(bytes);
+//        if(streamManager.isStartOfStream(bytes)) {
+//            streamManager.newStream();
+//            //InputStream in = new InputStreamChunkedTransfer();
+//            //receiveDataStream();
+//        }
+//
+//        streamManager.handle(bytes);
     }
 
     /**

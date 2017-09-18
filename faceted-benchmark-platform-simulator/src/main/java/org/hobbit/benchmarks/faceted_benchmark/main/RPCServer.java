@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import org.hobbit.transfer.ChunkedProtocolWriterSimple;
+import org.hobbit.transfer.OutputStreamChunkedTransfer;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -42,8 +45,18 @@ public class RPCServer {
                             .correlationId(properties.getCorrelationId())
                             .build();
 
-                    OutputStream out = new OutputStreamRabbitMQ(channel, "", properties.getReplyTo(), replyProps, false);
+                    //OutputStream out = new OutputStreamRabbitMQ(channel, "", properties.getReplyTo(), replyProps, false);
 
+                    OutputStream out = new OutputStreamChunkedTransfer(
+                            new ChunkedProtocolWriterSimple(666),
+                            md -> {
+                                try {
+                                    channel.basicPublish("", properties.getReplyTo(), replyProps, md.array());
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            null);
 
                     try {
                         String message = new String(body,"UTF-8");

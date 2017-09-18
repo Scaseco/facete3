@@ -7,7 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
-public abstract class InputStreamChunkedTransfer
+public class InputStreamChunkedTransfer
     extends InputStream
 {
     // Modifying these fields directly should be considered a hack
@@ -15,10 +15,15 @@ public abstract class InputStreamChunkedTransfer
     protected BlockingQueue<ByteBuffer> clientQueue = new LinkedBlockingQueue<>();
     protected ByteBuffer currentBuffer;
 
+
+    protected Throwable abortException = null;
+
+    protected Runnable closeAction;
     //protected ChunkedProtocolReader protocol;
 
-    public InputStreamChunkedTransfer() throws IOException {
+    public InputStreamChunkedTransfer(Runnable closeAction) {
         super();
+        this.closeAction = closeAction;
     }
 
     protected void setLastBatchSeen() {
@@ -50,6 +55,11 @@ public abstract class InputStreamChunkedTransfer
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
+
+                    if(abortException != null) {
+                        throw new RuntimeException(abortException);
+                    }
+
                     continue;
                 }
             }
@@ -64,6 +74,19 @@ public abstract class InputStreamChunkedTransfer
         return result;
     }
 
+    /**
+     * If the stream is already closed, this is a noop.
+     *
+     * Otherwise, sets the abort exception and interrupts any wait for data
+     *
+     */
+    public void abort(Throwable t) {
+        if(!lastBatchSeen) {
+            abortException = t;
+            clientQueue.notifyAll();
+        }
+    }
+
     @Override
     public int read() throws IOException {
         byte tmp[] = {0};
@@ -72,4 +95,12 @@ public abstract class InputStreamChunkedTransfer
         return result;
     }
 
+    @Override
+    public void close() throws IOException {
+        if(closeAction != null) {
+            closeAction.run();
+        }
+
+        super.close();
+    }
 }

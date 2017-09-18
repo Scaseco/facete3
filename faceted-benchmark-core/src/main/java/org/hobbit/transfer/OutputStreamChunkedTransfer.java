@@ -94,7 +94,9 @@ public class OutputStreamChunkedTransfer
 
         flush();
 
-        closeAction.run();
+        if(closeAction != null) {
+            closeAction.run();
+        }
 //        if(closeChannelOnClose) {
 //            try {
 //                channel.close();
