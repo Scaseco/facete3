@@ -3,6 +3,8 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
+import javax.annotation.Resource;
+
 import org.apache.commons.io.IOUtils;
 import org.hobbit.interfaces.BaseComponent;
 import org.slf4j.Logger;
@@ -30,7 +32,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     @Autowired
     protected ApplicationContext ctx;
 
-    @Autowired
+    @Resource(name="commandChannel")
     protected ObservableByteChannel commandChannel;
 
 
@@ -57,6 +59,8 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         ctx.getAutowireCapableBeanFactory().autowireBean(component);
 
         observer = buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, component::receiveCommand);
+
+        commandChannel.addObserver(observer);
 
         component.init();
         logger.debug("Successfully started local component of type " + componentClass);

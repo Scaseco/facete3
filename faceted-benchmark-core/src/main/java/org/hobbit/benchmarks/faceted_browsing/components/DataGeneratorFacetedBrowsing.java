@@ -18,6 +18,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.hobbit.core.Commands;
 import org.hobbit.interfaces.DataGenerator;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.slf4j.Logger;
@@ -45,16 +46,38 @@ public class DataGeneratorFacetedBrowsing
 
     @Override
     public void init() throws Exception {
-
+        logger.debug("Data generator init");
     }
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
-//        streamManager.handleIncomingData(ByteBuffer.wrap(data));
+        logger.debug("Seen command: " + command);
+        if(command == Commands.DATA_GENERATOR_START_SIGNAL) {
+            try {
+                generateData();
+            } catch(Exception e) {
+                 throw new RuntimeException(e);
+            }
+        }
+
+//        if (command == (byte) 150 ) {
+//            byte[] emptyByte = {};
+//            try {
+//                // tell the task generator to start
+//                sendDataToTaskGenerator(emptyByte);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            generateTasks.release();
+//        }
     }
+
+
+//        streamManager.handleIncomingData(ByteBuffer.wrap(data));
 
     @Override
     public void generateData() throws Exception {
+        logger.info("Data generator started.");
         {
             Stream<Triple> triples = tripleStreamSupplier.get();
             sendTriples(triples, batchSize, toTaskGenerator);

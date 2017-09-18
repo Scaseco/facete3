@@ -71,7 +71,6 @@ public class BenchmarkControllerFacetedBrowsing
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
 
 
-        Thread.sleep(10000);
 
 //
 //        // wait for the data generators to finish their work
