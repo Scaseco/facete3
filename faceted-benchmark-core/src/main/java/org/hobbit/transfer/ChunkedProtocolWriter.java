@@ -35,6 +35,7 @@ public interface ChunkedProtocolWriter {
      * @return
      */
     ByteBuffer nextBuffer(ByteBuffer previousBuffer);
+    //ByteBuffer getPayloadRegion(ByteBuffer buffer);
 
     /**
      *
@@ -44,6 +45,8 @@ public interface ChunkedProtocolWriter {
      */
     boolean setLastChunkFlag(ByteBuffer buffer, boolean flag);
 
+
+    String toString(ByteBuffer buffer);
 //    /**
 //     * Set up a byte buffer to hold the next payload.
 //     * The returned ByteBuffer is intended for immediate use.

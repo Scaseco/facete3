@@ -83,7 +83,7 @@ public class InputStreamManagerImpl
 
             InputStreamChunkedTransfer in = openIncomingStreams.get(streamId);
 
-            if(in != null) {
+            if(in == null) {
                 boolean isStartOfStream = readProtocol.isStartOfStream(buffer);
 
                 if(isStartOfStream) {
@@ -98,7 +98,9 @@ public class InputStreamManagerImpl
                         CompletableFuture.runAsync(() -> callback.accept(tmp));
                     }
                 }
+            }
 
+            if(in != null) {
                 ByteBuffer payload = readProtocol.getPayload(buffer);
                 try {
                     in.appendDataToQueue(payload);

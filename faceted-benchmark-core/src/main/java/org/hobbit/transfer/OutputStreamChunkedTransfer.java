@@ -27,13 +27,16 @@ public class OutputStreamChunkedTransfer
 
     protected Runnable closeAction;
 
+    protected ByteBuffer payloadRegion;
+
     public OutputStreamChunkedTransfer(ChunkedProtocolWriter protocol, Consumer<ByteBuffer> dataDelegate, Runnable closeAction) {
         super();
         this.protocol = protocol;
         this.dataDelegate = dataDelegate;
         this.closeAction = closeAction;
 
-        protocol.nextBuffer(dataBuffer);
+        dataBuffer = protocol.nextBuffer(dataBuffer);
+        //payloadRegion = protocol.getPayload(dataBuffer);
     }
 
     @Override
@@ -67,15 +70,19 @@ public class OutputStreamChunkedTransfer
     @Override
     public void flush() throws IOException {
         int pos = dataBuffer.position();
-        byte[] msgData = new byte[pos];
-        dataBuffer.rewind();
-        dataBuffer.get(msgData);
 
-        System.out.println("Sent number of bytes: " + msgData.length);
+//        ByteBuffer p
+//        byte[] msgData = new byte[pos];
+//        dataBuffer.rewind();
+//        dataBuffer.get(msgData);
+
+        System.out.println("Sending packet: " + protocol.toString(dataBuffer));
         //channel.basicPublish(exchangeName, routingKey, properties, msgData);
         dataDelegate.accept(dataBuffer);
 
         dataBuffer = protocol.nextBuffer(dataBuffer);
+        //payloadRegion = protocol.getPayload(dataBuffer);
+
 
         //super.flush();
     }

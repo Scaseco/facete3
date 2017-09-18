@@ -31,8 +31,11 @@ public class ChunkedProtocolReaderSimple
         return result;
     }
 
+    // TODO Object might be a bad idea here, as this would actually require a object<->byte encoder
+    // If we do not want to commit to a specific stream id length, we could just
+    // return the bytes (or byte region) of the id
     public Object getStreamId(ByteBuffer byteBuffer) {
-        long streamId = byteBuffer.getLong(8);
+        long streamId = byteBuffer.getInt(8);
         return streamId;
     }
 

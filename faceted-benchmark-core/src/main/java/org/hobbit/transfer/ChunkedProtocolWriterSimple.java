@@ -50,4 +50,19 @@ public class ChunkedProtocolWriterSimple
 
         return previousBuffer;
     }
+
+    public String toString(ByteBuffer buffer) {
+        String result =
+                buffer.getLong(0) + " " +
+                buffer.getInt(8) + " " +
+                buffer.getLong(12) + " " +
+                (buffer.position() - 20) + " bytes of payload";
+
+        return result;
+    }
+
+//	@Override
+//	public ByteBuffer getPayloadRegion(ByteBuffer buffer) {
+//		buffer.slice().position(20);
+//	}
 }

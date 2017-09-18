@@ -40,6 +40,8 @@ public class RPCClient {
     }
 
     public String call(String message) throws IOException, InterruptedException {
+        final BlockingQueue<String> response = new ArrayBlockingQueue<String>(1);
+
         String corrId = UUID.randomUUID().toString();
 
         AMQP.BasicProperties props = new AMQP.BasicProperties
@@ -60,8 +62,8 @@ public class RPCClient {
             List<Object> items = StreamUtils.readObjectStream(in, new Kryo())
                     .collect(Collectors.toList());
                 //String result = " foobar ";
-            System.out.println(items);
-
+            //System.out.println(items);
+            response.offer("" + items);
         });
 
 
@@ -82,7 +84,6 @@ public class RPCClient {
 
         }
         else if(mode == 1) {
-            final BlockingQueue<String> response = new ArrayBlockingQueue<String>(1);
 
             channel.basicConsume(replyQueueName, true, new DefaultConsumer(channel) {
                 @Override
@@ -118,7 +119,7 @@ public class RPCClient {
 //        });
 //
 //        return response.take();
-        return "";
+        return response.take();
     }
 
     public void close() throws IOException {
