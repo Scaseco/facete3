@@ -2,6 +2,7 @@ package org.hobbit.transfer;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,7 @@ public class InputStreamManagerImpl
     protected ChunkedProtocolReader readProtocol;
     protected ChunkedProtocolControl controlProtocol;
 
-    protected Map<Object, InputStreamChunkedTransfer> openIncomingStreams = new HashMap<>();
+    protected Map<Object, ReadableByteChannelSimple> openIncomingStreams = new HashMap<>();
     protected List<Consumer<InputStream>> callbacks = new ArrayList<>();
 
     protected Consumer<ByteBuffer> controlChannel;
@@ -58,7 +59,7 @@ public class InputStreamManagerImpl
             Object streamId = controlProtocol.getStreamId(buffer);
 
             // Check if the stream is being handled
-            InputStreamChunkedTransfer stream = openIncomingStreams.get(streamId);
+            ReadableByteChannelSimple stream = openIncomingStreams.get(streamId);
 
             if(stream != null) {
                 StreamControl message = controlProtocol.getMessageType(buffer);
@@ -81,13 +82,13 @@ public class InputStreamManagerImpl
         if(isDataMessage) {
             Object streamId = readProtocol.getStreamId(buffer);
 
-            InputStreamChunkedTransfer in = openIncomingStreams.get(streamId);
+            ReadableByteChannelSimple in = openIncomingStreams.get(streamId);
 
             if(in == null) {
                 boolean isStartOfStream = readProtocol.isStartOfStream(buffer);
 
                 if(isStartOfStream) {
-                    InputStreamChunkedTransfer tmp = new InputStreamChunkedTransfer(() -> {
+                    ReadableByteChannelSimple tmp = new ReadableByteChannelSimple(() -> {
                         ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
                         controlChannel.accept(readingAbortedMessage);
                     });
@@ -95,7 +96,10 @@ public class InputStreamManagerImpl
                     openIncomingStreams.put(streamId, in);
 
                     for(Consumer<InputStream> callback : callbacks) {
-                        CompletableFuture.runAsync(() -> callback.accept(tmp));
+
+                        // TODO This could be a long running action - we should not occupy the fork/join pool
+                        InputStream tmpIn = Channels.newInputStream(tmp);
+                        CompletableFuture.runAsync(() -> callback.accept(tmpIn));
                     }
                 }
             }

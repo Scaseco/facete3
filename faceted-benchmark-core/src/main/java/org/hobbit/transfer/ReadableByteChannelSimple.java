@@ -1,25 +1,15 @@
 package org.hobbit.transfer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
-/**
- * Do not use;
- *
- * Channels.newInputStream(...) with a readableByteChannelSimple argument instead
- *
- * use ReadableByteChannelSimple instead
- * @author raven
- *
- */
-public class InputStreamChunkedTransfer
-    extends InputStream
+public class ReadableByteChannelSimple
+    implements ReadableByteChannel
 {
-    // Modifying these fields directly should be considered a hack
     protected boolean lastBatchSeen = false;
     protected BlockingQueue<ByteBuffer> clientQueue = new LinkedBlockingQueue<>();
     protected ByteBuffer currentBuffer;
@@ -27,10 +17,10 @@ public class InputStreamChunkedTransfer
 
     protected Throwable abortException = null;
 
+    protected boolean isOpen = true;
     protected Runnable closeAction;
-    //protected ChunkedProtocolReader protocol;
 
-    public InputStreamChunkedTransfer(Runnable closeAction) {
+    public ReadableByteChannelSimple(Runnable closeAction) {
         super();
         this.closeAction = closeAction;
     }
@@ -43,19 +33,60 @@ public class InputStreamChunkedTransfer
         clientQueue.put(bodyBuffer);
     }
 
+    /**
+     * If the stream is already closed, this is a noop.
+     *
+     * Otherwise, sets the abort exception and interrupts any wait for data
+     *
+     */
+    public void abort(Throwable t) {
+        if(!lastBatchSeen) {
+            abortException = t;
+            clientQueue.notifyAll();
+        }
+    }
+
+
+    /**
+     * Supply data to the channel, which will be returned by read operations in sequence
+     *
+     * @param data
+     */
+    public void supplyData(ByteBuffer data) {
+        clientQueue.add(data);
+    }
+
+
+
+    // AsynchronousByteChannel methods
+
+    @Override
+    public void close() throws IOException {
+        if(closeAction != null) {
+            closeAction.run();
+        }
+        isOpen = false;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return isOpen;
+    }
 
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        int remaining = len;
+    public int read(ByteBuffer dst) {
         int result = 0;
+
+        int remaining = dst.remaining();
+        int readBytes = 0;
 
         while(remaining > 0) {
             int available = currentBuffer == null ? 0 : currentBuffer.remaining();
             if(available == 0) {
                 // If we are at the last batch and have not read anything yet, we have reached the end
                 if(lastBatchSeen && clientQueue.isEmpty()) {
-                    if(result == 0) {
+                    if(readBytes == 0) {
                         result = -1;
                     }
                     break;
@@ -75,42 +106,20 @@ public class InputStreamChunkedTransfer
             }
 
             int toRead = Math.min(remaining, available);
+
+            int off = currentBuffer.position();
+            int newOff = off + toRead;
+
+            ByteBuffer tmp = currentBuffer.duplicate();
+            tmp.limit(newOff);
+            dst.put(tmp);
+            currentBuffer.position(newOff);
+
             result += toRead;
-            currentBuffer.get(b, off, toRead);
-            off += toRead;
             remaining -= toRead;
         }
 
         return result;
     }
 
-    /**
-     * If the stream is already closed, this is a noop.
-     *
-     * Otherwise, sets the abort exception and interrupts any wait for data
-     *
-     */
-    public void abort(Throwable t) {
-        if(!lastBatchSeen) {
-            abortException = t;
-            clientQueue.notifyAll();
-        }
-    }
-
-    @Override
-    public int read() throws IOException {
-        byte tmp[] = {0};
-        int code = read(tmp, 0, 1);
-        int result = code > 0 ? tmp[0] : -1;
-        return result;
-    }
-
-    @Override
-    public void close() throws IOException {
-        if(closeAction != null) {
-            closeAction.run();
-        }
-
-        super.close();
-    }
 }

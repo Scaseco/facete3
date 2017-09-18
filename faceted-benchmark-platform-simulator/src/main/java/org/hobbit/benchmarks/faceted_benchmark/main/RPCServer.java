@@ -48,21 +48,11 @@ public class RPCServer {
 
                     //OutputStream out = new OutputStreamRabbitMQ(channel, "", properties.getReplyTo(), replyProps, false);
 
-                    OutputStream out = new OutputStreamChunkedTransfer(
+                    OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteArrayDelegate(
                             new ChunkedProtocolWriterSimple(666),
-                            md -> {
-                                try {
-                                    int pos = md.position();
-                                    System.out.println("pos = " + pos);
-                                    byte[] msgData = new byte[pos];
-                                    md.rewind();
-                                    md.get(msgData);
-                                    md.position(pos); // Reset position because we are nice
-                                    System.out.println("data = " + Arrays.toString(msgData));
-                                    channel.basicPublish("", properties.getReplyTo(), replyProps, msgData);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
+                            data -> {
+                                try { channel.basicPublish("", properties.getReplyTo(), replyProps, data);
+                                } catch (Exception e) { throw new RuntimeException(e); }
                             },
                             null);
 

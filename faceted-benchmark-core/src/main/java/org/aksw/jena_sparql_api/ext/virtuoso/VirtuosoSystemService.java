@@ -26,8 +26,6 @@ import org.slf4j.LoggerFactory;
 /**
  * A service wrapper instance manages a single underlying service process.
  *
- * TODO Factory all the system command + health checking stuff out into an AbstractSystemService
- *
  * @author raven
  *
  */
@@ -123,6 +121,7 @@ public class VirtuosoSystemService
      * The default connection is some application specific connection. At
      * minimum it should enable health check queries.
      *
+     * The default connection will typically refer to the service's openly accessible (HTTP) SPARQL endpoint.
      *
      *
      * @return

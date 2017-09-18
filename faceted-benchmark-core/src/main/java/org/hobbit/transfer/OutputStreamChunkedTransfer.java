@@ -2,8 +2,8 @@ package org.hobbit.transfer;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
@@ -38,6 +38,32 @@ public class OutputStreamChunkedTransfer
 
         dataBuffer = protocol.nextBuffer(dataBuffer);
         //payloadRegion = protocol.getPayload(dataBuffer);
+    }
+
+
+    public static OutputStreamChunkedTransfer newInstanceForByteArrayDelegate(
+            ChunkedProtocolWriter protocol,
+            Consumer<byte[]> dataDelegate,
+            Runnable closeAction) {
+        OutputStreamChunkedTransfer result = new OutputStreamChunkedTransfer(
+                new ChunkedProtocolWriterSimple(666),
+                md -> {
+                    try {
+                        int pos = md.position();
+                        System.out.println("pos = " + pos);
+                        byte[] msgData = new byte[pos];
+                        md.rewind();
+                        md.get(msgData);
+                        md.position(pos); // Reset position because we are nice
+                        System.out.println("data = " + Arrays.toString(msgData));
+                        dataDelegate.accept(msgData);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                null);
+
+        return result;
     }
 
     @Override
