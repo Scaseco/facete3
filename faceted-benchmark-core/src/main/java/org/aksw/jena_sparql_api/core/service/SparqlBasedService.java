@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.aksw.jena_sparql_api.core.service;
 
 import org.apache.jena.rdfconnection.RDFConnection;
 

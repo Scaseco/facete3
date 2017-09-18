@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.aksw.commons.service.core;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -44,26 +44,27 @@ public abstract class AbstractSystemService
             try {
                 awaitTerminated(10, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
+                // Give up
+                // TODO We could still try to destroyForcibly()
                 throw new RuntimeException(e);
             }
         }
     });
 
-//    public VirtuosoSystemService(Path virtExecPath, Path virtIniPath) {
-//        super();
-//        this.virtExecPath = virtExecPath;
-//        this.virtIniPath = virtIniPath;
-//
-//        this.workingPath = virtIniPath.getParent();
-//    }
-
     /**
-     * Perform a health check on the service
+     * Perform a health check on the service.
+     * During a startup, a service enters running state in the moment
+     * the health  check succeeds.
      *
      * @return
      */
     public abstract boolean performHealthCheck();
 
+    /**
+     * Expected to return a properly configured ProcessBuilder instance,
+     * such as having the path to the executable and the arguments set.
+     * @return
+     */
     protected abstract ProcessBuilder prepareProcessBuilder();
 
     /**

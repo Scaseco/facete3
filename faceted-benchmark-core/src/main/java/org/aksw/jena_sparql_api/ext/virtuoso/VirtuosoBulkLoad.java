@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.aksw.jena_sparql_api.ext.virtuoso;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.aksw.commons.utils;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;

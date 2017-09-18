@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.hobbit.benchmarks.faceted_browsing.task_generation;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -39,6 +39,9 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
+import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.output.ByteArrayOutputStream;

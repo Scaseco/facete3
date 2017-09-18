@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.hobbit.benchmarks.faceted_browsing.data_generation;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.aksw.commons.service.core.SimpleProcessExecutor;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.graph.Triple;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.aksw.commons.service.core;
 
 import java.util.function.Consumer;
 

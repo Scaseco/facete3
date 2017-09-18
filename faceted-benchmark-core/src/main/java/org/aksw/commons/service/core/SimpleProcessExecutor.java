@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing;
+package org.aksw.commons.service.core;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,9 +6,14 @@ import java.io.InputStreamReader;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
+import org.aksw.commons.utils.OmitSimilarItems;
+
 public class SimpleProcessExecutor {
     protected ProcessBuilder processBuilder;
     protected Consumer<String> outputSink;
+
+    // Experimental; but tendency is to require users to apply similarity removal
+    // on the sink themselves.
     protected UnaryOperator<Consumer<String>> similarityRemover;
 
     protected boolean isService;
