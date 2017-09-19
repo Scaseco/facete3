@@ -44,10 +44,12 @@ public class ReadableByteChannelSimple
      * Otherwise, sets the abort exception and interrupts any wait for data
      *
      */
-    public  void abort(Throwable t) {
-        if(!lastBatchSeen) {
-            abortException = t;
-            notifyAll();
+    public void abort(Throwable t) {
+        synchronized(this) {
+            if(!lastBatchSeen) {
+                abortException = t;
+                notifyAll();
+            }
         }
     }
 
@@ -133,7 +135,10 @@ public class ReadableByteChannelSimple
             remaining -= toRead;
         }
 
-        System.out.println("Read " + result + " bytes");
+        if(result == -1) {
+            System.out.println(this.getClass().getName() + ": Read " + result + " bytes");
+        }
+
         return result;
     }
 

@@ -141,10 +141,10 @@ public class DataGeneratorFacetedBrowsing
         AtomicLong recordCount = new AtomicLong();
         AtomicLong batchCount = new AtomicLong();
 
-        ChunkedProtocolWriter protocol = new ChunkedProtocolWriterSimple(666);
+        //ChunkedProtocolWriter protocol = new ChunkedProtocolWriterSimple(666);
 
         //Stream<Triple> stream = Streams.stream(it);
-        try(OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteChannel(protocol, channel, null)) {
+        try(OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteChannel(channel, null)) {
             StreamUtils
                 .mapToBatch(stream, batchSize)
                 .peek(x -> batchCount.incrementAndGet())

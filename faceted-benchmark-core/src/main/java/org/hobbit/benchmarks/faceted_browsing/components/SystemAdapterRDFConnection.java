@@ -50,7 +50,7 @@ public class SystemAdapterRDFConnection
     protected WritableByteChannel commandChannel;
 
 
-    protected StreamManager streamManager = new InputStreamManagerImpl(commandChannel);
+    protected StreamManager streamManager;
 
     protected ServiceManager serviceManager;
 
@@ -60,6 +60,8 @@ public class SystemAdapterRDFConnection
 
     @Override
     public void init() throws Exception {
+
+        streamManager = new InputStreamManagerImpl(commandChannel);
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
 //        systemUnderTestReadyFuture = PublisherUtils.awaitMessage(commandPublisher,
@@ -76,7 +78,6 @@ public class SystemAdapterRDFConnection
                 // Write incoming data to a file
                 File file = File.createTempFile("hobbit-system-adapter-data-to-load", ".nt");
                 FileCopyUtils.copy(in, new FileOutputStream(file));
-
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -97,11 +98,11 @@ public class SystemAdapterRDFConnection
 
 
         fromDataGenerator.subscribe((byteBuffer) -> {
-            System.out.println("Got a message form the data generator");
+            //System.out.println("Got a message form the data generator");
         });
 
         fromTaskGenerator.subscribe((byteBuffer) -> {
-            System.out.println("Got a message form the task generator");
+            //System.out.println("Got a message form the task generator");
         });
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
@@ -109,6 +110,7 @@ public class SystemAdapterRDFConnection
 
     @Override
     public void close() throws IOException {
+        streamManager.close();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
     }
 

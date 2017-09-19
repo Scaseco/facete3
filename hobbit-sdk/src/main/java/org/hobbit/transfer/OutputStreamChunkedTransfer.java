@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -31,6 +32,8 @@ public class OutputStreamChunkedTransfer
 
     protected ByteBuffer payloadRegion;
 
+    protected static final AtomicInteger nextStreamId = new AtomicInteger(1);
+
     public OutputStreamChunkedTransfer(ChunkedProtocolWriter protocol, Consumer<ByteBuffer> dataDelegate, Runnable closeAction) {
         super();
         this.protocol = protocol;
@@ -43,11 +46,11 @@ public class OutputStreamChunkedTransfer
 
 
     public static OutputStreamChunkedTransfer newInstanceForByteChannel(
-            ChunkedProtocolWriter protocol,
+            //ChunkedProtocolWriter protocol,
             WritableByteChannel channel,
             Runnable closeAction) {
         OutputStreamChunkedTransfer result = new OutputStreamChunkedTransfer(
-                new ChunkedProtocolWriterSimple(666),
+                new ChunkedProtocolWriterSimple(nextStreamId.getAndIncrement()),
                 md -> {
                     try {
                         channel.write(md);
@@ -61,11 +64,11 @@ public class OutputStreamChunkedTransfer
     }
 
     public static OutputStreamChunkedTransfer newInstanceForByteArrayChannel(
-            ChunkedProtocolWriter protocol,
+            //ChunkedProtocolWriter protocol,
             Consumer<byte[]> dataDelegate,
             Runnable closeAction) {
         OutputStreamChunkedTransfer result = new OutputStreamChunkedTransfer(
-                new ChunkedProtocolWriterSimple(666),
+                new ChunkedProtocolWriterSimple(nextStreamId.getAndIncrement()),
                 md -> {
                     try {
                         int pos = md.position();

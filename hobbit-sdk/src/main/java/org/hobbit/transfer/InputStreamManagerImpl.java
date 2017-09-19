@@ -124,8 +124,13 @@ public class InputStreamManagerImpl
                         // TODO This could be a long running action - we should not occupy the fork/join pool
                         InputStream tmpIn = Channels.newInputStream(tmp);
                         //CompletableFuture.runAsync(() -> {
+                        // TODO Get any exceptions from the executor service
                         executorService.submit(() -> {
-                            subscriber.accept(tmpIn);
+                            try {
+                                subscriber.accept(tmpIn);
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                            }
                         });
 
                         //});
@@ -162,6 +167,8 @@ public class InputStreamManagerImpl
 
     @Override
     public void close() throws IOException {
+        subscribers = Collections.emptyList();
+
         executorService.shutdown();
         try {
             executorService.awaitTermination(60, TimeUnit.SECONDS);
