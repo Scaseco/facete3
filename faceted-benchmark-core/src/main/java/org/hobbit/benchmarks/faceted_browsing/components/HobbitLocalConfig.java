@@ -76,6 +76,12 @@ public class HobbitLocalConfig {
     }
 
     @Bean
+    public ServiceFactory<Service> systemUnderTestServiceFactory() {
+        return new LocalHobbitComponentServiceFactory<>(FacetedTaskGenerator.class);
+    }
+
+
+    @Bean
     public SparqlBasedSystemService preparationSparqlService() {
         VirtuosoSystemService result = new VirtuosoSystemService(
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),

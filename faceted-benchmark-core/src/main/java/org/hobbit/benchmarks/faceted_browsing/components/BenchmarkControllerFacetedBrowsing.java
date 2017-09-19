@@ -31,6 +31,9 @@ public class BenchmarkControllerFacetedBrowsing
     @Resource(name="taskGeneratorServiceFactory")
     protected ServiceFactory<Service> taskGeneratorServiceFactory;
 
+    @Resource(name="systemAdapterServiceFactory")
+    protected ServiceFactory<Service> systemAdapterServiceFactory;
+
     @Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
 
@@ -41,16 +44,26 @@ public class BenchmarkControllerFacetedBrowsing
 
 
 
+    protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
+
+
     @Override
     public void init() throws Exception {
         logger.debug("Entered BenchmarkController::init()");
 
+        // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
+        // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
+        systemUnderTestReadyFuture = PublisherUtils.awaitMessage(commandPublisher,
+                firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
+
         Service dataGeneratorService = dataGeneratorServiceFactory.get();
         Service taskGeneratorService = taskGeneratorServiceFactory.get();
+        Service systemAdapterService = systemAdapterServiceFactory.get();
 
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
-                taskGeneratorService
+                taskGeneratorService,
+                systemAdapterService
         ));
 
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
@@ -96,49 +109,29 @@ public class BenchmarkControllerFacetedBrowsing
                 Collections.singleton(commandPublisher),
                 firstByteEquals(Commands.DATA_GENERATION_FINISHED));
 
-
-        // Wait for data generation to finish
-
-
-        // Wait
-
-
         CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
                 ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}),
                 Collections.singleton(commandPublisher),
                 firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
-        CompletableFuture<?> preparationPhaseCompletion = CompletableFuture.allOf(dataGenerationFuture, taskGenerationFuture);
+        // Wait for the system-under-test to report its ready state
+        //CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sen
+
+        CompletableFuture<?> preparationPhaseCompletion = CompletableFuture.allOf(
+                dataGenerationFuture,
+                taskGenerationFuture,
+                systemUnderTestReadyFuture
+                );
 
         try {
             preparationPhaseCompletion.get(60, TimeUnit.SECONDS);
         } catch(Exception e) {
-            throw new RuntimeException("Preparation phase did not complete in time");
+            throw new RuntimeException("Preparation phase did not complete in time", e);
         }
 
 
         System.out.println("ACTUAL BENCHMARK BEGINS NOW");
-
-//      commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
-
-
-
-
-//        ByteChannelRequestFactorySimple requestFactory = new ByteChannelRequestFactorySimple(
-//                commandChannel,
-//                Arrays.asList(commandChannel));
-//
-        //requestFactory.sendRequestAndAwaitResponse(, timeout, unit)
-
-        //CompletableFuture<ByteBuffer> future = PublisherUtils.awaitMessage(commandPublisher, firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
-
-
-
-
-        //CompletableFuture<ByteBuffer> ByteChannelUtils.awaitMessage(b -> Stream.of(b).map(b::array).test(b.length > 0).test());
-
-
 
 //
 //        // wait for the data generators to finish their work
