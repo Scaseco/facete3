@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -27,7 +28,7 @@ import java.util.function.Consumer;
 public class InputStreamManagerImpl
     implements StreamManager
 {
-    protected ExecutorService executorService = Executors.newCachedThreadPool();
+    protected ExecutorService executorService = Executors.newCachedThreadPool(); //Executors.newCachedThreadPool();
 
     protected ChunkedProtocolReader readProtocol;
     protected ChunkedProtocolControl controlProtocol;
@@ -157,6 +158,16 @@ public class InputStreamManagerImpl
     @Override
     public void unsubscribe(Consumer<? super InputStream> subscriber) {
         subscribers.remove(subscriber);
+    }
+
+    @Override
+    public void close() throws IOException {
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

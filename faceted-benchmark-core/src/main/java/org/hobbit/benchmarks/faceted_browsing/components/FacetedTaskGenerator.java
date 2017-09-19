@@ -158,6 +158,7 @@ public class FacetedTaskGenerator
 
     @Override
     public void close() throws IOException {
+        streamManager.close();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 
         fromDataGenerator.unsubscribe(streamManager::handleIncomingData);

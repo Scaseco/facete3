@@ -108,43 +108,38 @@ public class DataGeneratorFacetedBrowsing
         AtomicLong batchCount = new AtomicLong();
 
         ChunkedProtocolWriter protocol = new ChunkedProtocolWriterSimple(666);
-        OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteChannel(protocol, channel, null);
 
         //Stream<Triple> stream = Streams.stream(it);
-        StreamUtils
-            .mapToBatch(stream, batchSize)
-            .peek(x -> batchCount.incrementAndGet())
-            .map(GraphUtils::toMemGraph)
-            .peek(graph -> recordCount.addAndGet(graph.size()))
-            .map(ModelFactory::createModelForGraph)
-            .map(batchModel -> {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                RDFDataMgr.write(baos, batchModel, RDFFormat.TURTLE);
-                byte[] r = baos.toByteArray();
-                return r;
-            })
-            .onClose(() -> { try {
-                out.close();
-                } catch(IOException e) { throw new RuntimeException(e); }
-            })
-            .forEach(data -> {
-                //logger.info("CONVERTED MODEL TO BYTE. SENDING TO TASK");
-                //logger.info("byte array: " + data);
+        try(OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteChannel(protocol, channel, null)) {
+            StreamUtils
+                .mapToBatch(stream, batchSize)
+                .peek(x -> batchCount.incrementAndGet())
+                .map(GraphUtils::toMemGraph)
+                .peek(graph -> recordCount.addAndGet(graph.size()))
+                .map(ModelFactory::createModelForGraph)
+                .map(batchModel -> {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    RDFDataMgr.write(baos, batchModel, RDFFormat.TURTLE);
+                    byte[] r = baos.toByteArray();
+                    return r;
+                })
+                .forEach(data -> {
+                    //logger.info("CONVERTED MODEL TO BYTE. SENDING TO TASK");
+                    //logger.info("byte array: " + data);
 
-                String graphURI = "http://www.example.com/graph";
+                    String graphURI = "http://www.example.com/graph";
 
-                try {
-                    out.write(data);
-                    //channel.write(ByteBuffer.wrap(data));
-                    //sink.accept(RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeString(graphURI)}, data));
-                    //sendDataToSystemAdapter(RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeString(graphURI)}, data));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        try {
-            out.close();
-        } catch(IOException e) { throw new RuntimeException(e); }
+                    try {
+                        out.write(data);
+                        //channel.write(ByteBuffer.wrap(data));
+                        //sink.accept(RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeString(graphURI)}, data));
+                        //sendDataToSystemAdapter(RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeString(graphURI)}, data));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            out.flush();
+        }
 
         Entry<Long, Long> result = new SimpleEntry<>(recordCount.get(), batchCount.get());
         return result;

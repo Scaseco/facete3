@@ -1,10 +1,11 @@
 package org.hobbit.transfer;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public interface StreamManager
-    extends Publisher<InputStream>
+    extends Publisher<InputStream>, Closeable
 {
     //OutputStream newOutputStream();
 
