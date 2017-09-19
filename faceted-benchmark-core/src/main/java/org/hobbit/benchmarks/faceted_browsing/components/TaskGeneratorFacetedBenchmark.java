@@ -5,7 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -16,7 +19,6 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.Commands;
-import org.hobbit.interfaces.TaskGenerator;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
@@ -29,10 +31,10 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
 @Component
-public class FacetedTaskGenerator
-    implements TaskGenerator
+public class TaskGeneratorFacetedBenchmark
+    extends ComponentBase
 {
-    private static final Logger logger = LoggerFactory.getLogger(FacetedTaskGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmark.class);
 
     @Resource(name="preparationSparqlService")
     protected SparqlBasedSystemService preparationSparqlService;
@@ -46,6 +48,9 @@ public class FacetedTaskGenerator
     @Resource(name="dg2tg")
     protected Publisher<ByteBuffer> fromDataGenerator;
 
+    @Resource(name="tg2sa")
+    protected WritableByteChannel toSystemAdater;
+
 
     //@Resource(name="referenceSparqlService")
     //protected SparqlBasedSystemService referenceSparqlService;
@@ -55,6 +60,10 @@ public class FacetedTaskGenerator
     protected ServiceManager serviceManager;
 
     protected StreamManager streamManager;
+
+
+    // The generated tasks; we should use file persistence for scaling in the general case
+    protected Collection<String> generatedTasks = new ArrayList<>();
 
     @Override
     public void init() throws Exception {
@@ -116,6 +125,7 @@ public class FacetedTaskGenerator
 
             tasks.forEach(task -> {
                 System.out.println("Generated task: " + task);
+                generatedTasks.add(task);
             });
 
 
@@ -134,27 +144,54 @@ public class FacetedTaskGenerator
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
 
+
+        commandPublisher.subscribe((buffer) -> {
+            streamManager.handleIncomingData(buffer.duplicate());
+
+            if(buffer.hasRemaining()) {
+                byte cmd = buffer.get(0);
+                if(cmd == BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL) {
+                    sendOutTasksToSystemAdapter();
+                }
+            }
+        });
+
+    }
+
+
+    protected void sendOutTasksToSystemAdapter() {
+        try(Stream<String> taskStream = generatedTasks.stream()) {
+
+            // Pretend we have a stream of tasks because this is what it should eventually be
+            taskStream.forEach(task -> {
+                try {
+                    toSystemAdater.write(ByteBuffer.wrap(task.getBytes(StandardCharsets.UTF_8)));
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
     }
 
 
-    @Override
-    public void receiveCommand(byte command, byte[] data) {
-        streamManager.handleIncomingData(ByteBuffer.wrap(data));
-    }
+//    @Override
+//    public void receiveCommand(byte command, byte[] data) {
+//        streamManager.handleIncomingData(ByteBuffer.wrap(data));
+//    }
 
-    /**
-     * This method gets invoked by the data generator
-     */
-    @Override
-    public void generateTask(byte[] data) throws Exception {
-        streamManager.handleIncomingData(ByteBuffer.wrap(data));
-    }
-
-    @Override
-    public void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
-        // TODO Auto-generated method stub
-
-    }
+//    /**
+//     * This method gets invoked by the data generator
+//     */
+//    @Override
+//    public void generateTask(byte[] data) throws Exception {
+//        streamManager.handleIncomingData(ByteBuffer.wrap(data));
+//    }
+//
+//    @Override
+//    public void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
+//        // TODO Auto-generated method stub
+//
+//    }
 
     @Override
     public void close() throws IOException {

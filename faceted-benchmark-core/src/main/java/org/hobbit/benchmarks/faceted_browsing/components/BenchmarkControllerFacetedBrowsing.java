@@ -13,7 +13,6 @@ import javax.annotation.Resource;
 
 import org.hobbit.core.Commands;
 import org.hobbit.interfaces.BenchmarkController;
-import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +20,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
 public class BenchmarkControllerFacetedBrowsing
+    extends ComponentBase
     implements BenchmarkController
 {
     private static final Logger logger = LoggerFactory.getLogger(BenchmarkControllerFacetedBrowsing.class);
@@ -34,18 +34,23 @@ public class BenchmarkControllerFacetedBrowsing
     @Resource(name="systemAdapterServiceFactory")
     protected ServiceFactory<Service> systemAdapterServiceFactory;
 
+    @Resource(name="evaluationModuleServiceFactory")
+    protected ServiceFactory<Service> evaluationModuleServiceFactory;
+
+
     @Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
-
-    // This is the *local* publisher for the receiveCommand method
-    protected PublishingWritableByteChannelSimple commandPublisher = new PublishingWritableByteChannelSimple();
 
     protected ServiceManager serviceManager;
 
 
 
     protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
+    protected Service dataGeneratorService;
+    protected Service taskGeneratorService;
+    protected Service systemAdapterService;
 
+    public static final byte START_BENCHMARK_SIGNAL = 66;
 
     @Override
     public void init() throws Exception {
@@ -56,9 +61,9 @@ public class BenchmarkControllerFacetedBrowsing
         systemUnderTestReadyFuture = PublisherUtils.awaitMessage(commandPublisher,
                 firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
 
-        Service dataGeneratorService = dataGeneratorServiceFactory.get();
-        Service taskGeneratorService = taskGeneratorServiceFactory.get();
-        Service systemAdapterService = systemAdapterServiceFactory.get();
+        dataGeneratorService = dataGeneratorServiceFactory.get();
+        taskGeneratorService = taskGeneratorServiceFactory.get();
+        systemAdapterService = systemAdapterServiceFactory.get();
 
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
@@ -74,18 +79,6 @@ public class BenchmarkControllerFacetedBrowsing
         logger.debug("Normally left BenchmarkController::init()");
     }
 
-    @Override
-    public void receiveCommand(byte command, byte[] data) {
-        logger.info("Seen command: " + command + " with " + data.length + " bytes");
-        ByteBuffer bb = ByteBuffer.wrap(new byte[1 + data.length]).put(command).put(data);
-        bb.rewind();
-
-        try {
-            commandPublisher.write(bb);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public Predicate<ByteBuffer> firstByteEquals(byte b) {
         Predicate<ByteBuffer> result = buffer -> buffer.limit() > 0 && buffer.get(0) == b;
@@ -96,12 +89,6 @@ public class BenchmarkControllerFacetedBrowsing
     public void executeBenchmark() throws Exception {
 
         logger.info("Benchmark execution initiated");
-
-        // Create the waits for the signals before sending the commands
-
-
-//        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
-//        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
 
         CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
@@ -121,8 +108,7 @@ public class BenchmarkControllerFacetedBrowsing
         CompletableFuture<?> preparationPhaseCompletion = CompletableFuture.allOf(
                 dataGenerationFuture,
                 taskGenerationFuture,
-                systemUnderTestReadyFuture
-                );
+                systemUnderTestReadyFuture);
 
         try {
             preparationPhaseCompletion.get(60, TimeUnit.SECONDS);
@@ -133,17 +119,17 @@ public class BenchmarkControllerFacetedBrowsing
 
         System.out.println("ACTUAL BENCHMARK BEGINS NOW");
 
-//
-//        // wait for the data generators to finish their work
-//        LOGGER.info("WAITING FOR DATA GENERATOR ...");
-//        waitForDataGenToFinish();
-//        // wait for the task generators to finish their work
-//        // wait for the system to terminate
-//        waitForTaskGenToFinish();
-//        LOGGER.info("WAITING FOR SYSTEM ...");
-//        waitForSystemToFinish();
-//        this.stopContainer(containerName);
-//
+        // Instruct the task generator(s) to run their tasks
+        commandChannel.write(ByteBuffer.wrap(new byte[]{START_BENCHMARK_SIGNAL}));
+
+
+        // Stop unneeded services to free resources
+        dataGeneratorService.stopAsync();
+
+
+
+
+
 //
 //        // Create the evaluation module
 //        String evalModuleImageName = "git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image";

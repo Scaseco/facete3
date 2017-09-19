@@ -4,7 +4,7 @@ package org.hobbit.benchmarks.faceted_benchmark.main;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -55,7 +55,7 @@ public class RPCClient {
         // Execute the command
         channel.basicPublish("", requestQueueName, props, message.getBytes("UTF-8"));
 
-        StreamManager sm = new InputStreamManagerImpl(null);
+        StreamManager sm = new InputStreamManagerImpl((WritableByteChannel)null);
 
         sm.subscribe((in) -> {
             System.out.println("Got a data stream");

@@ -1,6 +1,10 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -8,6 +12,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.annotation.Resource;
@@ -16,6 +21,7 @@ import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.hobbit.core.Commands;
@@ -28,8 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Streams;
+
 @Component
 public class DataGeneratorFacetedBrowsing
+    extends ComponentBase
     implements DataGenerator
 {
     private static final Logger logger = LoggerFactory.getLogger(DataGeneratorFacetedBrowsing.class);
@@ -53,46 +62,71 @@ public class DataGeneratorFacetedBrowsing
     @Override
     public void init() throws Exception {
         logger.debug("Data generator init");
-    }
 
-    @Override
-    public void receiveCommand(byte command, byte[] data) {
-        logger.debug("Seen command: " + command);
-        if(command == Commands.DATA_GENERATOR_START_SIGNAL) {
-            try {
-                generateData();
-            } catch(Exception e) {
-                 throw new RuntimeException(e);
+        commandPublisher.subscribe((buffer) -> {
+            if(buffer.hasRemaining()) {
+                byte cmd = buffer.get(0);
+                if(cmd == Commands.DATA_GENERATOR_START_SIGNAL) {
+                    try {
+                        generateData();
+                    } catch(Exception e) {
+                         throw new RuntimeException(e);
+                    }
+                }
             }
-        }
-
-//        if (command == (byte) 150 ) {
-//            byte[] emptyByte = {};
-//            try {
-//                // tell the task generator to start
-//                sendDataToTaskGenerator(emptyByte);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            generateTasks.release();
-//        }
+        });
     }
+
+//    @Override
+//    public void receiveCommand(byte command, byte[] data) {
+//        logger.debug("Seen command: " + command);
+//        if(command == Commands.DATA_GENERATOR_START_SIGNAL) {
+//            try {
+//                generateData();
+//            } catch(Exception e) {
+//                 throw new RuntimeException(e);
+//            }
+//        }
+//
+////        if (command == (byte) 150 ) {
+////            byte[] emptyByte = {};
+////            try {
+////                // tell the task generator to start
+////                sendDataToTaskGenerator(emptyByte);
+////            } catch (IOException e) {
+////                e.printStackTrace();
+////            }
+////            generateTasks.release();
+////        }
+//    }
 
 
 //        streamManager.handleIncomingData(ByteBuffer.wrap(data));
 
+
     @Override
     public void generateData() throws Exception {
         logger.info("Data generator started.");
-        {
-            Stream<Triple> triples = tripleStreamSupplier.get();
-            sendTriples(triples, batchSize, toTaskGenerator);
-        }
 
-        {
-//            Stream<Triple> triples = tripleStreamSupplier.get();
-//            sendTriples(triples, batchSize, toSystemAdatper);
-        }
+        // Generate the data once and store it in a temp file
+        // TODO Add a flag whether to cache in a file
+        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing", ".nt");
+        datasetFile.deleteOnExit();
+        Stream<Triple> triples = tripleStreamSupplier.get();
+        RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), triples.iterator());
+
+        Supplier<Stream<Triple>> triplesFromCache = () -> {
+            try {
+                return Streams.stream(RDFDataMgr.createIteratorTriples(new FileInputStream(datasetFile), Lang.NTRIPLES, "http://example.org/"));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator);
+        sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper);
+
+        datasetFile.delete();
 
         try {
             commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));

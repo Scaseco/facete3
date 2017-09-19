@@ -2,9 +2,11 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.PublishingWritableByteChannel;
@@ -31,16 +33,20 @@ public class HobbitLocalConfig {
         return new PublishingWritableByteChannelSimple();
     }
 
-    @Bean
+    @Bean(name={"dg2sa","dg2saPub"})
     public PublishingWritableByteChannel dg2sa() {
         return new PublishingWritableByteChannelSimple();
     }
 
-    @Bean
+    @Bean(name={"tg2sa","tg2saPub"})
     public PublishingWritableByteChannel tg2sa() {
         return new PublishingWritableByteChannelSimple();
     }
 
+    @Bean(name={"sa2es","sa2esPub"})
+    public PublishingWritableByteChannel sa2es() {
+        return new PublishingWritableByteChannelSimple();
+    }
 
     @Bean
     public ServiceFactory<Service> benchmarkControllerServiceFactory() {
@@ -72,14 +78,30 @@ public class HobbitLocalConfig {
 
     @Bean
     public ServiceFactory<Service> taskGeneratorServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(FacetedTaskGenerator.class);
+        return new LocalHobbitComponentServiceFactory<>(TaskGeneratorFacetedBenchmark.class);
     }
 
     @Bean
-    public ServiceFactory<Service> systemUnderTestServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(FacetedTaskGenerator.class);
+    public ServiceFactory<Service> systemAdapterServiceFactory() {
+        return new LocalHobbitComponentServiceFactory<>(SystemAdapterRDFConnection.class);
     }
 
+
+    /**
+     * The RDF connection supplier to use by the system adapter
+     *
+     * @return
+     */
+    @Bean
+    public Supplier<RDFConnection> systemUnderTestRdfConnectionSupplier() {
+        return () -> null;
+    }
+
+
+    @Bean
+    public ServiceFactory<Service> evaluationModuleServiceFactory() {
+        return new LocalHobbitComponentServiceFactory<>(EvaluationModuleFacetedBenchmark.class);
+    }
 
     @Bean
     public SparqlBasedSystemService preparationSparqlService() {
