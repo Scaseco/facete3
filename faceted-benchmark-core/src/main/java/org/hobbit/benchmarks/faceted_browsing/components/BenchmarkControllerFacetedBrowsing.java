@@ -1,10 +1,10 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -34,6 +34,7 @@ public class BenchmarkControllerFacetedBrowsing
     @Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
 
+    // This is the *local* publisher for the receiveCommand method
     protected PublishingWritableByteChannelSimple commandPublisher = new PublishingWritableByteChannelSimple();
 
     protected ServiceManager serviceManager;
@@ -47,16 +48,15 @@ public class BenchmarkControllerFacetedBrowsing
         Service dataGeneratorService = dataGeneratorServiceFactory.get();
         Service taskGeneratorService = taskGeneratorServiceFactory.get();
 
-//        dataGeneratorService.startAsync();
-//        taskGeneratorService.startAsync();
-
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
                 taskGeneratorService
         ));
 
-        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
-                60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
+        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
+                serviceManager,
+                60, TimeUnit.SECONDS,
+                60, TimeUnit.SECONDS);
 
         logger.debug("Normally left BenchmarkController::init()");
     }
@@ -64,7 +64,14 @@ public class BenchmarkControllerFacetedBrowsing
     @Override
     public void receiveCommand(byte command, byte[] data) {
         logger.info("Seen command: " + command + " with " + data.length + " bytes");
-        commandPublisher.write(src);
+        ByteBuffer bb = ByteBuffer.wrap(new byte[1 + data.length]).put(command).put(data);
+        bb.rewind();
+
+        try {
+            commandPublisher.write(bb);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Predicate<ByteBuffer> firstByteEquals(byte b) {
@@ -77,9 +84,38 @@ public class BenchmarkControllerFacetedBrowsing
 
         logger.info("Benchmark execution initiated");
 
+        // Create the waits for the signals before sending the commands
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+
+//        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
+//        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+
+        CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitRepsonse(
+                commandChannel,
+                ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}),
+                Collections.singleton(commandPublisher),
+                firstByteEquals(Commands.DATA_GENERATION_FINISHED));
+
+        CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitRepsonse(
+                commandChannel,
+                ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}),
+                Collections.singleton(commandPublisher),
+                firstByteEquals(Commands.TASK_GENERATION_FINISHED));
+
+        CompletableFuture<?> preparationPhaseCompletion = CompletableFuture.allOf(dataGenerationFuture, taskGenerationFuture);
+
+        try {
+            preparationPhaseCompletion.get(60, TimeUnit.SECONDS);
+        } catch(Exception e) {
+            throw new RuntimeException("Preparation phase did not complete in time");
+        }
+
+
+        System.out.println("ACTUAL BENCHMARK BEGINS NOW");
+
+//      commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+
+
 
 
 //        ByteChannelRequestFactorySimple requestFactory = new ByteChannelRequestFactorySimple(
@@ -88,7 +124,7 @@ public class BenchmarkControllerFacetedBrowsing
 //
         //requestFactory.sendRequestAndAwaitResponse(, timeout, unit)
 
-        CompletableFuture<ByteBuffer> future = PublisherUtils.awaitMessage(commandPublisher, firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
+        //CompletableFuture<ByteBuffer> future = PublisherUtils.awaitMessage(commandPublisher, firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
 
 
 
