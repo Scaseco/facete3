@@ -1,8 +1,11 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.nio.ByteBuffer;
+
 import javax.annotation.Resource;
 
 import org.hobbit.interfaces.BaseComponent;
+import org.hobbit.transfer.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -28,7 +31,7 @@ public class LocalHobbitComponentServiceFactory<T extends BaseComponent>
     protected ApplicationContext ctx;
 
     @Resource(name="commandChannel")
-    protected ObservableByteChannel commandChannel;
+    protected Publisher<ByteBuffer> commandChannel;
 
     public LocalHobbitComponentServiceFactory(Class<T> componentClass) {
         super();

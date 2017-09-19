@@ -29,7 +29,7 @@ public class InputStreamManagerImpl
     protected ChunkedProtocolControl controlProtocol;
 
     protected Map<Object, ReadableByteChannelSimple> openIncomingStreams = new HashMap<>();
-    protected List<Consumer<InputStream>> callbacks = new ArrayList<>();
+    protected List<Consumer<? super InputStream>> subscribers = new ArrayList<>();
 
     protected Consumer<ByteBuffer> controlChannel;
 
@@ -112,11 +112,11 @@ public class InputStreamManagerImpl
                     in = tmp;
                     openIncomingStreams.put(streamId, in);
 
-                    for(Consumer<InputStream> callback : callbacks) {
+                    for(Consumer<? super InputStream> subscriber : subscribers) {
 
                         // TODO This could be a long running action - we should not occupy the fork/join pool
                         InputStream tmpIn = Channels.newInputStream(tmp);
-                        CompletableFuture.runAsync(() -> callback.accept(tmpIn));
+                        CompletableFuture.runAsync(() -> subscriber.accept(tmpIn));
                     }
                 }
             }
@@ -138,13 +138,14 @@ public class InputStreamManagerImpl
     }
 
     @Override
-    public void registerCallback(Consumer<InputStream> callback) {
-        callbacks.add(callback);
+    public Runnable subscribe(Consumer<? super InputStream> subscriber) {
+        subscribers.add(subscriber);
+        return () -> unsubscribe(subscriber);
     }
 
     @Override
-    public void unregisterCallback(Consumer<InputStream> callback) {
-        callbacks.remove(callback);
+    public void unsubscribe(Consumer<? super InputStream> subscriber) {
+        subscribers.remove(subscriber);
     }
 
 }

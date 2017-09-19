@@ -13,6 +13,7 @@ import javax.annotation.Resource;
 
 import org.hobbit.core.Commands;
 import org.hobbit.interfaces.BenchmarkController;
+import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class PseudoHobbitPlatformController
     protected ApplicationContext ctx;
 
     @Autowired
-    protected ObservableByteChannel commandChannel;
+    protected Publisher<ByteBuffer> commandChannel;
 
     @Resource(name="benchmarkControllerServiceFactory")
     protected ServiceFactory<Service> benchmarkControllerServiceFactory;

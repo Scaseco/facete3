@@ -57,7 +57,7 @@ public class RPCClient {
 
         StreamManager sm = new InputStreamManagerImpl(null);
 
-        sm.registerCallback((in) -> {
+        sm.subscribe((in) -> {
             System.out.println("Got a data stream");
 
             int[] count = {0};

@@ -1,15 +1,19 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javax.annotation.Resource;
 
 import org.hobbit.core.Commands;
 import org.hobbit.interfaces.BenchmarkController;
+import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +34,7 @@ public class BenchmarkControllerFacetedBrowsing
     @Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
 
+    protected PublishingWritableByteChannelSimple commandPublisher = new PublishingWritableByteChannelSimple();
 
     protected ServiceManager serviceManager;
 
@@ -59,6 +64,12 @@ public class BenchmarkControllerFacetedBrowsing
     @Override
     public void receiveCommand(byte command, byte[] data) {
         logger.info("Seen command: " + command + " with " + data.length + " bytes");
+        commandPublisher.write(src);
+    }
+
+    public Predicate<ByteBuffer> firstByteEquals(byte b) {
+        Predicate<ByteBuffer> result = buffer -> buffer.limit() > 0 && buffer.get(0) == b;
+        return result;
     }
 
     @Override
@@ -69,6 +80,20 @@ public class BenchmarkControllerFacetedBrowsing
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+
+
+//        ByteChannelRequestFactorySimple requestFactory = new ByteChannelRequestFactorySimple(
+//                commandChannel,
+//                Arrays.asList(commandChannel));
+//
+        //requestFactory.sendRequestAndAwaitResponse(, timeout, unit)
+
+        CompletableFuture<ByteBuffer> future = PublisherUtils.awaitMessage(commandPublisher, firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
+
+
+
+
+        //CompletableFuture<ByteBuffer> ByteChannelUtils.awaitMessage(b -> Stream.of(b).map(b::array).test(b.length > 0).test());
 
 
 

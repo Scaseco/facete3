@@ -1,10 +1,14 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.hobbit.interfaces.TripleStreamSupplier;
+import org.hobbit.transfer.Publisher;
+import org.hobbit.transfer.PublishingWritableByteChannel;
+import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 
@@ -13,28 +17,28 @@ import com.google.common.util.concurrent.Service;
 
 public class HobbitLocalConfig {
     @Bean
-    public ObservableByteChannel commandChannel() {
-        return new ObservableByteChannel();
+    public PublishingWritableByteChannel commandChannel() {
+        return new PublishingWritableByteChannelSimple();
     }
 
     @Bean
-    public ObservableByteChannel dataChannel() {
-        return new ObservableByteChannel();
+    public PublishingWritableByteChannel dataChannel() {
+        return new PublishingWritableByteChannelSimple();
     }
 
     @Bean
-    public ObservableByteChannel dg2tg() {
-        return new ObservableByteChannel();
+    public PublishingWritableByteChannel dg2tg() {
+        return new PublishingWritableByteChannelSimple();
     }
 
     @Bean
-    public ObservableByteChannel dg2sa() {
-        return new ObservableByteChannel();
+    public PublishingWritableByteChannel dg2sa() {
+        return new PublishingWritableByteChannelSimple();
     }
 
     @Bean
-    public ObservableByteChannel tg2sa() {
-        return new ObservableByteChannel();
+    public PublishingWritableByteChannel tg2sa() {
+        return new PublishingWritableByteChannelSimple();
     }
 
 
@@ -49,9 +53,9 @@ public class HobbitLocalConfig {
      * @return
      */
     @Bean
-    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandChannel") ObservableByteChannel commandChannel) {
+    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandChannel") Publisher<ByteBuffer> commandChannel) {
         PseudoHobbitPlatformController result = new PseudoHobbitPlatformController() ;//BenchmarkControllerFacetedBrowsing.class);
-        commandChannel.addObserver(result);
+        commandChannel.subscribe(result);
         return result;
     }
 

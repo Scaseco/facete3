@@ -2,9 +2,10 @@ package org.hobbit.transfer;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.function.Consumer;
 
-public interface StreamManager {
+public interface StreamManager
+    extends Publisher<InputStream>
+{
     //OutputStream newOutputStream();
 
     //boolean isStartOfNewStream(ByteBuffer data);
@@ -23,6 +24,6 @@ public interface StreamManager {
     /**
      * Register a callback whenever a new stream is encountered
      */
-    void registerCallback(Consumer<InputStream> callback);
-    void unregisterCallback(Consumer<InputStream> callback);
+//    void subscribe(Consumer<? super InputStream> callback);
+//    void unsubscribe(Consumer<InputStream> callback);
 }

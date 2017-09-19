@@ -17,6 +17,7 @@ import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.interfaces.TaskGenerator;
 import org.hobbit.transfer.InputStreamManagerImpl;
+import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class FacetedTaskGenerator
     protected WritableByteChannel dataChannel;
 
     @Resource(name="dg2tg")
-    protected ObservableByteChannel fromDataGenerator;
+    protected Publisher<ByteBuffer> fromDataGenerator;
 
 
     //@Resource(name="referenceSparqlService")
@@ -68,7 +69,7 @@ public class FacetedTaskGenerator
         streamManager = new InputStreamManagerImpl(commandChannel);
 
         //Consumer<ByteBuffer> fromDataGeneratorObserver
-        fromDataGenerator.addObserver(streamManager::handleIncomingData);
+        fromDataGenerator.subscribe(streamManager::handleIncomingData);
 
         /*
          * The protocol here is:
@@ -85,7 +86,7 @@ public class FacetedTaskGenerator
          * As we have served out duty then, we can stop the services
          *
          */
-        streamManager.registerCallback((in) -> {
+        streamManager.subscribe((in) -> {
             logger.debug("Data stream from data generator received");
 
             RDFConnection conn = preparationSparqlService.createDefaultConnection();
@@ -151,6 +152,6 @@ public class FacetedTaskGenerator
     public void close() throws IOException {
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 
-        fromDataGenerator.removeObserver(streamManager::handleIncomingData);
+        fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
     }
 }

@@ -7,6 +7,7 @@ import javax.annotation.Resource;
 
 import org.apache.commons.io.IOUtils;
 import org.hobbit.interfaces.BaseComponent;
+import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,14 +34,14 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     protected ApplicationContext ctx;
 
     @Resource(name="commandChannel")
-    protected ObservableByteChannel commandChannel;
+    protected Publisher<ByteBuffer> commandChannel;
 
 
     protected transient T component;
     protected transient Consumer<ByteBuffer> observer;
 
     public HobbitLocalComponentService(Class<T> componentClass, ApplicationContext ctx,
-            ObservableByteChannel commandChannel) {
+            Publisher<ByteBuffer> commandChannel) {
         super();
         this.componentClass = componentClass;
         this.ctx = ctx;
@@ -60,7 +61,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
         observer = buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, component::receiveCommand);
 
-        commandChannel.addObserver(observer);
+        commandChannel.subscribe(observer);
 
         component.init();
         logger.debug("Successfully started local component of type " + componentClass);
@@ -72,6 +73,6 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         IOUtils.closeQuietly(component);
 
         // After the benchmark controller served its purpose, deregister it from events
-        commandChannel.removeObserver(observer);
+        commandChannel.unsubscribe(observer);
     }
 }
