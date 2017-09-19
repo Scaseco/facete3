@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 
@@ -88,6 +87,8 @@ public class VirtuosoSystemService
         // Attempt to read the ini file
         virtIni = new Ini(virtIniPath.toFile());
         virtIniPrefs = new IniPreferences(virtIni);
+
+        setOutputSink(logger::debug);
 
         super.startUp();
     }

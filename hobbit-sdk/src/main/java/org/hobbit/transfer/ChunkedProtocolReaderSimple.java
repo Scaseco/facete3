@@ -35,7 +35,7 @@ public class ChunkedProtocolReaderSimple
     // If we do not want to commit to a specific stream id length, we could just
     // return the bytes (or byte region) of the id
     public Object getStreamId(ByteBuffer byteBuffer) {
-        long streamId = byteBuffer.getInt(8);
+        int streamId = byteBuffer.getInt(8);
         return streamId;
     }
 

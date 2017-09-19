@@ -30,7 +30,7 @@ public class ChunkedProtocolControlSimple
 
     @Override
     public Object getStreamId(ByteBuffer buffer) {
-        long result = buffer.getLong(8);
+        int result = buffer.getInt(8);
         return result;
     }
 
@@ -50,7 +50,7 @@ public class ChunkedProtocolControlSimple
     public ByteBuffer write(ByteBuffer buffer, Object streamId, byte message) {
         buffer.rewind();
         buffer.putLong(MAGIC_STREAM_CODE);
-        buffer.putInt((Integer)streamId);
+        buffer.putInt(((Number)streamId).intValue());
         buffer.put(message);
         return buffer;
     }

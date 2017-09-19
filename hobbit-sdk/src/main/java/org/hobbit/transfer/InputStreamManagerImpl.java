@@ -6,10 +6,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
@@ -25,11 +27,13 @@ import java.util.function.Consumer;
 public class InputStreamManagerImpl
     implements StreamManager
 {
+    protected ExecutorService executorService = Executors.newCachedThreadPool();
+
     protected ChunkedProtocolReader readProtocol;
     protected ChunkedProtocolControl controlProtocol;
 
     protected Map<Object, ReadableByteChannelSimple> openIncomingStreams = new HashMap<>();
-    protected List<Consumer<? super InputStream>> subscribers = new ArrayList<>();
+    protected Collection<Consumer<? super InputStream>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
 
     protected Consumer<ByteBuffer> controlChannel;
 
@@ -112,11 +116,18 @@ public class InputStreamManagerImpl
                     in = tmp;
                     openIncomingStreams.put(streamId, in);
 
-                    for(Consumer<? super InputStream> subscriber : subscribers) {
+                    // This is the event to a client that there exists a new input stream.
+                    // This runs is a separate thread
+                    for(Consumer<? super InputStream> subscriber : IterableUtils.synchronizedCopy(subscribers)) {
 
                         // TODO This could be a long running action - we should not occupy the fork/join pool
                         InputStream tmpIn = Channels.newInputStream(tmp);
-                        CompletableFuture.runAsync(() -> subscriber.accept(tmpIn));
+                        //CompletableFuture.runAsync(() -> {
+                        executorService.submit(() -> {
+                            subscriber.accept(tmpIn);
+                        });
+
+                        //});
                     }
                 }
             }

@@ -90,13 +90,20 @@ public class BenchmarkControllerFacetedBrowsing
 //        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 //        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
 
-        CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitRepsonse(
+        CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
                 ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}),
                 Collections.singleton(commandPublisher),
                 firstByteEquals(Commands.DATA_GENERATION_FINISHED));
 
-        CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitRepsonse(
+
+        // Wait for data generation to finish
+
+
+        // Wait
+
+
+        CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
                 ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}),
                 Collections.singleton(commandPublisher),

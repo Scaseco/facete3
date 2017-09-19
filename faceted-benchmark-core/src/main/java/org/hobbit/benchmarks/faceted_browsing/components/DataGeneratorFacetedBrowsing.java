@@ -90,8 +90,8 @@ public class DataGeneratorFacetedBrowsing
         }
 
         {
-            Stream<Triple> triples = tripleStreamSupplier.get();
-            sendTriples(triples, batchSize, toSystemAdatper);
+//            Stream<Triple> triples = tripleStreamSupplier.get();
+//            sendTriples(triples, batchSize, toSystemAdatper);
         }
 
         try {
@@ -102,7 +102,7 @@ public class DataGeneratorFacetedBrowsing
 
     }
 
-    public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, WritableByteChannel channel) {
+    public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, WritableByteChannel channel) throws IOException {
 
         AtomicLong recordCount = new AtomicLong();
         AtomicLong batchCount = new AtomicLong();
@@ -123,7 +123,10 @@ public class DataGeneratorFacetedBrowsing
                 byte[] r = baos.toByteArray();
                 return r;
             })
-            .onClose(() -> { try { out.close(); } catch(IOException e) { throw new RuntimeException(e); }})
+            .onClose(() -> { try {
+                out.close();
+                } catch(IOException e) { throw new RuntimeException(e); }
+            })
             .forEach(data -> {
                 //logger.info("CONVERTED MODEL TO BYTE. SENDING TO TASK");
                 //logger.info("byte array: " + data);
@@ -139,6 +142,9 @@ public class DataGeneratorFacetedBrowsing
                     throw new RuntimeException(e);
                 }
             });
+        try {
+            out.close();
+        } catch(IOException e) { throw new RuntimeException(e); }
 
         Entry<Long, Long> result = new SimpleEntry<>(recordCount.get(), batchCount.get());
         return result;

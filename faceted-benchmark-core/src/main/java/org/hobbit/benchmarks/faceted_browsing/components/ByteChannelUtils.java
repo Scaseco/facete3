@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import org.hobbit.transfer.Publisher;
 
 public class ByteChannelUtils {
-    public static CompletableFuture<ByteBuffer> sendMessageAndAwaitRepsonse(WritableByteChannel dataChannel, ByteBuffer msg, Collection<Publisher<ByteBuffer>> publishers, Predicate<ByteBuffer> responseCondition) throws IOException {
+    public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, ByteBuffer msg, Collection<Publisher<ByteBuffer>> publishers, Predicate<ByteBuffer> responseCondition) throws IOException {
         CompletableFuture<ByteBuffer> result = PublisherUtils.awaitMessage(publishers, responseCondition);
 
         try {

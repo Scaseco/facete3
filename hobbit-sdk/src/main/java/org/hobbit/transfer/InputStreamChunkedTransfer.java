@@ -74,6 +74,8 @@ public class InputStreamChunkedTransfer
                 }
             }
 
+            System.out.println("Read chunk");
+
             int toRead = Math.min(remaining, available);
             result += toRead;
             currentBuffer.get(b, off, toRead);

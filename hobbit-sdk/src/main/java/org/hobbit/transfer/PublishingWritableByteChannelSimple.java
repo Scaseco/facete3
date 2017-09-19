@@ -3,14 +3,16 @@ package org.hobbit.transfer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
 public class PublishingWritableByteChannelSimple
     implements PublishingWritableByteChannel
 {
-    protected List<Consumer<? super ByteBuffer>> subscribers = Collections.synchronizedList(new ArrayList<>());
+    protected Collection<Consumer<? super ByteBuffer>> subscribers = Collections.synchronizedList(new ArrayList<>());
+
+    //protected ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Override
     public boolean isOpen() {
@@ -23,20 +25,12 @@ public class PublishingWritableByteChannelSimple
 
     @Override
     public int write(ByteBuffer src) throws IOException {
-        /*
-         * Prevent concurrent modification exceptions when subscribers change during event processing
-         */
-        List<Consumer<? super ByteBuffer>> safeSubscribers;
-        synchronized(subscribers) {
-            safeSubscribers = new ArrayList<>(subscribers);
+
+        for(Consumer<? super ByteBuffer> subscriber : IterableUtils.synchronizedCopy(subscribers)) {
+            ByteBuffer tmp = src.duplicate();
+            subscriber.accept(tmp);
         }
 
-        for(Consumer<? super ByteBuffer> subscriber : safeSubscribers) {
-            //new Thread(() -> {
-                ByteBuffer tmp = src.duplicate();
-                subscriber.accept(tmp);
-            //}).start();
-        }
         return src.position();
     }
 

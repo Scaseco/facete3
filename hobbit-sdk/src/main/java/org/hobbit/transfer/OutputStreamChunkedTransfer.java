@@ -127,7 +127,11 @@ public class OutputStreamChunkedTransfer
 
         //System.out.println("Sending packet: " + protocol.toString(dataBuffer));
         //channel.basicPublish(exchangeName, routingKey, properties, msgData);
-        dataDelegate.accept(dataBuffer);
+        ByteBuffer forward = dataBuffer.duplicate();
+        forward.position(0);
+        forward.limit(dataBuffer.position());
+
+        dataDelegate.accept(forward);
 
         dataBuffer = protocol.nextBuffer(dataBuffer);
         //payloadRegion = protocol.getPayload(dataBuffer);

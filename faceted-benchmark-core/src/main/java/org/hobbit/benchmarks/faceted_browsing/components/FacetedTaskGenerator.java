@@ -102,6 +102,7 @@ public class FacetedTaskGenerator
                 //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
                 tmpFile.delete();
             } catch(Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
             logger.debug("Bulk loading phase complete, starting task generation");
