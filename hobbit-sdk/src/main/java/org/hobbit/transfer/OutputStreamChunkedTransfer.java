@@ -3,6 +3,7 @@ package org.hobbit.transfer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -41,7 +42,25 @@ public class OutputStreamChunkedTransfer
     }
 
 
-    public static OutputStreamChunkedTransfer newInstanceForByteArrayDelegate(
+    public static OutputStreamChunkedTransfer newInstanceForByteChannel(
+            ChunkedProtocolWriter protocol,
+            WritableByteChannel channel,
+            Runnable closeAction) {
+        OutputStreamChunkedTransfer result = new OutputStreamChunkedTransfer(
+                new ChunkedProtocolWriterSimple(666),
+                md -> {
+                    try {
+                        channel.write(md);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                null);
+
+        return result;
+    }
+
+    public static OutputStreamChunkedTransfer newInstanceForByteArrayChannel(
             ChunkedProtocolWriter protocol,
             Consumer<byte[]> dataDelegate,
             Runnable closeAction) {
@@ -106,7 +125,7 @@ public class OutputStreamChunkedTransfer
 //        dataBuffer.rewind();
 //        dataBuffer.get(msgData);
 
-        System.out.println("Sending packet: " + protocol.toString(dataBuffer));
+        //System.out.println("Sending packet: " + protocol.toString(dataBuffer));
         //channel.basicPublish(exchangeName, routingKey, properties, msgData);
         dataDelegate.accept(dataBuffer);
 

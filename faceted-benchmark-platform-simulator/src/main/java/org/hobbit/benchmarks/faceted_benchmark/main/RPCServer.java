@@ -48,7 +48,7 @@ public class RPCServer {
 
                     //OutputStream out = new OutputStreamRabbitMQ(channel, "", properties.getReplyTo(), replyProps, false);
 
-                    OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteArrayDelegate(
+                    OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteArrayChannel(
                             new ChunkedProtocolWriterSimple(666),
                             data -> {
                                 try { channel.basicPublish("", properties.getReplyTo(), replyProps, data);

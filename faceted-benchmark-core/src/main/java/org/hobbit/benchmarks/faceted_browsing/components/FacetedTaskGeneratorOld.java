@@ -246,7 +246,7 @@ public class FacetedTaskGeneratorOld {
      * Initialize generator with files and parameters
      * @author gkatsimpras
      */
-    private void initializeParameters(){
+    public void initializeParameters(){
         initializeReasonClasses();
         this.loadParameterFiles();
         this.computeParameters();

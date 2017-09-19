@@ -1,23 +1,27 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.interfaces.TaskGenerator;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
 
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
@@ -36,6 +40,10 @@ public class FacetedTaskGenerator
 
     @Resource(name="dataChannel")
     protected WritableByteChannel dataChannel;
+
+    @Resource(name="dg2tg")
+    protected ObservableByteChannel fromDataGenerator;
+
 
     //@Resource(name="referenceSparqlService")
     //protected SparqlBasedSystemService referenceSparqlService;
@@ -57,7 +65,10 @@ public class FacetedTaskGenerator
 
         serviceManager = new ServiceManager(services);
 
-        streamManager = new InputStreamManagerImpl(dataChannel);
+        streamManager = new InputStreamManagerImpl(commandChannel);
+
+        //Consumer<ByteBuffer> fromDataGeneratorObserver
+        fromDataGenerator.addObserver(streamManager::handleIncomingData);
 
         /*
          * The protocol here is:
@@ -75,12 +86,39 @@ public class FacetedTaskGenerator
          *
          */
         streamManager.registerCallback((in) -> {
-            serviceManager.stopAsync();
+            logger.debug("Data stream from data generator received");
+
+            RDFConnection conn = preparationSparqlService.createDefaultConnection();
             try {
-                serviceManager.awaitStopped(60, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
+                // Perform bulk load
+                File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
+                tmpFile.deleteOnExit();
+                FileCopyUtils.copy(in, new FileOutputStream(tmpFile));
+
+                // TODO Bulk loading not yet implemented...
+
+                //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
+                tmpFile.delete();
+            } catch(Exception e) {
                 throw new RuntimeException(e);
             }
+            logger.debug("Bulk loading phase complete, starting task generation");
+
+            // Now invoke the actual task generation
+            FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
+
+            gen.setQueryConn(conn);
+            gen.initializeParameters();
+            Stream<String> tasks = gen.generateTasks();
+
+            tasks.forEach(task -> {
+                System.out.println("Generated task: " + task);
+            });
+
+
+            ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+
+
         });
 
 
@@ -111,11 +149,8 @@ public class FacetedTaskGenerator
 
     @Override
     public void close() throws IOException {
-        serviceManager.stopAsync();
-        try {
-            serviceManager.awaitStopped(60, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-        }
+        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+
+        fromDataGenerator.removeObserver(streamManager::handleIncomingData);
     }
 }

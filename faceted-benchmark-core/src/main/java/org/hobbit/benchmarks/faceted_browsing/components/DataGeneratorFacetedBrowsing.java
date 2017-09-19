@@ -2,8 +2,8 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
@@ -21,6 +21,9 @@ import org.apache.jena.riot.RDFFormat;
 import org.hobbit.core.Commands;
 import org.hobbit.interfaces.DataGenerator;
 import org.hobbit.interfaces.TripleStreamSupplier;
+import org.hobbit.transfer.ChunkedProtocolWriter;
+import org.hobbit.transfer.ChunkedProtocolWriterSimple;
+import org.hobbit.transfer.OutputStreamChunkedTransfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -94,6 +97,9 @@ public class DataGeneratorFacetedBrowsing
         AtomicLong recordCount = new AtomicLong();
         AtomicLong batchCount = new AtomicLong();
 
+        ChunkedProtocolWriter protocol = new ChunkedProtocolWriterSimple(666);
+        OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteChannel(protocol, channel, null);
+
         //Stream<Triple> stream = Streams.stream(it);
         StreamUtils
             .mapToBatch(stream, batchSize)
@@ -107,14 +113,16 @@ public class DataGeneratorFacetedBrowsing
                 byte[] r = baos.toByteArray();
                 return r;
             })
+            .onClose(() -> { try { out.close(); } catch(IOException e) { throw new RuntimeException(e); }})
             .forEach(data -> {
-                logger.info("CONVERTED MODEL TO BYTE. SENDING TO TASKG");
-                logger.info("byte array: " + data);
+                //logger.info("CONVERTED MODEL TO BYTE. SENDING TO TASK");
+                //logger.info("byte array: " + data);
 
                 String graphURI = "http://www.example.com/graph";
 
                 try {
-                    channel.write(ByteBuffer.wrap(data));
+                    out.write(data);
+                    //channel.write(ByteBuffer.wrap(data));
                     //sink.accept(RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeString(graphURI)}, data));
                     //sendDataToSystemAdapter(RabbitMQUtils.writeByteArrays(null, new byte[][]{RabbitMQUtils.writeString(graphURI)}, data));
                 } catch (Exception e) {
@@ -128,8 +136,6 @@ public class DataGeneratorFacetedBrowsing
 
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
-
     }
 
 }
