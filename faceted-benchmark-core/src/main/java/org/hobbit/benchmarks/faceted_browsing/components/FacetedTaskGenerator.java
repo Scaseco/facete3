@@ -15,6 +15,7 @@ import javax.annotation.Resource;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.hobbit.core.Commands;
 import org.hobbit.interfaces.TaskGenerator;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
@@ -39,8 +40,8 @@ public class FacetedTaskGenerator
     @Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
 
-    @Resource(name="dataChannel")
-    protected WritableByteChannel dataChannel;
+//    @Resource(name="dataChannel")
+//    protected WritableByteChannel dataChannel;
 
     @Resource(name="dg2tg")
     protected Publisher<ByteBuffer> fromDataGenerator;
@@ -119,6 +120,12 @@ public class FacetedTaskGenerator
 
             ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 
+
+            try {
+                commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
         });
 

@@ -36,6 +36,9 @@ public class DataGeneratorFacetedBrowsing
 
     protected int batchSize = 10000;
 
+    @Resource(name="commandChannel")
+    protected WritableByteChannel commandChannel;
+
     @Resource
     protected TripleStreamSupplier tripleStreamSupplier;
 
@@ -90,6 +93,13 @@ public class DataGeneratorFacetedBrowsing
             Stream<Triple> triples = tripleStreamSupplier.get();
             sendTriples(triples, batchSize, toSystemAdatper);
         }
+
+        try {
+            commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, WritableByteChannel channel) {
