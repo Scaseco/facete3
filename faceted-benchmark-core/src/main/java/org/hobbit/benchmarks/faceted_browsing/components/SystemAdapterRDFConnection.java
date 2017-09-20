@@ -1,17 +1,28 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Resource;
 
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.Commands;
 import org.hobbit.transfer.InputStreamManagerImpl;
@@ -21,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ServiceManager;
 
 /**
@@ -97,11 +110,46 @@ public class SystemAdapterRDFConnection
                 60, TimeUnit.SECONDS);
 
 
-        fromDataGenerator.subscribe((byteBuffer) -> {
-            System.out.println("Got a message form the data generator");
+        fromDataGenerator.subscribe(byteBuffer -> {
+            // non-stream messages from the data generator are ignored
+            // System.out.println("Got a message form the data generator");
         });
 
-        fromTaskGenerator.subscribe((byteBuffer) -> {
+        fromTaskGenerator.subscribe(byteBuffer -> {
+            String sparqlStmtStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
+
+            Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, true);
+
+            SparqlStmt stmt = parser.apply(sparqlStmtStr);
+
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            if(stmt.isQuery()) {
+                try(QueryExecution qe = rdfConnection.query(stmt.getOriginalString())) {
+                    ResultSet rs = qe.execSelect();
+                    ResultSetFormatter.outputAsJSON(out, rs);
+                } catch(Exception e) {
+                    logger.warn("Sparql select query failed", e);
+
+                    try {
+                        out.write("{\"head\":{\"vars\":[\"xxx\"]},\"results\":{\"bindings\":[{\"xxx\":{\"type\":\"literal\",\"value\":\"XXX\"}}]}}".getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException f) {}
+                }
+            } else if(stmt.isUpdateRequest()) {
+                try {
+                    rdfConnection.update(stmt.getOriginalString());
+                } catch(Exception e) {
+                    try {
+                        out.write("{\"head\":{\"vars\":[\"xxx\"]},\"results\":{\"bindings\":[{\"xxx\":{\"type\":\"literal\",\"value\":\"XXX\"}}]}}".getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException f) {}
+                    logger.warn("Sparql update query failed", e);
+                }
+            }
+
+            long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
+
+            //sendResultToEvalStorage(taskId, outputStream.toByteArray());
+
             System.out.println("Got a message form the task generator");
         });
 
