@@ -1,5 +1,7 @@
 package org.hobbit.core.services;
 
+import java.util.Map;
+
 /**
  * Base implementation for creating docker services.
  *
@@ -16,4 +18,9 @@ public interface DockerServiceFactory<T extends DockerService>
 {
     String getImageName();
     DockerServiceFactory<T> setImageName(String imageName);
+
+
+    Map<String, String> getEnvironment();
+    DockerServiceFactory<T> setEnvironment(Map<String, String> environment);
+
 }

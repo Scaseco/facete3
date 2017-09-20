@@ -1,10 +1,14 @@
 package org.hobbit.core.services;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+import com.google.common.base.MoreObjects;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.ContainerConfig.Builder;
 
 /**
  * Implementation of DockerServiceFactory for docker containers backed by spotify's docker client
@@ -41,6 +45,15 @@ public class DockerServiceFactoryDockerClient
         return this;
     }
 
+    public ContainerConfig.Builder getContainerConfigBuilder() {
+        return containerConfigBuilder;
+    }
+
+    public DockerServiceFactoryDockerClient setContainerConfigBuilder(ContainerConfig.Builder containerConfigBuilder) {
+        this.containerConfigBuilder = containerConfigBuilder;
+        return this;
+    }
+
 
     public String getImageName() {
         return containerConfigBuilder.build().image();
@@ -51,15 +64,32 @@ public class DockerServiceFactoryDockerClient
         return this;
     }
 
+    @Override
+    public Map<String, String> getEnvironment() {
+        List<String> env = containerConfigBuilder.build().env();
+        if(env == null) {
+            env = Collections.emptyList();
+        }
 
-    public ContainerConfig.Builder getContainerConfigBuilder() {
-        return containerConfigBuilder;
+        Map<String, String> result = env.stream()
+            .map(e -> e.split("=", 2))
+            .collect(Collectors.toMap(
+                    e -> e[0],
+                    e -> e.length <= 1 ? "" : e[1]));
+
+        return result;
     }
 
-    public DockerServiceFactoryDockerClient setContainerConfigBuilder(ContainerConfig.Builder containerConfigBuilder) {
-        this.containerConfigBuilder = containerConfigBuilder;
+    @Override
+    public DockerServiceFactory<DockerServiceDockerClient> setEnvironment(Map<String, String> environment) {
+        List<String> env = environment.entrySet().stream()
+                .map(e -> e.getKey() + "=" + MoreObjects.firstNonNull(e.getValue(), ""))
+                .collect(Collectors.toList());
+
+        containerConfigBuilder.env(env);
         return this;
     }
+
 
     @Override
     public DockerServiceDockerClient get() {

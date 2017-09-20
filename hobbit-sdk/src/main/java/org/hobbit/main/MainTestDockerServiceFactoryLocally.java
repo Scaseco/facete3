@@ -5,9 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hobbit.core.services.DockerService;
 import org.hobbit.core.services.DockerServiceFactoryDockerClient;
 
-import com.google.common.util.concurrent.Service;
+import com.google.common.collect.ImmutableMap;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
@@ -18,6 +19,9 @@ import com.spotify.docker.client.messages.PortBinding;
 public class MainTestDockerServiceFactoryLocally {
     public static void main(String[] args) throws DockerCertificateException, InterruptedException {
         DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
+
+
+//        DefaultDockerClient.builder().s
 
         // Bind container port 443 to an automatically allocated available host
         // port.
@@ -42,14 +46,26 @@ public class MainTestDockerServiceFactoryLocally {
 //        	    .image("busybox").exposedPorts(ports)
 //        	    .cmd("sh", "-c", "while :; do sleep 1; done")
 
-        Service service = dockerServiceFactory
+        DockerService service = dockerServiceFactory
             .setDockerClient(dockerClient)
             .setContainerConfigBuilder(containerConfigBuilder)
             .setImageName("busybox")
             .get();
 
+        Map<String, String> env = ImmutableMap.<String, String>builder()
+                .put("foo", "bar")
+                .put("baz", "")
+                .build();
+
+        dockerServiceFactory.setEnvironment(env);
+
+
+
 
         service.startAsync();
+        System.out.println("Image name: " + service.getImageName());
+        System.out.println("Container Id: " + service.getContainerId());
+        System.out.println("Env: " + dockerServiceFactory.getEnvironment());
 
         Thread.sleep(60000);
 
