@@ -94,8 +94,6 @@ public class SystemAdapterRDFConnection
                 60, TimeUnit.SECONDS,
                 60, TimeUnit.SECONDS);
 
-        logger.debug("Normally left BenchmarkController::init()");
-
 
         fromDataGenerator.subscribe((byteBuffer) -> {
             //System.out.println("Got a message form the data generator");

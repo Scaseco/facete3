@@ -101,45 +101,31 @@ public class TaskGeneratorFacetedBenchmark
             try(InputStream in = tmpIn) {
                 logger.debug("Data stream from data generator received");
 
-                RDFConnection conn = preparationSparqlService.createDefaultConnection();
-                try {
-                    // Perform bulk load
-                    File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
-                    tmpFile.deleteOnExit();
-                    FileCopyUtils.copy(in, new FileOutputStream(tmpFile));
+                try(RDFConnection conn = preparationSparqlService.createDefaultConnection()) {
+                    try {
+                        // Perform bulk load
+                        File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
+                        tmpFile.deleteOnExit();
+                        FileCopyUtils.copy(in, new FileOutputStream(tmpFile));
 
-                    // TODO Bulk loading not yet implemented...
+                        // TODO Bulk loading not yet implemented...
 
-                    //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
-                    tmpFile.delete();
-                } catch(Exception e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
+                        //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
+                        tmpFile.delete();
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                    logger.debug("Bulk loading complete");
                 }
-                logger.debug("Bulk loading phase complete, starting task generation");
 
-                // Now invoke the actual task generation
-                FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
-
-                gen.setQueryConn(conn);
-                gen.initializeParameters();
-                Stream<String> tasks = gen.generateTasks();
-
-                tasks.forEach(task -> {
-                    System.out.println("Generated task: " + task);
-                    generatedTasks.add(task);
-                });
-
-
-                ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
-
-
-                try {
-                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
             } catch (IOException f) {
+                f.printStackTrace();
                 throw new RuntimeException(f);
             }
         });
@@ -149,17 +135,51 @@ public class TaskGeneratorFacetedBenchmark
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
 
 
+
         commandPublisher.subscribe((buffer) -> {
+            // Pass all data with a defensive copy to stream handler
             streamManager.handleIncomingData(buffer.duplicate());
 
             if(buffer.hasRemaining()) {
                 byte cmd = buffer.get(0);
-                if(cmd == BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL) {
+                switch(cmd) {
+                case Commands.TASK_GENERATOR_START_SIGNAL:
+                    try {
+                        runTaskGeneration();
+                        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+                    } catch(Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    break;
+                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
                     sendOutTasksToSystemAdapter();
+                    break;
                 }
             }
         });
 
+        // At this point, the task generator is ready for processing
+        // The message should be sent out by the service wrapper:
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
+    }
+
+    protected void runTaskGeneration() throws IOException {
+
+        // Now invoke the actual task generation
+        FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
+
+        try(RDFConnection conn = preparationSparqlService.createDefaultConnection()) {
+            gen.setQueryConn(conn);
+            gen.initializeParameters();
+            Stream<String> tasks = gen.generateTasks();
+
+            tasks.forEach(task -> {
+                System.out.println("Generated task: " + task);
+                generatedTasks.add(task);
+            });
+        }
+
+        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
     }
 
 

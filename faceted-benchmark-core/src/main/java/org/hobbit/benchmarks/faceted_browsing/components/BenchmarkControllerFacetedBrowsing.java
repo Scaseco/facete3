@@ -90,6 +90,11 @@ public class BenchmarkControllerFacetedBrowsing
 
         logger.info("Benchmark execution initiated");
 
+        /*
+         * Issue: Once the data generator is started, (preprational) data is sent to the task generator
+         *
+         *
+         */
         CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
                 ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}),

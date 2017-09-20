@@ -69,6 +69,13 @@ public class DataGeneratorFacetedBrowsing
                 if(cmd == Commands.DATA_GENERATOR_START_SIGNAL) {
                     try {
                         generateData();
+
+                        try {
+                            commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
                     } catch(Exception e) {
                          throw new RuntimeException(e);
                     }
@@ -104,6 +111,7 @@ public class DataGeneratorFacetedBrowsing
 //        streamManager.handleIncomingData(ByteBuffer.wrap(data));
 
 
+    // TODO Separate actual data generation from sending out platform specific events
     @Override
     public void generateData() throws Exception {
         logger.info("Data generator started.");
@@ -127,13 +135,6 @@ public class DataGeneratorFacetedBrowsing
         sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper);
 
         datasetFile.delete();
-
-        try {
-            commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
     }
 
     public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, WritableByteChannel channel) throws IOException {

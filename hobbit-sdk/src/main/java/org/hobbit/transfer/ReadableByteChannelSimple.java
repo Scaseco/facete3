@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 
 public class ReadableByteChannelSimple
@@ -110,7 +111,9 @@ public class ReadableByteChannelSimple
                     } else {
                         try {
                             while(clientQueue.isEmpty() && !lastBatchSeen && abortException == null) {
+                                //System.out.println("byte channel reader waiting");
                                 wait();
+                                //wait(1000);
                             }
 
                             currentBuffer = clientQueue.poll();
