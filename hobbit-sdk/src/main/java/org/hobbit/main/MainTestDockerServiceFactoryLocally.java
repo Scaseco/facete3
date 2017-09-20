@@ -11,11 +11,12 @@ import com.google.common.util.concurrent.Service;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
+import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 
 public class MainTestDockerServiceFactoryLocally {
-    public static void main(String[] args) throws DockerCertificateException {
+    public static void main(String[] args) throws DockerCertificateException, InterruptedException {
         DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
 
         // Bind container port 443 to an automatically allocated available host
@@ -35,13 +36,22 @@ public class MainTestDockerServiceFactoryLocally {
         HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
 
         DockerServiceFactoryDockerClient dockerServiceFactory = new DockerServiceFactoryDockerClient();
-        dockerServiceFactory.setHostConfig(hostConfig);
 
+        ContainerConfig.Builder containerConfigBuilder = ContainerConfig.builder()
+                .hostConfig(hostConfig);
+//        	    .image("busybox").exposedPorts(ports)
+//        	    .cmd("sh", "-c", "while :; do sleep 1; done")
 
-        Service service = dockerServiceFactory.setImageName("busybox").get();
+        Service service = dockerServiceFactory
+            .setDockerClient(dockerClient)
+            .setContainerConfigBuilder(containerConfigBuilder)
+            .setImageName("busybox")
+            .get();
 
 
         service.startAsync();
+
+        Thread.sleep(60000);
 
         service.stopAsync();
     }

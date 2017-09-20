@@ -2,11 +2,9 @@ package org.hobbit.core.services;
 
 import java.util.Objects;
 
-import com.google.common.collect.Tables;
 import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.messages.HostConfig;
-
-import junit.framework.Assert;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.ContainerConfig.Builder;
 
 /**
  * Implementation of DockerServiceFactory for docker containers backed by spotify's docker client
@@ -15,32 +13,23 @@ import junit.framework.Assert;
  *
  */
 public class DockerServiceFactoryDockerClient
-    extends DockerServiceFactoryBase<DockerServiceDockerClient>
+    implements DockerServiceFactory<DockerServiceDockerClient>
 {
     protected DockerClient dockerClient;
-    protected HostConfig hostConfig;
-
-
-    protected String imageName;
+    protected ContainerConfig.Builder containerConfigBuilder;
 
     public DockerServiceFactoryDockerClient() {
         super();
     }
 
-    public DockerServiceFactoryDockerClient(DockerClient dockerClient) {
+//    public DockerServiceFactoryDockerClient(DockerClient dockerClient) {
+//        this(null, null); //new ContainerCon
+//    }
+
+    public DockerServiceFactoryDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder) {
         super();
         this.dockerClient = dockerClient;
-    }
-
-    public DockerServiceFactoryDockerClient(DockerClient dockerClient, HostConfig hostConfig) {
-        super();
-        this.dockerClient = dockerClient;
-        this.hostConfig = hostConfig;
-    }
-
-    public DockerServiceFactoryDockerClient setImageName(String imageName) {
-        this.imageName = imageName;
-        return this;
+        this.containerConfigBuilder = containerConfigBuilder;
     }
 
     public DockerClient getDockerClient() {
@@ -52,26 +41,34 @@ public class DockerServiceFactoryDockerClient
         return this;
     }
 
-    public HostConfig getHostConfig() {
-        return hostConfig;
+
+    public String getImageName() {
+        return containerConfigBuilder.build().image();
     }
 
-    public DockerServiceFactoryDockerClient setHostConfig(HostConfig hostConfig) {
-        this.hostConfig = hostConfig;
+    public DockerServiceFactoryDockerClient setImageName(String imageName) {
+        containerConfigBuilder.image(imageName);
         return this;
     }
 
-    public String getImageName() {
-        return imageName;
+
+    public ContainerConfig.Builder getContainerConfigBuilder() {
+        return containerConfigBuilder;
+    }
+
+    public DockerServiceFactoryDockerClient setContainerConfigBuilder(ContainerConfig.Builder containerConfigBuilder) {
+        this.containerConfigBuilder = containerConfigBuilder;
+        return this;
     }
 
     @Override
     public DockerServiceDockerClient get() {
         Objects.requireNonNull(dockerClient);
-        Objects.requireNonNull(hostConfig);
-        Objects.requireNonNull(imageName);
+        Objects.requireNonNull(containerConfigBuilder);
 
-        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, hostConfig, imageName);
+        ContainerConfig containerConfig = containerConfigBuilder.build();
+
+        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig);
         return result;
     }
 }

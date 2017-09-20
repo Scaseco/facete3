@@ -11,17 +11,9 @@ package org.hobbit.core.services;
  * @author raven Sep 20, 2017
  *
  */
-public abstract class DockerServiceFactoryBase<T extends DockerService>
-    implements ServiceFactory<T>
+public interface DockerServiceFactory<T extends DockerService>
+    extends ServiceFactory<T>
 {
-    protected String imageName;
-
-    public String getImageName() {
-        return imageName;
-    }
-
-    public DockerServiceFactoryBase<T> setImageName(String imageName) {
-        this.imageName = imageName;
-        return this;
-    }
+    String getImageName();
+    DockerServiceFactory<T> setImageName(String imageName);
 }

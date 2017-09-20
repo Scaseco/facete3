@@ -22,9 +22,7 @@ public class DockerServiceDockerClient
     implements DockerService
 {
     protected DockerClient dockerClient;
-    protected HostConfig hostConfig;
-
-    protected String imageName;
+    protected ContainerConfig containerConfig;
 
 
     // Status fields for running services
@@ -36,21 +34,15 @@ public class DockerServiceDockerClient
     protected String execOutput;
 
 
-    public DockerServiceDockerClient(DockerClient dockerClient, HostConfig hostConfig, String imageName) {
+    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig) {
         super();
         this.dockerClient = dockerClient;
-        this.hostConfig = hostConfig;
-        this.imageName = imageName;
+        this.containerConfig = containerConfig;
     }
 
     @Override
     protected void startUp() throws Exception {
-        ContainerConfig containerConfig = ContainerConfig.builder()
-                .hostConfig(hostConfig)
-                .image(imageName)
-                //.exposedPorts(ports)
-                //.cmd("sh", "-c", "while :; do sleep 1; done")
-                .build();
+
 
         ContainerCreation creation = dockerClient.createContainer(containerConfig);
         String id = creation.id();
@@ -59,12 +51,12 @@ public class DockerServiceDockerClient
         dockerClient.startContainer(id);
 
         // Exec command inside running container with attached STDOUT and STDERR
-        String[] command = null; //{"bash", "-c", "ls"};
-        ExecCreation execCreation = dockerClient.execCreate(
-            id, command, DockerClient.ExecCreateParam.attachStdout(),
-            DockerClient.ExecCreateParam.attachStderr());
-        LogStream output = dockerClient.execStart(execCreation.id());
-        execOutput = output.readFully();
+//        String[] command = null; //{"bash", "-c", "ls"};
+//        ExecCreation execCreation = dockerClient.execCreate(
+//            id, command, DockerClient.ExecCreateParam.attachStdout(),
+//            DockerClient.ExecCreateParam.attachStderr());
+//        LogStream output = dockerClient.execStart(execCreation.id());
+//        execOutput = output.readFully();
     }
 
     @Override
@@ -81,7 +73,8 @@ public class DockerServiceDockerClient
 
     @Override
     public String getImageName() {
-        return imageName;
+        String result = containerConfig.image();
+        return result;
     }
 
     @Override
