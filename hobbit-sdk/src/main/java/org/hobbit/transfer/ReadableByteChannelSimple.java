@@ -20,14 +20,22 @@ public class ReadableByteChannelSimple
     protected boolean isOpen = true;
     protected Runnable closeAction;
 
+    public ReadableByteChannelSimple() {
+        super();
+    }
+
     public ReadableByteChannelSimple(Runnable closeAction) {
         super();
         this.closeAction = closeAction;
     }
 
+    public boolean isDone() {
+        return lastBatchSeen;
+    }
+
     protected void setLastBatchSeen() {
         synchronized(this) {
-            this.lastBatchSeen = true;
+            lastBatchSeen = true;
             notifyAll();
         }
     }
@@ -101,7 +109,7 @@ public class ReadableByteChannelSimple
                         break;
                     } else {
                         try {
-                            while(clientQueue.isEmpty() && !lastBatchSeen) {
+                            while(clientQueue.isEmpty() && !lastBatchSeen && abortException == null) {
                                 wait();
                             }
 

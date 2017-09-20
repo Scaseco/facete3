@@ -110,10 +110,18 @@ public class InputStreamManagerImpl
                 boolean isStartOfStream = readProtocol.isStartOfStream(buffer);
 
                 if(isStartOfStream) {
-                    ReadableByteChannelSimple tmp = new ReadableByteChannelSimple(() -> {
-                        ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
-                        controlChannel.accept(readingAbortedMessage);
-                    });
+                    ReadableByteChannelSimple tmp = new ReadableByteChannelSimple() {
+                        @Override
+                        public void close() throws IOException {
+                            // If the byte channel is closed before completed, send a control message
+                            // to hint any sender to stop sending the stream
+                            if(!isDone()) {
+                                ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
+                                controlChannel.accept(readingAbortedMessage);
+                            }
+                            super.close();
+                        }
+                    };
                     in = tmp;
                     openIncomingStreams.put(streamId, in);
 

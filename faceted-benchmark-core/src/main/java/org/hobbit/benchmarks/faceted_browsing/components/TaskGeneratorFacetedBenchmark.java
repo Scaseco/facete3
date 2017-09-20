@@ -3,6 +3,7 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -96,48 +97,51 @@ public class TaskGeneratorFacetedBenchmark
          * As we have served out duty then, we can stop the services
          *
          */
-        streamManager.subscribe((in) -> {
-            logger.debug("Data stream from data generator received");
+        streamManager.subscribe(tmpIn -> {
+            try(InputStream in = tmpIn) {
+                logger.debug("Data stream from data generator received");
 
-            RDFConnection conn = preparationSparqlService.createDefaultConnection();
-            try {
-                // Perform bulk load
-                File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
-                tmpFile.deleteOnExit();
-                FileCopyUtils.copy(in, new FileOutputStream(tmpFile));
+                RDFConnection conn = preparationSparqlService.createDefaultConnection();
+                try {
+                    // Perform bulk load
+                    File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
+                    tmpFile.deleteOnExit();
+                    FileCopyUtils.copy(in, new FileOutputStream(tmpFile));
 
-                // TODO Bulk loading not yet implemented...
+                    // TODO Bulk loading not yet implemented...
 
-                //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
-                tmpFile.delete();
-            } catch(Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
+                    //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
+                    tmpFile.delete();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+                logger.debug("Bulk loading phase complete, starting task generation");
+
+                // Now invoke the actual task generation
+                FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
+
+                gen.setQueryConn(conn);
+                gen.initializeParameters();
+                Stream<String> tasks = gen.generateTasks();
+
+                tasks.forEach(task -> {
+                    System.out.println("Generated task: " + task);
+                    generatedTasks.add(task);
+                });
+
+
+                ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+
+
+                try {
+                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } catch (IOException f) {
+                throw new RuntimeException(f);
             }
-            logger.debug("Bulk loading phase complete, starting task generation");
-
-            // Now invoke the actual task generation
-            FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
-
-            gen.setQueryConn(conn);
-            gen.initializeParameters();
-            Stream<String> tasks = gen.generateTasks();
-
-            tasks.forEach(task -> {
-                System.out.println("Generated task: " + task);
-                generatedTasks.add(task);
-            });
-
-
-            ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
-
-
-            try {
-                commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
         });
 
 
