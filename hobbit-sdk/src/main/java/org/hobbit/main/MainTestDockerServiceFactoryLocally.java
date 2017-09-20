@@ -57,7 +57,7 @@ public class MainTestDockerServiceFactoryLocally {
                 .put("baz", "")
                 .build();
 
-        dockerServiceFactory.setEnvironment(env);
+        dockerServiceFactory.setLocalEnvironment(env);
 
 
 
@@ -65,7 +65,7 @@ public class MainTestDockerServiceFactoryLocally {
         service.startAsync();
         System.out.println("Image name: " + service.getImageName());
         System.out.println("Container Id: " + service.getContainerId());
-        System.out.println("Env: " + dockerServiceFactory.getEnvironment());
+        System.out.println("Env: " + dockerServiceFactory.getLocalEnvironment());
 
         Thread.sleep(60000);
 

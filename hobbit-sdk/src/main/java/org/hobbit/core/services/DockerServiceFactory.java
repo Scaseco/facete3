@@ -20,7 +20,31 @@ public interface DockerServiceFactory<T extends DockerService>
     DockerServiceFactory<T> setImageName(String imageName);
 
 
-    Map<String, String> getEnvironment();
-    DockerServiceFactory<T> setEnvironment(Map<String, String> environment);
+    /**
+     * Get the local environment of the factory.
+     *
+     *
+     * Local means, that it should NOT return e.g. the system environment
+     * or anything else that is outside of control of this factory.
+     *
+     *
+     * We use the term local enviroment in order for subclasses to support spring's Environment object,
+     * which is at the core of dependency injenction, and it has a proper API
+     * for nesting of property sources
+     *
+     * Under this consideration, the local environment should be the treated as the first property source
+     * of an overall spring environment.
+     *
+     *
+     * @return
+     */
+    Map<String, String> getLocalEnvironment();
+
+    /**
+     *
+     * @param environment
+     * @return
+     */
+    DockerServiceFactory<T> setLocalEnvironment(Map<String, String> environment);
 
 }

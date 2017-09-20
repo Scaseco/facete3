@@ -65,7 +65,7 @@ public class DockerServiceFactoryDockerClient
     }
 
     @Override
-    public Map<String, String> getEnvironment() {
+    public Map<String, String> getLocalEnvironment() {
         List<String> env = containerConfigBuilder.build().env();
         if(env == null) {
             env = Collections.emptyList();
@@ -81,7 +81,7 @@ public class DockerServiceFactoryDockerClient
     }
 
     @Override
-    public DockerServiceFactory<DockerServiceDockerClient> setEnvironment(Map<String, String> environment) {
+    public DockerServiceFactory<DockerServiceDockerClient> setLocalEnvironment(Map<String, String> environment) {
         List<String> env = environment.entrySet().stream()
                 .map(e -> e.getKey() + "=" + MoreObjects.firstNonNull(e.getValue(), ""))
                 .collect(Collectors.toList());
