@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import javax.annotation.Resource;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.BenchmarkController;
 import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;

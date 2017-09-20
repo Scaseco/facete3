@@ -2,6 +2,8 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.util.Map;
 
+import org.hobbit.core.services.ServiceFactory;
+
 import com.google.common.util.concurrent.Service;
 
 /**

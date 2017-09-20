@@ -1,10 +1,11 @@
-package org.hobbit.benchmarks.faceted_browsing.components;
+package org.hobbit.core.services;
 
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.Service;
 
 /**
  * Tag interface for dependency injection
+ *
  *
  * @author raven
  *

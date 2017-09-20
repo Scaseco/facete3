@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.PublishingWritableByteChannel;

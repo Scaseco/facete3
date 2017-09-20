@@ -24,6 +24,8 @@ import org.springframework.util.FileCopyUtils;
 import com.google.common.util.concurrent.ServiceManager;
 
 /**
+ * TODO Rename to something like TaskExecutorSparql
+ *
  * SPARQL based SystemAdapter implementation for Jena's RDFConnection capable systems
  *
  * @author raven Sep 19, 2017
@@ -96,11 +98,11 @@ public class SystemAdapterRDFConnection
 
 
         fromDataGenerator.subscribe((byteBuffer) -> {
-            //System.out.println("Got a message form the data generator");
+            System.out.println("Got a message form the data generator");
         });
 
         fromTaskGenerator.subscribe((byteBuffer) -> {
-            //System.out.println("Got a message form the task generator");
+            System.out.println("Got a message form the task generator");
         });
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));

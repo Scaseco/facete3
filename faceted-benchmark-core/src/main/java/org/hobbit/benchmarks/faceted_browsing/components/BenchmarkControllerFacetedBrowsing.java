@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import javax.annotation.Resource;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
