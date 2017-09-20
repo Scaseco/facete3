@@ -1,24 +1,25 @@
 package org.hobbit.core.services;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
-import com.spotify.docker.client.messages.ExecCreation;
-import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.ContainerInfo;
+import com.spotify.docker.client.messages.ContainerState;
 
 /**
  * A DockerService backed by spotify's docker client
  *
- * Service for
  *
+ * TODO Make scheduler for polling health status configurable, at present it checks every 10 seconds
  *
  * @author raven Sep 20, 2017
  *
  */
 public class DockerServiceDockerClient
-    extends AbstractIdleService
+    extends AbstractScheduledService
     implements DockerService
 {
     protected DockerClient dockerClient;
@@ -26,13 +27,8 @@ public class DockerServiceDockerClient
 
 
     // Status fields for running services
-
     // Container id (requires the service to be running)
     protected String containerId;
-
-
-    protected String execOutput;
-
 
     public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig) {
         super();
@@ -42,13 +38,11 @@ public class DockerServiceDockerClient
 
     @Override
     protected void startUp() throws Exception {
-
-
         ContainerCreation creation = dockerClient.createContainer(containerConfig);
-        String id = creation.id();
+        containerId = creation.id();
 
         // Start container
-        dockerClient.startContainer(id);
+        dockerClient.startContainer(containerId);
 
         // Exec command inside running container with attached STDOUT and STDERR
 //        String[] command = null; //{"bash", "-c", "ls"};
@@ -61,13 +55,10 @@ public class DockerServiceDockerClient
 
     @Override
     protected void shutDown() throws Exception {
-        // Kill container
         dockerClient.killContainer(containerId);
-
-        // Remove container
         dockerClient.removeContainer(containerId);
 
-        // Close the docker client
+        // Closing the docker client has to be done elsewhere
         //docker.close();
     }
 
@@ -80,6 +71,22 @@ public class DockerServiceDockerClient
     @Override
     public String getContainerId() {
         return containerId;
+    }
+
+    @Override
+    protected void runOneIteration() throws Exception {
+        ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
+        ContainerState containerState = containerInfo.state();
+        if(!containerState.running()) {
+            throw new IllegalStateException("A docker container that should act as a service is no longer running. Container id = " + containerId);
+        }
+    }
+
+    @Override
+    protected Scheduler scheduler() {
+        Scheduler result = Scheduler.newFixedRateSchedule(10, 10, TimeUnit.SECONDS);
+        //Scheduler result = Scheduler.newFixedRateSchedule(1, 1, TimeUnit.SECONDS);
+        return result;
     }
 
 }

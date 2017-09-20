@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.hobbit.core.services.DockerService;
 import org.hobbit.core.services.DockerServiceFactoryDockerClient;
@@ -17,7 +19,7 @@ import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 
 public class MainTestDockerServiceFactoryLocally {
-    public static void main(String[] args) throws DockerCertificateException, InterruptedException {
+    public static void main(String[] args) throws DockerCertificateException, InterruptedException, TimeoutException {
         DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
 
 
@@ -63,12 +65,15 @@ public class MainTestDockerServiceFactoryLocally {
 
 
         service.startAsync();
+        service.awaitRunning(60, TimeUnit.SECONDS);
+
         System.out.println("Image name: " + service.getImageName());
         System.out.println("Container Id: " + service.getContainerId());
         System.out.println("Env: " + dockerServiceFactory.getLocalEnvironment());
 
-        Thread.sleep(60000);
+        Thread.sleep(5000);
 
         service.stopAsync();
+        service.awaitTerminated(60, TimeUnit.SECONDS);
     }
 }
