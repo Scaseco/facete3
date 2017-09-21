@@ -24,7 +24,7 @@ public class HobbitLocalConfig {
      * Standard channels
      */
 
-    @Bean(name={"commandChannel", "commandPublisher"})
+    @Bean(name={"commandChannel", "commandPub"})
     public PublishingWritableByteChannel commandChannel() {
         return new PublishingWritableByteChannelSimple();
     }
@@ -80,7 +80,7 @@ public class HobbitLocalConfig {
      * @return
      */
     @Bean
-    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandPublisher") Publisher<ByteBuffer> commandChannel) {
+    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandPub") Publisher<ByteBuffer> commandChannel) {
         PseudoHobbitPlatformController result = new PseudoHobbitPlatformController() ;//BenchmarkControllerFacetedBrowsing.class);
         commandChannel.subscribe(result);
         return result;
