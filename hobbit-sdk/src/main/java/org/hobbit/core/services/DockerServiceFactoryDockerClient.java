@@ -64,6 +64,7 @@ public class DockerServiceFactoryDockerClient
         return this;
     }
 
+
     @Override
     public Map<String, String> getLocalEnvironment() {
         List<String> env = containerConfigBuilder.build().env();
@@ -71,20 +72,14 @@ public class DockerServiceFactoryDockerClient
             env = Collections.emptyList();
         }
 
-        Map<String, String> result = env.stream()
-            .map(e -> e.split("=", 2))
-            .collect(Collectors.toMap(
-                    e -> e[0],
-                    e -> e.length <= 1 ? "" : e[1]));
+        Map<String, String> result = EnvironmentUtils.listToMap("=", env);
 
         return result;
     }
 
     @Override
     public DockerServiceFactory<DockerServiceDockerClient> setLocalEnvironment(Map<String, String> environment) {
-        List<String> env = environment.entrySet().stream()
-                .map(e -> e.getKey() + "=" + MoreObjects.firstNonNull(e.getValue(), ""))
-                .collect(Collectors.toList());
+        List<String> env = EnvironmentUtils.mapToList("=", environment);
 
         containerConfigBuilder.env(env);
         return this;

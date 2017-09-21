@@ -1,5 +1,6 @@
 package org.hobbit.core.services;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -17,6 +18,15 @@ public class DockerServiceFactorySimpleDelegation
     // Function to stop a container. Argument is the container id
     protected Consumer<String> stopServiceDelegate;
 
+
+    public DockerServiceFactorySimpleDelegation(
+            BiFunction<String, Map<String, String>, String> startServiceDelegate,
+            Consumer<String> stopServiceDelegate) {
+        super();
+        this.startServiceDelegate = startServiceDelegate;
+        this.stopServiceDelegate = stopServiceDelegate;
+        this.localEnvironment = new HashMap<>();
+    }
 
     @Override
     public String getImageName() {

@@ -61,6 +61,12 @@ public class PseudoHobbitPlatformController
         return result;
     }
 
+    public static ByteBuffer toByteBuffer(byte cmd, byte[] data) {
+        ByteBuffer result = ByteBuffer.wrap(new byte[1 + data.length]).put(cmd).put(data);
+        result.rewind();
+        return result;
+    }
+
     public static void forwardToHobbit(ByteBuffer buffer, BiConsumer<Byte, byte[]> consumer) {
         Entry<Byte, byte[]> e = formatToHobbitApi(buffer);
         if(e != null) {
