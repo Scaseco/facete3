@@ -152,15 +152,28 @@ public class SystemAdapterRDFConnection
             //sendResultToEvalStorage(taskId, outputStream.toByteArray());
 
             String taskIdStr = "task-id-foobar";
+          byte[] data = out.toByteArray();
 
-            byte[] data = out.toByteArray();
+
             byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
-            int capacity = 8 + taskIdBytes.length + data.length;
+            // + 4 for taskIdBytes.length
+            // + 4 for data.length
+            int capacity = 4 + 4 + taskIdBytes.length + data.length;
             ByteBuffer buffer = ByteBuffer.allocate(capacity);
             buffer.putInt(taskIdBytes.length);
             buffer.put(taskIdBytes);
             buffer.putInt(data.length);
             buffer.put(data);
+
+//            byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
+//            int capacity = 8 + taskIdBytes.length + data.length;
+//            ByteBuffer buffer = ByteBuffer.allocate(capacity);
+//            buffer.putInt(taskIdBytes.length);
+//            buffer.put(taskIdBytes);
+//            buffer.putInt(data.length);
+//            buffer.put(data);
+
+            buffer.rewind();
 
             try {
                 sa2es.write(buffer);

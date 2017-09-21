@@ -74,10 +74,12 @@ public class InMemoryEvaluationStorage
     public static void parseMessageIntoResultAndPassToConsumer(ByteBuffer buffer, BiConsumer<String, Result> consumer) {
         String taskId = RabbitMQUtils.readString(buffer);
         byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-        long timestamp = buffer.getLong();
+
+        // FIMXE hack for timestamps
+        long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
 
         Result result = new ResultImpl(timestamp, taskData);
-
+System.out.println("Got message from system adapter");
         consumer.accept(taskId, result);
     }
 
