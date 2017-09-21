@@ -35,6 +35,9 @@ public class BenchmarkControllerFacetedBrowsing
     @Resource(name="systemAdapterServiceFactory")
     protected ServiceFactory<Service> systemAdapterServiceFactory;
 
+    @Resource(name="evaluationStorageServiceFactory")
+    protected ServiceFactory<Service> evaluationStorageServiceFactory;
+
     @Resource(name="evaluationModuleServiceFactory")
     protected ServiceFactory<Service> evaluationModuleServiceFactory;
 
