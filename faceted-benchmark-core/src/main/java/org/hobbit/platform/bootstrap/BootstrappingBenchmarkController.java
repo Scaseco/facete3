@@ -44,13 +44,14 @@ public class BootstrappingBenchmarkController
 
         commandPublisher = new PublishingWritableByteChannelSimple();
 
-        DockerServiceFactory<DockerService> dockerServiceFactory =
+        DockerServiceFactorySimpleDelegation dockerServiceFactory =
                 new DockerServiceFactorySimpleDelegation(
                     (imageName, env) -> createContainer(
                             imageName, EnvironmentUtils.mapToList("=", env).toArray(new String[0])),
                     (containerId) -> stopContainer(containerId)
                     );
 
+        //dockerServiceFactory.clone().setLocalEnvironment();
 
         // TODO I think the task service factory has to start the docker container and in addition wait on
         // the ready signal

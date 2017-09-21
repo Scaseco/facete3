@@ -101,7 +101,12 @@ public class HobbitLocalConfig {
 
     @Bean
     public ServiceFactory<Service> evaluationModuleServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(EvaluationModuleFacetedBenchmark.class);
+        return new LocalHobbitComponentServiceFactory<>(SparqlEvaluationModule.class);
+    }
+
+    @Bean
+    public ServiceFactory<Service> evaluationStorageServiceFactory() {
+        return new LocalHobbitComponentServiceFactory<>(InMemoryEvaluationStorage.class);
     }
 
     @Bean

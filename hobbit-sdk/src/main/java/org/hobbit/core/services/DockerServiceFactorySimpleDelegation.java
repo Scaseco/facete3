@@ -6,7 +6,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class DockerServiceFactorySimpleDelegation
-    implements DockerServiceFactory<DockerService>
+    implements DockerServiceFactory<DockerService>, Cloneable
 {
     protected String imageName;
     protected Map<String, String> localEnvironment;
@@ -26,6 +26,17 @@ public class DockerServiceFactorySimpleDelegation
         this.startServiceDelegate = startServiceDelegate;
         this.stopServiceDelegate = stopServiceDelegate;
         this.localEnvironment = new HashMap<>();
+    }
+
+    @Override
+    public DockerServiceFactorySimpleDelegation clone() throws CloneNotSupportedException {
+        DockerServiceFactorySimpleDelegation result = new DockerServiceFactorySimpleDelegation(
+                startServiceDelegate,
+                stopServiceDelegate
+        );
+        result.setImageName(imageName);
+        result.setLocalEnvironment(localEnvironment);
+        return result;
     }
 
     @Override
