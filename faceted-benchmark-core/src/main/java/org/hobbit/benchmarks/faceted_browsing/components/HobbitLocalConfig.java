@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.hobbit.core.data.Result;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
@@ -120,13 +121,21 @@ public class HobbitLocalConfig {
 
     @Bean
     public ServiceFactory<Service> evaluationStorageServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(InMemoryEvaluationStorage.class);
+        return new LocalHobbitComponentServiceFactory<>(DefaultEvaluationStorage.class);
     }
 
 
     @Bean
     public ServiceFactory<Service> evaluationModuleServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(EvaluationModuleComponent.class);
+    }
+
+
+
+    // Used by the DefaultEvaluationStorage
+    @Bean
+    public Storage<String, Result> storage() {
+        return new StorageInMemory<>();
     }
 
     @Bean
@@ -137,6 +146,10 @@ public class HobbitLocalConfig {
 
         return result;
     }
+
+
+
+
 
 //    @Bean
 //    public SparqlBasedSystemService referenceSparqlService() {

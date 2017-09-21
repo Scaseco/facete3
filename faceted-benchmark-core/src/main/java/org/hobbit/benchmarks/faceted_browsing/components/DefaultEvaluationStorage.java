@@ -3,19 +3,12 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
-import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.data.Result;
@@ -24,14 +17,33 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
 
-public class InMemoryEvaluationStorage
+/**
+ * The evaluation storage implementing the default protocol for
+ * communication with
+ * - sa (receiving of actual results)
+ * - tg (receiving of expected results)
+ * - em (some complex rpc pattern)
+ *
+ * This component delegates all requests to a Storage class
+ *
+ *
+ * @author raven Sep 21, 2017
+ *
+ */
+public class DefaultEvaluationStorage
     extends ComponentBase
 {
-    private static final Logger logger = LoggerFactory.getLogger(InMemoryEvaluationStorage.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultEvaluationStorage.class);
+
+
+    @Autowired
+    protected Storage<String, Result> storage;
+
 
     /**
      * If a request contains this iterator ID, a new iterator is created and its
@@ -49,36 +61,6 @@ public class InMemoryEvaluationStorage
     protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
 
 
-
-    protected Map<String, Result> taskIdToExpectedResult = new LinkedHashMap<>();
-    protected Map<String, Result> taskIdToActualResult = new LinkedHashMap<>();
-
-
-
-    Stream<Entry<String, Entry<Result, Result>>> streamResults() {
-        return streamPairs(taskIdToExpectedResult, taskIdToActualResult);
-    }
-
-    /**
-     * Creates a stream of entries of the form (keyCommonToBothMaps, (valueForKeyInA, valueForkeyInB))
-     *
-     * @param a
-     * @param b
-     * @return
-     */
-    public static Stream<Entry<String, Entry<Result, Result>>>
-        streamPairs(Map<String, Result> a, Map<String, Result> b)
-    {
-        Set<String> keys = Sets.union(a.keySet(), b.keySet());
-
-        Stream<Entry<String, Entry<Result, Result>>> result = keys.stream()
-                .map(key -> new SimpleEntry<>(key, new SimpleEntry<>(
-                        a.get(key),
-                        b.get(key))));
-
-        return result;
-    }
-
     @Resource(name="tg2es")
     protected Publisher<ByteBuffer> expectedResultsFromTaskGenerator;
 
@@ -93,7 +75,7 @@ public class InMemoryEvaluationStorage
 
 
     public Iterator<ResultPair> createIterator() {
-        return streamResults()
+        return storage.streamResults()
             .map(
                 e -> {
                     ResultPairImpl r = new ResultPairImpl();
@@ -108,11 +90,11 @@ public class InMemoryEvaluationStorage
         // TODO We could add detection of duplicate keys
 
         expectedResultsFromTaskGenerator.subscribe(data -> {
-            parseMessageIntoResultAndPassToConsumer(data, taskIdToExpectedResult::put);
+            parseMessageIntoResultAndPassToConsumer(data, storage::putExpectedValue);
         });
 
         actualResultsFromTaskGenerator.subscribe(data -> {
-            parseMessageIntoResultAndPassToConsumer(data, taskIdToActualResult::put);
+            parseMessageIntoResultAndPassToConsumer(data, storage::putActualValue);
         });
 
 
