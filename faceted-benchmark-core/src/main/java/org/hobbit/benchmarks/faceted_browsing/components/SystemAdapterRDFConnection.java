@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -19,11 +17,13 @@ import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.hobbit.core.Commands;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ServiceManager;
 
 /**
@@ -116,6 +115,8 @@ public class SystemAdapterRDFConnection
         });
 
         fromTaskGenerator.subscribe(byteBuffer -> {
+            rdfConnection = RDFConnectionFactory.connect(DatasetFactory.create());
+
             String sparqlStmtStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
 
             Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, true);
@@ -149,6 +150,23 @@ public class SystemAdapterRDFConnection
             long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
 
             //sendResultToEvalStorage(taskId, outputStream.toByteArray());
+
+            String taskIdStr = "task-id-foobar";
+
+            byte[] data = out.toByteArray();
+            byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
+            int capacity = 8 + taskIdBytes.length + data.length;
+            ByteBuffer buffer = ByteBuffer.allocate(capacity);
+            buffer.putInt(taskIdBytes.length);
+            buffer.put(taskIdBytes);
+            buffer.putInt(data.length);
+            buffer.put(data);
+
+            try {
+                sa2es.write(buffer);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             System.out.println("Got a message form the task generator");
         });

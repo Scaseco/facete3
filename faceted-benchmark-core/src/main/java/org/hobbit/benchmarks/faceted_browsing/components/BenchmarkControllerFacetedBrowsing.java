@@ -42,6 +42,9 @@ public class BenchmarkControllerFacetedBrowsing
     protected ServiceFactory<Service> evaluationModuleServiceFactory;
 
 
+    // Issue: How to get the result from the evaluation module?
+
+
     @Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
 
@@ -53,6 +56,10 @@ public class BenchmarkControllerFacetedBrowsing
     protected Service dataGeneratorService;
     protected Service taskGeneratorService;
     protected Service systemAdapterService;
+
+    protected Service evaluationStorageService;
+    protected Service evaluationModuleService;
+
 
     public static final byte START_BENCHMARK_SIGNAL = 66;
 
@@ -68,11 +75,15 @@ public class BenchmarkControllerFacetedBrowsing
         dataGeneratorService = dataGeneratorServiceFactory.get();
         taskGeneratorService = taskGeneratorServiceFactory.get();
         systemAdapterService = systemAdapterServiceFactory.get();
+        evaluationStorageService = evaluationStorageServiceFactory.get();
+        evaluationModuleService = evaluationModuleServiceFactory.get();
 
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
                 taskGeneratorService,
-                systemAdapterService
+                systemAdapterService,
+                evaluationStorageService
+                //evaluationModuleService
         ));
 
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(

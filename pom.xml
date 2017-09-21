@@ -28,7 +28,7 @@
         <module>faceted-benchmark-bundle</module>
 
         <module>hobbit-sdk</module>
-        <module>hobbit-platform-sdk</module>
+<!--       <module>hobbit-platform-sdk</module> -->
     </modules>
 
     <dependencyManagement>

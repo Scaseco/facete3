@@ -19,17 +19,22 @@ import com.google.common.util.concurrent.Service;
 
 
 public class HobbitLocalConfig {
-    @Bean
+
+    /*
+     * Standard channels
+     */
+
+    @Bean(name={"commandChannel", "commandPublisher"})
     public PublishingWritableByteChannel commandChannel() {
         return new PublishingWritableByteChannelSimple();
     }
 
-    @Bean
+    @Bean(name={"dataChannel", "dataPublisher"})
     public PublishingWritableByteChannel dataChannel() {
         return new PublishingWritableByteChannelSimple();
     }
 
-    @Bean
+    @Bean(name={"dg2tg","dg2tgPub"})
     public PublishingWritableByteChannel dg2tg() {
         return new PublishingWritableByteChannelSimple();
     }
@@ -44,8 +49,23 @@ public class HobbitLocalConfig {
         return new PublishingWritableByteChannelSimple();
     }
 
+    @Bean(name={"tg2es","tg2esPub"})
+    public PublishingWritableByteChannel tg2es() {
+        return new PublishingWritableByteChannelSimple();
+    }
+
     @Bean(name={"sa2es","sa2esPub"})
     public PublishingWritableByteChannel sa2es() {
+        return new PublishingWritableByteChannelSimple();
+    }
+
+    @Bean(name={"es2em","es2emPub"})
+    public PublishingWritableByteChannel es2em() {
+        return new PublishingWritableByteChannelSimple();
+    }
+
+    @Bean(name={"em2es","em2esPub"})
+    public PublishingWritableByteChannel em2es() {
         return new PublishingWritableByteChannelSimple();
     }
 
@@ -60,7 +80,7 @@ public class HobbitLocalConfig {
      * @return
      */
     @Bean
-    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandChannel") Publisher<ByteBuffer> commandChannel) {
+    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandPublisher") Publisher<ByteBuffer> commandChannel) {
         PseudoHobbitPlatformController result = new PseudoHobbitPlatformController() ;//BenchmarkControllerFacetedBrowsing.class);
         commandChannel.subscribe(result);
         return result;
@@ -98,15 +118,15 @@ public class HobbitLocalConfig {
         return () -> null;
     }
 
-
-    @Bean
-    public ServiceFactory<Service> evaluationModuleServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(SparqlEvaluationModule.class);
-    }
-
     @Bean
     public ServiceFactory<Service> evaluationStorageServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(InMemoryEvaluationStorage.class);
+    }
+
+
+    @Bean
+    public ServiceFactory<Service> evaluationModuleServiceFactory() {
+        return new LocalHobbitComponentServiceFactory<>(EvaluationModuleComponent.class);
     }
 
     @Bean
