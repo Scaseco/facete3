@@ -55,6 +55,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,7 +177,12 @@ public class FacetedTaskGeneratorOld {
 
                     Resource task = ModelFactory.createDefaultModel().createResource()
                             // TODO use a different vocab to denote the task payload
-                            .addLiteral(RDFS.label, replacedQuery);
+                            .addLiteral(RDFS.label, replacedQuery)
+                            .addLiteral(FacetedBrowsingVocab.scenarioId, scenarioName)
+                            .addLiteral(FacetedBrowsingVocab.queryId,"" + queryid)
+                            ;
+
+                    task = ResourceUtils.renameResource(task, "http://example.org/" + scenarioName + "-" + queryid);
 
                     resultList.add(task);
 
@@ -656,13 +662,14 @@ public class FacetedTaskGeneratorOld {
 
         gen.setQueryConn(queryConn);
         gen.initializeParameters();
+        System.out.println(FacetedTaskGeneratorOld.class.getName() + ": Task generation results");
         List<Resource> a = gen.generateTasks().collect(Collectors.toList());
         List<Resource> b = gen.generateTasks().collect(Collectors.toList());
         List<Resource> c = gen.generateTasks().collect(Collectors.toList());
 
-        System.out.println(a.size());
-        System.out.println(a.equals(b));
-        System.out.println(a.equals(c));
+        System.out.println("Number of tasks: " + a.size());
+        System.out.println("Equality between task generation run 1 and 2?" + a.equals(b));
+        System.out.println("Equality between task generation run 1 and 3?" + a.equals(c));
 
 
         service.stopAsync();

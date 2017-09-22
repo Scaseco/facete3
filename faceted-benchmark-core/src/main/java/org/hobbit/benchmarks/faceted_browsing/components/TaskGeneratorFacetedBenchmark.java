@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.QueryExecution;
@@ -67,8 +66,8 @@ public class TaskGeneratorFacetedBenchmark
     protected SparqlBasedService preparationSparqlService;
 
 
-    @javax.annotation.Resource(name="referenceSparqlService")
-    protected SparqlBasedService referenceSparqlService;
+//    @javax.annotation.Resource(name="referenceSparqlService")
+//    protected SparqlBasedService referenceSparqlService;
 
 
 
@@ -186,18 +185,17 @@ public class TaskGeneratorFacetedBenchmark
                 case Commands.TASK_GENERATOR_START_SIGNAL:
                     try {
                         runTaskGeneration();
+//                        sendOutTasks();
                         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
                     } catch(Exception e) {
                         throw new RuntimeException(e);
                     }
-                    sendOutTasks();
                     //computeReferenceResultAndSendToEvalStorage();
                     break;
+                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
+                    sendOutTasks();
+                    break;
                 }
-//                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
-//                    sendOutTasksToSystemAdapter();
-//                    break;
-//                }
             }
         });
 
