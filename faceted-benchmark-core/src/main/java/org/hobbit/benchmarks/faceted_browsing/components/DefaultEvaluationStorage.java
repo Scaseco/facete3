@@ -99,6 +99,7 @@ public class DefaultEvaluationStorage
 
 
         fromEvaluationModule.subscribe(buffer -> {
+            //while(true) {
                 byte response[] = null;
                 // get iterator id
                 if (buffer.remaining() < 1) {
@@ -158,7 +159,7 @@ public class DefaultEvaluationStorage
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-
+            //}
         });
 
 

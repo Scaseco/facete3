@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import javax.annotation.Resource;
 
+import org.apache.jena.sparql.function.library.eval;
 import org.hobbit.core.Commands;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.BenchmarkController;
@@ -112,14 +113,14 @@ public class BenchmarkControllerFacetedBrowsing
          */
         CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
-                ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}),
-                Collections.singleton(commandPublisher),
+                new byte[]{Commands.DATA_GENERATOR_START_SIGNAL},
+                commandPublisher,
                 firstByteEquals(Commands.DATA_GENERATION_FINISHED));
 
         CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
-                ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}),
-                Collections.singleton(commandPublisher),
+                new byte[]{Commands.TASK_GENERATOR_START_SIGNAL},
+                commandPublisher,
                 firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
         // Wait for the system-under-test to report its ready state
@@ -138,6 +139,9 @@ public class BenchmarkControllerFacetedBrowsing
 
 
         System.out.println("ACTUAL BENCHMARK BEGINS NOW");
+
+        evaluationModuleService.startAsync();
+        evaluationModuleService.awaitRunning(60, TimeUnit.SECONDS);
 
         // Instruct the task generator(s) to run their tasks
         commandChannel.write(ByteBuffer.wrap(new byte[]{START_BENCHMARK_SIGNAL}));

@@ -31,15 +31,9 @@ public class EvaluationModuleComponent
     @Override
     public void init() throws Exception {
 
-        // TODO Not sure if this properly emulatess the protocol to the evaluation storage
+        // TODO Not sure if this properly emulates the protocol to the evaluation storage
 
         byte requestBody[] = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
-        try {
-            toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
-        } catch (IOException e1) {
-            throw new RuntimeException(e1);
-        }
-
 
 
         EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
@@ -84,6 +78,12 @@ public class EvaluationModuleComponent
             }
         });
 
+
+        try {
+            toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
+        } catch (IOException e1) {
+            throw new RuntimeException(e1);
+        }
 
     }
 
