@@ -190,7 +190,7 @@ public class TaskGeneratorFacetedBenchmark
                     } catch(Exception e) {
                         throw new RuntimeException(e);
                     }
-                    processTasks();
+                    sendOutTasks();
                     //computeReferenceResultAndSendToEvalStorage();
                     break;
                 }
@@ -240,9 +240,9 @@ public class TaskGeneratorFacetedBenchmark
         return result;
     }
 
-    protected void processTasks() {
+    protected void sendOutTasks() {
 
-        RDFConnection referenceConn = referenceSparqlService.createDefaultConnection();
+        RDFConnection referenceConn = preparationSparqlService.createDefaultConnection();//referenceSparqlService.createDefaultConnection();
 
         // Pretend we have a stream of tasks because this is what it should eventually be
         try(Stream<Resource> taskStream = generatedTasks.stream()) {

@@ -157,7 +157,9 @@ public class HobbitLocalConfig {
         return result;
     }
 
-
+//    @Bean
+//    public SparqlBasedSystemService preparationSparqlService() {
+//    }
 
 
 
