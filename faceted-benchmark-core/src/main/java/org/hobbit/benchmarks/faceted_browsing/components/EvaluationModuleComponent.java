@@ -1,11 +1,14 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 import javax.annotation.Resource;
 
+import org.apache.jena.rdf.model.Model;
+import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
@@ -20,6 +23,8 @@ public class EvaluationModuleComponent
 {
     private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleComponent.class);
 
+    @Resource(name="commandChannel")
+    protected WritableByteChannel commandChannel;
 
     @Resource(name="es2emPub")
     protected Publisher<ByteBuffer> fromEvaluationStorage;
@@ -30,6 +35,10 @@ public class EvaluationModuleComponent
 
     @Override
     public void init() throws Exception {
+
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
+        //collectResponses();
+
 
         // TODO Not sure if this properly emulates the protocol to the evaluation storage
 
@@ -59,6 +68,22 @@ public class EvaluationModuleComponent
 
             // if the response is empty
             if (buffer.remaining() == 0) {
+                // This is the 'finish' condition
+                Model model = evaluationCore.summarizeEvaluation();
+                logger.info("The result model has " + model.size() + " triples.");
+
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                model.write(outputStream, "JSONLD");
+                ByteBuffer buf = ByteBuffer.allocate(1 + outputStream.size());
+                buf.put(Commands.EVAL_MODULE_FINISHED_SIGNAL);
+                buf.put(outputStream.toByteArray());
+                try {
+                    commandChannel.write(buf);
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+
                 return;
             }
 

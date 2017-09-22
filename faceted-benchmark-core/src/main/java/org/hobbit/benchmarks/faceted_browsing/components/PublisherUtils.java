@@ -12,11 +12,11 @@ import org.hobbit.transfer.Publisher;
 
 public class PublisherUtils {
 
-    public static <T> CompletableFuture<T> awaitMessage(Publisher<T> publisher, Predicate<? super T> condition) {
-        return awaitMessage(Collections.singleton(publisher), condition);
+    public static <T> CompletableFuture<T> triggerOnMessage(Publisher<T> publisher, Predicate<? super T> condition) {
+        return triggerOnMessage(Collections.singleton(publisher), condition);
     }
 
-    public static <T> CompletableFuture<T> awaitMessage(Collection<Publisher<T>> publishers, Predicate<? super T> condition) {
+    public static <T> CompletableFuture<T> triggerOnMessage(Collection<Publisher<T>> publishers, Predicate<? super T> condition) {
         CompletableFuture<T> result = new CompletableFuture<T>();
 
         Consumer<T> subscriber = item -> {

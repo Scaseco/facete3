@@ -204,7 +204,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
 
 
 
-    public Model summarizeEvaluation ()throws Exception {
+    public Model summarizeEvaluation() {
 
         // ______________________________________
         // 1.a) Overall results

@@ -12,8 +12,6 @@ public class PublishingWritableByteChannelSimple
 {
     protected Collection<Consumer<? super ByteBuffer>> subscribers = Collections.synchronizedList(new ArrayList<>());
 
-    //protected ExecutorService executorService = Executors.newCachedThreadPool();
-
     @Override
     public boolean isOpen() {
         return true;

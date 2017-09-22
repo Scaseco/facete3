@@ -4,15 +4,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import javax.annotation.Resource;
 
-import org.apache.jena.sparql.function.library.eval;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.core.Commands;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
@@ -54,6 +56,12 @@ public class BenchmarkControllerFacetedBrowsing
 
 
     protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
+
+
+    // The future for whether the evaluation data has been received
+    protected CompletableFuture<ByteBuffer> evaluationDataReceivedFuture;
+
+
     protected Service dataGeneratorService;
     protected Service taskGeneratorService;
     protected Service systemAdapterService;
@@ -70,7 +78,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
-        systemUnderTestReadyFuture = PublisherUtils.awaitMessage(commandPublisher,
+        systemUnderTestReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
                 firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
 
         dataGeneratorService = dataGeneratorServiceFactory.get();
@@ -93,6 +101,27 @@ public class BenchmarkControllerFacetedBrowsing
                 60, TimeUnit.SECONDS);
 
         logger.debug("Normally left BenchmarkController::init()");
+
+
+        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL))
+        .whenComplete((buffer, ex) -> {
+            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining());
+            RDFDataMgr.write(System.out, model, Lang.NTRIPLES);
+        });
+
+
+//        commandPublisher.subscribe(buffer -> {
+//            if(buffer.hasRemaining()) {
+//                byte cmd = buffer.get();
+//                switch(cmd) {
+//                case Commands.EVAL_MODULE_FINISHED_SIGNAL: {
+//                    setResultModel(RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining()));
+//                    logger.info("model size = " + resultModel.size());
+//
+//
+//                }
+//            }
+//        });
     }
 
 
@@ -151,7 +180,9 @@ public class BenchmarkControllerFacetedBrowsing
         dataGeneratorService.stopAsync();
 
 
-
+        // Wait for the result
+        logger.debug("Awaiting evaluation result...");
+        evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
 
 
 //

@@ -12,6 +12,7 @@ import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.PublishingWritableByteChannel;
+import org.hobbit.transfer.PublishingWritableByteChannelQueued;
 import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -67,7 +68,7 @@ public class HobbitLocalConfig {
 
     @Bean(name={"em2es","em2esPub"})
     public PublishingWritableByteChannel em2es() {
-        return new PublishingWritableByteChannelSimple();
+        return new PublishingWritableByteChannelQueued();
     }
 
     @Bean
