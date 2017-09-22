@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 
 public class HobbitLocalConfig {
@@ -70,6 +72,13 @@ public class HobbitLocalConfig {
     public PublishingWritableByteChannel em2es() {
         return new PublishingWritableByteChannelQueued();
     }
+
+    @Bean
+    public Gson gson() {
+        return new Gson();
+        //return new GsonBuilder().setPrettyPrinting().create();
+    }
+
 
     @Bean
     public ServiceFactory<Service> benchmarkControllerServiceFactory() {

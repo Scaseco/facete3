@@ -28,7 +28,7 @@ import java.util.function.Consumer;
  */
 
 public class PublishingWritableByteChannelQueued
-    implements PublishingWritableByteChannel
+    implements PublishingWritableByteChannel, Consumer<ByteBuffer>
 {
     protected Collection<Consumer<? super ByteBuffer>> subscribers = Collections.synchronizedList(new ArrayList<>());
 
@@ -38,7 +38,7 @@ public class PublishingWritableByteChannelQueued
     public PublishingWritableByteChannelQueued() {
         super();
 
-        executorService.submit(() -> {
+        executorService.execute(() -> {
             while(!Thread.interrupted()) {
                 ByteBuffer src;
                 try {
@@ -73,12 +73,17 @@ public class PublishingWritableByteChannelQueued
     @Override
     public int write(ByteBuffer src) throws IOException {
         int result = src.remaining();
+        accept(src);
+        return result;
+    }
+
+    @Override
+    public void accept(ByteBuffer src) {
         try {
             queue.put(src);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return result;
     }
 
     @Override

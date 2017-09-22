@@ -14,22 +14,48 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import javax.annotation.Resource;
-
-import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
 
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
+import com.google.gson.Gson;
+
+// Some thoughts on client stubs for the referenced services
+
+//interface EvaluationStorage {
+//	sendTask(Resource resource);
+//}
+
+
+// The system adapter is there to interact with the system (e.g. a single triple store, or a search engine cluster)
+// and thus feature functionality COMMON TO A CATEGORY OF SYSTEMS (e.g. triple store, rdf store, graph store, search engine, routing system)
+//
+//interface SystemAdapterClientRDFConnection {
+// loadGraph(String graphURI, URI uri);
+//
+//}
+
+// The task executor is there to execute tasks on
+//interface TaskExecutorClient extends TaskExecutor { // The client should just look like a local object
+//  execTask(Resource taskDesc);
+//}
 
 @Component
 public class TaskGeneratorFacetedBenchmark
@@ -37,20 +63,34 @@ public class TaskGeneratorFacetedBenchmark
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmark.class);
 
-    @Resource(name="preparationSparqlService")
-    protected SparqlBasedSystemService preparationSparqlService;
+    @javax.annotation.Resource(name="preparationSparqlService")
+    protected SparqlBasedService preparationSparqlService;
 
-    @Resource(name="commandChannel")
+
+    @javax.annotation.Resource(name="referenceSparqlService")
+    protected SparqlBasedService referenceSparqlService;
+
+
+
+    @javax.annotation.Resource(name="commandChannel")
     protected WritableByteChannel commandChannel;
 
 //    @Resource(name="dataChannel")
 //    protected WritableByteChannel dataChannel;
 
-    @Resource(name="dg2tg")
+    @javax.annotation.Resource(name="dg2tg")
     protected Publisher<ByteBuffer> fromDataGenerator;
 
-    @Resource(name="tg2sa")
+    @javax.annotation.Resource(name="tg2sa")
     protected WritableByteChannel toSystemAdater;
+
+
+    @javax.annotation.Resource(name="tg2es")
+    protected WritableByteChannel toEvaluationStorage;
+
+
+    @Autowired
+    protected Gson gson;
 
 
     //@Resource(name="referenceSparqlService")
@@ -64,7 +104,7 @@ public class TaskGeneratorFacetedBenchmark
 
 
     // The generated tasks; we should use file persistence for scaling in the general case
-    protected Collection<String> generatedTasks = new ArrayList<>();
+    protected Collection<Resource> generatedTasks = new ArrayList<>();
 
     @Override
     public void init() throws Exception {
@@ -150,11 +190,14 @@ public class TaskGeneratorFacetedBenchmark
                     } catch(Exception e) {
                         throw new RuntimeException(e);
                     }
-                    break;
-                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
-                    sendOutTasksToSystemAdapter();
+                    processTasks();
+                    //computeReferenceResultAndSendToEvalStorage();
                     break;
                 }
+//                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
+//                    sendOutTasksToSystemAdapter();
+//                    break;
+//                }
             }
         });
 
@@ -171,7 +214,7 @@ public class TaskGeneratorFacetedBenchmark
         try(RDFConnection conn = preparationSparqlService.createDefaultConnection()) {
             gen.setQueryConn(conn);
             gen.initializeParameters();
-            Stream<String> tasks = gen.generateTasks();
+            Stream<Resource> tasks = gen.generateTasks();
 
             tasks.forEach(task -> {
                 System.out.println("Generated task: " + task);
@@ -183,14 +226,40 @@ public class TaskGeneratorFacetedBenchmark
     }
 
 
-    protected void sendOutTasksToSystemAdapter() {
-        try(Stream<String> taskStream = generatedTasks.stream()) {
+    public ByteBuffer createMessageForEvalStorage(Resource task, SparqlQueryConnection conn) {
+        String queryStr = task.getProperty(RDFS.label).getString();
 
-            // Pretend we have a stream of tasks because this is what it should eventually be
+        ByteBuffer result;
+
+        try(QueryExecution qe = conn.query(queryStr)) {
+            ResultSet resultSet = qe.execSelect();
+            long timestamp = System.currentTimeMillis();
+            result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
+        }
+
+        return result;
+    }
+
+    protected void processTasks() {
+
+        RDFConnection referenceConn = referenceSparqlService.createDefaultConnection();
+
+        // Pretend we have a stream of tasks because this is what it should eventually be
+        try(Stream<Resource> taskStream = generatedTasks.stream()) {
+
             taskStream.forEach(task -> {
+                ByteBuffer buf = createMessageForEvalStorage(task, referenceConn);
+
                 try {
-                    toSystemAdater.write(ByteBuffer.wrap(task.getBytes(StandardCharsets.UTF_8)));
-                } catch(Exception e) {
+                    toEvaluationStorage.write(buf);
+                } catch(IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String queryStr = task.getProperty(RDFS.label).getString();
+                try {
+                    toSystemAdater.write(ByteBuffer.wrap(queryStr.getBytes(StandardCharsets.UTF_8)));
+                } catch(IOException e) {
                     throw new RuntimeException(e);
                 }
             });

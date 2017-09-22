@@ -22,11 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -50,13 +50,15 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -139,8 +141,8 @@ public class FacetedTaskGeneratorOld {
 //    LOGGER.info("Acknoledgment done!");
 //
 
-    protected Stream<String> generateTasks() {
-        List<String> resultList = new ArrayList<>();
+    protected Stream<Resource> generateTasks() {
+        List<Resource> resultList = new ArrayList<>();
 
         ValueComparator vls = new ValueComparator();
         Map<String, List<Map<String, Map<String, String>>>> sortedScenarios = new TreeMap<>(vls);
@@ -172,7 +174,11 @@ public class FacetedTaskGeneratorOld {
                         replacedQuery = querySparql;
                     }
 
-                    resultList.add(replacedQuery);
+                    Resource task = ModelFactory.createDefaultModel().createResource()
+                            // TODO use a different vocab to denote the task payload
+                            .addLiteral(RDFS.label, replacedQuery);
+
+                    resultList.add(task);
 
 
                 }
@@ -650,9 +656,9 @@ public class FacetedTaskGeneratorOld {
 
         gen.setQueryConn(queryConn);
         gen.initializeParameters();
-        List<String> a = gen.generateTasks().collect(Collectors.toList());
-        List<String> b = gen.generateTasks().collect(Collectors.toList());
-        List<String> c = gen.generateTasks().collect(Collectors.toList());
+        List<Resource> a = gen.generateTasks().collect(Collectors.toList());
+        List<Resource> b = gen.generateTasks().collect(Collectors.toList());
+        List<Resource> c = gen.generateTasks().collect(Collectors.toList());
 
         System.out.println(a.size());
         System.out.println(a.equals(b));

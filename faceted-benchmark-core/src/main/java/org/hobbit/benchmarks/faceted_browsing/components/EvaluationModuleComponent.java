@@ -50,7 +50,7 @@ public class EvaluationModuleComponent
         fromEvaluationStorage.subscribe(buffer -> {
 
 
-            System.out.println("Received data to evaluate");
+            logger.debug("Received data to evaluate");
 
             try {
                 toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
