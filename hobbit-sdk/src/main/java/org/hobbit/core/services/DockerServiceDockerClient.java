@@ -2,6 +2,9 @@ package org.hobbit.core.services;
 
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.messages.ContainerConfig;
@@ -22,6 +25,10 @@ public class DockerServiceDockerClient
     extends AbstractScheduledService
     implements DockerService
 {
+
+    private static final Logger logger = LoggerFactory.getLogger(DockerServiceDockerClient.class);
+
+
     protected DockerClient dockerClient;
     protected ContainerConfig containerConfig;
 
@@ -87,6 +94,12 @@ public class DockerServiceDockerClient
         Scheduler result = Scheduler.newFixedRateSchedule(10, 10, TimeUnit.SECONDS);
         //Scheduler result = Scheduler.newFixedRateSchedule(1, 1, TimeUnit.SECONDS);
         return result;
+    }
+
+    @Override
+    public int getExitCode() {
+        logger.warn("STUB! Exist code always returns 0");
+        return 0;
     }
 
 }

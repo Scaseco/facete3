@@ -5,6 +5,21 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+/**
+ * Delegates the creation of a docker container to the provided
+ * start / stop and run functions.
+ *
+ *
+ * FIXME How to determine whether the service is running / terminated?
+ * - One option could be that there has to be a run function which blocks as long as the remote service is running.
+ *   For instance, the run function could wait for the termination signal from the platform
+ *   Downside: The service needs an extra thread just to wait
+ * - Another option: A handler outside of the service receives the signals and calls stop
+ *   This is the way to go
+ *
+ * @author raven Sep 24, 2017
+ *
+ */
 public class DockerServiceFactorySimpleDelegation
     implements DockerServiceFactory<DockerService>, Cloneable
 {
@@ -17,6 +32,11 @@ public class DockerServiceFactorySimpleDelegation
 
     // Function to stop a container. Argument is the container id
     protected Consumer<String> stopServiceDelegate;
+
+    protected Runnable runDelegate;
+
+    // Registration for state changes of the container
+    // protected Function<String, Publisher<Sring>> serviceStatus;
 
 
     public DockerServiceFactorySimpleDelegation(

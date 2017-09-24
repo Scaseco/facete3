@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 import java.util.function.Supplier;
 
-import org.hobbit.benchmarks.faceted_browsing.components.ByteChannelUtils;
 import org.hobbit.benchmarks.faceted_browsing.components.CountingSupplier;
 import org.hobbit.benchmarks.faceted_browsing.components.PseudoHobbitPlatformController;
 import org.hobbit.core.Constants;
@@ -13,6 +12,7 @@ import org.hobbit.core.services.DockerService;
 import org.hobbit.core.services.DockerServiceFactory;
 import org.hobbit.core.services.DockerServiceFactorySimpleDelegation;
 import org.hobbit.core.services.EnvironmentUtils;
+import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.transfer.PublishingWritableByteChannel;
 import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 

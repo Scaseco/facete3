@@ -16,11 +16,16 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.services.ServiceFactory;
+import org.hobbit.core.utils.ByteChannelUtils;
+import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.Listener;
+import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 
 public class BenchmarkControllerFacetedBrowsing
@@ -79,13 +84,29 @@ public class BenchmarkControllerFacetedBrowsing
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
         systemUnderTestReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
-                firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
+                ByteChannelUtils.firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
 
         dataGeneratorService = dataGeneratorServiceFactory.get();
         taskGeneratorService = taskGeneratorServiceFactory.get();
         systemAdapterService = systemAdapterServiceFactory.get();
         evaluationStorageService = evaluationStorageServiceFactory.get();
         evaluationModuleService = evaluationModuleServiceFactory.get();
+
+
+        // - The condition to determine the end of a benchmark run is, that the task generator(s) have shut down
+        // - The *BC* (NOT THE TG) has then to send out the TASK_GENERATION_FINISHED event!
+        taskGeneratorService.addListener(new Listener() {
+            @Override
+            public void terminated(State from) {
+                try {
+                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                super.terminated(from);
+            }
+        }, MoreExecutors.directExecutor());
+
 
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
@@ -103,11 +124,12 @@ public class BenchmarkControllerFacetedBrowsing
         logger.debug("Normally left BenchmarkController::init()");
 
 
-        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL))
-        .whenComplete((buffer, ex) -> {
-            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining());
-            RDFDataMgr.write(System.out, model, Lang.NTRIPLES);
-        });
+        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL))
+            .whenComplete((buffer, ex) -> {
+                logger.debug("Evaluation model received");
+                Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining());
+                RDFDataMgr.write(System.out, model, Lang.NTRIPLES);
+            });
 
 
 //        commandPublisher.subscribe(buffer -> {
@@ -124,12 +146,6 @@ public class BenchmarkControllerFacetedBrowsing
 //        });
     }
 
-
-    public Predicate<ByteBuffer> firstByteEquals(byte b) {
-        Predicate<ByteBuffer> result = buffer -> buffer.limit() > 0 && buffer.get(0) == b;
-        return result;
-    }
-
     @Override
     public void executeBenchmark() throws Exception {
 
@@ -144,13 +160,13 @@ public class BenchmarkControllerFacetedBrowsing
                 commandChannel,
                 new byte[]{Commands.DATA_GENERATOR_START_SIGNAL},
                 commandPublisher,
-                firstByteEquals(Commands.DATA_GENERATION_FINISHED));
+                ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATION_FINISHED));
 
         CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,
                 new byte[]{Commands.TASK_GENERATOR_START_SIGNAL},
                 commandPublisher,
-                firstByteEquals(Commands.TASK_GENERATION_FINISHED));
+                ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
         // Wait for the system-under-test to report its ready state
         //CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sen
@@ -169,18 +185,31 @@ public class BenchmarkControllerFacetedBrowsing
 
         System.out.println("ACTUAL BENCHMARK BEGINS NOW");
 
-        evaluationModuleService.startAsync();
-        evaluationModuleService.awaitRunning(60, TimeUnit.SECONDS);
-
         // Instruct the task generator(s) to run their tasks
+        // FIXME This is just my ad-hoc signal
         commandChannel.write(ByteBuffer.wrap(new byte[]{START_BENCHMARK_SIGNAL}));
+
+
 
 
         // Stop unneeded services to free resources
         dataGeneratorService.stopAsync();
 
 
+        // Wait for the benchmark run to finish
+        // This is indicated by the task generator service
+        // shutting itself down; hence we just have to wait here
+        taskGeneratorService.awaitTerminated(60, TimeUnit.SECONDS);
+
+
+        // The evaluation module will immediately on start request the data from the eval store
+        // so for things to work correctly, the eval store's data must be complete
+        evaluationModuleService.startAsync();
+        evaluationModuleService.awaitRunning(60, TimeUnit.SECONDS);
+
         // Wait for the result
+
+
         logger.debug("Awaiting evaluation result...");
         evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
 

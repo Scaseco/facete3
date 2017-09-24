@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing.components;
+package org.hobbit.core.utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,6 +12,14 @@ import java.util.function.Predicate;
 import org.hobbit.transfer.Publisher;
 
 public class ByteChannelUtils {
+
+
+    // TODO Actually this util method would better fit in ByteBufferUtils
+    public static Predicate<ByteBuffer> firstByteEquals(byte b) {
+        Predicate<ByteBuffer> result = buffer -> buffer.limit() > 0 && buffer.get(0) == b;
+        return result;
+    }
+
 
     public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, ByteBuffer msg, Collection<Publisher<ByteBuffer>> publishers, Predicate<ByteBuffer> responseCondition) throws IOException {
         CompletableFuture<ByteBuffer> result = PublisherUtils.triggerOnMessage(publishers, responseCondition);

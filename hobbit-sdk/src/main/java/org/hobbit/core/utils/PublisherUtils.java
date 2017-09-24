@@ -1,4 +1,4 @@
-package org.hobbit.benchmarks.faceted_browsing.components;
+package org.hobbit.core.utils;
 
 import java.util.Collection;
 import java.util.Collections;

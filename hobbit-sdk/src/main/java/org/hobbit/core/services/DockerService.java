@@ -13,4 +13,7 @@ public interface DockerService
 {
     String getContainerId();
     String getImageName();
+
+    // Only valid on terminated services
+    int getExitCode();
 }

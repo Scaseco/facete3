@@ -11,6 +11,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -25,10 +29,11 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.hobbit.core.Commands;
+import org.hobbit.core.services.RunnableServiceCapable;
+import org.hobbit.core.utils.ByteChannelUtils;
+import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.interfaces.DataGenerator;
 import org.hobbit.interfaces.TripleStreamSupplier;
-import org.hobbit.transfer.ChunkedProtocolWriter;
-import org.hobbit.transfer.ChunkedProtocolWriterSimple;
 import org.hobbit.transfer.OutputStreamChunkedTransfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +44,7 @@ import com.google.common.collect.Streams;
 @Component
 public class DataGeneratorFacetedBrowsing
     extends ComponentBase
-    implements DataGenerator
+    implements DataGenerator, RunnableServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(DataGeneratorFacetedBrowsing.class);
 
@@ -59,30 +64,69 @@ public class DataGeneratorFacetedBrowsing
 
 
 
+    protected CompletableFuture<ByteBuffer> startSignal;
+
+
+    @Override
+    public void startUp() {
+        try { init(); } catch(Exception e) { throw new RuntimeException(e); }
+    }
+    @Override
+    public void shutDown() {
+        try { init(); } catch(Exception e) { throw new RuntimeException(e); }
+    }
+
+
+
+
     @Override
     public void init() throws Exception {
         logger.debug("Data generator init");
 
-        commandPublisher.subscribe((buffer) -> {
-            if(buffer.hasRemaining()) {
-                byte cmd = buffer.get(0);
-                if(cmd == Commands.DATA_GENERATOR_START_SIGNAL) {
-                    try {
-                        generateData();
 
-                        try {
-                            commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
+        startSignal = PublisherUtils.triggerOnMessage(commandPublisher,
+                ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_START_SIGNAL));
 
-                    } catch(Exception e) {
-                         throw new RuntimeException(e);
-                    }
+
+        // This code block would allow repeated requests to the DG, but
+        // but the protocol demands the DG to shut down after handling a single DG request
+        if(false) {
+            startSignal.whenComplete((buffer, t) -> {
+                try {
+                    generateData();
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
                 }
-            }
-        });
+
+                // FIXME shut down the service
+                try {
+                    close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
     }
+
+    @Override
+    public void run() {
+        logger.debug("Waiting for message to start data generation");
+
+        try {
+            startSignal.get(60, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            generateData();
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        logger.debug("Data generation finished, shutting myself down");
+    }
+
 
 //    @Override
 //    public void receiveCommand(byte command, byte[] data) {
@@ -111,7 +155,7 @@ public class DataGeneratorFacetedBrowsing
 //        streamManager.handleIncomingData(ByteBuffer.wrap(data));
 
 
-    // TODO Separate actual data generation from sending out platform specific events
+    // TODO Separate actual data generation / caching from sending out platform specific events
     @Override
     public void generateData() throws Exception {
         logger.info("Data generator started.");

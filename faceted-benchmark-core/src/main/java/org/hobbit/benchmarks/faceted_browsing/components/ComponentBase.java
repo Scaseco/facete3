@@ -28,6 +28,7 @@ public abstract class ComponentBase
     protected PublishingWritableByteChannelSimple commandPublisher = new PublishingWritableByteChannelSimple();
 
 
+
     // FIXME Should we rename to init() ? If so, we must ensure that subclasses' init() methods call super.init()
     @PostConstruct
     public void coreInit() {

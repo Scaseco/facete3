@@ -99,6 +99,8 @@ public class DefaultEvaluationStorage
 
 
         fromEvaluationModule.subscribe(buffer -> {
+            logger.debug("Got data for evaluation from storage");
+
             //while(true) {
                 byte response[] = null;
                 // get iterator id

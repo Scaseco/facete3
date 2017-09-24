@@ -70,7 +70,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
     @Override
     protected void shutDown() throws Exception {
-        IOUtils.closeQuietly(component);
+        component.close();
 
         // After the benchmark controller served its purpose, deregister it from events
         commandChannel.unsubscribe(observer);

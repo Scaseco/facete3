@@ -59,7 +59,7 @@ public class EvaluationModuleComponent
             }
 
             // if the response is empty
-            if (buffer.remaining() == 0) {
+            if (!buffer.hasRemaining()) {
                 logger.error("Got a completely empty response from the evaluation storage.");
                 return;
             }
@@ -67,7 +67,7 @@ public class EvaluationModuleComponent
             requestBody[0] = buffer.get();
 
             // if the response is empty
-            if (buffer.remaining() == 0) {
+            if (!buffer.hasRemaining()) {
                 // This is the 'finish' condition
                 Model model = evaluationCore.summarizeEvaluation();
                 logger.info("The result model has " + model.size() + " triples.");
