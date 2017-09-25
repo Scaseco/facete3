@@ -41,8 +41,8 @@ public class LocalHobbitComponentServiceFactory<T extends BaseComponent>
     @Override
     public Service get() {
 
-        // TODO Add some callback to modify the environment after each invocation
-        // e.g. to increment the ID of the next task generator
+        // Note: Modifications to the local environment, such as incrementing
+        // an evironment value after each invocation should be done by a wrapper
         Service result = new HobbitLocalComponentService<T>(componentClass, ctx, commandChannel);
 
         return result;

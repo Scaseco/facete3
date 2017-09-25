@@ -1,11 +1,15 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 
-import org.apache.commons.io.IOUtils;
+import org.hobbit.core.services.ExecutionThreadServiceDelegate;
+import org.hobbit.core.services.IdleServiceCapable;
+import org.hobbit.core.services.IdleServiceDelegate;
+import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.interfaces.BaseComponent;
 import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
@@ -14,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 
 /**
  * The service instance has a fixed environment
@@ -37,7 +42,11 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     protected Publisher<ByteBuffer> commandChannel;
 
 
-    protected transient T component;
+    protected transient T componentInstance;
+
+
+    // The service wrapper for the componentInstance
+    protected transient Service componentService;
     protected transient Consumer<ByteBuffer> observer;
 
     public HobbitLocalComponentService(Class<T> componentClass, ApplicationContext ctx,
@@ -49,30 +58,50 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     }
 
     public T getComponent() {
-        return component;
+        return componentInstance;
     }
 
     @Override
     protected void startUp() throws Exception {
 
         logger.debug("Starting local component of type " + componentClass);
-        component = componentClass.newInstance();
-        ctx.getAutowireCapableBeanFactory().autowireBean(component);
+        componentInstance = componentClass.newInstance();
 
-        observer = buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, component::receiveCommand);
+
+        // Determine the appropriate service wrapper for the component
+        if(componentInstance instanceof Service) {
+            componentService = (Service)componentInstance;
+        }
+        else if(componentInstance instanceof IdleServiceCapable) {
+            IdleServiceCapable tmp = (IdleServiceCapable)componentInstance;
+            componentService = new IdleServiceDelegate(tmp::startUp, tmp::shutDown);
+        } else if(componentInstance instanceof RunnableServiceCapable) {
+            RunnableServiceCapable tmp = (RunnableServiceCapable)componentInstance;
+            componentService = new ExecutionThreadServiceDelegate(tmp::startUp, tmp::run, tmp::shutDown);
+        } else {
+            throw new RuntimeException("Could not determine how to wrap the component as a service");
+        }
+
+
+        ctx.getAutowireCapableBeanFactory().autowireBean(componentInstance);
+
+        observer = buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand);
 
         commandChannel.subscribe(observer);
 
-        component.init();
+        //componentInstance.init();
+        componentService.startAsync();
         logger.debug("Successfully started local component of type " + componentClass);
 
     }
 
     @Override
     protected void shutDown() throws Exception {
-        component.close();
+        componentService.stopAsync();
+        componentService.awaitTerminated(60, TimeUnit.SECONDS);
 
         // After the benchmark controller served its purpose, deregister it from events
         commandChannel.unsubscribe(observer);
     }
 }
+
