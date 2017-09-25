@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.utils.ByteChannelUtils;
-import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.Publisher;
 
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,6 +31,10 @@ public class DockerServiceManagerClientComponent
 {
     protected WritableByteChannel commandChannel;
     protected Publisher<ByteBuffer> commandPublisher;
+
+
+    // Some method to send the service creation request
+    protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requester;
 
     protected Gson gson;
 
@@ -64,7 +71,7 @@ public class DockerServiceManagerClientComponent
     }
 
     // These are the delegate target methods of the created by DockerServiceSimpleDelegation
-    public String startService(String imageName, Map<String, String> env) throws IOException {
+    public String startService(String imageName, Map<String, String> env) throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
         // Prepare the message for starting a service
         String[] envArr = EnvironmentUtils.mapToList("=", env).toArray(new String[0]);
@@ -80,14 +87,20 @@ public class DockerServiceManagerClientComponent
         // Send out the message
         commandChannel.write(buffer);
 
+
+        // Not sure if this is a compleable future or a subscriber
+        CompletableFuture<ByteBuffer> response = requester.apply(buffer);
         // FIXME We now need to get a response for the service creation request!
 
-        PublisherUtils.triggerOnMessage(commandPublisher,
-                ByteChannelUtils.firstByteEquals(Commands.DOCKER_CONTAINER_STOP));
+        ByteBuffer responseBuffer = response.get(60, TimeUnit.SECONDS);
+        String result = RabbitMQUtils.readString(responseBuffer);
+
+//        PublisherUtils.triggerOnMessage(commandPublisher,
+//                ByteChannelUtils.firstByteEquals(Commands.DOCKER_CONTAINER_STOP));
 
         // The response is the serviceId
         // FIXME The issue is, that we now need a response specifically to this request
-        String result = null;//;
+        //String result = null;//;
         return result;
     }
 

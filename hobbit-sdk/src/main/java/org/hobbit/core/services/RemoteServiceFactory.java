@@ -19,8 +19,7 @@ import com.google.common.util.concurrent.Service;
 public class RemoteServiceFactory {
 
     // Maps service id to service objects (may be client stubs)
-    protected Map<String, Service> idToService;
+    // protected Map<String, Service> idToService;
 
-    void
     //onServiceShutdown()
 }

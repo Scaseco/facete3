@@ -11,6 +11,8 @@ public interface Publisher<T> {
      */
     Runnable subscribe(Consumer<? super T> subscriber);
 
+//    void subscribe(BiConsumer<? super T, Consumer<? super T>> subscriber);
+
     /**
      * Unsubscribe.
      *

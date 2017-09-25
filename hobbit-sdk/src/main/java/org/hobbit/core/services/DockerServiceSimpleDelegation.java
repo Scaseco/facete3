@@ -48,4 +48,10 @@ public class DockerServiceSimpleDelegation
         stopServiceDelegate.accept(containerId);
     }
 
+    @Override
+    public int getExitCode() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 }
