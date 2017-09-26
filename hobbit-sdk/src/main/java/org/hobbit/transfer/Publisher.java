@@ -11,6 +11,15 @@ public interface Publisher<T> {
      */
     Runnable subscribe(Consumer<? super T> subscriber);
 
+    /**
+     * Subscription for sending back a response to publishing function.
+     *
+     *
+     *
+     * @param subscriber
+     * @return
+     */
+    //Runnable subscribe(Function<? super T, ? extends T> subscriber);
 //    void subscribe(BiConsumer<? super T, Consumer<? super T>> subscriber);
 
     /**

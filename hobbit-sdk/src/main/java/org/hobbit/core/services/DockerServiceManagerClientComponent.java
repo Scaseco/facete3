@@ -13,6 +13,7 @@ import java.util.function.Function;
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.Publisher;
 
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -32,9 +33,10 @@ public class DockerServiceManagerClientComponent
     protected WritableByteChannel commandChannel;
     protected Publisher<ByteBuffer> commandPublisher;
 
+    protected Publisher<ByteBuffer> responsePublisher;
 
     // Some method to send the service creation request
-    protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requester;
+    //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requester;
 
     protected Gson gson;
 
@@ -85,22 +87,16 @@ public class DockerServiceManagerClientComponent
         }));
 
         // Send out the message
+        // FIXME We need a mechanism to tell the receiver to respond on our responsePublisher
         commandChannel.write(buffer);
 
 
-        // Not sure if this is a compleable future or a subscriber
-        CompletableFuture<ByteBuffer> response = requester.apply(buffer);
-        // FIXME We now need to get a response for the service creation request!
+        // Not sure if this is a completable future or a subscriber
+        CompletableFuture<ByteBuffer> response = PublisherUtils.triggerOnMessage(responsePublisher, (x) -> true);
 
         ByteBuffer responseBuffer = response.get(60, TimeUnit.SECONDS);
         String result = RabbitMQUtils.readString(responseBuffer);
 
-//        PublisherUtils.triggerOnMessage(commandPublisher,
-//                ByteChannelUtils.firstByteEquals(Commands.DOCKER_CONTAINER_STOP));
-
-        // The response is the serviceId
-        // FIXME The issue is, that we now need a response specifically to this request
-        //String result = null;//;
         return result;
     }
 
