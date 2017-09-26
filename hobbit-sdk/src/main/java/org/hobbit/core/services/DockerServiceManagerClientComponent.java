@@ -3,12 +3,12 @@ package org.hobbit.core.services;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
@@ -17,6 +17,7 @@ import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.Publisher;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 
 /**
@@ -41,6 +42,8 @@ public class DockerServiceManagerClientComponent
     protected Gson gson;
 
 
+    protected Map<String, Service> idToService = new HashMap<>();
+
     /**
      * On start up, the stub registers on the command channel and listens for service
      * termination events in order to update the running state of service stubs
@@ -62,18 +65,26 @@ public class DockerServiceManagerClientComponent
             switch(cmd) {
             case Commands.DOCKER_CONTAINER_TERMINATED:
                 String serviceId = RabbitMQUtils.readString(msg);
-                handleServiceTermination(serviceId);
+                int exitCode = msg.get();
+                handleServiceTermination(serviceId, exitCode);
                 break;
             }
         }
     }
 
-    public void handleServiceTermination(String serviceId) {
+    public void handleServiceTermination(String serviceId, int exitCode) {
+        Service service = idToService.get(serviceId);
 
+        if(service != null) {
+            // FIXME If the remote service failed, we would here incorrectly set the service to STOPPED
+            service.stopAsync();
+        }
+
+        idToService.remove(service);
     }
 
     // These are the delegate target methods of the created by DockerServiceSimpleDelegation
-    public String startService(String imageName, Map<String, String> env) throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    public String startService(String imageName, Map<String, String> env) {
 
         // Prepare the message for starting a service
         String[] envArr = EnvironmentUtils.mapToList("=", env).toArray(new String[0]);
@@ -88,23 +99,40 @@ public class DockerServiceManagerClientComponent
 
         // Send out the message
         // FIXME We need a mechanism to tell the receiver to respond on our responsePublisher
-        commandChannel.write(buffer);
+        try {
+            commandChannel.write(buffer);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
 
 
         // Not sure if this is a completable future or a subscriber
         CompletableFuture<ByteBuffer> response = PublisherUtils.triggerOnMessage(responsePublisher, (x) -> true);
 
-        ByteBuffer responseBuffer = response.get(60, TimeUnit.SECONDS);
+        ByteBuffer responseBuffer;
+        try {
+            responseBuffer = response.get(60, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
         String result = RabbitMQUtils.readString(responseBuffer);
+
+        Service service = new DockerServiceSimpleDelegation(imageName, this::startService, this::stopService);
+
+        idToService.put(result, service);
 
         return result;
     }
 
-    public void stopService(String serviceId) throws IOException {
+    public void stopService(String serviceId) {
         ByteBuffer buffer = ByteBuffer.wrap(RabbitMQUtils.writeByteArrays(new byte[][]{
             new byte[]{Commands.DOCKER_CONTAINER_STOP}, RabbitMQUtils.writeString(serviceId)}));
 
-        commandChannel.write(buffer);
+        try {
+            commandChannel.write(buffer);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
