@@ -25,6 +25,7 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.hobbit.core.Commands;
+import org.hobbit.core.services.IdleServiceCapable;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
@@ -45,6 +46,7 @@ import com.google.common.util.concurrent.ServiceManager;
  */
 public class SystemAdapterRDFConnection
     extends ComponentBase
+    implements IdleServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(SystemAdapterRDFConnection.class);
 
@@ -73,7 +75,7 @@ public class SystemAdapterRDFConnection
 //    protected Service systemUnderTestService;
 
     @Override
-    public void init() throws Exception {
+    public void startUp() throws Exception {
 
         streamManager = new InputStreamManagerImpl(commandChannel);
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
@@ -188,7 +190,7 @@ public class SystemAdapterRDFConnection
     }
 
     @Override
-    public void close() throws IOException {
+    public void shutDown() throws IOException {
         streamManager.close();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
     }

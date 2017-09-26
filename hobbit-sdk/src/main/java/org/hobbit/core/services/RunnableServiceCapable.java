@@ -13,5 +13,5 @@ package org.hobbit.core.services;
 public interface RunnableServiceCapable
     extends ServiceCapable
 {
-    void run();
+    void run() throws Exception;
 }

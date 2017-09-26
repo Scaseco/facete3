@@ -23,6 +23,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
+import org.hobbit.core.services.IdleServiceCapable;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
@@ -59,6 +60,7 @@ import com.google.gson.Gson;
 @Component
 public class TaskGeneratorFacetedBenchmark
     extends ComponentBase
+    implements IdleServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmark.class);
 
@@ -106,7 +108,7 @@ public class TaskGeneratorFacetedBenchmark
     protected Collection<Resource> generatedTasks = new ArrayList<>();
 
     @Override
-    public void init() throws Exception {
+    public void startUp() throws Exception {
         // Avoid duplicate services
         Set<Service> services = Sets.newIdentityHashSet();
         services.addAll(Arrays.asList(
@@ -204,7 +206,8 @@ public class TaskGeneratorFacetedBenchmark
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
     }
 
-    protected void runTaskGeneration() throws IOException {
+
+    public void runTaskGeneration() throws IOException {
 
         // Now invoke the actual task generation
         FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
@@ -285,7 +288,7 @@ public class TaskGeneratorFacetedBenchmark
 //    }
 
     @Override
-    public void close() throws IOException {
+    public void shutDown() throws IOException {
         streamManager.close();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 

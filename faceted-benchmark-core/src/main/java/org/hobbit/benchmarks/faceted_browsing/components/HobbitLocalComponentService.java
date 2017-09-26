@@ -74,12 +74,20 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         }
         else if(componentInstance instanceof IdleServiceCapable) {
             IdleServiceCapable tmp = (IdleServiceCapable)componentInstance;
-            componentService = new IdleServiceDelegate(tmp::startUp, tmp::shutDown);
+            componentService = new IdleServiceDelegate(
+                    () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
+                    () -> { try { tmp.shutDown(); } catch(Exception e) { throw new RuntimeException(e); }});
+
+
         } else if(componentInstance instanceof RunnableServiceCapable) {
             RunnableServiceCapable tmp = (RunnableServiceCapable)componentInstance;
-            componentService = new ExecutionThreadServiceDelegate(tmp::startUp, tmp::run, tmp::shutDown);
+            //componentService = new ExecutionThreadServiceDelegate(tmp::startUp, tmp::run, tmp::shutDown);
+            componentService = new ExecutionThreadServiceDelegate(
+                    () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
+                    () -> { try { tmp.run(); } catch(Exception e) { throw new RuntimeException(e); }},
+                    () -> { try { tmp.shutDown(); } catch(Exception e) { throw new RuntimeException(e); }});
         } else {
-            throw new RuntimeException("Could not determine how to wrap the component as a service");
+            throw new RuntimeException("Could not determine how to wrap the component as a service: " + componentInstance.getClass());
         }
 
 

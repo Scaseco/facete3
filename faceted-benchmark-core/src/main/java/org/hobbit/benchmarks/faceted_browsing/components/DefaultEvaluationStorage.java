@@ -14,6 +14,7 @@ import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.services.IdleServiceCapable;
 import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import com.google.common.collect.Lists;
  */
 public class DefaultEvaluationStorage
     extends ComponentBase
+    implements IdleServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(DefaultEvaluationStorage.class);
 
@@ -86,7 +88,8 @@ public class DefaultEvaluationStorage
             .iterator();
     }
 
-    public void init() {
+    @Override
+    public void startUp() {
         // TODO We could add detection of duplicate keys
 
         expectedResultsFromTaskGenerator.subscribe(data -> {
@@ -182,8 +185,8 @@ System.out.println("Got message from system adapter");
     }
 
     @Override
-    public void close() throws IOException {
-        // TODO We should unsubscribe the consumers
-    }
+    public void shutDown() throws Exception {
+        // TODO Auto-generated method stub
 
+    }
 }

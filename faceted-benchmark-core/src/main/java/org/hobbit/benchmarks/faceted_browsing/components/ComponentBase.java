@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
+import org.hobbit.core.services.ServiceCapable;
 import org.hobbit.interfaces.BaseComponent;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.PublishingWritableByteChannelSimple;
@@ -13,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class ComponentBase
-    implements BaseComponent
+    implements BaseComponent, ServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(ComponentBase.class);
 
@@ -28,6 +29,19 @@ public abstract class ComponentBase
     protected PublishingWritableByteChannelSimple commandPublisher = new PublishingWritableByteChannelSimple();
 
 
+    @Override
+    public void init() throws Exception {
+        startUp();
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            shutDown();
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     // FIXME Should we rename to init() ? If so, we must ensure that subclasses' init() methods call super.init()
     @PostConstruct

@@ -6,7 +6,6 @@ import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 
 import javax.annotation.Resource;
 
@@ -15,10 +14,10 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
-import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,8 @@ import com.google.common.util.concurrent.ServiceManager;
 
 public class BenchmarkControllerFacetedBrowsing
     extends ComponentBase
-    implements BenchmarkController
+    implements RunnableServiceCapable
+    //implements BenchmarkController
 {
     private static final Logger logger = LoggerFactory.getLogger(BenchmarkControllerFacetedBrowsing.class);
 
@@ -77,8 +77,9 @@ public class BenchmarkControllerFacetedBrowsing
 
     public static final byte START_BENCHMARK_SIGNAL = 66;
 
+
     @Override
-    public void init() throws Exception {
+    public void startUp() throws Exception {
         logger.debug("Entered BenchmarkController::init()");
 
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
@@ -147,7 +148,7 @@ public class BenchmarkControllerFacetedBrowsing
     }
 
     @Override
-    public void executeBenchmark() throws Exception {
+    public void run() throws Exception {
 
         logger.info("Benchmark execution initiated");
 
@@ -230,9 +231,10 @@ public class BenchmarkControllerFacetedBrowsing
     }
 
     @Override
-    public void close() throws IOException {
+    public void shutDown() throws Exception {
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
     }
+
 }
 
 

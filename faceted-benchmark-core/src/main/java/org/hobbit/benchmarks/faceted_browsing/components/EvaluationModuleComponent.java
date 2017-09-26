@@ -11,6 +11,7 @@ import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class EvaluationModuleComponent
     extends ComponentBase
+    implements RunnableServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleComponent.class);
 
@@ -34,7 +36,7 @@ public class EvaluationModuleComponent
 
 
     @Override
-    public void init() throws Exception {
+    public void startUp() throws Exception {
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
         //collectResponses();
@@ -112,8 +114,14 @@ public class EvaluationModuleComponent
 
     }
 
+
     @Override
-    public void close() throws IOException {
+    public void run() throws Exception {
+        logger.debug("Running evaluation module");
+    }
+
+    @Override
+    public void shutDown() throws IOException {
         // TODO Auto-generated method stub
 
     }
