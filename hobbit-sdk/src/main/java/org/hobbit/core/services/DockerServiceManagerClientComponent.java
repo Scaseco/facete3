@@ -1,6 +1,5 @@
 package org.hobbit.core.services;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.Publisher;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 
@@ -29,7 +27,8 @@ import com.google.gson.Gson;
  *
  */
 public class DockerServiceManagerClientComponent
-    extends AbstractIdleService
+    //extends AbstractIdleService
+    implements IdleServiceCapable
 {
     protected WritableByteChannel commandChannel;
     protected Publisher<ByteBuffer> commandPublisher;
@@ -49,12 +48,12 @@ public class DockerServiceManagerClientComponent
      * termination events in order to update the running state of service stubs
      */
     @Override
-    protected void startUp() throws Exception {
+    public void startUp() throws Exception {
         commandPublisher.subscribe(this::handleMessage);
     }
 
     @Override
-    protected void shutDown() throws Exception {
+    public void shutDown() throws Exception {
         commandPublisher.unsubscribe(this::handleMessage);
     }
 
