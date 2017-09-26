@@ -2,12 +2,18 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.data.Result;
+import org.hobbit.core.services.DockerService;
+import org.hobbit.core.services.DockerServiceFactory;
+import org.hobbit.core.services.DockerServiceManagerClientComponent;
+import org.hobbit.core.services.DockerServiceManagerComponent;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
@@ -19,10 +25,15 @@ import org.springframework.context.annotation.Bean;
 
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 
 public class HobbitLocalConfig {
+
+    @Bean
+    public Gson gson() {
+        return new Gson();
+        //return new GsonBuilder().setPrettyPrinting().create();
+    }
 
     /*
      * Standard channels
@@ -73,12 +84,20 @@ public class HobbitLocalConfig {
         return new PublishingWritableByteChannelQueued();
     }
 
+
     @Bean
-    public Gson gson() {
-        return new Gson();
-        //return new GsonBuilder().setPrettyPrinting().create();
+    public Service dockerServiceManagerComponent() throws TimeoutException {
+        DockerServiceManagerComponent result = new DockerServiceManagerComponent();
+        result.startAsync();
+        result.awaitRunning(60, TimeUnit.SECONDS);
+        return result;
     }
 
+
+    @Bean
+    public DockerServiceFactory<DockerService> dockerServiceManagerClientComponent() {
+        return new DockerServiceManagerClientComponent();
+    }
 
     @Bean
     public ServiceFactory<Service> benchmarkControllerServiceFactory() {

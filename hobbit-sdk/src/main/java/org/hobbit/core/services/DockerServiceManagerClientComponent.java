@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +16,10 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.Publisher;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.Listener;
+import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
 
 /**
@@ -35,13 +39,43 @@ public class DockerServiceManagerClientComponent
 
     protected Publisher<ByteBuffer> responsePublisher;
 
-    // Some method to send the service creation request
-    //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requester;
+
 
     protected Gson gson;
+    protected Map<String, Service> runningManagedServices = new HashMap<>();
 
 
-    protected Map<String, Service> idToService = new HashMap<>();
+    protected String imageName;
+    protected Map<String, String> env;
+
+
+    public DockerServiceManagerClientComponent setImageName(String imageName) {
+        this.imageName = imageName;
+        return this;
+    }
+
+    public Service get() {
+        Objects.requireNonNull(imageName);
+
+        DockerService service = new DockerServiceSimpleDelegation(imageName, this::startService, this::stopService);
+
+        service.addListener(new Listener() {
+            @Override
+            public void running() {
+                String serviceId = service.getContainerId();
+                runningManagedServices.put(serviceId, service);
+            }
+
+            @Override
+            public void terminated(State from) {
+                String serviceId = service.getContainerId();
+                runningManagedServices.remove(serviceId);
+            }
+        }, MoreExecutors.directExecutor());
+
+        return service;
+    }
+
 
     /**
      * On start up, the stub registers on the command channel and listens for service
@@ -72,14 +106,14 @@ public class DockerServiceManagerClientComponent
     }
 
     public void handleServiceTermination(String serviceId, int exitCode) {
-        Service service = idToService.get(serviceId);
+        Service service = runningManagedServices.get(serviceId);
 
         if(service != null) {
             // FIXME If the remote service failed, we would here incorrectly set the service to STOPPED
             service.stopAsync();
         }
 
-        idToService.remove(service);
+        //idToService.remove(service);
     }
 
     // These are the delegate target methods of the created by DockerServiceSimpleDelegation
@@ -116,10 +150,6 @@ public class DockerServiceManagerClientComponent
         }
         String result = RabbitMQUtils.readString(responseBuffer);
 
-        Service service = new DockerServiceSimpleDelegation(imageName, this::startService, this::stopService);
-
-        idToService.put(result, service);
-
         return result;
     }
 
@@ -135,3 +165,5 @@ public class DockerServiceManagerClientComponent
     }
 
 }
+
+
