@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
 
 /**
- * Client component to communicate with a remote {@link DockerServiceManagerComponent}
+ * Client component to communicate with a remote {@link DockerServiceManagerServerComponent}
  *
  * The component is a service itself: When started, the appropriate hooks are registered
  *
@@ -32,7 +32,7 @@ import com.google.gson.Gson;
  */
 public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
-    implements IdleServiceCapable
+    implements IdleServiceCapable, DockerServiceFactory<DockerService>
 {
     protected WritableByteChannel commandChannel;
     protected Publisher<ByteBuffer> commandPublisher;
@@ -49,12 +49,32 @@ public class DockerServiceManagerClientComponent
     protected Map<String, String> env;
 
 
+    @Override
     public DockerServiceManagerClientComponent setImageName(String imageName) {
         this.imageName = imageName;
         return this;
     }
 
-    public Service get() {
+    @Override
+    public String getImageName() {
+        return imageName;
+    }
+
+    @Override
+    public DockerServiceManagerClientComponent setLocalEnvironment(Map<String, String> env) {
+        this.env = env;
+        return this;
+    }
+
+    @Override
+    public Map<String, String> getLocalEnvironment() {
+        return env;
+    }
+
+
+
+
+    public DockerService get() {
         Objects.requireNonNull(imageName);
 
         DockerService service = new DockerServiceSimpleDelegation(imageName, this::startService, this::stopService);

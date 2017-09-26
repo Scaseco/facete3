@@ -13,7 +13,7 @@ import org.hobbit.core.data.Result;
 import org.hobbit.core.services.DockerService;
 import org.hobbit.core.services.DockerServiceFactory;
 import org.hobbit.core.services.DockerServiceManagerClientComponent;
-import org.hobbit.core.services.DockerServiceManagerComponent;
+import org.hobbit.core.services.DockerServiceManagerServerComponent;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
@@ -87,7 +87,7 @@ public class HobbitLocalConfig {
 
     @Bean
     public Service dockerServiceManagerComponent() throws TimeoutException {
-        DockerServiceManagerComponent result = new DockerServiceManagerComponent();
+        DockerServiceManagerServerComponent result = new DockerServiceManagerServerComponent();
         result.startAsync();
         result.awaitRunning(60, TimeUnit.SECONDS);
         return result;

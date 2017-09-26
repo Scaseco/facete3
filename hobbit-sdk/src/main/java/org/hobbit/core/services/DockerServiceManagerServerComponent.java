@@ -30,10 +30,10 @@ import com.google.gson.Gson;
  * @author raven Sep 24, 2017
  *
  */
-public class DockerServiceManagerComponent
+public class DockerServiceManagerServerComponent
     extends AbstractIdleService
 {
-    private static final Logger logger = LoggerFactory.getLogger(DockerServiceManagerComponent.class);
+    private static final Logger logger = LoggerFactory.getLogger(DockerServiceManagerServerComponent.class);
 
 
     @Resource(name="commandChannel")
