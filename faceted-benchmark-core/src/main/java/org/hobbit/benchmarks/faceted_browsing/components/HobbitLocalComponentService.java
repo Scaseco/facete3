@@ -105,6 +105,10 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
     @Override
     protected void shutDown() throws Exception {
+        if(componentInstance != null) {
+            logger.debug("Shutting down component instance: " + componentInstance.getClass());
+        }
+
         componentService.stopAsync();
         componentService.awaitTerminated(60, TimeUnit.SECONDS);
 

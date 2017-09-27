@@ -10,7 +10,6 @@ import org.hobbit.benchmarks.faceted_browsing.components.EvaluationModuleCompone
 import org.hobbit.benchmarks.faceted_browsing.components.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.services.DockerServiceManagerServerComponent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 
@@ -27,7 +26,6 @@ public class ConfigHobbitLocalPlatformFacetedBenchmark {
         imageNameToClass.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", EvaluationModuleComponent.class);
 
         // FIXME Get this mapping working: We may need a preconfigured env + launcher in addition to the class
-        //
         //DockerServiceFactorySimpleDelegation
 
 
@@ -36,8 +34,10 @@ public class ConfigHobbitLocalPlatformFacetedBenchmark {
     }
 
     @Bean
-    @Autowired
+    //@Autowired
     public String dummy(@Qualifier("dockerServiceManagerComponent") Service service) throws TimeoutException {
+        //Thread.dumpStack();
+
         service.startAsync();
         service.awaitRunning(60, TimeUnit.SECONDS);
         return "dummy";
