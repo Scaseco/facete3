@@ -174,6 +174,7 @@ public class BenchmarkControllerFacetedBrowsing
         // Wait for the system-under-test to report its ready state
         //CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sen
 
+        logger.debug("Waiting for preparation phase to complete");
         CompletableFuture<?> preparationPhaseCompletion = CompletableFuture.allOf(
                 dataGenerationFuture,
                 taskGenerationFuture,

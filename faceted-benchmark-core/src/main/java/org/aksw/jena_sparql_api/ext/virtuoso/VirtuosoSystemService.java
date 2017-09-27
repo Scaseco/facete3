@@ -142,7 +142,8 @@ public class VirtuosoSystemService
                 new SparqlQueryConnectionJsa(httpSparqlService.getQueryExecutionFactory()),
                 new SparqlUpdateConnectionJsa(httpSparqlService.getUpdateExecutionFactory()), null);
 
-        System.out.println(odbcPort + " --- " + httpPort);
+        logger.debug("Automatically detected these ports in the virtuoso configuration:");
+        logger.debug("ODBC port: " + odbcPort + " --- HTTP port: " + httpPort);
 
         return result;
     }

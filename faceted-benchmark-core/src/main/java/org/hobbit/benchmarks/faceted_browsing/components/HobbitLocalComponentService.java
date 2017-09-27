@@ -71,8 +71,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         // Determine the appropriate service wrapper for the component
         if(componentInstance instanceof Service) {
             componentService = (Service)componentInstance;
-        }
-        else if(componentInstance instanceof IdleServiceCapable) {
+        } else if(componentInstance instanceof IdleServiceCapable) {
             IdleServiceCapable tmp = (IdleServiceCapable)componentInstance;
             componentService = new IdleServiceDelegate(
                     () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
@@ -99,6 +98,8 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
         //componentInstance.init();
         componentService.startAsync();
+        componentService.awaitRunning(60, TimeUnit.SECONDS);
+
         logger.debug("Successfully started local component of type " + componentClass);
 
     }

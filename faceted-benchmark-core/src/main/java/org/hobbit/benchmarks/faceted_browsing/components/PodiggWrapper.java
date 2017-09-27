@@ -27,7 +27,7 @@ public class PodiggWrapper {
         penv.putAll(env);
 
         SimpleProcessExecutor.wrap(processBuilder)
-            .setOutputSink(System.out::println) //logger::debug)
+            .setOutputSink(logger::debug) //System.out::println) //logger::debug)
             .execute();
     }
 

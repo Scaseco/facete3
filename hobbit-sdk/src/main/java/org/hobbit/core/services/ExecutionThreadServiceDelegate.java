@@ -30,7 +30,6 @@ public class ExecutionThreadServiceDelegate
         if(run != null) {
             run.run();
         }
-
     }
 
     @Override
@@ -39,5 +38,6 @@ public class ExecutionThreadServiceDelegate
             shutDown.run();
         }
 
+        super.shutDown();
     }
 }

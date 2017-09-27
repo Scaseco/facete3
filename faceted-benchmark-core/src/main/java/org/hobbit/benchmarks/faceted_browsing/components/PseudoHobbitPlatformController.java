@@ -92,11 +92,11 @@ public class PseudoHobbitPlatformController
                 try {
                     service.awaitRunning(60, TimeUnit.SECONDS);
                     BenchmarkController benchmarkController = service.getComponent();
-                    benchmarkController.executeBenchmark();
+                    //benchmarkController.executeBenchmark();
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 } finally {
-                    logger.debug("Benchmark has ended.");
+                    logger.debug("Waiting for benchmark to finish...");
                     service.stopAsync();
                     try {
                         service.awaitTerminated(60, TimeUnit.SECONDS);
