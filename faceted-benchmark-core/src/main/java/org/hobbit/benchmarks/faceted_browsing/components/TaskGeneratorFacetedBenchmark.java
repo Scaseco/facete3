@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -23,7 +24,9 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
-import org.hobbit.core.services.IdleServiceCapable;
+import org.hobbit.core.services.RunnableServiceCapable;
+import org.hobbit.core.utils.ByteChannelUtils;
+import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
@@ -60,7 +63,7 @@ import com.google.gson.Gson;
 @Component
 public class TaskGeneratorFacetedBenchmark
     extends ComponentBase
-    implements IdleServiceCapable
+    implements RunnableServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmark.class);
 
@@ -176,34 +179,47 @@ public class TaskGeneratorFacetedBenchmark
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
 
 
-
-        commandPublisher.subscribe((buffer) -> {
-            // Pass all data with a defensive copy to stream handler
-            streamManager.handleIncomingData(buffer.duplicate());
-
-            if(buffer.hasRemaining()) {
-                byte cmd = buffer.get(0);
-                switch(cmd) {
-                case Commands.TASK_GENERATOR_START_SIGNAL:
-                    try {
-                        runTaskGeneration();
-//                        sendOutTasks();
-                        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-                    } catch(Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    //computeReferenceResultAndSendToEvalStorage();
-                    break;
-                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
-                    sendOutTasks();
-                    break;
-                }
-            }
-        });
+//
+//        commandPublisher.subscribe((buffer) -> {
+//            // Pass all data with a defensive copy to stream handler
+//            streamManager.handleIncomingData(buffer.duplicate());
+//
+//            if(buffer.hasRemaining()) {
+//                byte cmd = buffer.get(0);
+//                switch(cmd) {
+//                case Commands.TASK_GENERATOR_START_SIGNAL:
+//                    try {
+//                        runTaskGeneration();
+////                        sendOutTasks();
+//                        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+//                    } catch(Exception e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                    //computeReferenceResultAndSendToEvalStorage();
+//                    break;
+//                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
+//                    sendOutTasks();
+//                    break;
+//                }
+//            }
+//        });
 
         // At this point, the task generator is ready for processing
         // The message should be sent out by the service wrapper:
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
+    }
+
+
+    @Override
+    public void run() throws Exception {
+        // Wait for the start signal
+
+        CompletableFuture<ByteBuffer> startFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
+
+        startFuture.get(60, TimeUnit.SECONDS);
+
+        runTaskGeneration();
+        sendOutTasks();
     }
 
 
