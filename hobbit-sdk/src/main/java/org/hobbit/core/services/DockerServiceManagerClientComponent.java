@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
@@ -40,6 +41,7 @@ public class DockerServiceManagerClientComponent
     protected Publisher<ByteBuffer> responsePublisher;
 
 
+    //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestFunction;
 
     protected Gson gson;
     protected Map<String, Service> runningManagedServices = new HashMap<>();

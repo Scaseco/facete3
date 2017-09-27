@@ -62,7 +62,8 @@ public class PublishingWritableByteChannelQueued
 
     @Override
     public void close() throws IOException {
-        executorService.shutdown();
+        executorService.shutdownNow();
+        //executorService.shutdown();
         try {
             executorService.awaitTermination(60, TimeUnit.SECONDS);
         } catch (InterruptedException e) {

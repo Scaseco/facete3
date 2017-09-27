@@ -55,6 +55,12 @@ public class DockerServiceManagerServerComponent
     //protected Set<Service> runningManagedServices = Sets.newIdentityHashSet();
 
 
+    public DockerServiceManagerServerComponent(DockerServiceFactory<DockerService> delegate) {
+        super();
+        this.delegate = delegate;
+    }
+
+
     @Override
     protected void startUp() throws Exception {
         commandPublisher.subscribe(this::receiveCommand);
@@ -134,8 +140,6 @@ public class DockerServiceManagerServerComponent
             byte b = buffer.get();
             switch(b) {
             case Commands.DOCKER_CONTAINER_START:
-                //parseJson().get("foo")
-
                 String str = RabbitMQUtils.readString(buffer);
                 StartCommandData data = gson.fromJson(str, StartCommandData.class);
 
