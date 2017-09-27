@@ -77,6 +77,8 @@ public class BenchmarkControllerFacetedBrowsing
     protected Service evaluationModuleService;
 
 
+    protected CompletableFuture<State> dataGenerationFuture;
+
     public static final byte START_BENCHMARK_SIGNAL = 66;
 
 
@@ -110,6 +112,8 @@ public class BenchmarkControllerFacetedBrowsing
             }
         }, MoreExecutors.directExecutor());
 
+
+        dataGenerationFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
 
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
@@ -159,11 +163,19 @@ public class BenchmarkControllerFacetedBrowsing
          *
          *
          */
-        CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
-                commandChannel,
-                new byte[]{Commands.DATA_GENERATOR_START_SIGNAL},
-                commandPublisher,
-                ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATION_FINISHED));
+//        CompletableFuture<ByteBuffer> dataGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
+//                commandChannel,
+//                new byte[]{Commands.DATA_GENERATOR_START_SIGNAL},
+//                commandPublisher,
+//                ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATION_FINISHED));
+
+
+        // Wait for the task generation service to stop
+
+        // Send out the data generation start signal
+
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
+
 
         CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
                 commandChannel,

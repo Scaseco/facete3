@@ -18,11 +18,10 @@ public class ExecutionThreadServiceDelegate
 
     @Override
     protected void startUp() throws Exception {
+        super.startUp();
         if(startUp != null) {
             startUp.run();
         }
-
-        super.startUp();
     }
 
     @Override

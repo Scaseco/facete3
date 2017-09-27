@@ -73,7 +73,7 @@ public class DataGeneratorFacetedBrowsing
     }
     @Override
     public void shutDown() {
-        try { init(); } catch(Exception e) { throw new RuntimeException(e); }
+        try { close(); } catch(Exception e) { throw new RuntimeException(e); }
     }
 
 
@@ -117,6 +117,8 @@ public class DataGeneratorFacetedBrowsing
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }
+
+        logger.debug("Data generation start message received.");
 
         try {
             generateData();
