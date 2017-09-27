@@ -78,8 +78,9 @@ public class BenchmarkControllerFacetedBrowsing
 
 
     protected CompletableFuture<State> dataGenerationFuture;
+    protected CompletableFuture<State> taskGenerationFuture;
 
-    public static final byte START_BENCHMARK_SIGNAL = 66;
+    //public static final byte START_BENCHMARK_SIGNAL = 66;
 
 
     @Override
@@ -114,6 +115,7 @@ public class BenchmarkControllerFacetedBrowsing
 
 
         dataGenerationFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
+        taskGenerationFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
 
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
@@ -177,49 +179,75 @@ public class BenchmarkControllerFacetedBrowsing
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 
 
-        CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
-                commandChannel,
-                new byte[]{Commands.TASK_GENERATOR_START_SIGNAL},
-                commandPublisher,
-                ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
+//        CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
+//                commandChannel,
+//                new byte[]{Commands.TASK_GENERATOR_START_SIGNAL},
+//                commandPublisher,
+//                ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
         // Wait for the system-under-test to report its ready state
         //CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sen
 
-        logger.debug("Waiting for preparation phase to complete");
-        CompletableFuture<?> preparationPhaseCompletion = CompletableFuture.allOf(
+
+        // FIXME Actually we only need to wait for the ready signals of the task and data generator
+        // The service stuff is just further info
+
+
+        logger.debug("Waiting for data generation phase to complete");
+        CompletableFuture<?> dataGenerationPhaseCompletion = CompletableFuture.allOf(
                 dataGenerationFuture,
-                taskGenerationFuture,
                 systemUnderTestReadyFuture);
 
         try {
-            preparationPhaseCompletion.get(60, TimeUnit.SECONDS);
+            dataGenerationPhaseCompletion.get(60, TimeUnit.SECONDS);
         } catch(Exception e) {
-            throw new RuntimeException("Preparation phase did not complete in time", e);
+            throw new RuntimeException("Data generation phase did not complete in time", e);
+        }
+
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
+
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+
+
+
+        logger.debug("Waiting for task generation phase to complete");
+        CompletableFuture<?> taskGenerationPhaseCompletion = taskGenerationFuture;
+                //CompletableFuture.allOf(dataGenerationFuture);
+
+        try {
+            taskGenerationPhaseCompletion.get(60, TimeUnit.SECONDS);
+        } catch(Exception e) {
+            throw new RuntimeException("Task generation phase did not complete in time", e);
         }
 
 
-        System.out.println("ACTUAL BENCHMARK BEGINS NOW");
+        logger.info("ACTUAL BENCHMARK BEGINS NOW");
+
+
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+
+
 
         // Instruct the task generator(s) to run their tasks
         // FIXME This is just my ad-hoc signal
-        commandChannel.write(ByteBuffer.wrap(new byte[]{START_BENCHMARK_SIGNAL}));
+        //commandChannel.write(ByteBuffer.wrap(new byte[]{START_BENCHMARK_SIGNAL}));
 
 
 
 
         // Stop unneeded services to free resources
-        dataGeneratorService.stopAsync();
+        // dataGeneratorService.stopAsync();
 
 
         // Wait for the benchmark run to finish
         // This is indicated by the task generator service
         // shutting itself down; hence we just have to wait here
-        taskGeneratorService.awaitTerminated(60, TimeUnit.SECONDS);
+        // taskGeneratorService.awaitTerminated(60, TimeUnit.SECONDS);
 
 
         // The evaluation module will immediately on start request the data from the eval store
         // so for things to work correctly, the eval store's data must be complete
+        logger.info("Starting evaluation module... ");
         evaluationModuleService.startAsync();
         evaluationModuleService.awaitRunning(60, TimeUnit.SECONDS);
 
