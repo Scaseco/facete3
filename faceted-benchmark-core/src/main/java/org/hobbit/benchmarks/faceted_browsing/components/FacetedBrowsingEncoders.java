@@ -54,12 +54,12 @@ public class FacetedBrowsingEncoders {
         return result;
     }
 
-    public static ByteBuffer formatTaskForSystemAdapter(Resource r, Gson gson) {
-        String payload = gson.toJson(resourceToJson(r));
-        byte[] data = payload.getBytes(StandardCharsets.UTF_8);
-        ByteBuffer result = ByteBuffer.wrap(data);
-        return result;
-    }
+//    public static ByteBuffer formatTaskForSystemAdapter(Resource r, Gson gson) {
+//        String payload = gson.toJson(resourceToJson(r));
+//        byte[] data = payload.getBytes(StandardCharsets.UTF_8);
+//        ByteBuffer result = ByteBuffer.wrap(data);
+//        return result;
+//    }
 
 
 
