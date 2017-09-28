@@ -3,6 +3,9 @@ package org.aksw.jena_sparql_api.ext.virtuoso;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -16,6 +19,9 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
+import org.apache.jena.rdfconnection.RDFDatasetConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.rdfconnection.SparqlUpdateConnection;
 import org.ini4j.Ini;
 import org.ini4j.IniPreferences;
 import org.ini4j.InvalidFileFormatException;
@@ -138,9 +144,19 @@ public class VirtuosoSystemService
 
         SparqlService httpSparqlService = FluentSparqlService.http(endpointUrl).create();
 
-        RDFConnection result = new RDFConnectionModular(
-                new SparqlQueryConnectionJsa(httpSparqlService.getQueryExecutionFactory()),
-                new SparqlUpdateConnectionJsa(httpSparqlService.getUpdateExecutionFactory()), null);
+        
+        Connection sqlConn;
+        try {
+            sqlConn = DriverManager.getConnection("jdbc:virtuoso://localhost:" + odbcPort, "dba", "dba");
+        } catch (SQLException e) {
+            throw new RuntimeException();
+        }
+        
+        SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(httpSparqlService.getQueryExecutionFactory());
+        SparqlUpdateConnection updateConn = new SparqlUpdateConnectionJsa(httpSparqlService.getUpdateExecutionFactory());
+        RDFDatasetConnection datasetConn = new RDFDatasetConnectionVirtuoso(queryConn, sqlConn);
+        
+        RDFConnection result = new RDFConnectionModular(queryConn, updateConn, datasetConn);
 
         logger.debug("Automatically detected these ports in the virtuoso configuration:");
         logger.debug("ODBC port: " + odbcPort + " --- HTTP port: " + httpPort);
