@@ -64,6 +64,10 @@ public class BenchmarkControllerFacetedBrowsing
 
     protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
 
+    // FIXME HACK - A service should not be considered started unless they are ready 
+    protected CompletableFuture<ByteBuffer> dataGeneratorReadyFuture;
+    protected CompletableFuture<ByteBuffer> taskGeneratorReadyFuture;
+
 
     // The future for whether the evaluation data has been received
     protected CompletableFuture<ByteBuffer> evaluationDataReceivedFuture;
@@ -92,6 +96,13 @@ public class BenchmarkControllerFacetedBrowsing
         systemUnderTestReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
                 ByteChannelUtils.firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
 
+        dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+                ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
+
+        taskGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+                ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_READY_SIGNAL));
+
+        
         dataGeneratorService = dataGeneratorServiceFactory.get();
         taskGeneratorService = taskGeneratorServiceFactory.get();
         systemAdapterService = systemAdapterServiceFactory.get();
@@ -158,6 +169,11 @@ public class BenchmarkControllerFacetedBrowsing
     @Override
     public void run() throws Exception {
 
+        logger.debug("Waiting for data and task generators to become ready");
+        CompletableFuture<?> initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
+        initFuture.get(60, TimeUnit.SECONDS);
+        
+        
         logger.info("Benchmark execution initiated");
 
         /*
@@ -178,6 +194,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 
+        
 
 //        CompletableFuture<ByteBuffer> taskGenerationFuture = ByteChannelUtils.sendMessageAndAwaitResponse(
 //                commandChannel,

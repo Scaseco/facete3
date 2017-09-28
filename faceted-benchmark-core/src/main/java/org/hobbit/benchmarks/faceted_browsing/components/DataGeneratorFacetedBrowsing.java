@@ -64,7 +64,7 @@ public class DataGeneratorFacetedBrowsing
 
 
 
-    protected CompletableFuture<ByteBuffer> startSignal;
+    protected CompletableFuture<ByteBuffer> startSignalFuture;
 
 
     @Override
@@ -84,14 +84,14 @@ public class DataGeneratorFacetedBrowsing
         logger.debug("Data generator init");
 
 
-        startSignal = PublisherUtils.triggerOnMessage(commandPublisher,
+        startSignalFuture = PublisherUtils.triggerOnMessage(commandPublisher,
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_START_SIGNAL));
 
 
         // This code block would allow repeated requests to the DG, but
         // but the protocol demands the DG to shut down after handling a single DG request
         if(false) {
-            startSignal.whenComplete((buffer, t) -> {
+            startSignalFuture.whenComplete((buffer, t) -> {
                 try {
                     generateData();
                 } catch(Exception e) {
@@ -106,6 +106,8 @@ public class DataGeneratorFacetedBrowsing
                 }
             });
         }
+        
+        commandChannel.write(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
     }
 
     @Override
@@ -113,7 +115,7 @@ public class DataGeneratorFacetedBrowsing
         logger.debug("Waiting for message to start data generation");
 
         try {
-            startSignal.get(60, TimeUnit.SECONDS);
+            startSignalFuture.get(60, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }

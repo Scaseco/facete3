@@ -167,13 +167,19 @@ public class TaskGeneratorFacetedBenchmark
 
                         // TODO Bulk loading not yet implemented...
 
-                        conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
+                        conn.load("http://www.virtuoso-graph.com", tmpFile.getAbsolutePath());
                         tmpFile.delete();
                     } catch(Exception e) {
                         e.printStackTrace();
                         throw new RuntimeException(e);
                     }
+                    
                     logger.debug("Bulk loading complete");
+                    try {
+                        Thread.sleep(5000);
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    }
                     
                     
                     // Wait for a response of the store that the loading is actually complete                    
