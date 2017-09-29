@@ -464,7 +464,8 @@ public class FacetedTaskGeneratorOld {
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
         Object result = null;
         try {
-            result = engine.eval(expression);
+        	System.out.println("Eval: " + expression);
+        	result = engine.eval(expression);
         } catch (ScriptException e) {
             e.printStackTrace();
         }

@@ -3,9 +3,9 @@ package org.hobbit.transfer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 
 public class ReadableByteChannelSimple
@@ -43,6 +43,13 @@ public class ReadableByteChannelSimple
 
     protected void appendDataToQueue(ByteBuffer bodyBuffer) throws InterruptedException {
         synchronized(this) {
+        	bodyBuffer.mark();
+        	byte[] tmp = new byte[bodyBuffer.remaining()];
+        	bodyBuffer.get(tmp, 0, bodyBuffer.remaining());
+        	String s = new String(tmp, StandardCharsets.UTF_8);
+        	bodyBuffer.reset();
+        	
+        	//System.out.println("Appending to queue: " + s);
             clientQueue.put(bodyBuffer);
         }
     }
@@ -140,6 +147,9 @@ public class ReadableByteChannelSimple
             ByteBuffer tmp = currentBuffer.duplicate();
             tmp.limit(newOff);
             dst.put(tmp);
+//            System.out.println("Got:");
+//            System.out.println(new String(dst.array(), StandardCharsets.UTF_8));
+
             currentBuffer.position(newOff);
 
             result += toRead;

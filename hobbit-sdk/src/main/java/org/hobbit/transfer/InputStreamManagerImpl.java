@@ -38,6 +38,11 @@ public class InputStreamManagerImpl
 
     protected Consumer<ByteBuffer> controlChannel;
 
+    public InputStreamManagerImpl() {
+        this.readProtocol = new ChunkedProtocolReaderSimple();
+        this.controlProtocol = new ChunkedProtocolControlSimple();    	
+    }
+
     public InputStreamManagerImpl(Consumer<ByteBuffer> controlChannel) {
         this.controlChannel = controlChannel;
 
@@ -117,7 +122,9 @@ public class InputStreamManagerImpl
                             // to hint any sender to stop sending the stream
                             if(!isDone()) {
                                 ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
-                                controlChannel.accept(readingAbortedMessage);
+                                if(controlChannel != null) {
+                                	controlChannel.accept(readingAbortedMessage);
+                                }
                             }
                             super.close();
                         }
@@ -133,11 +140,11 @@ public class InputStreamManagerImpl
                         InputStream tmpIn = Channels.newInputStream(tmp);
                         //CompletableFuture.runAsync(() -> {
                         // TODO Get any exceptions from the executor service
-                        executorService.submit(() -> {
+                        executorService.execute(() -> {
                             try {
                                 subscriber.accept(tmpIn);
                             } catch(Exception e) {
-                                e.printStackTrace();
+                                throw new RuntimeException();
                             }
                         });
 
@@ -148,12 +155,19 @@ public class InputStreamManagerImpl
 
             if(in != null) {
                 ByteBuffer payload = readProtocol.getPayload(buffer);
+                                
+                ByteBuffer copy = ByteBuffer.allocate(payload.remaining());
+                copy.put(payload);
+                copy.rewind();
+                
+                
+                
                 try {
                     boolean isLastChunk = readProtocol.isLastChunk(buffer);
                     if(isLastChunk) {
                         in.setLastBatchSeen();
                     }
-                    in.appendDataToQueue(payload);
+                    in.appendDataToQueue(copy);
                 } catch(InterruptedException e) {
                     throw new RuntimeException(e);
                 }
