@@ -102,14 +102,26 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         // Add a listener to shut down 'this' service wrapper
         Service self = this;
         componentService.addListener(new Listener() {
+        	@Override
+        	public void failed(State from, Throwable failure) {
+        		doTermination();
+        		super.failed(from, failure);
+        	}
+        	
+        	@Override
             public void terminated(State from) {
+        		super.terminated(from);
+            };
+
+            public void doTermination() {
                 self.stopAsync();
                 try {
                     self.awaitTerminated(60, TimeUnit.SECONDS);
                 } catch (TimeoutException e) {
                     throw new RuntimeException(e);
-                }
-            };
+                }            	
+            }
+        
         }, MoreExecutors.directExecutor());
 
         //componentInstance.init();

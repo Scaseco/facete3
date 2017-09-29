@@ -243,6 +243,7 @@ public class TaskGeneratorFacetedBenchmark
 
         runTaskGeneration();
         sendOutTasks();
+        logger.debug("Sending out tasks done.");
     }
 
 
@@ -256,13 +257,16 @@ public class TaskGeneratorFacetedBenchmark
             gen.initializeParameters();
             Stream<Resource> tasks = gen.generateTasks();
 
+            
             tasks.forEach(task -> {
                 System.out.println("Generated task: " + task);
                 generatedTasks.add(task);
             });
         }
 
+        logger.debug("Stopping preparation sparql service");
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+        logger.debug("Stopped preparation sparql service");
     }
 
 
@@ -291,6 +295,7 @@ public class TaskGeneratorFacetedBenchmark
                 ByteBuffer buf = createMessageForEvalStorage(task, referenceConn);
 
                 try {
+                	logger.debug("Sending to eval store");
                     toEvaluationStorage.write(buf);
                 } catch(IOException e) {
                     throw new RuntimeException(e);
@@ -298,6 +303,7 @@ public class TaskGeneratorFacetedBenchmark
 
                 String queryStr = task.getProperty(RDFS.label).getString();
                 try {
+                	logger.debug("Sending to system under test");
                     toSystemAdater.write(ByteBuffer.wrap(queryStr.getBytes(StandardCharsets.UTF_8)));
                 } catch(IOException e) {
                     throw new RuntimeException(e);

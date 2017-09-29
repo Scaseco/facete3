@@ -92,7 +92,20 @@ public class DockerServiceManagerServerComponent
             }
 
             @Override
+            public void failed(State from, Throwable failure) {
+            	doTermination();
+
+            	super.failed(from, failure);
+            }
+            
+            @Override
             public void terminated(State from) {
+            	doTermination();
+            	
+                super.terminated(from);
+            }
+
+            public void doTermination() {
                 String containerId = service.getContainerId();
 
 
@@ -113,11 +126,9 @@ public class DockerServiceManagerServerComponent
                     commandChannel.write(buffer);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
-                }
-
-                super.terminated(from);
+                }            	
             }
-
+            
         }, MoreExecutors.directExecutor());
 
 
