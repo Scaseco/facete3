@@ -468,6 +468,7 @@ public class FacetedTaskGeneratorOld {
         	result = engine.eval(expression);
         } catch (ScriptException e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return result;
     }
@@ -563,6 +564,7 @@ public class FacetedTaskGeneratorOld {
                 out.writeUTF(element);
             } catch (IOException e) {
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
         byte[] bytes = baos.toByteArray();

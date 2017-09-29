@@ -110,8 +110,21 @@ public class TaskGeneratorFacetedBenchmark
     // The generated tasks; we should use file persistence for scaling in the general case
     protected Collection<Resource> generatedTasks = new ArrayList<>();
 
+    
+    
+    protected CompletableFuture<Void> startTaskGenerationFuture;
+    
+    
+    protected CompletableFuture<Void> loadDataFinishedFuture = new CompletableFuture<>();
+    protected CompletableFuture<ByteBuffer> startSignalReceivedFuture;
+    
     @Override
     public void startUp() throws Exception {
+        
+        CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
+
+        startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
+        
         // Avoid duplicate services
         Set<Service> services = Sets.newIdentityHashSet();
         services.addAll(Arrays.asList(
@@ -154,13 +167,23 @@ public class TaskGeneratorFacetedBenchmark
 
                         // TODO Bulk loading not yet implemented...
 
-                        //conn.load("http://www.example.com/graph", tmpFile.getAbsolutePath());
+                        conn.load("http://www.virtuoso-graph.com", tmpFile.getAbsolutePath());
                         tmpFile.delete();
                     } catch(Exception e) {
                         e.printStackTrace();
                         throw new RuntimeException(e);
                     }
+                    
                     logger.debug("Bulk loading complete");
+                    try {
+                        Thread.sleep(5000);
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    }
+                    
+                    
+                    // Wait for a response of the store that the loading is actually complete                    
+                    loadDataFinishedFuture.complete(null);
                 }
 
 //                try {
@@ -212,11 +235,11 @@ public class TaskGeneratorFacetedBenchmark
 
     @Override
     public void run() throws Exception {
-        // Wait for the start signal
-
-        CompletableFuture<ByteBuffer> startFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
-
-        startFuture.get(60, TimeUnit.SECONDS);
+        // Wait for the start signal; but also make sure the data was loaded!
+        
+        
+        
+        startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
 
         runTaskGeneration();
         sendOutTasks();
