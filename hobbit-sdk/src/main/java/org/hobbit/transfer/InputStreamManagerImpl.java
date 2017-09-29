@@ -155,7 +155,10 @@ public class InputStreamManagerImpl
 
             if(in != null) {
                 ByteBuffer payload = readProtocol.getPayload(buffer);
-                                
+                              
+                // Make sure to pass only copies to the listeners so that
+                // (a) an overwrite of the original buffer does not cause undefined behavior
+                // (b) changes by the listeners do not cause undefined behavior
                 ByteBuffer copy = ByteBuffer.allocate(payload.remaining());
                 copy.put(payload);
                 copy.rewind();

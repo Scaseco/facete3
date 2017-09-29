@@ -102,7 +102,7 @@ public class ReadableByteChannelSimple
         int result = 0;
 
         int remaining = dst.remaining();
-        int readBytes = 0;
+        //int readBytes = 0;
 
         while(remaining > 0) {
             int available = currentBuffer == null ? 0 : currentBuffer.remaining();
@@ -111,7 +111,7 @@ public class ReadableByteChannelSimple
                 synchronized(this) {
                     // If we are at the last batch and have not read anything yet, we have reached the end
                     if(lastBatchSeen && clientQueue.isEmpty()) {
-                        if(readBytes == 0) {
+                        if(result == 0) {
                             result = -1;
                         }
                         break;
