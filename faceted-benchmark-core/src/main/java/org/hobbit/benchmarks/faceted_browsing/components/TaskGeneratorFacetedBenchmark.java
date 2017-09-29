@@ -175,11 +175,11 @@ public class TaskGeneratorFacetedBenchmark
                     }
                     
                     logger.debug("Bulk loading complete");
-                    try {
-                        Thread.sleep(5000);
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(5000);
+//                    } catch(Exception e) {
+//                        e.printStackTrace();
+//                    }
                     
                     
                     // Wait for a response of the store that the loading is actually complete                    
@@ -238,12 +238,14 @@ public class TaskGeneratorFacetedBenchmark
         // Wait for the start signal; but also make sure the data was loaded!
         
         
-        
+        logger.debug("Task generator waiting for start signal");
         startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
 
+        logger.debug("Task generator received start signal; running task generation");
         runTaskGeneration();
+        logger.debug("Task generator done with task generation; sending tasks out");
         sendOutTasks();
-        logger.debug("Sending out tasks done.");
+        logger.debug("Task generator fulfilled its purpose and shutting down");
     }
 
 

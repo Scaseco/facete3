@@ -110,6 +110,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         	
         	@Override
             public void terminated(State from) {
+        		doTermination();
         		super.terminated(from);
             };
 

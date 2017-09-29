@@ -179,9 +179,13 @@ public class DataGeneratorFacetedBrowsing
             }
         };
 
+        logger.debug("Data generator is sending dataset to task generater");
         sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator);
+        
+        logger.debug("Data generator is sending dataset to system adapter");
         sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper);
 
+        logger.debug("Data generator fulfilled its purpose and shuts down");
         datasetFile.delete();
     }
 

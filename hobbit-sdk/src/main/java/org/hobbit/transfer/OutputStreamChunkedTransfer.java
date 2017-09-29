@@ -48,7 +48,8 @@ public class OutputStreamChunkedTransfer
     public static OutputStreamChunkedTransfer newInstanceForByteChannel(
             //ChunkedProtocolWriter protocol,
             WritableByteChannel channel,
-            Runnable closeAction) {
+            Runnable closeAction)
+    {
         OutputStreamChunkedTransfer result = new OutputStreamChunkedTransfer(
                 new ChunkedProtocolWriterSimple(nextStreamId.getAndIncrement()),
                 md -> {
