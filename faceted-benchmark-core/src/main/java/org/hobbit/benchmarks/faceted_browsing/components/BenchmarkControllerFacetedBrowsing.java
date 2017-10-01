@@ -42,8 +42,8 @@ public class BenchmarkControllerFacetedBrowsing
     @Resource(name="taskGeneratorServiceFactory")
     protected ServiceFactory<Service> taskGeneratorServiceFactory;
 
-    @Resource(name="systemAdapterServiceFactory")
-    protected ServiceFactory<Service> systemAdapterServiceFactory;
+//    @Resource(name="systemAdapterServiceFactory")
+//    protected ServiceFactory<Service> systemAdapterServiceFactory;
 
     @Resource(name="evaluationStorageServiceFactory")
     protected ServiceFactory<Service> evaluationStorageServiceFactory;
@@ -62,7 +62,7 @@ public class BenchmarkControllerFacetedBrowsing
 
 
 
-    protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
+    //protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
 
     // FIXME HACK - A service should not be considered started unless they are ready 
     protected CompletableFuture<ByteBuffer> dataGeneratorReadyFuture;
@@ -93,8 +93,8 @@ public class BenchmarkControllerFacetedBrowsing
 
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
-        systemUnderTestReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
-                ByteChannelUtils.firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
+//        systemUnderTestReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+//                ByteChannelUtils.firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
 
         dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
@@ -105,7 +105,7 @@ public class BenchmarkControllerFacetedBrowsing
         
         dataGeneratorService = dataGeneratorServiceFactory.get();
         taskGeneratorService = taskGeneratorServiceFactory.get();
-        systemAdapterService = systemAdapterServiceFactory.get();
+        //systemAdapterService = systemAdapterServiceFactory.get();
         evaluationStorageService = evaluationStorageServiceFactory.get();
         evaluationModuleService = evaluationModuleServiceFactory.get();
 
@@ -131,7 +131,7 @@ public class BenchmarkControllerFacetedBrowsing
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
                 taskGeneratorService,
-                systemAdapterService,
+                //systemAdapterService,
                 evaluationStorageService
                 //evaluationModuleService
         ));
@@ -212,8 +212,8 @@ public class BenchmarkControllerFacetedBrowsing
 
         logger.debug("Waiting for data generation phase to complete");
         CompletableFuture<?> dataGenerationPhaseCompletion = CompletableFuture.allOf(
-                dataGenerationFuture,
-                systemUnderTestReadyFuture);
+                dataGenerationFuture);
+                //systemUnderTestReadyFuture);
 
         try {
             dataGenerationPhaseCompletion.get(60, TimeUnit.SECONDS);

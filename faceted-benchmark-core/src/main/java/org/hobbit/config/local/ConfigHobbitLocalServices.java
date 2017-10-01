@@ -2,10 +2,6 @@ package org.hobbit.config.local;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
@@ -22,25 +18,17 @@ import org.hobbit.benchmarks.faceted_browsing.components.Storage;
 import org.hobbit.benchmarks.faceted_browsing.components.StorageInMemory;
 import org.hobbit.benchmarks.faceted_browsing.components.SystemAdapterRDFConnection;
 import org.hobbit.benchmarks.faceted_browsing.components.TaskGeneratorFacetedBenchmark;
-import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.services.DockerService;
 import org.hobbit.core.services.DockerServiceFactory;
-import org.hobbit.core.services.DockerServiceFactorySimpleDelegation;
 import org.hobbit.core.services.DockerServiceManagerClientComponent;
-import org.hobbit.core.services.DockerServiceManagerServerComponent;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.Publisher;
-import org.hobbit.transfer.PublishingWritableByteChannel;
-import org.hobbit.transfer.PublishingWritableByteChannelQueued;
-import org.hobbit.transfer.PublishingWritableByteChannelSimple;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
 
 
 
@@ -96,17 +84,6 @@ public class ConfigHobbitLocalServices {
         return new LocalHobbitComponentServiceFactory<>(SystemAdapterRDFConnection.class);
     }
 
-
-    /**
-     * The RDF connection supplier to use by the system adapter
-     *
-     * @return
-     */
-    @Bean
-    public Supplier<RDFConnection> systemUnderTestRdfConnectionSupplier() {
-        return () -> null;
-    }
-
     @Bean
     public ServiceFactory<Service> evaluationStorageServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(DefaultEvaluationStorage.class);
@@ -127,13 +104,33 @@ public class ConfigHobbitLocalServices {
     }
 
     @Bean
-    public SparqlBasedSystemService preparationSparqlService() {
+    public SparqlBasedSystemService taskGeneratorSparqlService() {
         VirtuosoSystemService result = new VirtuosoSystemService(
                 Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
-                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit_1112_8891/virtuoso.ini"));
+                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-task-generation_1112_8891/virtuoso.ini"));
 
         return result;
     }
+
+    @Bean
+    public SparqlBasedSystemService systemUnderTestService() {
+        VirtuosoSystemService result = new VirtuosoSystemService(
+                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
+                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-system-under-test_1113_8892/virtuoso.ini"));
+
+        return result;
+    }
+
+    /**
+     * The RDF connection supplier to use by the system adapter
+     *
+     * @return
+     */
+    @Bean
+    public Supplier<RDFConnection> systemUnderTestRdfConnectionSupplier(@Qualifier("systemUnderTestService") SparqlBasedSystemService sparqlService) {
+        return () -> sparqlService.createDefaultConnection();
+    }
+
 
 //    @Bean
 //    public SparqlBasedSystemService preparationSparqlService() {

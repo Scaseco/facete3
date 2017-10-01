@@ -146,10 +146,11 @@ public class VirtuosoSystemService
 
         
         Connection sqlConn;
+        String jdbcUrl = "jdbc:virtuoso://localhost:" + odbcPort;
         try {
-            sqlConn = DriverManager.getConnection("jdbc:virtuoso://localhost:" + odbcPort, "dba", "dba");
+            sqlConn = DriverManager.getConnection(jdbcUrl, "dba", "dba");
         } catch (SQLException e) {
-            throw new RuntimeException();
+            throw new RuntimeException("Failed to connect to " + jdbcUrl, e);
         }
         
         SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(httpSparqlService.getQueryExecutionFactory());

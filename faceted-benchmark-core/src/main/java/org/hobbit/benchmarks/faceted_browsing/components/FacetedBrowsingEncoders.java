@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 
@@ -22,12 +23,53 @@ public class FacetedBrowsingEncoders {
 
     public static JsonObject resourceToJson(Resource r) {
         JsonObject result = new JsonObject();
-        result.addProperty("node", "" + r.asNode());
-        result.addProperty("graph", RabbitMQUtils.writeModel2String(r.getModel()));
+        result.addProperty("subject", "" + r.asNode());
+        result.addProperty("graphStr", RabbitMQUtils.writeModel2String(r.getModel()));
         return result;
     }
-
-
+    
+    
+    public static Resource jsonToResource(String jsonStr, Gson gson) {
+    	JsonObject json = gson.fromJson(jsonStr, JsonObject.class);
+    	Resource result = jsonToResource(json);
+    	return result;
+    }
+    
+    public static Resource jsonToResource(JsonObject json) {
+    	String subjectStr = json.get("subject").getAsString();
+    	String graphStr = json.get("graphStr").getAsString();
+    	
+    	
+    	Model model = RabbitMQUtils.readModel(graphStr);
+    	Resource result = model.createResource(subjectStr);
+    	
+    	return result;
+    }
+//
+//    public static ByteBuffer formatForSystemAdapter(Resource r) {
+//    	String taskIdStr = r.getURI();
+//    	String queryStr = r.getProperty(RDFS.label).getString();
+//
+//        byte[] tmp = RabbitMQUtils.writeByteArrays(
+//                new byte[][] { RabbitMQUtils.writeString(taskIdStr), queryStr.getBytes(StandardCharsets.UTF_8) });
+//
+//        ByteBuffer result = ByteBuffer.wrap(tmp);
+//        return result;
+//
+//    }
+//
+//    public static Resource readSystemAdapter(ByteBuffer r) {
+//    	Resource result = 
+//    	
+//    	ByteBuffer result;
+//        
+//        ByteBuffer buffer = ByteBuffer.wrap(data);
+//        String taskId = RabbitMQUtils.readString(buffer);
+//        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+//        receiveGeneratedTask(taskId, taskData);
+//    	
+//    }
+    
     public static ByteBuffer formatForEvalStorage(Resource r, ResultSet resultSet, long timestamp) {
         String taskIdString = r.getURI();
         byte[] data = formatTaskForEvalStorageCore(r, resultSet);

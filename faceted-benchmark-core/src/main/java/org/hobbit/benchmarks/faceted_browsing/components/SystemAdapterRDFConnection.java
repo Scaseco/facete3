@@ -24,6 +24,9 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.services.IdleServiceCapable;
 import org.hobbit.transfer.InputStreamManagerImpl;
@@ -31,10 +34,12 @@ import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.FileCopyUtils;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.ServiceManager;
+import com.google.gson.Gson;
 
 /**
  * TODO Rename to something like TaskExecutorSparql
@@ -50,6 +55,9 @@ public class SystemAdapterRDFConnection
 {
     private static final Logger logger = LoggerFactory.getLogger(SystemAdapterRDFConnection.class);
 
+    @Autowired
+    protected Gson gson;
+        
     @Resource(name="systemUnderTestRdfConnectionSupplier")
     protected Supplier<RDFConnection> rdfConnectionSupplier;
 
@@ -94,6 +102,15 @@ public class SystemAdapterRDFConnection
                 // Write incoming data to a file
                 File file = File.createTempFile("hobbit-system-adapter-data-to-load", ".nt");
                 FileCopyUtils.copy(in, new FileOutputStream(file));
+                
+                
+                // Load data
+                String graphName = "http://www.virtuoso-graph.com";
+                logger.debug("Clearing and loading graph: " + graphName);
+                rdfConnection.delete(graphName);
+                rdfConnection.load(graphName, file.getAbsolutePath());
+                file.delete();
+                
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -119,7 +136,14 @@ public class SystemAdapterRDFConnection
         fromTaskGenerator.subscribe(byteBuffer -> {
             rdfConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
-            String sparqlStmtStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
+            String jsonStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
+            org.apache.jena.rdf.model.Resource r = FacetedBrowsingEncoders.jsonToResource(jsonStr, gson);
+
+            System.out.println("Received task:");
+            RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_PRETTY);
+            
+            String taskIdStr = r.getURI();
+            String sparqlStmtStr = r.getProperty(RDFS.label).getString();
 
             Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, true);
 
@@ -153,8 +177,8 @@ public class SystemAdapterRDFConnection
 
             //sendResultToEvalStorage(taskId, outputStream.toByteArray());
 
-            String taskIdStr = "task-id-foobar";
-          byte[] data = out.toByteArray();
+            //String taskIdStr = "task-id-foobar";
+            byte[] data = out.toByteArray();
 
 
             byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);

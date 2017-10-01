@@ -19,6 +19,7 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -39,6 +40,7 @@ import org.springframework.util.FileCopyUtils;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 // Some thoughts on client stubs for the referenced services
 
@@ -67,8 +69,8 @@ public class TaskGeneratorFacetedBenchmark
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmark.class);
 
-    @javax.annotation.Resource(name="preparationSparqlService")
-    protected SparqlBasedService preparationSparqlService;
+    @javax.annotation.Resource(name="taskGeneratorSparqlService")
+    protected SparqlBasedService sparqlService;
 
 
 //    @javax.annotation.Resource(name="referenceSparqlService")
@@ -128,7 +130,7 @@ public class TaskGeneratorFacetedBenchmark
         // Avoid duplicate services
         Set<Service> services = Sets.newIdentityHashSet();
         services.addAll(Arrays.asList(
-                preparationSparqlService
+                sparqlService
                 //referenceSparqlService
         ));
 
@@ -158,7 +160,7 @@ public class TaskGeneratorFacetedBenchmark
             try(InputStream in = tmpIn) {
                 logger.debug("Data stream from data generator received");
 
-                try(RDFConnection conn = preparationSparqlService.createDefaultConnection()) {
+                try(RDFConnection conn = sparqlService.createDefaultConnection()) {
                     try {
                         // Perform bulk load
                         File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
@@ -167,7 +169,10 @@ public class TaskGeneratorFacetedBenchmark
 
                         // TODO Bulk loading not yet implemented...
 
-                        conn.load("http://www.virtuoso-graph.com", tmpFile.getAbsolutePath());
+                        String graphName = "http://www.virtuoso-graph.com";
+                        logger.debug("Clearing and loading graph: " + graphName);
+                        conn.delete(graphName);
+                        conn.load(graphName, tmpFile.getAbsolutePath());
                         tmpFile.delete();
                     } catch(Exception e) {
                         e.printStackTrace();
@@ -254,7 +259,7 @@ public class TaskGeneratorFacetedBenchmark
         // Now invoke the actual task generation
         FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
 
-        try(RDFConnection conn = preparationSparqlService.createDefaultConnection()) {
+        try(RDFConnection conn = sparqlService.createDefaultConnection()) {
             gen.setQueryConn(conn);
             gen.initializeParameters();
             Stream<Resource> tasks = gen.generateTasks();
@@ -285,10 +290,11 @@ public class TaskGeneratorFacetedBenchmark
 
         return result;
     }
+    
 
     protected void sendOutTasks() {
 
-        RDFConnection referenceConn = preparationSparqlService.createDefaultConnection();//referenceSparqlService.createDefaultConnection();
+        RDFConnection referenceConn = sparqlService.createDefaultConnection();//referenceSparqlService.createDefaultConnection();
 
         // Pretend we have a stream of tasks because this is what it should eventually be
         try(Stream<Resource> taskStream = generatedTasks.stream()) {
@@ -303,10 +309,17 @@ public class TaskGeneratorFacetedBenchmark
                     throw new RuntimeException(e);
                 }
 
-                String queryStr = task.getProperty(RDFS.label).getString();
+                
+                // The SA only needs to see the URI and the label (the query string)
+                Resource subResource = task.inModel(ModelFactory.createDefaultModel());
+                subResource.addLiteral(RDFS.label, task.getProperty(RDFS.label).getString());
+                
+                JsonObject json = FacetedBrowsingEncoders.resourceToJson(subResource);
+                ByteBuffer buf2 = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));
+                //String queryStr = task.getProperty(RDFS.label).getString();
                 try {
                 	logger.debug("Sending to system under test");
-                    toSystemAdater.write(ByteBuffer.wrap(queryStr.getBytes(StandardCharsets.UTF_8)));
+                    toSystemAdater.write(buf2);
                 } catch(IOException e) {
                     throw new RuntimeException(e);
                 }

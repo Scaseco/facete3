@@ -84,7 +84,11 @@ public class RDFDatasetConnectionVirtuoso
 
     @Override
     public void delete(String graphName) {
-        throw new UnsupportedOperationException();
+    	try {
+			VirtuosoBulkLoad.clearGraph(sqlConnection, graphName, true);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
     }
 
     @Override

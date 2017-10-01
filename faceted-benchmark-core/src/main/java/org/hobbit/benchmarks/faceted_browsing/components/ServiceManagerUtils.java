@@ -13,6 +13,24 @@ import com.google.common.util.concurrent.ServiceManager;
 
 public class ServiceManagerUtils {
 
+	
+	public static CompletableFuture<Object> awaitTerminatedOrStopAfterTimeout(Service service, long terminatedTimeout, long stopTimeout, TimeUnit unit) {
+		CompletableFuture<Object> result = new CompletableFuture<>();
+		try {
+			service.awaitTerminated(terminatedTimeout, unit);
+		} catch(Exception e) {
+			service.stopAsync();
+			try {
+				service.awaitTerminated(stopTimeout, unit);
+			} catch(Exception f) {
+				throw new RuntimeException(f);
+			}
+		} finally {
+			result.complete(true);
+		}
+		
+		return result;
+	}
 
     public static CompletableFuture<State> awaitState(Service service, Service.State state) {
         CompletableFuture<State> result = new CompletableFuture<>();
