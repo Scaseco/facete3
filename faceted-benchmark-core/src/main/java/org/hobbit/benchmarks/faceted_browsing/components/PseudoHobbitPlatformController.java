@@ -91,18 +91,19 @@ public class PseudoHobbitPlatformController
                 service.startAsync();
                 try {
                     service.awaitRunning(60, TimeUnit.SECONDS);
-                    BenchmarkController benchmarkController = service.getComponent();
+                    //Service benchmarkController = service.getComponent();
                     //benchmarkController.executeBenchmark();
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 } finally {
                     logger.debug("Waiting for benchmark to finish...");
-                    service.stopAsync();
-                    try {
-                        service.awaitTerminated(60, TimeUnit.SECONDS);
-                    } catch (TimeoutException e) {
-                        throw new RuntimeException(e);
-                    }
+                    ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(service, 5, TimeUnit.MINUTES, 60, TimeUnit.SECONDS);
+//                    service.awaitTerminated(5, TimeUnit.MINUTES);
+//                    service.stopAsync();
+//                    try {
+//                    } catch (TimeoutException e) {
+//                        throw new RuntimeException(e);
+//                    }
                 }
 
 //                // Create a new instance of the benchmark controller

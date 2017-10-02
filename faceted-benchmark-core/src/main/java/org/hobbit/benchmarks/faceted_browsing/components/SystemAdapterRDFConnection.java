@@ -134,16 +134,20 @@ public class SystemAdapterRDFConnection
         });
 
         fromTaskGenerator.subscribe(byteBuffer -> {
+            logger.debug("SystemAdapter received a message form the TaskGenerator");
+
             rdfConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
             String jsonStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
             org.apache.jena.rdf.model.Resource r = FacetedBrowsingEncoders.jsonToResource(jsonStr, gson);
 
-            System.out.println("Received task:");
-            RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_PRETTY);
             
             String taskIdStr = r.getURI();
             String sparqlStmtStr = r.getProperty(RDFS.label).getString();
+
+            //logger.debug("R"
+            //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_PRETTY);
+            logger.debug("TaskId - Sparql stmt: " + taskIdStr + " - " + sparqlStmtStr);
 
             Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, true);
 
@@ -202,12 +206,11 @@ public class SystemAdapterRDFConnection
             buffer.rewind();
 
             try {
+                logger.debug("Forwarding task result to evaluation storage");
                 sa2es.write(buffer);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
-            System.out.println("Got a message form the task generator");
         });
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));

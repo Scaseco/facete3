@@ -72,7 +72,7 @@ public class MainHobbitFacetedeBrowsingBenchmark {
                 if(systemUnderTestService != null) {
                     logger.debug("Shutting down system under test service");
                     systemUnderTestService.stopAsync();
-                    ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, 0, TimeUnit.SECONDS);
+                    ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, TimeUnit.SECONDS, 0, TimeUnit.SECONDS);
 //                  systemUnderTestService.stopAsync();
 //                  systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
                 }        	

@@ -14,14 +14,14 @@ import com.google.common.util.concurrent.ServiceManager;
 public class ServiceManagerUtils {
 
 	
-	public static CompletableFuture<Object> awaitTerminatedOrStopAfterTimeout(Service service, long terminatedTimeout, long stopTimeout, TimeUnit unit) {
+	public static CompletableFuture<Object> awaitTerminatedOrStopAfterTimeout(Service service, long terminatedTimeout, TimeUnit terminatedUnit, long stopTimeout, TimeUnit stopUnit) {
 		CompletableFuture<Object> result = new CompletableFuture<>();
 		try {
-			service.awaitTerminated(terminatedTimeout, unit);
+			service.awaitTerminated(terminatedTimeout, terminatedUnit);
 		} catch(Exception e) {
 			service.stopAsync();
 			try {
-				service.awaitTerminated(stopTimeout, unit);
+				service.awaitTerminated(stopTimeout, stopUnit);
 			} catch(Exception f) {
 			    f.printStackTrace();
 				//throw new RuntimeException(f);

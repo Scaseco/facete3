@@ -69,7 +69,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         try {
             startUpCore();
         } catch(Exception e) {
-            throw new RuntimeException("Failed to start class " + componentClass);
+            throw new RuntimeException("Failed to start class " + componentClass, e);
         }
     }
     
@@ -154,7 +154,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         try {
             componentService.awaitTerminated(60, TimeUnit.SECONDS);
         } catch(Exception e) {
-            logger.error("Failed to shut down component instance in time: " + componentInstance.getClass());
+            logger.error("Failed to shut down component instance in time: " + componentInstance.getClass(), e);
         }
         // After the component served its purpose, deregister it from events
     }

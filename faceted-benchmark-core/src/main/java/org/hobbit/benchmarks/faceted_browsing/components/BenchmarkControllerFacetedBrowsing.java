@@ -1,5 +1,6 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
@@ -128,6 +129,17 @@ public class BenchmarkControllerFacetedBrowsing
         dataGenerationFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
         taskGenerationFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
 
+        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
+
+        evaluationDataReceivedFuture = evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
+            logger.debug("Evaluation model received");
+            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.limit() - 1);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            RDFDataMgr.write(baos, model, Lang.NTRIPLES);
+            String str = baos.toString();
+            logger.debug("Received eval model is: " + str);
+        });
+        
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
                 taskGeneratorService,
@@ -141,17 +153,8 @@ public class BenchmarkControllerFacetedBrowsing
                 60, TimeUnit.SECONDS,
                 60, TimeUnit.SECONDS);
 
+
         logger.debug("Normally left BenchmarkController::init()");
-
-
-        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
-
-        evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
-            logger.debug("Evaluation model received");
-            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining());
-            RDFDataMgr.write(System.out, model, Lang.NTRIPLES);
-        });
-
         
 //        commandPublisher.subscribe(buffer -> {
 //            if(buffer.hasRemaining()) {
@@ -265,9 +268,17 @@ public class BenchmarkControllerFacetedBrowsing
 
         // The evaluation module will immediately on start request the data from the eval store
         // so for things to work correctly, the eval store's data must be complete
+        
+        
+        
+        // Wait for the benchmark to finish, indicated by the task generator shutting down
+        ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(taskGeneratorService, 5, TimeUnit.MINUTES, 60, TimeUnit.SECONDS);
+        
+        
         logger.info("Starting evaluation module... ");
         evaluationModuleService.startAsync();
-        evaluationModuleService.awaitRunning(60, TimeUnit.SECONDS);
+        // TODO If we do await running, it seems it blocks forever as terminated or failure is not handled properly
+        evaluationModuleService.awaitTerminated(60, TimeUnit.SECONDS);
 
         // Wait for the result
 
@@ -277,6 +288,7 @@ public class BenchmarkControllerFacetedBrowsing
 
 
         
+        logger.info("Benchmark controller done.");
 
 //
 //        // Create the evaluation module
