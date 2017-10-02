@@ -289,6 +289,7 @@ public class TaskGeneratorFacetedBenchmark
                 generatedTasks.add(task);
             });
         }
+        logger.info("TaskGenerator created " + generatedTasks.size() + " tasks");
 
         logger.debug("Stopping preparation sparql service");
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);

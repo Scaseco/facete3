@@ -162,6 +162,7 @@ public class DefaultEvaluationStorage
 
                 // Fortunately, at present, we can just use the static channel to the em
                 try {
+                    System.out.println("Sending " + response.length + " bytes");
                     toEvaluationModule.write(ByteBuffer.wrap(response));
                 } catch (IOException e) {
                     throw new RuntimeException(e);

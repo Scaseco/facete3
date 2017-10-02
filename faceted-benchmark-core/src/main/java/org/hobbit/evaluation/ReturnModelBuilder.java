@@ -41,7 +41,7 @@ public class ReturnModelBuilder {
                               ArrayList<QueryID> queriesWithTimeout){
         Model rdfModel = createDefaultModel();
 
-        Resource experimentResource = rdfModel.getResource(experimentUri);
+        Resource experimentResource = experimentUri == null ? rdfModel.createResource() : rdfModel.createResource(experimentUri);
         rdfModel.add(experimentResource , RDF.type, HOBBIT.Experiment);
 
         String rdfInTTL ="@prefix ex: <http://example.org/> .\n" +

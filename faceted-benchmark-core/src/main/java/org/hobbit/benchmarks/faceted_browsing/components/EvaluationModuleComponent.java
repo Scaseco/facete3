@@ -55,12 +55,6 @@ public class EvaluationModuleComponent
 
             logger.debug("Received data to evaluate");
 
-            try {
-                toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
-            } catch (IOException e1) {
-                throw new RuntimeException(e1);
-            }
-
             // if the response is empty
             if (!buffer.hasRemaining()) {
                 logger.error("Got a completely empty response from the evaluation storage.");
@@ -88,6 +82,14 @@ public class EvaluationModuleComponent
 
 
                 return;
+            } else {
+                // If we did not encounter the end condition, request more data
+                
+                try {
+                    toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
+                } catch (IOException e1) {
+                    throw new RuntimeException(e1);
+                }                
             }
 
 

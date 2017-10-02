@@ -77,7 +77,7 @@ public class PseudoHobbitPlatformController
 
     @Override
     public void accept(ByteBuffer t) {
-        logger.info("Seen " + t.remaining() + " bytes on command queue: " + Arrays.toString(t.array()));
+        //logger.info("Seen " + t.remaining() + " bytes on command queue: " + Arrays.toString(t.array()));
 
 
         if(t.remaining() > 0) {

@@ -165,6 +165,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
             }
 
 
+            LOGGER.info("Processed evaluation data for query id " + key);
+            
             evalCPTs.put(key, new InstancesEvalHelper(tp, fn, fp, time_needed));
 
             evalOverall.add(tp, fn, fp, time_needed);
@@ -269,7 +271,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
 
             for (QueryID query : queries) {
                 try {
-                    currentChokePT_eval.add(evalCPTs.get(query));
+                    InstancesEvalHelper tmp = evalCPTs.get(query);
+                    currentChokePT_eval.add(tmp);
                     current_chokePT_number_of_queries += 1;
                 } catch(NullPointerException e){
                     currentChokePT_eval.add(0,0,0,0);
