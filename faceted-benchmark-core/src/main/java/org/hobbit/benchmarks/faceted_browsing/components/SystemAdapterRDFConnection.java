@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -24,11 +25,11 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
-import org.hobbit.core.services.IdleServiceCapable;
+import org.hobbit.core.services.RunnableServiceCapable;
+import org.hobbit.core.utils.ByteChannelUtils;
+import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
@@ -51,7 +52,7 @@ import com.google.gson.Gson;
  */
 public class SystemAdapterRDFConnection
     extends ComponentBase
-    implements IdleServiceCapable
+    implements RunnableServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(SystemAdapterRDFConnection.class);
 
@@ -82,9 +83,15 @@ public class SystemAdapterRDFConnection
 
 //    protected Service systemUnderTestService;
 
+    protected CompletableFuture<?> taskGenerationFinishedFuture;
+    
     @Override
     public void startUp() throws Exception {
 
+        taskGenerationFinishedFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+                ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
+
+        
         streamManager = new InputStreamManagerImpl(commandChannel);
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
@@ -220,6 +227,13 @@ public class SystemAdapterRDFConnection
     public void shutDown() throws IOException {
         streamManager.close();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void run() throws Exception {
+        logger.debug("Waiting for task generation to finish");
+        taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
+        logger.debug("Task generation finished");
     }
 
 }

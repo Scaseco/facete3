@@ -113,22 +113,33 @@ public class BenchmarkControllerFacetedBrowsing
 
         // - The condition to determine the end of a benchmark run is, that the task generator(s) have shut down
         // - The *BC* (NOT THE TG) has then to send out the TASK_GENERATION_FINISHED event!
-        taskGeneratorService.addListener(new Listener() {
-            @Override
-            public void terminated(State from) {
-                try {
-                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                super.terminated(from);
-            }
-        }, MoreExecutors.directExecutor());
+//        taskGeneratorService.addListener(new Listener() {
+//            @Override
+//            public void terminated(State from) {
+//                try {
+//                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                super.terminated(from);
+//            }
+//        }, MoreExecutors.directExecutor());
 
 
         dataGenerationFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
+        
         taskGenerationFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
+        
 
+        taskGenerationFuture.whenComplete((v, t) -> {
+            try {
+                commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+            } catch(IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        
         evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
 
         evaluationDataReceivedFuture = evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
