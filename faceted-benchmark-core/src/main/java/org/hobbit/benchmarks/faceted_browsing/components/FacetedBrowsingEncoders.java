@@ -1,5 +1,6 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,8 +11,10 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 
 import com.google.gson.Gson;
@@ -70,11 +73,12 @@ public class FacetedBrowsingEncoders {
 //    	
 //    }
     
-    public static ByteBuffer formatForEvalStorage(Resource r, ResultSet resultSet, long timestamp) {
-        String taskIdString = r.getURI();
-        byte[] data = formatTaskForEvalStorageCore(r, resultSet);
-        byte[] tmp = RabbitMQUtils.writeByteArrays(null,
-                new byte[][] { RabbitMQUtils.writeString(taskIdString), data }, RabbitMQUtils.writeLong(timestamp));
+    public static ByteBuffer formatForEvalStorage(Resource r, long timestamp) { //ResultSet resultSet,
+        //String taskIdString = r.getURI();
+        byte[] data = formatTaskForEvalStorageCore(r); //, resultSet);
+        //RabbitMQUtils.writeString(taskIdString)
+        byte[] tmp = RabbitMQUtils.writeByteArrays(
+                new byte[][] { data , RabbitMQUtils.writeLong(timestamp)});
 
         ByteBuffer result = ByteBuffer.wrap(tmp);
         return result;
@@ -84,13 +88,16 @@ public class FacetedBrowsingEncoders {
     // The eval storage gets the legacy format
     // the system adapter gets the more convenient format
 
-    public static byte[] formatTaskForEvalStorageCore(Resource r, ResultSet resultSet) {
+    public static byte[] formatTaskForEvalStorageCore(Resource r) { //, ResultSet resultSet) {
         String taskId = r.getURI();
         //long timestamp = r.getProperty(DCTerms.created).getLong();
         //String replacedQuery = r.getProperty(RDFS.label).getString();
         String queryId = r.getProperty(FacetedBrowsingVocab.queryId).getString();
         String scenarioId = r.getProperty(FacetedBrowsingVocab.scenarioId).getString();
+        String resultSetJsonStr = r.getProperty(RDFS.comment).getString();
 
+        ResultSet resultSet = ResultSetFactory.fromJSON(new ByteArrayInputStream(resultSetJsonStr.getBytes(StandardCharsets.UTF_8)));
+        
         byte[] result = FacetedBrowsingEncoders.adjustFormat(taskId, scenarioId, queryId, resultSet);
 
         return result;

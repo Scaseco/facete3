@@ -1,5 +1,6 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -267,6 +269,23 @@ public class TaskGeneratorFacetedBenchmark
             
             tasks.forEach(task -> {
                 System.out.println("Generated task: " + task);
+                
+                String queryStr = task.getProperty(RDFS.label).getString();
+                
+                // The task generation is not complete without the reference result
+                // TODO Reference result should be computed against TDB
+                try(RDFConnection refConn = sparqlService.createDefaultConnection()) {
+	                try(QueryExecution qe = refConn.query(queryStr)) {
+	                	ResultSet resultSet = qe.execSelect();
+	                	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	                	ResultSetFormatter.outputAsJSON(baos, resultSet);
+	                	//baos.flush();
+	                	String resultSetStr = baos.toString();
+	                	task.addLiteral(RDFS.comment, resultSetStr);
+	                }
+	                	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
+               	}                
+                
                 generatedTasks.add(task);
             });
         }
@@ -277,30 +296,30 @@ public class TaskGeneratorFacetedBenchmark
     }
 
 
-    public ByteBuffer createMessageForEvalStorage(Resource task, SparqlQueryConnection conn) {
-        String queryStr = task.getProperty(RDFS.label).getString();
-
-        ByteBuffer result;
-
-        try(QueryExecution qe = conn.query(queryStr)) {
-            ResultSet resultSet = qe.execSelect();
-            long timestamp = System.currentTimeMillis();
-            result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
-        }
-
-        return result;
-    }
+//    public ByteBuffer createMessageForEvalStorage(Resource task, SparqlQueryConnection conn) {
+//        String queryStr = task.getProperty(RDFS.label).getString();
+//
+//        ByteBuffer result;
+//
+//        try(QueryExecution qe = conn.query(queryStr)) {
+//            ResultSet resultSet = qe.execSelect();
+//            long timestamp = System.currentTimeMillis();
+//            result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
+//        }
+//
+//        return result;
+//    }
     
 
     protected void sendOutTasks() {
-
-        RDFConnection referenceConn = sparqlService.createDefaultConnection();//referenceSparqlService.createDefaultConnection();
 
         // Pretend we have a stream of tasks because this is what it should eventually be
         try(Stream<Resource> taskStream = generatedTasks.stream()) {
 
             taskStream.forEach(task -> {
-                ByteBuffer buf = createMessageForEvalStorage(task, referenceConn);
+            	long timestamp = System.currentTimeMillis();
+                ByteBuffer buf = FacetedBrowsingEncoders.formatForEvalStorage(task, timestamp);
+                		//createMessageForEvalStorage(task, referenceConn);
 
                 try {
                 	logger.debug("Sending to eval store");
