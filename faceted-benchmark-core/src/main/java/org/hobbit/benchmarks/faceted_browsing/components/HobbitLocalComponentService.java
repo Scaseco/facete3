@@ -65,7 +65,15 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     }
 
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() {
+        try {
+            startUpCore();
+        } catch(Exception e) {
+            throw new RuntimeException("Failed to start class " + componentClass);
+        }
+    }
+    
+    protected void startUpCore() throws Exception {
 
         logger.debug("Starting local component of type " + componentClass);
         componentInstance = componentClass.newInstance();
@@ -119,7 +127,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
                 try {
                     self.awaitTerminated(60, TimeUnit.SECONDS);
                 } catch (TimeoutException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failure during termination " + componentClass, e);
                 }            	
             }
         
@@ -143,7 +151,11 @@ public class HobbitLocalComponentService<T extends BaseComponent>
         }
 
         componentService.stopAsync();
-        componentService.awaitTerminated(60, TimeUnit.SECONDS);
+        try {
+            componentService.awaitTerminated(60, TimeUnit.SECONDS);
+        } catch(Exception e) {
+            logger.error("Failed to shut down component instance in time: " + componentInstance.getClass());
+        }
         // After the component served its purpose, deregister it from events
     }
 }

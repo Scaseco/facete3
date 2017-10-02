@@ -1,7 +1,11 @@
 package org.hobbit.evaluation;
 
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.out.NodeFormatter;
+import org.apache.jena.riot.out.NodeFormatterNT;
+import org.apache.jena.riot.writer.NTriplesWriter;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
@@ -44,6 +48,8 @@ public class ReturnModelBuilder {
         Resource experimentResource = experimentUri == null ? rdfModel.createResource() : rdfModel.createResource(experimentUri);
         rdfModel.add(experimentResource , RDF.type, HOBBIT.Experiment);
 
+        experimentUri = NodeUtils.toNTriplesString(experimentResource.asNode());
+        
         String rdfInTTL ="@prefix ex: <http://example.org/> .\n" +
                 "@prefix hobbit: <http://w3id.org/hobbit/vocab#> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
@@ -63,7 +69,7 @@ public class ReturnModelBuilder {
         */
 
         String overallResults = String.format(""
-                +"<%s> \t bench:precision_total \" %f\"^^xsd:float ; \n"
+                +"%s \t bench:precision_total \" %f\"^^xsd:float ; \n"
                 +"\t bench:recall_total \"%f\"^^xsd:float ; \n"
                 +"\t bench:fmeasure_total \"%f\"^^xsd:float ; \n"
                 +"\t bench:query_per_second_score_total \"%f\"^^xsd:float ",

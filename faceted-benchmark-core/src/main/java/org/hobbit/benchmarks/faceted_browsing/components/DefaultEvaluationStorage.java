@@ -189,7 +189,6 @@ System.out.println("Got message from system adapter");
 
     @Override
     public void shutDown() throws Exception {
-        // TODO Auto-generated method stub
-
+        logger.debug("evaluation module shut down done");
     }
 }

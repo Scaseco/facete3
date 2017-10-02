@@ -60,7 +60,8 @@ public class ConfigHobbitLocalChannels {
 
     @Bean(name = { "em2es", "em2esPub" })
     public PublishingWritableByteChannel em2es() {
-        return new PublishingWritableByteChannelQueued();
+        return new PublishingWritableByteChannelSimple();
+        //return new PublishingWritableByteChannelQueued();
     }
 
 }

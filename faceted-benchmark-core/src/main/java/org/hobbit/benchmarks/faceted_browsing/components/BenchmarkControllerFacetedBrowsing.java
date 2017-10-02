@@ -144,14 +144,15 @@ public class BenchmarkControllerFacetedBrowsing
         logger.debug("Normally left BenchmarkController::init()");
 
 
-        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL))
-            .whenComplete((buffer, ex) -> {
-                logger.debug("Evaluation model received");
-                Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining());
-                RDFDataMgr.write(System.out, model, Lang.NTRIPLES);
-            });
+        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
 
+        evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
+            logger.debug("Evaluation model received");
+            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.remaining());
+            RDFDataMgr.write(System.out, model, Lang.NTRIPLES);
+        });
 
+        
 //        commandPublisher.subscribe(buffer -> {
 //            if(buffer.hasRemaining()) {
 //                byte cmd = buffer.get();
@@ -216,7 +217,7 @@ public class BenchmarkControllerFacetedBrowsing
                 //systemUnderTestReadyFuture);
 
         try {
-            dataGenerationPhaseCompletion.get(60, TimeUnit.SECONDS);
+            dataGenerationPhaseCompletion.get(180, TimeUnit.SECONDS);
         } catch(Exception e) {
             throw new RuntimeException("Data generation phase did not complete in time", e);
         }
@@ -232,7 +233,7 @@ public class BenchmarkControllerFacetedBrowsing
                 //CompletableFuture.allOf(dataGenerationFuture);
 
         try {
-            taskGenerationPhaseCompletion.get(60, TimeUnit.SECONDS);
+            taskGenerationPhaseCompletion.get(5, TimeUnit.MINUTES);
         } catch(Exception e) {
             throw new RuntimeException("Task generation phase did not complete in time", e);
         }
@@ -274,6 +275,8 @@ public class BenchmarkControllerFacetedBrowsing
         logger.debug("Awaiting evaluation result...");
         evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
 
+
+        
 
 //
 //        // Create the evaluation module

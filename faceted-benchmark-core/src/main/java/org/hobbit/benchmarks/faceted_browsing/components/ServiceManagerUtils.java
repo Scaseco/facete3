@@ -23,8 +23,11 @@ public class ServiceManagerUtils {
 			try {
 				service.awaitTerminated(stopTimeout, unit);
 			} catch(Exception f) {
-				throw new RuntimeException(f);
+			    f.printStackTrace();
+				//throw new RuntimeException(f);
 			}
+			
+			throw new RuntimeException(e);
 		} finally {
 			result.complete(true);
 		}

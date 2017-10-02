@@ -63,13 +63,19 @@ public class MainHobbitFacetedeBrowsingBenchmark {
 	            PseudoHobbitPlatformController commandHandler = ctx.getBean(PseudoHobbitPlatformController.class);
 	            commandHandler.accept(ByteBuffer.wrap(new byte[] {Commands.START_BENCHMARK_SIGNAL}));
 	            
+	            // Sending the command blocks until the benchmark is complete
+	            //System.out.println("sent start benchmark signal");
+	            
         	} catch(Exception e) {
-        		if(systemUnderTestService != null) {
-        			logger.debug("Shutting down system under test service");
-        			ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, 0, TimeUnit.SECONDS);
-//		            systemUnderTestService.stopAsync();
-//		            systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
-        		}
+        		throw new RuntimeException(e);
+        	} finally {
+                if(systemUnderTestService != null) {
+                    logger.debug("Shutting down system under test service");
+                    systemUnderTestService.stopAsync();
+                    ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, 0, TimeUnit.SECONDS);
+//                  systemUnderTestService.stopAsync();
+//                  systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
+                }        	
         	}
         }
 
