@@ -3,6 +3,7 @@ package org.hobbit.evaluation;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -83,6 +85,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
         // NEW:
         InputStream inReceived = new ByteArrayInputStream(receivedData);
 
+        //System.out.println(IOUtils.toString(inReceived, StandardCharsets.UTF_8));
+        
         String resultsString;
         try {
             ResultSet received = ResultSetFactory.fromJSON(inReceived);

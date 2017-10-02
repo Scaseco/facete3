@@ -48,6 +48,7 @@ public class EvaluationModuleComponent
 
 
         EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
+        evaluationCore.init();
 
         fromEvaluationStorage.subscribe(buffer -> {
 

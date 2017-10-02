@@ -74,13 +74,17 @@ public class FacetedBrowsingEncoders {
 //    }
     
     public static ByteBuffer formatForEvalStorage(Resource r, long timestamp) { //ResultSet resultSet,
-        //String taskIdString = r.getURI();
-        byte[] data = formatTaskForEvalStorageCore(r); //, resultSet);
-        //RabbitMQUtils.writeString(taskIdString)
-        byte[] tmp = RabbitMQUtils.writeByteArrays(
-                new byte[][] { data , RabbitMQUtils.writeLong(timestamp)});
-
-        ByteBuffer result = ByteBuffer.wrap(tmp);
+        
+        String taskIdStr = r.getURI();
+        
+        byte[] data = formatTaskForEvalStorageCore(r);
+        
+//        String resultSetJsonStr = r.getProperty(RDFS.comment).getString();
+//        byte[] data = resultSetJsonStr.getBytes(StandardCharsets.UTF_8);
+        
+        ByteBuffer result = ByteBuffer.wrap(RabbitMQUtils.writeByteArrays(null,
+                new byte[][] { RabbitMQUtils.writeString(taskIdStr), data }, RabbitMQUtils.writeLong(timestamp)));
+        
         return result;
     }
 
@@ -98,7 +102,7 @@ public class FacetedBrowsingEncoders {
 
         ResultSet resultSet = ResultSetFactory.fromJSON(new ByteArrayInputStream(resultSetJsonStr.getBytes(StandardCharsets.UTF_8)));
         
-        byte[] result = FacetedBrowsingEncoders.adjustFormat(taskId, scenarioId, queryId, resultSet);
+        byte[] result = FacetedBrowsingEncoders.adjustFormatForEvalStorage(taskId, scenarioId, queryId, resultSet);
 
         return result;
     }
@@ -117,7 +121,7 @@ public class FacetedBrowsingEncoders {
      * Changes the format of the given data to byte array
      * @author gkatsimpras
      */
-    public static byte[] adjustFormat(String taskId,String scenarioId, String queryId, ResultSet resultModel){
+    public static byte[] adjustFormatForEvalStorage(String taskId,String scenarioId, String queryId, ResultSet resultModel){
         // format the result as (scenarioId, queryId, data)
         StringBuilder listString = new StringBuilder();
         while(resultModel.hasNext()) {

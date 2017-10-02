@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
 import javax.annotation.Resource;
@@ -67,7 +68,7 @@ public class DefaultEvaluationStorage
     protected Publisher<ByteBuffer> expectedResultsFromTaskGenerator;
 
     @Resource(name="sa2es")
-    protected Publisher<ByteBuffer> actualResultsFromTaskGenerator;
+    protected Publisher<ByteBuffer> actualResultsFromSystemAdapter;
 
     @Resource(name="em2esPub")
     protected Publisher<ByteBuffer> fromEvaluationModule;
@@ -81,8 +82,9 @@ public class DefaultEvaluationStorage
             .map(
                 e -> {
                     ResultPairImpl r = new ResultPairImpl();
-                    r.setActual(e.getValue().getKey());
-                    r.setExpected(e.getValue().getValue());
+                    Entry<Result, Result> expectedAndActual = e.getValue();
+                    r.setExpected(expectedAndActual.getKey());
+                    r.setActual(expectedAndActual.getValue());
                     return (ResultPair)r;
                 })
             .iterator();
@@ -96,7 +98,7 @@ public class DefaultEvaluationStorage
             parseMessageIntoResultAndPassToConsumer(data, storage::putExpectedValue);
         });
 
-        actualResultsFromTaskGenerator.subscribe(data -> {
+        actualResultsFromSystemAdapter.subscribe(data -> {
             parseMessageIntoResultAndPassToConsumer(data, storage::putActualValue);
         });
 

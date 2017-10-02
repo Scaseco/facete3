@@ -317,7 +317,11 @@ public class TaskGeneratorFacetedBenchmark
         try(Stream<Resource> taskStream = generatedTasks.stream()) {
 
             taskStream.forEach(task -> {
-            	long timestamp = System.currentTimeMillis();
+            	
+                // We are now sending out the task, so track the timestamp
+                long timestamp = System.currentTimeMillis();
+            	
+            	
                 ByteBuffer buf = FacetedBrowsingEncoders.formatForEvalStorage(task, timestamp);
                 		//createMessageForEvalStorage(task, referenceConn);
 
