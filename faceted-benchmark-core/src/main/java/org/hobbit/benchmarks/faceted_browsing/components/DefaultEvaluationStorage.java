@@ -95,10 +95,14 @@ public class DefaultEvaluationStorage
         // TODO We could add detection of duplicate keys
 
         expectedResultsFromTaskGenerator.subscribe(data -> {
+            logger.debug("Got expected result from task generator");
+
             parseMessageIntoResultAndPassToConsumer(data, storage::putExpectedValue);
         });
 
         actualResultsFromSystemAdapter.subscribe(data -> {
+            logger.debug("Got actual result from system adapter");
+
             parseMessageIntoResultAndPassToConsumer(data, storage::putActualValue);
         });
 
@@ -183,7 +187,6 @@ public class DefaultEvaluationStorage
         long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
 
         Result result = new ResultImpl(timestamp, taskData);
-System.out.println("Got message from system adapter");
         consumer.accept(taskId, result);
     }
 

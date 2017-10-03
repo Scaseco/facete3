@@ -118,7 +118,9 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
         String goldsString = RabbitMQUtils.readString(bufferExp);
         // LOGGER.info("goldsString: "+ goldsString);
 
-        TimeUnit.MILLISECONDS.sleep(500);
+        // WTF???? Why is there a sleep??? ~Claus
+        //TimeUnit.MILLISECONDS.sleep(500);
+        
         String[] resultsArray = resultsString.split(",");
         for (int i=0 ; i< resultsArray.length; i++){
             resultsArray[i]=resultsArray[i].trim();
