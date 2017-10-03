@@ -82,8 +82,8 @@ public class BenchmarkControllerFacetedBrowsing
     protected Service evaluationModuleService;
 
 
-    protected CompletableFuture<State> dataGenerationFuture;
-    protected CompletableFuture<State> taskGenerationFuture;
+    protected CompletableFuture<State> dataGenerationTerminatedFuture;
+    protected CompletableFuture<State> taskGenerationTerminatedFuture;
 
     //public static final byte START_BENCHMARK_SIGNAL = 66;
 
@@ -126,13 +126,16 @@ public class BenchmarkControllerFacetedBrowsing
 //        }, MoreExecutors.directExecutor());
 
 
-        dataGenerationFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
+        dataGenerationTerminatedFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
         
-        taskGenerationFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
-        
+        taskGenerationTerminatedFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
 
-        taskGenerationFuture.whenComplete((v, t) -> {
+        //systemAdapterTerminatedFuture = ServiceManagerUtils.awaitState(systemAdapterService, State.TERMINATED);
+
+
+        taskGenerationTerminatedFuture.whenComplete((v, t) -> {
             try {
+                logger.debug("Sending out task TASK_GENERATION_FINISHED signal");
                 commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
             } catch(IOException e) {
                 throw new RuntimeException(e);
@@ -227,7 +230,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         logger.debug("Waiting for data generation phase to complete");
         CompletableFuture<?> dataGenerationPhaseCompletion = CompletableFuture.allOf(
-                dataGenerationFuture);
+                dataGenerationTerminatedFuture);
                 //systemUnderTestReadyFuture);
 
         try {
@@ -243,7 +246,7 @@ public class BenchmarkControllerFacetedBrowsing
 
 
         logger.debug("Waiting for task generation phase to complete");
-        CompletableFuture<?> taskGenerationPhaseCompletion = taskGenerationFuture;
+        CompletableFuture<?> taskGenerationPhaseCompletion = taskGenerationTerminatedFuture;
                 //CompletableFuture.allOf(dataGenerationFuture);
 
         try {

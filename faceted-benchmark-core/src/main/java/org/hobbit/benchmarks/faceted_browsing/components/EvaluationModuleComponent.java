@@ -34,17 +34,17 @@ public class EvaluationModuleComponent
     @Resource(name="em2es")
     protected WritableByteChannel toEvaluationStorage;
 
+    
+    protected byte requestBody[];
 
     @Override
     public void startUp() throws Exception {
-
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
         //collectResponses();
 
 
         // TODO Not sure if this properly emulates the protocol to the evaluation storage
 
-        byte requestBody[] = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
+        requestBody = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
 
 
         EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
@@ -108,18 +108,18 @@ public class EvaluationModuleComponent
             }
         });
 
-
-        try {
-            toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
-        } catch (IOException e1) {
-            throw new RuntimeException(e1);
-        }
-
+        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
     }
 
 
     @Override
     public void run() throws Exception {
+        try {
+            toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
+        } catch (IOException e1) {
+            throw new RuntimeException(e1);
+        }
+        
         logger.debug("Running evaluation module");
     }
 
