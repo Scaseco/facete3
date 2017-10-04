@@ -266,19 +266,19 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
 
         for (Map.Entry<Integer, ArrayList<QueryID>> chokePt_entry : chokePT_entries) {
             Integer key = chokePt_entry.getKey();
-            List<QueryID> queries = chokePt_entry.getValue();
+            List<QueryID> queryIds = chokePt_entry.getValue();
 
             int current_chokePT_number_of_queries = 0;
             InstancesEvalHelper currentChokePT_eval = new InstancesEvalHelper(0,0,0,0);
 
-            for (QueryID query : queries) {
+            for (QueryID queryId : queryIds) {
                 try {
-                    InstancesEvalHelper tmp = evalCPTs.get(query);
+                    InstancesEvalHelper tmp = evalCPTs.get(queryId);
                     currentChokePT_eval.add(tmp);
                     current_chokePT_number_of_queries += 1;
                 } catch(NullPointerException e){
                     currentChokePT_eval.add(0,0,0,0);
-                    LOGGER.info("Query selection went wrong.");
+                    LOGGER.info("Query selection went wrong: " + queryId + " evalCPTs.size = " + evalCPTs.size());
                 }
             }
 

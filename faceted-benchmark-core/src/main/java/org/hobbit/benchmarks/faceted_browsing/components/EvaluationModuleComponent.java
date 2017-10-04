@@ -50,8 +50,13 @@ public class EvaluationModuleComponent
         EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
         evaluationCore.init();
 
+        boolean terminationConditionSatisfied[] = {false};
+        
         fromEvaluationStorage.subscribe(buffer -> {
 
+        	if(terminationConditionSatisfied[0]) {
+        		throw new RuntimeException("Got another message after termination message");
+        	}
 
             logger.debug("Received data to evaluate");
 
@@ -66,6 +71,8 @@ public class EvaluationModuleComponent
             // if the response is empty
             if (!buffer.hasRemaining()) {
                 // This is the 'finish' condition
+            	terminationConditionSatisfied[0] = true;
+            	
                 Model model = evaluationCore.summarizeEvaluation();
                 logger.info("The result model has " + model.size() + " triples.");
 
@@ -81,9 +88,21 @@ public class EvaluationModuleComponent
                 }
 
 
-                return;
             } else {
                 // If we did not encounter the end condition, request more data
+                byte[] data = RabbitMQUtils.readByteArray(buffer);
+                long taskSentTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
+                byte[] expectedData = RabbitMQUtils.readByteArray(buffer);
+
+                data = RabbitMQUtils.readByteArray(buffer);
+                long responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
+                byte[] receivedData = RabbitMQUtils.readByteArray(buffer);
+
+                try {
+                    evaluationCore.evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 
                 try {
                     toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
@@ -92,20 +111,6 @@ public class EvaluationModuleComponent
                 }                
             }
 
-
-            byte[] data = RabbitMQUtils.readByteArray(buffer);
-            long taskSentTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
-            byte[] expectedData = RabbitMQUtils.readByteArray(buffer);
-
-            data = RabbitMQUtils.readByteArray(buffer);
-            long responseReceivedTimestamp = data.length > 0 ? RabbitMQUtils.readLong(data) : 0;
-            byte[] receivedData = RabbitMQUtils.readByteArray(buffer);
-
-            try {
-                evaluationCore.evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         });
 
         commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
