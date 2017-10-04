@@ -55,6 +55,8 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -156,8 +158,10 @@ public class FacetedTaskGeneratorOld {
                 int queryid = 0;
                 for (Entry<String, Map<String, String>> query : queries.entrySet()) {
                     String scenarioName = entry.getKey();
+                    String scenarioClassifier = scenarioName;
+                	System.out.println("scenarioName: " + scenarioName + " query: " + query);                
                     if (query.getKey().contains("Count")){
-                        scenarioName = "Scenario_0";
+                    	scenarioClassifier = "Scenario_0";
                     }
                     queryid += 1;
                     //String taskIdString = getNextTaskId();
@@ -166,8 +170,8 @@ public class FacetedTaskGeneratorOld {
                     //setTaskIdToWaitFor(taskIdString);
                     // retrieve query string and replace the parameters
                     String replacedQuery = "";
-                    String querySparql = (String) (query.getValue()).get("query");
-                    String params = (String) (query.getValue()).get("parameters");
+                    String querySparql = query.getValue().get("query");
+                    String params = query.getValue().get("parameters");
                     if (params!=null) {
                         replacedQuery = replaceParameters(querySparql, params);
                     }
@@ -178,12 +182,16 @@ public class FacetedTaskGeneratorOld {
                     Resource task = ModelFactory.createDefaultModel().createResource()
                             // TODO use a different vocab to denote the task payload
                             .addLiteral(RDFS.label, replacedQuery)
-                            .addLiteral(FacetedBrowsingVocab.scenarioId, scenarioName)
+                            //.addLiteral(FacetedBrowsingVocab.scenarioClassifier, scenarioClassifier)
+                            .addLiteral(FacetedBrowsingVocab.scenarioId, scenarioClassifier)
                             .addLiteral(FacetedBrowsingVocab.queryId,"" + queryid)
                             ;
 
                     task = ResourceUtils.renameResource(task, "http://example.org/" + scenarioName + "-" + queryid);
 
+                    System.out.println("Generated task:");
+                    RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
+                    
                     resultList.add(task);
 
 

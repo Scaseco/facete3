@@ -25,6 +25,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.services.RunnableServiceCapable;
@@ -117,6 +118,7 @@ public class SystemAdapterRDFConnection
                 rdfConnection.delete(graphName);
                 rdfConnection.load(graphName, file.getAbsolutePath());
                 file.delete();
+                logger.info("Data loading complete");
                 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -165,7 +167,12 @@ public class SystemAdapterRDFConnection
             if(stmt.isQuery()) {
                 try(QueryExecution qe = rdfConnection.query(stmt.getOriginalString())) {
                     ResultSet rs = qe.execSelect();
-                    ResultSetFormatter.outputAsJSON(out, rs);
+                    ResultSetMem rsMem = new ResultSetMem(rs);
+                    int numRows = ResultSetFormatter.consume(rsMem);
+                    rsMem.rewind();
+                    logger.debug("Number of result set rows for task " + taskIdStr + ": " + numRows);
+
+                    ResultSetFormatter.outputAsJSON(out, rsMem);
                 } catch(Exception e) {
                     logger.warn("Sparql select query failed", e);
 

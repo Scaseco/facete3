@@ -24,7 +24,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.services.RunnableServiceCapable;
@@ -261,12 +261,13 @@ public class TaskGeneratorFacetedBenchmark
         // Now invoke the actual task generation
         FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
 
-        try(RDFConnection conn = sparqlService.createDefaultConnection()) {
-            gen.setQueryConn(conn);
+        try(RDFConnection conn = sparqlService.createDefaultConnection();
+            RDFConnection refConn = sparqlService.createDefaultConnection()) {
+
+        	gen.setQueryConn(conn);
             gen.initializeParameters();
             Stream<Resource> tasks = gen.generateTasks();
 
-            
             tasks.forEach(task -> {
                 System.out.println("Generated task: " + task);
                 
@@ -274,17 +275,21 @@ public class TaskGeneratorFacetedBenchmark
                 
                 // The task generation is not complete without the reference result
                 // TODO Reference result should be computed against TDB
-                try(RDFConnection refConn = sparqlService.createDefaultConnection()) {
-	                try(QueryExecution qe = refConn.query(queryStr)) {
-	                	ResultSet resultSet = qe.execSelect();
-	                	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	                	ResultSetFormatter.outputAsJSON(baos, resultSet);
-	                	//baos.flush();
-	                	String resultSetStr = baos.toString();
-	                	task.addLiteral(RDFS.comment, resultSetStr);
-	                }
+                try(QueryExecution qe = refConn.query(queryStr)) {
+                	ResultSet resultSet = qe.execSelect();
+                	ResultSetMem rsMem = new ResultSetMem(resultSet);
+                	int numRows = ResultSetFormatter.consume(rsMem);
+                	rsMem.rewind();
+                    logger.debug("Number of result set rows for task " + task + ": " + numRows);
+
+                	
+                	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                	ResultSetFormatter.outputAsJSON(baos, rsMem); //resultSet);
+                	//baos.flush();
+                	String resultSetStr = baos.toString();
+                	task.addLiteral(RDFS.comment, resultSetStr);
+                }
 	                	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
-               	}                
                 
                 generatedTasks.add(task);
             });

@@ -93,7 +93,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
             byte[] resultsBytes = formatResultData(received);
             resultsString = RabbitMQUtils.readString(resultsBytes);
         } catch ( org.apache.jena.atlas.json.JsonParseException e){
-            resultsString="";
+        	throw new RuntimeException(e);
+            //resultsString="";
         }
 
 
@@ -134,6 +135,9 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
         ArrayList<String> receivedDataInstances = new ArrayList<>(Arrays.asList(resultsArray));
         ArrayList<String> expectedDataInstances = new ArrayList<>(Arrays.asList(goldsArray));
 
+        LOGGER.debug("expected data items: " + expectedDataInstances.size());
+        LOGGER.debug("actual data items: " + receivedDataInstances.size());
+        
         ArrayList<String> empties = new ArrayList<>();
         empties.add("");
         receivedDataInstances.removeAll(empties);
