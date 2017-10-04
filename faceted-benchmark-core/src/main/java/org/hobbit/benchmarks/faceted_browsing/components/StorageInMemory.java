@@ -18,12 +18,20 @@ public class StorageInMemory<K, V>
 
     @Override
     public void putExpectedValue(K key, V value) {
+    	if(keyToExpectedValue.containsKey(key)) {
+    		throw new RuntimeException("Duplicate key for expected value: " + key);
+    	}
+    	
         keyToExpectedValue.put(key, value);
     }
 
     @Override
     public void putActualValue(K key, V value) {
-        keyToActualValue.put(key, value);
+    	if(keyToActualValue.containsKey(key)) {
+    		throw new RuntimeException("Duplicate key for actual value: " + key);
+    	}
+
+    	keyToActualValue.put(key, value);
     }
 
 
@@ -31,6 +39,7 @@ public class StorageInMemory<K, V>
 
     @Override
     public Stream<Entry<K, Entry<V, V>>> streamResults() {
+    	//System.out.println("# of expected/actual values: "+ keyToExpectedValue.size() + "/" + keyToActualValue.size());
         return streamPairs(keyToExpectedValue, keyToActualValue);
     }
 

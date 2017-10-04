@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
+import jersey.repackaged.com.google.common.collect.Iterators;
+
 
 /**
  * The evaluation storage implementing the default protocol for
@@ -108,7 +110,7 @@ public class DefaultEvaluationStorage
 
 
         fromEvaluationModule.subscribe(buffer -> {
-            logger.debug("Got data for evaluation from storage");
+            logger.debug("Got request from evaluation module; storage contains " + Iterators.size(createIterator()) + " items");
 
             //while(true) {
                 byte response[] = null;
@@ -183,6 +185,8 @@ public class DefaultEvaluationStorage
         String taskId = RabbitMQUtils.readString(buffer);
         byte[] taskData = RabbitMQUtils.readByteArray(buffer);
 
+        //System.out.println("For " + consumer + " Received taskId " + taskId);
+        
         // FIMXE hack for timestamps
         long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
 
