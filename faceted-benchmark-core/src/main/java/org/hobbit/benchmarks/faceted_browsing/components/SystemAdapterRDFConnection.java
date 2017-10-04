@@ -145,7 +145,7 @@ public class SystemAdapterRDFConnection
         fromTaskGenerator.subscribe(byteBuffer -> {
             logger.debug("SystemAdapter received a message form the TaskGenerator");
 
-            rdfConnection = RDFConnectionFactory.connect(DatasetFactory.create());
+            //rdfConnection = //RDFConnectionFactory.connect(DatasetFactory.create());
 
             String jsonStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
             org.apache.jena.rdf.model.Resource r = FacetedBrowsingEncoders.jsonToResource(jsonStr, gson);
@@ -170,7 +170,7 @@ public class SystemAdapterRDFConnection
                     ResultSetMem rsMem = new ResultSetMem(rs);
                     int numRows = ResultSetFormatter.consume(rsMem);
                     rsMem.rewind();
-                    logger.debug("Number of result set rows for task " + taskIdStr + ": " + numRows);
+                    logger.debug("Number of result set rows for task " + taskIdStr + ": " + numRows + " query: " + stmt.getOriginalString());
 
                     ResultSetFormatter.outputAsJSON(out, rsMem);
                 } catch(Exception e) {

@@ -280,7 +280,7 @@ public class TaskGeneratorFacetedBenchmark
                 	ResultSetMem rsMem = new ResultSetMem(resultSet);
                 	int numRows = ResultSetFormatter.consume(rsMem);
                 	rsMem.rewind();
-                    logger.debug("Number of result set rows for task " + task + ": " + numRows);
+                    logger.debug("Number of result set rows for task " + task + ": " + numRows + " query: " + queryStr);
 
                 	
                 	ByteArrayOutputStream baos = new ByteArrayOutputStream();
