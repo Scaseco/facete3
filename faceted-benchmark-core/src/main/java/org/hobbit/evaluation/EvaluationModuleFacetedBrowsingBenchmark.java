@@ -288,13 +288,25 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
 
 
             double current_chokePT_query_per_second_score = (double) 1000 * current_chokePT_number_of_queries / currentChokePT_eval.getTime();
-            double current_chokePT_precision = (currentChokePT_eval.getTP()==0 && currentChokePT_eval.getFP()==0) ? 0 :
-                    (double) currentChokePT_eval.getTP() / (currentChokePT_eval.getTP() + currentChokePT_eval.getFP());
-            double current_chokePT_recall = (currentChokePT_eval.getTP()==0 && currentChokePT_eval.getFN()==0) ? 0 :
-                    (double) currentChokePT_eval.getTP() / (currentChokePT_eval.getTP() + currentChokePT_eval.getFN());
-            double current_chokePT_f1 = (current_chokePT_recall==0 && current_chokePT_precision==0) ? 0 :
-                    2 * current_chokePT_precision * current_chokePT_recall / (current_chokePT_precision + current_chokePT_recall);
 
+            double current_chokePT_precision;
+            double current_chokePT_recall;
+
+            int numRelevantItems = currentChokePT_eval.getTP() + currentChokePT_eval.getFN();
+            boolean isEmptySetOfRelevantItems = numRelevantItems == 0;
+            
+            if(isEmptySetOfRelevantItems) {            
+            	current_chokePT_precision = 1;
+            	current_chokePT_recall = 1;
+            } else  {
+            	int numRetrievedItems = currentChokePT_eval.getTP() + currentChokePT_eval.getFP();
+                current_chokePT_precision = numRetrievedItems == 0 ? 0 : currentChokePT_eval.getTP() / (double)numRetrievedItems;
+                current_chokePT_recall = currentChokePT_eval.getTP() / (double)numRelevantItems;
+            }
+
+            double current_chokePT_f1 = (current_chokePT_recall==0 && current_chokePT_precision==0) ? 0 :
+                2 * current_chokePT_precision * current_chokePT_recall / (current_chokePT_precision + current_chokePT_recall);
+            
             chokePT_query_per_second_score.put(key, current_chokePT_query_per_second_score);
             chokePT_precision.put(key, current_chokePT_precision);
             chokePT_recall.put(key, current_chokePT_recall);

@@ -12,10 +12,10 @@
     </parent>
 
     <dependencies>
-        <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
-            <artifactId>rxjava</artifactId>
-        </dependency>
+<!--         <dependency> -->
+<!--             <groupId>io.reactivex.rxjava2</groupId> -->
+<!--             <artifactId>rxjava</artifactId> -->
+<!--         </dependency> -->
 
         <dependency>
             <groupId>com.spotify</groupId>

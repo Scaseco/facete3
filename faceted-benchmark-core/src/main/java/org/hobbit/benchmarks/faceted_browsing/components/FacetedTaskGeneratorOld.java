@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+//import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.DatatypeConverter;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
@@ -493,6 +494,7 @@ public class FacetedTaskGeneratorOld {
                 if (calendar instanceof GregorianCalendar) {
                     Date calendarTime = ((GregorianCalendar) calendar).getTime();
                     String xmlDateTime = DatatypeConverter.printDateTime(((GregorianCalendar) calendar));
+                    //String xmlDateTime = "";
                     xmlDateTime = "\"" + xmlDateTime + "\"";
                     qS[index] = xmlDateTime;
                 } else if (qS[index].contains("route") || qS[index].contains("trip")) {

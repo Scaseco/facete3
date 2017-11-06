@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -441,7 +440,8 @@ public class FacetedTaskGeneratorOld extends AbstractSequencingTaskGenerator {
                 Object calendar = globalVariables.get(qS[index]);
                 if (calendar instanceof GregorianCalendar) {
                     Date calendarTime = ((GregorianCalendar) calendar).getTime();
-                    String xmlDateTime = DatatypeConverter.printDateTime(((GregorianCalendar) calendar));
+                    //String xmlDateTime = DatatypeConverter.printDateTime(((GregorianCalendar) calendar));
+                    String xmlDateTime = "";
                     xmlDateTime = "\"" + xmlDateTime + "\"";
                     qS[index] = xmlDateTime;
                 } else if (qS[index].contains("route") || qS[index].contains("trip")) {
