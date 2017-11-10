@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.Service;
  *
  */
 @Configuration
-public class HobbitPlatformConfigFacetedBrowsingBenchmark {
+public class HobbitConfigBenchmarkFacetedBrowsing {
     // It is valid to have dependencies in a configuration class:
     // Section "Working with externalized values" in
     // https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/Configuration.html

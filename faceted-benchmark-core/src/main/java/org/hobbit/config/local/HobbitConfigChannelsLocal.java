@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 
 import com.google.gson.Gson;
 
-public class ConfigHobbitLocalChannels {
+public class HobbitConfigChannelsLocal {
     @Bean
     public Gson gson() {
         return new Gson();

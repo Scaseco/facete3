@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean;
 
 import com.google.common.util.concurrent.Service;
 
-public class ConfigHobbitLocalPlatformFacetedBenchmark {
+public class HobbitConfigLocalPlatformFacetedBenchmark {
 
     @Bean
     public Service dockerServiceManagerComponent() throws TimeoutException {

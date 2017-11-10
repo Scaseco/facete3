@@ -1,30 +1,34 @@
 package org.hobbit.benchmarks.faceted_browsing.main;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
+import org.apache.qpid.server.Broker;
+import org.apache.qpid.server.BrokerOptions;
 import org.hobbit.benchmarks.faceted_browsing.components.PseudoHobbitPlatformController;
 import org.hobbit.benchmarks.faceted_browsing.components.ServiceManagerUtils;
-import org.hobbit.config.local.ConfigHobbitLocalChannels;
-import org.hobbit.config.local.ConfigHobbitLocalPlatformFacetedBenchmark;
 import org.hobbit.config.local.ConfigHobbitLocalServices;
+import org.hobbit.config.local.HobbitConfigChannelsLocal;
+import org.hobbit.config.local.HobbitConfigLocalPlatformFacetedBenchmark;
 import org.hobbit.core.Commands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.StandardEnvironment;
 
 import com.google.common.util.concurrent.Service;
 
-public class MainHobbitFacetedeBrowsingBenchmark {
+public class MainHobbitFacetedeBrowsingBenchmarkLocal {
 	
-	private static final Logger logger = LoggerFactory.getLogger(MainHobbitFacetedeBrowsingBenchmark.class);
-
+	private static final Logger logger = LoggerFactory.getLogger(MainHobbitFacetedeBrowsingBenchmarkLocal.class);
 	
-    public static void main(String[] args) throws TimeoutException {
+    public static void main(String[] args) throws Exception {
 
+    	//start();
+    	
     	// The platform ensures that the system under test (sut) is
     	// ready before start up of the benchmark controller
     	// however, this may change in the future, such that the sut is
@@ -38,8 +42,8 @@ public class MainHobbitFacetedeBrowsingBenchmark {
     	
     	
         try(AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
-                ConfigHobbitLocalPlatformFacetedBenchmark.class,
-                ConfigHobbitLocalChannels.class,
+                HobbitConfigLocalPlatformFacetedBenchmark.class,
+                HobbitConfigChannelsLocal.class,
                 ConfigHobbitLocalServices.class)) {
 
         	
