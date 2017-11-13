@@ -202,18 +202,19 @@ public class HobbitConfigChannelsPlatform {
     
     
 	
-    public static Channel createFanoutChannel(Connection connection, String exchangeName) throws IOException {
+    public static Channel createFanoutChannel(Connection connection, String queueName, String exchangeName) throws IOException {
         Channel result = connection.createChannel();
-        String queueName = result.queueDeclare().getQueue();
+        String newQueue = result.queueDeclare().getQueue();
+        //result.queueDeclare()
         result.exchangeDeclare(exchangeName, "fanout", false, true, null);
         result.queueBind(queueName, exchangeName, "");
     	
         return result;
     }
     
-    public static Flowable<ByteBuffer> createFlowable(Connection connection, String exchangeName) throws IOException {
-    	Channel channel = createFanoutChannel(connection, exchangeName);
-    	String queueName = channel.queueDeclare().getQueue();
+    public static Flowable<ByteBuffer> createFlowable(Connection connection, String queueName, String exchangeName) throws IOException {
+    	Channel channel = createFanoutChannel(connection, queueName, exchangeName);
+    	//String queueName = channel.queueDeclare().getQueue();
 
     	Flowable<ByteBuffer> result = wrapChannel(channel, queueName);
     	return result;
@@ -245,16 +246,18 @@ public class HobbitConfigChannelsPlatform {
 	}
 
 
-    public String getHobbitSessionId() {
-        return hobbitSessionId;
-    }
+//    public String getHobbitSessionId() {
+//        return hobbitSessionId;
+//    }
 
     public String generateSessionQueueName(String queueName) {
         return queueName + "." + hobbitSessionId;
     }
 
-    public static ChannelWrapper<ByteBuffer> createWrappedFanoutChannel(Connection connection, String name) throws IOException {
-    	Channel channel = createFanoutChannel(connection, name);
+
+    public ChannelWrapper<ByteBuffer> createWrappedFanoutChannel(Connection connection, String name) throws IOException {
+    	String queueName = generateSessionQueueName(name);
+    	Channel channel = createFanoutChannel(connection, queueName, name);
     	ChannelWrapper<ByteBuffer> result = createChannelWrapper(channel, name);
     	return result;    	
     }
@@ -299,12 +302,12 @@ public class HobbitConfigChannelsPlatform {
      */
     
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawDg2tg(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawDg2tg(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawDg2tgPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawDg2tgPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
     }
 
@@ -324,12 +327,12 @@ public class HobbitConfigChannelsPlatform {
      */
     
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawDg2sa(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawDg2sa(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawDg2saPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawDg2saPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
     }
 
@@ -350,12 +353,12 @@ public class HobbitConfigChannelsPlatform {
 
     
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawTg2sa(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawTg2sa(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawTg2saPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawTg2saPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
     }
 
@@ -376,12 +379,12 @@ public class HobbitConfigChannelsPlatform {
     
     
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawTg2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawTg2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawTg2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawTg2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
     
@@ -402,12 +405,12 @@ public class HobbitConfigChannelsPlatform {
      */
         
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawSa2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawSa2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawSa2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawSa2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
     
@@ -427,12 +430,12 @@ public class HobbitConfigChannelsPlatform {
      */
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawEs2em(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawEs2em(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawEs2emPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawEs2emPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
     }
     
@@ -451,12 +454,12 @@ public class HobbitConfigChannelsPlatform {
      */
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawEm2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawEm2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
 
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawEm2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    public ChannelWrapper<ByteBuffer> rawEm2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
     	return createWrappedFanoutChannel(connection, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
     

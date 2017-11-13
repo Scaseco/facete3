@@ -62,7 +62,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
     	return result;
     }
 
-	public static void start() throws Exception {
+	public static Broker start() throws Exception {
 		//Map<String, String> environment = System.getenv();
 		
 		environment.getPropertySources().addFirst(new ResourcePropertySource("classpath:/local-config.properties"));
@@ -86,65 +86,72 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	    broker.startup(brokerOptions);
 	    //System.out.println("Broker starting...");
 	    //Thread.sleep(5000);
+	    return broker;
 	}
 
 	
     public static void main(String[] args) throws Exception {
     	
-    	start();
+    	Broker broker = start();
 
-    	//SpringApplication.run(Application.class, args);
-        Properties props = new Properties();
-        props.put("spring.config.location", "classpath:/local-config.properties");
-        
-    	ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
-    		.properties(props)
-    		.sources(HobbitConfigCommon.class)
-        	.sources(HobbitConfigLocalPlatformFacetedBenchmark.class)
-        	.sources(HobbitConfigChannelsPlatform.class)
-        	.sources(ConfigHobbitLocalServices.class)
-        	.bannerMode(Banner.Mode.OFF)
-        	.run(args);
-    	
+    	Service systemUnderTestService = null;
+
+    	try {
+    		
+
+	    	//SpringApplication.run(Application.class, args);
+	        Properties props = new Properties();
+	        props.put("spring.config.location", "classpath:/local-config.properties");
+	        
+	    	ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
+	    		.properties(props)
+	    		.sources(HobbitConfigCommon.class)
+	        	.sources(HobbitConfigLocalPlatformFacetedBenchmark.class)
+	        	.sources(HobbitConfigChannelsPlatform.class)
+	        	.sources(ConfigHobbitLocalServices.class)
+	        	.bannerMode(Banner.Mode.OFF)
+	        	.run(args);
+	    	
 //	    try(AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
 //	            HobbitConfigLocalPlatformFacetedBenchmark.class,
 //	            HobbitConfigChannelsPlatform.class,
 //	            ConfigHobbitLocalServices.class)) {
 	
 	    	
-	    	Service systemUnderTestService = null;
-	    	try {
-	    		systemUnderTestService = (Service)ctx.getBean("systemUnderTestService");
-	    		systemUnderTestService.startAsync();
-	    		systemUnderTestService.awaitRunning();
-	    		
-	//The system adapter has to send out the system_ready_signal
-	//    		WritableByteChannel commandChannel = (WritableByteChannel)ctx.getBean("commandChannel");
-	//    		commandChannel.write(ByteBuffer.wrap(new byte[] {Commands.SYSTEM_READY_SIGNAL}));
-	    		
-	    		
-	        	Supplier<Service> systemAdapterServiceFactory = (Supplier<Service>)ctx.getBean("systemAdapterServiceFactory");
-	        	Service systemAdapter = systemAdapterServiceFactory.get();
-	        	systemAdapter.startAsync();
-	        	systemAdapter.awaitRunning();
-	        	
-	        	
-	            PseudoHobbitPlatformController commandHandler = ctx.getBean(PseudoHobbitPlatformController.class);
-	            commandHandler.accept(ByteBuffer.wrap(new byte[] {Commands.START_BENCHMARK_SIGNAL}));
-	            
-	            // Sending the command blocks until the benchmark is complete
-	            //System.out.println("sent start benchmark signal");
-	            
-	    	} catch(Exception e) {
-	    		throw new RuntimeException(e);
-	    	} finally {
-	            if(systemUnderTestService != null) {
-	                logger.debug("Shutting down system under test service");
-	                systemUnderTestService.stopAsync();
-	                ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, TimeUnit.SECONDS, 0, TimeUnit.SECONDS);
-	//              systemUnderTestService.stopAsync();
-	//              systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
-	            }        	
-	    	}
+    		systemUnderTestService = (Service)ctx.getBean("systemUnderTestService");
+    		systemUnderTestService.startAsync();
+    		systemUnderTestService.awaitRunning();
+    		
+//The system adapter has to send out the system_ready_signal
+//    		WritableByteChannel commandChannel = (WritableByteChannel)ctx.getBean("commandChannel");
+//    		commandChannel.write(ByteBuffer.wrap(new byte[] {Commands.SYSTEM_READY_SIGNAL}));
+    		
+    		
+        	Supplier<Service> systemAdapterServiceFactory = (Supplier<Service>)ctx.getBean("systemAdapterServiceFactory");
+        	Service systemAdapter = systemAdapterServiceFactory.get();
+        	systemAdapter.startAsync();
+        	systemAdapter.awaitRunning();
+        	
+        	
+            PseudoHobbitPlatformController commandHandler = ctx.getBean(PseudoHobbitPlatformController.class);
+            commandHandler.accept(ByteBuffer.wrap(new byte[] {Commands.START_BENCHMARK_SIGNAL}));
+            
+            // Sending the command blocks until the benchmark is complete
+            //System.out.println("sent start benchmark signal");
+            
+    	} finally {
+    		broker.shutdown();
+    		
+            if(systemUnderTestService != null) {
+                logger.debug("Shutting down system under test service");
+                systemUnderTestService.stopAsync();
+                ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, TimeUnit.SECONDS, 0, TimeUnit.SECONDS);
+//              systemUnderTestService.stopAsync();
+//              systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
+            }        	
+    	}
+    	
+    	
+    	logger.info("Execution is done.");
     }
 }
