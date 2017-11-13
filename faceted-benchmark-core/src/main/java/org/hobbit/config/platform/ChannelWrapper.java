@@ -1,13 +1,13 @@
 package org.hobbit.config.platform;
 
-import org.hobbit.transfer.WritableChannel;
+import org.reactivestreams.Subscriber;
 
 import io.reactivex.Flowable;
 
 public class ChannelWrapper<T>
 	//implements ChannelWrapper<T>
 {
-	protected WritableChannel<T> writableChannel;
+	protected Subscriber<T> subscriber;
 	protected Flowable<T> flowable;
 	
 //	protected Consumer<T> consumer;
@@ -22,7 +22,7 @@ public class ChannelWrapper<T>
 //		this.close = () -> { try { closeable.close(); } catch (IOException e) { throw new RuntimeException(e); } };
 //	}
 
-	public ChannelWrapper(WritableChannel<T> writableChannel, Flowable<T> flowable) {
+	public ChannelWrapper(Subscriber<T> subscriber, Flowable<T> flowable) {
 		super();
 		//this.consumer = consumer;
 		this.flowable = flowable;
@@ -30,7 +30,7 @@ public class ChannelWrapper<T>
 		//this.isOpen = isOpen;
 		
 		
-		this.writableChannel = writableChannel; //new WritableChannelImpl<>(consumer, close, isOpen);
+		this.subscriber = subscriber; //new WritableChannelImpl<>(consumer, close, isOpen);
 	}
 
 //	@Override
@@ -50,8 +50,8 @@ public class ChannelWrapper<T>
 //	}
 
 	//@Override
-	public WritableChannel<T> getWritableChannel() {
-		return writableChannel;
+	public Subscriber<T> getSubscriber() {
+		return subscriber;
 	}
 	
 	//@Override

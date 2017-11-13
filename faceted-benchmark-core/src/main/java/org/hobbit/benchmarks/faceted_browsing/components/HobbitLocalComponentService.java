@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 
@@ -40,11 +39,11 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
     protected Class<T> componentClass;
 
-    @Autowired
+    //@Autowired
     protected ApplicationContext ctx;
 
-    @Resource(name="commandChannel")
-    protected Flowable<ByteBuffer> commandChannel;
+    //@Resource(name="commandChannelPub")
+    protected Flowable<ByteBuffer> commandPub;
 
 
     protected transient T componentInstance;
@@ -57,11 +56,11 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     protected transient Disposable commandChannelUnsubscribe; 
     
     public HobbitLocalComponentService(Class<T> componentClass, ApplicationContext ctx,
-    		Flowable<ByteBuffer> commandChannel) {
+    		Flowable<ByteBuffer> commandPub) {
         super();
         this.componentClass = componentClass;
         this.ctx = ctx;
-        this.commandChannel = commandChannel;
+        this.commandPub = commandPub;
     }
 
     public T getComponent() {
@@ -107,7 +106,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
         ctx.getAutowireCapableBeanFactory().autowireBean(componentInstance);
 
-        commandChannelUnsubscribe = commandChannel.subscribe(
+        commandChannelUnsubscribe = commandPub.subscribe(
         		buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand));
 
         // Add a listener to shut down 'this' service wrapper

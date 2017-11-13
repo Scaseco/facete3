@@ -12,13 +12,14 @@ import javax.annotation.Resource;
 import org.hobbit.core.Commands;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.BenchmarkController;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.util.concurrent.Service;
+
+import io.reactivex.Flowable;
 
 public class PseudoHobbitPlatformController
     implements Consumer<ByteBuffer>
@@ -29,7 +30,8 @@ public class PseudoHobbitPlatformController
     protected ApplicationContext ctx;
 
     @Autowired
-    protected Publisher<ByteBuffer> commandChannel;
+    @Resource(name="commandPub")
+    protected Flowable<ByteBuffer> commandPub;
 
     @Resource(name="benchmarkControllerServiceFactory")
     protected ServiceFactory<Service> benchmarkControllerServiceFactory;

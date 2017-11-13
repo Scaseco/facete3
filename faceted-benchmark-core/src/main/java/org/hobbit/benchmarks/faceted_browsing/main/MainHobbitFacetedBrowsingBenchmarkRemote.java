@@ -13,6 +13,7 @@ import org.apache.qpid.server.Broker;
 import org.apache.qpid.server.BrokerOptions;
 import org.hobbit.benchmarks.faceted_browsing.components.PseudoHobbitPlatformController;
 import org.hobbit.benchmarks.faceted_browsing.components.ServiceManagerUtils;
+import org.hobbit.config.common.HobbitConfigCommon;
 import org.hobbit.config.local.ConfigHobbitLocalServices;
 import org.hobbit.config.local.HobbitConfigLocalPlatformFacetedBenchmark;
 import org.hobbit.config.platform.HobbitConfigChannelsPlatform;
@@ -98,6 +99,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
         
     	ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
     		.properties(props)
+    		.sources(HobbitConfigCommon.class)
         	.sources(HobbitConfigLocalPlatformFacetedBenchmark.class)
         	.sources(HobbitConfigChannelsPlatform.class)
         	.sources(ConfigHobbitLocalServices.class)

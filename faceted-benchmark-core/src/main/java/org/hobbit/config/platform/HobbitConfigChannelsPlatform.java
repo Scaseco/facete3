@@ -2,6 +2,7 @@ package org.hobbit.config.platform;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -9,13 +10,9 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import org.hobbit.core.Constants;
-import org.hobbit.transfer.PublishingWritableByteChannel;
-import org.hobbit.transfer.PublishingWritableByteChannelSimple;
-import org.hobbit.transfer.WritableByteChannelImpl;
-import org.hobbit.transfer.WritableChannel;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
@@ -31,6 +28,7 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.subscribers.DefaultSubscriber;
 
 public class HobbitConfigChannelsPlatform {
 	
@@ -55,8 +53,8 @@ public class HobbitConfigChannelsPlatform {
 	
     //protected Connection commandConnection;
 	
-    protected Connection incomingDataChannel;
-    protected Connection outgoingDataChannel;
+//    protected Connection incomingDataConnection;
+//    protected Connection outgoingDataConnection;
 
     
 
@@ -76,8 +74,8 @@ public class HobbitConfigChannelsPlatform {
         connectionFactory.setNetworkRecoveryInterval(10000);
   
                 
-        incomingDataChannel = createConnection();
-        outgoingDataChannel = createConnection();
+//        incomingDataConnection = createConnection();
+//        outgoingDataConnection = createConnection();
 	}
 	
 		
@@ -133,10 +131,33 @@ public class HobbitConfigChannelsPlatform {
 
     	//createFlowable(queueFactory, exchangeName);
 				
-		WritableByteChannelImpl writableByteChannel = WritableByteChannelImpl.wrap(consumer, () -> { channel.close(); return null; }, () -> channel.isOpen());
+		//DefaultSubscriber()
+		//WritableByteChannelImpl.wrap(consumer, () -> { channel.close(); return null; }, () -> channel.isOpen());
+
+		Subscriber<ByteBuffer> subscriber = new DefaultSubscriber<ByteBuffer>() {
+			@Override
+			public void onNext(ByteBuffer t) {
+				consumer.apply(t);
+			}
+			
+			@Override
+			public void onComplete() {
+				try {
+					channel.close();
+				} catch (IOException | TimeoutException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				throw new RuntimeException(t);
+			}
+		};
+				
     	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
     	
-    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(writableByteChannel, flowable);
+    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
     	return result;
     }
 	
@@ -223,29 +244,7 @@ public class HobbitConfigChannelsPlatform {
 		return createConnection();
 	}
 
-    @Bean
-    @Autowired
-    public static ChannelWrapper<ByteBuffer> rawCommandChannel(
-    		@Qualifier("commandConnection") Connection connection
-    	) throws IOException
-    {
-    	Channel channel = createFanoutChannel(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
-    	ChannelWrapper<ByteBuffer> result = createChannelWrapper(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
-    	return result;
-    }
 
-    @Bean
-    public static WritableChannel<ByteBuffer> commandChannel(@Qualifier("rawCommandChannel") ChannelWrapper<ByteBuffer> channelWrapper) throws IOException {
-    	return channelWrapper.getWritableChannel();
-    }
-        
- 
-    @Bean
-    public Flowable<ByteBuffer> commandPub(@Qualifier("rawCommandChannel") ChannelWrapper<ByteBuffer> channelWrapper) {
-    	return channelWrapper.getFlowable();
-    }
-
-   
     public String getHobbitSessionId() {
         return hobbitSessionId;
     }
@@ -254,54 +253,221 @@ public class HobbitConfigChannelsPlatform {
         return queueName + "." + hobbitSessionId;
     }
 
+    public static ChannelWrapper<ByteBuffer> createWrappedFanoutChannel(Connection connection, String name) throws IOException {
+    	Channel channel = createFanoutChannel(connection, name);
+    	ChannelWrapper<ByteBuffer> result = createChannelWrapper(channel, name);
+    	return result;    	
+    }
+
+    /*
+     * data connections
+     */
     
-//    public ChannelWrapper<ByteBuffer> buildSender(String queueName) {
-////    	String sessionQueueName = generateSessionQueueName(queueName); 
-//    	
-//    	
-////        DataSender sender2TaskGen = DataSenderImpl.builder().queue(outgoingQueueFactory,
-////                generateSessionQueueName(Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)).build();
-////    	
-//        //DataSenderImpl.Builder
-//        
-//    	
-//    }
+    @Bean
+    public Connection outgoingDataConnection() throws Exception {
+    	return createConnection();
+    }
+
+    @Bean
+    public Connection incomingDataConnection() throws Exception {
+    	return createConnection();
+    }
+
+    /*
+     * command channel
+     */
+    
+    @Bean
+    public ChannelWrapper<ByteBuffer> rawCommandChannel(@Qualifier("commandConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
+    }
+
+    @Bean
+    public Subscriber<ByteBuffer> commandChannel(@Qualifier("rawCommandChannel") ChannelWrapper<ByteBuffer> channelWrapper) throws IOException {
+    	return channelWrapper.getSubscriber();
+    }
+        
+ 
+    @Bean
+    public Flowable<ByteBuffer> commandPub(@Qualifier("rawCommandChannel") ChannelWrapper<ByteBuffer> channelWrapper) {
+    	return channelWrapper.getFlowable();
+    }
+
+
+    /*
+     * dg2tg
+     */
+    
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawDg2tg(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
+    }
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawDg2tgPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
+    }
+
+    @Bean
+    public Subscriber<ByteBuffer> dg2tg(@Qualifier("rawDg2tg") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
+    }
+
+    @Bean
+    public Flowable<ByteBuffer> dg2tgPub(@Qualifier("rawDg2tgPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
+    }
+
+
+    /*
+     * dg2sa
+     */
+    
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawDg2sa(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
+    }
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawDg2saPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
+    }
+
+    @Bean
+    public Subscriber<ByteBuffer> dg2sa(@Qualifier("rawDg2sa") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
+    }
+
+    @Bean
+    public Flowable<ByteBuffer> dg2saPub(@Qualifier("rawDg2saPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
+    }
+
+    
+    /*
+     * tg2sa
+     */
+
+    
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawTg2sa(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
+    }
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawTg2saPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
+    }
+
+    @Bean
+    public Subscriber<ByteBuffer> tg2sa(@Qualifier("rawTg2sa") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
+    }
+    
+    @Bean
+    public Flowable<ByteBuffer> tg2saPub(@Qualifier("rawTg2saPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
+    }
+
+    
+    /*
+     * tg2es
+     */
+    
+    
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawTg2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+    }
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawTg2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+    }
+    
+    @Bean
+    public Subscriber<ByteBuffer> tg2es(@Qualifier("rawTg2es") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
+    }
+
+    @Bean
+    public Flowable<ByteBuffer> tg2esPub(@Qualifier("rawTg2esPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
+    }
+    
+    
+    
+    /*
+     * sa2es
+     */
+        
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawSa2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+    }
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawSa2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+    }
+    
+    @Bean
+    public Subscriber<ByteBuffer> sa2es(@Qualifier("rawSa2es") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
+    }
+
+    @Bean
+    public Flowable<ByteBuffer> sa2esPub(@Qualifier("rawSa2esPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
+    }
     
 
-    @Bean(name = { "dg2tg", "dg2tgPub" })
-    public PublishingWritableByteChannel dg2tg() {
-        return new PublishingWritableByteChannelSimple();
+    /*
+     * es2em
+     */
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawEs2em(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
     }
 
-    @Bean(name = { "dg2sa", "dg2saPub" })
-    public PublishingWritableByteChannel dg2sa() {
-        return new PublishingWritableByteChannelSimple();
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawEs2emPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+    }
+    
+    @Bean
+    public Subscriber<ByteBuffer> es2em(@Qualifier("rawEs2em") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
     }
 
-    @Bean(name = { "tg2sa", "tg2saPub" })
-    public PublishingWritableByteChannel tg2sa() {
-        return new PublishingWritableByteChannelSimple();
+    @Bean
+    public Flowable<ByteBuffer> es2emPub(@Qualifier("rawEs2emPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
     }
 
-    @Bean(name = { "tg2es", "tg2esPub" })
-    public PublishingWritableByteChannel tg2es() {
-        return new PublishingWritableByteChannelSimple();
+    /*
+     * em2es
+     */
+
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawEm2es(@Qualifier("outgoingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
     }
 
-    @Bean(name = { "sa2es", "sa2esPub" })
-    public PublishingWritableByteChannel sa2es() {
-        return new PublishingWritableByteChannelSimple();
+    @Bean
+    public static ChannelWrapper<ByteBuffer> rawEm2esPub(@Qualifier("incomingDataConnection") Connection connection) throws IOException {
+    	return createWrappedFanoutChannel(connection, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+    }
+    
+    @Bean
+    public Subscriber<ByteBuffer> em2es(@Qualifier("rawEm2es") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getSubscriber();
     }
 
-    @Bean(name = { "es2em", "es2emPub" })
-    public PublishingWritableByteChannel es2em() {
-        return new PublishingWritableByteChannelSimple();
-    }
-
-    @Bean(name = { "em2es", "em2esPub" })
-    public PublishingWritableByteChannel em2es() {
-        return new PublishingWritableByteChannelSimple();
-        //return new PublishingWritableByteChannelQueued();
+    @Bean
+    public Flowable<ByteBuffer> em2esPub(@Qualifier("rawEm2esPub") ChannelWrapper<ByteBuffer> channelWrapper) {
+        return channelWrapper.getFlowable();
     }
 
 }

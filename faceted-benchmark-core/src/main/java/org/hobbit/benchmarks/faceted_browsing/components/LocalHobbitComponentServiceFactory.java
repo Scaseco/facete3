@@ -31,8 +31,8 @@ public class LocalHobbitComponentServiceFactory<T extends BaseComponent>
     @Autowired
     protected ApplicationContext ctx;
 
-    @Resource(name="commandChannel")
-    protected Flowable<ByteBuffer> commandChannel;
+    @Resource(name="commandPub")
+    protected Flowable<ByteBuffer> commandPub;
 
     public LocalHobbitComponentServiceFactory(Class<T> componentClass) {
         super();
@@ -44,7 +44,7 @@ public class LocalHobbitComponentServiceFactory<T extends BaseComponent>
 
         // Note: Modifications to the local environment, such as incrementing
         // an evironment value after each invocation should be done by a wrapper
-        Service result = new HobbitLocalComponentService<T>(componentClass, ctx, commandChannel);
+        Service result = new HobbitLocalComponentService<T>(componentClass, ctx, commandPub);
 
         return result;
     }
