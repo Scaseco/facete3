@@ -27,6 +27,7 @@ public class MainHobbitFacetedeBrowsingBenchmarkLocal {
 	
     public static void main(String[] args) throws Exception {
 
+    	logger.debug("Benchmark startup initiated");
     	//start();
     	
     	// The platform ensures that the system under test (sut) is

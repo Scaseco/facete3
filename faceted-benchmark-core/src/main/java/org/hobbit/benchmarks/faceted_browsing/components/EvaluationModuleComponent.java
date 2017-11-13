@@ -3,7 +3,6 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 
 import javax.annotation.Resource;
 
@@ -13,10 +12,12 @@ import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
-import org.hobbit.transfer.Publisher;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import io.reactivex.Flowable;
 
 @Component
 public class EvaluationModuleComponent
@@ -26,13 +27,13 @@ public class EvaluationModuleComponent
     private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleComponent.class);
 
     @Resource(name="commandChannel")
-    protected WritableByteChannel commandChannel;
+    protected Subscriber<ByteBuffer> commandChannel;
 
     @Resource(name="es2emPub")
-    protected Publisher<ByteBuffer> fromEvaluationStorage;
+    protected Flowable<ByteBuffer> fromEvaluationStorage;
 
     @Resource(name="em2es")
-    protected WritableByteChannel toEvaluationStorage;
+    protected Subscriber<ByteBuffer> toEvaluationStorage;
 
     
     protected byte requestBody[];
@@ -82,7 +83,7 @@ public class EvaluationModuleComponent
                 buf.put(Commands.EVAL_MODULE_FINISHED_SIGNAL);
                 buf.put(outputStream.toByteArray());
                 try {
-                    commandChannel.write(buf);
+                    commandChannel.onNext(buf);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -104,26 +105,26 @@ public class EvaluationModuleComponent
                     throw new RuntimeException(e);
                 }
                 
-                try {
-                    toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
-                } catch (IOException e1) {
-                    throw new RuntimeException(e1);
-                }                
+//                try {
+                    toEvaluationStorage.onNext(ByteBuffer.wrap(requestBody));
+//                } catch (IOException e1) {
+//                    throw new RuntimeException(e1);
+//                }                
             }
 
         });
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
     }
 
 
     @Override
     public void run() throws Exception {
-        try {
-            toEvaluationStorage.write(ByteBuffer.wrap(requestBody));
-        } catch (IOException e1) {
-            throw new RuntimeException(e1);
-        }
+//        try {
+            toEvaluationStorage.onNext(ByteBuffer.wrap(requestBody));
+//        } catch (IOException e1) {
+//            throw new RuntimeException(e1);
+//        }
         
         logger.debug("Running evaluation module");
     }

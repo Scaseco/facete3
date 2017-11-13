@@ -24,11 +24,12 @@ import org.hobbit.core.services.DockerServiceFactory;
 import org.hobbit.core.services.DockerServiceManagerClientComponent;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
-import org.hobbit.transfer.Publisher;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.util.concurrent.Service;
+
+import io.reactivex.Flowable;
 
 
 
@@ -57,9 +58,9 @@ public class ConfigHobbitLocalServices {
      * @return
      */
     @Bean
-    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandPub") Publisher<ByteBuffer> commandChannel) {
+    public PseudoHobbitPlatformController defaultCommandHandler(@Qualifier("commandPub") Flowable<ByteBuffer> commandChannel) {
         PseudoHobbitPlatformController result = new PseudoHobbitPlatformController() ;//BenchmarkControllerFacetedBrowsing.class);
-        commandChannel.subscribe(result);
+        commandChannel.subscribe(result::accept);
         return result;
     }
 

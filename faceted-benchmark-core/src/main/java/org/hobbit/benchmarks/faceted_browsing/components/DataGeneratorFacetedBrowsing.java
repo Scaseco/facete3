@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -35,6 +35,7 @@ import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.interfaces.DataGenerator;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.OutputStreamChunkedTransfer;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -51,16 +52,16 @@ public class DataGeneratorFacetedBrowsing
     protected int batchSize = 10000;
 
     @Resource(name="commandChannel")
-    protected WritableByteChannel commandChannel;
+    protected Subscriber<ByteBuffer> commandChannel;
 
     @Resource
     protected TripleStreamSupplier tripleStreamSupplier;
 
     @Resource(name="dg2tg")
-    protected WritableByteChannel toTaskGenerator;
+    protected Subscriber<ByteBuffer> toTaskGenerator;
 
     @Resource(name="dg2sa")
-    protected WritableByteChannel toSystemAdatper;
+    protected Subscriber<ByteBuffer> toSystemAdatper;
 
 
 
@@ -107,7 +108,7 @@ public class DataGeneratorFacetedBrowsing
             });
         }
         
-        commandChannel.write(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
     }
 
     @Override
@@ -180,16 +181,16 @@ public class DataGeneratorFacetedBrowsing
         };
 
         logger.debug("Data generator is sending dataset to task generater");
-        sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator);
+        sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         
         logger.debug("Data generator is sending dataset to system adapter");
-        sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper);
+        sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
 
         logger.debug("Data generator fulfilled its purpose and shuts down");
         datasetFile.delete();
     }
 
-    public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, WritableByteChannel channel) throws IOException {
+    public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {
 
         AtomicLong recordCount = new AtomicLong();
         AtomicLong batchCount = new AtomicLong();

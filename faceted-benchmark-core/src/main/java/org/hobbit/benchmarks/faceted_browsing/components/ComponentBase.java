@@ -8,10 +8,11 @@ import javax.annotation.Resource;
 
 import org.hobbit.core.services.ServiceCapable;
 import org.hobbit.interfaces.BaseComponent;
-import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.reactivex.Flowable;
 
 public abstract class ComponentBase
     implements BaseComponent, ServiceCapable
@@ -21,7 +22,7 @@ public abstract class ComponentBase
     // The actual publisher of the command channel
     // All commands are re-publishehd via the local command publisher
     @Resource(name="commandPub")
-    protected Publisher<ByteBuffer> remoteCommandPublisher;
+    protected Flowable<ByteBuffer> remoteCommandPublisher;
 
 
     // This is the *local* publisher for the receiveCommand method

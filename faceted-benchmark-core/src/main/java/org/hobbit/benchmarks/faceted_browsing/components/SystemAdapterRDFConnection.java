@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -18,13 +17,11 @@ import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
-import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
@@ -32,8 +29,8 @@ import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.InputStreamManagerImpl;
-import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +39,8 @@ import org.springframework.util.FileCopyUtils;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
+
+import io.reactivex.Flowable;
 
 /**
  * TODO Rename to something like TaskExecutorSparql
@@ -64,16 +63,16 @@ public class SystemAdapterRDFConnection
     protected Supplier<RDFConnection> rdfConnectionSupplier;
 
     @Resource(name="dg2saPub")
-    protected Publisher<ByteBuffer> fromDataGenerator;
+    protected Flowable<ByteBuffer> fromDataGenerator;
 
     @Resource(name="tg2saPub")
-    protected Publisher<ByteBuffer> fromTaskGenerator;
+    protected Flowable<ByteBuffer> fromTaskGenerator;
 
     @Resource(name="sa2es")
-    protected WritableByteChannel sa2es;
+    protected Subscriber<ByteBuffer> sa2es;
 
     @Resource(name="commandChannel")
-    protected WritableByteChannel commandChannel;
+    protected Subscriber<ByteBuffer> commandChannel;
 
 
     protected StreamManager streamManager;
@@ -93,7 +92,7 @@ public class SystemAdapterRDFConnection
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
         
-        streamManager = new InputStreamManagerImpl(commandChannel);
+        streamManager = new InputStreamManagerImpl(commandChannel::onNext);
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
 //        systemUnderTestReadyFuture = PublisherUtils.awaitMessage(commandPublisher,
@@ -219,15 +218,15 @@ public class SystemAdapterRDFConnection
 
             buffer.rewind();
 
-            try {
+//            try {
                 logger.debug("Forwarding task result to evaluation storage");
-                sa2es.write(buffer);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+                sa2es.onNext(buffer);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
         });
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
     }
 
     @Override

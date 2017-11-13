@@ -2,10 +2,8 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.nio.ByteBuffer;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -14,7 +12,7 @@ import javax.annotation.Resource;
 import org.hobbit.core.Commands;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.interfaces.BenchmarkController;
-import org.hobbit.transfer.Publisher;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

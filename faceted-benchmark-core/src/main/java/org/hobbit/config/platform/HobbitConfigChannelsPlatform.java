@@ -1,11 +1,9 @@
 package org.hobbit.config.platform;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -13,13 +11,14 @@ import javax.inject.Inject;
 import org.hobbit.core.Constants;
 import org.hobbit.transfer.PublishingWritableByteChannel;
 import org.hobbit.transfer.PublishingWritableByteChannelSimple;
+import org.hobbit.transfer.WritableByteChannelImpl;
+import org.hobbit.transfer.WritableChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -52,7 +51,9 @@ public class HobbitConfigChannelsPlatform {
 		
 	protected ConnectionFactory connectionFactory;
 	protected String hobbitSessionId;
+
 	
+    //protected Connection commandConnection;
 	
     protected Connection incomingDataChannel;
     protected Connection outgoingDataChannel;
@@ -74,11 +75,12 @@ public class HobbitConfigChannelsPlatform {
         // attempt recovery every 10 seconds
         connectionFactory.setNetworkRecoveryInterval(10000);
   
+                
         incomingDataChannel = createConnection();
         outgoingDataChannel = createConnection();
 	}
 	
-	
+		
 	
     protected Connection createConnection() throws Exception {
     	
@@ -119,18 +121,22 @@ public class HobbitConfigChannelsPlatform {
     			.build();
     	
     	
-    	Consumer<ByteBuffer> consumer = (buffer) -> {
+    	Function<ByteBuffer, Integer> consumer = (buffer) -> {
 			try {
-				channel.basicPublish(queueName, "", props, buffer.array());
+				byte[] array = buffer.array();
+				channel.basicPublish(queueName, "", props, array);
+				return array.length;
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		};
 
     	//createFlowable(queueFactory, exchangeName);
+				
+		WritableByteChannelImpl writableByteChannel = WritableByteChannelImpl.wrap(consumer, () -> { channel.close(); return null; }, () -> channel.isOpen());
     	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
     	
-    	ChannelWrapper<ByteBuffer> result = new ChannelWrapperImpl<>(consumer, flowable, () -> { channel.close(); return null; });
+    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(writableByteChannel, flowable);
     	return result;
     }
 	
@@ -211,16 +217,26 @@ public class HobbitConfigChannelsPlatform {
         return result;
     }
 
+    
+	@Bean
+	public Connection commandConnection() throws Exception {
+		return createConnection();
+	}
+
     @Bean
-    public static ChannelWrapper<ByteBuffer> rawCommandChannel(Connection connection) throws IOException {
+    @Autowired
+    public static ChannelWrapper<ByteBuffer> rawCommandChannel(
+    		@Qualifier("commandConnection") Connection connection
+    	) throws IOException
+    {
     	Channel channel = createFanoutChannel(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
     	ChannelWrapper<ByteBuffer> result = createChannelWrapper(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
     	return result;
     }
 
     @Bean
-    public static Consumer<ByteBuffer> commandChannel(@Qualifier("rawCommandChannel") ChannelWrapper<ByteBuffer> channelWrapper) throws IOException {
-    	return channelWrapper.getConsumer();
+    public static WritableChannel<ByteBuffer> commandChannel(@Qualifier("rawCommandChannel") ChannelWrapper<ByteBuffer> channelWrapper) throws IOException {
+    	return channelWrapper.getWritableChannel();
     }
         
  

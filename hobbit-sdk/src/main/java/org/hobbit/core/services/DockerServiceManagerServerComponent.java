@@ -2,10 +2,10 @@ package org.hobbit.core.services;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Resource;
 
@@ -13,7 +13,7 @@ import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.transfer.Publisher;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 
 /**
  * A service listening on a byte channel for requests to create docker containers
@@ -37,10 +40,10 @@ public class DockerServiceManagerServerComponent
 
 
     @Resource(name="commandChannel")
-    protected WritableByteChannel commandChannel;
+    protected Subscriber<ByteBuffer> commandChannel;
 
     @Resource(name="commandPub")
-    protected Publisher<ByteBuffer> commandPublisher;
+    protected Flowable<ByteBuffer> commandPublisher;
 
     @Autowired
     protected Gson gson;// = new Gson();
@@ -54,6 +57,8 @@ public class DockerServiceManagerServerComponent
     protected Map<String, DockerService> runningManagedServices = new LinkedHashMap<>();
     //protected Set<Service> runningManagedServices = Sets.newIdentityHashSet();
 
+    
+    protected transient Disposable commandPublisherUnsubscribe;
 
     public DockerServiceManagerServerComponent(DockerServiceFactory<DockerService> delegate) {
         super();
@@ -63,13 +68,14 @@ public class DockerServiceManagerServerComponent
 
     @Override
     protected void startUp() throws Exception {
-        commandPublisher.subscribe(this::receiveCommand);
+        commandPublisherUnsubscribe = commandPublisher.subscribe(this::receiveCommand);
     }
 
 
     @Override
     protected void shutDown() throws Exception {
-        commandPublisher.unsubscribe(this::receiveCommand);
+    	Optional.ofNullable(commandPublisherUnsubscribe).ifPresent(Disposable::dispose);
+        //commandPublisher.unsubscribe(this::receiveCommand);
     }
 
     public void onStartServiceRequest(String imageName, Map<String, String> env) {
@@ -122,11 +128,11 @@ public class DockerServiceManagerServerComponent
                         new byte[]{(byte)exitCode}
                 }));
 
-                try {
-                    commandChannel.write(buffer);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }            	
+//                try {
+                    commandChannel.onNext(buffer);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }            	
             }
             
         }, MoreExecutors.directExecutor());

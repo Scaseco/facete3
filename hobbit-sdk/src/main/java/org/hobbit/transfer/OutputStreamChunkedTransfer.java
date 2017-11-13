@@ -47,14 +47,15 @@ public class OutputStreamChunkedTransfer
 
     public static OutputStreamChunkedTransfer newInstanceForByteChannel(
             //ChunkedProtocolWriter protocol,
-            WritableByteChannel channel,
+            //WritableByteChannel channel,
+    		Consumer<ByteBuffer> channel,
             Runnable closeAction)
     {
         OutputStreamChunkedTransfer result = new OutputStreamChunkedTransfer(
                 new ChunkedProtocolWriterSimple(nextStreamId.getAndIncrement()),
                 md -> {
                     try {
-                        channel.write(md);
+                        channel.accept(md);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

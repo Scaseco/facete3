@@ -3,7 +3,6 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -19,13 +18,12 @@ import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.core.services.ServiceFactory;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 
@@ -57,7 +55,7 @@ public class BenchmarkControllerFacetedBrowsing
 
 
     @Resource(name="commandChannel")
-    protected WritableByteChannel commandChannel;
+    protected Subscriber<ByteBuffer> commandChannel;
 
     protected ServiceManager serviceManager;
 
@@ -134,12 +132,12 @@ public class BenchmarkControllerFacetedBrowsing
 
 
         taskGenerationTerminatedFuture.whenComplete((v, t) -> {
-            try {
+//            try {
                 logger.debug("Sending out task TASK_GENERATION_FINISHED signal");
-                commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-            } catch(IOException e) {
-                throw new RuntimeException(e);
-            }
+                commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+//            } catch(IOException e) {
+//                throw new RuntimeException(e);
+//            }
         });
 
         
@@ -210,7 +208,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         // Send out the data generation start signal
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 
         
 
@@ -239,9 +237,9 @@ public class BenchmarkControllerFacetedBrowsing
             throw new RuntimeException("Data generation phase did not complete in time", e);
         }
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
 
 
 
@@ -259,7 +257,7 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("ACTUAL BENCHMARK BEGINS NOW");
 
 
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
 
 
 

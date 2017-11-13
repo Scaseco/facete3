@@ -35,12 +35,28 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 
 	protected static StandardEnvironment environment = new StandardEnvironment();
 	
-	
-    public static File copyToTempFile(Resource resource) throws IOException {
+	/**
+	 * If the resource is a file, returns the corresponding file object.
+	 * Otherwise, creates a temporary file and copies the resource's data into it.
+	 * 
+	 * 
+	 * @param resource
+	 * @param prefix
+	 * @param suffix
+	 * @return
+	 * @throws IOException
+	 */
+    public static File getResourceAsFile(Resource resource, String prefix, String suffix) throws IOException {
+    	File result;
+    	try {
+    		result = resource.getFile();
+    	} catch(Exception e) {
     	
-    	File result = File.createTempFile("amqp-config-", ".json");
-    	Files.copy(resource.getInputStream(), result.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    	result.deleteOnExit();
+	    	//FileCopyUtils.copy(in, out)
+	    	result = File.createTempFile(prefix, suffix);
+	    	Files.copy(resource.getInputStream(), result.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	    	result.deleteOnExit();
+    	}
     	
     	return result;
     }
@@ -51,7 +67,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 		environment.getPropertySources().addFirst(new ResourcePropertySource("classpath:/local-config.properties"));
 		
 		
-        String amqpInitialConfigUrl = copyToTempFile(new ClassPathResource("amqp-initial-config.json")).getAbsoluteFile().toURI().toURL().toString();
+        String amqpInitialConfigUrl = getResourceAsFile(new ClassPathResource("amqp-initial-config.json"), "amqp-config-", ".json").getAbsoluteFile().toURI().toURL().toString();
 
 	    Broker broker = new Broker();
 	    BrokerOptions brokerOptions = new BrokerOptions();
@@ -67,8 +83,8 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	    brokerOptions.setConfigurationStoreType("Memory");
 	    brokerOptions.setStartupLoggedToSystemOut(false);
 	    broker.startup(brokerOptions);
-	    System.out.println("Broker starting...");
-	    Thread.sleep(5000);
+	    //System.out.println("Broker starting...");
+	    //Thread.sleep(5000);
 	}
 
 	

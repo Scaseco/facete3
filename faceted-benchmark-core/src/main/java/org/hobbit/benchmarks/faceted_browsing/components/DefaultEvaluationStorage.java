@@ -2,7 +2,6 @@ package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -16,13 +15,14 @@ import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.services.IdleServiceCapable;
-import org.hobbit.transfer.Publisher;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
+import io.reactivex.Flowable;
 import jersey.repackaged.com.google.common.collect.Iterators;
 
 
@@ -67,16 +67,16 @@ public class DefaultEvaluationStorage
 
 
     @Resource(name="tg2es")
-    protected Publisher<ByteBuffer> expectedResultsFromTaskGenerator;
+    protected Flowable<ByteBuffer> expectedResultsFromTaskGenerator;
 
     @Resource(name="sa2es")
-    protected Publisher<ByteBuffer> actualResultsFromSystemAdapter;
+    protected Flowable<ByteBuffer> actualResultsFromSystemAdapter;
 
     @Resource(name="em2esPub")
-    protected Publisher<ByteBuffer> fromEvaluationModule;
+    protected Flowable<ByteBuffer> fromEvaluationModule;
 
     @Resource(name="es2em")
-    protected WritableByteChannel toEvaluationModule;
+    protected Subscriber<ByteBuffer> toEvaluationModule;
 
 
     public Iterator<ResultPair> createIterator() {
@@ -167,12 +167,12 @@ public class DefaultEvaluationStorage
                 // by the ByteChannel abstraction: Replying on the channel that sent the request
 
                 // Fortunately, at present, we can just use the static channel to the em
-                try {
+//                try {
                     logger.debug("Sending " + response.length + " bytes to evaluation module");
-                    toEvaluationModule.write(ByteBuffer.wrap(response));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                    toEvaluationModule.onNext(ByteBuffer.wrap(response));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
             //}
         });
 

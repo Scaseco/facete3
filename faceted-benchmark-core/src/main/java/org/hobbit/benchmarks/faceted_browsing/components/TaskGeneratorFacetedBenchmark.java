@@ -6,11 +6,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -31,8 +31,8 @@ import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.transfer.InputStreamManagerImpl;
-import org.hobbit.transfer.Publisher;
 import org.hobbit.transfer.StreamManager;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +43,9 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 
 // Some thoughts on client stubs for the referenced services
 
@@ -81,20 +84,20 @@ public class TaskGeneratorFacetedBenchmark
 
 
     @javax.annotation.Resource(name="commandChannel")
-    protected WritableByteChannel commandChannel;
+    protected Subscriber<ByteBuffer> commandChannel;
 
 //    @Resource(name="dataChannel")
 //    protected WritableByteChannel dataChannel;
 
     @javax.annotation.Resource(name="dg2tg")
-    protected Publisher<ByteBuffer> fromDataGenerator;
+    protected Flowable<ByteBuffer> fromDataGenerator;
 
     @javax.annotation.Resource(name="tg2sa")
-    protected WritableByteChannel toSystemAdater;
+    protected Subscriber<ByteBuffer> toSystemAdater;
 
 
     @javax.annotation.Resource(name="tg2es")
-    protected WritableByteChannel toEvaluationStorage;
+    protected Subscriber<ByteBuffer> toEvaluationStorage;
 
 
     @Autowired
@@ -122,6 +125,9 @@ public class TaskGeneratorFacetedBenchmark
     protected CompletableFuture<Void> loadDataFinishedFuture = new CompletableFuture<>();
     protected CompletableFuture<ByteBuffer> startSignalReceivedFuture;
     
+    
+    protected transient Disposable fromDataGeneratorUnsubscribe = null;
+    
     @Override
     public void startUp() throws Exception {
         
@@ -138,10 +144,10 @@ public class TaskGeneratorFacetedBenchmark
 
         serviceManager = new ServiceManager(services);
 
-        streamManager = new InputStreamManagerImpl(commandChannel);
+        streamManager = new InputStreamManagerImpl(commandChannel::onNext);
 
         //Consumer<ByteBuffer> fromDataGeneratorObserver
-        fromDataGenerator.subscribe(streamManager::handleIncomingData);
+        fromDataGeneratorUnsubscribe = fromDataGenerator.subscribe(streamManager::handleIncomingData);
 
         /*
          * The protocol here is:
@@ -236,7 +242,7 @@ public class TaskGeneratorFacetedBenchmark
 
         // At this point, the task generator is ready for processing
         // The message should be sent out by the service wrapper:
-        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
+        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
     }
 
 
@@ -331,12 +337,12 @@ public class TaskGeneratorFacetedBenchmark
                 ByteBuffer buf = FacetedBrowsingEncoders.formatForEvalStorage(task, timestamp);
                 		//createMessageForEvalStorage(task, referenceConn);
 
-                try {
+//                try {
                 	logger.debug("Sending to eval store");
-                    toEvaluationStorage.write(buf);
-                } catch(IOException e) {
-                    throw new RuntimeException(e);
-                }
+                    toEvaluationStorage.onNext(buf);
+//                } catch(IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 
                 // The SA only needs to see the URI and the label (the query string)
@@ -346,12 +352,12 @@ public class TaskGeneratorFacetedBenchmark
                 JsonObject json = FacetedBrowsingEncoders.resourceToJson(subResource);
                 ByteBuffer buf2 = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));
                 //String queryStr = task.getProperty(RDFS.label).getString();
-                try {
+//                try {
                 	logger.debug("Sending to system under test");
-                    toSystemAdater.write(buf2);
-                } catch(IOException e) {
-                    throw new RuntimeException(e);
-                }
+                    toSystemAdater.onNext(buf2);
+//                } catch(IOException e) {
+//                    throw new RuntimeException(e);
+//                }
             });
         }
     }
@@ -381,6 +387,7 @@ public class TaskGeneratorFacetedBenchmark
         streamManager.close();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 
-        fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
+        //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
+        Optional.ofNullable(fromDataGeneratorUnsubscribe).ifPresent(Disposable::dispose);
     }
 }

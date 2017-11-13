@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +16,14 @@ import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.reactivex.processors.PublishProcessor;
+
 
 public class StreamTest {
 	@Test
 	public void testStream() throws Exception {
-		PublishingWritableByteChannel channel = new PublishingWritableByteChannelSimple();
+		//PublishingWritableByteChannel channel = new PublishingWritableByteChannelSimple();
+		PublishProcessor<ByteBuffer> channel = PublishProcessor.create(); 
 		
 		StreamManager streamManager = new InputStreamManagerImpl();
 		
@@ -54,7 +58,7 @@ public class StreamTest {
 				//.map(s -> s.getBytes(StandardCharsets.UTF_8))
 				//.map(ByteBuffer::wrap);
 
-		PrintStream out = new PrintStream(OutputStreamChunkedTransfer.newInstanceForByteChannel(channel, null));
+		PrintStream out = new PrintStream(OutputStreamChunkedTransfer.newInstanceForByteChannel(channel::onNext, null));
 		
 		expected.forEach(out::println);
 

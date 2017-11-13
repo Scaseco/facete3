@@ -1,6 +1,7 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -12,7 +13,6 @@ import org.hobbit.core.services.IdleServiceCapable;
 import org.hobbit.core.services.IdleServiceDelegate;
 import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.interfaces.BaseComponent;
-import org.hobbit.transfer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +21,8 @@ import org.springframework.context.ApplicationContext;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 import jersey.repackaged.com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -42,7 +44,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
     protected ApplicationContext ctx;
 
     @Resource(name="commandChannel")
-    protected Publisher<ByteBuffer> commandChannel;
+    protected Flowable<ByteBuffer> commandChannel;
 
 
     protected transient T componentInstance;
@@ -50,10 +52,12 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
     // The service wrapper for the componentInstance
     protected transient Service componentService;
-    protected transient Consumer<ByteBuffer> observer;
+    //protected transient Consumer<ByteBuffer> observer;
 
+    protected transient Disposable commandChannelUnsubscribe; 
+    
     public HobbitLocalComponentService(Class<T> componentClass, ApplicationContext ctx,
-            Publisher<ByteBuffer> commandChannel) {
+    		Flowable<ByteBuffer> commandChannel) {
         super();
         this.componentClass = componentClass;
         this.ctx = ctx;
@@ -103,9 +107,8 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
         ctx.getAutowireCapableBeanFactory().autowireBean(componentInstance);
 
-        observer = buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand);
-
-        commandChannel.subscribe(observer);
+        commandChannelUnsubscribe = commandChannel.subscribe(
+        		buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand));
 
         // Add a listener to shut down 'this' service wrapper
         Service self = this;
@@ -144,7 +147,9 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
     @Override
     protected void shutDown() throws Exception {
-        commandChannel.unsubscribe(observer);
+        //commandChannel.unsubscribe(observer);
+    	Optional.ofNullable(commandChannelUnsubscribe).ifPresent(Disposable::dispose);
+    	
 
         if(componentInstance != null) {
             logger.debug("Shutting down component instance: " + componentInstance.getClass());

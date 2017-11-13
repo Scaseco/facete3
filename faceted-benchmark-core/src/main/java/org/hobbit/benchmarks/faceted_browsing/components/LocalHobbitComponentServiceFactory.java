@@ -5,11 +5,12 @@ import java.nio.ByteBuffer;
 import javax.annotation.Resource;
 
 import org.hobbit.interfaces.BaseComponent;
-import org.hobbit.transfer.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.util.concurrent.Service;
+
+import io.reactivex.Flowable;
 
 
 /**
@@ -31,7 +32,7 @@ public class LocalHobbitComponentServiceFactory<T extends BaseComponent>
     protected ApplicationContext ctx;
 
     @Resource(name="commandChannel")
-    protected Publisher<ByteBuffer> commandChannel;
+    protected Flowable<ByteBuffer> commandChannel;
 
     public LocalHobbitComponentServiceFactory(Class<T> componentClass) {
         super();
