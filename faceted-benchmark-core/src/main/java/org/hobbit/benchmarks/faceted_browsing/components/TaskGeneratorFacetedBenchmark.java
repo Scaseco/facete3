@@ -89,7 +89,7 @@ public class TaskGeneratorFacetedBenchmark
 //    @Resource(name="dataChannel")
 //    protected WritableByteChannel dataChannel;
 
-    @javax.annotation.Resource(name="dg2tg")
+    @javax.annotation.Resource(name="dg2tgPub")
     protected Flowable<ByteBuffer> fromDataGenerator;
 
     @javax.annotation.Resource(name="tg2sa")

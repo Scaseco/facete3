@@ -66,10 +66,10 @@ public class DefaultEvaluationStorage
     protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
 
 
-    @Resource(name="tg2es")
+    @Resource(name="tg2esPub")
     protected Flowable<ByteBuffer> expectedResultsFromTaskGenerator;
 
-    @Resource(name="sa2es")
+    @Resource(name="sa2esPub")
     protected Flowable<ByteBuffer> actualResultsFromSystemAdapter;
 
     @Resource(name="em2esPub")

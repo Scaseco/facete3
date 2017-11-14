@@ -238,7 +238,9 @@ public class SystemAdapterRDFConnection
     @Override
     public void run() throws Exception {
         logger.debug("Waiting for task generation to finish");
-        taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
+//        taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
+        taskGenerationFinishedFuture.get(60, TimeUnit.SECONDS);
+
         logger.debug("Task generation finished");
     }
 

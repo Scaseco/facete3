@@ -91,9 +91,27 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 
 	
     public static void main(String[] args) throws Exception {
+
+    	try {
+    		start(args);
+    	} finally {
+    		logger.info("Execution is done.");
+    	}
+    }
+
+    public static void start(String[] args) throws Exception {
     	
     	Broker broker = start();
 
+    	try {
+    		run(args);
+    	} finally {    	
+    		broker.shutdown();
+    	}
+    }
+
+
+    public static void run(String[] args) {
     	Service systemUnderTestService = null;
 
     	try {
@@ -140,7 +158,6 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
             //System.out.println("sent start benchmark signal");
             
     	} finally {
-    		broker.shutdown();
     		
             if(systemUnderTestService != null) {
                 logger.debug("Shutting down system under test service");
@@ -150,8 +167,5 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 //              systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
             }        	
     	}
-    	
-    	
-    	logger.info("Execution is done.");
     }
 }
