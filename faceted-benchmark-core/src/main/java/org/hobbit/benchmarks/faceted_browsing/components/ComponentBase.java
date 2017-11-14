@@ -8,11 +8,11 @@ import javax.annotation.Resource;
 
 import org.hobbit.core.services.ServiceCapable;
 import org.hobbit.interfaces.BaseComponent;
-import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
+import io.reactivex.processors.PublishProcessor;
 
 public abstract class ComponentBase
     implements BaseComponent, ServiceCapable
@@ -27,7 +27,7 @@ public abstract class ComponentBase
 
     // This is the *local* publisher for the receiveCommand method
     // It combines data sent via the remote publisher and the receiveCommand function
-    protected PublishingWritableByteChannelSimple commandPublisher = new PublishingWritableByteChannelSimple();
+    protected PublishProcessor<ByteBuffer> commandPublisher = PublishProcessor.create();
 
 
     @Override
@@ -47,12 +47,13 @@ public abstract class ComponentBase
     // FIXME Should we rename to init() ? If so, we must ensure that subclasses' init() methods call super.init()
     @PostConstruct
     public void coreInit() {
-        remoteCommandPublisher.subscribe(t -> {
-            try {
-                commandPublisher.write(t);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+
+    	remoteCommandPublisher.subscribe(t -> {
+//            try {
+                commandPublisher.onNext(t);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
         });
     }
 
@@ -62,11 +63,11 @@ public abstract class ComponentBase
         ByteBuffer bb = ByteBuffer.wrap(new byte[1 + data.length]).put(command).put(data);
         bb.rewind();
 
-        try {
-            commandPublisher.write(bb);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+            commandPublisher.onNext(bb);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
 }

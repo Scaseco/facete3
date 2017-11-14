@@ -2,14 +2,17 @@ package org.hobbit.config.platform;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.TimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import org.hobbit.core.Constants;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +27,8 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.processors.PublishProcessor;
 import io.reactivex.subscribers.DefaultSubscriber;
 
 public class HobbitConfigChannelsPlatform {
@@ -114,44 +115,36 @@ public class HobbitConfigChannelsPlatform {
         return connection;
     }
 
-	
-//    protected void sendToCmdQueue(byte command, byte data[], BasicProperties props) throws IOException {
-//        byte sessionIdBytes[] = getHobbitSessionId().getBytes(Charsets.UTF_8);
-//        // + 5 because 4 bytes for the session ID length and 1 byte for the
-//        // command
-//        int dataLength = sessionIdBytes.length + 5;
-//        boolean attachData = (data != null) && (data.length > 0);
-//        if (attachData) {
-//            dataLength += data.length;
-//        }
-//        ByteBuffer buffer = ByteBuffer.allocate(dataLength);
-//        buffer.putInt(sessionIdBytes.length);
-//        buffer.put(sessionIdBytes);
-//        buffer.put(command);
-//        if (attachData) {
-//            buffer.put(data);
-//        }
-//        cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
-//    }
 
-    public static ChannelWrapper<ByteBuffer> createCommandChannelWrapper(Channel channel, String exchangeName) throws IOException {
+    public ChannelWrapper<ByteBuffer> createCommandChannelWrapper(Connection connection, String exchangeName) throws IOException {
+    	Channel channel = connection.createChannel();
+    	
         String queueName = channel.queueDeclare().getQueue();
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
         channel.queueBind(queueName, exchangeName, "");
 
-    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
-
+    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName).map(HobbitConfigChannelsPlatform::parseCommandBuffer);
+    	Supplier<Flowable<ByteBuffer>> flowableSupplier = () -> flowable.map(raw -> ByteBuffer.wrap(raw.array()));
+    	
     	String responseQueueName = channel.queueDeclare().getQueue();
     	BasicProperties properties = new BasicProperties.Builder()
     			.deliveryMode(2)
     			.replyTo(responseQueueName)
     			.build();
 
-    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(channel, exchangeName, "", properties);
+    	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
+    	Consumer<ByteBuffer> consumer = (buffer) -> {
+    		ByteBuffer msg = createCmdMessage(buffer, hobbitSessionId);
+    		coreConsumer.accept(msg);
+    	};
 
-    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
+    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> { channel.close(); return 0; });
+
+    	
+    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowableSupplier);
     	return result;
     }
+    
     
     /**
      * Data channel uses exchange="" and queueName=
@@ -168,81 +161,85 @@ public class HobbitConfigChannelsPlatform {
     			.deliveryMode(2)
     			.build();
 
-    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(channel, "", queueName, properties);
+    	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, "", queueName, properties);
+    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(coreConsumer, () -> { channel.close(); return 0; });
+
     	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
+    	Supplier<Flowable<ByteBuffer>> flowableSupplier = () -> flowable.map(raw -> ByteBuffer.wrap(raw.array()));
+
     	
-    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
+    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowableSupplier);
     	
     	return result;
     }
 
-        
-//    public static ChannelWrapper<ByteBuffer> createChannelWrapper(Channel channel, String exchangeName, String queueName) throws IOException {
-//    	String responseQueueName = channel.queueDeclare().getQueue();
-//    	BasicProperties props = new BasicProperties.Builder()
-//    			.deliveryMode(2)
-//    			.replyTo(responseQueueName)
-//    			.build();
-//    	
-//    	
-//    	Function<ByteBuffer, Integer> consumer = (buffer) -> {
-//			try {
-//				byte[] array = buffer.array();
-//				channel.basicPublish(exchangeName, "", props, array);
-//				return array.length;
-//			} catch (IOException e) {
-//				throw new RuntimeException(e);
-//			}
-//		};
-//
-//    	//createFlowable(queueFactory, exchangeName);
-//				
-//		//DefaultSubscriber()
-//		//WritableByteChannelImpl.wrap(consumer, () -> { channel.close(); return null; }, () -> channel.isOpen());
-//
-//		Subscriber<ByteBuffer> subscriber = new DefaultSubscriber<ByteBuffer>() {
-//			@Override
-//			public void onNext(ByteBuffer t) {
-//				consumer.apply(t);
-//			}
-//			
-//			@Override
-//			public void onComplete() {
-//				try {
-//					channel.close();
-//				} catch (IOException | TimeoutException e) {
-//					throw new RuntimeException(e);
-//				}
-//			}
-//
-//			@Override
-//			public void onError(Throwable t) {
-//				throw new RuntimeException(t);
-//			}
-//		};
-//				
-//    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
-//    	
-//    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
-//    	return result;
-//    }
-//    
-    public static Subscriber<ByteBuffer> wrapPublishAsSubscriber(Channel channel, String exchangeName, String routingKey, BasicProperties properties) {
-    	Consumer<ByteBuffer> consumer = wrapPublishAsConsumer(channel, exchangeName, routingKey, properties);
+
+    public static ByteBuffer parseCommandBuffer(ByteBuffer buffer) {
+
+    	String sessionId = RabbitMQUtils.readString(buffer);
+//        if (acceptedCmdHeaderIds.contains(sessionId)) {
     	
-		Subscriber<ByteBuffer> result = new DefaultSubscriber<ByteBuffer>() {
+//            byte command = buffer.get();
+//            byte remainingData[];
+//            if (buffer.remaining() > 0) {
+//                remainingData = new byte[buffer.remaining()];
+//                buffer.get(remainingData);
+//            } else {
+//                remainingData = new byte[0];
+//            }
+            
+            
+            //receiveCommand(command, remainingData);
+//        } else {
+//        	result = null;
+//        }
+    	byte[] remainingData = new byte[buffer.remaining()];
+    	buffer.get(remainingData);
+    	
+    	ByteBuffer result = ByteBuffer.wrap(remainingData);
+
+    	System.out.println("Received command: SessionId=" + sessionId + " Cmd=" + (result.hasRemaining() ? result.get(0) : "-") );
+
+    	
+    	
+        return result;
+    }
+    
+    
+    public static ByteBuffer createCmdMessage(ByteBuffer dataBuf, String sessionId) {
+        byte sessionIdBytes[] = sessionId.getBytes(StandardCharsets.UTF_8);
+        // + 4 because 4 bytes for the session ID length and 0 byte for the
+        // command - the cmd byte is part of the payload now ~ Claus
+
+        
+        int dataLength = 4 + sessionIdBytes.length + dataBuf.remaining();
+        ByteBuffer buffer = ByteBuffer.allocate(dataLength);
+        buffer.putInt(sessionIdBytes.length);
+        buffer.put(sessionIdBytes);
+        buffer.put(dataBuf);
+        buffer.rewind();
+        
+        System.out.println("Sending command (" + buffer.remaining() + " bytes)");
+        return buffer;
+    }
+    
+    public static <T> Subscriber<T> wrapPublishAsSubscriber(Consumer<T> consumer, Callable<?> closeAction) {
+    	
+		Subscriber<T> result = new DefaultSubscriber<T>() {
 			@Override
-			public void onNext(ByteBuffer t) {
+			public void onNext(T t) {
 				consumer.accept(t);
 			}
 			
 			@Override
 			public void onComplete() {
-				try {
-					channel.close();
-				} catch (IOException | TimeoutException e) {
-					throw new RuntimeException(e);
-				}
+				Optional.ofNullable(closeAction).ifPresent(t -> {
+					try {
+						t.call();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				});
 			}
 
 			@Override
@@ -256,26 +253,19 @@ public class HobbitConfigChannelsPlatform {
     }
 	
     
-    public static Flowable<ByteBuffer> wrapChannel(Channel channel, String queueName) {
-        Flowable<ByteBuffer> result = Flowable.create(new FlowableOnSubscribe<ByteBuffer>() {
-	        @Override
-	        public void subscribe(final FlowableEmitter<ByteBuffer> emitter) throws Exception {
-	        	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
-	        		@Override
-	        		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-	        				throws IOException {
-	        	    	ByteBuffer buffer = ByteBuffer.wrap(body);
-	        	    	emitter.onNext(buffer);
-	        		}
-	        	});
-	        }
-	    }, BackpressureStrategy.BUFFER);    	
-	
-    	return result;
-    }
-    
-    
-//    public static Flowable<ByteBuffer> wrapChannel(Channel channel, String queueName) {
+    public static Flowable<ByteBuffer> wrapChannel(Channel channel, String queueName) throws IOException {
+    	PublishProcessor<ByteBuffer> result = PublishProcessor.create();
+    	
+    	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
+			@Override
+			public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+					throws IOException {
+				System.out.println("Received message from queue " + queueName);
+		    	ByteBuffer buffer = ByteBuffer.wrap(body);
+		    	result.onNext(buffer);
+			}
+		});
+
 //        Flowable<ByteBuffer> result = Flowable.create(new FlowableOnSubscribe<ByteBuffer>() {
 //	        @Override
 //	        public void subscribe(final FlowableEmitter<ByteBuffer> emitter) throws Exception {
@@ -283,36 +273,17 @@ public class HobbitConfigChannelsPlatform {
 //	        		@Override
 //	        		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
 //	        				throws IOException {
+//	        			System.out.println("Received message from queue " + queueName);
 //	        	    	ByteBuffer buffer = ByteBuffer.wrap(body);
 //	        	    	emitter.onNext(buffer);
 //	        		}
 //	        	});
 //	        }
-//	    }, BackpressureStrategy.BUFFER);    	
+//	    }, BackpressureStrategy.BUFFER);
 //	
-//    	return result;
-//    }
-    
+    	return result;
+    }
         
-	
-//    public static Channel createFanoutChannel(Connection connection, String exchangeName) throws IOException {
-//        Channel result = connection.createChannel();
-//        String queueName = result.queueDeclare().getQueue();
-//        //result.queueDeclare()
-//        result.exchangeDeclare(exchangeName, "fanout", false, true, null);
-//        result.queueBind(queueName, exchangeName, "");
-//    	
-//        return result;
-//    }
-    
-//    public static Flowable<ByteBuffer> createFlowable(Connection connection, String queueName, String exchangeName) throws IOException {
-//    	Channel channel = createFanoutChannel(connection, exchangeName);
-//    	//String queueName = channel.queueDeclare().getQueue();
-//
-//    	Flowable<ByteBuffer> result = wrapChannel(channel, queueName);
-//    	return result;
-//    }
-    
     public static Consumer<ByteBuffer> wrapPublishAsConsumer(Channel channel, String exchangeName, String routingKey, BasicProperties properties) {
     	Consumer<ByteBuffer> result = (buffer) -> {
     		try {
@@ -324,44 +295,12 @@ public class HobbitConfigChannelsPlatform {
     	
     	return result;
     }
-
-    
-//    public static Consumer<ByteBuffer> wrapDataChannelAsConsumer(Channel channel, String queueName) {
-////    	String responseQueueName = channel.queueDeclare().getQueue();
-//    	BasicProperties properties = new BasicProperties.Builder()
-//    			.deliveryMode(2)
-////    			.replyTo(responseQueueName)
-//    			.build();
-//
-//    	Consumer<ByteBuffer> result = wrapPublishAsConsumer(channel, "", queueName, properties);
-//    	
-//    	return result;
-//    }
-    
-    
-//    public static Consumer<ByteBuffer> wrapCommandChannelAsConsumer(Channel channel) throws IOException {
-//
-//    	String responseQueueName = channel.queueDeclare().getQueue();
-//    	BasicProperties properties = new BasicProperties.Builder()
-//    			.deliveryMode(2)
-//    			.replyTo(responseQueueName)
-//    			.build();
-//
-//    	Consumer<ByteBuffer> result = wrapPublishAsConsumer(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", properties);
-//    	
-//        return result;
-//    }
-
     
 	@Bean
 	public Connection commandConnection() throws Exception {
 		return createConnection();
 	}
 
-
-//    public String getHobbitSessionId() {
-//        return hobbitSessionId;
-//    }
 
     public String generateSessionQueueName(String queueName) {
         return queueName + "." + hobbitSessionId;
@@ -397,7 +336,7 @@ public class HobbitConfigChannelsPlatform {
     
     @Bean
     public ChannelWrapper<ByteBuffer> rawCommandChannel(@Qualifier("commandConnection") Connection connection) throws IOException {
-    	return createWrappedFanoutChannel(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
+    	return createCommandChannelWrapper(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
     }
 
     @Bean
@@ -654,3 +593,145 @@ public class HobbitConfigChannelsPlatform {
 //      LOGGER.info("Couldn't get the id of this Docker container. Won't be able to create containers.");
 //  }
 //}
+
+
+
+//protected void sendToCmdQueue(byte command, byte data[], BasicProperties props) throws IOException {
+//  byte sessionIdBytes[] = getHobbitSessionId().getBytes(Charsets.UTF_8);
+//  // + 5 because 4 bytes for the session ID length and 1 byte for the
+//  // command
+//  int dataLength = sessionIdBytes.length + 5;
+//  boolean attachData = (data != null) && (data.length > 0);
+//  if (attachData) {
+//      dataLength += data.length;
+//  }
+//  ByteBuffer buffer = ByteBuffer.allocate(dataLength);
+//  buffer.putInt(sessionIdBytes.length);
+//  buffer.put(sessionIdBytes);
+//  buffer.put(command);
+//  if (attachData) {
+//      buffer.put(data);
+//  }
+//  cmdChannel.basicPublish(Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", props, buffer.array());
+//}
+
+
+
+
+//public static Consumer<ByteBuffer> wrapDataChannelAsConsumer(Channel channel, String queueName) {
+////	String responseQueueName = channel.queueDeclare().getQueue();
+//	BasicProperties properties = new BasicProperties.Builder()
+//			.deliveryMode(2)
+////			.replyTo(responseQueueName)
+//			.build();
+//
+//	Consumer<ByteBuffer> result = wrapPublishAsConsumer(channel, "", queueName, properties);
+//	
+//	return result;
+//}
+
+
+//public static Consumer<ByteBuffer> wrapCommandChannelAsConsumer(Channel channel) throws IOException {
+//
+//	String responseQueueName = channel.queueDeclare().getQueue();
+//	BasicProperties properties = new BasicProperties.Builder()
+//			.deliveryMode(2)
+//			.replyTo(responseQueueName)
+//			.build();
+//
+//	Consumer<ByteBuffer> result = wrapPublishAsConsumer(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "", properties);
+//	
+//  return result;
+//}
+
+
+//public static Flowable<ByteBuffer> wrapChannel(Channel channel, String queueName) {
+//  Flowable<ByteBuffer> result = Flowable.create(new FlowableOnSubscribe<ByteBuffer>() {
+//      @Override
+//      public void subscribe(final FlowableEmitter<ByteBuffer> emitter) throws Exception {
+//      	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
+//      		@Override
+//      		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+//      				throws IOException {
+//      	    	ByteBuffer buffer = ByteBuffer.wrap(body);
+//      	    	emitter.onNext(buffer);
+//      		}
+//      	});
+//      }
+//  }, BackpressureStrategy.BUFFER);    	
+//
+//	return result;
+//}
+
+  
+
+//public static Channel createFanoutChannel(Connection connection, String exchangeName) throws IOException {
+//  Channel result = connection.createChannel();
+//  String queueName = result.queueDeclare().getQueue();
+//  //result.queueDeclare()
+//  result.exchangeDeclare(exchangeName, "fanout", false, true, null);
+//  result.queueBind(queueName, exchangeName, "");
+//	
+//  return result;
+//}
+
+//public static Flowable<ByteBuffer> createFlowable(Connection connection, String queueName, String exchangeName) throws IOException {
+//	Channel channel = createFanoutChannel(connection, exchangeName);
+//	//String queueName = channel.queueDeclare().getQueue();
+//
+//	Flowable<ByteBuffer> result = wrapChannel(channel, queueName);
+//	return result;
+//}
+
+
+
+//public static ChannelWrapper<ByteBuffer> createChannelWrapper(Channel channel, String exchangeName, String queueName) throws IOException {
+//	String responseQueueName = channel.queueDeclare().getQueue();
+//	BasicProperties props = new BasicProperties.Builder()
+//			.deliveryMode(2)
+//			.replyTo(responseQueueName)
+//			.build();
+//	
+//	
+//	Function<ByteBuffer, Integer> consumer = (buffer) -> {
+//		try {
+//			byte[] array = buffer.array();
+//			channel.basicPublish(exchangeName, "", props, array);
+//			return array.length;
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
+//	};
+//
+//	//createFlowable(queueFactory, exchangeName);
+//			
+//	//DefaultSubscriber()
+//	//WritableByteChannelImpl.wrap(consumer, () -> { channel.close(); return null; }, () -> channel.isOpen());
+//
+//	Subscriber<ByteBuffer> subscriber = new DefaultSubscriber<ByteBuffer>() {
+//		@Override
+//		public void onNext(ByteBuffer t) {
+//			consumer.apply(t);
+//		}
+//		
+//		@Override
+//		public void onComplete() {
+//			try {
+//				channel.close();
+//			} catch (IOException | TimeoutException e) {
+//				throw new RuntimeException(e);
+//			}
+//		}
+//
+//		@Override
+//		public void onError(Throwable t) {
+//			throw new RuntimeException(t);
+//		}
+//	};
+//			
+//	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
+//	
+//	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
+//	return result;
+//}
+//

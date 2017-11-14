@@ -1,27 +1,31 @@
 package org.hobbit.core.services;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
+
+import javax.annotation.Resource;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.utils.PublisherUtils;
-import org.hobbit.transfer.Publisher;
+import org.reactivestreams.Subscriber;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Client component to communicate with a remote {@link DockerServiceManagerServerComponent}
@@ -35,10 +39,17 @@ public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
     implements IdleServiceCapable, DockerServiceFactory<DockerService>
 {
-    protected WritableByteChannel commandChannel;
-    protected Publisher<ByteBuffer> commandPublisher;
+	@Resource(name="commandChannel")
+    protected Subscriber<ByteBuffer> commandChannel;
+    
+	
+	@Resource(name="commandPub")
+	protected Flowable<ByteBuffer> commandPublisher;
 
-    protected Publisher<ByteBuffer> responsePublisher;
+	
+	// FIXME responsePublisher
+	@Resource(name="commandPub")
+    protected Flowable<ByteBuffer> responsePublisher;
 
 
     //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestFunction;
@@ -50,6 +61,8 @@ public class DockerServiceManagerClientComponent
     protected String imageName;
     protected Map<String, String> env;
 
+
+    protected transient Disposable commandPublisherUnsubscribe = null;
 
     @Override
     public DockerServiceManagerClientComponent setImageName(String imageName) {
@@ -105,12 +118,12 @@ public class DockerServiceManagerClientComponent
      */
     @Override
     public void startUp() throws Exception {
-        commandPublisher.subscribe(this::handleMessage);
+        commandPublisherUnsubscribe = commandPublisher.subscribe(this::handleMessage);
     }
 
     @Override
     public void shutDown() throws Exception {
-        commandPublisher.unsubscribe(this::handleMessage);
+    	Optional.ofNullable(commandPublisherUnsubscribe).ifPresent(Disposable::dispose);
     }
 
     // Listen to service terminated messages
@@ -154,11 +167,11 @@ public class DockerServiceManagerClientComponent
 
         // Send out the message
         // FIXME We need a mechanism to tell the receiver to respond on our responsePublisher
-        try {
-            commandChannel.write(buffer);
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+            commandChannel.onNext(buffer);
+//        } catch(Exception e) {
+//            throw new RuntimeException(e);
+//        }
 
 
         // Not sure if this is a completable future or a subscriber
@@ -179,11 +192,11 @@ public class DockerServiceManagerClientComponent
         ByteBuffer buffer = ByteBuffer.wrap(RabbitMQUtils.writeByteArrays(new byte[][]{
             new byte[]{Commands.DOCKER_CONTAINER_STOP}, RabbitMQUtils.writeString(serviceId)}));
 
-        try {
-            commandChannel.write(buffer);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+            commandChannel.onNext(buffer);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
 }

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -29,6 +31,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePropertySource;
 
 import com.google.common.util.concurrent.Service;
+import com.rabbitmq.client.Channel;
 
 public class MainHobbitFacetedBrowsingBenchmarkRemote
 {
@@ -114,6 +117,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
     public static void run(String[] args) {
     	Service systemUnderTestService = null;
 
+    	ConfigurableApplicationContext ctx = null;
     	try {
     		
 
@@ -121,7 +125,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	        Properties props = new Properties();
 	        props.put("spring.config.location", "classpath:/local-config.properties");
 	        
-	    	ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
+	    	ctx = new SpringApplicationBuilder()
 	    		.properties(props)
 	    		.sources(HobbitConfigCommon.class)
 	        	.sources(HobbitConfigLocalPlatformFacetedBenchmark.class)
@@ -130,6 +134,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	        	.bannerMode(Banner.Mode.OFF)
 	        	.run(args);
 	    	
+
 //	    try(AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
 //	            HobbitConfigLocalPlatformFacetedBenchmark.class,
 //	            HobbitConfigChannelsPlatform.class,
@@ -165,7 +170,22 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
                 ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(systemUnderTestService, 60, TimeUnit.SECONDS, 0, TimeUnit.SECONDS);
 //              systemUnderTestService.stopAsync();
 //              systemUnderTestService.awaitTerminated(60, TimeUnit.SECONDS);
-            }        	
+            }
+            
+            if(ctx != null) {
+            	 Map<String, Channel> channels = ctx.getBeansOfType(Channel.class);
+            	 for(Entry<String, Channel> entry : channels.entrySet()) {
+            		 Channel channel = entry.getValue();
+            		 if(channel.isOpen()) {
+            			 logger.warn("Closing still open channel " + entry.getKey());
+            			 try {
+            				 channel.close();
+            			 } catch(Exception e) {
+            				 logger.warn("Error closing channel", e);
+            			 }
+            		 }
+            	 }
+            }
     	}
     }
 }

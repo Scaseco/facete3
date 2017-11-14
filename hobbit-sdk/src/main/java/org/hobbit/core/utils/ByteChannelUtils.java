@@ -11,6 +11,8 @@ import java.util.function.Predicate;
 
 import org.hobbit.transfer.Publisher;
 
+import io.reactivex.Flowable;
+
 public class ByteChannelUtils {
 
 
@@ -21,7 +23,7 @@ public class ByteChannelUtils {
     }
 
 
-    public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, ByteBuffer msg, Collection<Publisher<ByteBuffer>> publishers, Predicate<ByteBuffer> responseCondition) throws IOException {
+    public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, ByteBuffer msg, Collection<Flowable<ByteBuffer>> publishers, Predicate<ByteBuffer> responseCondition) throws IOException {
         CompletableFuture<ByteBuffer> result = PublisherUtils.triggerOnMessage(publishers, responseCondition);
 
         // TODO By awaiting the message first, we may mistake a message for a response despite not
@@ -47,9 +49,9 @@ public class ByteChannelUtils {
      * @return
      * @throws IOException
      */
-    public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, byte[] msg, Publisher<ByteBuffer> publisher, Predicate<ByteBuffer> responseCondition) throws IOException {
+    public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, byte[] msg, Flowable<ByteBuffer> publisher, Predicate<ByteBuffer> responseCondition) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(msg);
-        Collection<Publisher<ByteBuffer>> publishers = Collections.singleton(publisher);
+        Collection<Flowable<ByteBuffer>> publishers = Collections.singleton(publisher);
         CompletableFuture<ByteBuffer> result = sendMessageAndAwaitResponse(dataChannel, buffer, publishers, responseCondition);
         return result;
     }
