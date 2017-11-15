@@ -123,6 +123,7 @@ public class DefaultEvaluationStorage
             Entry<String, Result> record = parseMessage(data);
             String taskId = record.getKey();
 
+            System.out.println("Acknowledging received evaluation data for task " + taskId);
             taskAck.onNext(ByteBuffer.wrap(RabbitMQUtils.writeString(taskId)));
             
             storage.putActualValue(taskId, record.getValue());

@@ -295,9 +295,11 @@ public class BenchmarkControllerFacetedBrowsing
         // Wait for the result
 
 
+        // TODO: The better solution would be to listen on the taskAck channel to see whether there is any activity ongoing
+        
         logger.debug("Awaiting evaluation result...");
-        evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
-
+        //evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
+        evaluationDataReceivedFuture.get(10, TimeUnit.MINUTES);
 
         
         logger.info("Benchmark controller done.");

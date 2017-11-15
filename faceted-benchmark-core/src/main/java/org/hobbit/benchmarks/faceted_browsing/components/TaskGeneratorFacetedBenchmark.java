@@ -358,18 +358,28 @@ public class TaskGeneratorFacetedBenchmark
                 ByteBuffer buf2 = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));
                 //String queryStr = task.getProperty(RDFS.label).getString();
 //                try {
-                	logger.debug("Sending to system under test");
-                    toSystemAdater.onNext(buf2);
+                
+                String taskId = task.getURI();
+
+                CompletableFuture<?> taskAckFuture = PublisherUtils
+						.triggerOnMessage(taskAckPub, (buffer) -> {
+							String ackMsg = RabbitMQUtils.readString(buffer.array());
+							boolean r = taskId.equals(ackMsg);
+							return r;
+						});
+
+            	logger.debug("Sending to system under test");
+                toSystemAdater.onNext(buf2);
+                    
                     
                     
                // Wait for acknowledgement
                try {
-				PublisherUtils
-				   		.triggerOnMessage(taskAckPub, (buffer) -> task.getURI().equals(RabbitMQUtils.readString(buffer)))
-				   		.get(60, TimeUnit.SECONDS);
+            	   taskAckFuture.get(60, TimeUnit.SECONDS);
                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            	   throw new RuntimeException("Timeout waiting for acknowledgement of task " + task.getURI());
+            	   throw new RuntimeException("Timeout waiting for acknowledgement of task " + taskId);
                }
+               System.out.println("Acknowledged: " + taskId);
                
 //                } catch(IOException e) {
 //                    throw new RuntimeException(e);
