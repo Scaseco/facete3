@@ -1,4 +1,4 @@
-package org.hobbit.config.platform;
+package org.hobbit.trash.transfer.rabbitmq;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -1,4 +1,4 @@
-package org.hobbit.config.common;
+package org.hobbit.core.config;
 
 import org.springframework.context.annotation.Bean;
 

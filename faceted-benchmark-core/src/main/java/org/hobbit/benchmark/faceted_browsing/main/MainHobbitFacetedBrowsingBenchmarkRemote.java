@@ -13,12 +13,12 @@ import java.util.function.Supplier;
 
 import org.apache.qpid.server.Broker;
 import org.apache.qpid.server.BrokerOptions;
-import org.hobbit.config.common.HobbitConfigCommon;
-import org.hobbit.config.local.ConfigHobbitLocalServices;
-import org.hobbit.config.local.HobbitConfigLocalPlatformFacetedBenchmark;
-import org.hobbit.config.platform.HobbitConfigChannelsPlatform;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
+import org.hobbit.benchmark.faceted_browsing.config.HobbitConfigLocalPlatformFacetedBenchmark;
 import org.hobbit.core.Commands;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
+import org.hobbit.core.config.HobbitConfigChannelsPlatform;
+import org.hobbit.core.config.HobbitConfigCommon;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.HobbitLocalComponentService;
 import org.hobbit.core.Commands;
-import org.hobbit.core.services.ServiceFactory;
+import org.hobbit.core.service.api.ServiceFactory;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;

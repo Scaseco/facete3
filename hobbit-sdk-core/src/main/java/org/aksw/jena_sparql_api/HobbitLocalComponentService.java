@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.hobbit.core.component.BaseComponent;
+import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.service.api.ExecutionThreadServiceDelegate;
 import org.hobbit.core.service.api.IdleServiceCapable;
 import org.hobbit.core.service.api.IdleServiceDelegate;

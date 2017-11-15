@@ -1,13 +1,13 @@
-package org.hobbit.config.local;
+package org.hobbit.benchmark.faceted_browsing.config;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.hobbit.benchmarks.faceted_browsing.components.DataGeneratorFacetedBrowsing;
-import org.hobbit.benchmarks.faceted_browsing.components.EvaluationModuleComponent;
-import org.hobbit.benchmarks.faceted_browsing.components.TaskGeneratorFacetedBenchmark;
+import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
+import org.hobbit.core.component.EvaluationModuleComponent;
+import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
 import org.springframework.beans.factory.annotation.Qualifier;

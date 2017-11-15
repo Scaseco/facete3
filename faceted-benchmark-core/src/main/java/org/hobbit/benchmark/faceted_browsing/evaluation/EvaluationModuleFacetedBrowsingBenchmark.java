@@ -3,20 +3,18 @@ package org.hobbit.benchmark.faceted_browsing.evaluation;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.Charsets;
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Created on 9/12/2016.
  */
-public class EvaluationModuleFacetedBrowsingBenchmark  {
+public class EvaluationModuleFacetedBrowsingBenchmark
+	implements EvaluationModule
+{
 
     protected String experimentUri;
 
@@ -48,6 +48,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
     private int timeOut;
 
 
+    @Override
     public void init() throws Exception {
 
         evalOverall = new InstancesEvalHelper(0,0,0,0);
@@ -65,6 +66,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
         timeOut = 60000; // max time to answer a query in ms
     }
 
+    @Override
     public void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
                                     long responseReceivedTimestamp) throws Exception {
 
@@ -216,6 +218,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark  {
 
 
 
+    @Override
     public Model summarizeEvaluation() {
 
         // ______________________________________

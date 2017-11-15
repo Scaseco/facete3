@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 import javax.annotation.Resource;
 
-import org.hobbit.core.service_factory.AbstractSimpleServiceFactory;
-import org.hobbit.interfaces.BaseComponent;
+import org.hobbit.core.component.BaseComponent;
+import org.hobbit.core.service.api.AbstractSimpleServiceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 

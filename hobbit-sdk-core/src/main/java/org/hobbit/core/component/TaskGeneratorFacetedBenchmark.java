@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
@@ -108,6 +109,10 @@ public class TaskGeneratorFacetedBenchmark
     @javax.annotation.Resource(name="taskAckPub")
     protected Flowable<ByteBuffer> taskAckPub;
 
+    @javax.annotation.Resource(name="taskAckPub")
+    protected Supplier<Stream<Resource>> taskGenerator;
+    
+    
     @Autowired
     protected Gson gson;
 

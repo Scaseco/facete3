@@ -1,4 +1,4 @@
-package org.hobbit.config.platform;
+package org.hobbit.core.config;
 
 import org.reactivestreams.Subscriber;
 

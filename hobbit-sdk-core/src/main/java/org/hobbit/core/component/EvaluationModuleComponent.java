@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import javax.annotation.Resource;
 
 import org.apache.jena.rdf.model.Model;
-import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -34,7 +33,9 @@ public class EvaluationModuleComponent
 
     @Resource(name="em2es")
     protected Subscriber<ByteBuffer> toEvaluationStorage;
-
+    
+    @Resource(name="evaluationModule")
+    protected EvaluationModule evaluationModule;
     
     protected byte requestBody[];
 
@@ -48,8 +49,8 @@ public class EvaluationModuleComponent
         requestBody = new byte[] { AbstractEvaluationStorage.NEW_ITERATOR_ID };
 
 
-        EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
-        evaluationCore.init();
+        //EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
+        evaluationModule.init();
 
         boolean terminationConditionSatisfied[] = {false};
         
@@ -74,7 +75,7 @@ public class EvaluationModuleComponent
                 // This is the 'finish' condition
             	terminationConditionSatisfied[0] = true;
             	
-                Model model = evaluationCore.summarizeEvaluation();
+                Model model = evaluationModule.summarizeEvaluation();
                 logger.info("The result model has " + model.size() + " triples.");
 
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -100,7 +101,7 @@ public class EvaluationModuleComponent
                 byte[] receivedData = RabbitMQUtils.readByteArray(buffer);
 
                 try {
-                    evaluationCore.evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
+                	evaluationModule.evaluateResponse(expectedData, receivedData, taskSentTimestamp, responseReceivedTimestamp);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

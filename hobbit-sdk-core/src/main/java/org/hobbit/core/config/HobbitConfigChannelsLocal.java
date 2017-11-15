@@ -1,4 +1,4 @@
-package org.hobbit.config.local;
+package org.hobbit.core.config;
 
 import java.nio.ByteBuffer;
 
