@@ -1,36 +1,28 @@
 package org.hobbit.core.component;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.benchmark.faceted_browsing.components.FacetedBrowsingEncoders;
-import org.hobbit.benchmark.faceted_browsing.components.FacetedTaskGeneratorOld;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.RunnableServiceCapable;
@@ -49,7 +41,6 @@ import org.springframework.util.FileCopyUtils;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -109,9 +100,19 @@ public class TaskGeneratorFacetedBenchmark
     @javax.annotation.Resource(name="taskAckPub")
     protected Flowable<ByteBuffer> taskAckPub;
 
-    @javax.annotation.Resource(name="taskAckPub")
-    protected Supplier<Stream<Resource>> taskGenerator;
+    @javax.annotation.Resource(name="taskStreamSupplier")
+    protected Supplier<Stream<Resource>> taskStreamSupplier;
     
+    
+    
+    //FacetedBrowsingEncoders.formatForEvalStorage(task, timestamp);
+    
+    protected BiFunction<Resource, Long, ByteBuffer> taskEncoderForEvalStorage;
+
+//  JsonObject json = FacetedBrowsingEncoders.resourceToJson(subResource);
+//  ByteBuffer buf2 = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));    
+    protected Function<Resource, ByteBuffer> taskEncoderForSystemAdapter;
+
     
     @Autowired
     protected Gson gson;
@@ -128,7 +129,7 @@ public class TaskGeneratorFacetedBenchmark
 
 
     // The generated tasks; we should use file persistence for scaling in the general case
-    protected Collection<Resource> generatedTasks = new ArrayList<>();
+    //protected Collection<Resource> generatedTasks = new ArrayList<>();
 
     
     
@@ -267,58 +268,14 @@ public class TaskGeneratorFacetedBenchmark
         logger.debug("Task generator waiting for start signal");
         startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
 
-        logger.debug("Task generator received start signal; running task generation");
-        runTaskGeneration();
-        logger.debug("Task generator done with task generation; sending tasks out");
+        //logger.debug("Task generator received start signal; running task generation");
+        //runTaskGeneration();
+        //logger.debug("Task generator done with task generation; sending tasks out");
         sendOutTasks();
         logger.debug("Task generator fulfilled its purpose and shutting down");
     }
 
 
-    public void runTaskGeneration() throws IOException {
-
-        // Now invoke the actual task generation
-        FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
-
-        try(RDFConnection conn = sparqlService.createDefaultConnection();
-            RDFConnection refConn = sparqlService.createDefaultConnection()) {
-
-        	gen.setQueryConn(conn);
-            gen.initializeParameters();
-            Stream<Resource> tasks = gen.generateTasks();
-
-            tasks.forEach(task -> {
-                System.out.println("Generated task: " + task);
-                
-                String queryStr = task.getProperty(RDFS.label).getString();
-                
-                // The task generation is not complete without the reference result
-                // TODO Reference result should be computed against TDB
-                try(QueryExecution qe = refConn.query(queryStr)) {
-                	ResultSet resultSet = qe.execSelect();
-                	ResultSetMem rsMem = new ResultSetMem(resultSet);
-                	int numRows = ResultSetFormatter.consume(rsMem);
-                	rsMem.rewind();
-                    logger.debug("Number of result set rows for task " + task + ": " + numRows + " query: " + queryStr);
-
-                	
-                	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                	ResultSetFormatter.outputAsJSON(baos, rsMem); //resultSet);
-                	//baos.flush();
-                	String resultSetStr = baos.toString();
-                	task.addLiteral(RDFS.comment, resultSetStr);
-                }
-	                	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
-                
-                generatedTasks.add(task);
-            });
-        }
-        logger.info("TaskGenerator created " + generatedTasks.size() + " tasks");
-
-        logger.debug("Stopping preparation sparql service");
-        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
-        logger.debug("Stopped preparation sparql service");
-    }
 
 
 //    public ByteBuffer createMessageForEvalStorage(Resource task, SparqlQueryConnection conn) {
@@ -335,11 +292,10 @@ public class TaskGeneratorFacetedBenchmark
 //        return result;
 //    }
     
-
     protected void sendOutTasks() {
 
-        // Pretend we have a stream of tasks because this is what it should eventually be
-        try(Stream<Resource> taskStream = generatedTasks.stream()) {
+        // Pretend we have a stream of tasks because this is what it should eventually be        
+    	try(Stream<Resource> taskStream = taskStreamSupplier.get()) {
 
             taskStream.forEach(task -> {
             	
@@ -347,7 +303,7 @@ public class TaskGeneratorFacetedBenchmark
                 long timestamp = System.currentTimeMillis();
             	
             	
-                ByteBuffer buf = FacetedBrowsingEncoders.formatForEvalStorage(task, timestamp);
+                ByteBuffer buf = taskEncoderForEvalStorage.apply(task, timestamp);
                 		//createMessageForEvalStorage(task, referenceConn);
 
 //                try {
@@ -362,8 +318,9 @@ public class TaskGeneratorFacetedBenchmark
                 Resource subResource = task.inModel(ModelFactory.createDefaultModel());
                 subResource.addLiteral(RDFS.label, task.getProperty(RDFS.label).getString());
                 
-                JsonObject json = FacetedBrowsingEncoders.resourceToJson(subResource);
-                ByteBuffer buf2 = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));
+                ByteBuffer buf2 = taskEncoderForSystemAdapter.apply(subResource);
+                
+                
                 //String queryStr = task.getProperty(RDFS.label).getString();
 //                try {
                 
