@@ -1,7 +1,5 @@
 package org.hobbit.config.platform;
 
-import java.util.function.Supplier;
-
 import org.reactivestreams.Subscriber;
 
 import io.reactivex.Flowable;
@@ -10,7 +8,7 @@ public class ChannelWrapper<T>
 	//implements ChannelWrapper<T>
 {
 	protected Subscriber<T> subscriber;
-	protected Supplier<Flowable<T>> flowableSupplier;
+	protected Flowable<T> flowable;
 	
 //	protected Consumer<T> consumer;
 //	protected Callable<?> close;
@@ -24,10 +22,10 @@ public class ChannelWrapper<T>
 //		this.close = () -> { try { closeable.close(); } catch (IOException e) { throw new RuntimeException(e); } };
 //	}
 
-	public ChannelWrapper(Subscriber<T> subscriber, Supplier<Flowable<T>> flowable) {
+	public ChannelWrapper(Subscriber<T> subscriber, Flowable<T> flowable) {
 		super();
 		//this.consumer = consumer;
-		this.flowableSupplier = flowable;
+		this.flowable = flowable;
 		//this.close = close;
 		//this.isOpen = isOpen;
 		
@@ -58,7 +56,7 @@ public class ChannelWrapper<T>
 	
 	//@Override
 	public Flowable<T> getFlowable() {
-		return flowableSupplier.get();
+		return flowable;
 	}
 	
 }

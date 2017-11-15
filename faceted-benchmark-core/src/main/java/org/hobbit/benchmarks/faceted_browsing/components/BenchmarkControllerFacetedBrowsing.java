@@ -257,7 +257,7 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("ACTUAL BENCHMARK BEGINS NOW");
 
 
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+        //commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
 
 
 

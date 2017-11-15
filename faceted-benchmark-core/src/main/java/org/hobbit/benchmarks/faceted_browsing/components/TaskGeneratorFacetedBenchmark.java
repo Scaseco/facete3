@@ -13,7 +13,9 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
@@ -27,6 +29,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.services.RunnableServiceCapable;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
@@ -99,6 +102,8 @@ public class TaskGeneratorFacetedBenchmark
     @javax.annotation.Resource(name="tg2es")
     protected Subscriber<ByteBuffer> toEvaluationStorage;
 
+    @javax.annotation.Resource(name="taskAckPub")
+    protected Flowable<ByteBuffer> taskAckPub;
 
     @Autowired
     protected Gson gson;
@@ -355,6 +360,17 @@ public class TaskGeneratorFacetedBenchmark
 //                try {
                 	logger.debug("Sending to system under test");
                     toSystemAdater.onNext(buf2);
+                    
+                    
+               // Wait for acknowledgement
+               try {
+				PublisherUtils
+				   		.triggerOnMessage(taskAckPub, (buffer) -> task.getURI().equals(RabbitMQUtils.readString(buffer)))
+				   		.get(60, TimeUnit.SECONDS);
+               } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            	   throw new RuntimeException("Timeout waiting for acknowledgement of task " + task.getURI());
+               }
+               
 //                } catch(IOException e) {
 //                    throw new RuntimeException(e);
 //                }

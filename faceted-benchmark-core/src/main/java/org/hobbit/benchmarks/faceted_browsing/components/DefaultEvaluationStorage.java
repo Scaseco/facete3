@@ -1,7 +1,7 @@
 package org.hobbit.benchmarks.faceted_browsing.components;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 
 import javax.annotation.Resource;
 
+import org.hobbit.core.Constants;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.data.Result;
@@ -23,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
-import jersey.repackaged.com.google.common.collect.Iterators;
 
 
 /**
@@ -78,6 +78,9 @@ public class DefaultEvaluationStorage
     @Resource(name="es2em")
     protected Subscriber<ByteBuffer> toEvaluationModule;
 
+    @Resource(name="taskAck")
+    protected Subscriber<ByteBuffer> taskAck;
+
 
     public Iterator<ResultPair> createIterator() {
         return storage.streamResults()
@@ -94,23 +97,40 @@ public class DefaultEvaluationStorage
 
     @Override
     public void startUp() {
+    	boolean[] resultSent = {false};
+    	
         // TODO We could add detection of duplicate keys
 
         expectedResultsFromTaskGenerator.subscribe(data -> {
             logger.debug("Got expected result from task generator");
 
-            parseMessageIntoResultAndPassToConsumer(data, storage::putExpectedValue);
+            if(resultSent[0]) {
+            	throw new RuntimeException("Evaluation module already requested data, yet an attempt to add another expected result was seen");
+            }
+            
+            Entry<String, Result> record = parseMessage(data);
+            storage.putExpectedValue(record.getKey(), record.getValue());
         });
 
         actualResultsFromSystemAdapter.subscribe(data -> {
             logger.debug("Got actual result from system adapter");
 
-            parseMessageIntoResultAndPassToConsumer(data, storage::putActualValue);
+            if(resultSent[0]) {
+            	throw new RuntimeException("Evaluation module already requested data, yet an attempt to add another actual result was seen");
+            }
+            
+            //final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+            Entry<String, Result> record = parseMessage(data);
+            String taskId = record.getKey();
+
+            taskAck.onNext(ByteBuffer.wrap(RabbitMQUtils.writeString(taskId)));
+            
+            storage.putActualValue(taskId, record.getValue());
         });
 
 
         fromEvaluationModule.subscribe(buffer -> {
-            logger.debug("Got request from evaluation module; storage contains " + Iterators.size(createIterator()) + " items");
+            //logger.debug("Got request from evaluation module; storage contains " + Iterators.size(createIterator()) + " items");
 
             //while(true) {
                 byte response[] = null;
@@ -119,6 +139,9 @@ public class DefaultEvaluationStorage
                     response = EMPTY_RESPONSE;
                     logger.error("Got a request without a valid iterator Id. Returning emtpy response.");
                 } else {
+                	
+                	resultSent[0] = true;
+
                     byte iteratorId = buffer.get();
 
                     // get the iterator
@@ -179,9 +202,8 @@ public class DefaultEvaluationStorage
 
     }
 
-
-    // TODO Move to some util function
-    public static void parseMessageIntoResultAndPassToConsumer(ByteBuffer buffer, BiConsumer<String, Result> consumer) {
+    
+    public static Entry<String, Result> parseMessage(ByteBuffer buffer) {
         String taskId = RabbitMQUtils.readString(buffer);
         byte[] taskData = RabbitMQUtils.readByteArray(buffer);
 
@@ -190,9 +212,26 @@ public class DefaultEvaluationStorage
         // FIMXE hack for timestamps
         long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
 
-        Result result = new ResultImpl(timestamp, taskData);
-        consumer.accept(taskId, result);
+        Result r = new ResultImpl(timestamp, taskData);
+
+        Entry<String, Result> result = new SimpleEntry<>(taskId, r);
+        return result;
     }
+
+
+//    // TODO Move to some util function
+//    public static void parseMessageIntoResultAndPassToConsumer(ByteBuffer buffer, BiConsumer<String, Result> consumer) {
+//        String taskId = RabbitMQUtils.readString(buffer);
+//        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+//
+//        //System.out.println("For " + consumer + " Received taskId " + taskId);
+//        
+//        // FIMXE hack for timestamps
+//        long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
+//
+//        Result result = new ResultImpl(timestamp, taskData);
+//        consumer.accept(taskId, result);
+//    }
 
     @Override
     public void shutDown() throws Exception {
