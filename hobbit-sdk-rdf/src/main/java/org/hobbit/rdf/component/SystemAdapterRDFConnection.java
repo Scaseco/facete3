@@ -83,6 +83,10 @@ public class SystemAdapterRDFConnection
 
     protected RDFConnection rdfConnection;
 
+    
+    @Resource(name="taskResourceDeserializer")
+    protected Function<ByteBuffer, org.apache.jena.rdf.model.Resource> taskResourceDeserializer;
+    
 //    protected Service systemUnderTestService;
 
     protected CompletableFuture<?> taskGenerationFinishedFuture;
@@ -148,9 +152,8 @@ public class SystemAdapterRDFConnection
 
             //rdfConnection = //RDFConnectionFactory.connect(DatasetFactory.create());
 
-            String jsonStr = new String(byteBuffer.array(), StandardCharsets.UTF_8);
-            org.apache.jena.rdf.model.Resource r = FacetedBrowsingEncoders.jsonToResource(jsonStr, gson);
-
+            org.apache.jena.rdf.model.Resource r = taskResourceDeserializer.apply(byteBuffer);
+            
             
             String taskIdStr = r.getURI();
             String sparqlStmtStr = r.getProperty(RDFS.label).getString();

@@ -1,13 +1,8 @@
 package org.hobbit.core.component;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -17,18 +12,15 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
-import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
-import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.transfer.InputStreamManagerImpl;
 import org.hobbit.transfer.StreamManager;
 import org.reactivestreams.Subscriber;
@@ -36,10 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.FileCopyUtils;
 
-import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
 
 import io.reactivex.Flowable;
@@ -71,9 +60,6 @@ public class TaskGeneratorFacetedBenchmark
     implements RunnableServiceCapable
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmark.class);
-
-    @javax.annotation.Resource(name="taskGeneratorSparqlService")
-    protected SparqlBasedService sparqlService;
 
 
 //    @javax.annotation.Resource(name="referenceSparqlService")
@@ -114,6 +100,10 @@ public class TaskGeneratorFacetedBenchmark
     protected Function<Resource, ByteBuffer> taskEncoderForSystemAdapter;
 
     
+    //protected Consumer<InputStream> loadDataHandler;
+    protected TaskGeneratorModule taskGeneratorModule;
+    
+    
     @Autowired
     protected Gson gson;
 
@@ -123,7 +113,7 @@ public class TaskGeneratorFacetedBenchmark
 
 //    @Resource
 //    protected
-    protected ServiceManager serviceManager;
+//    protected ServiceManager serviceManager;
 
     protected StreamManager streamManager;
 
@@ -133,10 +123,10 @@ public class TaskGeneratorFacetedBenchmark
 
     
     
-    protected CompletableFuture<Void> startTaskGenerationFuture;
+    protected CompletableFuture<?> startTaskGenerationFuture;
     
     
-    protected CompletableFuture<Void> loadDataFinishedFuture = new CompletableFuture<>();
+    protected CompletableFuture<?> loadDataFinishedFuture = new CompletableFuture<>();
     protected CompletableFuture<ByteBuffer> startSignalReceivedFuture;
     
     
@@ -148,15 +138,16 @@ public class TaskGeneratorFacetedBenchmark
         CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
 
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
-        
-        // Avoid duplicate services
-        Set<Service> services = Sets.newIdentityHashSet();
-        services.addAll(Arrays.asList(
-                sparqlService
-                //referenceSparqlService
-        ));
 
-        serviceManager = new ServiceManager(services);
+        taskGeneratorModule.startUp();
+//        // Avoid duplicate services
+//        Set<Service> services = Sets.newIdentityHashSet();
+//        services.addAll(Arrays.asList(
+//                sparqlService
+//                //referenceSparqlService
+//        ));
+//
+//        serviceManager = new ServiceManager(services);
 
         streamManager = new InputStreamManagerImpl(commandChannel::onNext);
 
@@ -178,81 +169,18 @@ public class TaskGeneratorFacetedBenchmark
          * As we have served out duty then, we can stop the services
          *
          */
-        streamManager.subscribe(tmpIn -> {
-            try(InputStream in = tmpIn) {
-                logger.debug("Data stream from data generator received");
-
-                try(RDFConnection conn = sparqlService.createDefaultConnection()) {
-                    try {
-                        // Perform bulk load
-                        File tmpFile = File.createTempFile("hobbit-faceted-browsing-benchmark-task-generator-bulk-load-", ".nt");
-                        tmpFile.deleteOnExit();
-                        FileCopyUtils.copy(in, new FileOutputStream(tmpFile));
-
-                        // TODO Bulk loading not yet implemented...
-
-                        String graphName = "http://www.virtuoso-graph.com";
-                        logger.debug("Clearing and loading graph: " + graphName);
-                        conn.delete(graphName);
-                        conn.load(graphName, tmpFile.getAbsolutePath());
-                        tmpFile.delete();
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                    
-                    logger.debug("Bulk loading complete");
-//                    try {
-//                        Thread.sleep(5000);
-//                    } catch(Exception e) {
-//                        e.printStackTrace();
-//                    }
-                    
-                    
-                    // Wait for a response of the store that the loading is actually complete                    
-                    loadDataFinishedFuture.complete(null);
-                }
-
-//                try {
-//                    commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-            } catch (IOException f) {
-                f.printStackTrace();
-                throw new RuntimeException(f);
-            }
+        streamManager.subscribe(tmpIn -> {        	
+        	try {
+        		taskGeneratorModule.loadDataFromStream(tmpIn);
+        	} finally {
+        		IOUtils.closeQuietly(tmpIn);
+                loadDataFinishedFuture.complete(null);
+        	}
         });
 
 
-        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
-                60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
-
-
-//
-//        commandPublisher.subscribe((buffer) -> {
-//            // Pass all data with a defensive copy to stream handler
-//            streamManager.handleIncomingData(buffer.duplicate());
-//
-//            if(buffer.hasRemaining()) {
-//                byte cmd = buffer.get(0);
-//                switch(cmd) {
-//                case Commands.TASK_GENERATOR_START_SIGNAL:
-//                    try {
-//                        runTaskGeneration();
-////                        sendOutTasks();
-//                        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
-//                    } catch(Exception e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                    //computeReferenceResultAndSendToEvalStorage();
-//                    break;
-//                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
-//                    sendOutTasks();
-//                    break;
-//                }
-//            }
-//        });
+//        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
+//                60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
 
         // At this point, the task generator is ready for processing
         // The message should be sent out by the service wrapper:
@@ -274,23 +202,6 @@ public class TaskGeneratorFacetedBenchmark
         sendOutTasks();
         logger.debug("Task generator fulfilled its purpose and shutting down");
     }
-
-
-
-
-//    public ByteBuffer createMessageForEvalStorage(Resource task, SparqlQueryConnection conn) {
-//        String queryStr = task.getProperty(RDFS.label).getString();
-//
-//        ByteBuffer result;
-//
-//        try(QueryExecution qe = conn.query(queryStr)) {
-//            ResultSet resultSet = qe.execSelect();
-//            long timestamp = System.currentTimeMillis();
-//            result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
-//        }
-//
-//        return result;
-//    }
     
     protected void sendOutTasks() {
 
@@ -353,32 +264,75 @@ public class TaskGeneratorFacetedBenchmark
         }
     }
 
-
-//    @Override
-//    public void receiveCommand(byte command, byte[] data) {
-//        streamManager.handleIncomingData(ByteBuffer.wrap(data));
-//    }
-
-//    /**
-//     * This method gets invoked by the data generator
-//     */
-//    @Override
-//    public void generateTask(byte[] data) throws Exception {
-//        streamManager.handleIncomingData(ByteBuffer.wrap(data));
-//    }
-//
-//    @Override
-//    public void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
-//        // TODO Auto-generated method stub
-//
-//    }
-
     @Override
     public void shutDown() throws IOException {
         streamManager.close();
-        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+        //ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 
         //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
         Optional.ofNullable(fromDataGeneratorUnsubscribe).ifPresent(Disposable::dispose);
     }
 }
+
+
+//@Override
+//public void receiveCommand(byte command, byte[] data) {
+//  streamManager.handleIncomingData(ByteBuffer.wrap(data));
+//}
+
+///**
+//* This method gets invoked by the data generator
+//*/
+//@Override
+//public void generateTask(byte[] data) throws Exception {
+//  streamManager.handleIncomingData(ByteBuffer.wrap(data));
+//}
+//
+//@Override
+//public void sendTaskToSystemAdapter(String taskIdString, byte[] data) throws IOException {
+//  // TODO Auto-generated method stub
+//
+//}
+
+
+//public ByteBuffer createMessageForEvalStorage(Resource task, SparqlQueryConnection conn) {
+//  String queryStr = task.getProperty(RDFS.label).getString();
+//
+//  ByteBuffer result;
+//
+//  try(QueryExecution qe = conn.query(queryStr)) {
+//      ResultSet resultSet = qe.execSelect();
+//      long timestamp = System.currentTimeMillis();
+//      result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
+//  }
+//
+//  return result;
+//}
+
+
+
+//
+//        commandPublisher.subscribe((buffer) -> {
+//            // Pass all data with a defensive copy to stream handler
+//            streamManager.handleIncomingData(buffer.duplicate());
+//
+//            if(buffer.hasRemaining()) {
+//                byte cmd = buffer.get(0);
+//                switch(cmd) {
+//                case Commands.TASK_GENERATOR_START_SIGNAL:
+//                    try {
+//                        runTaskGeneration();
+////                        sendOutTasks();
+//                        commandChannel.write(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+//                    } catch(Exception e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                    //computeReferenceResultAndSendToEvalStorage();
+//                    break;
+//                case BenchmarkControllerFacetedBrowsing.START_BENCHMARK_SIGNAL:
+//                    sendOutTasks();
+//                    break;
+//                }
+//            }
+//        });
+

@@ -275,10 +275,10 @@ public class FacetedTaskGeneratorOld {
 
     public <T> T loadTaskResource(String resourceName, TypeToken<T> typeToken) {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        Type mapToListOfMapsType = typeToken.getType();//new TypeToken<Map<String, List<Map<String, String>>>>() {}.getType();
+        Type type = typeToken.getType();//new TypeToken<Map<String, List<Map<String, String>>>>() {}.getType();
 
         Gson gson = new Gson();
-        T result = gson.fromJson(new InputStreamReader(classloader.getResourceAsStream(resourceName), StandardCharsets.UTF_8), mapToListOfMapsType);
+        T result = gson.fromJson(new InputStreamReader(classloader.getResourceAsStream(resourceName), StandardCharsets.UTF_8), type);
 
         return result;
     }

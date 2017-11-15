@@ -2,17 +2,12 @@ package org.hobbit.core.config;
 
 import java.nio.ByteBuffer;
 
-import org.hobbit.transfer.PublishingWritableByteChannel;
-import org.hobbit.transfer.PublishingWritableByteChannelSimple;
 import org.springframework.context.annotation.Bean;
 
 import com.google.gson.Gson;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.subjects.PublishSubject;
 
 public class HobbitConfigChannelsLocal {
     @Bean
