@@ -12,12 +12,17 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.core.component.FacetedTaskGeneratorOld;
 import org.hobbit.core.utils.ServiceManagerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TaskGenerator {
+	
+	private static final Logger logger = LoggerFactory.getLogger(TaskGenerator.class);
 
-    public void runTaskGeneration() throws IOException {
+	
+	
+    public Stream<Resource> runTaskGeneration(RDFConnection conn) throws IOException {
 
         // Now invoke the actual task generation
         FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
