@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
@@ -34,7 +35,8 @@ public class EvaluationModuleComponent
     @Resource(name="em2es")
     protected Subscriber<ByteBuffer> toEvaluationStorage;
     
-    @Resource(name="evaluationModule")
+    //@Resource(name="evaluationModule")
+    @Inject
     protected EvaluationModule evaluationModule;
     
     protected byte requestBody[];

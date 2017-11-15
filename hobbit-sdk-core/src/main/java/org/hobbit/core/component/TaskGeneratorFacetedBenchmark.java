@@ -9,8 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import javax.inject.Inject;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -26,7 +27,6 @@ import org.hobbit.transfer.StreamManager;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
@@ -86,25 +86,25 @@ public class TaskGeneratorFacetedBenchmark
     @javax.annotation.Resource(name="taskAckPub")
     protected Flowable<ByteBuffer> taskAckPub;
 
-    @javax.annotation.Resource(name="taskStreamSupplier")
-    protected Supplier<Stream<Resource>> taskStreamSupplier;
+//    @javax.annotation.Resource(name="taskStreamSupplier")
+//    protected Supplier<Stream<Resource>> taskStreamSupplier;
     
     
     
-    //FacetedBrowsingEncoders.formatForEvalStorage(task, timestamp);
-    
+    @Inject
     protected BiFunction<Resource, Long, ByteBuffer> taskEncoderForEvalStorage;
 
-//  JsonObject json = FacetedBrowsingEncoders.resourceToJson(subResource);
-//  ByteBuffer buf2 = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));    
+
+    @Inject
     protected Function<Resource, ByteBuffer> taskEncoderForSystemAdapter;
 
     
     //protected Consumer<InputStream> loadDataHandler;
+    @Inject
     protected TaskGeneratorModule taskGeneratorModule;
     
     
-    @Autowired
+    @Inject
     protected Gson gson;
 
 
@@ -206,7 +206,8 @@ public class TaskGeneratorFacetedBenchmark
     protected void sendOutTasks() {
 
         // Pretend we have a stream of tasks because this is what it should eventually be        
-    	try(Stream<Resource> taskStream = taskStreamSupplier.get()) {
+
+    	try(Stream<Resource> taskStream = taskGeneratorModule.generateTasks()) {
 
             taskStream.forEach(task -> {
             	

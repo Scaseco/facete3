@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 
 import org.apache.qpid.server.Broker;
 import org.apache.qpid.server.BrokerOptions;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
 import org.hobbit.benchmark.faceted_browsing.config.HobbitConfigLocalPlatformFacetedBenchmark;
 import org.hobbit.core.Commands;
@@ -128,6 +129,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	    	ctx = new SpringApplicationBuilder()
 	    		.properties(props)
 	    		.sources(HobbitConfigCommon.class)
+	    		.sources(ConfigEncodersFacetedBrowsing.class)
 	        	.sources(HobbitConfigLocalPlatformFacetedBenchmark.class)
 	        	.sources(HobbitConfigChannelsPlatform.class)
 	        	.sources(ConfigHobbitLocalServices.class)
@@ -150,7 +152,8 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 //    		commandChannel.write(ByteBuffer.wrap(new byte[] {Commands.SYSTEM_READY_SIGNAL}));
     		
     		
-        	Supplier<Service> systemAdapterServiceFactory = (Supplier<Service>)ctx.getBean("systemAdapterServiceFactory");
+        	@SuppressWarnings("unchecked")
+			Supplier<Service> systemAdapterServiceFactory = (Supplier<Service>)ctx.getBean("systemAdapterServiceFactory");
         	Service systemAdapter = systemAdapterServiceFactory.get();
         	systemAdapter.startAsync();
         	systemAdapter.awaitRunning();
