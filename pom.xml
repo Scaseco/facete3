@@ -1,282 +1,304 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.hobbit</groupId>
-    <artifactId>faceted-benchmark-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+	<groupId>org.hobbit</groupId>
+	<artifactId>faceted-benchmark-parent</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
 
-    <properties>
-        <jena-sparql-api.version>3.4.0-2-SNAPSHOT</jena-sparql-api.version>
-        <slf4j.version>1.7.24</slf4j.version>
+	<properties>
+		<jena-sparql-api.version>3.4.0-2-SNAPSHOT</jena-sparql-api.version>
+		<slf4j.version>1.7.24</slf4j.version>
 
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-<!--         <maven.compiler.source>9</maven.compiler.source> -->
-<!--         <maven.compiler.target>9</maven.compiler.target> -->
-<!--         <maven.compiler.release>9</maven.compiler.release> -->
-    </properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<!-- <maven.compiler.source>9</maven.compiler.source> -->
+		<!-- <maven.compiler.target>9</maven.compiler.target> -->
+		<!-- <maven.compiler.release>9</maven.compiler.release> -->
+	</properties>
 
-    <modules>
-        <module>faceted-benchmark-core</module>
-        <module>faceted-benchmark-system-adapter</module>
-        <module>faceted-benchmark-data-generator</module>
-        <module>faceted-benchmark-task-generator</module>
-        <module>faceted-benchmark-evaluation-module</module>
-        <module>faceted-benchmark-benchmark-controller</module>
-        <module>faceted-benchmark-platform-simulator</module>
-        <module>faceted-benchmark-bundle</module>
+	<modules>
+		<module>faceted-benchmark-core</module>
+		<module>faceted-benchmark-system-adapter</module>
+		<module>faceted-benchmark-data-generator</module>
+		<module>faceted-benchmark-task-generator</module>
+		<module>faceted-benchmark-evaluation-module</module>
+		<module>faceted-benchmark-benchmark-controller</module>
+		<module>faceted-benchmark-platform-simulator</module>
+		<module>faceted-benchmark-bundle</module>
 
-        <module>hobbit-sdk</module>
-<!--       <module>hobbit-platform-sdk</module> -->
-    </modules>
+		<module>hobbit-sdk-core</module>
+		<module>hobbit-sdk-rdf</module>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>hobbit-sdk</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+		<!-- <module>hobbit-platform-sdk</module> -->
+	</modules>
 
-            <dependency>
-                <groupId>de.javakaffee</groupId>
-                <artifactId>kryo-serializers</artifactId>
-                <version>0.41</version>
-            </dependency>
+	<dependencyManagement>
+		<dependencies>
 
-            <dependency>
-                <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-core</artifactId>
-                <version>${jena-sparql-api.version}</version>
-            </dependency>
+			<!-- HOBBIT Core -->
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>core</artifactId>
+				<version>1.0.7-SNAPSHOT</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-log4j12</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.jena</groupId>
+						<artifactId>apache-jena-libs</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
-            <dependency>
-                <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-server-standalone</artifactId>
-                <version>${jena-sparql-api.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>platform-controller</artifactId>
+				<version>1.0.12</version>
+			</dependency>
 
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>faceted-benchmark-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>hobbit-sdk-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>faceted-benchmark-benchmark-controller</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>hobbit-sdk-rdf</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>faceted-benchmark-data-generator</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.ini4j</groupId>
+				<artifactId>ini4j</artifactId>
+				<version>0.5.4</version>
+			</dependency>
 
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>faceted-benchmark-task-generator</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>de.javakaffee</groupId>
+				<artifactId>kryo-serializers</artifactId>
+				<version>0.41</version>
+			</dependency>
 
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>faceted-benchmark-bundle</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-core</artifactId>
+				<version>${jena-sparql-api.version}</version>
+			</dependency>
 
+<!-- 			<dependency> -->
+<!-- 				<groupId>org.aksw.jena-sparql-api</groupId> -->
+<!-- 				<artifactId>jena-sparql-api-server-standalone</artifactId> -->
+<!-- 				<version>${jena-sparql-api.version}</version> -->
+<!-- 			</dependency> -->
 
-            <dependency>
-                <groupId>com.spotify</groupId>
-                <artifactId>docker-client</artifactId>
-                <version>8.9.0</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>org.aksw.commons</groupId>
-                <artifactId>aksw-commons-collections</artifactId>
-                <version>0.8.6</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.jena</groupId>
-                <artifactId>jena-arq</artifactId>
-                <version>3.4.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-core</artifactId>
-                <version>4.3.11.RELEASE </version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
-                <version>4.3.11.RELEASE </version>
-            </dependency>
-
-            <!-- <dependency> -->
-            <!-- <groupId>org.apache.jena</groupId> -->
-            <!-- <artifactId>apache-jena-libs</artifactId> -->
-            <!-- <version>3.4.0</version> -->
-            <!-- </dependency> -->
-
-            <!-- HOBBIT Core -->
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>core</artifactId>
-                <version>1.0.7-SNAPSHOT</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.jena</groupId>
-                        <artifactId>apache-jena-libs</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>platform-controller</artifactId>
-                <version>1.0.12</version>
-            </dependency>
-
-            <!-- RabbitMQ -->
-            <dependency>
-                <groupId>com.rabbitmq</groupId>
-                <artifactId>amqp-client</artifactId>
-                <version>3.6.0</version>
-            </dependency>
-
-            <!-- Java IO -->
-            <!-- <dependency> -->
-            <!-- <groupId>commons-io</groupId> -->
-            <!-- <artifactId>commons-io</artifactId> -->
-            <!-- <version>2.5</version> -->
-            <!-- </dependency> -->
-            <!-- <dependency> -->
-            <!-- <groupId>org.apache.commons</groupId> -->
-            <!-- <artifactId>commons-collections4</artifactId> -->
-            <!-- <version>4.0</version> -->
-            <!-- </dependency> -->
-            <!-- <dependency> -->
-            <!-- <groupId>org.apache.httpcomponents</groupId> -->
-            <!-- <artifactId>httpclient</artifactId> -->
-            <!-- <version>4.3.4</version> -->
-            <!-- </dependency> -->
-
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>virtjdbc4</artifactId>
-                <version>1.0.0</version>
-                <!-- <scope>runtime</scope> -->
-            </dependency>
-
-            <dependency>
-                <groupId>org.hobbit</groupId>
-                <artifactId>virt_jena3</artifactId>
-                <version>1.0.0</version>
-            </dependency>
+<!-- 			<dependency> -->
+<!-- 				<groupId>org.hobbit</groupId> -->
+<!-- 				<artifactId>faceted-benchmark-core</artifactId> -->
+<!-- 				<version>${project.version}</version> -->
+<!-- 			</dependency> -->
 
 
-            <!-- Apache Jena -->
-
-            <!-- log4j -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.11</version>
-                <!-- <scope>test</scope> -->
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.4.3</version>
-                    <configuration>
-                        <!-- filter all the META-INF files of other artifacts -->
-                        <filters>
-                            <filter>
-                                <artifact>*:*</artifact>
-                                <excludes>
-                                    <exclude>META-INF/*.SF</exclude>
-                                    <exclude>META-INF/*.DSA</exclude>
-                                    <exclude>META-INF/*.RSA</exclude>
-                                </excludes>
-                            </filter>
-                        </filters>
-                        <transformers>
-                            <transformer
-                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                <manifestEntries>
-                                    <X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
-                                    <X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
-                                </manifestEntries>
-                            </transformer>
-                            <transformer
-                                implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                        </transformers>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>shade</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
+			<dependency>
+				<groupId>org.apache.qpid</groupId>
+				<artifactId>qpid-broker</artifactId>
+				<version>6.1.4</version>
+				<!-- <exclusions> -->
+				<!-- <exclusion> -->
+				<!-- <groupId>ch.qos.logback</groupId> -->
+				<!-- <artifactId>logback-classic</artifactId> -->
+				<!-- </exclusion> -->
+				<!-- </exclusions> -->
+			</dependency>
 
 
-            </plugins>
-        </pluginManagement>
-    </build>
+			<dependency>
+				<groupId>com.spotify</groupId>
+				<artifactId>docker-client</artifactId>
+				<version>8.9.0</version>
+			</dependency>
 
 
-    <repositories>
-        <repository>
-            <id>maven.aksw.internal</id>
-            <name>University Leipzig, AKSW Maven2 Repository</name>
-            <url>http://maven.aksw.org/repository/internal</url>
-        </repository>
-        <repository>
-            <id>maven.aksw.snapshots</id>
-            <name>University Leipzig, AKSW Maven2 Repository</name>
-            <url>http://maven.aksw.org/repository/snapshots</url>
-        </repository>
-        <repository>
-            <id>Apache Repo</id>
-            <name>Apache Repository</name>
-            <url>https://repository.apache.org/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>in-project-virtjdbc</id>
-            <name>In Project Repo for VirtJDBC</name>
-            <url>file://${project.basedir}/src/main/resources/lib</url>
-        </repository>
-    </repositories>
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-collections</artifactId>
+				<version>0.8.6</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.jena</groupId>
+				<artifactId>jena-arq</artifactId>
+				<version>3.4.0</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot</artifactId>
+				<version>1.5.8.RELEASE</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>4.3.11.RELEASE </version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>4.3.11.RELEASE </version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>23.0</version>
+			</dependency>
+
+
+			<!-- <dependency> -->
+			<!-- <groupId>org.apache.jena</groupId> -->
+			<!-- <artifactId>apache-jena-libs</artifactId> -->
+			<!-- <version>3.4.0</version> -->
+			<!-- </dependency> -->
+
+
+			<!-- RabbitMQ -->
+			<dependency>
+				<groupId>com.rabbitmq</groupId>
+				<artifactId>amqp-client</artifactId>
+				<version>3.6.0</version>
+			</dependency>
+
+			<!-- Java IO -->
+			<!-- <dependency> -->
+			<!-- <groupId>commons-io</groupId> -->
+			<!-- <artifactId>commons-io</artifactId> -->
+			<!-- <version>2.5</version> -->
+			<!-- </dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>org.apache.commons</groupId> -->
+			<!-- <artifactId>commons-collections4</artifactId> -->
+			<!-- <version>4.0</version> -->
+			<!-- </dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>org.apache.httpcomponents</groupId> -->
+			<!-- <artifactId>httpclient</artifactId> -->
+			<!-- <version>4.3.4</version> -->
+			<!-- </dependency> -->
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>virtjdbc4</artifactId>
+				<version>1.0.0</version>
+				<!-- <scope>runtime</scope> -->
+			</dependency>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>virt_jena3</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+
+
+			<!-- Apache Jena -->
+
+			<!-- log4j -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.11</version>
+				<!-- <scope>test</scope> -->
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>2.4.3</version>
+					<configuration>
+						<!-- filter all the META-INF files of other artifacts -->
+						<filters>
+							<filter>
+								<artifact>*:*</artifact>
+								<excludes>
+									<exclude>META-INF/*.SF</exclude>
+									<exclude>META-INF/*.DSA</exclude>
+									<exclude>META-INF/*.RSA</exclude>
+								</excludes>
+							</filter>
+						</filters>
+						<transformers>
+							<transformer
+								implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<manifestEntries>
+									<X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
+									<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
+								</manifestEntries>
+							</transformer>
+							<transformer
+								implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+						</transformers>
+					</configuration>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+
+			</plugins>
+		</pluginManagement>
+	</build>
+
+
+	<repositories>
+		<repository>
+			<id>maven.aksw.internal</id>
+			<name>University Leipzig, AKSW Maven2 Repository</name>
+			<url>http://maven.aksw.org/repository/internal</url>
+		</repository>
+		<repository>
+			<id>maven.aksw.snapshots</id>
+			<name>University Leipzig, AKSW Maven2 Repository</name>
+			<url>http://maven.aksw.org/repository/snapshots</url>
+		</repository>
+		<repository>
+			<id>Apache Repo</id>
+			<name>Apache Repository</name>
+			<url>https://repository.apache.org/content/repositories/releases/</url>
+		</repository>
+		<repository>
+			<id>in-project-virtjdbc</id>
+			<name>In Project Repo for VirtJDBC</name>
+			<url>file://${project.basedir}/src/main/resources/lib</url>
+		</repository>
+	</repositories>
 
 </project>

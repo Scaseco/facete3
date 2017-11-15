@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>faceted-benchmark-core</artifactId>
+	<artifactId>hobbit-sdk-rdf</artifactId>
 
 	<parent>
 		<groupId>org.hobbit</groupId>
@@ -12,10 +12,24 @@
 	</parent>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>hobbit-sdk-rdf</artifactId>
+			<artifactId>hobbit-sdk-core</artifactId>
 		</dependency>
+
+		<!-- Parsing of virtuoso.ini files -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.ini4j</groupId> -->
+<!-- 			<artifactId>ini4j</artifactId> -->
+<!-- 			<version>0.5.4</version> -->
+<!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>virtjdbc4</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
