@@ -11,14 +11,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.IdleServiceCapable;
-import org.reactivestreams.Subscriber;
 
+import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.Listener;
@@ -40,17 +40,30 @@ public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
     implements IdleServiceCapable, DockerServiceBuilder<DockerService>
 {
-	@Resource(name="commandChannel")
-    protected Subscriber<ByteBuffer> commandChannel;
+//	@Resource(name="commandChannel")
+//    protected Subscriber<ByteBuffer> commandChannel;
     
 	
-	@Resource(name="commandPub")
+	//@Resource(name="commandPub")
 	protected Flowable<ByteBuffer> commandPublisher;
 
 	
-	@Resource(name="dockerServerConnection")
-	protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> serverConnection;
+	//@Resource(name="dockerServiceManagerClientConnection")
+	protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer;
+
 	
+	
+	
+	public DockerServiceManagerClientComponent(
+			Flowable<ByteBuffer> commandPublisher,
+			Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
+			Gson gson) {
+		super();
+		this.commandPublisher = commandPublisher;
+		this.requestToServer = requestToServer;
+		this.gson = gson;
+	}
+
 	// FIXME responsePublisher
 //	@Resource(name="commandPub")
 //    protected Flowable<ByteBuffer> responsePublisher;
@@ -58,7 +71,9 @@ public class DockerServiceManagerClientComponent
 
     //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestFunction;
 
+	@Inject
     protected Gson gson;
+	
     protected Map<String, Service> runningManagedServices = new HashMap<>();
 
 
@@ -164,10 +179,10 @@ public class DockerServiceManagerClientComponent
         String jsonStr = gson.toJson(msg);
 
 
-        ByteBuffer buffer = ByteBuffer.wrap(RabbitMQUtils.writeByteArrays(new byte[][]{
+        ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
             new byte[]{Commands.DOCKER_CONTAINER_START},
             RabbitMQUtils.writeString(jsonStr)
-        }));
+        ));
 
         // Send out the message
         // FIXME We need a mechanism to tell the receiver to respond on our responsePublisher
@@ -182,7 +197,7 @@ public class DockerServiceManagerClientComponent
         //CompletableFuture<ByteBuffer> response = PublisherUtils.triggerOnMessage(responsePublisher, (x) -> true);
 
             
-        CompletableFuture<ByteBuffer> response = serverConnection.apply(buffer);
+        CompletableFuture<ByteBuffer> response = requestToServer.apply(buffer);
         ByteBuffer responseBuffer;
         try {
             responseBuffer = response.get(60, TimeUnit.SECONDS);
@@ -191,6 +206,8 @@ public class DockerServiceManagerClientComponent
         }
         String result = RabbitMQUtils.readString(responseBuffer);
 
+        System.out.println("Client received response with docker id: " + result);
+        
         return result;
     }
 
@@ -199,7 +216,15 @@ public class DockerServiceManagerClientComponent
             new byte[]{Commands.DOCKER_CONTAINER_STOP}, RabbitMQUtils.writeString(serviceId)}));
 
 //        try {
-            commandChannel.onNext(buffer);
+        CompletableFuture<ByteBuffer> responseFuture = requestToServer.apply(buffer);
+        
+        try {
+			responseFuture.get(60, TimeUnit.SECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			throw new RuntimeException(e);
+		}
+        
+            //commandChannel.onNext(buffer);
 //        } catch (Exception e) {
 //            throw new RuntimeException(e);
 //        }

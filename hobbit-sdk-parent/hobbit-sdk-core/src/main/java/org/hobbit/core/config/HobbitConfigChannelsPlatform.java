@@ -132,7 +132,7 @@ public class HobbitConfigChannelsPlatform {
     	return flowable;
     }
     
-    public Subscriber<ByteBuffer> createFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
+	public static Subscriber<ByteBuffer> createFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
     	Channel channel = connection.createChannel();
 
 //    	String responseQueueName = channel.queueDeclare().getQueue();

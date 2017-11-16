@@ -29,7 +29,7 @@ public class HobbitConfigLocalPlatformFacetedBenchmark {
         //DockerServiceFactorySimpleDelegation
 
 
-        DockerServiceManagerServerComponent result = new DockerServiceManagerServerComponent(null);
+        DockerServiceManagerServerComponent result = new DockerServiceManagerServerComponent(null, null, null, null, null);
         return result;
     }
 

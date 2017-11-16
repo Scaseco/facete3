@@ -1,22 +1,26 @@
 package org.hobbit.core.service.docker;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 
 import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
 import org.hobbit.core.Commands;
+import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.StartCommandData;
+import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -39,18 +43,21 @@ public class DockerServiceManagerServerComponent
     private static final Logger logger = LoggerFactory.getLogger(DockerServiceManagerServerComponent.class);
 
 
-    @Resource(name="commandChannel")
+//    @Resource(name="commandChannel")
     protected Subscriber<ByteBuffer> commandChannel;
 
-    @Resource(name="commandPub")
+//    @Resource(name="commandPub")
     protected Flowable<ByteBuffer> commandPublisher;
 
-    @Autowired
+//    @Resource(name="dockerServiceManagerServerConnection")
+    protected Flowable<SimpleReplyableMessage<ByteBuffer>> requestsFromClients;
+    
+//    @Inject
     protected Gson gson;// = new Gson();
 
 
     // Delegate to the actual service instance creation
-    protected DockerServiceBuilder<? extends DockerService> delegate;
+    protected Supplier<? extends DockerServiceBuilder<? extends DockerService>> builderSupplier;
 
 
     // The services created by this service manager
@@ -59,16 +66,30 @@ public class DockerServiceManagerServerComponent
 
     
     protected transient Disposable commandPublisherUnsubscribe;
+    protected transient Disposable clientRequestsUnsubscribe;
 
-    public DockerServiceManagerServerComponent(DockerServiceBuilder<? extends DockerService> delegate) {
+    public DockerServiceManagerServerComponent(
+    		Supplier<? extends DockerServiceBuilder<? extends DockerService>> delegateSupplier,
+    		Subscriber<ByteBuffer> commandChannel,
+    		Flowable<ByteBuffer> commandPublisher,
+    		Flowable<SimpleReplyableMessage<ByteBuffer>> requestsFromClients,
+    		Gson gson
+    ) {
         super();
-        this.delegate = delegate;
+        this.builderSupplier = delegateSupplier;
+        
+        this.commandChannel = commandChannel;
+        this.commandPublisher = commandPublisher;
+        this.requestsFromClients = requestsFromClients;
+        this.gson = gson;
     }
 
 
     @Override
     protected void startUp() throws Exception {
-        commandPublisherUnsubscribe = commandPublisher.subscribe(this::receiveCommand);
+        commandPublisherUnsubscribe = commandPublisher.subscribe(this::onCommand);
+        
+        clientRequestsUnsubscribe = requestsFromClients.subscribe(this::onRequest);
     }
 
 
@@ -78,14 +99,16 @@ public class DockerServiceManagerServerComponent
         //commandPublisher.unsubscribe(this::receiveCommand);
     }
 
-    public void onStartServiceRequest(String imageName, Map<String, String> env) {
+    public void onStartServiceRequest(String imageName, Map<String, String> env, Consumer<String> idCallback) {
         //Map<String, String> env = n;
 
+    	DockerServiceBuilder<?> builder = builderSupplier.get();
+    	
         // TODO Ensure thread safety
-        delegate.setImageName(imageName);
-        delegate.setLocalEnvironment(env);
+        builder.setImageName(imageName);
+        builder.setLocalEnvironment(env);
 
-        DockerService service = delegate.get();
+        DockerService service = builder.get();
 
 
 
@@ -95,6 +118,8 @@ public class DockerServiceManagerServerComponent
                 String containerId = service.getContainerId();
 
                 runningManagedServices.put(containerId, service);
+                
+                idCallback.accept(containerId);
             }
 
             @Override
@@ -151,29 +176,56 @@ public class DockerServiceManagerServerComponent
             logger.warn("Stop request ignored due to no running service know by id " + containerId);
         }
     }
+    
+    
+    public void onRequest(SimpleReplyableMessage<ByteBuffer> request) {
+    	ByteBuffer command = request.getValue();
 
-    public void receiveCommand(ByteBuffer buffer) {
+    	onCommand(command, request::reply);
+    }
+
+    public void onCommand(ByteBuffer buffer) {
+    	onCommand(buffer, null);
+    }
+    
+    public void onCommand(ByteBuffer buffer, Consumer<ByteBuffer> responseTarget) {
         if(buffer.hasRemaining()) {
             byte b = buffer.get();
             switch(b) {
-            case Commands.DOCKER_CONTAINER_START:
-                String str = RabbitMQUtils.readString(buffer);
+            case Commands.DOCKER_CONTAINER_START: {
+            	if(responseTarget == null) {
+            		logger.warn("Received a request to start a container, however there was no target for the response");
+            	}
+            	
+            	// https://stackoverflow.com/questions/17354891/java-bytebuffer-to-string
+                String str = new String(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining(), StandardCharsets.UTF_8);
+                
                 StartCommandData data = gson.fromJson(str, StartCommandData.class);
 
                 String imageName = data.getImage();
                 String[] rawEnv = data.getEnvironmentVariables();
                 Map<String, String> env = EnvironmentUtils.listToMap("=", Arrays.asList(rawEnv));
-                onStartServiceRequest(imageName, env);
 
+                onStartServiceRequest(imageName, env, containerId -> {
+                    ByteBuffer msg = ByteBuffer.wrap(RabbitMQUtils.writeString(containerId));
+                    responseTarget.accept(msg);
+                });
+
+                
 //                byte data[] = RabbitMQUtils.writeString(
 //                        gson.toJson(new StartCommandData(imageName, "defaultContainerType", "defaultContainerName", EnvironmentU)));
 
 
-                break;
-            case Commands.DOCKER_CONTAINER_STOP:
-                String containerId = RabbitMQUtils.readString(buffer);
+                break; }
+            case Commands.DOCKER_CONTAINER_STOP: {
+//                byte data[] = RabbitMQUtils.writeString(gson.toJson(new StopCommandData(containerName)));
+                String str = new String(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining(), StandardCharsets.UTF_8);
+                
+                
+            	StopCommandData data = gson.fromJson(str, StopCommandData.class);
+            	String containerId = data.getContainerName();
                 onStopServiceRequest(containerId);
-                break;
+                break; }
             }
         }
     }

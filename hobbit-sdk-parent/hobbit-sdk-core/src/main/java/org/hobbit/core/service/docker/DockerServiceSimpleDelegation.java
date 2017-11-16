@@ -1,5 +1,6 @@
 package org.hobbit.core.service.docker;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -11,7 +12,7 @@ public class DockerServiceSimpleDelegation
     implements DockerService
 {
     protected String imageName;
-    protected Map<String, String> localEnvironment;
+    protected Map<String, String> localEnvironment = new LinkedHashMap<>();
 
     protected BiFunction<String, Map<String, String>, String> startServiceDelegate;
 
