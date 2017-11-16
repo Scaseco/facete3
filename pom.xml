@@ -99,17 +99,17 @@
 				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
-<!-- 			<dependency> -->
-<!-- 				<groupId>org.aksw.jena-sparql-api</groupId> -->
-<!-- 				<artifactId>jena-sparql-api-server-standalone</artifactId> -->
-<!-- 				<version>${jena-sparql-api.version}</version> -->
-<!-- 			</dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+			<!-- <artifactId>jena-sparql-api-server-standalone</artifactId> -->
+			<!-- <version>${jena-sparql-api.version}</version> -->
+			<!-- </dependency> -->
 
-<!-- 			<dependency> -->
-<!-- 				<groupId>org.hobbit</groupId> -->
-<!-- 				<artifactId>faceted-benchmark-core</artifactId> -->
-<!-- 				<version>${project.version}</version> -->
-<!-- 			</dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>org.hobbit</groupId> -->
+			<!-- <artifactId>faceted-benchmark-core</artifactId> -->
+			<!-- <version>${project.version}</version> -->
+			<!-- </dependency> -->
 
 
 			<dependency>
@@ -153,6 +153,12 @@
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-autoconfigure</artifactId>
+				<version>1.5.8.RELEASE</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-loader</artifactId>
 				<version>1.5.8.RELEASE</version>
 			</dependency>
 
@@ -247,45 +253,16 @@
 	<build>
 		<pluginManagement>
 			<plugins>
-<!--
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-shade-plugin</artifactId>
-					<version>2.4.3</version>
-					<configuration>
-						< !- - filter all the META-INF files of other artifacts - - >
-						<filters>
-							<filter>
-								<artifact>*:*</artifact>
-								<excludes>
-									<exclude>META-INF/*.SF</exclude>
-									<exclude>META-INF/*.DSA</exclude>
-									<exclude>META-INF/*.RSA</exclude>
-								</excludes>
-							</filter>
-						</filters>
-						<transformers>
-							<transformer
-								implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-								<manifestEntries>
-									<X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
-									<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
-								</manifestEntries>
-							</transformer>
-							<transformer
-								implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-						</transformers>
-					</configuration>
-					<executions>
-						<execution>
-							<phase>package</phase>
-							<goals>
-								<goal>shade</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
--->
+				<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
+					<version>2.4.3</version> <configuration> < !- - filter all the META-INF files 
+					of other artifacts - - > <filters> <filter> <artifact>*:*</artifact> <excludes> 
+					<exclude>META-INF/*.SF</exclude> <exclude>META-INF/*.DSA</exclude> <exclude>META-INF/*.RSA</exclude> 
+					</excludes> </filter> </filters> <transformers> <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> 
+					<manifestEntries> <X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK> 
+					<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK> </manifestEntries> 
+					</transformer> <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" 
+					/> </transformers> </configuration> <executions> <execution> <phase>package</phase> 
+					<goals> <goal>shade</goal> </goals> </execution> </executions> </plugin> -->
 
 			</plugins>
 		</pluginManagement>
