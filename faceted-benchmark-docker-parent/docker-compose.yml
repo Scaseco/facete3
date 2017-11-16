@@ -1,0 +1,10 @@
+version: '2.1'
+
+services:
+
+  benchmark-controller:
+    build: benchmark-controller/
+
+#  tast-generator:
+#    build: ./task-generator
+
