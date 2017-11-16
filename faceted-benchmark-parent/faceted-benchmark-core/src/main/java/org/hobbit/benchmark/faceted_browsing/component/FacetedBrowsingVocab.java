@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.components;
+package org.hobbit.benchmark.faceted_browsing.component;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;

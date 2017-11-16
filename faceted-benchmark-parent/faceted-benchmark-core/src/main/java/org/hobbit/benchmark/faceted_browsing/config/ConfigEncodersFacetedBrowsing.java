@@ -6,8 +6,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.apache.jena.rdf.model.Resource;
-import org.hobbit.benchmark.faceted_browsing.components.FacetedBrowsingEncoders;
-import org.hobbit.benchmark.faceted_browsing.components.TaskGeneratorModuleFacetedBrowsing;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
+import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.TaskGeneratorModule;

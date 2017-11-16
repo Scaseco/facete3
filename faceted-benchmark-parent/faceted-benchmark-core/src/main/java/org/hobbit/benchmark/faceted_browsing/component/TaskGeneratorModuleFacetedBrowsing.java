@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.components;
+package org.hobbit.benchmark.faceted_browsing.component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

@@ -1,9 +1,15 @@
 version: '2.1'
 
 services:
+  qpid-server:
+    build: qpid-server/
+    ports:
+      - 5672:5672
 
   benchmark-controller:
     build: benchmark-controller/
+    depends_on:
+      - qpid-server
 
 #  tast-generator:
 #    build: ./task-generator

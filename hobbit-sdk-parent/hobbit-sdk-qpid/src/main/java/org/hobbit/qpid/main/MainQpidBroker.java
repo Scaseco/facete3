@@ -1,7 +1,7 @@
 package org.hobbit.qpid.main;
 
-import org.hobbit.qpid.component.ApplicationRunnerQpidBroker;
 import org.hobbit.qpid.config.ConfigQpidBroker;
+import org.springframework.boot.Banner;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -12,9 +12,11 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan
 public class MainQpidBroker {
 	public static void main(String[] args) {
+		// Note: The Broker bean is already started
 		new SpringApplicationBuilder()
 			.sources(ConfigQpidBroker.class)
-			.sources(ApplicationRunnerQpidBroker.class)
+			//.sources(ApplicationRunnerQpidBroker.class)
+			.bannerMode(Banner.Mode.OFF)
 			.run(args);
 	}
 }

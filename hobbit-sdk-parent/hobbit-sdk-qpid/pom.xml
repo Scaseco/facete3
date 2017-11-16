@@ -12,18 +12,34 @@
 	</parent>
 
 	<dependencies>
+
+                <!-- Embedded AMQP server -->
+                <dependency>
+                        <groupId>org.apache.qpid</groupId>
+                        <artifactId>qpid-broker</artifactId>
+                </dependency>
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>hobbit-sdk-core</artifactId>
 		</dependency>
-	
-	
-		<!-- Embedded AMQP server -->
-		<dependency>
-			<groupId>org.apache.qpid</groupId>
-			<artifactId>qpid-broker</artifactId>
-		</dependency>
 
+                        <dependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-core</artifactId>
+                        </dependency>
+
+                        <dependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-databind</artifactId>
+                        </dependency>
+
+                        <dependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-annotations</artifactId>
+                        </dependency>
+
+	
 	</dependencies>
 
 </project>

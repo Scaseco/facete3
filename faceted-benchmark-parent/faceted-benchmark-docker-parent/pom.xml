@@ -14,6 +14,9 @@
 	</parent>
 
 	<properties>
+		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</docker.benchmark-controller.repository>
+		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository>
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -26,10 +29,11 @@
 		<module>benchmark-controller</module>
 		<module>data-generator</module>
 		<module>task-generator</module>
-<!--		<module>system-adapter</module> -->
-<!--		<module>evaluation-storage</module> -->
+		<!-- <module>system-adapter</module> -->
+		<!-- <module>evaluation-storage</module> -->
 		<module>evaluation-module</module>
 		<module>virtuoso</module>
+		<module>qpid-server</module>
 	</modules>
 
 	<dependencyManagement>
@@ -63,7 +67,7 @@
 						<repository>docker-repo.example.com:8080/organization/image</repository>
 						<useMavenSettingsForAuth>true</useMavenSettingsForAuth>
 						<tag>latest</tag>
-<!-- 						<tag>${project.version}</tag> -->
+						<!-- <tag>${project.version}</tag> -->
 						<buildArgs>
 							<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
 						</buildArgs>
@@ -78,17 +82,17 @@
 					<executions>
 						<execution>
 							<phase>prepare-package</phase>
-<!-- 							<phase>package</phase> -->
+							<!-- <phase>package</phase> -->
 							<goals>
 								<goal>copy-dependencies</goal>
 							</goals>
 						</execution>
 					</executions>
 					<configuration>
-<!-- 						<useBaseVersion>false</useBaseVersion> -->
+						<!-- <useBaseVersion>false</useBaseVersion> -->
 						<overWriteReleases>false</overWriteReleases>
 						<overWriteSnapshots>true</overWriteSnapshots>
-<!-- 						<includeScope>runtime</includeScope> -->
+						<includeScope>runtime</includeScope>
 						<outputDirectory>${project.build.directory}/lib</outputDirectory>
 					</configuration>
 				</plugin>

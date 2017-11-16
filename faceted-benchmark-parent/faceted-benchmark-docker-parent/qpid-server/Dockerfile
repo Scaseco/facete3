@@ -10,6 +10,6 @@ ARG JAR_FILE
 ADD target/${JAR_FILE} myservice.jar
 
 # ARG MAIN_CLASS
-ENTRYPOINT ["/usr/bin/java", "-cp", ".:lib/*", "-Dloader.main=org.hobbit.benchmark.faceted_browsing.main.MainHobbitFacetedBrowsingBenchmark", "org.springframework.boot.loader.PropertiesLauncher", "org.hobbit.core.component.BenchmarkControllerFacetedBrowsing"]
+ENTRYPOINT ["/usr/bin/java", "-cp", ".:lib/*", "-Dloader.main=org.hobbit.qpid.main.MainQpidBroker", "org.springframework.boot.loader.PropertiesLauncher"]
 
 

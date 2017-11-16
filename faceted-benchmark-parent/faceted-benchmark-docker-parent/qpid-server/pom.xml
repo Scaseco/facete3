@@ -14,7 +14,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>faceted-benchmark-core</artifactId>
+			<artifactId>hobbit-sdk-qpid</artifactId>
 		</dependency>
 	</dependencies>
 
@@ -29,7 +29,7 @@
 				<groupId>com.spotify</groupId>
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<configuration>
-<!--					<repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</repository> -->
+					<repository>${docker.qpid-server.repository}</repository>
 				</configuration>
 			</plugin>
 		</plugins>
