@@ -3,24 +3,18 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>faceted-benchmark-core</artifactId>
+	<artifactId>faceted-benchmark-docker-qpid-server</artifactId>
 
 	<parent>
 		<groupId>org.hobbit</groupId>
-		<artifactId>faceted-benchmark-parent</artifactId>
+		<artifactId>faceted-benchmark-docker-parent</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>hobbit-sdk-rdf</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.hobbit</groupId>
-			<artifactId>hobbit-sdk-qpid</artifactId>
-			<scope>test</scope>
+			<artifactId>faceted-benchmark-core</artifactId>
 		</dependency>
 	</dependencies>
 
@@ -28,9 +22,18 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
+				<artifactId>maven-dependency-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<configuration>
+<!--					<repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</repository> -->
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 
 </project>
+

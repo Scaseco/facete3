@@ -2,11 +2,8 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import org.apache.qpid.server.Broker;
-import org.apache.qpid.server.BrokerOptions;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
 import org.hobbit.benchmark.faceted_browsing.config.HobbitConfigLocalPlatformFacetedBenchmark;
 import org.hobbit.core.Commands;
@@ -16,8 +13,6 @@ import org.hobbit.core.utils.ServiceManagerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.StandardEnvironment;
 
 import com.google.common.util.concurrent.Service;
 

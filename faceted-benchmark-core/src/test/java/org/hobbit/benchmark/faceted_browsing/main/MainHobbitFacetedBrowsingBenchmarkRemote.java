@@ -1,10 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -12,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.apache.qpid.server.Broker;
-import org.apache.qpid.server.BrokerOptions;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
 import org.hobbit.benchmark.faceted_browsing.config.HobbitConfigLocalPlatformFacetedBenchmark;
@@ -21,15 +16,14 @@ import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.config.HobbitConfigChannelsPlatform;
 import org.hobbit.core.config.HobbitConfigCommon;
 import org.hobbit.core.utils.ServiceManagerUtils;
+import org.hobbit.qpid.config.ConfigQpidBroker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.Banner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePropertySource;
 
 import com.google.common.util.concurrent.Service;
 import com.rabbitmq.client.Channel;
@@ -40,57 +34,15 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 
 	protected static StandardEnvironment environment = new StandardEnvironment();
 	
-	/**
-	 * If the resource is a file, returns the corresponding file object.
-	 * Otherwise, creates a temporary file and copies the resource's data into it.
-	 * 
-	 * 
-	 * @param resource
-	 * @param prefix
-	 * @param suffix
-	 * @return
-	 * @throws IOException
-	 */
-    public static File getResourceAsFile(Resource resource, String prefix, String suffix) throws IOException {
-    	File result;
-    	try {
-    		result = resource.getFile();
-    	} catch(Exception e) {
-    	
-	    	//FileCopyUtils.copy(in, out)
-	    	result = File.createTempFile(prefix, suffix);
-	    	Files.copy(resource.getInputStream(), result.toPath(), StandardCopyOption.REPLACE_EXISTING);
-	    	result.deleteOnExit();
-    	}
-    	
+
+
+	public static Broker startAmqpBroker() throws Exception {
+    	ConfigurableApplicationContext ctx = SpringApplication.run(ConfigQpidBroker.class);
+
+    	// Presently, the returned broker is already started
+    	Broker result = ctx.getBean(Broker.class);
+    	//result.startup();
     	return result;
-    }
-
-	public static Broker start() throws Exception {
-		//Map<String, String> environment = System.getenv();
-		
-		environment.getPropertySources().addFirst(new ResourcePropertySource("classpath:/local-config.properties"));
-		
-		
-        String amqpInitialConfigUrl = getResourceAsFile(new ClassPathResource("amqp-initial-config.json"), "amqp-config-", ".json").getAbsoluteFile().toURI().toURL().toString();
-
-	    Broker broker = new Broker();
-	    BrokerOptions brokerOptions = new BrokerOptions();
-	    
-//	    brokerOptions.setConfigProperty('qpid.amqp_port',"${amqpPort}")
-//	    brokerOptions.setConfigProperty('qpid.http_port', "${httpPort}")
-//	    brokerOptions.setConfigProperty('qpid.home_dir', homePath);
-
-	    brokerOptions.setInitialConfigurationLocation(amqpInitialConfigUrl); //"classpath:/amqp-initial-config.json");
-	    brokerOptions.setConfigProperty("qpid.amqp_port", environment.getProperty("spring.amqp.port"));
-	    brokerOptions.setConfigProperty("qpid.broker.defaultPreferenceStoreAttributes", "{\"type\": \"Noop\"}");
-	    brokerOptions.setConfigProperty("qpid.vhost", environment.getProperty("spring.amqp.vhost"));
-	    brokerOptions.setConfigurationStoreType("Memory");
-	    brokerOptions.setStartupLoggedToSystemOut(false);
-	    broker.startup(brokerOptions);
-	    //System.out.println("Broker starting...");
-	    //Thread.sleep(5000);
-	    return broker;
 	}
 
 	
@@ -105,7 +57,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 
     public static void start(String[] args) throws Exception {
     	
-    	Broker broker = start();
+    	Broker broker = startAmqpBroker();
 
     	try {
     		run(args);

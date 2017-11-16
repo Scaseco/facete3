@@ -25,6 +25,7 @@
 
 		<module>hobbit-sdk-core</module>
 		<module>hobbit-sdk-rdf</module>
+		<module>hobbit-sdk-qpid</module>
 
 		<!-- <module>hobbit-platform-sdk</module> -->
 	</modules>
@@ -78,6 +79,12 @@
 			<dependency>
 				<groupId>org.hobbit</groupId>
 				<artifactId>hobbit-sdk-rdf</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>hobbit-sdk-qpid</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 

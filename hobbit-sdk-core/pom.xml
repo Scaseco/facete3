@@ -12,12 +12,6 @@
 	</parent>
 
 	<dependencies>
-		<!-- Embedded AMQP server -->
-		<dependency>
-			<groupId>org.apache.qpid</groupId>
-			<artifactId>qpid-broker</artifactId>
-		</dependency>
-
 
 		<!-- Parsing of e.g. virtuoso.ini files -->
 		<dependency>
