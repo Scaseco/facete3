@@ -1,6 +1,7 @@
 package org.hobbit.core.service.docker;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -204,7 +205,7 @@ public class DockerServiceManagerClientComponent
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }
-        String result = RabbitMQUtils.readString(responseBuffer);
+        String result = DockerServiceManagerServerComponent.readRemainingBytesAsString(responseBuffer, StandardCharsets.UTF_8);;
 
         System.out.println("Client received response with docker id: " + result);
         

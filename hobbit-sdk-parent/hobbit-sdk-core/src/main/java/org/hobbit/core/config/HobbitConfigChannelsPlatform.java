@@ -346,7 +346,7 @@ public class HobbitConfigChannelsPlatform {
 				    			.deliveryMode(2)
 				    			.build();
 
-    					tmpChannel.basicPublish(queueName, "", props, byteBuffer.array());
+    					tmpChannel.basicPublish(replyTo, "", props, byteBuffer.array());
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					} finally {

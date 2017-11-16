@@ -1,6 +1,7 @@
 package org.hobbit.core.service.docker;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -8,9 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import javax.annotation.Resource;
-import javax.inject.Inject;
 
 import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
 import org.hobbit.core.Commands;
@@ -194,11 +192,11 @@ public class DockerServiceManagerServerComponent
             switch(b) {
             case Commands.DOCKER_CONTAINER_START: {
             	if(responseTarget == null) {
-            		logger.warn("Received a request to start a container, however there was no target for the response");
+            		logger.warn("Received a request to start a container, however there was no target for the response; therefore ignoring request");
+            		return;
             	}
             	
-            	// https://stackoverflow.com/questions/17354891/java-bytebuffer-to-string
-                String str = new String(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining(), StandardCharsets.UTF_8);
+                String str = readRemainingBytesAsString(buffer, StandardCharsets.UTF_8);
                 
                 StartCommandData data = gson.fromJson(str, StartCommandData.class);
 
@@ -219,7 +217,7 @@ public class DockerServiceManagerServerComponent
                 break; }
             case Commands.DOCKER_CONTAINER_STOP: {
 //                byte data[] = RabbitMQUtils.writeString(gson.toJson(new StopCommandData(containerName)));
-                String str = new String(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining(), StandardCharsets.UTF_8);
+                String str = readRemainingBytesAsString(buffer, StandardCharsets.UTF_8);
                 
                 
             	StopCommandData data = gson.fromJson(str, StopCommandData.class);
@@ -230,5 +228,19 @@ public class DockerServiceManagerServerComponent
         }
     }
 
+	// https://stackoverflow.com/questions/17354891/java-bytebuffer-to-string
+
+    public static String readRemainingBytesAsString(ByteBuffer b, Charset charset) {
+    	String result;
+    	if(b.hasArray()) {
+    		result = new String(b.array(), b.arrayOffset() + b.position(), b.remaining(), charset);
+    	} else {
+    		byte[] tmp = new byte[b.remaining()];
+    		b.duplicate().get(tmp);
+    		result = new String(tmp, charset);
+    	}
+
+    	return result;
+    }
 }
 
