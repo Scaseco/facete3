@@ -1,5 +1,6 @@
 package org.hobbit.qpid.main;
 
+import org.hobbit.qpid.component.ApplicationRunnerQpidBroker;
 import org.hobbit.qpid.config.ConfigQpidBroker;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
