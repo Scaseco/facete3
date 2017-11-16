@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.hobbit</groupId>
-	<artifactId>faceted-benchmark-parent</artifactId>
+	<artifactId>hobbit-sdk-parent</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
@@ -21,8 +21,6 @@
 	</properties>
 
 	<modules>
-		<module>faceted-benchmark-core</module>
-
 		<module>hobbit-sdk-core</module>
 		<module>hobbit-sdk-rdf</module>
 		<module>hobbit-sdk-qpid</module>
@@ -32,13 +30,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-
-			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>faceted-benchmark-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-
 
 			<!-- HOBBIT Core -->
 			<dependency>
