@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import javax.annotation.Resource;
 
@@ -16,7 +17,6 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.IdleServiceCapable;
-import org.hobbit.core.utils.PublisherUtils;
 import org.reactivestreams.Subscriber;
 
 import com.google.common.util.concurrent.MoreExecutors;
@@ -38,7 +38,7 @@ import io.reactivex.disposables.Disposable;
  */
 public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
-    implements IdleServiceCapable, DockerServiceFactory<DockerService>
+    implements IdleServiceCapable, DockerServiceBuilder<DockerService>
 {
 	@Resource(name="commandChannel")
     protected Subscriber<ByteBuffer> commandChannel;
@@ -48,9 +48,12 @@ public class DockerServiceManagerClientComponent
 	protected Flowable<ByteBuffer> commandPublisher;
 
 	
+	@Resource(name="dockerServerConnection")
+	protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> serverConnection;
+	
 	// FIXME responsePublisher
-	@Resource(name="commandPub")
-    protected Flowable<ByteBuffer> responsePublisher;
+//	@Resource(name="commandPub")
+//    protected Flowable<ByteBuffer> responsePublisher;
 
 
     //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestFunction;
@@ -169,15 +172,17 @@ public class DockerServiceManagerClientComponent
         // Send out the message
         // FIXME We need a mechanism to tell the receiver to respond on our responsePublisher
 //        try {
-            commandChannel.onNext(buffer);
+//            commandChannel.onNext(buffer);
 //        } catch(Exception e) {
 //            throw new RuntimeException(e);
 //        }
 
 
         // Not sure if this is a completable future or a subscriber
-        CompletableFuture<ByteBuffer> response = PublisherUtils.triggerOnMessage(responsePublisher, (x) -> true);
+        //CompletableFuture<ByteBuffer> response = PublisherUtils.triggerOnMessage(responsePublisher, (x) -> true);
 
+            
+        CompletableFuture<ByteBuffer> response = serverConnection.apply(buffer);
         ByteBuffer responseBuffer;
         try {
             responseBuffer = response.get(60, TimeUnit.SECONDS);

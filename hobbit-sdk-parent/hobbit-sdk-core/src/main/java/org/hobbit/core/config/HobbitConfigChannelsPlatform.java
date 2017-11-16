@@ -3,8 +3,13 @@ package org.hobbit.core.config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -49,7 +54,7 @@ public class HobbitConfigChannelsPlatform {
 	@Inject
 	protected Environment env;
 		
-	protected ConnectionFactory connectionFactory;
+	//protected ConnectionFactory connectionFactory;
 	protected String hobbitSessionId;
 
 	
@@ -64,17 +69,7 @@ public class HobbitConfigChannelsPlatform {
     public void postConstruct() throws Exception {  	
     	hobbitSessionId = env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 
-        String rabbitMQHostName = env.getProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost");
 
-        
-        connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost(rabbitMQHostName);
-        connectionFactory.setPort(5672);
-        connectionFactory.setAutomaticRecoveryEnabled(true);
-        connectionFactory.setVirtualHost("default");
-        // attempt recovery every 10 seconds
-        connectionFactory.setNetworkRecoveryInterval(10000);
-                
 //        incomingDataConnection = createConnection();
 //        outgoingDataConnection = createConnection();
 	}
@@ -88,7 +83,7 @@ public class HobbitConfigChannelsPlatform {
 //	}
 	
 	
-    protected Connection createConnection() throws Exception {
+    protected Connection createConnection(ConnectionFactory connectionFactory) throws Exception {
     	
     	Connection connection = null;
         for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
@@ -116,21 +111,60 @@ public class HobbitConfigChannelsPlatform {
         return connection;
     }
 
-    
-    
-    public Flowable<ByteBuffer> createFanoutReceiver(Connection connection, String exchangeName) throws IOException {
-    	Channel channel = connection.createChannel();
+
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName) throws IOException {
+    	//Channel channel = connection.createChannel();
     	
         String queueName = channel.queueDeclare().getQueue();
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
         channel.queueBind(queueName, exchangeName, "");
 
-    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
+    	Flowable<SimpleReplyableMessage<ByteBuffer>> flowable = wrapChannel(channel, queueName);
+    	
+    	return flowable;
+    }
+
+    
+    public static Flowable<ByteBuffer> createFanoutReceiver(Connection connection, String exchangeName) throws IOException {
+    	Channel channel = connection.createChannel();
+    	Flowable<ByteBuffer> flowable = createReplyableFanoutReceiver(channel, exchangeName).map(SimpleReplyableMessage::getValue);
     	
     	return flowable;
     }
     
     public Subscriber<ByteBuffer> createFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
+    	Channel channel = connection.createChannel();
+
+//    	String responseQueueName = channel.queueDeclare().getQueue();
+    	BasicProperties properties = new BasicProperties.Builder()
+    			.deliveryMode(2)
+//    			.replyTo(responseQueueName)
+    			.build();
+
+    	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
+    	Consumer<ByteBuffer> consumer = transformer == null ? coreConsumer : (buffer) -> {
+    		ByteBuffer msg = transformer.apply(buffer);
+    		coreConsumer.accept(msg);
+    	};
+
+    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> { channel.close(); return 0; });
+
+    	return subscriber;
+    }
+    
+
+    
+    /**
+     * Creates both a subscriber and a flowable.
+     * Every sent message has the replyTo field set, such that any replys will be made available via the flowable. 
+     * 
+     * @param connection
+     * @param exchangeName
+     * @param transformer
+     * @return
+     * @throws IOException
+     */
+    public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
     	Channel channel = connection.createChannel();
 
     	String responseQueueName = channel.queueDeclare().getQueue();
@@ -147,10 +181,41 @@ public class HobbitConfigChannelsPlatform {
 
     	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> { channel.close(); return 0; });
 
-    	return subscriber;
+    	Flowable<ByteBuffer> flowable = wrapChannel(channel, responseQueueName).map(SimpleReplyableMessage::getValue);
+    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> result = new SimpleEntry<>(subscriber, flowable);
+    	
+    	return result;
+    }
+
+    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
+    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, transformer);
+    	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry);
+    	
+    	return result;
+    }
+
+    
+    public static <T> Function<T, CompletableFuture<T>> wrapAsFunction(Entry<Subscriber<T>, Flowable<T>> entry) {
+    	Subscriber<T> subscriber = entry.getKey();
+    	Flowable<T> flowable = entry.getValue();
+    	Function<T, CompletableFuture<T>> result = wrapAsFunction(subscriber, flowable);
+
+    	return result;
+    }
+
+    public static <I, O> Function<I, CompletableFuture<O>> wrapAsFunction(Subscriber<I> subscriber, Flowable<O> flowable) {
+    	Function<I, CompletableFuture<O>> result = t -> {
+    		subscriber.onNext(t);
+    		
+    		// TODO properly create the completable future
+    		O r = flowable.timeout(60, TimeUnit.SECONDS).blockingFirst();
+    		CompletableFuture<O> tmp = CompletableFuture.completedFuture(r);
+    		return tmp;
+    	};
+    	
+    	return result;
     }
     
-
 //    public ChannelWrapper<ByteBuffer> createCommandChannelWrapper(Connection connection, String exchangeName) throws IOException {
 //    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
 //    	return result;
@@ -175,7 +240,7 @@ public class HobbitConfigChannelsPlatform {
     	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, "", queueName, properties);
     	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(coreConsumer, () -> { channel.close(); return 0; });
 
-    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
+    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName).map(SimpleReplyableMessage::getValue);
     	
     	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
     	
@@ -262,16 +327,46 @@ public class HobbitConfigChannelsPlatform {
     }
 	
     
-    public static Flowable<ByteBuffer> wrapChannel(Channel channel, String queueName) throws IOException {
-    	PublishProcessor<ByteBuffer> result = PublishProcessor.create();
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> wrapChannel(Channel channel, String queueName) throws IOException {
+    	PublishProcessor<SimpleReplyableMessage<ByteBuffer>> result = PublishProcessor.create();
+    	
+    	Connection conn = channel.getConnection();
     	
     	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
 					throws IOException {
+
+				String replyTo = properties.getReplyTo();
+				Consumer<ByteBuffer> reply = replyTo == null ? null : (byteBuffer) -> {
+					Channel tmpChannel = null;
+					try {
+						tmpChannel = conn.createChannel();
+				    	BasicProperties props = new BasicProperties.Builder()
+				    			.deliveryMode(2)
+				    			.build();
+
+    					tmpChannel.basicPublish(queueName, "", props, byteBuffer.array());
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					} finally {
+						try {
+							if(tmpChannel != null) {
+								tmpChannel.close();
+							}
+						} catch (IOException | TimeoutException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				};
+				
 				//System.out.println("Received message from queue " + queueName);
 		    	ByteBuffer buffer = ByteBuffer.wrap(body);
-		    	result.onNext(buffer);
+		    	
+		    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buffer, reply);
+		    	
+		    	//result.onNext(buffer);
+		    	result.onNext(msg);
 			}
 		});
 
@@ -306,8 +401,8 @@ public class HobbitConfigChannelsPlatform {
     }
     
 	@Bean
-	public Connection commandConnection() throws Exception {
-		return createConnection();
+	public Connection commandConnection(ConnectionFactory connectionFactory) throws Exception {
+		return createConnection(connectionFactory);
 	}
 
 
@@ -322,7 +417,7 @@ public class HobbitConfigChannelsPlatform {
     	Channel channel = connection.createChannel();
     	channel.queueDeclare(queueName, false, false, true, null);
 
-    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName);
+    	Flowable<ByteBuffer> flowable = wrapChannel(channel, queueName).map(SimpleReplyableMessage::getValue);
 
     	return flowable;
     }
@@ -357,23 +452,23 @@ public class HobbitConfigChannelsPlatform {
      * data connections
      */
     @Bean
-    public Connection outgoingCommandConnection() throws Exception {
-    	return createConnection();
+    public Connection outgoingCommandConnection(ConnectionFactory connectionFactory) throws Exception {
+    	return createConnection(connectionFactory);
     }
 
     @Bean
-    public Connection incomingCommandConnection() throws Exception {
-    	return createConnection();
+    public Connection incomingCommandConnection(ConnectionFactory connectionFactory) throws Exception {
+    	return createConnection(connectionFactory);
     }
     
     @Bean
-    public Connection outgoingDataConnection() throws Exception {
-    	return createConnection();
+    public Connection outgoingDataConnection(ConnectionFactory connectionFactory) throws Exception {
+    	return createConnection(connectionFactory);
     }
 
     @Bean
-    public Connection incomingDataConnection() throws Exception {
-    	return createConnection();
+    public Connection incomingDataConnection(ConnectionFactory connectionFactory) throws Exception {
+    	return createConnection(connectionFactory);
     }
 
     /*

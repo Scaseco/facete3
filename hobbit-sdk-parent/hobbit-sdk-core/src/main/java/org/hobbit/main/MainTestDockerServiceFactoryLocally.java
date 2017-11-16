@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactoryDockerClient;
+import org.hobbit.core.service.docker.DockerServiceBuilderDockerClient;
 
 import com.google.common.collect.ImmutableMap;
 import com.spotify.docker.client.DefaultDockerClient;
@@ -41,7 +41,7 @@ public class MainTestDockerServiceFactoryLocally {
 
         HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
 
-        DockerServiceFactoryDockerClient dockerServiceFactory = new DockerServiceFactoryDockerClient();
+        DockerServiceBuilderDockerClient dockerServiceFactory = new DockerServiceBuilderDockerClient();
 
         ContainerConfig.Builder containerConfigBuilder = ContainerConfig.builder()
                 .hostConfig(hostConfig);

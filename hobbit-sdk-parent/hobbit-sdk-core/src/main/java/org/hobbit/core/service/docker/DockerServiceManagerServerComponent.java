@@ -50,7 +50,7 @@ public class DockerServiceManagerServerComponent
 
 
     // Delegate to the actual service instance creation
-    protected DockerServiceFactory<DockerService> delegate;
+    protected DockerServiceBuilder<? extends DockerService> delegate;
 
 
     // The services created by this service manager
@@ -60,7 +60,7 @@ public class DockerServiceManagerServerComponent
     
     protected transient Disposable commandPublisherUnsubscribe;
 
-    public DockerServiceManagerServerComponent(DockerServiceFactory<DockerService> delegate) {
+    public DockerServiceManagerServerComponent(DockerServiceBuilder<? extends DockerService> delegate) {
         super();
         this.delegate = delegate;
     }

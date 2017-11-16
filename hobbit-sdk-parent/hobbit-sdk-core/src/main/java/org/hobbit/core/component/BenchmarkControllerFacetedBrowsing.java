@@ -14,7 +14,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.RunnableServiceCapable;
-import org.hobbit.core.service.api.ServiceFactory;
+import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.core.utils.ServiceManagerUtils;
@@ -36,19 +36,19 @@ public class BenchmarkControllerFacetedBrowsing
     private static final Logger logger = LoggerFactory.getLogger(BenchmarkControllerFacetedBrowsing.class);
 
     @Resource(name="dataGeneratorServiceFactory")
-    protected ServiceFactory<Service> dataGeneratorServiceFactory;
+    protected ServiceBuilder<Service> dataGeneratorServiceFactory;
 
     @Resource(name="taskGeneratorServiceFactory")
-    protected ServiceFactory<Service> taskGeneratorServiceFactory;
+    protected ServiceBuilder<Service> taskGeneratorServiceFactory;
 
 //    @Resource(name="systemAdapterServiceFactory")
 //    protected ServiceFactory<Service> systemAdapterServiceFactory;
 
     @Resource(name="evaluationStorageServiceFactory")
-    protected ServiceFactory<Service> evaluationStorageServiceFactory;
+    protected ServiceBuilder<Service> evaluationStorageServiceFactory;
 
     @Resource(name="evaluationModuleServiceFactory")
-    protected ServiceFactory<Service> evaluationModuleServiceFactory;
+    protected ServiceBuilder<Service> evaluationModuleServiceFactory;
 
 
     // Issue: How to get the result from the evaluation module?

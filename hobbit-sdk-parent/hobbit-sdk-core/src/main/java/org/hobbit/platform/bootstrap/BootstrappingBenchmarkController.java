@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.components.AbstractBenchmarkController;
-import org.hobbit.core.service.docker.DockerServiceFactorySimpleDelegation;
+import org.hobbit.core.service.docker.DockerServiceBuilderSimpleDelegation;
 import org.hobbit.core.service.docker.EnvironmentUtils;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.CountingSupplier;
@@ -42,8 +42,8 @@ public class BootstrappingBenchmarkController
 
         commandPublisher = new PublishingWritableByteChannelSimple();
 
-        DockerServiceFactorySimpleDelegation dockerServiceFactory =
-                new DockerServiceFactorySimpleDelegation(
+        DockerServiceBuilderSimpleDelegation dockerServiceFactory =
+                new DockerServiceBuilderSimpleDelegation(
                     (imageName, env) -> createContainer(
                             imageName, EnvironmentUtils.mapToList("=", env).toArray(new String[0])),
                     (containerId) -> stopContainer(containerId)

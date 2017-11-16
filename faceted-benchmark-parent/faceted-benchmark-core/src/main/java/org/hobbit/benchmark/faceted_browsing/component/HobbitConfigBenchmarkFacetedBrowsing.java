@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
 import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.utils.CountingSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +30,7 @@ public class HobbitConfigBenchmarkFacetedBrowsing {
     // https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/Configuration.html
 
     @Autowired
-    protected DockerServiceFactory<DockerService> dockerServiceFactory;
+    protected DockerServiceBuilder<DockerService> dockerServiceFactory;
 
 
 

@@ -15,9 +15,9 @@ import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.data.Result;
-import org.hobbit.core.service.api.ServiceFactory;
+import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
@@ -43,12 +43,12 @@ public class ConfigHobbitLocalServices {
 
 
     @Bean
-    public DockerServiceFactory<DockerService> dockerServiceManagerClientComponent() {
+    public DockerServiceBuilder<DockerService> dockerServiceManagerClientComponent() {
         return new DockerServiceManagerClientComponent();
     }
 
     @Bean
-    public ServiceFactory<Service> benchmarkControllerServiceFactory() {
+    public ServiceBuilder<Service> benchmarkControllerServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(BenchmarkControllerFacetedBrowsing.class);
     }
 
@@ -71,28 +71,28 @@ public class ConfigHobbitLocalServices {
     }
 
     @Bean
-    public ServiceFactory<Service> dataGeneratorServiceFactory() {
+    public ServiceBuilder<Service> dataGeneratorServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(DataGeneratorFacetedBrowsing.class);
     }
 
     @Bean
-    public ServiceFactory<Service> taskGeneratorServiceFactory() {
+    public ServiceBuilder<Service> taskGeneratorServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(TaskGeneratorFacetedBenchmark.class);
     }
 
     @Bean
-    public ServiceFactory<Service> systemAdapterServiceFactory() {
+    public ServiceBuilder<Service> systemAdapterServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(SystemAdapterRDFConnection.class);
     }
 
     @Bean
-    public ServiceFactory<Service> evaluationStorageServiceFactory() {
+    public ServiceBuilder<Service> evaluationStorageServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(DefaultEvaluationStorage.class);
     }
 
 
     @Bean
-    public ServiceFactory<Service> evaluationModuleServiceFactory() {
+    public ServiceBuilder<Service> evaluationModuleServiceFactory() {
         return new LocalHobbitComponentServiceFactory<>(EvaluationModuleComponent.class);
     }
 

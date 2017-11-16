@@ -10,7 +10,7 @@ import com.google.common.util.concurrent.Service;
  * @author raven
  *
  */
-public interface ServiceFactory<T extends Service>
+public interface ServiceBuilder<T extends Service>
     extends Supplier<T>
 {
 }

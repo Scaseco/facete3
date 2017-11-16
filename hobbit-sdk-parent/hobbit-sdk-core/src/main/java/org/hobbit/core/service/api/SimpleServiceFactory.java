@@ -11,7 +11,7 @@ import com.google.common.util.concurrent.Service;
  *
  */
 public interface SimpleServiceFactory<T extends Service>
-    extends ServiceFactory<T>
+    extends ServiceBuilder<T>
 {
     Map<String, String> getEnvironment();
 }

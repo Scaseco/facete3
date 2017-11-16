@@ -20,8 +20,8 @@ import java.util.function.Consumer;
  * @author raven Sep 24, 2017
  *
  */
-public class DockerServiceFactorySimpleDelegation
-    implements DockerServiceFactory<DockerService>, Cloneable
+public class DockerServiceBuilderSimpleDelegation
+    implements DockerServiceBuilder<DockerService>, Cloneable
 {
     protected String imageName;
     protected Map<String, String> localEnvironment;
@@ -39,7 +39,7 @@ public class DockerServiceFactorySimpleDelegation
     // protected Function<String, Publisher<Sring>> serviceStatus;
 
 
-    public DockerServiceFactorySimpleDelegation(
+    public DockerServiceBuilderSimpleDelegation(
             BiFunction<String, Map<String, String>, String> startServiceDelegate,
             Consumer<String> stopServiceDelegate) {
         super();
@@ -49,8 +49,8 @@ public class DockerServiceFactorySimpleDelegation
     }
 
     @Override
-    public DockerServiceFactorySimpleDelegation clone() throws CloneNotSupportedException {
-        DockerServiceFactorySimpleDelegation result = new DockerServiceFactorySimpleDelegation(
+    public DockerServiceBuilderSimpleDelegation clone() throws CloneNotSupportedException {
+        DockerServiceBuilderSimpleDelegation result = new DockerServiceBuilderSimpleDelegation(
                 startServiceDelegate,
                 stopServiceDelegate
         );
@@ -65,7 +65,7 @@ public class DockerServiceFactorySimpleDelegation
     }
 
     @Override
-    public DockerServiceFactorySimpleDelegation setImageName(String imageName) {
+    public DockerServiceBuilderSimpleDelegation setImageName(String imageName) {
         this.imageName = imageName;
         return this;
     }
@@ -76,7 +76,7 @@ public class DockerServiceFactorySimpleDelegation
     }
 
     @Override
-    public DockerServiceFactorySimpleDelegation setLocalEnvironment(Map<String, String> environment) {
+    public DockerServiceBuilderSimpleDelegation setLocalEnvironment(Map<String, String> environment) {
         this.localEnvironment = environment;
         return this;
     }

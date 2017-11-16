@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.HobbitLocalComponentService;
 import org.hobbit.core.Commands;
-import org.hobbit.core.service.api.ServiceFactory;
+import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class PseudoHobbitPlatformController
     protected Flowable<ByteBuffer> commandPub;
 
     @Resource(name="benchmarkControllerServiceFactory")
-    protected ServiceFactory<Service> benchmarkControllerServiceFactory;
+    protected ServiceBuilder<Service> benchmarkControllerServiceFactory;
 
     public PseudoHobbitPlatformController() {
         super();

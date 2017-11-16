@@ -14,13 +14,13 @@ import com.spotify.docker.client.messages.ContainerConfig;
  * @author raven Sep 20, 2017
  *
  */
-public class DockerServiceFactoryDockerClient
-    implements DockerServiceFactory<DockerServiceDockerClient>
+public class DockerServiceBuilderDockerClient
+    implements DockerServiceBuilder<DockerServiceDockerClient>
 {
     protected DockerClient dockerClient;
     protected ContainerConfig.Builder containerConfigBuilder;
 
-    public DockerServiceFactoryDockerClient() {
+    public DockerServiceBuilderDockerClient() {
         super();
     }
 
@@ -28,7 +28,7 @@ public class DockerServiceFactoryDockerClient
 //        this(null, null); //new ContainerCon
 //    }
 
-    public DockerServiceFactoryDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder) {
+    public DockerServiceBuilderDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder) {
         super();
         this.dockerClient = dockerClient;
         this.containerConfigBuilder = containerConfigBuilder;
@@ -38,7 +38,7 @@ public class DockerServiceFactoryDockerClient
         return dockerClient;
     }
 
-    public DockerServiceFactoryDockerClient setDockerClient(DockerClient dockerClient) {
+    public DockerServiceBuilderDockerClient setDockerClient(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
         return this;
     }
@@ -47,7 +47,7 @@ public class DockerServiceFactoryDockerClient
         return containerConfigBuilder;
     }
 
-    public DockerServiceFactoryDockerClient setContainerConfigBuilder(ContainerConfig.Builder containerConfigBuilder) {
+    public DockerServiceBuilderDockerClient setContainerConfigBuilder(ContainerConfig.Builder containerConfigBuilder) {
         this.containerConfigBuilder = containerConfigBuilder;
         return this;
     }
@@ -57,7 +57,7 @@ public class DockerServiceFactoryDockerClient
         return containerConfigBuilder.build().image();
     }
 
-    public DockerServiceFactoryDockerClient setImageName(String imageName) {
+    public DockerServiceBuilderDockerClient setImageName(String imageName) {
         containerConfigBuilder.image(imageName);
         return this;
     }
@@ -76,7 +76,7 @@ public class DockerServiceFactoryDockerClient
     }
 
     @Override
-    public DockerServiceFactory<DockerServiceDockerClient> setLocalEnvironment(Map<String, String> environment) {
+    public DockerServiceBuilder<DockerServiceDockerClient> setLocalEnvironment(Map<String, String> environment) {
         List<String> env = EnvironmentUtils.mapToList("=", environment);
 
         containerConfigBuilder.env(env);
