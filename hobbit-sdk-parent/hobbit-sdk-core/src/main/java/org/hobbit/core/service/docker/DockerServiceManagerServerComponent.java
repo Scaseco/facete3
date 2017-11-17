@@ -95,6 +95,7 @@ public class DockerServiceManagerServerComponent
     @Override
     protected void shutDown() throws Exception {
     	Optional.ofNullable(commandPublisherUnsubscribe).ifPresent(Disposable::dispose);
+    	Optional.ofNullable(clientRequestsUnsubscribe).ifPresent(Disposable::dispose);
         //commandPublisher.unsubscribe(this::receiveCommand);
     }
 
@@ -226,6 +227,11 @@ public class DockerServiceManagerServerComponent
 
                 break; }
             case Commands.DOCKER_CONTAINER_STOP: {
+                if(responseTarget == null) {
+            		logger.warn("Received a request to start a container, however there was no target for the response; therefore ignoring request");
+            		return;
+            	}
+
 //                byte data[] = RabbitMQUtils.writeString(gson.toJson(new StopCommandData(containerName)));
                 String str = readRemainingBytesAsString(buffer, StandardCharsets.UTF_8);
                 
@@ -237,6 +243,7 @@ public class DockerServiceManagerServerComponent
             	} finally {
 	                // Reply to the requester that its requets was executed
 	                ByteBuffer response = createTerminationMsg(containerId, -1);
+	                
 	                responseTarget.accept(response);
             	}
 

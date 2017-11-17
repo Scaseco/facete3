@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Scope;
 
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.spotify.docker.client.DefaultDockerClient;
@@ -54,32 +53,42 @@ public class TestDockerCommunication {
 		return Constants.HOBBIT_COMMAND_EXCHANGE_NAME;
 	}
 	
-	@Bean
+	@Bean//(destroyMethod="close")
 	public Connection connection(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
-		return connectionFactory.newConnection();
+		Connection result = connectionFactory.newConnection();
+		return result;
 	}
 	
 	@Bean
-	@Scope("prototype")
-	public Flowable<ByteBuffer> commandPub(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
+	//@Scope("prototype")
+	public Flowable<ByteBuffer> commandPub(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
 		return HobbitConfigChannelsPlatform.createFanoutReceiver(connection, commandExchange);
 	}
+	
+//	@Bean
+//	@Scope("prototype")
+//	public Subscriber<ByteBuffer> commandChannel(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
+//		return HobbitConfigChannelsPlatform.createFanoutSender(connection, commandExchange, null);
+//	}
+	
 	
 	@Bean
 	@Scope("prototype")
 	public Subscriber<ByteBuffer> commandChannel(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
-		return HobbitConfigChannelsPlatform.createFanoutSender(connection, commandExchange, null);
+		return HobbitConfigChannelsPlatform.createFanoutSender(connection, commandExchange, null);		
 	}
 	
 	@Bean
-	public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
+	@Scope("prototype")
+	public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
 		return HobbitConfigChannelsPlatform.createReplyableFanoutSender(connection, commandExchange, null);
 	}
 
 	@Bean
-	public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
-		Channel channel = connection.createChannel();
-		return HobbitConfigChannelsPlatform.createReplyableFanoutReceiver(channel, commandExchange);
+	@Scope("prototype")
+	public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
+		//Channel channel = connection.createChannel();
+		return HobbitConfigChannelsPlatform.createReplyableFanoutReceiver(connection, commandExchange);
 	}
 
 //	@Bean
@@ -181,25 +190,42 @@ public class TestDockerCommunication {
 	
 		
 	@Test
-	public void testDockerCommunication() {
-		ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
-			.sources(ConfigQpidBroker.class)
-			.sources(HobbitConfigCommon.class)
-			.sources(ConfigRabbitMqConnectionFactory.class)
-			.sources(TestDockerCommunication.class)
-			.run();
+	public void testDockerCommunication() throws InterruptedException {
+		ConfigurableApplicationContext tmpCtx = new SpringApplicationBuilder()
+				.sources(ConfigQpidBroker.class)
+				.sources(HobbitConfigCommon.class)
+				.sources(ConfigRabbitMqConnectionFactory.class)
+				.sources(TestDockerCommunication.class)
+				.run();
 		
-		DockerServiceBuilder<DockerService> client = (DockerServiceBuilder<DockerService>) ctx.getBean("dockerServiceManagerClient");
-		client.setImageName("tenforce/virtuoso");
-		DockerService service = client.get();
-		service.startAsync().awaitRunning();
+		Broker broker = tmpCtx.getBean(Broker.class);
 
-		System.out.println("Service is running");
+		
+		try(ConfigurableApplicationContext ctx = tmpCtx) {
+		
+			DockerServiceBuilder<DockerService> client = (DockerServiceBuilder<DockerService>) ctx.getBean("dockerServiceManagerClient");
+			client.setImageName("tenforce/virtuoso");
+			DockerService service = client.get();
+			service.startAsync().awaitRunning();
+	
+			System.out.println("[STATUS] Service is running");
+	
+			System.out.println("[STATUS] Waiting for termination");
+			service.stopAsync().awaitTerminated();
+			System.out.println("[STATUS] Terminated");
 
-		System.out.println("Waiting for termination");
-		service.stopAsync().awaitTerminated();
-		System.out.println("Terminated");
-
-		ctx.getBean(Broker.class).shutdown();		
+		} catch(Exception e) {
+			System.out.println("[STATUS] Exception caught");
+			e.printStackTrace();
+		} finally {
+			
+			//System.out.println("Resting...");
+			//Thread.sleep(5000);
+			System.out.println("[STATUS] Shutting down broker");
+			broker.shutdown();
+		}
+		
+		//System.out.println("Resting...");
+		//Thread.sleep(5000);
 	}
 }

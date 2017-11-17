@@ -12,8 +12,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import javax.inject.Inject;
-
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
@@ -33,7 +31,8 @@ import io.reactivex.disposables.Disposable;
 /**
  * Client component to communicate with a remote {@link DockerServiceManagerServerComponent}
  *
- * The component is a service itself: When started, the appropriate hooks are registered
+ * The component is a service itself:
+ * When started, the appropriate subscriptions are made to the flows - and of course unsubscribed when stopping
  *
  * @author raven Sep 25, 2017
  *
@@ -42,18 +41,11 @@ public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
     implements IdleServiceCapable, DockerServiceBuilder<DockerService>
 {
-//	@Resource(name="commandChannel")
-//    protected Subscriber<ByteBuffer> commandChannel;
-    
+	// TODO: Probably change ByteBuffer to Object here, and encode the objects
+	// internally
 	
-	//@Resource(name="commandPub")
 	protected Flowable<ByteBuffer> commandPublisher;
-
-	
-	//@Resource(name="dockerServiceManagerClientConnection")
 	protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer;
-
-	
 	
 	
 	public DockerServiceManagerClientComponent(
@@ -66,14 +58,6 @@ public class DockerServiceManagerClientComponent
 		this.gson = gson;
 	}
 
-	// FIXME responsePublisher
-//	@Resource(name="commandPub")
-//    protected Flowable<ByteBuffer> responsePublisher;
-
-
-    //protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestFunction;
-
-	@Inject
     protected Gson gson;
 	
     protected Map<String, Service> runningManagedServices = new HashMap<>();
