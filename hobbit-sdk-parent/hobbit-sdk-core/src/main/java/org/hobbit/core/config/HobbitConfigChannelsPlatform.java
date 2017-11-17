@@ -139,6 +139,18 @@ public class HobbitConfigChannelsPlatform {
     	return queueDeclare;
     }
 
+    
+    /**
+     * Create a flowable of objects which (a) hold the message value and (b) offers
+     * a method to reply to the sender, thus facilitating a simple RPC pattern.
+     * 
+     * 
+     * @param connection
+     * @param exchangeName
+     * @return
+     * @throws IOException
+     * @throws TimeoutException
+     */
     public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Connection connection, String exchangeName) throws IOException, TimeoutException {
 
 
