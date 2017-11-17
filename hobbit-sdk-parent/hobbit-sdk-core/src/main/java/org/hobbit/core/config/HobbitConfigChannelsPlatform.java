@@ -338,6 +338,17 @@ public class HobbitConfigChannelsPlatform {
 					throws IOException {
 
 				String replyTo = properties.getReplyTo();
+				
+				// Set up a lambda that for the sake of sending a response creates a one-shot
+				// channel to send a message to the recipient specified in the replyTo field
+				// This approach should be thread safe in accordance with the rabbitmq spec
+				// i.e. sending the response can be done
+				// by a different thread than the one that handled the request
+				
+				// The down-side is, that although multiple messages can be sent as repsonses,
+				// a new connection is created for each of them
+				// However, as the main use case here is to facilitate a simple RPC pattern
+				// this should be acceptable
 				Consumer<ByteBuffer> reply = replyTo == null ? null : (byteBuffer) -> {
 					Channel tmpChannel = null;
 					try {
@@ -365,6 +376,8 @@ public class HobbitConfigChannelsPlatform {
 		    	
 		    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buffer, reply);
 		    	
+		    	//result.onSubscribe();
+		    	
 		    	//result.onNext(buffer);
 		    	result.onNext(msg);
 			}
@@ -385,6 +398,8 @@ public class HobbitConfigChannelsPlatform {
 //	        }
 //	    }, BackpressureStrategy.BUFFER);
 //	
+
+    	//result = result.doOnSubscribe(onSubscribe -> onSubscribe.)
     	return result;
     }
         

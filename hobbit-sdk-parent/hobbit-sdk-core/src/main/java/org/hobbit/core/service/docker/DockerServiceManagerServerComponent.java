@@ -20,6 +20,7 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -97,6 +98,19 @@ public class DockerServiceManagerServerComponent
         //commandPublisher.unsubscribe(this::receiveCommand);
     }
 
+    
+    public static ByteBuffer createTerminationMsg(String containerId, int exitCode) {
+        RabbitMQUtils.writeString(containerId);
+
+        ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
+                new byte[]{Commands.DOCKER_CONTAINER_TERMINATED},
+                RabbitMQUtils.writeString(containerId),
+                new byte[]{(byte)exitCode}
+        ));
+        
+        return buffer;
+    }
+
     public void onStartServiceRequest(String imageName, Map<String, String> env, Consumer<String> idCallback) {
         //Map<String, String> env = n;
 
@@ -134,6 +148,7 @@ public class DockerServiceManagerServerComponent
                 super.terminated(from);
             }
 
+                        
             public void doTermination() {
                 String containerId = service.getContainerId();
 
@@ -141,15 +156,8 @@ public class DockerServiceManagerServerComponent
                 runningManagedServices.remove(containerId);
 
                 // Create the termination message and send it out
-
-                RabbitMQUtils.writeString(containerId);
                 int exitCode = service.getExitCode();
-
-                ByteBuffer buffer = ByteBuffer.wrap(RabbitMQUtils.writeByteArrays(new byte[][]{
-                        new byte[]{Commands.DOCKER_CONTAINER_TERMINATED},
-                        RabbitMQUtils.writeString(containerId),
-                        new byte[]{(byte)exitCode}
-                }));
+                ByteBuffer buffer = createTerminationMsg(containerId, exitCode);
 
 //                try {
                     commandChannel.onNext(buffer);
@@ -169,7 +177,7 @@ public class DockerServiceManagerServerComponent
     public void onStopServiceRequest(String containerId) {
         Service service = runningManagedServices.get(containerId);
         if(service != null) {
-            service.stopAsync();
+            service.stopAsync().awaitTerminated();
         } else {
             logger.warn("Stop request ignored due to no running service know by id " + containerId);
         }
@@ -187,7 +195,9 @@ public class DockerServiceManagerServerComponent
     }
     
     public void onCommand(ByteBuffer buffer, Consumer<ByteBuffer> responseTarget) {
-        if(buffer.hasRemaining()) {
+    	buffer = buffer.duplicate();
+
+    	if(buffer.hasRemaining()) {
             byte b = buffer.get();
             switch(b) {
             case Commands.DOCKER_CONTAINER_START: {
@@ -222,7 +232,14 @@ public class DockerServiceManagerServerComponent
                 
             	StopCommandData data = gson.fromJson(str, StopCommandData.class);
             	String containerId = data.getContainerName();
-                onStopServiceRequest(containerId);
+            	try {
+            		onStopServiceRequest(containerId);
+            	} finally {
+	                // Reply to the requester that its requets was executed
+	                ByteBuffer response = createTerminationMsg(containerId, -1);
+	                responseTarget.accept(response);
+            	}
+
                 break; }
             }
         }
@@ -230,6 +247,12 @@ public class DockerServiceManagerServerComponent
 
 	// https://stackoverflow.com/questions/17354891/java-bytebuffer-to-string
 
+    /**
+     * This function reads *all* remaining bytes in a byte buffer as a string.
+     * @param b
+     * @param charset
+     * @return
+     */
     public static String readRemainingBytesAsString(ByteBuffer b, Charset charset) {
     	String result;
     	if(b.hasArray()) {
@@ -239,7 +262,10 @@ public class DockerServiceManagerServerComponent
     		b.duplicate().get(tmp);
     		result = new String(tmp, charset);
     	}
-
+    	
+    	//b.position(b.arrayOffset() + b.position() + result.getBytes(charset).length);
+    	b.position(b.limit());
+    	
     	return result;
     }
 }

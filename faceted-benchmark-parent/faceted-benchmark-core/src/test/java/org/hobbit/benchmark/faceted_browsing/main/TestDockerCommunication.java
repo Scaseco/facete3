@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.qpid.server.Broker;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.HobbitConfigChannelsPlatform;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -58,11 +60,13 @@ public class TestDockerCommunication {
 	}
 	
 	@Bean
+	@Scope("prototype")
 	public Flowable<ByteBuffer> commandPub(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
 		return HobbitConfigChannelsPlatform.createFanoutReceiver(connection, commandExchange);
 	}
 	
 	@Bean
+	@Scope("prototype")
 	public Subscriber<ByteBuffer> commandChannel(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
 		return HobbitConfigChannelsPlatform.createFanoutSender(connection, commandExchange, null);
 	}
@@ -189,10 +193,13 @@ public class TestDockerCommunication {
 		client.setImageName("tenforce/virtuoso");
 		DockerService service = client.get();
 		service.startAsync().awaitRunning();
-		
+
 		System.out.println("Service is running");
-		
-		service.stopAsync();
-		
+
+		System.out.println("Waiting for termination");
+		service.stopAsync().awaitTerminated();
+		System.out.println("Terminated");
+
+		ctx.getBean(Broker.class).shutdown();		
 	}
 }

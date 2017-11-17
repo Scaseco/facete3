@@ -16,6 +16,7 @@ import javax.inject.Inject;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
+import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.IdleServiceCapable;
 
@@ -148,12 +149,17 @@ public class DockerServiceManagerClientComponent
 
     // Listen to service terminated messages
     public void handleMessage(ByteBuffer msg) {
+    	msg = msg.duplicate();
+
         if(msg.hasRemaining()) {
             byte cmd = msg.get();
             switch(cmd) {
             case Commands.DOCKER_CONTAINER_TERMINATED:
-                String serviceId = RabbitMQUtils.readString(msg);
-                int exitCode = msg.get();
+            	msg.limit(msg.limit() - 1);
+                String serviceId = DockerServiceManagerServerComponent.readRemainingBytesAsString(msg, StandardCharsets.UTF_8);
+            	msg.limit(msg.limit() + 1);
+
+            	int exitCode = msg.get();
                 handleServiceTermination(serviceId, exitCode);
                 break;
             }
@@ -165,7 +171,10 @@ public class DockerServiceManagerClientComponent
 
         if(service != null) {
             // FIXME If the remote service failed, we would here incorrectly set the service to STOPPED
-            service.stopAsync();
+        	synchronized (service) {
+	        	service.stopAsync();
+	        	runningManagedServices.remove(serviceId);
+        	}
         }
 
         //idToService.remove(service);
@@ -213,8 +222,14 @@ public class DockerServiceManagerClientComponent
     }
 
     public void stopService(String serviceId) {
-        ByteBuffer buffer = ByteBuffer.wrap(RabbitMQUtils.writeByteArrays(new byte[][]{
-            new byte[]{Commands.DOCKER_CONTAINER_STOP}, RabbitMQUtils.writeString(serviceId)}));
+    	//this.commandPublisher
+    	
+        StopCommandData msg = new StopCommandData(serviceId);
+        String jsonStr = gson.toJson(msg);
+
+        ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
+            new byte[]{Commands.DOCKER_CONTAINER_STOP},
+            RabbitMQUtils.writeString(jsonStr)));
 
 //        try {
         CompletableFuture<ByteBuffer> responseFuture = requestToServer.apply(buffer);

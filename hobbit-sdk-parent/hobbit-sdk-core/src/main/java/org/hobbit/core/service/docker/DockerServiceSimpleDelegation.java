@@ -41,7 +41,7 @@ public class DockerServiceSimpleDelegation
 
     @Override
     protected void startUp() throws Exception {
-        containerId = startServiceDelegate.apply(imageName, localEnvironment);
+        containerId = startServiceDelegate.apply(imageName, localEnvironment);        
     }
 
     @Override
