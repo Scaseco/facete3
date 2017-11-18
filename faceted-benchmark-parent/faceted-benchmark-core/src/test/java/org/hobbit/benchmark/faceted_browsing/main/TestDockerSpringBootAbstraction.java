@@ -18,7 +18,7 @@ public class TestDockerSpringBootAbstraction {
 
 	public static class Context {
 		@Bean
-		public ApplicationRunner runner(DockerServiceBuilderFactory<DockerService> serviceBuilderFactory, Environment env) {
+		public ApplicationRunner runner(Environment env) {
 			return (args) -> {
 				System.out.println("Hello " + env.getRequiredProperty("MSG"));
 			};

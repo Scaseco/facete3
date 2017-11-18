@@ -48,6 +48,7 @@ public class DockerServiceSimple<A, B>
     		String imageName) {
         super();
         this.start = start;
+        this.getContainerId = getContainerId;
         this.run = run;
         this.stop = stop;
         this.imageName = imageName;

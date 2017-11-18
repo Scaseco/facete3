@@ -1,8 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.util.Map;
+import java.io.Closeable;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -34,7 +36,7 @@ public class DockerServiceFactoryUtilsSpringBoot {
 				imageNameToClass,
 				(env, clazz) -> new SimpleEntry<>(env, baseAppBuilder.get().sources(clazz)),
 				e -> {
-					Map<String, Object> env = e.getKey().entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> (Object)x));
+					Map<String, Object> env = e.getKey().entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> (Object)x.getValue()));
 					
 					ConfigurableEnvironment cenv = new StandardEnvironment();
 					cenv.getPropertySources().addFirst(new MapPropertySource("myPropertySource", env));
@@ -42,8 +44,8 @@ public class DockerServiceFactoryUtilsSpringBoot {
 					ConfigurableApplicationContext r = e.getValue().environment(cenv).build().run();
 					return r;
 				},
-				(appBuilder, ctx) -> ctx.close());
-		
+				(appBuilder, ctx) -> { if(ctx != null) try { ctx.close(); } catch(Exception e) { throw new RuntimeException(e); } }
+			);
 		return result;
 	}
 
