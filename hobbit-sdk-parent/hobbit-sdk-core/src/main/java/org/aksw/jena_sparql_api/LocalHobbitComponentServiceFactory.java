@@ -45,7 +45,7 @@ public class LocalHobbitComponentServiceFactory<T extends BaseComponent>
 
         // Note: Modifications to the local environment, such as incrementing
         // an evironment value after each invocation should be done by a wrapper
-        Service result = new HobbitLocalComponentService<T>(componentClass, ctx, commandPub);
+        Service result = new ServiceContext<T>(componentClass, ctx, commandPub);
 
         return result;
     }

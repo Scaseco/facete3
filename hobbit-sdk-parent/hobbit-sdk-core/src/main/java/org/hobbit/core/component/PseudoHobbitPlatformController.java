@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 
-import org.aksw.jena_sparql_api.HobbitLocalComponentService;
+import org.aksw.jena_sparql_api.ServiceContext;
 import org.hobbit.core.Commands;
 import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.utils.ServiceManagerUtils;
@@ -88,7 +88,7 @@ public class PseudoHobbitPlatformController
 
                 // A hacky cast
                 @SuppressWarnings("unchecked")
-                HobbitLocalComponentService<BenchmarkController> service = (HobbitLocalComponentService<BenchmarkController>) benchmarkControllerServiceFactory.get();
+                ServiceContext<BenchmarkController> service = (ServiceContext<BenchmarkController>) benchmarkControllerServiceFactory.get();
 
                 service.startAsync();
                 try {

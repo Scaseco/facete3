@@ -97,6 +97,9 @@ public class TestDockerCommunication {
 //		return service;
 //	}
 //	
+	
+	
+	
 	@Bean
 	public Service dockerServiceManagerServer(
 		//Supplier<? extends DockerServiceBuilder<? extends DockerService>> delegateSupplier,

@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.hobbit.core.component.BaseComponent;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.service.api.ExecutionThreadServiceDelegate;
 import org.hobbit.core.service.api.IdleServiceCapable;
@@ -29,10 +28,10 @@ import jersey.repackaged.com.google.common.util.concurrent.MoreExecutors;
  *
  * @param <T>
  */
-public class HobbitLocalComponentService<T extends BaseComponent>
+public class ServiceContext<T>
     extends AbstractIdleService
 {
-    private static final Logger logger = LoggerFactory.getLogger(HobbitLocalComponentService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ServiceContext.class);
 
 
     protected Class<T> componentClass;
@@ -53,7 +52,7 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
     protected transient Disposable commandChannelUnsubscribe; 
     
-    public HobbitLocalComponentService(Class<T> componentClass, ApplicationContext ctx,
+    public ServiceContext(Class<T> componentClass, ApplicationContext ctx,
     		Flowable<ByteBuffer> commandPub) {
         super();
         this.componentClass = componentClass;
@@ -104,34 +103,34 @@ public class HobbitLocalComponentService<T extends BaseComponent>
 
         ctx.getAutowireCapableBeanFactory().autowireBean(componentInstance);
 
-        commandChannelUnsubscribe = commandPub.subscribe(
-        		buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand));
-
-        // Add a listener to shut down 'this' service wrapper
-        Service self = this;
-        componentService.addListener(new Listener() {
-        	@Override
-        	public void failed(State from, Throwable failure) {
-        		doTermination();
-        		super.failed(from, failure);
-        	}
-        	
-        	@Override
-            public void terminated(State from) {
-        		doTermination();
-        		super.terminated(from);
-            };
-
-            public void doTermination() {
-                self.stopAsync();
-                try {
-                    self.awaitTerminated(60, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    throw new RuntimeException("Failure during termination " + componentClass, e);
-                }            	
-            }
-        
-        }, MoreExecutors.directExecutor());
+//        commandChannelUnsubscribe = commandPub.subscribe(
+//        		buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand));
+//
+//        // Add a listener to shut down 'this' service wrapper
+//        Service self = this;
+//        componentService.addListener(new Listener() {
+//        	@Override
+//        	public void failed(State from, Throwable failure) {
+//        		doTermination();
+//        		super.failed(from, failure);
+//        	}
+//        	
+//        	@Override
+//            public void terminated(State from) {
+//        		doTermination();
+//        		super.terminated(from);
+//            };
+//
+//            public void doTermination() {
+//                self.stopAsync();
+//                try {
+//                    self.awaitTerminated(60, TimeUnit.SECONDS);
+//                } catch (TimeoutException e) {
+//                    throw new RuntimeException("Failure during termination " + componentClass, e);
+//                }            	
+//            }
+//        
+//        }, MoreExecutors.directExecutor());
 
         //componentInstance.init();
         componentService.startAsync();

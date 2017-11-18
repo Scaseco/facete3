@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 import org.apache.qpid.server.Broker;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
-import org.hobbit.benchmark.faceted_browsing.config.HobbitConfigLocalPlatformFacetedBenchmark;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitFacetedBenchmarkLocalServiceMapping;
 import org.hobbit.core.Commands;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.config.HobbitConfigChannelsPlatform;
@@ -82,7 +82,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	    		.properties(props)
 	    		.sources(HobbitConfigCommon.class)
 	    		.sources(ConfigEncodersFacetedBrowsing.class)
-	        	.sources(HobbitConfigLocalPlatformFacetedBenchmark.class)
+	        	.sources(ConfigHobbitFacetedBenchmarkLocalServiceMapping.class)
 	        	.sources(HobbitConfigChannelsPlatform.class)
 	        	.sources(ConfigHobbitLocalServices.class)
 	        	.bannerMode(Banner.Mode.OFF)

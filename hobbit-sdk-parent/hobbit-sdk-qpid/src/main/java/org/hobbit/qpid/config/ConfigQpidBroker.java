@@ -47,13 +47,13 @@ public class ConfigQpidBroker {
     	
     	return result;
     }
-	@Bean
+	@Bean(destroyMethod="shutdown")
 	public Broker broker() throws Exception {
         String amqpInitialConfigUrl = ConfigQpidBroker.getResourceAsFile(new ClassPathResource("amqp-initial-config.json"), "amqp-config-", ".json").getAbsoluteFile().toURI().toURL().toString();
 
 	    Broker broker = new Broker();
 	    BrokerOptions brokerOptions = new BrokerOptions();
-	    
+
 //	    brokerOptions.setConfigProperty('qpid.amqp_port',"${amqpPort}")
 //	    brokerOptions.setConfigProperty('qpid.http_port', "${httpPort}")
 //	    brokerOptions.setConfigProperty('qpid.home_dir', homePath);
