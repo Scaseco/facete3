@@ -3,15 +3,7 @@ package org.hobbit.core.config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -26,45 +18,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
 
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.FlowableOnSubscribe;
-import io.reactivex.subscribers.DefaultSubscriber;
 
 public class HobbitConfigChannelsPlatform {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(HobbitConfigChannelsPlatform.class);
-	
-    /**
-     * Maximum number of retries that are executed to connect to RabbitMQ.
-     */
-    public static final int NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ = 5;
-    /**
-     * Time, the system waits before retrying to connect to RabbitMQ. Note that
-     * this time will be multiplied with the number of already failed tries.
-     */
-    public static final long START_WAITING_TIME_BEFORE_RETRY = 5000;
-	
+		
 	@Inject
 	protected Environment env;
 		
-	//protected ConnectionFactory connectionFactory;
 	protected String hobbitSessionId;
-
-	
-    //protected Connection commandConnection;
-	
-//    protected Connection incomingDataConnection;
-//    protected Connection outgoingDataConnection;
-
     
 
 	@PostConstruct
@@ -75,218 +41,32 @@ public class HobbitConfigChannelsPlatform {
 //        incomingDataConnection = createConnection();
 //        outgoingDataConnection = createConnection();
 	}
-	
-//	@PreDestroy
-//	public void preDestroy(
-//			) throws IOException {
-//		
-//		commandConnection.close();
-//		//logger.
-//	}
-	
-	
-    protected Connection createConnection(ConnectionFactory connectionFactory) throws Exception {
-    	
-    	Connection connection = null;
-        for (int i = 0; (connection == null) && (i <= NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ); ++i) {
-            try {
-                connection = connectionFactory.newConnection();
-            } catch (Exception e) {
-                if (i < NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ) {
-                    long waitingTime = START_WAITING_TIME_BEFORE_RETRY * (i + 1);
-                    LOGGER.warn("Couldn't connect to RabbitMQ with try #" + i + ". Next try in " + waitingTime + "ms.",
-                            e);
-                    try {
-                        Thread.sleep(waitingTime);
-                    } catch (Exception e2) {
-                        LOGGER.warn("Interrupted while waiting before retrying to connect to RabbitMQ.", e2);
-                    }
-                }
-            }
-        }
-        if (connection == null) {
-            String msg = "Couldn't connect to RabbitMQ after " + NUMBER_OF_RETRIES_TO_CONNECT_TO_RABBIT_MQ
-                    + " retries.";
-            LOGGER.error(msg);
-            throw new Exception(msg);
-        }
-        return connection;
+
+    public String generateSessionQueueName(String queueName) {
+        return queueName + "." + hobbitSessionId;
     }
 
-    public static String allocateDefaultQueueName(Connection connection) throws IOException, TimeoutException {
-    	// Let the server allocate a queue name
-    	Channel channel = connection.createChannel();
-    	String queueName = channel.queueDeclare().getQueue();
-    	System.out.println("Allocated queue name " + queueName);
-    	channel.close();
+	/**
+	 * Helper function where context specific connection configuration could be made
+	 * 
+	 * @param connectionFactory
+	 * @return
+	 * @throws Exception
+	 */
+	public Connection createConnection(ConnectionFactory connectionFactory) throws Exception {
+		return RabbitMqFlows.createConnection(connectionFactory);
+	}
 
-    	return queueName;
-    }
-    
-    public static Function<Channel, String> createDefaultQueueDeclare(Connection connection, String queueName, String exchangeName) throws IOException, TimeoutException {
-    	
-    	Function<Channel, String> queueDeclare = (ch) -> {
-    		try {
-	    		ch.queueDeclare(queueName, false, true, true, null);
-	            ch.exchangeDeclare(exchangeName, "fanout", false, true, null);
-	            ch.queueBind(queueName, exchangeName, "");
-    		} catch(Exception e) {
-    			throw new RuntimeException(e);
-    		}
-            return queueName;
-    	};
-    	
-    	return queueDeclare;
+	public Subscriber<ByteBuffer> createDataSender(Connection connection, String baseQueueName) throws IOException {
+		String queueName = generateSessionQueueName(baseQueueName);
+		return RabbitMqFlows.createDataSenderCore(connection, queueName);
+	}
+
+    public Flowable<ByteBuffer> createDataReceiver(Connection connection, String baseQueueName) throws IOException, TimeoutException {
+    	String queueName = generateSessionQueueName(baseQueueName);
+    	return RabbitMqFlows.createDataReceiverCore(connection, queueName);
     }
 
-    
-    /**
-     * Create a flowable of objects which (a) hold the message value and (b) offers
-     * a method to reply to the sender, thus facilitating a simple RPC pattern.
-     * 
-     * 
-     * @param connection
-     * @param exchangeName
-     * @return
-     * @throws IOException
-     * @throws TimeoutException
-     */
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Connection connection, String exchangeName) throws IOException, TimeoutException {
-
-
-//        String queueName = channel.queueDeclare().getQueue();
-//        channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
-//        channel.queueBind(queueName, exchangeName, "");
-//        
-//        channel.close();
-
-    	String queueName = allocateDefaultQueueName(connection);
-    	Function<Channel, String> queueDeclare = createDefaultQueueDeclare(connection, queueName, exchangeName);
-    	
-    	Flowable<SimpleReplyableMessage<ByteBuffer>> flowable = createFlowableForQueue(connection, queueDeclare);
-    	
-    	return flowable;
-    }
-
-    
-    public static Flowable<ByteBuffer> createFanoutReceiver(Connection connection, String exchangeName) throws IOException, TimeoutException {
-    	//Channel channel = connection.createChannel();
-    	Flowable<ByteBuffer> flowable = createReplyableFanoutReceiver(connection, exchangeName).map(SimpleReplyableMessage::getValue);
-    	
-    	return flowable;
-    }
-    
-	public static Subscriber<ByteBuffer> createFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
-    	Channel channel = connection.createChannel();
-
-    	BasicProperties properties = new BasicProperties.Builder()
-    			.deliveryMode(2)
-    			.build();
-
-    	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
-    	Consumer<ByteBuffer> consumer = transformer == null ? coreConsumer : (buffer) -> {
-    		ByteBuffer msg = transformer.apply(buffer);
-    		coreConsumer.accept(msg);
-    	};
-
-    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> {
-    		channel.close();
-    		return 0;
-    	});
-
-    	return subscriber;
-    }
-    
-
-    
-    /**
-     * Creates both a subscriber and a flowable.
-     * Every sent message has the replyTo field set, such that any replys will be made available via the flowable. 
-     * 
-     * @param connection
-     * @param exchangeName
-     * @param transformer
-     * @return
-     * @throws IOException
-     * @throws TimeoutException 
-     */
-    public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-    	Channel channel = connection.createChannel();
-
-//    	Channel responseChannel = connection.createChannel();
-//    	String responseQueueName = responseChannel.queueDeclare().getQueue();
-    	
-    	String responseQueueName = allocateDefaultQueueName(connection);
-    	Function<Channel, String> responseQueueDeclare = createDefaultQueueDeclare(connection, responseQueueName, exchangeName);
-   	
-    	
-    	BasicProperties properties = new BasicProperties.Builder()
-    			.deliveryMode(2)
-    			.replyTo(responseQueueName)
-    			.build();
-
-    	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
-    	Consumer<ByteBuffer> consumer = transformer == null ? coreConsumer : (buffer) -> {
-    		ByteBuffer msg = transformer.apply(buffer);
-    		coreConsumer.accept(msg);
-    	};
-
-    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> {
-    		channel.close();
-    		return 0;
-    	});
-
-    	Flowable<ByteBuffer> flowable = createFlowableForQueue(connection, responseQueueDeclare).map(SimpleReplyableMessage::getValue);
-    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> result = new SimpleEntry<>(subscriber, flowable);
-    	
-    	return result;
-    }
-
-    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, transformer);
-    	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry);
-    	
-    	return result;
-    }
-
-    
-    public static <T> Function<T, CompletableFuture<T>> wrapAsFunction(Entry<Subscriber<T>, Flowable<T>> entry) {
-    	Subscriber<T> subscriber = entry.getKey();
-    	Flowable<T> flowable = entry.getValue();
-    	Function<T, CompletableFuture<T>> result = wrapAsFunction(subscriber, flowable);
-
-    	return result;
-    }
-
-    public static <I, O> Function<I, CompletableFuture<O>> wrapAsFunction(Subscriber<I> subscriber, Flowable<O> flowable) {
-    	Function<I, CompletableFuture<O>> result = t -> {
-    		
-    		// Send request
-    		subscriber.onNext(t);
-
-    		// Await response
-    		System.out.println("Awaiting response");
-    		O r = flowable.blockingFirst();
-    		System.out.println("Got response: " + r);
-    		
-    		
-    		
-    		// TODO properly create the completable future
-    		//O r = flowable.timeout(60, TimeUnit.SECONDS).blockingFirst();
-    		//O r = flowable.blockingNext();
-    		
-//    		CompletableFuture<O> tmp = new CompletableFuture<>();
-//    		flowable.doOnNext(r -> {
-//    			System.out.println("Got response object; resolving future");
-//    			tmp.complete(r);
-//    		});
-    		
-    		CompletableFuture<O> tmp = CompletableFuture.completedFuture(r);
-    		return tmp;
-    	};
-    	
-    	return result;
-    }
     
 //    public ChannelWrapper<ByteBuffer> createCommandChannelWrapper(Connection connection, String exchangeName) throws IOException {
 //    	ChannelWrapper<ByteBuffer> result = new ChannelWrapper<>(subscriber, flowable);
@@ -369,231 +149,37 @@ public class HobbitConfigChannelsPlatform {
         return buffer;
     }
     
-    public static <T> Subscriber<T> wrapPublishAsSubscriber(Consumer<T> consumer, Callable<?> closeAction) {
-    	
-		Subscriber<T> result = new DefaultSubscriber<T>() {
-			@Override
-			public void onNext(T t) {
-				consumer.accept(t);
-			}
-			
-			@Override
-			public void onComplete() {
-				Optional.ofNullable(closeAction).ifPresent(t -> {
-					try {
-						t.call();
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
-				});
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				throw new RuntimeException(t);
-			}
-		};
-		
-		return result;
-    	
-    }
-    
-    public static Consumer<ByteBuffer> createReplyToConsumer(Connection conn, String replyTo) {
-
-		// Set up a lambda that for the sake of sending a response creates a one-shot
-		// channel to send a message to the recipient specified in the replyTo field
-		// This approach should be thread safe in accordance with the rabbitmq spec
-		// i.e. sending the response can be done
-		// by a different thread than the one that handled the request
-		
-		// The down-side is, that although multiple messages can be sent as repsonses,
-		// a new connection is created for each of them
-		// However, as the main use case here is to facilitate a simple RPC pattern
-		// this should be acceptable
-		Consumer<ByteBuffer> result = replyTo == null ? null : (byteBuffer) -> {
-			Channel tmpChannel = null;
-			try {
-				tmpChannel = conn.createChannel();
-		    	BasicProperties props = new BasicProperties.Builder()
-		    			.deliveryMode(2)
-		    			.build();
-
-				tmpChannel.basicPublish(replyTo, "", props, byteBuffer.array());
-				System.out.println("Publishing reply to " + replyTo);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} finally {
-				try {
-					if(tmpChannel != null) {
-						//tmpChannel.waitForConfirms();
-						System.out.println("Closing reply channel " + tmpChannel + " isOpen=" + tmpChannel.isOpen());
-						tmpChannel.close();
-					}
-				} catch (IOException | TimeoutException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		};
-		
-		return result;
-    }
-	
-    
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Connection connection, Function<Channel, String> queueDeclare) throws IOException {
-    	Flowable<SimpleReplyableMessage<ByteBuffer>> result = Flowable.create(new FlowableOnSubscribe<SimpleReplyableMessage<ByteBuffer>>() {
-	        @Override
-	        public void subscribe(final FlowableEmitter<SimpleReplyableMessage<ByteBuffer>> emitter) throws Exception {
-
-	        	Channel channel = connection.createChannel();
-
-	        	String queueName = queueDeclare.apply(channel);
-	        	
-	        	System.out.println("Created channel " + channel + " for queue " + queueName + " connIsOpen=" + connection.isOpen());
-	        	
-	        	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
-	        		@Override
-	        		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-	        				throws IOException {
-	    				String replyTo = properties.getReplyTo();
-	    				
-	    				Consumer<ByteBuffer> reply = createReplyToConsumer(connection, replyTo);
-	    				
-	    				
-	    				//System.out.println("Received message from queue " + queueName);
-	    		    	ByteBuffer buffer = ByteBuffer.wrap(body);
-	    		    	
-	    		    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buffer, reply);
-	    		    	
-	    		    	//result.onSubscribe();
-	    		    	
-	    		    	//result.onNext(buffer);
-	    		    	emitter.onNext(msg);
-	    		    }	        		
-	        	});
-	        	
-	        	
-	        	//emitter.setCancellable(channel::close);
-
-	        	emitter.setCancellable(() -> {
-	        		System.out.println("Closing channel " + channel + " isOpen=" + channel.isOpen() + " connIsOpen=" + connection.isOpen());
-	        		
-	        		channel.close();
-	        	});
-	        }
-	    }, BackpressureStrategy.BUFFER);    	
-    	
-    	//PublishProcessor<SimpleReplyableMessage<ByteBuffer>> result = PublishProcessor.create();
-//    	
-//    	Connection conn = channel.getConnection();
-//    	
-//    	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
-//			@Override
-//			public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-//					throws IOException {
-//
-//				String replyTo = properties.getReplyTo();
-//				
-//				Consumer<ByteBuffer> reply = createReplyToConsumer(conn, replyTo);
-//				
-//				
-//				//System.out.println("Received message from queue " + queueName);
-//		    	ByteBuffer buffer = ByteBuffer.wrap(body);
-//		    	
-//		    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buffer, reply);
-//		    	
-//		    	//result.onSubscribe();
-//		    	
-//		    	//result.onNext(buffer);
-//		    	result.onNext(msg);
-//			}
-//		});
-
-//        Flowable<ByteBuffer> result = Flowable.create(new FlowableOnSubscribe<ByteBuffer>() {
-//	        @Override
-//	        public void subscribe(final FlowableEmitter<ByteBuffer> emitter) throws Exception {
-//	        	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
-//	        		@Override
-//	        		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-//	        				throws IOException {
-//	        			System.out.println("Received message from queue " + queueName);
-//	        	    	ByteBuffer buffer = ByteBuffer.wrap(body);
-//	        	    	emitter.onNext(buffer);
-//	        		}
-//	        	});
-//	        }
-//	    }, BackpressureStrategy.BUFFER);
-//	
-
-    	//result = result.doOnSubscribe(onSubscribe -> onSubscribe.)
-    	return result;
-    }
-        
-    public static Consumer<ByteBuffer> wrapPublishAsConsumer(Channel channel, String exchangeName, String routingKey, BasicProperties properties) {
-    	Consumer<ByteBuffer> result = (buffer) -> {
-    		try {
-    			System.out.println("Publishing on channel " + channel + " isOpen=" + channel.isOpen());
-    	    	channel.basicPublish(exchangeName, routingKey, properties, buffer.array());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-    	};
-    	
-    	return result;
-    }
     
 	@Bean
 	public Connection commandConnection(ConnectionFactory connectionFactory) throws Exception {
-		return createConnection(connectionFactory);
+		return RabbitMqFlows.createConnection(connectionFactory);
 	}
 
-
-    public String generateSessionQueueName(String queueName) {
-        return queueName + "." + hobbitSessionId;
-    }
 
     
 //    public static defaultQueueDeclare()
 
-    public Flowable<ByteBuffer> createDataReceiver(Connection connection, String baseQueueName) throws IOException, TimeoutException {
-    	String queueName = generateSessionQueueName(baseQueueName);
-
+//    
+//
+//    public static Subscriber<ByteBuffer> createDataSenderCore(Connection connection, String queueName) throws IOException {
+//    	String queueName = generateSessionQueueName(baseQueueName);
+//
 //    	Channel channel = connection.createChannel();
 //    	channel.queueDeclare(queueName, false, false, true, null);
-//    	channel.close();
+//
+//    	BasicProperties properties = new BasicProperties.Builder()
+//    			.deliveryMode(2)
+//    			.build();
+//
+//    	Consumer<ByteBuffer> coreConsumer = RabbitMqFlows.wrapPublishAsConsumer(channel, "", queueName, properties);
+//    	Subscriber<ByteBuffer> subscriber = RabbitMqFlows.wrapPublishAsSubscriber(coreConsumer, () -> {
+//    		channel.close();
+//    		return 0;
+//    	});
+//    	
+//    	return subscriber;
+//    }
 
-    	Function<Channel, String> queueDeclare = (channel) -> {
-        	try {
-				channel.queueDeclare(queueName, false, false, true, null);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-        	return queueName;
-    	};
-    	
-    	
-    	Flowable<ByteBuffer> flowable = createFlowableForQueue(connection, queueDeclare).map(SimpleReplyableMessage::getValue);
-
-    	return flowable;
-    }
-
-    public Subscriber<ByteBuffer> createDataSender(Connection connection, String baseQueueName) throws IOException {
-    	String queueName = generateSessionQueueName(baseQueueName);
-
-    	Channel channel = connection.createChannel();
-    	channel.queueDeclare(queueName, false, false, true, null);
-
-    	BasicProperties properties = new BasicProperties.Builder()
-    			.deliveryMode(2)
-    			.build();
-
-    	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, "", queueName, properties);
-    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(coreConsumer, () -> {
-    		channel.close();
-    		return 0;
-    	});
-    	
-    	return subscriber;
-    }
     
     
 //    public ChannelWrapper<ByteBuffer> createWrappedFanoutChannel(Connection connection, String baseQueueName) throws IOException {
@@ -610,7 +196,7 @@ public class HobbitConfigChannelsPlatform {
      */
     @Bean
     public Connection outgoingCommandConnection(ConnectionFactory connectionFactory) throws Exception {
-    	return createConnection(connectionFactory);
+    	return RabbitMqFlows.createConnection(connectionFactory);
     }
 
     @Bean
@@ -640,14 +226,14 @@ public class HobbitConfigChannelsPlatform {
     @Bean
     @Scope("prototype")
     public Subscriber<ByteBuffer> commandChannel(@Qualifier("outgoingCommandConnection") Connection connection) throws IOException {
-    	return createFanoutSender(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, (buffer) -> createCmdMessage(buffer, hobbitSessionId));
+    	return RabbitMqFlows.createFanoutSender(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, (buffer) -> createCmdMessage(buffer, hobbitSessionId));
     }
         
  
     @Bean
     @Scope("prototype")
     public Flowable<ByteBuffer> commandPub(@Qualifier("incomingCommandConnection") Connection connection) throws IOException, TimeoutException {
-    	return createFanoutReceiver(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME).map(HobbitConfigChannelsPlatform::parseCommandBuffer);
+    	return RabbitMqFlows.createFanoutReceiver(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME).map(HobbitConfigChannelsPlatform::parseCommandBuffer);
     }
 
 
@@ -839,14 +425,14 @@ public class HobbitConfigChannelsPlatform {
     @Bean
     @Scope("prototype")
     public Subscriber<ByteBuffer> taskAck(@Qualifier("outgoingCommandConnection") Connection connection) throws IOException {
-    	return createFanoutSender(connection, Constants.HOBBIT_ACK_EXCHANGE_NAME, null);
+    	return RabbitMqFlows.createFanoutSender(connection, Constants.HOBBIT_ACK_EXCHANGE_NAME, null);
     }
         
  
     @Bean
     @Scope("prototype")
     public Flowable<ByteBuffer> taskAckPub(@Qualifier("incomingCommandConnection") Connection connection) throws IOException, TimeoutException {
-    	return createFanoutReceiver(connection, Constants.HOBBIT_ACK_EXCHANGE_NAME);
+    	return RabbitMqFlows.createFanoutReceiver(connection, Constants.HOBBIT_ACK_EXCHANGE_NAME);
     }
 
     

@@ -14,8 +14,8 @@ import java.util.function.Supplier;
 import org.apache.qpid.server.Broker;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
-import org.hobbit.core.config.HobbitConfigChannelsPlatform;
 import org.hobbit.core.config.HobbitConfigCommon;
+import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
@@ -62,7 +62,7 @@ public class TestDockerCommunication {
 	@Bean
 	//@Scope("prototype")
 	public Flowable<ByteBuffer> commandPub(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
-		return HobbitConfigChannelsPlatform.createFanoutReceiver(connection, commandExchange);
+		return RabbitMqFlows.createFanoutReceiver(connection, commandExchange);
 	}
 	
 //	@Bean
@@ -75,20 +75,20 @@ public class TestDockerCommunication {
 	@Bean
 	@Scope("prototype")
 	public Subscriber<ByteBuffer> commandChannel(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
-		return HobbitConfigChannelsPlatform.createFanoutSender(connection, commandExchange, null);		
+		return RabbitMqFlows.createFanoutSender(connection, commandExchange, null);		
 	}
 	
 	@Bean
 	@Scope("prototype")
 	public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
-		return HobbitConfigChannelsPlatform.createReplyableFanoutSender(connection, commandExchange, null);
+		return RabbitMqFlows.createReplyableFanoutSender(connection, commandExchange, null);
 	}
 
 	@Bean
 	@Scope("prototype")
 	public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
 		//Channel channel = connection.createChannel();
-		return HobbitConfigChannelsPlatform.createReplyableFanoutReceiver(connection, commandExchange);
+		return RabbitMqFlows.createReplyableFanoutReceiver(connection, commandExchange);
 	}
 
 //	@Bean
