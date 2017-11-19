@@ -34,6 +34,9 @@ import io.reactivex.disposables.Disposable;
  * The component is a service itself:
  * When started, the appropriate subscriptions are made to the flows - and of course unsubscribed when stopping
  *
+ *
+ * NOTE Alternative implementation would be: the component is registered as a listener on the event queue;
+ * 
  * @author raven Sep 25, 2017
  *
  */
