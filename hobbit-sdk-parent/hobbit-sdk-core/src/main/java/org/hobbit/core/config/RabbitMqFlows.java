@@ -164,7 +164,7 @@ public class RabbitMqFlows {
     }
     
 
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName) throws IOException, TimeoutException {
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName) throws IOException {
         String queueName = channel.queueDeclare().getQueue();
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
         channel.queueBind(queueName, exchangeName, "");
@@ -175,7 +175,7 @@ public class RabbitMqFlows {
     }
   
 
-    public static Flowable<ByteBuffer> createFanoutReceiver(Channel channel, String exchangeName) throws IOException, TimeoutException {
+    public static Flowable<ByteBuffer> createFanoutReceiver(Channel channel, String exchangeName) throws IOException {
         Flowable<ByteBuffer> result = createReplyableFanoutReceiver(channel, exchangeName).map(SimpleReplyableMessage::getValue); 
   	
         return result;

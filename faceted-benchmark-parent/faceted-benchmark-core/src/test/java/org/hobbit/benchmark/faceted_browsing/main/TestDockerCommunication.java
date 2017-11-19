@@ -56,14 +56,19 @@ public class TestDockerCommunication {
 			return result;
 		}
 
-		@Bean
+		@Bean(destroyMethod="close")
 		public Channel channel(Connection connection) throws IOException {
 			return connection.createChannel();
 		}
 
 		@Bean
-		public Subscriber<ByteBuffer> commandPub(Channel channel) throws IOException {
+		public Subscriber<ByteBuffer> commandChannel(Channel channel) throws IOException {
 			return RabbitMqFlows.createFanoutSender(channel, commandExchange, null);		
+		}
+
+		@Bean
+		public Flowable<ByteBuffer> commandPub(Channel channel) throws IOException {
+			return RabbitMqFlows.createFanoutReceiver(channel, commandExchange);		
 		}
 	}
 	
