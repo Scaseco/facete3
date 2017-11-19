@@ -14,7 +14,7 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitFacetedBenchmark
 import org.hobbit.core.Commands;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.config.HobbitConfigChannelsPlatform;
-import org.hobbit.core.config.HobbitConfigCommon;
+import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.qpid.config.ConfigQpidBroker;
 import org.slf4j.Logger;
@@ -80,7 +80,7 @@ public class MainHobbitFacetedBrowsingBenchmarkRemote
 	        
 	    	ctx = new SpringApplicationBuilder()
 	    		.properties(props)
-	    		.sources(HobbitConfigCommon.class)
+	    		.sources(ConfigGson.class)
 	    		.sources(ConfigEncodersFacetedBrowsing.class)
 	        	.sources(ConfigHobbitFacetedBenchmarkLocalServiceMapping.class)
 	        	.sources(HobbitConfigChannelsPlatform.class)

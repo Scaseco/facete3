@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean;
 
 import com.google.gson.Gson;
 
-public class HobbitConfigCommon {
+public class ConfigGson {
 
 	@Bean
 	public Gson gson() {

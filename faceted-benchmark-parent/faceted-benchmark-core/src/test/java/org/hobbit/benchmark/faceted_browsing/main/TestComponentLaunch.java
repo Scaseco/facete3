@@ -1,7 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
-import org.hobbit.core.config.HobbitConfigCommon;
+import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
@@ -36,7 +36,7 @@ public class TestComponentLaunch
 	public void testDockerCommunication() throws InterruptedException {
 		try(ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)
-				.sources(HobbitConfigCommon.class)
+				.sources(ConfigGson.class)
 				.sources(ConfigRabbitMqConnectionFactory.class)
 //				.sources(TestDockerCommunication.class)
 				.sources(Context.class)

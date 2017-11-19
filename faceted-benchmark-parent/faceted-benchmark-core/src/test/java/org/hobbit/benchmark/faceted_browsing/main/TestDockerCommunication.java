@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 import org.apache.qpid.server.Broker;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
-import org.hobbit.core.config.HobbitConfigCommon;
+import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.service.docker.DockerService;
@@ -48,10 +48,7 @@ public class TestDockerCommunication {
 	
 	protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> channel;
 	
-	@Bean
-	public String commandExchange() {
-		return Constants.HOBBIT_COMMAND_EXCHANGE_NAME;
-	}
+	protected String commandExchange = Constants.HOBBIT_COMMAND_EXCHANGE_NAME;
 	
 	@Bean//(destroyMethod="close")
 	public Connection connection(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
@@ -61,7 +58,7 @@ public class TestDockerCommunication {
 	
 	@Bean
 	//@Scope("prototype")
-	public Flowable<ByteBuffer> commandPub(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
+	public Flowable<ByteBuffer> commandPub(Connection connection) throws IOException, TimeoutException {
 		return RabbitMqFlows.createFanoutReceiver(connection, commandExchange);
 	}
 	
@@ -74,19 +71,19 @@ public class TestDockerCommunication {
 	
 	@Bean
 	@Scope("prototype")
-	public Subscriber<ByteBuffer> commandChannel(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
+	public Subscriber<ByteBuffer> commandChannel(Connection connection) throws IOException {
 		return RabbitMqFlows.createFanoutSender(connection, commandExchange, null);		
 	}
 	
 	@Bean
 	@Scope("prototype")
-	public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
+	public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Connection connection) throws IOException, TimeoutException {
 		return RabbitMqFlows.createReplyableFanoutSender(connection, commandExchange, null);
 	}
 
 	@Bean
 	@Scope("prototype")
-	public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException, TimeoutException {
+	public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Connection connection) throws IOException, TimeoutException {
 		//Channel channel = connection.createChannel();
 		return RabbitMqFlows.createReplyableFanoutReceiver(connection, commandExchange);
 	}
@@ -196,7 +193,7 @@ public class TestDockerCommunication {
 	public void testDockerCommunication() throws InterruptedException {
 		ConfigurableApplicationContext tmpCtx = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)
-				.sources(HobbitConfigCommon.class)
+				.sources(ConfigGson.class)
 				.sources(ConfigRabbitMqConnectionFactory.class)
 				.sources(TestDockerCommunication.class)
 				.run();
@@ -207,7 +204,7 @@ public class TestDockerCommunication {
 		try(ConfigurableApplicationContext ctx = tmpCtx) {
 		
 			DockerServiceBuilder<DockerService> client = (DockerServiceBuilder<DockerService>) ctx.getBean("dockerServiceManagerClient");
-			client.setImageName("tenforce/virtuoso");
+			client.setImageName("library/alpine"); //"tenforce/virtuoso");
 			DockerService service = client.get();
 			service.startAsync().awaitRunning();
 	

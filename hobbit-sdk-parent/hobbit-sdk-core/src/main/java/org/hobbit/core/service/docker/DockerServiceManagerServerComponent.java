@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -60,7 +61,7 @@ public class DockerServiceManagerServerComponent
 
 
     // The services created by this service manager
-    protected Map<String, DockerService> runningManagedServices = new LinkedHashMap<>();
+    protected Map<String, DockerService> runningManagedServices = Collections.synchronizedMap(new LinkedHashMap<>());
     //protected Set<Service> runningManagedServices = Sets.newIdentityHashSet();
 
     
@@ -121,7 +122,9 @@ public class DockerServiceManagerServerComponent
         builder.setImageName(imageName);
         builder.setLocalEnvironment(env);
 
-        DockerService service = builder.get();
+        
+        DockerService service;
+    	service = builder.get();
 
 
 
@@ -137,6 +140,11 @@ public class DockerServiceManagerServerComponent
 
             @Override
             public void failed(State from, Throwable failure) {
+            	// If the state was starting, we have not yet sent back a response to the dockerServiceClint
+            	if(State.STARTING.equals(from)) {
+                	idCallback.accept("fail:" + failure.toString());
+            	}
+            	
             	doTermination();
 
             	super.failed(from, failure);

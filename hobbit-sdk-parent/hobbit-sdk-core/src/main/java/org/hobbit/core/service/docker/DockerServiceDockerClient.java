@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.exceptions.ContainerNotFoundException;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerInfo;
@@ -62,9 +63,26 @@ public class DockerServiceDockerClient
 
     @Override
     protected void shutDown() throws Exception {
-        dockerClient.killContainer(containerId);
-        dockerClient.removeContainer(containerId);
+    	try {
+    		dockerClient.killContainer(containerId);
+    		dockerClient.removeContainer(containerId);
+    	} catch(Exception e) {
 
+    		boolean acceptableException = false;
+    		// Maybe the underlying container is already stopped or already terminated
+    		try {
+    			ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
+    			boolean isContainerStopped = !containerInfo.state().running();
+    			acceptableException = isContainerStopped;
+    		} catch(ContainerNotFoundException f) {
+    			acceptableException = true;
+    		}
+    		
+    		if(!acceptableException) {
+    			throw new RuntimeException(e);
+    		}
+    		
+    	}
         // Closing the docker client has to be done elsewhere
         //docker.close();
     }
@@ -85,8 +103,12 @@ public class DockerServiceDockerClient
         ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
         ContainerState containerState = containerInfo.state();
         if(!containerState.running()) {
-            throw new IllegalStateException("A docker container that should act as a service is no longer running. Container id = " + containerId);
+        	stopAsync();
         }
+//        if(!containerState.running()) {
+//            throw new IllegalStateException("A docker container that should act as a service is no longer running. Container id = " + containerId);
+//        }
+
     }
 
     @Override

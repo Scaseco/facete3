@@ -202,6 +202,10 @@ public class DockerServiceManagerClientComponent
 
         System.out.println("Client received response with docker id: " + result);
         
+        if(result.startsWith("fail:")) {
+        	throw new RuntimeException("Failed to start image [" + imageName + "] - server returned: " + result);
+        }
+        
         return result;
     }
 

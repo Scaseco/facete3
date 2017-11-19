@@ -6,10 +6,10 @@ import java.util.Map;
 
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
 import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.junit.Test;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.Banner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
@@ -24,8 +24,6 @@ public class TestDockerSpringBootAbstraction {
 			};
 		}
 	}
-
-	
 	
 	@Test
 	public void test() {
@@ -33,14 +31,20 @@ public class TestDockerSpringBootAbstraction {
         imageNameToClass.put("myApp", Context.class);
         
         DockerServiceFactory<?> serviceFactory = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(imageNameToClass,
-        		() -> new SpringApplicationBuilder()
-        );
+        		() -> new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF));
 
-        
-        DockerService service = serviceFactory.create("myApp", Collections.singletonMap("MSG", "World"));
-        service.startAsync().awaitRunning();
-        service.stopAsync().awaitTerminated();
-        
-        System.out.println("Service had id: " + service.getContainerId());
+        {
+	        DockerService service = serviceFactory.create("myApp", Collections.singletonMap("MSG", "World1"));
+	        service.startAsync().awaitRunning();
+	        service.stopAsync().awaitTerminated();        
+	        System.out.println("Service had id: " + service.getContainerId());
+        }
+
+        {
+	        DockerService service = serviceFactory.create("myApp", Collections.singletonMap("MSG", "World2"));
+	        service.startAsync().awaitRunning();
+	        service.stopAsync().awaitTerminated();        
+	        System.out.println("Service had id: " + service.getContainerId());
+        }
 	}
 }
