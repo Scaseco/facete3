@@ -193,7 +193,9 @@ public class DockerServiceManagerClientComponent
         // Not sure if this is a completable future or a subscriber
         //CompletableFuture<ByteBuffer> response = PublisherUtils.triggerOnMessage(responsePublisher, (x) -> true);
 
-            
+        
+        // IMPORTANT The response should come on a separate queue separate from the commandPub
+        
         CompletableFuture<ByteBuffer> response = requestToServer.apply(buffer);
         ByteBuffer responseBuffer;
         try {

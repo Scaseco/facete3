@@ -315,8 +315,8 @@ public class RabbitMqFlows {
 		    			.deliveryMode(2)
 		    			.build();
 
-				channel.basicPublish(replyTo, "", props, byteBuffer.array());
 				System.out.println("Publishing reply to " + replyTo);
+				channel.basicPublish(replyTo, "", props, byteBuffer.array());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

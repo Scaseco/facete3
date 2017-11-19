@@ -25,6 +25,7 @@ import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -51,17 +52,19 @@ public class TestDockerCommunication {
 	public static class CommonContext {
 		@Bean(destroyMethod="close")
 		public Connection connection(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
-			System.out.println("[STATUS] Creating connection from ConnectionFactory " + connectionFactory);
+//			System.out.println("[STATUS] Creating connection from ConnectionFactory " + connectionFactory);
 			Connection result = connectionFactory.newConnection();
-			result.addShutdownListener((t) -> { System.out.println("[STATUS] Closing connection from ConnectionFactory " + connectionFactory); });
+//			result.addShutdownListener((t) -> { System.out.println("[STATUS] Closing connection from ConnectionFactory " + connectionFactory); });
 			return result;
 		}
 
 		@Bean(destroyMethod="close")
 		public Channel channel(Connection connection) throws IOException {
-			System.out.println("[STATUS] Creating channel from Connection " + connection);
+//			System.out.println("[STATUS] Creating channel from Connection " + connection);
 			Channel result = connection.createChannel();
-			result.addShutdownListener((t) -> { System.out.println("[STATUS] Closing channel from Connection " + connection); });
+			result.addShutdownListener((t) -> {
+				System.out.println("[STATUS] Closing channel " + result + "[" + result.hashCode() + "] from Connection " + connection + " " + connection.hashCode());
+			});
 			return result;
 		}
 
@@ -128,23 +131,6 @@ public class TestDockerCommunication {
 		        return dockerServiceBuilder;
 	        };
 	        
-	        
-	        		//.getContainerConfigBuilder().exposedPorts(exposedPorts)
-	        		
-	        		//.setImageName("busybox");
-
-	        
-//	        dockerServiceBuilder.setImageName("tenforce/virtuoso");
-//	        DockerService dockerService = dockerServiceBuilder.get();
-//	        dockerService.startAsync().awaitRunning();
-//	        
-//	        System.out.println("Started: " + dockerService.getContainerId());
-	        
-//		        ContainerConfig.Builder containerConfigBuilder = ContainerConfig.builder()
-//		                .hostConfig(hostConfig);
-//		        	    .image("busybox").exposedPorts(ports)
-//		        	    .cmd("sh", "-c", "while :; do sleep 1; done")
-
 	        DockerServiceManagerServerComponent result =
 	        		new DockerServiceManagerServerComponent(
 	        				builderSupplier,
@@ -169,7 +155,7 @@ public class TestDockerCommunication {
 			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, null);
 		}
 
-		@Bean(initMethod="startUp")
+		@Bean(initMethod="startUp", destroyMethod="shutDown")
 		public DockerServiceBuilder<DockerService> dockerServiceManagerClient(
 				@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
 				@Qualifier("dockerServiceManagerClientConnection") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
@@ -186,84 +172,42 @@ public class TestDockerCommunication {
 			return result;
 		}
 	}
-	
-		
-	
-	
-//	@Bean
-//	public Flowable<ByteBuffer> commandPub(Connection connection) throws IOException, TimeoutException {
-//		return RabbitMqFlows.createFanoutReceiver(connection, commandExchange);
-//	}
-	
-//	@Bean
-//	@Scope("prototype")
-//	public Subscriber<ByteBuffer> commandChannel(Connection connection, @Qualifier("commandExchange") String commandExchange) throws IOException {
-//		return HobbitConfigChannelsPlatform.createFanoutSender(connection, commandExchange, null);
-//	}
-	
-	
 
-
-//	@Bean
-//	public Service rawDockerServiceManagerServer(@Qualifier("rawDockerServiceManagerServer") Service service) throws DockerCertificateException {
-//		service.startAsync().awai
-//		return service;
-//	}
-//	
-	
-	
-	
-	
+	public static class AppContext {
+		@Bean
+		public ApplicationRunner appRunner(DockerServiceBuilder<DockerService> client) {
+			return (args) -> {
+				client.setImageName("library/alpine"); 
+//				client.setImageName("tenforce/virtuoso");
+				DockerService service = client.get();
+				service.startAsync().awaitRunning();
 		
+				System.out.println("[STATUS] Service is running");
+				Thread.sleep(3000);
+				
+				System.out.println("[STATUS] Waiting for termination");
+				service.stopAsync().awaitTerminated();
+				System.out.println("[STATUS] Terminated");
+			};
+		}
+	}
+	
 	@Test
-	public void testDockerCommunication() throws InterruptedException {
+	public void testDockerCommunication() {
 		
 		// NOTE The broker shuts down when the context is closed
 		
-		ConfigurableApplicationContext tmpCtx = new SpringApplicationBuilder()
+		SpringApplicationBuilder builder = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)
 				.sources(ConfigGson.class)
 				.sources(ConfigRabbitMqConnectionFactory.class)
 					.child(ServerContext.class)
-					.sibling(ClientContext.class)
-				//.sources(TestDockerCommunication.class)
-				.run();
-		
-		
-		
-		//Broker broker = tmpCtx.getBean(Broker.class);
+					.sibling(ClientContext.class, AppContext.class);
 
-		
-		try(ConfigurableApplicationContext ctx = tmpCtx) {
-		
-			@SuppressWarnings("unchecked")
-			DockerServiceBuilder<DockerService> client = (DockerServiceBuilder<DockerService>) ctx.getBean("dockerServiceManagerClient");
-			client.setImageName("library/alpine"); 
-			client.setImageName("tenforce/virtuoso");
-			DockerService service = client.get();
-			service.startAsync().awaitRunning();
-	
-			System.out.println("[STATUS] Service is running");
-			Thread.sleep(3000);
-			
-			System.out.println("[STATUS] Waiting for termination");
-			service.stopAsync().awaitTerminated();
-			System.out.println("[STATUS] Terminated");
-
+		try(ConfigurableApplicationContext ctx = builder.run()) {
 		} catch(Exception e) {
 			System.out.println("[STATUS] Exception caught");
 			throw new RuntimeException(e);
-			//e.printStackTrace();
 		}
-//		finally {
-//			
-//			//System.out.println("Resting...");
-//			//Thread.sleep(5000);
-//			System.out.println("[STATUS] Shutting down broker");
-//			//broker.shutdown();
-//		}
-		
-		//System.out.println("Resting...");
-		//Thread.sleep(5000);
 	}
 }
