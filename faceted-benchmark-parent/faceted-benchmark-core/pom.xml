@@ -19,7 +19,7 @@
 
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>hobbit-sdk-qpid</artifactId>
+			<artifactId>hobbit-sdk-qpid7</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -1,6 +1,6 @@
-package org.hobbit.qpid.main;
+package org.hobbit.qpid.v7.main;
 
-import org.hobbit.qpid.config.ConfigQpidBroker;
+import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.springframework.boot.Banner;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

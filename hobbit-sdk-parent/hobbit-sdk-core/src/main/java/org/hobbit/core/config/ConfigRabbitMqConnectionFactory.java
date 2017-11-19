@@ -25,7 +25,7 @@ public class ConfigRabbitMqConnectionFactory {
         result.setVirtualHost("default");
         // attempt recovery every 10 seconds
         result.setNetworkRecoveryInterval(10000);
-                
+
         return result;
 	}
 

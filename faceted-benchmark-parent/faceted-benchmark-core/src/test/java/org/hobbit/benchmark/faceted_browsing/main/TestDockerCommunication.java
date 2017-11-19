@@ -11,7 +11,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.qpid.server.Broker;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
@@ -22,7 +21,7 @@ import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderDockerClient;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
-import org.hobbit.qpid.config.ConfigQpidBroker;
+import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -52,13 +51,18 @@ public class TestDockerCommunication {
 	public static class CommonContext {
 		@Bean(destroyMethod="close")
 		public Connection connection(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
+			System.out.println("[STATUS] Creating connection from ConnectionFactory " + connectionFactory);
 			Connection result = connectionFactory.newConnection();
+			result.addShutdownListener((t) -> { System.out.println("[STATUS] Closing connection from ConnectionFactory " + connectionFactory); });
 			return result;
 		}
 
 		@Bean(destroyMethod="close")
 		public Channel channel(Connection connection) throws IOException {
-			return connection.createChannel();
+			System.out.println("[STATUS] Creating channel from Connection " + connection);
+			Channel result = connection.createChannel();
+			result.addShutdownListener((t) -> { System.out.println("[STATUS] Closing channel from Connection " + connection); });
+			return result;
 		}
 
 		@Bean
@@ -213,6 +217,9 @@ public class TestDockerCommunication {
 		
 	@Test
 	public void testDockerCommunication() throws InterruptedException {
+		
+		// NOTE The broker shuts down when the context is closed
+		
 		ConfigurableApplicationContext tmpCtx = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)
 				.sources(ConfigGson.class)
@@ -224,32 +231,37 @@ public class TestDockerCommunication {
 		
 		
 		
-		Broker broker = tmpCtx.getBean(Broker.class);
+		//Broker broker = tmpCtx.getBean(Broker.class);
 
 		
 		try(ConfigurableApplicationContext ctx = tmpCtx) {
 		
+			@SuppressWarnings("unchecked")
 			DockerServiceBuilder<DockerService> client = (DockerServiceBuilder<DockerService>) ctx.getBean("dockerServiceManagerClient");
-			client.setImageName("library/alpine"); //"tenforce/virtuoso");
+			client.setImageName("library/alpine"); 
+			client.setImageName("tenforce/virtuoso");
 			DockerService service = client.get();
 			service.startAsync().awaitRunning();
 	
 			System.out.println("[STATUS] Service is running");
-	
+			Thread.sleep(3000);
+			
 			System.out.println("[STATUS] Waiting for termination");
 			service.stopAsync().awaitTerminated();
 			System.out.println("[STATUS] Terminated");
 
 		} catch(Exception e) {
 			System.out.println("[STATUS] Exception caught");
-			e.printStackTrace();
-		} finally {
-			
-			//System.out.println("Resting...");
-			//Thread.sleep(5000);
-			System.out.println("[STATUS] Shutting down broker");
-			broker.shutdown();
+			throw new RuntimeException(e);
+			//e.printStackTrace();
 		}
+//		finally {
+//			
+//			//System.out.println("Resting...");
+//			//Thread.sleep(5000);
+//			System.out.println("[STATUS] Shutting down broker");
+//			//broker.shutdown();
+//		}
 		
 		//System.out.println("Resting...");
 		//Thread.sleep(5000);

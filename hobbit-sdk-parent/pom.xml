@@ -23,7 +23,8 @@
 	<modules>
 		<module>hobbit-sdk-core</module>
 		<module>hobbit-sdk-rdf</module>
-		<module>hobbit-sdk-qpid</module>
+		<module>hobbit-sdk-qpid6</module>
+		<module>hobbit-sdk-qpid7</module>
 
 		<!-- <module>hobbit-platform-sdk</module> -->
 	</modules>
@@ -55,26 +56,26 @@
 				<version>2.8.8</version>
 			</dependency>
 
-                        <dependency>
-                                <groupId>com.fasterxml.jackson.core</groupId>
-                                <artifactId>jackson-databind</artifactId>
-                                <version>2.8.8</version>
-                        </dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>2.8.8</version>
+			</dependency>
 
 
-                        <dependency>
-                                <groupId>com.fasterxml.jackson.core</groupId>
-                                <artifactId>jackson-annotations</artifactId>
-                                <version>2.8.8</version>
-                        </dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>2.8.8</version>
+			</dependency>
 
 
 
-                <dependency>
-                        <groupId>io.reactivex.rxjava2</groupId>
-                        <artifactId>rxjava</artifactId>
-                        <version>2.1.3</version>
-                </dependency>
+			<dependency>
+				<groupId>io.reactivex.rxjava2</groupId>
+				<artifactId>rxjava</artifactId>
+				<version>2.1.3</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>
@@ -93,13 +94,10 @@
 				<artifactId>hobbit-sdk-rdf</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-
-			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>hobbit-sdk-qpid</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-
+			<!-- <dependency> <groupId>org.hobbit</groupId> <artifactId>hobbit-sdk-qpid6</artifactId> 
+				<version>${project.version}</version> </dependency> <dependency> <groupId>org.hobbit</groupId> 
+				<artifactId>hobbit-sdk-qpid7</artifactId> <version>${project.version}</version> 
+				</dependency> -->
 			<dependency>
 				<groupId>org.ini4j</groupId>
 				<artifactId>ini4j</artifactId>
@@ -131,18 +129,8 @@
 			<!-- </dependency> -->
 
 
-			<dependency>
-				<groupId>org.apache.qpid</groupId>
-				<artifactId>qpid-broker</artifactId>
-				<version>6.1.4</version>
-				<!-- <exclusions> -->
-				<!-- <exclusion> -->
-				<!-- <groupId>ch.qos.logback</groupId> -->
-				<!-- <artifactId>logback-classic</artifactId> -->
-				<!-- </exclusion> -->
-				<!-- </exclusions> -->
-			</dependency>
-
+			<!-- <dependency> <groupId>org.apache.qpid</groupId> <artifactId>qpid-broker</artifactId> 
+				<version>6.1.4</version> <! - - <version>7.0.0</version> - - > </dependency> -->
 
 			<dependency>
 				<groupId>com.spotify</groupId>

@@ -606,16 +606,17 @@ public class RabbitMqFlows {
     		coreConsumer.accept(msg);
     	};
 
-    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> {
-    		channel.close();
-    		return 0;
-    	});
+    	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> 0);
+//    		channel.close();
+//    		return 0;
+//    	});
 
     	Flowable<ByteBuffer> flowable = createFlowableForChannel(channel, responseQueueName, channel).map(SimpleReplyableMessage::getValue);
     	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> result = new SimpleEntry<>(subscriber, flowable);
     	
     	return result;
     }
+
     public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
     	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, transformer);
     	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry);

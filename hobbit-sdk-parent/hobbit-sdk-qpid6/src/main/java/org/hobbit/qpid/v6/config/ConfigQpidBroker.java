@@ -1,4 +1,4 @@
-package org.hobbit.qpid.config;
+package org.hobbit.qpid.v6.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class ConfigQpidBroker {
 	public Broker broker() throws Exception {
         String amqpInitialConfigUrl = ConfigQpidBroker.getResourceAsFile(new ClassPathResource("amqp-initial-config.json"), "amqp-config-", ".json").getAbsoluteFile().toURI().toURL().toString();
 
-	    Broker broker = new Broker();
+        Broker broker = new Broker();
 	    BrokerOptions brokerOptions = new BrokerOptions();
 
 //	    brokerOptions.setConfigProperty('qpid.amqp_port',"${amqpPort}")

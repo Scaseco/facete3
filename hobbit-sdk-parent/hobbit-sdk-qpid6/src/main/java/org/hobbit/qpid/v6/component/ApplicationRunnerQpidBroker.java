@@ -1,4 +1,4 @@
-package org.hobbit.qpid.component;
+package org.hobbit.qpid.v6.component;
 
 import javax.inject.Inject;
 
