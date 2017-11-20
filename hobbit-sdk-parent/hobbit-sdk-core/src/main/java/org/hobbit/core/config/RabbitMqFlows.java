@@ -27,6 +27,8 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.processors.PublishProcessor;
 import io.reactivex.subscribers.DefaultSubscriber;
 
 public class RabbitMqFlows {
@@ -114,6 +116,12 @@ public class RabbitMqFlows {
     }
 
     
+    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
+    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, transformer);
+    	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry.getKey(), entry.getValue());
+    	
+    	return result;
+    }
     
     /**
      * Creates a flowable that for each subscriber
@@ -236,14 +244,14 @@ public class RabbitMqFlows {
 		    			.build();
 
 				tmpChannel.basicPublish(replyTo, "", props, byteBuffer.array());
-				System.out.println("Publishing reply to " + replyTo);
+				System.out.println("[STATUS] Publishing reply to " + replyTo);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			} finally {
 				try {
 					if(tmpChannel != null) {
 						//tmpChannel.waitForConfirms();
-						System.out.println("Closing reply channel " + tmpChannel + " isOpen=" + tmpChannel.isOpen());
+						System.out.println("[STATUS] Closing reply channel " + tmpChannel + " isOpen=" + tmpChannel.isOpen());
 						tmpChannel.close();
 					}
 				} catch (IOException | TimeoutException e) {
@@ -444,12 +452,22 @@ public class RabbitMqFlows {
     }
 
 
+    /**
+     * Useful for the server side of an RPC pattern:
+     * - Creates a new queue, binds it to a (possibly existing) (fanout) exchange, and
+     *   returns a flow of messages, which support to send a reply
+     * 
+     * @param channel
+     * @param exchangeName
+     * @return
+     * @throws IOException
+     */
     public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName) throws IOException {
         String queueName = channel.queueDeclare().getQueue();
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
         channel.queueBind(queueName, exchangeName, "");
 
-        Flowable<SimpleReplyableMessage<ByteBuffer>> flowable = createFlowableForChannel(channel, queueName, channel);
+        Flowable<SimpleReplyableMessage<ByteBuffer>> flowable = createFlowableForQueue(channel, queueName, channel);
   	
         return flowable;
     }
@@ -503,7 +521,7 @@ public class RabbitMqFlows {
 		    			.deliveryMode(2)
 		    			.build();
 
-				System.out.println("Publishing reply to " + replyTo);
+				System.out.println("[STATUS] Publishing reply to " + replyTo);
 				channel.basicPublish(replyTo, "", props, byteBuffer.array());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -513,6 +531,45 @@ public class RabbitMqFlows {
 		return result;
     }
     
+    
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Channel channel, String queueName, Channel responseChannel) throws IOException {
+    	PublishProcessor<SimpleReplyableMessage<ByteBuffer>> result = PublishProcessor.create();
+		
+    	ShutdownListener shutdownListener = (throwable) -> {
+    		System.out.println("[STATUS] Channel is closing; completing flow");
+    		if(throwable != null) {
+    			result.onError(throwable);
+    		}
+    		result.onComplete();
+    	};
+
+    	result.doOnCancel(() -> channel.removeShutdownListener(shutdownListener));
+    	
+
+    	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
+    		@Override
+    		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+    				throws IOException {
+				String replyTo = properties.getReplyTo();
+				
+				Consumer<ByteBuffer> reply = createReplyToConsumer(responseChannel, replyTo);
+				
+				
+				//System.out.println("Received message from queue " + queueName);
+		    	ByteBuffer buffer = ByteBuffer.wrap(body);
+		    	
+		    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buffer, reply);
+		    	
+		    	//result.onSubscribe();
+		    	
+		    	//result.onNext(buffer);
+		    	System.out.println("[STATUS] Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+		    	result.onNext(msg);
+		    }	        		
+    	});
+
+    	return result.onBackpressureLatest(); //.publish().publish();
+    }
     /**
      * Creates a flowable which re-publishes all messages received from a queue on a given channel,
      * and supports sending replies via a given response channel.
@@ -526,7 +583,7 @@ public class RabbitMqFlows {
      * @return
      * @throws IOException 
      */
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForChannel(Channel channel, String queueName, Channel responseChannel) throws IOException {
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForChannelOld(Channel channel, String queueName, Channel responseChannel) throws IOException {
     	Flowable<SimpleReplyableMessage<ByteBuffer>> result = Flowable.create(new FlowableOnSubscribe<SimpleReplyableMessage<ByteBuffer>>() {
 	        @Override
 	        public void subscribe(final FlowableEmitter<SimpleReplyableMessage<ByteBuffer>> emitter) throws Exception {
@@ -536,10 +593,10 @@ public class RabbitMqFlows {
 	        			emitter.onError(throwable);
 	        		}
 	        		emitter.onComplete();
-	        		//channel.removeShutdownListener(shutdownListener);
 	        	};
 	        	
-	        	
+	        	emitter.setCancellable(() -> channel.removeShutdownListener(shutdownListener));
+
 //	        	System.out.println("Created channel " + channel + " for queue " + queueName + " connIsOpen=" + connection.isOpen());
 	        	
 	        	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
@@ -559,15 +616,12 @@ public class RabbitMqFlows {
 	    		    	//result.onSubscribe();
 	    		    	
 	    		    	//result.onNext(buffer);
+	    		    	System.out.println("[STATUS] Emitting item to flow of queue " + queueName);
 	    		    	emitter.onNext(msg);
 	    		    }	        		
 	        	});
-
-	        	emitter.setCancellable(() -> {
-	        		channel.removeShutdownListener(shutdownListener);
-	        	});
 	        }
-	    }, BackpressureStrategy.BUFFER);   
+	    }, BackpressureStrategy.LATEST);   
     	
     	
     	
@@ -613,7 +667,7 @@ public class RabbitMqFlows {
     public static Consumer<ByteBuffer> wrapPublishAsConsumer(Channel channel, String exchangeName, String routingKey, BasicProperties properties) {
     	Consumer<ByteBuffer> result = (buffer) -> {
     		try {
-    			System.out.println("Publishing on channel " + channel + " isOpen=" + channel.isOpen());
+    			System.out.println("[STATUS] Publishing on channel " + channel + " exchange=" + exchangeName + " routingKey=" + routingKey + " replyTo=" + properties.getReplyTo() + " isOpen=" + channel.isOpen());
     	    	channel.basicPublish(exchangeName, routingKey, properties, buffer.array());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -624,19 +678,23 @@ public class RabbitMqFlows {
     }
     
 
+    /**
+     * Useful for the client side of an RPC pattern.
+     * Creates a new queue for server responses.
+     * Also declares the exchange.
+     * 
+     * 
+     * @param channel
+     * @param exchangeName
+     * @param transformer
+     * @return
+     * @throws IOException
+     * @throws TimeoutException
+     */
     public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(Channel channel, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-//    	Channel channel = connection.createChannel();
-
-//    	Channel responseChannel = connection.createChannel();
-//    	String responseQueueName = responseChannel.queueDeclare().getQueue();
-    	
-    	//String responseQueueName = allocateDefaultQueueName(connection);
-    	//Function<Channel, String> responseQueueDeclare = createDefaultQueueDeclare(responseQueueName, exchangeName);
-   	
-    	
-		String responseQueueName = channel.queueDeclare().getQueue();
+		
+    	String responseQueueName = channel.queueDeclare().getQueue();		
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
-        //channel.queueBind(responseQueueName, exchangeName, "");
 
     	
     	BasicProperties properties = new BasicProperties.Builder()
@@ -652,58 +710,55 @@ public class RabbitMqFlows {
 
     	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> 0);
 
-    	Flowable<ByteBuffer> flowable = createFlowableForChannel(channel, responseQueueName, channel).map(SimpleReplyableMessage::getValue);
+    	Flowable<ByteBuffer> flowable = createFlowableForQueue(channel, responseQueueName, channel).map(SimpleReplyableMessage::getValue);
     	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> result = new SimpleEntry<>(subscriber, flowable);
     	
     	return result;
     }
 
-    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, transformer);
-    	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry);
-    	
-    	return result;
-    }
-
+    /**
+     * Useful for the client side of an RPC pattern. See {@link createReplyableFanoutSenderCore} for details.
+     * 
+     * @param channel
+     * @param exchangeName
+     * @param transformer
+     * @return
+     * @throws IOException
+     * @throws TimeoutException
+     */
     public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Channel channel, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
     	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(channel, exchangeName, transformer);
-    	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry);
+    	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry.getKey(), entry.getValue());
     	
     	return result;
     }
     
-    public static <T> Function<T, CompletableFuture<T>> wrapAsFunction(Entry<Subscriber<T>, Flowable<T>> entry) {
-    	Subscriber<T> subscriber = entry.getKey();
-    	Flowable<T> flowable = entry.getValue();
-    	Function<T, CompletableFuture<T>> result = wrapAsFunction(subscriber, flowable);
-
-    	return result;
-    }
 
     public static <I, O> Function<I, CompletableFuture<O>> wrapAsFunction(Subscriber<I> subscriber, Flowable<O> flowable) {
-    	Function<I, CompletableFuture<O>> result = t -> {
-    		
-    		// Send request
-    		subscriber.onNext(t);
+		flowable.doOnEach(x -> System.out.println("[STATUS] SAW AN ITEM ON THE RESPONSE QUEUE"));
 
-    		// Await response
-    		System.out.println("Awaiting response");
-    		O r = flowable.blockingFirst();
-    		System.out.println("Got response: " + r);
+		Function<I, CompletableFuture<O>> result = t -> {
+    		CompletableFuture<O> tmp = new CompletableFuture<>();
+
+    		System.out.println("[STATUS] About to listen on flow " + flowable);
     		
-    		
-    		
-    		// TODO properly create the completable future
-    		//O r = flowable.timeout(60, TimeUnit.SECONDS).blockingFirst();
-    		//O r = flowable.blockingNext();
-    		
-//    		CompletableFuture<O> tmp = new CompletableFuture<>();
-//    		flowable.doOnNext(r -> {
-//    			System.out.println("Got response object; resolving future");
-//    			tmp.complete(r);
-//    		});
-    		
-    		CompletableFuture<O> tmp = CompletableFuture.completedFuture(r);
+    		try {
+    			Disposable disposable = flowable.subscribe(
+    					tmp::complete,
+    					tmp::completeExceptionally,
+    					() -> tmp.completeExceptionally(new RuntimeException("flowable completed but a response was expecetd")));
+
+    			System.out.println("[STATUS] Waiting for function reply"); // hasSubscribers=" + foo.hasSubscribers());
+    			tmp.whenComplete((v, th) -> {
+    				System.out.println("[STATUS] Got the reply");
+    				disposable.dispose();
+    				tmp.complete(v);
+    			});
+
+	    		subscriber.onNext(t);
+    		} catch(Exception e) {
+    			tmp.completeExceptionally(e);
+    		}
     		return tmp;
     	};
     	

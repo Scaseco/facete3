@@ -49,7 +49,7 @@ public class ConfigQpidBroker {
 
 		return result;
 	}
-
+	
 	@Bean(destroyMethod = "shutdown")
 	public SystemLauncher broker() throws Exception {
 		String amqpInitialConfigUrl = ConfigQpidBroker

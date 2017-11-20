@@ -12,6 +12,8 @@ import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerInfo;
 import com.spotify.docker.client.messages.ContainerState;
+import com.spotify.docker.client.messages.NetworkConfig;
+import com.spotify.docker.client.messages.NetworkCreation;
 
 /**
  * A DockerService backed by spotify's docker client
@@ -38,6 +40,8 @@ public class DockerServiceDockerClient
     // Container id (requires the service to be running)
     protected String containerId;
 
+    protected String containerName;
+    
     public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig) {
         super();
         this.dockerClient = dockerClient;
@@ -52,6 +56,17 @@ public class DockerServiceDockerClient
         // Start container
         dockerClient.startContainer(containerId);
 
+        
+        ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
+        containerName = containerInfo.name();
+
+        
+        // Remove leading '/'
+        containerName = containerName.startsWith("/") ? containerName.substring(1) : containerName;
+        
+        //NetworkCreation x = dockerClient.createNetwork(NetworkConfig.builder().name(containerName).build());
+        //dockerClient.connectToNetwork(containerId, containerName);
+        
         // Exec command inside running container with attached STDOUT and STDERR
 //        String[] command = null; //{"bash", "-c", "ls"};
 //        ExecCreation execCreation = dockerClient.execCreate(
@@ -95,7 +110,8 @@ public class DockerServiceDockerClient
 
     @Override
     public String getContainerId() {
-        return containerId;
+        //return containerId;
+    	return containerName;
     }
 
     @Override

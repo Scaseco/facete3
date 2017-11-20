@@ -21,6 +21,12 @@ public class SimpleReplyableMessageImpl<T>
 	
 	@Override
 	public void reply(T value) {
+		System.out.println("[STATUS] Sending reply");
 		replyer.accept(value);
 	}
+	
+	@Override
+	public Consumer<T> getReplyConsumer() {
+		return replyer;
+	}	
 }

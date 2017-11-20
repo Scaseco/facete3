@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.main;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class TestDockerCommunication {
 	protected static final String commandExchange = Constants.HOBBIT_COMMAND_EXCHANGE_NAME;
 
 	public static class CommonContext {
-		@Bean(destroyMethod="close")
+		@Bean
 		public Connection connection(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
 //			System.out.println("[STATUS] Creating connection from ConnectionFactory " + connectionFactory);
 			Connection result = connectionFactory.newConnection();
@@ -86,6 +87,7 @@ public class TestDockerCommunication {
 		@Bean
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Channel channel) throws IOException, TimeoutException {
 			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange);
+					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
 		}
 
 		@Bean
@@ -168,7 +170,7 @@ public class TestDockerCommunication {
 							gson
 					);
 			
-			result.startUp();
+			//result.startUp();
 			return result;
 		}
 	}
@@ -177,13 +179,14 @@ public class TestDockerCommunication {
 		@Bean
 		public ApplicationRunner appRunner(DockerServiceBuilder<DockerService> client) {
 			return (args) -> {
-				client.setImageName("library/alpine"); 
-//				client.setImageName("tenforce/virtuoso");
+				//client.setImageName("library/alpine"); 
+				client.setImageName("tenforce/virtuoso");
 				DockerService service = client.get();
 				service.startAsync().awaitRunning();
 		
-				System.out.println("[STATUS] Service is running");
-				Thread.sleep(3000);
+				System.out.println("[STATUS] Service is running: " + service.getContainerId());
+				
+				//Thread.sleep(600000);
 				
 				System.out.println("[STATUS] Waiting for termination");
 				service.stopAsync().awaitTerminated();
