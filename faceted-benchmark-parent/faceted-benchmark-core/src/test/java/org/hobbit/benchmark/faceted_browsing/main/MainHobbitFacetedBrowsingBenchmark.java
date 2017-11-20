@@ -2,7 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitFacetedBenchmarkLocalServiceMapping;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
 import org.hobbit.core.config.HobbitConfigChannelsPlatform;
 import org.hobbit.core.config.ConfigGson;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -21,7 +21,7 @@ public class MainHobbitFacetedBrowsingBenchmark {
         new SpringApplicationBuilder()
     		.sources(ConfigGson.class)
     		.sources(ConfigEncodersFacetedBrowsing.class)
-        	.sources(ConfigHobbitFacetedBenchmarkLocalServiceMapping.class)
+        	.sources(ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class)
         	.sources(HobbitConfigChannelsPlatform.class)
         	.sources(ConfigHobbitLocalServices.class)
         	.bannerMode(Banner.Mode.OFF)

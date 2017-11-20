@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitFacetedBenchmarkLocalServiceMapping;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
 import org.hobbit.core.Commands;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.config.HobbitConfigChannelsLocal;
@@ -38,7 +38,7 @@ public class MainHobbitFacetedeBrowsingBenchmarkLocal {
     	
     	
         try(AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
-                ConfigHobbitFacetedBenchmarkLocalServiceMapping.class,
+                ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class,
                 HobbitConfigChannelsLocal.class,
                 ConfigHobbitLocalServices.class)) {
 

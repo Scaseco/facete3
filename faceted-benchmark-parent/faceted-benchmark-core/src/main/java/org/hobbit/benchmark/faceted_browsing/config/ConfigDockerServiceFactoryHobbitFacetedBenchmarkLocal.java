@@ -11,13 +11,14 @@ import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.Banner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.util.concurrent.Service;
 
 
-public class ConfigHobbitFacetedBenchmarkLocalServiceMapping {
+public class ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal {
 
 	
     @Bean
@@ -30,7 +31,7 @@ public class ConfigHobbitFacetedBenchmarkLocalServiceMapping {
 
         
         DockerServiceFactory<?> result = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(imageNameToClass,
-        		() -> new SpringApplicationBuilder()
+        		() -> new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF)
         );
         
 //        Docker
