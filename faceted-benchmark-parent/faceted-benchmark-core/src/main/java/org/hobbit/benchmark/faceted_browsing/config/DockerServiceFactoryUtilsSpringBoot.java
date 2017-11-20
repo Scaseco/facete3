@@ -1,10 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.io.Closeable;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -12,9 +10,6 @@ import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.core.env.StandardEnvironment;
 
 public class DockerServiceFactoryUtilsSpringBoot {
 	/**
@@ -26,22 +21,27 @@ public class DockerServiceFactoryUtilsSpringBoot {
 	 * @param baseAppBuilder
 	 * @return
 	 */
-	public static DockerServiceFactory<?> createDockerServiceFactoryForBootstrap(Map<String, Class<?>> imageNameToClass, Supplier<SpringApplicationBuilder> baseAppBuilder) {
+	public static DockerServiceFactory<?> createDockerServiceFactoryForBootstrap(Map<String, Supplier<SpringApplicationBuilder>> imageNameToApplicationBuilderSupplier) {
 
 		DockerServiceFactory<DockerService> result = new DockerServiceFactoryGeneric<
-					Class<?>,
-					Entry<Map<String, String>, SpringApplicationBuilder>,
+					Supplier<SpringApplicationBuilder>,
+					Entry<Map<String, String>, Supplier<SpringApplicationBuilder>>,
 					ConfigurableApplicationContext>
 			(					
-				imageNameToClass,
-				(env, clazz) -> new SimpleEntry<>(env, baseAppBuilder.get().sources(clazz)),
+					imageNameToApplicationBuilderSupplier,
+				(env, appBuilderSupplier) -> new SimpleEntry<>(env, appBuilderSupplier),
 				e -> {
 					Map<String, Object> env = e.getKey().entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> (Object)x.getValue()));
-					
-					ConfigurableEnvironment cenv = new StandardEnvironment();
-					cenv.getPropertySources().addFirst(new MapPropertySource("myPropertySource", env));
 
-					ConfigurableApplicationContext r = e.getValue().environment(cenv).build().run();
+					SpringApplicationBuilder appBuilder = e.getValue().get()
+						.properties(env);
+						
+//					
+//					ConfigurableEnvironment cenv = new StandardEnvironment();
+//					cenv.getPropertySources().addFirst(new MapPropertySource("myPropertySource", env));
+
+					
+					ConfigurableApplicationContext r = appBuilder.run();
 					return r;
 				},
 				(appBuilder, ctx) -> { if(ctx != null) try { ctx.close(); } catch(Exception e) { throw new RuntimeException(e); } }

@@ -2,46 +2,48 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
+import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.Constants;
+import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
+import org.hobbit.core.component.DefaultEvaluationStorage;
+import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
-import org.hobbit.core.service.docker.DockerServiceBuilderDockerClient;
+import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
+import org.hobbit.rdf.component.SystemAdapterRDFConnection;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.HostConfig;
-import com.spotify.docker.client.messages.PortBinding;
 
 import io.reactivex.Flowable;
 
@@ -167,19 +169,17 @@ public class TestBenchmark {
 			@Qualifier("dockerServiceManagerServerConnection") Flowable<SimpleReplyableMessage<ByteBuffer>> requestsFromClients,
 			Gson gson
 		) throws DockerCertificateException {
-			
-	        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
-
 	        
 	        // Create a supplier that yields preconfigured builders
 	        Supplier<DockerServiceBuilder<? extends DockerService>> builderSupplier = () -> {
-	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient();
-
-		        dockerServiceBuilder
-		        		.setDockerClient(dockerClient)
-		        		.setContainerConfigBuilder(containerConfigBuilder);
-		        
-		        return dockerServiceBuilder;
+//	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient();
+//
+//		        dockerServiceBuilder
+//		        		.setDockerClient(dockerClient)
+//		        		.setContainerConfigBuilder(containerConfigBuilder);
+//		        
+//		        return dockerServiceBuilder;
+	        	return null;
 	        };
 	        
 	        DockerServiceManagerServerComponent result =
@@ -386,16 +386,73 @@ public class TestBenchmark {
 	}
 	
 	
+	public static class BenchmarkLauncher {
+		@Bean
+		public ApplicationRunner benchmarkLauncher(DockerServiceFactory<?> dockerServiceFactory) {
+			return args -> {
+				
+				// Launch the system adapter
+				dockerServiceFactory.create("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image",
+						ImmutableMap.<String, String>builder().build());
+				
+				
+				// Launch the benchmark
+				dockerServiceFactory.create("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image",
+						ImmutableMap.<String, String>builder().build());
+			};
+		}
+	}
+	
 	@Test
 	public void testBenchmark() {
+
+		Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
+				.sources(ConfigRabbitMqConnectionFactory.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
+				
+		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
+				.sources(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
+		
+		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
+				.sources(ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
+		
+		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
+				.sources(ConfigTaskGenerator.class, TaskGeneratorFacetedBenchmark.class);
+
+		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
+				.sources(ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
+			
+		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
+				.sources(ConfigEvaluationModule.class, DefaultEvaluationStorage.class);
+
+		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
+				.sources(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class);
+
+		
+		Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
+        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
+		
+        map.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
+        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
+        map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
+        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
+
+        // NOTE The sa is started by the platform
+        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
+		
+        // Configure the docker server component
+        
+		DockerServiceFactory<?> dockerServiceFactory = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(map);
+		
+		
+		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
-				// Add the amqp broker
-				.sources(ConfigQpidBroker.class)
-					.child(ConfigRabbitMqConnectionFactory.class)
-						// Connect the docker service factory to the amqp infrastructure 
-						.child(ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceManagerServiceComponent.class) // Connect the local docker service factory to the rabbit mq channels
-						// Add the benchmark component
-						.sibling(ConfigBenchmarkControllerChannels.class, ConfigDockerServiceManagerClientComponent.class, ConfigHobbitFacetedBenchmarkController.class);
+//				// Add the amqp broker and the DockerServiceMangagerServerComponent
+				.sources(ConfigQpidBroker.class, ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, DockerServiceManagerServerComponent.class);
+//					.child(ConfigRabbitMqConnectionFactory.class)
+//						// Connect the docker service factory to the amqp infrastructure 
+//						.child(ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceManagerServiceComponent.class) // Connect the local docker service factory to the rabbit mq channels
+//						// Add the benchmark component
+//						.sibling(ConfigBenchmarkControllerChannels.class, ConfigDockerServiceManagerClientComponent.class, ConfigHobbitFacetedBenchmarkController.class);
 
 		try(ConfigurableApplicationContext ctx = builder.run()) {}
 
