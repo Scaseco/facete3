@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.component;
+package org.hobbit.benchmark.faceted_browsing.config;
 
 import java.util.function.Supplier;
 
@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.Service;
  *
  */
 @Configuration
-public class HobbitConfigBenchmarkFacetedBrowsing {
+public class ConfigBenchmarkControllerFacetedBrowsingServices {
     // It is valid to have dependencies in a configuration class:
     // Section "Working with externalized values" in
     // https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/Configuration.html

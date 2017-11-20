@@ -15,6 +15,11 @@ public class SimpleReplyableMessageImpl<T>
 	}
 
 	@Override
+	public T get() {
+		return value;
+	}
+	
+	@Override
 	public T getValue() {
 		return value;
 	}

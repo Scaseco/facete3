@@ -123,6 +123,8 @@ public class RabbitMqFlows {
     	return result;
     }
     
+    //public static r
+    
     /**
      * Creates a flowable that for each subscriber
      * allocates a new channel and queue that listens on the given exchange.
@@ -766,5 +768,42 @@ public class RabbitMqFlows {
     }
 
 
+    public static Flowable<ByteBuffer> createDataReceiver(Channel channel, String queueName) throws IOException, TimeoutException {
+
+//    	Channel channel = connection.createChannel();
+//    	channel.queueDeclare(queueName, false, false, true, null);
+//    	channel.close();
+
+//    	Function<Channel, String> queueDeclare = (ch) -> {
+//        	try {
+//				ch.queueDeclare(queueName, false, false, true, null);
+//			} catch (IOException e) {
+//				throw new RuntimeException(e);
+//			}
+//        	return queueName;
+//    	};
+
+		channel.queueDeclare(queueName, false, false, true, null);
+    	Flowable<ByteBuffer> flowable = RabbitMqFlows.createFlowableForQueue(channel, queueName, channel).map(SimpleReplyableMessage::getValue);
+
+    	return flowable;
+    }
+
+    public static Subscriber<ByteBuffer> createDataSender(Channel channel, String queueName) throws IOException {
+
+    	channel.queueDeclare(queueName, false, false, true, null);
+
+    	BasicProperties properties = new BasicProperties.Builder()
+    			.deliveryMode(2)
+    			.build();
+
+    	Consumer<ByteBuffer> coreConsumer = RabbitMqFlows.wrapPublishAsConsumer(channel, "", queueName, properties);
+    	Subscriber<ByteBuffer> subscriber = RabbitMqFlows.wrapPublishAsSubscriber(coreConsumer, () -> {
+    		channel.close();
+    		return 0;
+    	});
+    	
+    	return subscriber;
+    }
 }
 
