@@ -47,8 +47,10 @@ import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
 import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
+import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnection;
+import org.hobbit.service.podigg.PodiggWrapper;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -264,7 +266,7 @@ public class TestBenchmark {
 		}
 		
 	    @Bean
-	    public Subscriber<ByteBuffer> dg2tg(@Qualifier("dg2tgChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> dg2tgSender(@Qualifier("dg2tgChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 	    }
 
@@ -275,8 +277,17 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> dg2sa(@Qualifier("dg2saChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> dg2saSender(@Qualifier("dg2saChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
+	    }
+
+	}
+	
+	
+	public static class ConfigDataGeneratorFacetedBrowsing {
+	    @Bean
+	    public TripleStreamSupplier dataGenerationMethod() {
+	        return () -> PodiggWrapper.test();
 	    }
 
 	}
@@ -529,7 +540,7 @@ public class TestBenchmark {
 	    @Bean
 	    public TaskGeneratorModule taskGeneratorModule() {
 	    	return new TaskGeneratorModuleFacetedBrowsing();
-	    }
+	    }	    
 	}
 
 	// Configuration for the worker of the system adapter
@@ -558,7 +569,7 @@ public class TestBenchmark {
 					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
 			
 			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
+					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
 			
 			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class, TaskGeneratorFacetedBenchmark.class);

@@ -19,6 +19,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 import org.aksw.commons.collections.utils.StreamUtils;
@@ -51,16 +53,16 @@ public class DataGeneratorFacetedBrowsing
 
     protected int batchSize = 10000;
 
-    @Resource(name="commandChannel")
+    @Resource(name="commandSender")
     protected Subscriber<ByteBuffer> commandChannel;
 
     @Resource
     protected TripleStreamSupplier tripleStreamSupplier;
 
-    @Resource(name="dg2tg")
+    @Resource(name="dg2tgSender")
     protected Subscriber<ByteBuffer> toTaskGenerator;
 
-    @Resource(name="dg2sa")
+    @Resource(name="dg2saSender")
     protected Subscriber<ByteBuffer> toSystemAdatper;
 
 
@@ -68,10 +70,14 @@ public class DataGeneratorFacetedBrowsing
     protected CompletableFuture<ByteBuffer> startSignalFuture;
 
 
+    @PostConstruct
     @Override
     public void startUp() {
         try { init(); } catch(Exception e) { throw new RuntimeException(e); }
     }
+
+    
+    @PreDestroy
     @Override
     public void shutDown() {
         try { close(); } catch(Exception e) { throw new RuntimeException(e); }
@@ -109,6 +115,9 @@ public class DataGeneratorFacetedBrowsing
         }
         
         commandChannel.onNext(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
+        
+        
+        run();
     }
 
     @Override

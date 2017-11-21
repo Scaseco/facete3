@@ -33,6 +33,14 @@ import org.springframework.util.FileCopyUtils;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
+/**
+ * 
+ * 
+ * Note: The life cycle of this worker is managed by the TaskGeneratorComponent
+ * 
+ * @author raven Nov 21, 2017
+ *
+ */
 public class TaskGeneratorModuleFacetedBrowsing
 	implements TaskGeneratorModule
 {
@@ -46,20 +54,20 @@ public class TaskGeneratorModuleFacetedBrowsing
     
     protected transient ServiceManager serviceManager;
     
-    @PostConstruct
+    //@PostConstruct
 	@Override
 	public void startUp() throws Exception {
         Set<Service> services = Sets.newIdentityHashSet();
         services.addAll(Arrays.asList(sparqlService));
 
-        ServiceManager serviceManager = new ServiceManager(services);
+        serviceManager = new ServiceManager(services);
         
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
 	}
 
 
-    @PreDestroy
+    //@PreDestroy
 	@Override
 	public void shutDown() throws Exception {
         logger.debug("Stopping preparation sparql service");
