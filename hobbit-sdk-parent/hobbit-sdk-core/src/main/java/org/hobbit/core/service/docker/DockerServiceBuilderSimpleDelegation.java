@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  *
  */
 public class DockerServiceBuilderSimpleDelegation
-    implements DockerServiceBuilder<DockerService>, Cloneable
+    implements DockerServiceBuilder<DockerService>//, Cloneable
 {
     protected String imageName;
     protected Map<String, String> localEnvironment;
@@ -48,16 +48,16 @@ public class DockerServiceBuilderSimpleDelegation
         this.localEnvironment = new HashMap<>();
     }
 
-    @Override
-    public DockerServiceBuilderSimpleDelegation clone() throws CloneNotSupportedException {
-        DockerServiceBuilderSimpleDelegation result = new DockerServiceBuilderSimpleDelegation(
-                startServiceDelegate,
-                stopServiceDelegate
-        );
-        result.setImageName(imageName);
-        result.setLocalEnvironment(localEnvironment);
-        return result;
-    }
+//    @Override
+//    public DockerServiceBuilderSimpleDelegation clone() throws CloneNotSupportedException {
+//        DockerServiceBuilderSimpleDelegation result = new DockerServiceBuilderSimpleDelegation(
+//                startServiceDelegate,
+//                stopServiceDelegate
+//        );
+//        result.setImageName(imageName);
+//        result.setLocalEnvironment(localEnvironment);
+//        return result;
+//    }
 
     @Override
     public String getImageName() {
@@ -86,6 +86,5 @@ public class DockerServiceBuilderSimpleDelegation
         DockerServiceSimpleDelegation result = new DockerServiceSimpleDelegation(imageName, startServiceDelegate, stopServiceDelegate);
         return result;
     }
-
 
 }

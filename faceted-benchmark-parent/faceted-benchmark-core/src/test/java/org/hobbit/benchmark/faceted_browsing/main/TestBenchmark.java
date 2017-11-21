@@ -22,6 +22,7 @@ import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
+import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
@@ -49,29 +50,29 @@ import io.reactivex.Flowable;
 
 
 public class TestBenchmark {
-	
-	class ConfigDockerServiceManagerServiceComponent {
-		@Bean
-		public DockerServiceManagerServerComponent dockerServiceManagerServer() {
-			
-		}
-	}
-
-	class ConfigRabbitMqConnection {
-		
-	}
-	
-	class ConfigChannelRabbitMq {
-		
-	}
-		
-	public class ConfigDockerServiceManagerClientComponent {
-		@Bean
-		public DockerServiceManagerServerComponent dockerServiceManagerClient() {
-			
-		}
-	}
-	
+//	
+//	class ConfigDockerServiceManagerServiceComponent {
+//		@Bean
+//		public DockerServiceManagerServerComponent dockerServiceManagerServer() {
+//			
+//		}
+//	}
+//
+//	class ConfigRabbitMqConnection {
+//		
+//	}
+//	
+//	class ConfigChannelRabbitMq {
+//		
+//	}
+//		
+//	public class ConfigDockerServiceManagerClientComponent {
+//		@Bean
+//		public DockerServiceManagerServerComponent dockerServiceManagerClient() {
+//			
+//		}
+//	}
+//	
 	
 	public class ConfigCommandReceivingComponentRabbitMq {
 		@Bean
@@ -167,20 +168,16 @@ public class TestBenchmark {
 			@Qualifier("commandChannel") Subscriber<ByteBuffer> commandChannel,
 			@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
 			@Qualifier("dockerServiceManagerServerConnection") Flowable<SimpleReplyableMessage<ByteBuffer>> requestsFromClients,
+			DockerServiceFactory<?> dockerServiceFactory,
 			Gson gson
 		) throws DockerCertificateException {
 	        
 	        // Create a supplier that yields preconfigured builders
 	        Supplier<DockerServiceBuilder<? extends DockerService>> builderSupplier = () -> {
-//	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient();
-//
-//		        dockerServiceBuilder
-//		        		.setDockerClient(dockerClient)
-//		        		.setContainerConfigBuilder(containerConfigBuilder);
-//		        
-//		        return dockerServiceBuilder;
-	        	return null;
+	        	DockerServiceBuilder<?> r = DockerServiceBuilderJsonDelegate.create(dockerServiceFactory::create);
+	        	return r;
 	        };
+	        
 	        
 	        DockerServiceManagerServerComponent result =
 	        		new DockerServiceManagerServerComponent(
@@ -402,49 +399,56 @@ public class TestBenchmark {
 			};
 		}
 	}
+
+	
+	public static class DockerConfig {
+		@Bean
+		public DockerServiceFactory<?> dockerServiceFactory() {
+
+			Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
+					.sources(ConfigRabbitMqConnectionFactory.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
+					
+			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
+					.sources(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
+			
+			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
+					.sources(ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
+			
+			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
+					.sources(ConfigTaskGenerator.class, TaskGeneratorFacetedBenchmark.class);
+
+			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
+					.sources(ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
+				
+			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
+					.sources(ConfigEvaluationModule.class, DefaultEvaluationStorage.class);
+
+			Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
+					.sources(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class);
+
+			
+			Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
+	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
+			
+	        map.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
+	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
+	        map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
+	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
+
+	        // NOTE The sa is started by the platform
+	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
+			
+	        // Configure the docker server component
+			
+	        DockerServiceFactory<?> result = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(map);
+			return result;
+			//DockerServiceBuilder dockerServiceBuilder = DockerServiceBuilderJsonDelegate.create(dockerServiceFactory::create);
+		}
+	}
 	
 	@Test
 	public void testBenchmark() {
 
-		Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
-				.sources(ConfigRabbitMqConnectionFactory.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
-				
-		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
-				.sources(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
-		
-		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
-				.sources(ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
-		
-		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
-				.sources(ConfigTaskGenerator.class, TaskGeneratorFacetedBenchmark.class);
-
-		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
-				.sources(ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
-			
-		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
-				.sources(ConfigEvaluationModule.class, DefaultEvaluationStorage.class);
-
-		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
-				.sources(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class);
-
-		
-		Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
-		
-        map.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
-        map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
-
-        // NOTE The sa is started by the platform
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
-		
-        // Configure the docker server component
-        
-		DockerServiceFactory<?> dockerServiceFactory = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(map);
-		
-		
-		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
 //				// Add the amqp broker and the DockerServiceMangagerServerComponent
 				.sources(ConfigQpidBroker.class, ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, DockerServiceManagerServerComponent.class);
