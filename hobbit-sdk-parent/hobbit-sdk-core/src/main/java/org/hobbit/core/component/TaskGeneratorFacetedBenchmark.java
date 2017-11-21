@@ -11,6 +11,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import org.apache.commons.compress.utils.IOUtils;
@@ -67,23 +69,23 @@ public class TaskGeneratorFacetedBenchmark
 
 
 
-    @javax.annotation.Resource(name="commandChannel")
+    @javax.annotation.Resource(name="commandSender")
     protected Subscriber<ByteBuffer> commandChannel;
 
 //    @Resource(name="dataChannel")
 //    protected WritableByteChannel dataChannel;
 
-    @javax.annotation.Resource(name="dg2tgPub")
+    @javax.annotation.Resource(name="dg2tgReceiver")
     protected Flowable<ByteBuffer> fromDataGenerator;
 
-    @javax.annotation.Resource(name="tg2sa")
+    @javax.annotation.Resource(name="tg2saSender")
     protected Subscriber<ByteBuffer> toSystemAdater;
 
 
-    @javax.annotation.Resource(name="tg2es")
+    @javax.annotation.Resource(name="tg2esSender")
     protected Subscriber<ByteBuffer> toEvaluationStorage;
 
-    @javax.annotation.Resource(name="taskAckPub")
+    @javax.annotation.Resource(name="taskAckReceiver")
     protected Flowable<ByteBuffer> taskAckPub;
 
 //    @javax.annotation.Resource(name="taskStreamSupplier")
@@ -132,6 +134,7 @@ public class TaskGeneratorFacetedBenchmark
     
     protected transient Disposable fromDataGeneratorUnsubscribe = null;
     
+    @PostConstruct
     @Override
     public void startUp() throws Exception {
         
@@ -265,6 +268,7 @@ public class TaskGeneratorFacetedBenchmark
         }
     }
 
+    @PreDestroy
     @Override
     public void shutDown() throws IOException {
         streamManager.close();

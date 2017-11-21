@@ -67,19 +67,19 @@ public class DefaultEvaluationStorage
     protected List<Iterator<ResultPair>> resultPairIterators = Lists.newArrayList();
 
 
-    @Resource(name="tg2esPub")
+    @Resource(name="tg2esReceiver")
     protected Flowable<ByteBuffer> expectedResultsFromTaskGenerator;
 
-    @Resource(name="sa2esPub")
+    @Resource(name="sa2esReceiver")
     protected Flowable<ByteBuffer> actualResultsFromSystemAdapter;
 
-    @Resource(name="em2esPub")
+    @Resource(name="em2esReceiver")
     protected Flowable<ByteBuffer> fromEvaluationModule;
 
-    @Resource(name="es2em")
+    @Resource(name="es2emSender")
     protected Subscriber<ByteBuffer> toEvaluationModule;
 
-    @Resource(name="taskAck")
+    @Resource(name="taskAckSender")
     protected Subscriber<ByteBuffer> taskAck;
 
 

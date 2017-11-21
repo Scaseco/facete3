@@ -26,13 +26,13 @@ public class EvaluationModuleComponent
 {
     private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleComponent.class);
 
-    @Resource(name="commandChannel")
-    protected Subscriber<ByteBuffer> commandChannel;
+    @Resource(name="commandReceiver")
+    protected Subscriber<ByteBuffer> commandReceiver;
 
-    @Resource(name="es2emPub")
+    @Resource(name="es2emReceiver")
     protected Flowable<ByteBuffer> fromEvaluationStorage;
 
-    @Resource(name="em2es")
+    @Resource(name="em2esSender")
     protected Subscriber<ByteBuffer> toEvaluationStorage;
     
     //@Resource(name="evaluationModule")
@@ -86,7 +86,7 @@ public class EvaluationModuleComponent
                 buf.put(Commands.EVAL_MODULE_FINISHED_SIGNAL);
                 buf.put(outputStream.toByteArray());
                 try {
-                    commandChannel.onNext(buf);
+                    commandReceiver.onNext(buf);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -117,7 +117,7 @@ public class EvaluationModuleComponent
 
         });
 
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
+        commandReceiver.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
     }
 
 

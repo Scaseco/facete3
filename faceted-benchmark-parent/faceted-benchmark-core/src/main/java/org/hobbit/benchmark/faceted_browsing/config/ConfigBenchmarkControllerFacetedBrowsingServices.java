@@ -62,4 +62,14 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
 	                ).get();
     }
 
+    @Bean
+    public ServiceBuilder<?> evaluationModuleServiceFactory() {
+        return CountingSupplier.from(count ->
+	        dockerServiceBuilderFactory.get()
+	                .setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image")
+	                .setLocalEnvironment(ImmutableMap.<String, String>builder()
+	                        .build())
+	                ).get();
+    }
+
 }

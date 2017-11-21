@@ -12,6 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.QueryExecution;
@@ -43,7 +46,7 @@ public class TaskGeneratorModuleFacetedBrowsing
     
     protected transient ServiceManager serviceManager;
     
-    
+    @PostConstruct
 	@Override
 	public void startUp() throws Exception {
         Set<Service> services = Sets.newIdentityHashSet();
@@ -56,6 +59,7 @@ public class TaskGeneratorModuleFacetedBrowsing
 	}
 
 
+    @PreDestroy
 	@Override
 	public void shutDown() throws Exception {
         logger.debug("Stopping preparation sparql service");

@@ -2,6 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -12,26 +13,31 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
-import org.aksw.jena_sparql_api.ext.virtuoso.RDFDatasetConnectionVirtuoso;
+import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
-import org.apache.jena.rdfconnection.RDFDatasetConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.rdfconnection.SparqlUpdateConnection;
+import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
 import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
+import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
+import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
+import org.hobbit.core.data.Result;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
@@ -39,6 +45,8 @@ import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
+import org.hobbit.core.storage.Storage;
+import org.hobbit.core.storage.StorageInMemory;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnection;
 import org.junit.Test;
@@ -271,11 +279,6 @@ public class TestBenchmark {
 	        return RabbitMqFlows.createDataSender(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
-	    @Bean
-	    public Flowable<ByteBuffer> dg2saPub(@Qualifier("dg2saChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
-	    }
-
 	}
 	
 	
@@ -291,7 +294,7 @@ public class TestBenchmark {
 		}
 		
 	    @Bean
-	    public Flowable<ByteBuffer> dg2tgPub(@Qualifier("dg2tgChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> dg2tgReceiver(@Qualifier("dg2tgChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 	    }
 
@@ -306,7 +309,7 @@ public class TestBenchmark {
 
 		
 	    @Bean
-	    public Subscriber<ByteBuffer> tg2sa(@Qualifier("tg2saChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> tg2saSender(@Qualifier("tg2saChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
@@ -321,7 +324,7 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> tg2es(@Qualifier("tg2esChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> tg2esSender(@Qualifier("tg2esChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 	    
@@ -329,14 +332,29 @@ public class TestBenchmark {
 	    /*
 	     * Reception of task acknowledgements from es
 	     */
-	    
+
+		@Bean
+		public Channel ackChannel(Connection connection) throws IOException {
+			return connection.createChannel();
+		}
+
 	    @Bean
-	    public Flowable<ByteBuffer> taskAckPub(@Qualifier("ackChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel) throws IOException, TimeoutException {
 	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME);
 	    }
 	}
 	
 	public static class ConfigSystemAdapter {
+
+		@Bean
+		public Channel dg2saChannel(Connection connection) throws IOException {
+			return connection.createChannel();
+		}
+		
+	    @Bean
+	    public Flowable<ByteBuffer> dg2saReceiver(@Qualifier("dg2saChannel") Channel channel) throws IOException, TimeoutException {
+	        return RabbitMqFlows.createDataReceiver(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
+	    }
 
 		
 		@Bean
@@ -358,7 +376,7 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> tg2saPub(@Qualifier("tg2saChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> tg2saReceiver(@Qualifier("tg2saChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
@@ -368,7 +386,7 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> sa2es(@Qualifier("sa2esChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> sa2esSender(@Qualifier("sa2esChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 	}
@@ -382,7 +400,7 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> tg2esPub(@Qualifier("tg2esChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> tg2esReceiver(@Qualifier("tg2esChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
@@ -392,7 +410,7 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> sa2esPub(@Qualifier("sa2esChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> sa2esReceiver(@Qualifier("sa2esChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 		
@@ -403,12 +421,18 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> es2em(@Qualifier("sa2esChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("sa2esChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
 	    }
 	    
+	    
+		@Bean
+		public Channel em2esChannel(Connection connection) throws IOException {
+			return connection.createChannel();
+		}
+	    
 	    @Bean
-	    public Flowable<ByteBuffer> em2esPub(@Qualifier("em2esChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> em2esReceiver(@Qualifier("em2esChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
@@ -419,9 +443,17 @@ public class TestBenchmark {
 		}
 
 		@Bean
-	    public Subscriber<ByteBuffer> taskAck(@Qualifier("ackChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> taskAckSender(@Qualifier("ackChannel") Channel channel) throws IOException {
 	    	return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, null);
 	    }		
+	}
+	
+	
+	public static class ConfigEvaluationStorageStorageProvider {
+	    @Bean
+	    public Storage<String, Result> storage() {
+	        return new StorageInMemory<>();
+	    }
 	}
 	
 	public static class ConfigEvaluationModule {
@@ -433,14 +465,19 @@ public class TestBenchmark {
 
 
 	    @Bean
-	    public Subscriber<ByteBuffer> em2es(@Qualifier("em2esChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> em2esSender(@Qualifier("em2esChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
 	    
 	    @Bean
-	    public Flowable<ByteBuffer> es2emPub(@Qualifier("es2emChannel") Channel channel) throws IOException, TimeoutException {
+	    public Flowable<ByteBuffer> es2emReceiver(@Qualifier("es2emChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+	    }
+
+	    @Bean
+	    public EvaluationModule evaluationModule() {
+	    	return new EvaluationModuleFacetedBrowsingBenchmark();
 	    }
 
 	}
@@ -468,16 +505,47 @@ public class TestBenchmark {
 				
 				saService.startAsync().awaitRunning();
 				
-//				bcService.startAsync().awaitRunning();
-//				
-//				// Wait for the bc to finish
-//				bcService.awaitTerminated();
+				bcService.startAsync().awaitRunning();
+				
+				// Wait for the bc to finish
+				bcService.awaitTerminated();
 				
 				saService.stopAsync().awaitTerminated();
 			};
 		}
 	}
 
+	// Configuration for the worker task generator fo the faceted browsing benchmark
+	public static class ConfigTaskGeneratorFacetedBenchmark {
+	    @Bean
+	    public SparqlBasedSystemService taskGeneratorSparqlService() {
+	        VirtuosoSystemService result = new VirtuosoSystemService(
+	                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
+	                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-task-generation_1112_8891/virtuoso.ini"));
+
+	        return result;
+	    }
+	    
+	    @Bean
+	    public TaskGeneratorModule taskGeneratorModule() {
+	    	return new TaskGeneratorModuleFacetedBrowsing();
+	    }
+	}
+
+	// Configuration for the worker of the system adapter
+//	public static class ConfigTaskGeneratorFacetedBenchmark {
+//	    @Bean
+//	    public SparqlBasedSystemService taskGeneratorSparqlService() {
+//	        VirtuosoSystemService result = new VirtuosoSystemService(
+//	                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
+//	                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-system-under-test_1113_8892/virtuoso.ini"));
+//
+//		        return result;
+//	    }
+//	}
+
+	
+	
 	
 	public static class ConfigDockerServiceFactory {
 		@Bean
@@ -487,22 +555,22 @@ public class TestBenchmark {
 					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
 					
 			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
-					.sources(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
+					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
 			
 			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
-					.sources(ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
+					.child(ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
 			
 			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
-					.sources(ConfigTaskGenerator.class, TaskGeneratorFacetedBenchmark.class);
+					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class, TaskGeneratorFacetedBenchmark.class);
 
 			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
+					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
 				
 			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
-					.sources(ConfigEvaluationModule.class, DefaultEvaluationStorage.class);
+					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class, DefaultEvaluationStorage.class);
 
 			Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
-					.sources(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class);
+					.child(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class);
 
 			
 			Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();

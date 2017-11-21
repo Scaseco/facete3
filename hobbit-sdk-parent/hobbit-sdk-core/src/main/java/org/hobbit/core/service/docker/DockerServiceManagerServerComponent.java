@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 
 import io.reactivex.Flowable;
@@ -184,8 +183,9 @@ public class DockerServiceManagerServerComponent
     }
 
     public void onStopServiceRequest(String containerId) {
-        Service service = runningManagedServices.get(containerId);
+        DockerService service = runningManagedServices.get(containerId);
         if(service != null) {
+        	System.out.println("Stopping service: " + service.getImageName() + "; container " + service.getContainerId());
             service.stopAsync().awaitTerminated();
         } else {
             logger.warn("Stop request ignored due to no running service know by id " + containerId);

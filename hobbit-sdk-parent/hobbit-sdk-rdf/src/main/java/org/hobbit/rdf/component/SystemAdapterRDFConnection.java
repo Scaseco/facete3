@@ -12,6 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
@@ -63,17 +65,17 @@ public class SystemAdapterRDFConnection
     @Resource(name="systemUnderTestRdfConnection")
     protected RDFConnection rdfConnection;
 
-    @Resource(name="dg2saPub")
+    @Resource(name="dg2saReceiver")
     protected Flowable<ByteBuffer> fromDataGenerator;
 
-    @Resource(name="tg2saPub")
+    @Resource(name="tg2saReceiver")
     protected Flowable<ByteBuffer> fromTaskGenerator;
 
-    @Resource(name="sa2es")
+    @Resource(name="sa2esSender")
     protected Subscriber<ByteBuffer> sa2es;
 
-    @Resource(name="commandChannel")
-    protected Subscriber<ByteBuffer> commandChannel;
+    @Resource(name="commandSender")
+    protected Subscriber<ByteBuffer> commandSender;
 
 
     protected StreamManager streamManager;
@@ -90,6 +92,7 @@ public class SystemAdapterRDFConnection
 
     protected CompletableFuture<?> taskGenerationFinishedFuture;
     
+    @PostConstruct
     @Override
     public void startUp() throws Exception {
 
@@ -97,7 +100,7 @@ public class SystemAdapterRDFConnection
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
         
-        streamManager = new InputStreamManagerImpl(commandChannel::onNext);
+        streamManager = new InputStreamManagerImpl(commandSender::onNext);
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
 //        systemUnderTestReadyFuture = PublisherUtils.awaitMessage(commandPublisher,
@@ -230,9 +233,10 @@ public class SystemAdapterRDFConnection
 //            }
         });
 
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
     }
 
+    @PreDestroy
     @Override
     public void shutDown() throws IOException {
         streamManager.close();

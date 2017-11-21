@@ -7,10 +7,6 @@ import java.util.function.Function;
 
 import org.apache.jena.rdf.model.Resource;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
-import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
-import org.hobbit.core.component.EvaluationModule;
-import org.hobbit.core.component.TaskGeneratorModule;
 import org.springframework.context.annotation.Bean;
 
 import com.google.gson.Gson;
@@ -32,17 +28,12 @@ public class ConfigEncodersFacetedBrowsing {
     	};
     }
     
-    @Bean
-    public TaskGeneratorModule taskGeneratorModule() {
-    	return new TaskGeneratorModuleFacetedBrowsing();
-    }
+//    @Bean
+//    public TaskGeneratorModule taskGeneratorModule() {
+//    	return new TaskGeneratorModuleFacetedBrowsing();
+//    }
     
-    @Bean
-    public EvaluationModule evaluationModule() {
-    	return new EvaluationModuleFacetedBrowsingBenchmark();
-    }
     
-
     @Bean
     public Function<ByteBuffer, Resource> taskResourceDeserializer(Gson gson) {
     	return (buffer) -> {
