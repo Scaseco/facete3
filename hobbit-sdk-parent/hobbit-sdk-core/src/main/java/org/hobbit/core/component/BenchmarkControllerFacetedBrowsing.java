@@ -54,8 +54,8 @@ public class BenchmarkControllerFacetedBrowsing
     // Issue: How to get the result from the evaluation module?
 
 
-    @Resource(name="commandChannel")
-    protected Subscriber<ByteBuffer> commandChannel;
+    @Resource(name="commandSender")
+    protected Subscriber<ByteBuffer> commandSender;
 
     protected ServiceManager serviceManager;
 
@@ -134,7 +134,7 @@ public class BenchmarkControllerFacetedBrowsing
         taskGenerationTerminatedFuture.whenComplete((v, t) -> {
 //            try {
                 logger.debug("Sending out task TASK_GENERATION_FINISHED signal");
-                commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
+                commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
 //            } catch(IOException e) {
 //                throw new RuntimeException(e);
 //            }
@@ -208,7 +208,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         // Send out the data generation start signal
 
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 
         
 
@@ -237,9 +237,9 @@ public class BenchmarkControllerFacetedBrowsing
             throw new RuntimeException("Data generation phase did not complete in time", e);
         }
 
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
 
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
 
 
 

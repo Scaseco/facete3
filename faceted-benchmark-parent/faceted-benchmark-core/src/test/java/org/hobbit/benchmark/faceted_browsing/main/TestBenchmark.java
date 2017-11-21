@@ -460,7 +460,7 @@ public class TestBenchmark {
 		public DockerServiceFactory<?> dockerServiceFactory() {
 
 			Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
-					.sources(ConfigRabbitMqConnectionFactory.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
+					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
 					
 			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
 					.sources(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);

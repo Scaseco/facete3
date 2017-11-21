@@ -20,7 +20,7 @@ public abstract class ComponentBase
 
     // The actual publisher of the command channel
     // All commands are re-publishehd via the local command publisher
-    @Resource(name="commandPub")
+    @Resource(name="commandReceiver")
     protected Flowable<ByteBuffer> remoteCommandPublisher;
 
 
