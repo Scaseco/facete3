@@ -14,6 +14,7 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHo
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.Constants;
+import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
 import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
@@ -220,6 +221,20 @@ public class TestBenchmark {
 
 
 	public static class ConfigBenchmarkController {
+		
+		@Bean
+		public BenchmarkControllerFacetedBrowsing bc() {
+			return new BenchmarkControllerFacetedBrowsing();
+		}
+	
+		@Bean
+		public ApplicationRunner applicationRunner(BenchmarkControllerFacetedBrowsing controller) throws Exception {
+			return (args) -> {
+				controller.startUp();
+				controller.run();
+				controller.shutDown();
+			};
+		}
 	}
 
 
@@ -411,6 +426,8 @@ public class TestBenchmark {
 		@Bean
 		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 			return args -> {
+				
+				System.out.println("Launching benchmark");
 				
 				// Launch the system adapter
 				Service saService = dockerServiceBuilderFactory.get()

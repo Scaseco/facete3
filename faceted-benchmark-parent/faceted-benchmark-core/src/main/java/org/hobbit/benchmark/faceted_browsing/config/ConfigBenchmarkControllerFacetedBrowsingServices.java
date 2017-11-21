@@ -1,16 +1,12 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.util.function.Supplier;
-
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilder;
+import org.hobbit.core.service.api.ServiceBuilder;
+import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.utils.CountingSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.google.common.util.concurrent.Service;
 
 
 
@@ -30,40 +26,40 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
     // https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/Configuration.html
 
     @Autowired
-    protected DockerServiceBuilder<DockerService> dockerServiceFactory;
+    protected DockerServiceBuilderFactory<?> dockerServiceBuilderFactory;
 
 
 
     @Bean
-    public Supplier<Service> dataGeneratorServiceFactory() {
+    public ServiceBuilder<?> dataGeneratorServiceFactory() {
         return CountingSupplier.from(count ->
-            dockerServiceFactory
+        	dockerServiceBuilderFactory.get()
                 .setImageName("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image")
                 .setLocalEnvironment(ImmutableMap.<String, String>builder()
                         .put("NODE_MEM", "1000")
                         .build())
-                .get());
+                ).get();
     }
 
     @Bean
-    public Supplier<Service> taskGeneratorServiceFactory() {
+    public ServiceBuilder<?> taskGeneratorServiceFactory() {
         return CountingSupplier.from(count ->
-            dockerServiceFactory
-                .setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")
-                .setLocalEnvironment(ImmutableMap.<String, String>builder()
-                        .build())
-                .get());
+	    	dockerServiceBuilderFactory.get()
+	            .setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")
+	            .setLocalEnvironment(ImmutableMap.<String, String>builder()
+	                    .build())
+	            ).get();
     }
 
     @Bean
-    public Supplier<Service> evaluationStorageServiceFactory() {
+    public ServiceBuilder<?> evaluationStorageServiceFactory() {
         return CountingSupplier.from(count ->
-            dockerServiceFactory
-                .setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
-                .setLocalEnvironment(ImmutableMap.<String, String>builder()
-                        .put("ACKNOWLEDGEMENT_FLAG", "true")
-                        .build())
-                .get());
+	        dockerServiceBuilderFactory.get()
+	                .setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
+	                .setLocalEnvironment(ImmutableMap.<String, String>builder()
+	                        .put("ACKNOWLEDGEMENT_FLAG", "true")
+	                        .build())
+	                ).get();
     }
 
 }
