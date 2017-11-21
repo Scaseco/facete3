@@ -42,7 +42,7 @@ import io.reactivex.disposables.Disposable;
  */
 public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
-    implements IdleServiceCapable, DockerServiceBuilder<DockerService>
+    implements IdleServiceCapable, DockerServiceFactory<DockerService> // DockerServiceBuilder<DockerService>
 {
 	// TODO: Probably change ByteBuffer to Object here, and encode the objects
 	// internally
@@ -66,41 +66,43 @@ public class DockerServiceManagerClientComponent
     protected Map<String, Service> runningManagedServices = new HashMap<>();
 
 
-    protected String imageName;
-    protected Map<String, String> env;
+    //protected String imageName;
+    //protected Map<String, String> env;
 
 
     protected transient Disposable commandPublisherUnsubscribe = null;
 
+//    @Override
+//    public DockerServiceManagerClientComponent setImageName(String imageName) {
+//        this.imageName = imageName;
+//        return this;
+//    }
+//
+//    @Override
+//    public String getImageName() {
+//        return imageName;
+//    }
+//
+//    @Override
+//    public DockerServiceManagerClientComponent setLocalEnvironment(Map<String, String> env) {
+//        this.env = env;
+//        return this;
+//    }
+//
+//    @Override
+//    public Map<String, String> getLocalEnvironment() {
+//        return env;
+//    }
+
+
+
+
+    //public DockerService get() {
     @Override
-    public DockerServiceManagerClientComponent setImageName(String imageName) {
-        this.imageName = imageName;
-        return this;
-    }
-
-    @Override
-    public String getImageName() {
-        return imageName;
-    }
-
-    @Override
-    public DockerServiceManagerClientComponent setLocalEnvironment(Map<String, String> env) {
-        this.env = env;
-        return this;
-    }
-
-    @Override
-    public Map<String, String> getLocalEnvironment() {
-        return env;
-    }
-
-
-
-
-    public DockerService get() {
+    public DockerService create(String imageName, Map<String, String> env) {
         Objects.requireNonNull(imageName);
 
-        DockerService service = new DockerServiceSimpleDelegation(imageName, this::startService, this::stopService);
+        DockerService service = new DockerServiceSimpleDelegation(imageName, env, this::startService, this::stopService);
 
         service.addListener(new Listener() {
             @Override

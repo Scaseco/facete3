@@ -18,9 +18,9 @@ public class TestComponentLaunch
 		
 		
 		@Bean
-		public ApplicationRunner runner(DockerServiceBuilderFactory<DockerService> serviceBuilderFactory) {
+		public ApplicationRunner runner(DockerServiceBuilderFactory<?> serviceBuilderFactory) {
 			return (args) -> {
-				DockerServiceBuilder<DockerService> builder = serviceBuilderFactory.get();
+				DockerServiceBuilder<?> builder = serviceBuilderFactory.get();
 				//builder.setImageName(imageName)
 				DockerService service = builder.get();
 				

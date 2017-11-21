@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.main;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
@@ -20,6 +20,9 @@ import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderDockerClient;
+import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
+import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
@@ -158,19 +161,21 @@ public class TestDockerCommunication {
 		}
 
 		@Bean(initMethod="startUp", destroyMethod="shutDown")
-		public DockerServiceBuilder<DockerService> dockerServiceManagerClient(
+		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
 				@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
 				@Qualifier("dockerServiceManagerClientConnection") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
 		) throws Exception {
-			DockerServiceManagerClientComponent result =
+			DockerServiceManagerClientComponent core =
 					new DockerServiceManagerClientComponent(
-							commandPublisher,
-							requestToServer,
-							gson
+						commandPublisher,
+						requestToServer,
+						gson
 					);
 			
-			//result.startUp();
+			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
+					() -> DockerServiceBuilderJsonDelegate.create(core::create);
+
 			return result;
 		}
 	}

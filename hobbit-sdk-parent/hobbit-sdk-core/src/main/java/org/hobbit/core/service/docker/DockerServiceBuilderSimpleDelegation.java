@@ -83,7 +83,7 @@ public class DockerServiceBuilderSimpleDelegation
 
     @Override
     public DockerService get() {
-        DockerServiceSimpleDelegation result = new DockerServiceSimpleDelegation(imageName, startServiceDelegate, stopServiceDelegate);
+        DockerServiceSimpleDelegation result = new DockerServiceSimpleDelegation(imageName, localEnvironment, startServiceDelegate, stopServiceDelegate);
         return result;
     }
 

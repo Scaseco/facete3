@@ -42,10 +42,10 @@ import io.reactivex.Flowable;
 public class ConfigHobbitLocalServices {
 
 
-    @Bean
-    public DockerServiceBuilder<DockerService> dockerServiceManagerClientComponent() {
-        return new DockerServiceManagerClientComponent(null, null, null);
-    }
+//    @Bean
+//    public DockerServiceBuilder<DockerService> dockerServiceManagerClientComponent() {
+//        return new DockerServiceManagerClientComponent(null, null, null);
+//    }
 
     @Bean
     public ServiceBuilder<Service> benchmarkControllerServiceFactory() {

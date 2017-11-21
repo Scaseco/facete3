@@ -17,11 +17,13 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
+import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
+import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
@@ -31,12 +33,10 @@ import org.hobbit.rdf.component.SystemAdapterRDFConnection;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -74,15 +74,14 @@ public class TestBenchmark {
 //	}
 //	
 	
-	public class ConfigCommandReceivingComponentRabbitMq {
-		@Bean
-		@Scope("protoytpe")
-		public Connection connectionFactory(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
-			return connectionFactory.newConnection();
-		}
-	}
+//	public class ConfigCommandReceivingComponentRabbitMq {
+//		@Bean
+//		public Connection connectionFactory(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
+//			return connectionFactory.newConnection();
+//		}
+//	}
 	
-	public class ConfigCommandConnection {
+	public static class ConfigRabbitMqConnection {
 		@Bean
 		public Connection commandConnection(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
 			return connectionFactory.newConnection();
@@ -97,16 +96,17 @@ public class TestBenchmark {
 		}
 		
 		@Bean
-		public Flowable<SimpleReplyableMessage<ByteBuffer>> commandReceiver(
-				Channel channel,
-				@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange);
+		public Flowable<ByteBuffer> commandReceiver(
+				Channel channel) throws IOException {
+				//@Value("commandExchange") String commandExchange) throws IOException {
+			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
 		}
 		
+		@Bean
 		public Subscriber<ByteBuffer> commandSender(
-				Channel channel,
-				@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createFanoutSender(channel, commandExchange, null);
+				Channel channel) throws IOException {
+				//@Value("commandExchange") String commandExchange) throws IOException {
+			return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
 			//return //RabbitMqFlows.createReplyableFanoutSender(channel, exchangeName, transformer)
 		}
 	}
@@ -121,16 +121,16 @@ public class TestBenchmark {
 	public static class ConfigReplyableCommandChannel {
 		@Bean
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(
-				Channel channel,
-				@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange);
+				Channel channel) throws IOException {
+				//@Value("commandExchange") String commandExchange) throws IOException {
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
 		}
 		
 		@Bean
 		public Subscriber<ByteBuffer> replyableCommandSender(
-				Channel channel,
-				@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createFanoutSender(channel, commandExchange, null);
+				Channel channel) throws IOException {
+				//@Value("commandExchange") String commandExchange) throws IOException {
+			return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
 			//return //RabbitMqFlows.createReplyableFanoutSender(channel, exchangeName, transformer)
 		}
 	}
@@ -139,18 +139,29 @@ public class TestBenchmark {
 	
 	
 	public static class ConfigDockerServiceManagerClient {
+		
+		
+		@Bean
+		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerConnectionClient(Channel channel) throws IOException, TimeoutException {
+			return RabbitMqFlows.createReplyableFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
+		}
+
+		
 		@Bean(initMethod="startUp", destroyMethod="shutDown")
-		public DockerServiceBuilder<DockerService> dockerServiceManagerClient(
-				@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
-				@Qualifier("dockerServiceManagerClientConnection") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
+		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
+				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
+				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
 		) throws Exception {
-			DockerServiceManagerClientComponent result =
+			DockerServiceManagerClientComponent core =
 					new DockerServiceManagerClientComponent(
-							commandPublisher,
+							commandReceiver,
 							requestToServer,
 							gson
 					);
+			
+			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
+					() -> DockerServiceBuilderJsonDelegate.create(core::create);
 			
 			return result;
 		}
@@ -163,11 +174,17 @@ public class TestBenchmark {
 		// TODO: Make use of a docker service factory
 		
 		@Bean
+		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(Channel channel) throws IOException, TimeoutException {
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
+					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
+		}
+
+		@Bean
 		public Service dockerServiceManagerServer(
 			//Supplier<? extends DockerServiceBuilder<? extends DockerService>> delegateSupplier,
-			@Qualifier("commandChannel") Subscriber<ByteBuffer> commandChannel,
-			@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
-			@Qualifier("dockerServiceManagerServerConnection") Flowable<SimpleReplyableMessage<ByteBuffer>> requestsFromClients,
+			@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
+			@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender,
+			@Qualifier("dockerServiceManagerConnectionServer") Flowable<SimpleReplyableMessage<ByteBuffer>> requestsFromClients,
 			DockerServiceFactory<?> dockerServiceFactory,
 			Gson gson
 		) throws DockerCertificateException {
@@ -182,8 +199,8 @@ public class TestBenchmark {
 	        DockerServiceManagerServerComponent result =
 	        		new DockerServiceManagerServerComponent(
 	        				builderSupplier,
-	        				commandChannel,
-	        				commandPublisher,
+	        				commandSender,
+	        				commandReceiver,
 	        				requestsFromClients,
 	        				gson        				
 	        				);
@@ -385,23 +402,36 @@ public class TestBenchmark {
 	
 	public static class BenchmarkLauncher {
 		@Bean
-		public ApplicationRunner benchmarkLauncher(DockerServiceFactory<?> dockerServiceFactory) {
+		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 			return args -> {
 				
 				// Launch the system adapter
-				dockerServiceFactory.create("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image",
-						ImmutableMap.<String, String>builder().build());
+				Service saService = dockerServiceBuilderFactory.get()
+					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
+					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+					.get();
 				
 				
 				// Launch the benchmark
-				dockerServiceFactory.create("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image",
-						ImmutableMap.<String, String>builder().build());
+				Service bcService = dockerServiceBuilderFactory.get()
+					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
+					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+					.get();
+				
+				saService.startAsync().awaitRunning();
+				
+				bcService.startAsync().awaitRunning();
+				
+				// Wait for the bc to finish
+				bcService.awaitTerminated();
+				
+				saService.stopAsync().awaitTerminated();
 			};
 		}
 	}
 
 	
-	public static class DockerConfig {
+	public static class ConfigDockerServiceFactory {
 		@Bean
 		public DockerServiceFactory<?> dockerServiceFactory() {
 
@@ -450,15 +480,24 @@ public class TestBenchmark {
 	public void testBenchmark() {
 
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
-//				// Add the amqp broker and the DockerServiceMangagerServerComponent
-				.sources(ConfigQpidBroker.class, ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, DockerServiceManagerServerComponent.class);
-//					.child(ConfigRabbitMqConnectionFactory.class)
-//						// Connect the docker service factory to the amqp infrastructure 
-//						.child(ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceManagerServiceComponent.class) // Connect the local docker service factory to the rabbit mq channels
-//						// Add the benchmark component
-//						.sibling(ConfigBenchmarkControllerChannels.class, ConfigDockerServiceManagerClientComponent.class, ConfigHobbitFacetedBenchmarkController.class);
+			// Add the amqp broker
+			.sources(ConfigQpidBroker.class)
+			// Register the docker service manager server component; for this purpose:
+			// (1) Register any pseudo docker images - i.e. launchers of local components
+			// (2) Configure a docker service factory - which creates service instances that can be launched
+			// (3) configure the docker service manager server component which listens on the amqp infrastructure
+			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
+			;
+			//.sibling(BenchmarkLauncher.class);
 
 		try(ConfigurableApplicationContext ctx = builder.run()) {}
+
+		
+//		.child(ConfigRabbitMqConnectionFactory.class)
+//		// Connect the docker service factory to the amqp infrastructure 
+//		.child(ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceManagerServiceComponent.class) // Connect the local docker service factory to the rabbit mq channels
+//		// Add the benchmark component
+//		.sibling(ConfigBenchmarkControllerChannels.class, ConfigDockerServiceManagerClientComponent.class, ConfigHobbitFacetedBenchmarkController.class);
 
 	}
 }
