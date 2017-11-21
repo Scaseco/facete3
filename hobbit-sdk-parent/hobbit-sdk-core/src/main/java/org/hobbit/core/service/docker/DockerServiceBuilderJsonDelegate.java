@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
@@ -64,8 +66,13 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
 
     @Override
     public DockerServiceBuilderJsonDelegate<T> setLocalEnvironment(Map<String, String> environment) {
-    	throw new UnsupportedOperationException();
-    	//return this;
+    	Gson gson = new Gson();
+    	JsonElement json = gson.toJsonTree(environment);
+    	
+    	config.remove(KEY_ENV);
+    	config.add(KEY_ENV, json);
+    	//throw new UnsupportedOperationException();
+    	return this;
     }
 
     @Override

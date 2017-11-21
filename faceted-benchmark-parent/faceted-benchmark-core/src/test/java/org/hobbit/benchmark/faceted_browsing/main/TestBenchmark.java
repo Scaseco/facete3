@@ -148,7 +148,7 @@ public class TestBenchmark {
 
 		
 		@Bean(initMethod="startUp", destroyMethod="shutDown")
-		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
+		public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
@@ -159,6 +159,13 @@ public class TestBenchmark {
 							requestToServer,
 							gson
 					);
+			return core;
+		}
+			
+		@Bean
+		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
+				DockerServiceManagerClientComponent core
+		) throws Exception {
 			
 			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
 					() -> DockerServiceBuilderJsonDelegate.create(core::create);
@@ -487,8 +494,8 @@ public class TestBenchmark {
 			// (2) Configure a docker service factory - which creates service instances that can be launched
 			// (3) configure the docker service manager server component which listens on the amqp infrastructure
 			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
+			.sibling(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class, BenchmarkLauncher.class);
 			;
-			//.sibling(BenchmarkLauncher.class);
 
 		try(ConfigurableApplicationContext ctx = builder.run()) {}
 
