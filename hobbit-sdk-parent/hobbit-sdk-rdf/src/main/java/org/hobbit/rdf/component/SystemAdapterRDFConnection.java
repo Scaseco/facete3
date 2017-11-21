@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.annotation.Resource;
 
@@ -61,8 +60,8 @@ public class SystemAdapterRDFConnection
     @Autowired
     protected Gson gson;
         
-    @Resource(name="systemUnderTestRdfConnectionSupplier")
-    protected Supplier<RDFConnection> rdfConnectionSupplier;
+    @Resource(name="systemUnderTestRdfConnection")
+    protected RDFConnection rdfConnection;
 
     @Resource(name="dg2saPub")
     protected Flowable<ByteBuffer> fromDataGenerator;
@@ -81,7 +80,7 @@ public class SystemAdapterRDFConnection
 
     protected ServiceManager serviceManager;
 
-    protected RDFConnection rdfConnection;
+    //protected RDFConnection rdfConnection;
 
     
     @Resource(name="taskResourceDeserializer")
@@ -130,7 +129,7 @@ public class SystemAdapterRDFConnection
             }
         });
 
-        rdfConnection = rdfConnectionSupplier.get();
+        //rdfConnection = rdfConnectionSupplier.get();
 
         serviceManager = new ServiceManager(Arrays.asList(
 //                systemUnderTestService

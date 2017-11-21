@@ -9,6 +9,16 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
+import org.aksw.jena_sparql_api.ext.virtuoso.RDFDatasetConnectionVirtuoso;
+import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
+import org.apache.jena.rdfconnection.RDFDatasetConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.rdfconnection.SparqlUpdateConnection;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
@@ -328,6 +338,20 @@ public class TestBenchmark {
 	
 	public static class ConfigSystemAdapter {
 
+		
+		@Bean
+		public RDFConnection systemUnderTestRdfConnection() {
+			SparqlService tmp = FluentSparqlService.forModel().create();
+			
+	        SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(tmp.getQueryExecutionFactory());
+	        SparqlUpdateConnection updateConn = new SparqlUpdateConnectionJsa(tmp.getUpdateExecutionFactory());
+	        //RDFDatasetConnection datasetConn = new RDFDatasetConnectionVirtuoso(queryConn, sqlConn);
+	        
+	        RDFConnection result = new RDFConnectionModular(queryConn, updateConn, null);
+
+	        return result;
+		}
+		
 		@Bean
 		public Channel tg2saChannel(Connection connection) throws IOException {
 			return connection.createChannel();
@@ -444,10 +468,10 @@ public class TestBenchmark {
 				
 				saService.startAsync().awaitRunning();
 				
-				bcService.startAsync().awaitRunning();
-				
-				// Wait for the bc to finish
-				bcService.awaitTerminated();
+//				bcService.startAsync().awaitRunning();
+//				
+//				// Wait for the bc to finish
+//				bcService.awaitTerminated();
 				
 				saService.stopAsync().awaitTerminated();
 			};
@@ -472,7 +496,7 @@ public class TestBenchmark {
 					.sources(ConfigTaskGenerator.class, TaskGeneratorFacetedBenchmark.class);
 
 			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
-					.sources(ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
+					.child(ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
 				
 			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
 					.sources(ConfigEvaluationModule.class, DefaultEvaluationStorage.class);
