@@ -144,7 +144,7 @@ public class InputStreamManagerImpl
                             try {
                                 subscriber.accept(tmpIn);
                             } catch(Exception e) {
-                                throw new RuntimeException();
+                                throw new RuntimeException(e);
                             }
                         });
 

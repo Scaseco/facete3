@@ -43,6 +43,7 @@ public class EvaluationModuleComponent
 
     @Override
     public void startUp() throws Exception {
+    	super.startUp();
         //collectResponses();
 
 
@@ -135,7 +136,8 @@ public class EvaluationModuleComponent
     }
 
     @Override
-    public void shutDown() throws IOException {
+    public void shutDown() throws Exception {
+    	super.shutDown();
         // TODO Auto-generated method stub
 
     }

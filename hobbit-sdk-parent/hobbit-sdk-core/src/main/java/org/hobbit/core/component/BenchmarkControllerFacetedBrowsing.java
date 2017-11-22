@@ -158,7 +158,7 @@ public class BenchmarkControllerFacetedBrowsing
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             RDFDataMgr.write(baos, model, Lang.NTRIPLES);
             String str = baos.toString();
-            logger.debug("Received eval model is: " + str);
+            logger.info("Received eval model is: " + str);
         });
         
         serviceManager = new ServiceManager(Arrays.asList(
