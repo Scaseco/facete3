@@ -86,7 +86,7 @@ public class DataGeneratorFacetedBrowsing
 
     @Override
     public void startUp() throws Exception {
-        logger.debug("Data generator init");
+        logger.debug("DataGenerator::startUp()");
     	super.startUp();
 
 

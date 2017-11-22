@@ -94,7 +94,7 @@ public class VirtuosoSystemService
         virtIni = new Ini(virtIniPath.toFile());
         virtIniPrefs = new IniPreferences(virtIni);
 
-        setOutputSink(logger::debug);
+        setOutputSink(logger::info);
 
         super.startUp();
     }

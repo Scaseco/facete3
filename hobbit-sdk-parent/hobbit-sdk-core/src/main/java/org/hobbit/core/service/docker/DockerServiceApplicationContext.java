@@ -16,6 +16,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
  * @author raven Sep 20, 2017
  *
  */
+@Deprecated
 public class DockerServiceApplicationContext
     extends AbstractExecutionThreadService
     implements DockerService

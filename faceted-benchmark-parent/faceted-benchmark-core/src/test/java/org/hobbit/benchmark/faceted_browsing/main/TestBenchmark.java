@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.commons.service.core.LifecycleService;
+import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.commons.service.core.ServiceCapableWrapper;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
@@ -63,7 +63,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.Lifecycle;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
@@ -127,7 +126,7 @@ public class TestBenchmark {
 		public Flowable<ByteBuffer> commandReceiver(
 				Channel channel) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
+			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "cmd");
 		}
 		
 		@Bean
@@ -151,7 +150,7 @@ public class TestBenchmark {
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(
 				Channel channel) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "replableCmd");
 		}
 		
 		@Bean
@@ -171,14 +170,14 @@ public class TestBenchmark {
 		
 		@Bean
 		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerConnectionClient(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
+			return RabbitMqFlows.createReplyableFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerClient", null);
 		}
 
 		
 		//@Bean(initMethod="startUp", destroyMethod="shutDown")
 		//public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
 		@Bean
-		public LifecycleService<?> dockerServiceManagerClientCore(
+		public BeanWrapperService<?> dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
@@ -189,13 +188,13 @@ public class TestBenchmark {
 							requestToServer,
 							gson
 					);
-			return new LifecycleService<>(ServiceCapableWrapper.wrap(core));
+			return new BeanWrapperService<>(ServiceCapableWrapper.wrap(core));
 		}
 			
 		@Bean
 		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
 				//DockerServiceManagerClientComponent core
-				LifecycleService<ServiceDelegate<DockerServiceManagerClientComponent>> tmp
+				BeanWrapperService<ServiceDelegate<DockerServiceManagerClientComponent>> tmp
 		) throws Exception {
 			DockerServiceManagerClientComponent core = tmp.getService().getEntity();
 			
@@ -214,12 +213,12 @@ public class TestBenchmark {
 		
 		@Bean
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME);
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerServerComponent");
 					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
 		}
 
 		@Bean
-		public Service dockerServiceManagerServer(
+		public BeanWrapperService<?> dockerServiceManagerServer(
 			//Supplier<? extends DockerServiceBuilder<? extends DockerService>> delegateSupplier,
 			@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 			@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender,
@@ -235,7 +234,7 @@ public class TestBenchmark {
 	        };
 	        
 	        
-	        DockerServiceManagerServerComponent result =
+	        DockerServiceManagerServerComponent service =
 	        		new DockerServiceManagerServerComponent(
 	        				builderSupplier,
 	        				commandSender,
@@ -243,9 +242,11 @@ public class TestBenchmark {
 	        				requestsFromClients,
 	        				gson        				
 	        				);
-	        result.startAsync().awaitRunning();
+	        //result.startAsync().awaitRunning();
 
-	        return result;
+	        return new BeanWrapperService<>(service);
+	        
+	        //return result;
 		}
 		
 	}
@@ -362,7 +363,7 @@ public class TestBenchmark {
 
 	    @Bean
 	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel) throws IOException, TimeoutException {
-	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME);
+	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, "ack");
 	    }
 	}
 	
@@ -505,6 +506,9 @@ public class TestBenchmark {
 	}
 	
 	public static class LauncherServiceCapable {
+		private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.LauncherServiceCapable.class);
+
+		
 //		@Bean
 //		public Lifecycle componentService(ServiceCapable serviceCapable) {
 //			Service service = ServiceCapableWrapper.wrap(serviceCapable);
@@ -514,12 +518,15 @@ public class TestBenchmark {
 		@Bean
 		public ApplicationRunner serviceLauncher(ServiceCapable serviceCapable) {
 			return args -> {
+				logger.info("Launching component: " + serviceCapable.getClass());
+				
 				Service service = ServiceCapableWrapper.wrap(serviceCapable);
 				service.startAsync().awaitRunning();
 				
 				// The services shut themselves down when they are finished
 				
 				service.awaitTerminated();
+				logger.info("Component terminated: " + serviceCapable.getClass());
 			};
 		}
 	}

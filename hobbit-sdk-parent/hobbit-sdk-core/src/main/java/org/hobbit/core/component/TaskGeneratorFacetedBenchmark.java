@@ -11,8 +11,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import org.apache.commons.compress.utils.IOUtils;
@@ -136,7 +134,8 @@ public class TaskGeneratorFacetedBenchmark
    
     @Override
     public void startUp() throws Exception {
-        
+        logger.info("TaskGenerator::startUp() in progress");
+    	
         CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
 
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
@@ -187,6 +186,8 @@ public class TaskGeneratorFacetedBenchmark
         // At this point, the task generator is ready for processing
         // The message should be sent out by the service wrapper:
         commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
+
+        logger.info("TaskGenerator::startUp() completed");
     }
 
 

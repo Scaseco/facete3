@@ -45,7 +45,7 @@ public class TestClientServerCommunication {
 	public static class ServerContext {
 		@Bean
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> serverRequests(Channel channel) throws IOException, TimeoutException {
-			Flowable<SimpleReplyableMessage<ByteBuffer>> result = RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange);
+			Flowable<SimpleReplyableMessage<ByteBuffer>> result = RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange, "server");
 
 			// TODO Ideally move the handler somewhere else
 			result.subscribe(x -> {
@@ -63,7 +63,7 @@ public class TestClientServerCommunication {
 	public static class ClientContext {
 		@Bean
 		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> client(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, null);
+			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "client", null);
 		}
 	}
 

@@ -224,6 +224,7 @@ public class DockerServiceManagerServerComponent
                 Map<String, String> env = EnvironmentUtils.listToMap("=", Arrays.asList(rawEnv));
 
                 onStartServiceRequest(imageName, env, containerId -> {
+                	logger.info("Server started docker service " + imageName + ": " + containerId);
                     ByteBuffer msg = ByteBuffer.wrap(RabbitMQUtils.writeString(containerId));
                     responseTarget.accept(msg);
                 });

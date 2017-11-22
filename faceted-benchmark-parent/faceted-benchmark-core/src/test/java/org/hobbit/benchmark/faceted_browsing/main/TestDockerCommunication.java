@@ -79,7 +79,7 @@ public class TestDockerCommunication {
 
 		@Bean
 		public Flowable<ByteBuffer> commandPub(Channel channel) throws IOException {
-			return RabbitMqFlows.createFanoutReceiver(channel, commandExchange);		
+			return RabbitMqFlows.createFanoutReceiver(channel, commandExchange, "common");		
 		}
 	}
 	
@@ -89,7 +89,7 @@ public class TestDockerCommunication {
 
 		@Bean
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange);
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange, "server");
 					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
 		}
 
@@ -157,7 +157,7 @@ public class TestDockerCommunication {
 		
 		@Bean
 		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, null);
+			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "dockerServiceManagerClientComponent", null);
 		}
 
 		@Bean(initMethod="startUp", destroyMethod="shutDown")

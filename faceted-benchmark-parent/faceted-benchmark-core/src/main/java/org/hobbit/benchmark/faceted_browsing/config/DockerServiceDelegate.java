@@ -23,7 +23,7 @@ public class DockerServiceDelegate<S extends Service>
 	
 	@Override
 	public ServiceDelegate<S> startAsync() {
-		this.containerId = getContainerId();
+		this.containerId = getContainerId.get();
 		
 		return super.startAsync();
 		//return this;

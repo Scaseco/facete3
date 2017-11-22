@@ -88,7 +88,7 @@ public class BenchmarkControllerFacetedBrowsing
 
     @Override
     public void startUp() throws Exception {
-        logger.debug("Entered BenchmarkController::init()");
+        logger.debug("BenchmarkController::startUp()");
 
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
@@ -160,13 +160,14 @@ public class BenchmarkControllerFacetedBrowsing
                 //evaluationModuleService
         ));
 
+
+        logger.info("BenchmarkController::startUp() Waiting for services to start...");
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
                 serviceManager,
                 60, TimeUnit.SECONDS,
                 60, TimeUnit.SECONDS);
 
-
-        logger.debug("Normally left BenchmarkController::init()");
+        logger.info("BenchmarkController::startUp() completed.");
         
 //        commandPublisher.subscribe(buffer -> {
 //            if(buffer.hasRemaining()) {
@@ -184,6 +185,8 @@ public class BenchmarkControllerFacetedBrowsing
 
     @Override
     public void run() throws Exception {
+
+
 
         logger.info("Waiting for data and task generators to become ready");
         CompletableFuture<?> initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);

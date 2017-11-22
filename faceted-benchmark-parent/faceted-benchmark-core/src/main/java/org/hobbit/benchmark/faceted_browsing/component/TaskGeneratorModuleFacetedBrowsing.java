@@ -62,8 +62,12 @@ public class TaskGeneratorModuleFacetedBrowsing
 
         serviceManager = new ServiceManager(services);
         
+        //sparqlService.startAsync().awaitRunning();
+        
+        logger.info("TaskGeneratorWorker::startUp(): Waiting for SPARQL service to become ready");
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
+        logger.info("TaskGeneratorWorker::startUp(): SPARQL service is now ready");
 	}
 
 

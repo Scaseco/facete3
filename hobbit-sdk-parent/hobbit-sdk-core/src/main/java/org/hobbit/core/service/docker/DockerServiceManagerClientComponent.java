@@ -17,6 +17,8 @@ import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.IdleServiceCapable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -43,7 +45,10 @@ import io.reactivex.disposables.Disposable;
 public class DockerServiceManagerClientComponent
     //extends AbstractIdleService
     implements IdleServiceCapable, DockerServiceFactory<DockerService> // DockerServiceBuilder<DockerService>
-{
+{	
+	private static final Logger logger = LoggerFactory.getLogger(DockerServiceManagerClientComponent.class);
+
+	
 	// TODO: Probably change ByteBuffer to Object here, and encode the objects
 	// internally
 	
@@ -201,16 +206,20 @@ public class DockerServiceManagerClientComponent
         CompletableFuture<ByteBuffer> response = requestToServer.apply(buffer);
         ByteBuffer responseBuffer;
         try {
-            responseBuffer = response.get(60, TimeUnit.SECONDS);
+            responseBuffer = response.get(60, TimeUnit.SECONDS).duplicate();
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }
         String result = DockerServiceManagerServerComponent.readRemainingBytesAsString(responseBuffer, StandardCharsets.UTF_8);;
-
-        System.out.println("Client received response with docker id: " + result);
+        
+        logger.info("Client received response with docker id: " + result);
         
         if(result.startsWith("fail:")) {
         	throw new RuntimeException("Failed to start image [" + imageName + "] - server returned: " + result);
+        }
+
+        if(result.isEmpty()) {
+        	throw new RuntimeException("DockerServiceManager client received a response with an invalid Id upon launching " + msg);
         }
         
         return result;

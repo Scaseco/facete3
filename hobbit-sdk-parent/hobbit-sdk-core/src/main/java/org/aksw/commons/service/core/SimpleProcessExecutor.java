@@ -45,7 +45,22 @@ public class SimpleProcessExecutor {
     public boolean isService() {
         return isService;
     }
+    
+    /**
+     * Return the underlying processBuilder
+     * 
+     * @return
+     */
+    public ProcessBuilder getProcessBuilder() {
+		return processBuilder;
+	}
 
+    /**
+     * If the process is a service, its output will be processed by a separate thread.
+     * Otherwise, all output will be consumed by the invoking thread.
+     * 
+     * @return
+     */
     public SimpleProcessExecutor setService(boolean isService) {
         this.isService = isService;
         return this;
