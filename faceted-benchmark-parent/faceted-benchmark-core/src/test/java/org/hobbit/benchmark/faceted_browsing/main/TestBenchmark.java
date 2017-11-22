@@ -10,6 +10,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.commons.service.core.LifecycleService;
+import org.aksw.commons.service.core.ServiceCapableWrapper;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
@@ -38,6 +40,8 @@ import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
+import org.hobbit.core.service.api.ServiceCapable;
+import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
@@ -57,6 +61,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.Lifecycle;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
@@ -168,8 +173,10 @@ public class TestBenchmark {
 		}
 
 		
-		@Bean(initMethod="startUp", destroyMethod="shutDown")
-		public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
+		//@Bean(initMethod="startUp", destroyMethod="shutDown")
+		//public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
+		@Bean
+		public LifecycleService<?> dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
@@ -180,13 +187,15 @@ public class TestBenchmark {
 							requestToServer,
 							gson
 					);
-			return core;
+			return new LifecycleService<>(ServiceCapableWrapper.wrap(core));
 		}
 			
 		@Bean
 		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
-				DockerServiceManagerClientComponent core
+				//DockerServiceManagerClientComponent core
+				LifecycleService<ServiceDelegate<DockerServiceManagerClientComponent>> tmp
 		) throws Exception {
+			DockerServiceManagerClientComponent core = tmp.getService().getEntity();
 			
 			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
 					() -> DockerServiceBuilderJsonDelegate.create(core::create);
@@ -493,6 +502,26 @@ public class TestBenchmark {
 
 	}
 	
+	public static class LauncherServiceCapable {
+//		@Bean
+//		public Lifecycle componentService(ServiceCapable serviceCapable) {
+//			Service service = ServiceCapableWrapper.wrap(serviceCapable);
+//			return new LifecycleService<>(service);
+//		}
+		
+		@Bean
+		public ApplicationRunner serviceLauncher(ServiceCapable serviceCapable) {
+			return args -> {
+				Service service = ServiceCapableWrapper.wrap(serviceCapable);
+				service.startAsync().awaitRunning();
+				
+				// The services shut themselves down when they are finished
+				
+				service.awaitTerminated();
+			};
+		}
+	}
+	
 	
 	public static class BenchmarkLauncher {
 		@Bean
@@ -520,6 +549,9 @@ public class TestBenchmark {
 				
 				// Wait for the bc to finish
 				bcService.awaitTerminated();
+				
+				System.out.println("Letting sa live for a little while");
+				Thread.sleep(5000);
 				
 				saService.stopAsync().awaitTerminated();
 			};
@@ -569,19 +601,19 @@ public class TestBenchmark {
 					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
 			
 			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class);
+					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
 			
 			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class, TaskGeneratorFacetedBenchmark.class);
+					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class, TaskGeneratorFacetedBenchmark.class, LauncherServiceCapable.class);
 
 			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class, SystemAdapterRDFConnection.class);
+					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class, SystemAdapterRDFConnection.class, LauncherServiceCapable.class);
 				
 			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class, DefaultEvaluationStorage.class);
+					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class, DefaultEvaluationStorage.class, LauncherServiceCapable.class);
 
 			Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class);
+					.child(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class, LauncherServiceCapable.class);
 
 			
 			Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();

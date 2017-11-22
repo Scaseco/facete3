@@ -12,8 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
@@ -92,9 +90,9 @@ public class SystemAdapterRDFConnection
 
     protected CompletableFuture<?> taskGenerationFinishedFuture;
     
-    @PostConstruct
     @Override
     public void startUp() throws Exception {
+    	super.startUp();
 
         taskGenerationFinishedFuture = PublisherUtils.triggerOnMessage(commandPublisher,
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
@@ -236,11 +234,14 @@ public class SystemAdapterRDFConnection
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
     }
 
-    @PreDestroy
     @Override
-    public void shutDown() throws IOException {
-        streamManager.close();
+    public void shutDown() throws Exception {
+    	if(streamManager != null) {
+    		streamManager.close();
+    	}
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+        
+        super.shutDown();
     }
 
     @Override

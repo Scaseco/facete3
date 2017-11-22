@@ -42,6 +42,41 @@ public class DockerServiceFactoryGeneric<X, A, B>
 	protected Function<A, B> run;
 	protected BiConsumer<A, B> stop;
 	
+	public static class Builder<X, A, B> {
+		protected Map<String, X> imageNameToConfig;	
+		
+		protected BiFunction<Map<String, String>, X, A> start;
+		protected Function<A, B> run;
+		protected BiConsumer<A, B> stop;
+	
+		public Builder<X, A, B> setConfigMap(Map<String, X> imageNameToConfig) {
+			this.imageNameToConfig = imageNameToConfig;
+			return this;
+		}
+		
+		public Builder<X, A, B> setStart(BiFunction<Map<String, String>, X, A> start) {
+			this.start = start;
+			return this;
+		}
+
+		public Builder<X, A, B> setStop(BiConsumer<A, B> stop) {
+			this.stop = stop;
+			return this;
+		}
+
+		public Builder<X, A, B> setRun(Function<A, B> run) {
+			this.run = run;
+			return this;
+		}
+
+		public DockerServiceFactoryGeneric<X, A, B> build() {
+			DockerServiceFactoryGeneric<X, A, B> result = new DockerServiceFactoryGeneric<>(
+					imageNameToConfig,
+					start, run, stop);
+			return result;
+		}
+	}
+	
 
 	public DockerServiceFactoryGeneric(Map<String, X> imageNameToConfig,
 			BiFunction<Map<String, String>, X, A> start,
@@ -73,7 +108,11 @@ public class DockerServiceFactoryGeneric<X, A, B>
 		Supplier<String> idStrSupplier = () -> imageName + "-" + idSupplier.get();
 		
 		return new DockerServiceSimple<Entry<String, A>, B>(
-				() -> new SimpleEntry<>(idStrSupplier.get(), start.apply(env, imageConfig)),
+				() -> {
+					String containerId = idStrSupplier.get();
+					A initObject = start.apply(env, imageConfig);
+					return new SimpleEntry<>(containerId, initObject);
+				},
 				Entry::getKey,
 				ea -> run.apply(ea.getValue()),
 				(ea, b) -> stop.accept(ea.getValue(), b),

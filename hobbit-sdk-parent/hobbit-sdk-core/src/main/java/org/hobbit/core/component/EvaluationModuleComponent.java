@@ -118,6 +118,8 @@ public class EvaluationModuleComponent
         });
 
         commandReceiver.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
+        
+        run();
     }
 
 

@@ -133,8 +133,7 @@ public class TaskGeneratorFacetedBenchmark
     
     
     protected transient Disposable fromDataGeneratorUnsubscribe = null;
-    
-    @PostConstruct
+   
     @Override
     public void startUp() throws Exception {
         
@@ -268,10 +267,11 @@ public class TaskGeneratorFacetedBenchmark
         }
     }
 
-    @PreDestroy
     @Override
     public void shutDown() throws IOException {
-        streamManager.close();
+    	if(streamManager != null) {
+    		streamManager.close();
+    	}
         //ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 
         //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);

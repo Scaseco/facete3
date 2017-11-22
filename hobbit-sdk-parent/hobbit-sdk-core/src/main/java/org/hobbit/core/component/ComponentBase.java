@@ -31,9 +31,10 @@ public abstract class ComponentBase
 
     @Override
     public void init() throws Exception {
-        startUp();
+    	startUp();
     }
 
+    
     @Override
     public void close() throws IOException {
         try {
@@ -42,9 +43,21 @@ public abstract class ComponentBase
             throw new RuntimeException(e);
         }
     }
+    
+    @Override
+    public void startUp() throws Exception {
+    	coreInit();
+    }
+
+    
+    @Override
+    public void shutDown() throws Exception {
+    	// TODO Auto-generated method stub
+    	
+    }
 
     // FIXME Should we rename to init() ? If so, we must ensure that subclasses' init() methods call super.init()
-    @PostConstruct
+//    @PostConstruct
     public void coreInit() {
 
     	remoteCommandPublisher.subscribe(t -> {

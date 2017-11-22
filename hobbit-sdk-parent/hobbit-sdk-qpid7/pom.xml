@@ -18,6 +18,17 @@
 			<groupId>org.apache.qpid</groupId>
 			<artifactId>qpid-broker</artifactId>
 			<version>7.0.0</version>
+
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.qpid</groupId>
+					<artifactId>qpid-broker-plugins-logging-logback</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>

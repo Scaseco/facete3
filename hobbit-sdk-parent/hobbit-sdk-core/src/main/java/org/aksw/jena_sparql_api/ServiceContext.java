@@ -21,6 +21,8 @@ import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import jersey.repackaged.com.google.common.util.concurrent.MoreExecutors;
 
+// No longer needed - SpringApplication does this
+
 /**
  * The service instance has a fixed environment
  *
@@ -74,34 +76,34 @@ public class ServiceContext<T>
     }
     
     protected void startUpCore() throws Exception {
-
-        logger.debug("Starting local component of type " + componentClass);
-        componentInstance = componentClass.newInstance();
-
-
-        // Determine the appropriate service wrapper for the component
-        if(componentInstance instanceof Service) {
-            componentService = (Service)componentInstance;
-        } else if(componentInstance instanceof IdleServiceCapable) {
-            IdleServiceCapable tmp = (IdleServiceCapable)componentInstance;
-            componentService = new IdleServiceDelegate(
-                    () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
-                    () -> { try { tmp.shutDown(); } catch(Exception e) { throw new RuntimeException(e); }});
-
-
-        } else if(componentInstance instanceof RunnableServiceCapable) {
-            RunnableServiceCapable tmp = (RunnableServiceCapable)componentInstance;
-            //componentService = new ExecutionThreadServiceDelegate(tmp::startUp, tmp::run, tmp::shutDown);
-            componentService = new ExecutionThreadServiceDelegate(
-                    () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
-                    () -> { try { tmp.run(); } catch(Exception e) { throw new RuntimeException(e); }},
-                    () -> { try { tmp.shutDown(); } catch(Exception e) { throw new RuntimeException(e); }});
-        } else {
-            throw new RuntimeException("Could not determine how to wrap the component as a service: " + componentInstance.getClass());
-        }
-
-
-        ctx.getAutowireCapableBeanFactory().autowireBean(componentInstance);
+//
+//        logger.debug("Starting local component of type " + componentClass);
+//        componentInstance = componentClass.newInstance();
+//
+//
+//        // Determine the appropriate service wrapper for the component
+//        if(componentInstance instanceof Service) {
+//            componentService = (Service)componentInstance;
+//        } else if(componentInstance instanceof IdleServiceCapable) {
+//            IdleServiceCapable tmp = (IdleServiceCapable)componentInstance;
+//            componentService = new IdleServiceDelegate(
+//                    () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
+//                    () -> { try { tmp.shutDown(); } catch(Exception e) { throw new RuntimeException(e); }});
+//
+//
+//        } else if(componentInstance instanceof RunnableServiceCapable) {
+//            RunnableServiceCapable tmp = (RunnableServiceCapable)componentInstance;
+//            //componentService = new ExecutionThreadServiceDelegate(tmp::startUp, tmp::run, tmp::shutDown);
+//            componentService = new ExecutionThreadServiceDelegate(
+//                    () -> { try { tmp.startUp(); } catch(Exception e) { throw new RuntimeException(e); }},
+//                    () -> { try { tmp.run(); } catch(Exception e) { throw new RuntimeException(e); }},
+//                    () -> { try { tmp.shutDown(); } catch(Exception e) { throw new RuntimeException(e); }});
+//        } else {
+//            throw new RuntimeException("Could not determine how to wrap the component as a service: " + componentInstance.getClass());
+//        }
+//
+//
+//        ctx.getAutowireCapableBeanFactory().autowireBean(componentInstance);
 
 //        commandChannelUnsubscribe = commandPub.subscribe(
 //        		buffer -> PseudoHobbitPlatformController.forwardToHobbit(buffer, componentInstance::receiveCommand));

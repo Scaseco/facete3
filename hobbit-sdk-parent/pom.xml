@@ -132,10 +132,22 @@
 			<!-- <dependency> <groupId>org.apache.qpid</groupId> <artifactId>qpid-broker</artifactId> 
 				<version>6.1.4</version> <! - - <version>7.0.0</version> - - > </dependency> -->
 
+			<!-- <dependency> -->
+			<!-- <groupId>ch.qos.logback</groupId> -->
+			<!-- <artifactId>logback-classic</artifactId> -->
+			<!-- <scope>provided</scope> -->
+			<!-- </dependency> -->
+
 			<dependency>
 				<groupId>com.spotify</groupId>
 				<artifactId>docker-client</artifactId>
 				<version>8.9.0</version>
+				<exclusions>
+					<exclusion>
+						<groupId>ch.qos.logback</groupId>
+						<artifactId>logback-classic</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 

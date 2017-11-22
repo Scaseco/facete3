@@ -70,14 +70,12 @@ public class DataGeneratorFacetedBrowsing
     protected CompletableFuture<ByteBuffer> startSignalFuture;
 
 
-    @PostConstruct
     @Override
     public void startUp() {
         try { init(); } catch(Exception e) { throw new RuntimeException(e); }
     }
 
     
-    @PreDestroy
     @Override
     public void shutDown() {
         try { close(); } catch(Exception e) { throw new RuntimeException(e); }
@@ -89,6 +87,7 @@ public class DataGeneratorFacetedBrowsing
     @Override
     public void init() throws Exception {
         logger.debug("Data generator init");
+    	super.init();
 
 
         startSignalFuture = PublisherUtils.triggerOnMessage(commandPublisher,
@@ -115,9 +114,6 @@ public class DataGeneratorFacetedBrowsing
         }
         
         commandChannel.onNext(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
-        
-        
-        run();
     }
 
     @Override
