@@ -1,6 +1,5 @@
 package org.hobbit.core.component;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -135,8 +134,9 @@ public class TaskGeneratorFacetedBenchmark
     @Override
     public void startUp() throws Exception {
         logger.info("TaskGenerator::startUp() in progress");
+    	super.startUp();
     	
-        CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
+        CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
 
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
 
@@ -269,14 +269,18 @@ public class TaskGeneratorFacetedBenchmark
     }
 
     @Override
-    public void shutDown() throws IOException {
-    	if(streamManager != null) {
-    		streamManager.close();
+    public void shutDown() throws Exception {
+    	try {
+	    	if(streamManager != null) {
+	    		streamManager.close();
+	    	}
+	        //ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+	
+	        //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
+	        Optional.ofNullable(fromDataGeneratorUnsubscribe).ifPresent(Disposable::dispose);
+    	} finally {
+    		super.shutDown();
     	}
-        //ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
-
-        //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
-        Optional.ofNullable(fromDataGeneratorUnsubscribe).ifPresent(Disposable::dispose);
     }
 }
 

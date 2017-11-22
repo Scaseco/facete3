@@ -68,6 +68,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
         logger.info("TaskGeneratorWorker::startUp(): SPARQL service is now ready");
+        logger.info("TaskGeneratorWorker::startUp(): Startup is complete");
 	}
 
 

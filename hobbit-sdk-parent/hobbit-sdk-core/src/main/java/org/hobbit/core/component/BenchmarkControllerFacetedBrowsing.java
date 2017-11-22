@@ -89,19 +89,28 @@ public class BenchmarkControllerFacetedBrowsing
     @Override
     public void startUp() throws Exception {
         logger.debug("BenchmarkController::startUp()");
+    	super.startUp();
+    	
 
         // The system adapter will send a ready signal, hence register on it on the command queue before starting the service
         // NOTE A completable future will resolve only once; Java 9 flows would allow multiple resolution (reactive streams)
 //        systemUnderTestReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
 //                ByteChannelUtils.firstByteEquals(Commands.SYSTEM_READY_SIGNAL));
 
-        dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+        dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
 
-        taskGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+        taskGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_READY_SIGNAL));
 
-        
+        dataGeneratorReadyFuture.whenComplete((v, t) -> {
+        	logger.info("DataGenerator ready signal received");	
+        });
+
+        taskGeneratorReadyFuture.whenComplete((v, t) -> {
+        	logger.info("TaskGenerator ready signal received");	
+        });
+
         dataGeneratorService = dataGeneratorServiceFactory.get();
         taskGeneratorService = taskGeneratorServiceFactory.get();
         //systemAdapterService = systemAdapterServiceFactory.get();
@@ -141,7 +150,7 @@ public class BenchmarkControllerFacetedBrowsing
         });
 
         
-        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandPublisher, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
+        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
 
         evaluationDataReceivedFuture = evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
             logger.debug("Evaluation model received");
@@ -324,7 +333,11 @@ public class BenchmarkControllerFacetedBrowsing
 
     @Override
     public void shutDown() throws Exception {
-        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+        try {
+        	ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+        } finally {
+        	super.shutDown();
+        }
     }
 
 }

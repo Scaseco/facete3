@@ -2,8 +2,8 @@ package org.hobbit.core.component;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import org.hobbit.core.service.api.ServiceCapable;
@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
 
 public abstract class ComponentBase
@@ -26,8 +27,9 @@ public abstract class ComponentBase
 
     // This is the *local* publisher for the receiveCommand method
     // It combines data sent via the remote publisher and the receiveCommand function
-    protected PublishProcessor<ByteBuffer> commandPublisher = PublishProcessor.create();
+    protected PublishProcessor<ByteBuffer> commandReceiver = PublishProcessor.create();
 
+    protected Disposable commandPublisherDisposable = null;
 
     @Override
     public void init() throws Exception {
@@ -52,6 +54,7 @@ public abstract class ComponentBase
     
     @Override
     public void shutDown() throws Exception {
+    	Optional.ofNullable(commandPublisherDisposable).ifPresent(Disposable::dispose);
     	// TODO Auto-generated method stub
     	
     }
@@ -60,9 +63,9 @@ public abstract class ComponentBase
 //    @PostConstruct
     public void coreInit() {
 
-    	remoteCommandPublisher.subscribe(t -> {
+    	commandPublisherDisposable = remoteCommandPublisher.subscribe(t -> {
 //            try {
-                commandPublisher.onNext(t);
+                commandReceiver.onNext(t);
 //            } catch (IOException e) {
 //                throw new RuntimeException(e);
 //            }
@@ -76,7 +79,7 @@ public abstract class ComponentBase
         bb.rewind();
 
 //        try {
-            commandPublisher.onNext(bb);
+            commandReceiver.onNext(bb);
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }

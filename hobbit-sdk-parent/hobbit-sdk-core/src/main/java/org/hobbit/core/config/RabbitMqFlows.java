@@ -757,23 +757,26 @@ public class RabbitMqFlows {
     }
     
 
+    public static AtomicInteger requestCounter = new AtomicInteger();
+
     public static <I, O> Function<I, CompletableFuture<O>> wrapAsFunction(Subscriber<I> subscriber, Flowable<O> flowable) {
 		//flowable.doOnEach(x -> System.out.println("[STATUS] SAW AN ITEM ON THE RESPONSE QUEUE"));
 
 		Function<I, CompletableFuture<O>> result = t -> {
     		CompletableFuture<O> tmp = new CompletableFuture<>();
 
-    		System.out.println("[STATUS] About to listen on flow " + flowable);
-    		
+    		int requestId = requestCounter.incrementAndGet();
+    		    		
     		try {
     			Disposable disposable = flowable.subscribe(
     					tmp::complete,
     					tmp::completeExceptionally,
     					() -> tmp.completeExceptionally(new RuntimeException("flowable completed but a response was expecetd")));
 
-    			System.out.println("[STATUS] Waiting for function reply"); // hasSubscribers=" + foo.hasSubscribers());
+    			//System.out.println("[STATUS] RequestId " + requestId + ": Waiting for function reply"); // hasSubscribers=" + foo.hasSubscribers());
+        		System.out.println("[STATUS] RequestId " + requestId + ": Waiting for reply on flow " + flowable);
     			tmp.whenComplete((v, th) -> {
-    				System.out.println("[STATUS] Got the reply");
+    				System.out.println("[STATUS] RequestId " + requestId + ": Got the reply from flow " + flowable);
     				disposable.dispose();
     				if(th == null) {
     					tmp.complete(v);
@@ -782,6 +785,7 @@ public class RabbitMqFlows {
     				}
     			});
 
+    			System.out.println("[STATUS] RequestId " + requestId + ": Sending request to subscriber" + subscriber);
 	    		subscriber.onNext(t);
     		} catch(Exception e) {
     			tmp.completeExceptionally(e);

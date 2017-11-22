@@ -97,7 +97,8 @@ public class DefaultEvaluationStorage
     }
 
     @Override
-    public void startUp() {
+    public void startUp() throws Exception {
+    	super.startUp();
     	boolean[] resultSent = {false};
     	
         // TODO We could add detection of duplicate keys
@@ -237,6 +238,7 @@ public class DefaultEvaluationStorage
 
     @Override
     public void shutDown() throws Exception {
+    	super.shutDown();
         logger.debug("evaluation module shut down done");
     }
 }

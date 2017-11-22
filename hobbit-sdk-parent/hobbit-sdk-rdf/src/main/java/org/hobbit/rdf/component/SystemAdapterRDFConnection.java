@@ -96,7 +96,7 @@ public class SystemAdapterRDFConnection
     	
     	super.startUp();
 
-        taskGenerationFinishedFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+        taskGenerationFinishedFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATION_FINISHED));
 
         
@@ -240,13 +240,15 @@ public class SystemAdapterRDFConnection
 
     @Override
     public void shutDown() throws Exception {
-    	logger.info("SystemAdapter::startDown()");    
-    	if(streamManager != null) {
-    		streamManager.close();
+    	try {
+	    	logger.info("SystemAdapter::startDown()");    
+	    	if(streamManager != null) {
+	    		streamManager.close();
+	    	}
+	        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+    	} finally {
+    		super.shutDown();
     	}
-        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
-        
-        super.shutDown();
     }
 
     @Override

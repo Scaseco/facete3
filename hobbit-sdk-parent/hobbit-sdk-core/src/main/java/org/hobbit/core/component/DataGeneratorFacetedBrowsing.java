@@ -90,7 +90,7 @@ public class DataGeneratorFacetedBrowsing
     	super.startUp();
 
 
-        startSignalFuture = PublisherUtils.triggerOnMessage(commandPublisher,
+        startSignalFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_START_SIGNAL));
 
 
