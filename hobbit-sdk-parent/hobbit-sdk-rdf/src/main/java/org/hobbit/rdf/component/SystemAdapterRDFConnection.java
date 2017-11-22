@@ -92,6 +92,8 @@ public class SystemAdapterRDFConnection
     
     @Override
     public void startUp() throws Exception {
+    	logger.info("SystemAdapter::startUp() started");    
+    	
     	super.startUp();
 
         taskGenerationFinishedFuture = PublisherUtils.triggerOnMessage(commandPublisher,
@@ -232,10 +234,13 @@ public class SystemAdapterRDFConnection
         });
 
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.SYSTEM_READY_SIGNAL}));
+
+    	logger.info("SystemAdpater::startUp() completed");    
     }
 
     @Override
     public void shutDown() throws Exception {
+    	logger.info("SystemAdapter::startDown()");    
     	if(streamManager != null) {
     		streamManager.close();
     	}
@@ -246,7 +251,7 @@ public class SystemAdapterRDFConnection
 
     @Override
     public void run() throws Exception {
-        logger.debug("Waiting for task generation to finish");
+        logger.info("Waiting for task generation to finish");
         taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
 //        taskGenerationFinishedFuture.get(60, TimeUnit.SECONDS);
 

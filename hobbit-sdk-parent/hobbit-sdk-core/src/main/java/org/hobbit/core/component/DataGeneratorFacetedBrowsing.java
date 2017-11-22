@@ -70,24 +70,24 @@ public class DataGeneratorFacetedBrowsing
     protected CompletableFuture<ByteBuffer> startSignalFuture;
 
 
+//    @Override
+//    public void startUp() {
+//        try { init(); } catch(Exception e) { throw new RuntimeException(e); }
+//    }
+//
+//    
+//    @Override
+//    public void shutDown() {
+//        try { close(); } catch(Exception e) { throw new RuntimeException(e); }
+//    }
+
+
+
+
     @Override
-    public void startUp() {
-        try { init(); } catch(Exception e) { throw new RuntimeException(e); }
-    }
-
-    
-    @Override
-    public void shutDown() {
-        try { close(); } catch(Exception e) { throw new RuntimeException(e); }
-    }
-
-
-
-
-    @Override
-    public void init() throws Exception {
+    public void startUp() throws Exception {
         logger.debug("Data generator init");
-    	super.init();
+    	super.startUp();
 
 
         startSignalFuture = PublisherUtils.triggerOnMessage(commandPublisher,
@@ -236,10 +236,6 @@ public class DataGeneratorFacetedBrowsing
 
         Entry<Long, Long> result = new SimpleEntry<>(recordCount.get(), batchCount.get());
         return result;
-    }
-
-    @Override
-    public void close() throws IOException {
     }
 
 }

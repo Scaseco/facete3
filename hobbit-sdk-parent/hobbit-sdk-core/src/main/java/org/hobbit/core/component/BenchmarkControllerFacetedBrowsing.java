@@ -185,7 +185,7 @@ public class BenchmarkControllerFacetedBrowsing
     @Override
     public void run() throws Exception {
 
-        logger.debug("Waiting for data and task generators to become ready");
+        logger.info("Waiting for data and task generators to become ready");
         CompletableFuture<?> initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
         initFuture.get(60, TimeUnit.SECONDS);
         
@@ -243,7 +243,7 @@ public class BenchmarkControllerFacetedBrowsing
 
 
 
-        logger.debug("Waiting for task generation phase to complete");
+        logger.info("Waiting for task generation phase to complete");
         CompletableFuture<?> taskGenerationPhaseCompletion = taskGenerationTerminatedFuture;
                 //CompletableFuture.allOf(dataGenerationFuture);
 

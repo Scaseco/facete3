@@ -22,10 +22,11 @@ public class DockerServiceDelegate<S extends Service>
 	protected String containerId;
 	
 	@Override
-	protected void doStart() {
+	public ServiceDelegate<S> startAsync() {
 		this.containerId = getContainerId();
 		
-		super.doStart();
+		return super.startAsync();
+		//return this;
 	}
 
 	@Override

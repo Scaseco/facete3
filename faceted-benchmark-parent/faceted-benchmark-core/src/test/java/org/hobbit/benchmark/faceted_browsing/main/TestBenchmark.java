@@ -57,6 +57,8 @@ import org.hobbit.rdf.component.SystemAdapterRDFConnection;
 import org.hobbit.service.podigg.PodiggWrapper;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -524,11 +526,15 @@ public class TestBenchmark {
 	
 	
 	public static class BenchmarkLauncher {
+		
+		private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.BenchmarkLauncher.class);
+
+		
 		@Bean
 		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 			return args -> {
 				
-				System.out.println("Launching benchmark");
+				logger.info("Prepapring benchmark launch");
 				
 				// Launch the system adapter
 				Service saService = dockerServiceBuilderFactory.get()
@@ -550,8 +556,6 @@ public class TestBenchmark {
 				// Wait for the bc to finish
 				bcService.awaitTerminated();
 				
-				System.out.println("Letting sa live for a little while");
-				Thread.sleep(5000);
 				
 				saService.stopAsync().awaitTerminated();
 			};

@@ -1,11 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
 
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 
@@ -15,8 +18,11 @@ import com.google.common.util.concurrent.AbstractIdleService;
  *
  */
 public class ServiceSpringApplicationBuilder
-	extends AbstractIdleService
-{
+	extends AbstractExecutionThreadService
+{	
+	private static final Logger logger = LoggerFactory.getLogger(ServiceSpringApplicationBuilder.class);
+
+	
 	protected SpringApplicationBuilder appBuilder;
 	protected String[] args;
 
@@ -47,9 +53,15 @@ public class ServiceSpringApplicationBuilder
 				}
 			}
 		});
-		ctx = appBuilder.run(args);
 	}
 
+	@Override
+	protected void run() throws Exception {
+		logger.info("SpringApplicationBuilder as service: launching, builderHash: " + appBuilder.hashCode());
+		ctx = appBuilder.run(args);
+		logger.info("SpringApplicationBuilder as service: context terminated, builderHash:" + appBuilder.hashCode());
+	}
+	
 	@Override
 	protected void shutDown() throws Exception {
 		if(ctx != null) {
