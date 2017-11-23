@@ -31,7 +31,7 @@ class ConsumerSorting<T, S extends Comparable<S>>
 {
 	protected Subscriber<? super T> delegate; //Consumer<? super T> delegate;
 	
-	protected Function<? super T, ? extends S> getSeqId;
+	protected Function<? super T, ? extends S> extractSeqId;
 	protected Function<? super S, ? extends S> incrementSeqId;
 
 	//protected DiscreteDomain<S> discreteDomain;
@@ -48,7 +48,7 @@ class ConsumerSorting<T, S extends Comparable<S>>
 			Function<? super S, ? extends S> incrementSeqId,
 			Subscriber<? super T> delegate) {
 		super();
-		this.getSeqId = extractSeqId;
+		this.extractSeqId = extractSeqId;
 		this.incrementSeqId = incrementSeqId;
 		this.expectedSeqId = expectedSeqId;
 		this.delegate = delegate;		
@@ -72,7 +72,7 @@ class ConsumerSorting<T, S extends Comparable<S>>
 	}
 
 	public synchronized void onNext(T value) {
-		S seqId = getSeqId.apply(value);
+		S seqId = extractSeqId.apply(value);
 
 		// If complete, the seqId must not be higher than the latest seen one
 		if(isComplete) {
