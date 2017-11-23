@@ -3,13 +3,15 @@ package org.hobbit.transfer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 
 public class ReadableByteChannelSimple
-    implements ReadableByteChannel
+    implements ReadableByteChannel, Subscriber<ByteBuffer>
 {
     protected volatile boolean lastBatchSeen = false;
     protected BlockingQueue<ByteBuffer> clientQueue = new LinkedBlockingQueue<>();
@@ -30,27 +32,37 @@ public class ReadableByteChannelSimple
         this.closeAction = closeAction;
     }
 
-    public boolean isDone() {
+    public boolean isComplete() {
         return lastBatchSeen;
     }
 
-    protected void setLastBatchSeen() {
+    @Override
+    public void onSubscribe(Subscription s) {
+    }
+    
+    @Override
+    public void onComplete() {
         synchronized(this) {
             lastBatchSeen = true;
             notifyAll();
         }
     }
 
-    protected void appendDataToQueue(ByteBuffer bodyBuffer) throws InterruptedException {
+    @Override
+    public void onNext(ByteBuffer bodyBuffer) {
         synchronized(this) {
         	bodyBuffer.mark();
         	byte[] tmp = new byte[bodyBuffer.remaining()];
         	bodyBuffer.get(tmp, 0, bodyBuffer.remaining());
-        	String s = new String(tmp, StandardCharsets.UTF_8);
+        	//String s = new String(tmp, StandardCharsets.UTF_8);
         	bodyBuffer.reset();
         	
         	//System.out.println("Appending to queue: " + s);
-            clientQueue.put(bodyBuffer);
+            try {
+				clientQueue.put(bodyBuffer);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
         }
     }
 
@@ -60,7 +72,8 @@ public class ReadableByteChannelSimple
      * Otherwise, sets the abort exception and interrupts any wait for data
      *
      */
-    public void abort(Throwable t) {
+    @Override
+    public void onError(Throwable t) {
         synchronized(this) {
             if(!lastBatchSeen) {
                 abortException = t;
@@ -75,9 +88,9 @@ public class ReadableByteChannelSimple
      *
      * @param data
      */
-    public  void supplyData(ByteBuffer data) {
-        clientQueue.add(data);
-    }
+//    public void supplyData(ByteBuffer data) {
+//        clientQueue.add(data);
+//    }
 
 
 

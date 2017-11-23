@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  *
  */
 public class ChunkedProtocolReaderSimple
-    implements ChunkedProtocolReader
+    implements ChunkedProtocolReader<ByteBuffer>
 {
     public ChunkedProtocolReaderSimple() {
 

@@ -3,9 +3,9 @@ package org.hobbit.transfer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -25,7 +25,7 @@ public class OutputStreamChunkedTransfer
     protected long batchSequenceId = 1;
     protected boolean closeChannelOnClose = false;
 
-    protected ChunkedProtocolWriter protocol;
+    protected ChunkedProtocolWriter<ByteBuffer> protocol;
     protected Consumer<ByteBuffer> dataDelegate;
 
     protected Runnable closeAction;
@@ -34,7 +34,7 @@ public class OutputStreamChunkedTransfer
 
     protected static final AtomicInteger nextStreamId = new AtomicInteger(1);
 
-    public OutputStreamChunkedTransfer(ChunkedProtocolWriter protocol, Consumer<ByteBuffer> dataDelegate, Runnable closeAction) {
+    public OutputStreamChunkedTransfer(ChunkedProtocolWriter<ByteBuffer> protocol, Consumer<ByteBuffer> dataDelegate, Runnable closeAction) {
         super();
         this.protocol = protocol;
         this.dataDelegate = dataDelegate;
@@ -118,6 +118,7 @@ public class OutputStreamChunkedTransfer
         write(new byte[]{(byte)b}, 0, 1);
     }
 
+    AtomicLong flushCount = new AtomicLong();
     @Override
     public void flush() throws IOException {
 //        int pos = dataBuffer.position();
@@ -141,7 +142,7 @@ public class OutputStreamChunkedTransfer
         dataBuffer = protocol.nextBuffer(dataBuffer);
         //payloadRegion = protocol.getPayload(dataBuffer);
 
-
+        System.out.println("[STREAM] Flushcount: " + flushCount.incrementAndGet());
         //super.flush();
     }
 

@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  * @author raven
  *
  */
-public interface ChunkedProtocolWriter {
+public interface ChunkedProtocolWriter<T> {
 
 //    /**
 //     * Within the current bounds, write the metadata
@@ -34,7 +34,7 @@ public interface ChunkedProtocolWriter {
      * @param isLastChunk
      * @return
      */
-    ByteBuffer nextBuffer(ByteBuffer previousBuffer);
+    T nextBuffer(T previousBuffer);
     //ByteBuffer getPayloadRegion(ByteBuffer buffer);
 
     /**
@@ -43,10 +43,10 @@ public interface ChunkedProtocolWriter {
      * @param flag
      * @return True iff the flag was modified
      */
-    boolean setLastChunkFlag(ByteBuffer buffer, boolean flag);
+    boolean setLastChunkFlag(T buffer, boolean flag);
 
 
-    String toString(ByteBuffer buffer);
+    String toString(T buffer);
 //    /**
 //     * Set up a byte buffer to hold the next payload.
 //     * The returned ByteBuffer is intended for immediate use.

@@ -186,7 +186,7 @@ public class DataGeneratorFacetedBrowsing
         };
 
         logger.debug("Data generator is sending dataset to task generater");
-        sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
+        //sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         
         logger.debug("Data generator is sending dataset to system adapter");
         sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);

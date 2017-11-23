@@ -2,13 +2,13 @@ package org.hobbit.transfer;
 
 import java.nio.ByteBuffer;
 
-public interface ChunkedProtocolReader {
+public interface ChunkedProtocolReader<T> {
     /**
      * Check whether the record can be handled by the protocol
      * @param byteBuffer
      * @return
      */
-    boolean isStreamRecord(ByteBuffer byteBuffer);
+    boolean isStreamRecord(T byteBuffer);
 
     /**
      * Read the id of the stream
@@ -16,7 +16,7 @@ public interface ChunkedProtocolReader {
      * @param byteBuffer
      * @return
      */
-    Object getStreamId(ByteBuffer byteBuffer);
+    Object getStreamId(T byteBuffer);
 
     /**
      * Get the sequence id of the chunk within the stream
@@ -24,7 +24,7 @@ public interface ChunkedProtocolReader {
      * @param byteBuffer
      * @return
      */
-    Object getChunkId(ByteBuffer byteBuffer);
+    Object getChunkId(T byteBuffer);
 
     /**
      * Check whether this is the first chunk of a stream.
@@ -33,11 +33,11 @@ public interface ChunkedProtocolReader {
      * @param byteBuffer
      * @return
      */
-    boolean isStartOfStream(ByteBuffer byteBuffer);
+    boolean isStartOfStream(T byteBuffer);
 
 
 
-    boolean isLastChunk(ByteBuffer byteBuffer);
+    boolean isLastChunk(T byteBuffer);
 
     /**
      * Adjust the byte buffer to the payload.
@@ -46,6 +46,6 @@ public interface ChunkedProtocolReader {
      * @param byteBuffer
      * @return
      */
-    ByteBuffer getPayload(ByteBuffer byteBuffer);
+    T getPayload(T byteBuffer);
 
 }

@@ -19,42 +19,81 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 class ConsumerSorting<T, S extends Comparable<S>>
-	implements Consumer<T>
+	implements Subscriber<T>
 {
-	protected Consumer<? super T> delegate;
+	protected Subscriber<? super T> delegate; //Consumer<? super T> delegate;
 	
 	protected Function<? super T, ? extends S> getSeqId;
-	protected Function<? super S, ? extends S> getNextSeqId;
+	protected Function<? super S, ? extends S> incrementSeqId;
+
 	//protected DiscreteDomain<S> discreteDomain;
 
 	protected S expectedSeqId;
+	protected boolean isComplete = false;
 	
 	protected NavigableMap<S, T> seqIdToValue = new TreeMap<>();
-	
-	
+
 	
 	public ConsumerSorting(
 			S expectedSeqId,
-			Function<? super T, ? extends S> getSeqId,
-			Function<? super S, ? extends S> getNextSeqId,
-			Consumer<? super T> delegate) {
+			Function<? super T, ? extends S> extractSeqId,
+			Function<? super S, ? extends S> incrementSeqId,
+			Subscriber<? super T> delegate) {
 		super();
-		this.getSeqId = getSeqId;
-		this.getNextSeqId = getNextSeqId;
+		this.getSeqId = extractSeqId;
+		this.incrementSeqId = incrementSeqId;
 		this.expectedSeqId = expectedSeqId;
-		this.delegate = delegate;
+		this.delegate = delegate;		
 	}
 
+	public synchronized void onError(Throwable throwable) {
+		delegate.onError(throwable);
+	
+		//throw new RuntimeException(throwable);
+	}
+		
+	public synchronized void onComplete() {
+		isComplete = true;
+		
+		// If there are no more entries in the map, complete the delegate immediately
+		if(seqIdToValue.isEmpty()) {
+			delegate.onComplete();
+		}
+		
+		// otherwise, the onNext method has to handle completion
+	}
 
-
-	public synchronized void accept(T value) {
+	public synchronized void onNext(T value) {
 		S seqId = getSeqId.apply(value);
 
-		// TODO Add sanity checks for existing values 
+		// If complete, the seqId must not be higher than the latest seen one
+		if(isComplete) {
+			if(seqIdToValue.isEmpty()) {
+				onError(new RuntimeException("Sanity check failed: Call to onNext encountered after completion."));
+			}
+			
+			S highestSeqId = seqIdToValue.descendingKeySet().first();
+			
+			if(Objects.compare(seqId, highestSeqId, Comparator.naturalOrder()) > 0) {
+				onError(new RuntimeException("Sequence was marked as complete with id " + highestSeqId + " but a higher id was encountered " + seqId));
+			}
+		}
+
+		boolean checkForExistingKeys = true;
+		if(checkForExistingKeys) {
+			if(seqIdToValue.containsKey(seqId)) {
+				onError(new RuntimeException("Already seen an item with id " + seqId));
+			}
+		}
+
 		// Add item to the map
 		seqIdToValue.put(seqId, value);
 		
@@ -68,24 +107,37 @@ class ConsumerSorting<T, S extends Comparable<S>>
 			int d = Objects.compare(expectedSeqId, s, Comparator.naturalOrder());
 			if(d == 0) {
 				it.remove();
-				delegate.accept(v);				
-				expectedSeqId = getNextSeqId.apply(expectedSeqId);
+				delegate.onNext(v);				
+				expectedSeqId = incrementSeqId.apply(expectedSeqId);
+				//System.out.println("expecting seq id " + expectedSeqId);
 			} else if(d < 0) {
-				// This should not happen
-				
 				// Skip values with a lower id
+				// TODO Add a flag to emit onError event
+				System.out.println("Should not happen: received id " + s + " which is lower than the expected id " + expectedSeqId);
 				it.remove();
 			} else { // if d > 0
 				// Wait for the next sequence id
+				System.out.println("Received id " + s + " while waiting for expected id " + expectedSeqId);
 				break;
 			}			
 		}
+		
+		// If the completion mark was set and all items have been emitted, we are done
+		if(isComplete && seqIdToValue.isEmpty()) {
+			delegate.onComplete();
+		}
 	}	
 
+	@Override
+	public synchronized void onSubscribe(Subscription s) {
+		// TODO Auto-generated method stub		
+	}
 
-	public static <T> Consumer<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> getSeqId, Consumer<? super T> delegate) {
+
+	public static <T> Subscriber<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> getSeqId, Subscriber<? super T> delegate) {
 		return new ConsumerSorting<T, Long>(initiallyExpectedId, getSeqId, id -> Long.valueOf(id.longValue() + 1l), delegate);
 	}
+	
 }
 
 
@@ -104,7 +156,7 @@ public class InputStreamManagerImpl
 {
     protected ExecutorService executorService = Executors.newCachedThreadPool(); //Executors.newCachedThreadPool();
 
-    protected ChunkedProtocolReader readProtocol;
+    protected ChunkedProtocolReader<ByteBuffer> readProtocol;
     protected ChunkedProtocolControl controlProtocol;
 
     protected Map<Object, ReadableByteChannelSimple> openIncomingStreams = new HashMap<>();
@@ -151,7 +203,8 @@ public class InputStreamManagerImpl
 //    }
 
     @Override
-    public boolean handleIncomingData(ByteBuffer buffer) {
+    public synchronized boolean handleIncomingData(ByteBuffer buffer) {
+    	buffer = buffer.duplicate();
         // Check for control event
         boolean isControlMessage = controlProtocol.isStreamControlMessage(buffer);
 
@@ -166,7 +219,7 @@ public class InputStreamManagerImpl
                 StreamControl message = controlProtocol.getMessageType(buffer);
                 switch(message){
                 case READING_ABORTED:
-                    stream.abort(new RuntimeException("reading aborted"));
+                    stream.onError(new RuntimeException("reading aborted"));
                     break;
                 default:
                     System.out.println("Unknown message type: " + message);
@@ -190,25 +243,33 @@ public class InputStreamManagerImpl
                 boolean isStartOfStream = readProtocol.isStartOfStream(buffer);
 
                 if(isStartOfStream) {
+                	AtomicLong count = new AtomicLong();
                     ReadableByteChannelSimple tmp = new ReadableByteChannelSimple() {
                     	// Here we create a consumer instance that orders bytebuffers by their sequence id
                     	protected Consumer<ByteBuffer> appender = ConsumerSorting.forLong(
                     			1l, b -> ((Number)readProtocol.getChunkId(b)).longValue(),
                     			t -> {
 									try {
-			                            ByteBuffer payload = readProtocol.getPayload(buffer);
+		                                boolean isLastChunk = readProtocol.isLastChunk(t);
+
+		                                ByteBuffer payload = readProtocol.getPayload(t);
 			                            ByteBuffer copy = ByteBuffer.allocate(payload.remaining());
-			                            copy.put(payload);
+			                            copy.put(payload.duplicate());
 			                            copy.rewind();                                
 
-			                            super.appendDataToQueue(copy);
+			                            System.out.println("[STREAM] Appended data " + count.incrementAndGet());
+			                            super.onNext(copy);
+		                                if(isLastChunk) {
+		                                    onComplete();
+		                                }
+
 									} catch (InterruptedException e) {
 										throw new RuntimeException(e);
 									}
 								});
                     	
                         @Override
-                        protected void appendDataToQueue(ByteBuffer buffer) throws InterruptedException {
+                        protected void onNext(ByteBuffer buffer) throws InterruptedException {
                             ByteBuffer copy = ByteBuffer.allocate(buffer.remaining());
                             copy.put(buffer.duplicate());
                             copy.rewind();                                
@@ -218,12 +279,7 @@ public class InputStreamManagerImpl
                             // (a) an overwrite of the original buffer does not cause undefined behavior
                             // (b) changes by the listeners do not cause undefined behavior
                             
-                            try {
-                                boolean isLastChunk = readProtocol.isLastChunk(buffer);
-                                if(isLastChunk) {
-                                    setLastBatchSeen();
-                                }
-                                                    
+                            try {                                                    
 //                                in.appendDataToQueue(copy);
                             	appender.accept(copy);
                             } catch(Exception e) {
@@ -238,7 +294,7 @@ public class InputStreamManagerImpl
                         public void close() throws IOException {
                             // If the byte channel is closed before completed, send a control message
                             // to hint any sender to stop sending the stream
-                            if(!isDone()) {
+                            if(!isComplete()) {
                                 ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
                                 if(controlChannel != null) {
                                 	controlChannel.accept(readingAbortedMessage);
@@ -273,7 +329,7 @@ public class InputStreamManagerImpl
 
             if(in != null) {
             	try {
-					in.appendDataToQueue(buffer);
+					in.onNext(buffer);
 				} catch (InterruptedException e) {
 					throw new RuntimeException(e);
 				}
