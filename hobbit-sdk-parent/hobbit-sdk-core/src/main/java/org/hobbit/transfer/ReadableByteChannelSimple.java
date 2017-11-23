@@ -42,6 +42,7 @@ public class ReadableByteChannelSimple
     
     @Override
     public void onComplete() {
+    	System.out.println("OnComplete called");
         synchronized(this) {
             lastBatchSeen = true;
             notifyAll();

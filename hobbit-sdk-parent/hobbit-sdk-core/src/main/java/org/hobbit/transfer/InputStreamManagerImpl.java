@@ -5,11 +5,11 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,14 +19,19 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-class ConsumerSorting<T, S extends Comparable<S>>
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+
+import io.reactivex.Flowable;
+import io.reactivex.processors.PublishProcessor;
+
+class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 	implements Subscriber<T>
 {
 	protected Subscriber<? super T> delegate; //Consumer<? super T> delegate;
@@ -42,10 +47,10 @@ class ConsumerSorting<T, S extends Comparable<S>>
 	protected NavigableMap<S, T> seqIdToValue = new TreeMap<>();
 
 	
-	public ConsumerSorting(
+	public FlowableTransformerLocalOrdering(
 			S expectedSeqId,
-			Function<? super T, ? extends S> extractSeqId,
 			Function<? super S, ? extends S> incrementSeqId,
+			Function<? super T, ? extends S> extractSeqId,
 			Subscriber<? super T> delegate) {
 		super();
 		this.extractSeqId = extractSeqId;
@@ -79,6 +84,7 @@ class ConsumerSorting<T, S extends Comparable<S>>
 			if(seqIdToValue.isEmpty()) {
 				onError(new RuntimeException("Sanity check failed: Call to onNext encountered after completion."));
 			}
+
 			
 			S highestSeqId = seqIdToValue.descendingKeySet().first();
 			
@@ -134,10 +140,24 @@ class ConsumerSorting<T, S extends Comparable<S>>
 	}
 
 
-	public static <T> Subscriber<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> getSeqId, Subscriber<? super T> delegate) {
-		return new ConsumerSorting<T, Long>(initiallyExpectedId, getSeqId, id -> Long.valueOf(id.longValue() + 1l), delegate);
+	public static <T> Subscriber<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId, Subscriber<? super T> delegate) {
+		return new FlowableTransformerLocalOrdering<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), extractSeqId, delegate);
 	}
 	
+	public static <T, S extends Comparable<S>> Subscriber<T> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId, Subscriber<? super T> delegate) {
+		return new FlowableTransformerLocalOrdering<T, S>(initiallyExpectedId, incrementSeqId, extractSeqId, delegate);
+	}
+	
+	public static <T, S extends Comparable<S>> Function<Flowable<T>, Flowable<T>>transformer(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId) {		
+		return upstream -> {
+			PublishProcessor<T> downstream = PublishProcessor.create();
+
+			Subscriber<T> tmp = wrap(initiallyExpectedId, incrementSeqId, extractSeqId, downstream);
+			upstream.subscribe(tmp::onNext, tmp::onError, tmp::onComplete);
+			
+			return downstream;
+		};
+	}
 }
 
 
@@ -159,7 +179,23 @@ public class InputStreamManagerImpl
     protected ChunkedProtocolReader<ByteBuffer> readProtocol;
     protected ChunkedProtocolControl controlProtocol;
 
-    protected Map<Object, ReadableByteChannelSimple> openIncomingStreams = new HashMap<>();
+    
+//    public static <R, C, V> Table<R, C, V> createTable(boolean rowIdentity, boolean columnIdentity) {
+//        Map<R, Map<C, V>> backingMap = createMap(rowIdentity);
+//
+//        Supplier<Map<C, V>> supplier = columnIdentity
+//                ? IdentityHashMap::new
+//                : LinkedHashMap::new;
+//
+//        Table<R, C, V> result = Tables.newCustomTable(backingMap, supplier::get);
+//        return result;
+//    }
+
+    
+    // For each stream, for each subscriber, the status of the stream
+    // TODO Right now every subscriber has its own queue - but we could optimize to a single queue with multiple read cursors
+    protected Table<Object, Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> openIncomingStreams = HashBasedTable.create(); 
+    
     protected Collection<Consumer<? super InputStream>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
 
     protected Consumer<ByteBuffer> controlChannel;
@@ -201,6 +237,17 @@ public class InputStreamManagerImpl
 //        OutputStream result = new OutputStreamChunkedTransfer(writeProtocol, outputTransport, () -> {});
 //        return result;
 //    }
+    
+    public static ByteBuffer copyRemaining(ByteBuffer b) {
+		// Create a copy of the payload to prevent potential overwrites
+        ByteBuffer copy = b.duplicate();
+    	ByteBuffer result = ByteBuffer.allocate(copy.remaining());
+        result.put(copy);
+        result.rewind();                                
+
+        return result;
+    }
+
 
     @Override
     public synchronized boolean handleIncomingData(ByteBuffer buffer) {
@@ -213,146 +260,88 @@ public class InputStreamManagerImpl
             Object streamId = controlProtocol.getStreamId(buffer);
 
             // Check if the stream is being handled
-            ReadableByteChannelSimple stream = openIncomingStreams.get(streamId);
+            Map<Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> stream = openIncomingStreams.row(streamId);
 
-            if(stream != null) {
-                StreamControl message = controlProtocol.getMessageType(buffer);
-                switch(message){
-                case READING_ABORTED:
-                    stream.onError(new RuntimeException("reading aborted"));
-                    break;
-                default:
-                    System.out.println("Unknown message type: " + message);
-                    break;
-                }
-
+            for(Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple> e : stream.values()) {            
+	            if(stream != null) {
+	                StreamControl message = controlProtocol.getMessageType(buffer);
+	                switch(message){
+	                case READING_ABORTED:
+	                    //stream.onError(new RuntimeException("reading aborted"));
+	                	e.getValue().onError(new RuntimeException("reading aborted"));
+	                    break;
+	                default:
+	                    System.out.println("Unknown message type: " + message);
+	                    break;
+	                }
+	
+	            }
             }
 
         }
 
         // Check whether the data is a stream chunk, and if so, to which stream it belongs
 
-        boolean isDataMessage = readProtocol.isStreamRecord(buffer);
-        if(isDataMessage) {
+        boolean isStreamRecord = readProtocol.isStreamRecord(buffer);
+        if(isStreamRecord) {
             Object streamId = readProtocol.getStreamId(buffer);
 
-            ReadableByteChannelSimple in = openIncomingStreams.get(streamId);
-
+            Map<Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> in = openIncomingStreams.row(streamId);
             
             if(in == null) {
                 boolean isStartOfStream = readProtocol.isStartOfStream(buffer);
 
                 if(isStartOfStream) {
-                	AtomicLong count = new AtomicLong();
-                    ReadableByteChannelSimple tmp = new ReadableByteChannelSimple() {
-                    	// Here we create a consumer instance that orders bytebuffers by their sequence id
-                    	protected Consumer<ByteBuffer> appender = ConsumerSorting.forLong(
-                    			1l, b -> ((Number)readProtocol.getChunkId(b)).longValue(),
-                    			t -> {
-									try {
-		                                boolean isLastChunk = readProtocol.isLastChunk(t);
 
-		                                ByteBuffer payload = readProtocol.getPayload(t);
-			                            ByteBuffer copy = ByteBuffer.allocate(payload.remaining());
-			                            copy.put(payload.duplicate());
-			                            copy.rewind();                                
-
-			                            System.out.println("[STREAM] Appended data " + count.incrementAndGet());
-			                            super.onNext(copy);
-		                                if(isLastChunk) {
-		                                    onComplete();
-		                                }
-
-									} catch (InterruptedException e) {
-										throw new RuntimeException(e);
-									}
-								});
-                    	
-                        @Override
-                        protected void onNext(ByteBuffer buffer) throws InterruptedException {
-                            ByteBuffer copy = ByteBuffer.allocate(buffer.remaining());
-                            copy.put(buffer.duplicate());
-                            copy.rewind();                                
-
-                            
-                            // Make sure to pass only copies to the listeners so that
-                            // (a) an overwrite of the original buffer does not cause undefined behavior
-                            // (b) changes by the listeners do not cause undefined behavior
-                            
-                            try {                                                    
-//                                in.appendDataToQueue(copy);
-                            	appender.accept(copy);
-                            } catch(Exception e) {
-                                throw new RuntimeException(e);
-                            }
-
-                        	
-                        	
-                        }
-                    	
-                    	@Override
-                        public void close() throws IOException {
-                            // If the byte channel is closed before completed, send a control message
-                            // to hint any sender to stop sending the stream
-                            if(!isComplete()) {
-                                ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
-                                if(controlChannel != null) {
-                                	controlChannel.accept(readingAbortedMessage);
-                                }
-                            }
-                            super.close();
-                        }
-                    };
-                    in = tmp;
-                    openIncomingStreams.put(streamId, in);
-
-                    // This is the event to a client that there exists a new input stream.
-                    // This runs is a separate thread
                     for(Consumer<? super InputStream> subscriber : IterableUtils.synchronizedCopy(subscribers)) {
+	                	
+	                    PublishProcessor<ByteBuffer> pipeline = PublishProcessor.create();
+	                    ReadableByteChannelSimple target = new ReadableByteChannelSimple() {
+	                    	@Override
+	                    	public void close() throws IOException {
+	                    		openIncomingStreams.remove(streamId, subscriber);
+	                    		super.close();
+	                    	}
+	                    };
+	                    
+	                    pipeline
+	                    		.map(InputStreamManagerImpl::copyRemaining)
+	                    		.compose(FlowableTransformerLocalOrdering.<ByteBuffer, Long>transformer(1l, (id) -> id + 1, b -> ((Number)readProtocol.getChunkId(b)).longValue())::apply)
+	                    		.takeUntil(readProtocol::isLastChunk)
+	                    		.map(b -> {
+	                    			
+	                                ByteBuffer rawPayload = readProtocol.getPayload(b);
+		                            ByteBuffer payload = InputStreamManagerImpl.copyRemaining(rawPayload);
+		                            return payload;
+	                    		})
+	                    		.subscribe(target::onNext, target::onError, target::onComplete);
+	  
+	                    Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple> e = new SimpleEntry<>(pipeline, target);
 
-                        // TODO This could be a long running action - we should not occupy the fork/join pool
-                        InputStream tmpIn = Channels.newInputStream(tmp);
-                        //CompletableFuture.runAsync(() -> {
-                        // TODO Get any exceptions from the executor service
-                        executorService.execute(() -> {
-                            try {
-                                subscriber.accept(tmpIn);
-                            } catch(Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
+	                    openIncomingStreams.put(streamId, subscriber, e);
 
-                        //});
+	                    InputStream tmpIn = Channels.newInputStream(target);
+	                    //CompletableFuture.runAsync(() -> {
+	                    // TODO Get any exceptions from the executor service
+	                    executorService.execute(() -> {
+	                        try {
+	                            subscriber.accept(tmpIn);
+	                        } catch(Exception ex) {
+	                            throw new RuntimeException(ex);
+	                        }
+	                    });
+
                     }
                 }
             }
+            
+
+            in = openIncomingStreams.row(streamId);
 
             if(in != null) {
-            	try {
-					in.onNext(buffer);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-//                ByteBuffer payload = readProtocol.getPayload(buffer);
-//
-//                
-//                // Make sure to pass only copies to the listeners so that
-//                // (a) an overwrite of the original buffer does not cause undefined behavior
-//                // (b) changes by the listeners do not cause undefined behavior
-//                ByteBuffer copy = ByteBuffer.allocate(payload.remaining());
-//                copy.put(payload);
-//                copy.rewind();                                
-//                
-//                try {
-//                    boolean isLastChunk = readProtocol.isLastChunk(buffer);
-//                    if(isLastChunk) {
-//                        in.setLastBatchSeen();
-//                    }
-//                                        
-//                    in.appendDataToQueue(copy);
-//                } catch(InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
+        		for(Entry<Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> e : in.entrySet()) {
+        			e.getValue().getKey().onNext(buffer);
+        		}
             }
         }
         return true;
@@ -382,3 +371,67 @@ public class InputStreamManagerImpl
     }
 
 }
+
+
+
+
+////
+////ReadableByteChannelSimple tmp = new ReadableByteChannelSimple() {
+////// Here we create a consumer instance that orders bytebuffers by their sequence id
+////protected Consumer<ByteBuffer> appender = FlowableTransformerLocalOrdering.forLong(
+////		1l, b -> ((Number)readProtocol.getChunkId(b)).longValue(),
+////		t -> {
+////			try {
+////                boolean isLastChunk = readProtocol.isLastChunk(t);
+////
+////                ByteBuffer payload = readProtocol.getPayload(t);
+////                ByteBuffer copy = ByteBuffer.allocate(payload.remaining());
+////                copy.put(payload.duplicate());
+////                copy.rewind();                                
+////
+////                System.out.println("[STREAM] Appended data " + count.incrementAndGet());
+////                super.onNext(copy);
+////                if(isLastChunk) {
+////                    onComplete();
+////                }
+////
+////			} catch (InterruptedException e) {
+////				throw new RuntimeException(e);
+////			}
+////		});
+////
+////@Override
+////protected void onNext(ByteBuffer buffer) throws InterruptedException {
+////    ByteBuffer copy = ByteBuffer.allocate(buffer.remaining());
+////    copy.put(buffer.duplicate());
+////    copy.rewind();                                
+////
+////    
+////    // Make sure to pass only copies to the listeners so that
+////    // (a) an overwrite of the original buffer does not cause undefined behavior
+////    // (b) changes by the listeners do not cause undefined behavior
+////    
+////    try {                                                    
+//////        in.appendDataToQueue(copy);
+////    	appender.accept(copy);
+////    } catch(Exception e) {
+////        throw new RuntimeException(e);
+////    }
+//
+//	
+//	
+//}
+//
+//@Override
+//public void close() throws IOException {
+//    // If the byte channel is closed before completed, send a control message
+//    // to hint any sender to stop sending the stream
+//    if(!isComplete()) {
+//        ByteBuffer readingAbortedMessage = controlProtocol.write(ByteBuffer.allocate(16), streamId, StreamControl.READING_ABORTED.getCode());
+//        if(controlChannel != null) {
+//        	controlChannel.accept(readingAbortedMessage);
+//        }
+//    }
+//    super.close();
+//}
+//};
