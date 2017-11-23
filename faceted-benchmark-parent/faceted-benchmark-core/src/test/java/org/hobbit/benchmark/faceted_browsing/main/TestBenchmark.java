@@ -13,15 +13,12 @@ import java.util.function.Supplier;
 import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.commons.service.core.ServiceCapableWrapper;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
-import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.rdfconnection.SparqlUpdateConnection;
+import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
@@ -177,7 +174,7 @@ public class TestBenchmark {
 		//@Bean(initMethod="startUp", destroyMethod="shutDown")
 		//public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
 		@Bean
-		public BeanWrapperService<?> dockerServiceManagerClientCore(
+		public BeanWrapperService<ServiceDelegate<DockerServiceManagerClientComponent>> dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
@@ -191,6 +188,7 @@ public class TestBenchmark {
 			return new BeanWrapperService<>(ServiceCapableWrapper.wrap(core));
 		}
 			
+		//ServiceDelegate<DockerServiceManagerClientComponent>
 		@Bean
 		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
 				//DockerServiceManagerClientComponent core
@@ -384,12 +382,15 @@ public class TestBenchmark {
 		public RDFConnection systemUnderTestRdfConnection() {
 			SparqlService tmp = FluentSparqlService.forModel().create();
 			
-	        SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(tmp.getQueryExecutionFactory());
-	        SparqlUpdateConnection updateConn = new SparqlUpdateConnectionJsa(tmp.getUpdateExecutionFactory());
+	        //SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(tmp.getQueryExecutionFactory());
+	        //SparqlUpdateConnection updateConn = new SparqlUpdateConnectionJsa(tmp.getUpdateExecutionFactory());
+	        //RDFDatasetConnection
 	        //RDFDatasetConnection datasetConn = new RDFDatasetConnectionVirtuoso(queryConn, sqlConn);
 	        
-	        RDFConnection result = new RDFConnectionModular(queryConn, updateConn, null);
+	        //RDFConnection result = new RDFConnectionModular(queryConn, updateConn, null);
 
+			RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
+			
 	        return result;
 		}
 		

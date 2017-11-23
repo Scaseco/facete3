@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -38,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.FileCopyUtils;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
 
@@ -78,7 +80,7 @@ public class SystemAdapterRDFConnection
 
     protected StreamManager streamManager;
 
-    protected ServiceManager serviceManager;
+    protected ServiceManager serviceManager = null;
 
     //protected RDFConnection rdfConnection;
 
@@ -113,9 +115,10 @@ public class SystemAdapterRDFConnection
         streamManager.subscribe(inputStream -> {
             logger.info("Bulk load data received");
 
+            File file = null;
             try(InputStream in = inputStream) {
                 // Write incoming data to a file
-                File file = File.createTempFile("hobbit-system-adapter-data-to-load", ".nt");
+                file = File.createTempFile("hobbit-system-adapter-data-to-load", ".ttl");
                 FileCopyUtils.copy(in, new FileOutputStream(file));
                 
                 
@@ -128,21 +131,25 @@ public class SystemAdapterRDFConnection
                 logger.info("Data loading complete");
                 
             } catch (Exception e) {
-                throw new RuntimeException(e);
+            	String filename = file == null ? "(file creation failed)" : file.getAbsolutePath();
+                throw new RuntimeException("While preparing dataset tmp file " + filename, e);
             }
         });
 
         //rdfConnection = rdfConnectionSupplier.get();
 
-        serviceManager = new ServiceManager(Arrays.asList(
+        List<Service> services = Arrays.asList(
 //                systemUnderTestService
-        ));
-
-        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
-                serviceManager,
-                60, TimeUnit.SECONDS,
-                60, TimeUnit.SECONDS);
-
+        );
+        
+        if(!services.isEmpty()) {
+	        serviceManager = new ServiceManager(services);
+	
+	        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
+	                serviceManager,
+	                60, TimeUnit.SECONDS,
+	                60, TimeUnit.SECONDS);
+        }
 
         fromDataGenerator.subscribe(byteBuffer -> {
             // non-stream messages from the data generator are ignored
@@ -245,7 +252,10 @@ public class SystemAdapterRDFConnection
 	    	if(streamManager != null) {
 	    		streamManager.close();
 	    	}
-	        ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+
+	    	if(serviceManager != null) {
+	    		ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+	    	}
     	} finally {
     		super.shutDown();
     	}

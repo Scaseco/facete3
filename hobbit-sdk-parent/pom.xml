@@ -9,7 +9,7 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<jena-sparql-api.version>3.4.0-2-SNAPSHOT</jena-sparql-api.version>
+		<jena-sparql-api.version>3.5.0-1</jena-sparql-api.version>
 		<slf4j.version>1.7.24</slf4j.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
