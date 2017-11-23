@@ -19,8 +19,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 import org.aksw.commons.collections.utils.StreamUtils;
@@ -172,7 +170,10 @@ public class DataGeneratorFacetedBrowsing
 
         // Generate the data once and store it in a temp file
         // TODO Add a flag whether to cache in a file
-        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing", ".nt");
+        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing-", ".nt");
+        
+        // TODO Enable an optional validation step which keeps the output files if there are any problems
+        
         datasetFile.deleteOnExit();
         Stream<Triple> triples = tripleStreamSupplier.get();
         RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), triples.iterator());
@@ -191,8 +192,8 @@ public class DataGeneratorFacetedBrowsing
         logger.debug("Data generator is sending dataset to system adapter");
         sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
 
-        logger.debug("Data generator fulfilled its purpose and shuts down");
         datasetFile.delete();
+        logger.debug("Data generator fulfilled its purpose and shuts down");
     }
 
     public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {
@@ -203,8 +204,9 @@ public class DataGeneratorFacetedBrowsing
         //ChunkedProtocolWriter protocol = new ChunkedProtocolWriterSimple(666);
 
         //Stream<Triple> stream = Streams.stream(it);
+        //try(OutputStream out = new FileOutputStream(File.createTempFile("foo-", ".ttl"))) {//
         try(OutputStream out = OutputStreamChunkedTransfer.newInstanceForByteChannel(channel, null)) {
-            StreamUtils
+        	StreamUtils
                 .mapToBatch(stream, batchSize)
                 .peek(x -> batchCount.incrementAndGet())
                 .map(GraphUtils::toMemGraph)

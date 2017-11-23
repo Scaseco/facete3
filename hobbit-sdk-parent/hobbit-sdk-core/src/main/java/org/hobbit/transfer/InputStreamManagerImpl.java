@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Subscriber;
@@ -166,8 +167,10 @@ public class InputStreamManagerImpl
 	                    	}
 	                    };
 	                    
+	                    AtomicLong counter = new AtomicLong();
 	                    pipeline
 	                    		.map(InputStreamManagerImpl::copyRemaining)
+	                    		.doOnNext(b -> { System.out.println("[STREAM] Received " + counter.incrementAndGet() + " with hash " + b + " " +  b.hashCode()); })
 	                    		.compose(FlowableTransformerLocalOrdering.<ByteBuffer, Long>transformer(1l, (id) -> id + 1, b -> ((Number)readProtocol.getChunkId(b)).longValue())::apply)
 	                    		.takeUntil(readProtocol::isLastChunk)
 	                    		.map(b -> {

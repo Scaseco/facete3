@@ -683,7 +683,10 @@ public class RabbitMqFlows {
     	Consumer<ByteBuffer> result = (buffer) -> {
     		try {
     			logger.info("Publishing on channel " + channel + " exchange=" + exchangeName + " routingKey=" + routingKey + " replyTo=" + properties.getReplyTo() + " isOpen=" + channel.isOpen());
-    	    	channel.basicPublish(exchangeName, routingKey, properties, buffer.array());
+    	    	byte[] payload = new byte[buffer.remaining()];
+    	    	buffer.duplicate().get(payload);
+    			
+    			channel.basicPublish(exchangeName, routingKey, properties, payload);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
