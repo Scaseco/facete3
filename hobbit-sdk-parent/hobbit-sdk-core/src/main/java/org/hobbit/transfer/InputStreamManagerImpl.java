@@ -9,157 +9,19 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-import io.reactivex.Flowable;
 import io.reactivex.processors.PublishProcessor;
-
-class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
-	implements Subscriber<T>
-{
-	protected Subscriber<? super T> delegate; //Consumer<? super T> delegate;
-	
-	protected Function<? super T, ? extends S> extractSeqId;
-	protected Function<? super S, ? extends S> incrementSeqId;
-
-	//protected DiscreteDomain<S> discreteDomain;
-
-	protected S expectedSeqId;
-	protected boolean isComplete = false;
-	
-	protected NavigableMap<S, T> seqIdToValue = new TreeMap<>();
-
-	
-	public FlowableTransformerLocalOrdering(
-			S expectedSeqId,
-			Function<? super S, ? extends S> incrementSeqId,
-			Function<? super T, ? extends S> extractSeqId,
-			Subscriber<? super T> delegate) {
-		super();
-		this.extractSeqId = extractSeqId;
-		this.incrementSeqId = incrementSeqId;
-		this.expectedSeqId = expectedSeqId;
-		this.delegate = delegate;		
-	}
-
-	public synchronized void onError(Throwable throwable) {
-		delegate.onError(throwable);
-	
-		//throw new RuntimeException(throwable);
-	}
-		
-	public synchronized void onComplete() {
-		isComplete = true;
-		
-		// If there are no more entries in the map, complete the delegate immediately
-		if(seqIdToValue.isEmpty()) {
-			delegate.onComplete();
-		}
-		
-		// otherwise, the onNext method has to handle completion
-	}
-
-	public synchronized void onNext(T value) {
-		S seqId = extractSeqId.apply(value);
-
-		// If complete, the seqId must not be higher than the latest seen one
-		if(isComplete) {
-			if(seqIdToValue.isEmpty()) {
-				onError(new RuntimeException("Sanity check failed: Call to onNext encountered after completion."));
-			}
-
-			
-			S highestSeqId = seqIdToValue.descendingKeySet().first();
-			
-			if(Objects.compare(seqId, highestSeqId, Comparator.naturalOrder()) > 0) {
-				onError(new RuntimeException("Sequence was marked as complete with id " + highestSeqId + " but a higher id was encountered " + seqId));
-			}
-		}
-
-		boolean checkForExistingKeys = true;
-		if(checkForExistingKeys) {
-			if(seqIdToValue.containsKey(seqId)) {
-				onError(new RuntimeException("Already seen an item with id " + seqId));
-			}
-		}
-
-		// Add item to the map
-		seqIdToValue.put(seqId, value);
-		
-		// Consume consecutive items from the map
-		Iterator<Entry<S, T>> it = seqIdToValue.entrySet().iterator();
-		while(it.hasNext()) {
-			Entry<S, T> e = it.next();
-			S s = e.getKey();
-			T v = e.getValue();
-			
-			int d = Objects.compare(expectedSeqId, s, Comparator.naturalOrder());
-			if(d == 0) {
-				it.remove();
-				delegate.onNext(v);				
-				expectedSeqId = incrementSeqId.apply(expectedSeqId);
-				//System.out.println("expecting seq id " + expectedSeqId);
-			} else if(d < 0) {
-				// Skip values with a lower id
-				// TODO Add a flag to emit onError event
-				System.out.println("Should not happen: received id " + s + " which is lower than the expected id " + expectedSeqId);
-				it.remove();
-			} else { // if d > 0
-				// Wait for the next sequence id
-				System.out.println("Received id " + s + " while waiting for expected id " + expectedSeqId);
-				break;
-			}			
-		}
-		
-		// If the completion mark was set and all items have been emitted, we are done
-		if(isComplete && seqIdToValue.isEmpty()) {
-			delegate.onComplete();
-		}
-	}	
-
-	@Override
-	public synchronized void onSubscribe(Subscription s) {
-		// TODO Auto-generated method stub		
-	}
-
-
-	public static <T> Subscriber<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId, Subscriber<? super T> delegate) {
-		return new FlowableTransformerLocalOrdering<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), extractSeqId, delegate);
-	}
-	
-	public static <T, S extends Comparable<S>> Subscriber<T> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId, Subscriber<? super T> delegate) {
-		return new FlowableTransformerLocalOrdering<T, S>(initiallyExpectedId, incrementSeqId, extractSeqId, delegate);
-	}
-	
-	public static <T, S extends Comparable<S>> Function<Flowable<T>, Flowable<T>>transformer(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId) {		
-		return upstream -> {
-			PublishProcessor<T> downstream = PublishProcessor.create();
-
-			Subscriber<T> tmp = wrap(initiallyExpectedId, incrementSeqId, extractSeqId, downstream);
-			upstream.subscribe(tmp::onNext, tmp::onError, tmp::onComplete);
-			
-			return downstream;
-		};
-	}
-}
-
 
 /**
  * Implements input streams over a data channel.
@@ -288,7 +150,7 @@ public class InputStreamManagerImpl
 
             Map<Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> in = openIncomingStreams.row(streamId);
             
-            if(in == null) {
+            if(in.isEmpty()) {
                 boolean isStartOfStream = readProtocol.isStartOfStream(buffer);
 
                 if(isStartOfStream) {
@@ -338,11 +200,11 @@ public class InputStreamManagerImpl
 
             in = openIncomingStreams.row(streamId);
 
-            if(in != null) {
-        		for(Entry<Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> e : in.entrySet()) {
-        			e.getValue().getKey().onNext(buffer);
-        		}
-            }
+//            if(in != null) {
+    		for(Entry<Consumer<? super InputStream>, Entry<Subscriber<ByteBuffer>, ReadableByteChannelSimple>> e : in.entrySet()) {
+    			e.getValue().getKey().onNext(buffer);
+    		}
+//            }
         }
         return true;
     }

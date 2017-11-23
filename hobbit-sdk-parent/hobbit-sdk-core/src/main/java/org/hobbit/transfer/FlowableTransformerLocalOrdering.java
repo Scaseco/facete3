@@ -1,0 +1,167 @@
+package org.hobbit.transfer;
+
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.function.Function;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Emitter;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.FlowableOnSubscribe;
+
+public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
+	implements Subscriber<T>
+{
+	protected Emitter<? super T> delegate; //Consumer<? super T> delegate;
+	
+	protected Function<? super T, ? extends S> extractSeqId;
+	protected Function<? super S, ? extends S> incrementSeqId;
+
+	//protected DiscreteDomain<S> discreteDomain;
+
+	protected S expectedSeqId;
+	protected boolean isComplete = false;
+	
+	protected NavigableMap<S, T> seqIdToValue = new TreeMap<>();
+
+	
+	public FlowableTransformerLocalOrdering(
+			S expectedSeqId,
+			Function<? super S, ? extends S> incrementSeqId,
+			Function<? super T, ? extends S> extractSeqId,
+			Emitter<? super T> delegate) {
+		super();
+		this.extractSeqId = extractSeqId;
+		this.incrementSeqId = incrementSeqId;
+		this.expectedSeqId = expectedSeqId;
+		this.delegate = delegate;		
+	}
+
+	public synchronized void onError(Throwable throwable) {
+		delegate.onError(throwable);
+	
+		//throw new RuntimeException(throwable);
+	}
+		
+	public synchronized void onComplete() {
+		isComplete = true;
+		
+		// If there are no more entries in the map, complete the delegate immediately
+		if(seqIdToValue.isEmpty()) {
+			delegate.onComplete();
+		}
+		
+		// otherwise, the onNext method has to handle completion
+	}
+
+	public synchronized void onNext(T value) {
+		S seqId = extractSeqId.apply(value);
+
+		// If complete, the seqId must not be higher than the latest seen one
+		if(isComplete) {
+			if(seqIdToValue.isEmpty()) {
+				onError(new RuntimeException("Sanity check failed: Call to onNext encountered after completion."));
+			}
+
+			
+			S highestSeqId = seqIdToValue.descendingKeySet().first();
+			
+			if(Objects.compare(seqId, highestSeqId, Comparator.naturalOrder()) > 0) {
+				onError(new RuntimeException("Sequence was marked as complete with id " + highestSeqId + " but a higher id was encountered " + seqId));
+			}
+		}
+
+		boolean checkForExistingKeys = true;
+		if(checkForExistingKeys) {
+			if(seqIdToValue.containsKey(seqId)) {
+				onError(new RuntimeException("Already seen an item with id " + seqId));
+			}
+		}
+
+		// Add item to the map
+		seqIdToValue.put(seqId, value);
+		
+		// Consume consecutive items from the map
+		Iterator<Entry<S, T>> it = seqIdToValue.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<S, T> e = it.next();
+			S s = e.getKey();
+			T v = e.getValue();
+			
+			int d = Objects.compare(s, expectedSeqId, Comparator.naturalOrder());
+			if(d == 0) {
+				it.remove();
+				delegate.onNext(v);				
+				expectedSeqId = incrementSeqId.apply(expectedSeqId);
+				//System.out.println("expecting seq id " + expectedSeqId);
+			} else if(d < 0) {
+				// Skip values with a lower id
+				// TODO Add a flag to emit onError event
+				System.out.println("Should not happen: received id " + s + " which is lower than the expected id " + expectedSeqId);
+				it.remove();
+			} else { // if d > 0
+				// Wait for the next sequence id
+				System.out.println("Received id " + s + " while waiting for expected id " + expectedSeqId);
+				break;
+			}			
+		}
+		
+		// If the completion mark was set and all items have been emitted, we are done
+		if(isComplete && seqIdToValue.isEmpty()) {
+			delegate.onComplete();
+		}
+	}	
+
+	@Override
+	public synchronized void onSubscribe(Subscription s) {
+		// TODO Auto-generated method stub		
+	}
+
+
+	public static <T> Subscriber<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId, Emitter<? super T> delegate) {
+		return new FlowableTransformerLocalOrdering<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), extractSeqId, delegate);
+	}
+	
+	public static <T, S extends Comparable<S>> Subscriber<T> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId, Emitter<? super T> delegate) {
+		return new FlowableTransformerLocalOrdering<T, S>(initiallyExpectedId, incrementSeqId, extractSeqId, delegate);
+	}
+	
+	public static <T, S extends Comparable<S>> Function<Flowable<T>, Flowable<T>>transformer(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId) {		
+		return upstream -> {
+			Flowable<T> result = Flowable.create(new FlowableOnSubscribe<T>() {				
+				@Override
+				public void subscribe(FlowableEmitter<T> e) throws Exception {
+					Subscriber<T> tmp = wrap(initiallyExpectedId, incrementSeqId, extractSeqId, e);
+					upstream.subscribe(tmp::onNext, tmp::onError, tmp::onComplete);
+				}
+			}, BackpressureStrategy.LATEST);
+			
+			return result;
+		};
+	}
+	
+//	new Subscriber<T>() {
+//	@Override
+//	public void onSubscribe(Subscription s) { }
+//
+//	@Override
+//	public void onNext(T t) { e.onNext(t); }
+//
+//	@Override
+//	public void onError(Throwable t) { e.onError(t); }
+//
+//	@Override
+//	public void onComplete() { e.onComplete(); }						
+//});
+
+//upstream.subscribe()
+
+}
