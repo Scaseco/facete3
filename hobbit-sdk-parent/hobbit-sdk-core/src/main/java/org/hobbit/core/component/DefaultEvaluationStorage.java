@@ -125,7 +125,7 @@ public class DefaultEvaluationStorage
             Entry<String, Result> record = parseMessage(data);
             String taskId = record.getKey();
 
-            System.out.println("Acknowledging received evaluation data for task " + taskId);
+            logger.info("Acknowledging received evaluation data for task " + taskId);
             taskAck.onNext(ByteBuffer.wrap(RabbitMQUtils.writeString(taskId)));
             
             storage.putActualValue(taskId, record.getValue());
@@ -194,7 +194,7 @@ public class DefaultEvaluationStorage
 
                 // Fortunately, at present, we can just use the static channel to the em
 //                try {
-                    logger.debug("Sending " + response.length + " bytes to evaluation module");
+                    logger.info("Sending " + response.length + " bytes to evaluation module");
                     toEvaluationModule.onNext(ByteBuffer.wrap(response));
 //                } catch (IOException e) {
 //                    throw new RuntimeException(e);

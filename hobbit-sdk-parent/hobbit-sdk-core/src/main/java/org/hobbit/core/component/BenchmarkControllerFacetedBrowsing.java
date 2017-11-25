@@ -135,6 +135,11 @@ public class BenchmarkControllerFacetedBrowsing
 
         dataGenerationTerminatedFuture = ServiceManagerUtils.awaitState(dataGeneratorService, State.TERMINATED);
         
+        dataGenerationTerminatedFuture.whenComplete((v, t) -> {
+        	logger.info("BC got DG termination notification - " + v + " - " + t);
+        });
+        
+        
         taskGenerationTerminatedFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
 
         //systemAdapterTerminatedFuture = ServiceManagerUtils.awaitState(systemAdapterService, State.TERMINATED);
@@ -142,7 +147,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         taskGenerationTerminatedFuture.whenComplete((v, t) -> {
 //            try {
-                logger.debug("Sending out task TASK_GENERATION_FINISHED signal");
+                logger.info("Sending out task TASK_GENERATION_FINISHED signal");
                 commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
 //            } catch(IOException e) {
 //                throw new RuntimeException(e);
@@ -238,7 +243,7 @@ public class BenchmarkControllerFacetedBrowsing
         // The service stuff is just further info
 
 
-        logger.debug("Waiting for data generation phase to complete");
+        logger.info("Waiting for data generation phase to complete");
         CompletableFuture<?> dataGenerationPhaseCompletion = CompletableFuture.allOf(
                 dataGenerationTerminatedFuture);
                 //systemUnderTestReadyFuture);
@@ -251,6 +256,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
 
+        logger.info("Sending TASK_GENERATOR_START_SIGNAL");
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_START_SIGNAL}));
 
 
@@ -333,7 +339,9 @@ public class BenchmarkControllerFacetedBrowsing
 
     @Override
     public void shutDown() throws Exception {
-        try {
+        logger.info("BenchmarkController::shutDown() invoked");
+    	
+    	try {
         	ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
         } finally {
         	super.shutDown();

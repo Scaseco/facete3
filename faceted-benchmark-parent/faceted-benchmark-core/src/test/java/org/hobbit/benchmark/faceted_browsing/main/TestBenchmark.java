@@ -21,7 +21,6 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
@@ -30,6 +29,7 @@ import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
 import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModule;
+import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.config.ConfigGson;
@@ -483,17 +483,20 @@ public class TestBenchmark {
 	public static class ConfigEvaluationModule {
 
 		@Bean
-		public Channel es2emChannel(Connection connection) throws IOException {
+		public Channel em2esChannel(Connection connection) throws IOException {
 			return connection.createChannel();
 		}
 
-
-	    @Bean
+		@Bean
 	    public Subscriber<ByteBuffer> em2esSender(@Qualifier("em2esChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
-	    
+		@Bean
+		public Channel es2emChannel(Connection connection) throws IOException {
+			return connection.createChannel();
+		}
+
 	    @Bean
 	    public Flowable<ByteBuffer> es2emReceiver(@Qualifier("es2emChannel") Channel channel) throws IOException, TimeoutException {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
@@ -520,14 +523,18 @@ public class TestBenchmark {
 		public ApplicationRunner serviceLauncher(ServiceCapable serviceCapable) {
 			return args -> {
 				logger.info("Launching component: " + serviceCapable.getClass());
-				
-				Service service = ServiceCapableWrapper.wrap(serviceCapable);
-				service.startAsync().awaitRunning();
-				
-				// The services shut themselves down when they are finished
-				
-				service.awaitTerminated();
-				logger.info("Component terminated: " + serviceCapable.getClass());
+
+				try {
+					Service service = ServiceCapableWrapper.wrap(serviceCapable);
+					service.startAsync().awaitRunning();
+					
+					// The services shut themselves down when they are finished
+					
+					service.awaitTerminated();
+					logger.info("Component terminated: " + serviceCapable.getClass());
+				} catch(Exception e) {
+					throw new RuntimeException("Component failed: " + serviceCapable.getClass(), e);
+				}
 			};
 		}
 	}
@@ -610,23 +617,29 @@ public class TestBenchmark {
 					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
 					
 			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class, ConfigBenchmarkController.class);
+					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
+						.child(ConfigBenchmarkController.class);
 			
 			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class, DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
+					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
+							.child(DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
 			
 			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class, TaskGeneratorFacetedBenchmark.class, LauncherServiceCapable.class);
+					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
+						.child(TaskGeneratorFacetedBenchmark.class, LauncherServiceCapable.class);
 
 			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class, SystemAdapterRDFConnection.class, LauncherServiceCapable.class);
+					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
+						.child(SystemAdapterRDFConnection.class, LauncherServiceCapable.class);
 				
 			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class, DefaultEvaluationStorage.class, LauncherServiceCapable.class);
+					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
+							.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);
 
 			Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEvaluationModule.class, EvaluationModuleFacetedBrowsingBenchmark.class, LauncherServiceCapable.class);
-
+					.child(ConfigEvaluationModule.class)
+						.child(EvaluationModuleComponent.class, LauncherServiceCapable.class);
+//EvaluationModuleFacetedBrowsingBenchmark.class,
 			
 			Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
 	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
@@ -657,7 +670,7 @@ public class TestBenchmark {
 			// (1) Register any pseudo docker images - i.e. launchers of local components
 			// (2) Configure a docker service factory - which creates service instances that can be launched
 			// (3) configure the docker service manager server component which listens on the amqp infrastructure
-			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceFactoryHobbitFacetedBenchmarkLocal.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
+			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
 			.sibling(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class, BenchmarkLauncher.class);
 			;
 

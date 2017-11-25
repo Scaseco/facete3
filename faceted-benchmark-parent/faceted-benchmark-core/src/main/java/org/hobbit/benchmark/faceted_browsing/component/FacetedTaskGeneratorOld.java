@@ -44,6 +44,7 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.ModelUtils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -160,7 +161,7 @@ public class FacetedTaskGeneratorOld {
                 for (Entry<String, Map<String, String>> query : queries.entrySet()) {
                     String scenarioName = entry.getKey();
                     String scenarioClassifier = scenarioName;
-                	System.out.println("scenarioName: " + scenarioName + " query: " + query);                
+                	//System.out.println("scenarioName: " + scenarioName + " query: " + query);                
                     if (query.getKey().contains("Count")){
                     	scenarioClassifier = "Scenario_0";
                     }
@@ -190,8 +191,8 @@ public class FacetedTaskGeneratorOld {
 
                     task = ResourceUtils.renameResource(task, "http://example.org/" + scenarioName + "-" + queryid);
 
-                    System.out.println("Generated task:");
-                    RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
+                    logger.info("Generated task:\n" + toString(task.getModel(), RDFFormat.TURTLE_PRETTY));
+                    //RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
                     
                     resultList.add(task);
 
@@ -201,6 +202,13 @@ public class FacetedTaskGeneratorOld {
         }
 
         return resultList.stream();
+    }
+    
+    public static String toString(Model model, RDFFormat rdfFormat) {
+    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	RDFDataMgr.write(out, model, rdfFormat);
+    	String result = out.toString(StandardCharsets.UTF_8);
+    	return result;
     }
 
     protected String getTheNextTaskId() {

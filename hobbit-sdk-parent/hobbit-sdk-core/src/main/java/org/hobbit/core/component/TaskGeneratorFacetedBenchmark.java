@@ -67,7 +67,7 @@ public class TaskGeneratorFacetedBenchmark
 
 
     @javax.annotation.Resource(name="commandSender")
-    protected Subscriber<ByteBuffer> commandChannel;
+    protected Subscriber<ByteBuffer> commandSender;
 
 //    @Resource(name="dataChannel")
 //    protected WritableByteChannel dataChannel;
@@ -138,6 +138,16 @@ public class TaskGeneratorFacetedBenchmark
     	
         CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
 
+        
+        startSignalReceivedFuture.whenComplete((v, e) -> {
+        	logger.info("TaskGenerator: Start signal for sending out tasks received");
+        });
+        
+        loadDataFinishedFuture.whenComplete((v, e) -> {
+        	logger.info("TaskGenerator: Finished loading data");
+        });
+        
+        
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
 
         taskGeneratorModule.startUp();
@@ -150,7 +160,7 @@ public class TaskGeneratorFacetedBenchmark
 //
 //        serviceManager = new ServiceManager(services);
 
-        streamManager = new InputStreamManagerImpl(commandChannel::onNext);
+        streamManager = new InputStreamManagerImpl(commandSender::onNext);
 
         //Consumer<ByteBuffer> fromDataGeneratorObserver
         fromDataGeneratorUnsubscribe = fromDataGenerator.subscribe(streamManager::handleIncomingData);
@@ -174,6 +184,7 @@ public class TaskGeneratorFacetedBenchmark
         	try {
         		taskGeneratorModule.loadDataFromStream(tmpIn);
         	} finally {
+        		logger.info("TaskGenerator finished loading data");
         		IOUtils.closeQuietly(tmpIn);
                 loadDataFinishedFuture.complete(null);
         	}
@@ -185,7 +196,7 @@ public class TaskGeneratorFacetedBenchmark
 
         // At this point, the task generator is ready for processing
         // The message should be sent out by the service wrapper:
-        commandChannel.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
 
         logger.info("TaskGenerator::startUp() completed");
     }
@@ -196,22 +207,24 @@ public class TaskGeneratorFacetedBenchmark
         // Wait for the start signal; but also make sure the data was loaded!
         
         
-        logger.debug("Task generator waiting for start signal");
+        logger.info("TaskGenerator waiting for start signal");
         startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
         //logger.debug("Task generator done with task generation; sending tasks out");
         sendOutTasks();
-        logger.debug("Task generator fulfilled its purpose and shutting down");
+        logger.info("TaskGenerator fulfilled its purpose and shutting down");
     }
     
     protected void sendOutTasks() {
 
         // Pretend we have a stream of tasks because this is what it should eventually be        
 
+        logger.info("TaskGenerator: Generating tasks...");
     	try(Stream<Resource> taskStream = taskGeneratorModule.generateTasks()) {
 
+            logger.info("TaskGenerator: Task generation complete, sending out tasks...");
             taskStream.forEach(task -> {
             	
                 // We are now sending out the task, so track the timestamp
@@ -248,7 +261,7 @@ public class TaskGeneratorFacetedBenchmark
 							return r;
 						});
 
-            	logger.debug("Sending to system under test");
+            	logger.info("Sending task " + task + " to system under test and waiting for ack");
                 toSystemAdater.onNext(buf2);
                     
                     
@@ -259,7 +272,7 @@ public class TaskGeneratorFacetedBenchmark
                } catch (InterruptedException | ExecutionException | TimeoutException e) {
             	   throw new RuntimeException("Timeout waiting for acknowledgement of task " + taskId);
                }
-               System.out.println("Acknowledged: " + taskId);
+               logger.info("Acknowledged: " + taskId);
                
 //                } catch(IOException e) {
 //                    throw new RuntimeException(e);
@@ -270,7 +283,10 @@ public class TaskGeneratorFacetedBenchmark
 
     @Override
     public void shutDown() throws Exception {
+    	logger.debug("TaskGenerator shutting down");
     	try {
+    		taskGeneratorModule.shutDown();
+
 	    	if(streamManager != null) {
 	    		streamManager.close();
 	    	}

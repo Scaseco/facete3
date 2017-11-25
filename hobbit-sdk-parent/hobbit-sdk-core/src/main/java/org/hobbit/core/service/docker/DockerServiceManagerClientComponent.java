@@ -2,6 +2,7 @@ package org.hobbit.core.service.docker;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -68,7 +69,10 @@ public class DockerServiceManagerClientComponent
 
     protected Gson gson;
 	
-    protected Map<String, Service> runningManagedServices = new HashMap<>();
+    protected Map<String, Service> runningManagedServices = Collections.synchronizedMap(new HashMap<>());
+    
+    // Map used to suppress the stop event on services that are shutting down
+    protected Map<String, Service> terminatedManagedServices = Collections.synchronizedMap(new HashMap<>());
 
 
     //protected String imageName;
@@ -120,6 +124,7 @@ public class DockerServiceManagerClientComponent
             public void terminated(State from) {
                 String serviceId = service.getContainerId();
                 runningManagedServices.remove(serviceId);
+                //terminatedManagedServices.put(serviceId, service);
             }
         }, MoreExecutors.directExecutor());
 
@@ -164,10 +169,12 @@ public class DockerServiceManagerClientComponent
         Service service = runningManagedServices.get(serviceId);
 
         if(service != null) {
+            logger.info("Received termination message for " + serviceId + " and going to stop local stub " + service);
             // FIXME If the remote service failed, we would here incorrectly set the service to STOPPED
         	synchronized (service) {
+	        	//runningManagedServices.remove(serviceId);
+	        	terminatedManagedServices.put(serviceId, service);
 	        	service.stopAsync();
-	        	runningManagedServices.remove(serviceId);
         	}
         }
 
@@ -175,7 +182,7 @@ public class DockerServiceManagerClientComponent
     }
 
     // These are the delegate target methods of the created by DockerServiceSimpleDelegation
-    public String startService(String imageName, Map<String, String> env) {
+    public synchronized String startService(String imageName, Map<String, String> env) {
 
         // Prepare the message for starting a service
         String[] envArr = EnvironmentUtils.mapToList("=", env).toArray(new String[0]);
@@ -203,6 +210,13 @@ public class DockerServiceManagerClientComponent
         
         // IMPORTANT The response should come on a separate queue separate from the commandPub
         
+        logger.info("Sending request to start a service " + imageName + " " + env + " and waiting for response");
+        
+//        if(imageName.equals("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")) {
+//        	System.out.println("FOOBARITIS");
+//        	new RuntimeException("ARGH").printStackTrace();
+//        }
+        
         CompletableFuture<ByteBuffer> response = requestToServer.apply(buffer);
         ByteBuffer responseBuffer;
         try {
@@ -225,9 +239,18 @@ public class DockerServiceManagerClientComponent
         return result;
     }
 
-    public void stopService(String serviceId) {
+    public synchronized void stopService(String serviceId) {
     	//this.commandPublisher
+
+    	// If the service is no longere managed, then
+    	Service service = terminatedManagedServices.get(serviceId);
+    	if(service != null) {
+    		logger.info("Shutdown of local client for " + serviceId + " complete");
+    		terminatedManagedServices.remove(serviceId);
+    		return;
+    	}
     	
+    	logger.info("DockerServiceManagerClientComponent::stopService() invoked for id " + serviceId);
         StopCommandData msg = new StopCommandData(serviceId);
         String jsonStr = gson.toJson(msg);
 

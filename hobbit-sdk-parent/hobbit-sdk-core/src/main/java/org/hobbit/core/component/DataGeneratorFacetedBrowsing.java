@@ -186,14 +186,14 @@ public class DataGeneratorFacetedBrowsing
             }
         };
 
-        logger.debug("Data generator is sending dataset to task generater");
+        logger.info("Data generator is sending dataset to task generater");
         sendTriples(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         
-        logger.debug("Data generator is sending dataset to system adapter");
+        logger.info("Data generator is sending dataset to system adapter");
         sendTriples(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
 
         datasetFile.delete();
-        logger.debug("Data generator fulfilled its purpose and shuts down");
+        logger.info("Data generator fulfilled its purpose and shuts down");
     }
 
     public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {

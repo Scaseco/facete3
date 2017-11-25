@@ -267,7 +267,7 @@ public class SystemAdapterRDFConnection
         taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
 //        taskGenerationFinishedFuture.get(60, TimeUnit.SECONDS);
 
-        logger.debug("Task generation finished");
+        logger.info("Task generation finished");
     }
 
 }

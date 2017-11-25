@@ -139,7 +139,7 @@ public class OutputStreamChunkedTransfer
 
         dataDelegate.accept(forward);
 
-        System.out.println("[STREAM] Flushcount: " + flushCount.incrementAndGet() + " hash: " + forward + " " + forward.hashCode());
+        //System.out.println("[STREAM] Flushcount: " + flushCount.incrementAndGet() + " hash: " + forward + " " + forward.hashCode());
 
         dataBuffer = protocol.nextBuffer(dataBuffer);
         //payloadRegion = protocol.getPayload(dataBuffer);

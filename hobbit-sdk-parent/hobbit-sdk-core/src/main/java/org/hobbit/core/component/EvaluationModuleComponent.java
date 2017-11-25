@@ -1,7 +1,6 @@
 package org.hobbit.core.component;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Resource;
@@ -26,8 +25,8 @@ public class EvaluationModuleComponent
 {
     private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleComponent.class);
 
-    @Resource(name="commandReceiver")
-    protected Subscriber<ByteBuffer> commandReceiver;
+    @Resource(name="commandSender")
+    protected Subscriber<ByteBuffer> commandSender;
 
     @Resource(name="es2emReceiver")
     protected Flowable<ByteBuffer> fromEvaluationStorage;
@@ -87,7 +86,7 @@ public class EvaluationModuleComponent
                 buf.put(Commands.EVAL_MODULE_FINISHED_SIGNAL);
                 buf.put(outputStream.toByteArray());
                 try {
-                    commandReceiver.onNext(buf);
+                    commandSender.onNext(buf);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -118,7 +117,7 @@ public class EvaluationModuleComponent
 
         });
 
-        commandReceiver.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
         
         run();
     }

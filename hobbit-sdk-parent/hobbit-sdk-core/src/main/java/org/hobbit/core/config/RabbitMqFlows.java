@@ -573,7 +573,7 @@ public class RabbitMqFlows {
 		    	//result.onSubscribe();
 		    	
 		    	//result.onNext(buffer);
-		    	logger.info("Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+		    	//logger.info("Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
 		    	
 		    	if(!result.hasSubscribers()) {
 			    	logger.warn("No subscribers on a flow, this may indicate a bug: Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
@@ -682,7 +682,7 @@ public class RabbitMqFlows {
     public static Consumer<ByteBuffer> wrapPublishAsConsumer(Channel channel, String exchangeName, String routingKey, BasicProperties properties) {
     	Consumer<ByteBuffer> result = (buffer) -> {
     		try {
-    			logger.info("Publishing on channel " + channel + " exchange=" + exchangeName + " routingKey=" + routingKey + " replyTo=" + properties.getReplyTo() + " isOpen=" + channel.isOpen());
+    			logger.debug("Publishing on channel " + channel + " exchange=" + exchangeName + " routingKey=" + routingKey + " replyTo=" + properties.getReplyTo() + " isOpen=" + channel.isOpen());
     	    	byte[] payload = new byte[buffer.remaining()];
     	    	buffer.duplicate().get(payload);
     			

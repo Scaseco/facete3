@@ -170,7 +170,7 @@ public class InputStreamManagerImpl
 	                    AtomicLong counter = new AtomicLong();
 	                    pipeline
 	                    		.map(InputStreamManagerImpl::copyRemaining)
-	                    		.doOnNext(b -> { System.out.println("[STREAM] Received " + counter.incrementAndGet() + " with hash " + b + " " +  b.hashCode()); })
+	                    		//.doOnNext(b -> { System.out.println("[STREAM] Received " + counter.incrementAndGet() + " with hash " + b + " " +  b.hashCode()); })
 	                    		.compose(FlowableTransformerLocalOrdering.<ByteBuffer, Long>transformer(1l, (id) -> id + 1, b -> ((Number)readProtocol.getChunkId(b)).longValue())::apply)
 	                    		.takeUntil(readProtocol::isLastChunk)
 	                    		.map(b -> {

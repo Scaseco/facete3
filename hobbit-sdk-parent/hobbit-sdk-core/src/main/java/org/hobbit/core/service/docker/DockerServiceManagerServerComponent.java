@@ -101,7 +101,9 @@ public class DockerServiceManagerServerComponent
 
     
     public static ByteBuffer createTerminationMsg(String containerId, int exitCode) {
-        RabbitMQUtils.writeString(containerId);
+
+    	logger.info("Sending out termination message for container " + containerId);
+    	RabbitMQUtils.writeString(containerId);
 
         ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
                 new byte[]{Commands.DOCKER_CONTAINER_TERMINATED},
@@ -188,7 +190,7 @@ public class DockerServiceManagerServerComponent
         	System.out.println("Stopping service: " + service.getImageName() + "; container " + service.getContainerId());
             service.stopAsync().awaitTerminated();
         } else {
-            logger.warn("Stop request ignored due to no running service know by id " + containerId);
+            logger.warn("Stop request ignored due to no running service known by id " + containerId);
         }
     }
     
@@ -210,10 +212,6 @@ public class DockerServiceManagerServerComponent
             byte b = buffer.get();
             switch(b) {
             case Commands.DOCKER_CONTAINER_START: {
-            	if(responseTarget == null) {
-            		logger.warn("Received a request to start a container, however there was no target for the response; therefore ignoring request");
-            		return;
-            	}
             	
                 String str = readRemainingBytesAsString(buffer, StandardCharsets.UTF_8);
                 
@@ -223,6 +221,12 @@ public class DockerServiceManagerServerComponent
                 String[] rawEnv = data.getEnvironmentVariables();
                 Map<String, String> env = EnvironmentUtils.listToMap("=", Arrays.asList(rawEnv));
 
+            	if(responseTarget == null) {
+            		logger.warn("Received a request to start container " + imageName + " with " + env + ", however there was no target for the response; therefore ignoring request");
+            		return;
+            	}
+
+                
                 onStartServiceRequest(imageName, env, containerId -> {
                 	logger.info("Server started docker service " + imageName + ": " + containerId);
                     ByteBuffer msg = ByteBuffer.wrap(RabbitMQUtils.writeString(containerId));
@@ -236,10 +240,6 @@ public class DockerServiceManagerServerComponent
 
                 break; }
             case Commands.DOCKER_CONTAINER_STOP: {
-                if(responseTarget == null) {
-            		logger.warn("Received a request to start a container, however there was no target for the response; therefore ignoring request");
-            		return;
-            	}
 
 //                byte data[] = RabbitMQUtils.writeString(gson.toJson(new StopCommandData(containerName)));
                 String str = readRemainingBytesAsString(buffer, StandardCharsets.UTF_8);
@@ -247,6 +247,12 @@ public class DockerServiceManagerServerComponent
                 
             	StopCommandData data = gson.fromJson(str, StopCommandData.class);
             	String containerId = data.getContainerName();
+
+            	if(responseTarget == null) {
+            		logger.warn("Received a request to stop container " + containerId + ", however there was no target for the response; therefore ignoring request");
+            		return;
+            	}
+
             	try {
             		onStopServiceRequest(containerId);
             	} finally {

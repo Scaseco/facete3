@@ -151,7 +151,7 @@ public class TaskGeneratorModuleFacetedBrowsing
     
 	public static Resource annotateTaskWithReferenceResult(Resource task, RDFConnection conn, RDFConnection refConn) {
 
-        System.out.println("Generated task: " + task);
+        logger.info("Generated task: " + task);
         
         String queryStr = task.getProperty(RDFS.label).getString();
         

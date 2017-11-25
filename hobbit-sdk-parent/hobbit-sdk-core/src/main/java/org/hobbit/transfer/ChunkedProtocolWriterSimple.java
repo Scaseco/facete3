@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public class ChunkedProtocolWriterSimple
     implements ChunkedProtocolWriter<ByteBuffer>
 {
-    public static final long MAGIC_STREAM_CODE = 666999333;
+    public static final long MAGIC_STREAM_CODE = 0xfafafafababababal;//666999333;
     public static final int MIN_MESSAGE_LENGTH = 20;
 
     protected int streamId;
