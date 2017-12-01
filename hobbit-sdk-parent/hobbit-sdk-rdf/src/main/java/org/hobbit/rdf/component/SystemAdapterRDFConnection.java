@@ -248,7 +248,7 @@ public class SystemAdapterRDFConnection
     @Override
     public void shutDown() throws Exception {
     	try {
-	    	logger.info("SystemAdapter::startDown()");    
+	    	logger.info("SystemAdapter::shutDown() [begin]");    
 	    	if(streamManager != null) {
 	    		streamManager.close();
 	    	}
@@ -259,6 +259,7 @@ public class SystemAdapterRDFConnection
     	} finally {
     		super.shutDown();
     	}
+    	logger.info("SystemAdapter::shutDown() [end]");    
     }
 
     @Override

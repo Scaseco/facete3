@@ -264,6 +264,7 @@ public class DockerServiceManagerClientComponent
         try {
 			responseFuture.get(60, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			logger.error("Timeout waiting for stop on container id " + serviceId);
 			throw new RuntimeException(e);
 		}
         

@@ -2,6 +2,7 @@ package org.hobbit.core.component;
 
 import java.nio.ByteBuffer;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -133,7 +134,8 @@ public class DefaultEvaluationStorage
 
 
         fromEvaluationModule.subscribe(buffer -> {
-            //logger.debug("Got request from evaluation module; storage contains " + Iterators.size(createIterator()) + " items");
+        	buffer = buffer.duplicate();
+            logger.info("Got request from evaluation module: " + Arrays.toString(buffer.array())); // storage contains " + Iterators.size(createIterator()) + " items");
 
             //while(true) {
                 byte response[] = null;
@@ -239,6 +241,6 @@ public class DefaultEvaluationStorage
     @Override
     public void shutDown() throws Exception {
     	super.shutDown();
-        logger.debug("evaluation module shut down done");
+        logger.debug("evaluation storage shut down done");
     }
 }

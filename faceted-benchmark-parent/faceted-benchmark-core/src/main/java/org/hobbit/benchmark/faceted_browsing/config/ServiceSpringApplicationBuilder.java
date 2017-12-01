@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
 
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractIdleService;
 
 
 /**
@@ -17,23 +17,25 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
  *
  */
 public class ServiceSpringApplicationBuilder
-	extends AbstractExecutionThreadService
+	extends AbstractIdleService//AbstractExecutionThreadService
 {	
 	private static final Logger logger = LoggerFactory.getLogger(ServiceSpringApplicationBuilder.class);
 
 	
+	protected String appName;
 	protected SpringApplicationBuilder appBuilder;
 	protected String[] args;
 
 	protected ConfigurableApplicationContext ctx = null;
 
 	
-	public ServiceSpringApplicationBuilder(SpringApplicationBuilder appBuilder) {
-		this(appBuilder, new String[]{});
+	public ServiceSpringApplicationBuilder(String appName, SpringApplicationBuilder appBuilder) {
+		this(appName, appBuilder, new String[]{});
 	}
 	
-	public ServiceSpringApplicationBuilder(SpringApplicationBuilder appBuilder, String[] args) {
+	public ServiceSpringApplicationBuilder(String appName, SpringApplicationBuilder appBuilder, String[] args) {
 		super();
+		this.appName = appName;
 		this.appBuilder = appBuilder;
 		this.args = args;
 	}
@@ -45,6 +47,7 @@ public class ServiceSpringApplicationBuilder
 			public void onApplicationEvent(ApplicationEvent event) {
 				if(event instanceof ContextClosedEvent) {
 					try {
+						logger.info("Context closed ; terminating service");
 						shutDown();
 					} catch (Exception e) {
 						throw new RuntimeException(e);
@@ -52,17 +55,22 @@ public class ServiceSpringApplicationBuilder
 				}
 			}
 		});
+		
+//		logger.info("Launching " );
+		logger.info("ServiceSpringApplicationBuilder::startUp [begin] " + appName + ", builderHash: " + appBuilder.hashCode());
+		ctx = appBuilder.run(args);
+		logger.info("ServiceSpringApplicationBuilder::startUp [end] " + appName + ", builderHash: " + appBuilder.hashCode());
+//		logger.info("ServiceSpringApplicationBuilder: context terminated, builderHash:" + appBuilder.hashCode());
 	}
 
-	@Override
-	protected void run() throws Exception {
-		logger.info("SpringApplicationBuilder as service: launching, builderHash: " + appBuilder.hashCode());
-		ctx = appBuilder.run(args);
-		logger.info("SpringApplicationBuilder as service: context terminated, builderHash:" + appBuilder.hashCode());
-	}
+//	@Override
+//	protected void run() throws Exception {
+//	}
 	
 	@Override
-	protected void shutDown() throws Exception {
+	protected void shutDown() {
+		logger.info("ServiceSpringApplicationBuilder: Shutdown invoked");
+		ctx = appBuilder.context();
 		if(ctx != null) {
 			ctx.close();
 		}

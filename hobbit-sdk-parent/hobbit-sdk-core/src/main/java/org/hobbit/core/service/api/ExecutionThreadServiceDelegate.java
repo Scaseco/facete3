@@ -40,11 +40,11 @@ public class ExecutionThreadServiceDelegate<T>
     }
 
     @Override
-    protected void shutDown() throws Exception {
+    protected void triggerShutdown() {
         if(shutDown != null) {
             shutDown.run();
         }
 
-        super.shutDown();
+        super.triggerShutdown();
     }
 }

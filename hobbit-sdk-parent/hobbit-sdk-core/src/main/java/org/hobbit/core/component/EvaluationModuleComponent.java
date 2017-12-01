@@ -2,6 +2,9 @@ package org.hobbit.core.component;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 import javax.inject.Inject;
@@ -17,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 
 @Component
 public class EvaluationModuleComponent
@@ -40,8 +44,15 @@ public class EvaluationModuleComponent
     
     protected byte requestBody[];
 
+    
+    protected Disposable esSubscription;
+    
+    
+    protected CompletableFuture<?> terminationFuture = new CompletableFuture<Object>();
+    
     @Override
     public void startUp() throws Exception {
+    	logger.info("EvalModule::startUp() invoked");
     	super.startUp();
         //collectResponses();
 
@@ -56,13 +67,14 @@ public class EvaluationModuleComponent
 
         boolean terminationConditionSatisfied[] = {false};
         
-        fromEvaluationStorage.subscribe(buffer -> {
+        esSubscription = fromEvaluationStorage.subscribe(buffer -> {
+        	buffer = buffer.duplicate();
 
         	if(terminationConditionSatisfied[0]) {
-        		throw new RuntimeException("Got another message after termination message");
+        		throw new RuntimeException("Got another message after termination message: " + Arrays.toString(buffer.array()));
         	}
 
-            logger.debug("Received data to evaluate");
+            logger.info("Received data to evaluate");
 
             // if the response is empty
             if (!buffer.hasRemaining()) {
@@ -85,12 +97,15 @@ public class EvaluationModuleComponent
                 ByteBuffer buf = ByteBuffer.allocate(1 + outputStream.size());
                 buf.put(Commands.EVAL_MODULE_FINISHED_SIGNAL);
                 buf.put(outputStream.toByteArray());
+                buf.rewind();
                 try {
                     commandSender.onNext(buf);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
+                } finally {
+                	terminationFuture.complete(null);
                 }
-
+                
 
             } else {
                 // If we did not encounter the end condition, request more data
@@ -119,7 +134,7 @@ public class EvaluationModuleComponent
 
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.EVAL_MODULE_READY_SIGNAL}));
         
-        run();
+        //run();
     }
 
 
@@ -131,11 +146,18 @@ public class EvaluationModuleComponent
 //            throw new RuntimeException(e1);
 //        }
         
-        logger.debug("Running evaluation module");
+        logger.info("Running evaluation module");
+        // wait for having served 1 request
+        
+        terminationFuture.get(60, TimeUnit.SECONDS);
+        
+        logger.info("Evaluation module terminating");
     }
 
     @Override
     public void shutDown() throws Exception {
+    	esSubscription.dispose();
+
     	super.shutDown();
         // TODO Auto-generated method stub
 

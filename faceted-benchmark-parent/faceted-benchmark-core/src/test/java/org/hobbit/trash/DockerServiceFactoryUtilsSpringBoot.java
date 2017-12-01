@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.config;
+package org.hobbit.trash;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
@@ -7,25 +7,37 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.service.core.ServiceCapableWrapper;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryGeneric;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryGeneric.Builder;
 import org.hobbit.core.service.api.ServiceCapable;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.StandardEnvironment;
 
 import com.google.common.util.concurrent.Service;
 
 public class DockerServiceFactoryUtilsSpringBoot {
 	
-	public static DockerServiceFactory<?> createDockerServiceFactoryForBootstrap(Map<String, Supplier<SpringApplicationBuilder>> imageNameToConfigSupplier) {
-
-		DockerServiceFactory<DockerService> result =
-				new DockerServiceFactoryGeneric2<>(
-						imageNameToConfigSupplier,
-						appBuilder -> new ServiceSpringApplicationBuilder(appBuilder));
-	
-		return result;
-	}
+//	public static DockerServiceFactory<?> createDockerServiceFactoryForBootstrap(Map<String, Supplier<SpringApplicationBuilder>> imageNameToConfigSupplier) {
+//
+//		DockerServiceFactory<DockerService> result =
+//				new DockerServiceFactorySpringApplicationBuilder<>(
+//						imageNameToConfigSupplier,
+//						(appBuilder, env) -> {
+//							Map<String, Object> env2 = env.entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> (Object)x.getValue()));
+//
+//							ConfigurableEnvironment cenv = new StandardEnvironment();
+//							cenv.getPropertySources().addFirst(new MapPropertySource("myPropertySource", env2));
+//							appBuilder.environment(cenv);
+//						},
+//						appBuilder -> new ServiceSpringApplicationBuilder(appBuilder));
+//	
+//		return result;
+//	}
 	
 	/**
 	 * This function yields a DockerServiceFactory that

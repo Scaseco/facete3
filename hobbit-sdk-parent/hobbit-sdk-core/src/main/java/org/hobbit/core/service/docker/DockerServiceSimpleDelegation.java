@@ -4,12 +4,17 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.util.concurrent.AbstractIdleService;
 
 public class DockerServiceSimpleDelegation
     extends AbstractIdleService
     implements DockerService
 {
+	private static final Logger logger = LoggerFactory.getLogger(DockerServiceSimpleDelegation.class);
+	
     protected String imageName;
     protected Map<String, String> localEnvironment;// = new LinkedHashMap<>();
 
@@ -40,14 +45,31 @@ public class DockerServiceSimpleDelegation
         return containerId;
     }
 
+    public static void nameThreadForAction(String name, Runnable runnable) {
+    	String threadName = Thread.currentThread().getName();
+    	Thread.currentThread().setName(threadName + " [" + name + "]");
+
+    	try {
+    		logger.info("[Begin of action]");
+    		runnable.run();
+    		logger.info("[End of action]");
+    	} finally {
+    		Thread.currentThread().setName(threadName);
+    	}
+    }
+    
     @Override
     protected void startUp() throws Exception {
-        containerId = startServiceDelegate.apply(imageName, localEnvironment);        
+    	nameThreadForAction(imageName, () -> {
+    		containerId = startServiceDelegate.apply(imageName, localEnvironment);
+    	});
     }
 
     @Override
     protected void shutDown() throws Exception {
-        stopServiceDelegate.accept(containerId);
+    	nameThreadForAction(imageName, () -> {
+            stopServiceDelegate.accept(containerId);
+    	});
     }
 
     @Override

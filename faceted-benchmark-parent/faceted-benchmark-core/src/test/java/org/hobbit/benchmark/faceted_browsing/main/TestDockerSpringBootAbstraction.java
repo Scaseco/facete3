@@ -5,9 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.trash.DockerServiceFactoryUtilsSpringBoot;
 import org.junit.Test;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.Banner;
@@ -32,7 +33,7 @@ public class TestDockerSpringBootAbstraction {
         imageNameToAppBuilder.put("myFirstImage", () -> new SpringApplicationBuilder(Context.class).bannerMode(Banner.Mode.OFF));
         imageNameToAppBuilder.put("mySecondImage", () -> new SpringApplicationBuilder(Context.class).bannerMode(Banner.Mode.OFF));
         
-        DockerServiceFactory<?> serviceFactory = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(imageNameToAppBuilder);
+        DockerServiceFactory<?> serviceFactory = new DockerServiceFactorySpringApplicationBuilder(imageNameToAppBuilder);
 
         {
 	        DockerService service = serviceFactory.create("myFirstImage", Collections.singletonMap("MSG", "World1"));

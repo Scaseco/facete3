@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.main;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -10,6 +11,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.commons.service.core.ServiceCapableWrapper;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -22,7 +25,7 @@ import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
@@ -37,7 +40,6 @@ import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
-import org.hobbit.core.service.api.ServiceCapable;
 import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
@@ -52,6 +54,7 @@ import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnection;
 import org.hobbit.service.podigg.PodiggWrapper;
+import org.hobbit.trash.DockerServiceFactoryUtilsSpringBoot;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
@@ -445,7 +448,7 @@ public class TestBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("sa2esChannel") Channel channel) throws IOException {
+	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("es2emChannel") Channel channel) throws IOException {
 	        return RabbitMqFlows.createDataSender(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
 	    }
 	    
@@ -509,37 +512,6 @@ public class TestBenchmark {
 
 	}
 	
-	public static class LauncherServiceCapable {
-		private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.LauncherServiceCapable.class);
-
-		
-//		@Bean
-//		public Lifecycle componentService(ServiceCapable serviceCapable) {
-//			Service service = ServiceCapableWrapper.wrap(serviceCapable);
-//			return new LifecycleService<>(service);
-//		}
-		
-		@Bean
-		public ApplicationRunner serviceLauncher(ServiceCapable serviceCapable) {
-			return args -> {
-				logger.info("Launching component: " + serviceCapable.getClass());
-
-				try {
-					Service service = ServiceCapableWrapper.wrap(serviceCapable);
-					service.startAsync().awaitRunning();
-					
-					// The services shut themselves down when they are finished
-					
-					service.awaitTerminated();
-					logger.info("Component terminated: " + serviceCapable.getClass());
-				} catch(Exception e) {
-					throw new RuntimeException("Component failed: " + serviceCapable.getClass(), e);
-				}
-			};
-		}
-	}
-	
-	
 	public static class BenchmarkLauncher {
 		
 		private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.BenchmarkLauncher.class);
@@ -563,6 +535,19 @@ public class TestBenchmark {
 					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
 					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
 					.get();
+
+//				Service esService = dockerServiceBuilderFactory.get()
+//						.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
+//						.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+//						.get();
+
+//				esService.startAsync().awaitRunning();
+//				esService.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
+//				
+//				if(true) {
+//					System.out.println("yay");
+//					return;
+//				}
 				
 				saService.startAsync().awaitRunning();
 				
@@ -615,7 +600,9 @@ public class TestBenchmark {
 
 			Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
 					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
-					
+
+			// Note: We make the actual components children of the channel configuration, so that we ensure that
+			// channels are only closed once the components have shut down and sent their final messages
 			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
 						.child(ConfigBenchmarkController.class);
@@ -634,12 +621,13 @@ public class TestBenchmark {
 				
 			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
-							.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);
+						.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);
 
+			
+			
 			Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEvaluationModule.class)
 						.child(EvaluationModuleComponent.class, LauncherServiceCapable.class);
-//EvaluationModuleFacetedBrowsingBenchmark.class,
 			
 			Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
 	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
@@ -652,11 +640,19 @@ public class TestBenchmark {
 	        // NOTE The sa is started by the platform
 	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
 			
-	        // Configure the docker server component
-			
-	        DockerServiceFactory<?> result = DockerServiceFactoryUtilsSpringBoot.createDockerServiceFactoryForBootstrap(map);
-			return result;
-			//DockerServiceBuilder dockerServiceBuilder = DockerServiceBuilderJsonDelegate.create(dockerServiceFactory::create);
+	        // Configure the docker server component	        
+	        DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
+	        
+
+	        if(false) {
+		        DockerService x = result.create("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", ImmutableMap.<String, String>builder().build());
+		        x.startAsync().awaitRunning();
+		        System.out.println("SERVICE IS RUNNING");
+		        x.stopAsync().awaitTerminated();
+		        System.out.println("SERVICE TERMINATED");
+	        }
+	        
+	        return result;
 		}
 	}
 	

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -86,7 +87,9 @@ public class DockerServiceManagerServerComponent
 
     @Override
     protected void startUp() throws Exception {
-        commandPublisherUnsubscribe = commandPublisher.subscribe(this::onCommand);
+    	logger.info("DockerServiceManagerServerComponent::startUp()");
+
+    	commandPublisherUnsubscribe = commandPublisher.subscribe(this::onCommand);
         
         clientRequestsUnsubscribe = requestsFromClients.subscribe(this::onRequest);
     }
@@ -94,6 +97,8 @@ public class DockerServiceManagerServerComponent
 
     @Override
     protected void shutDown() throws Exception {
+    	logger.info("DockerServiceManagerServerComponent::shutDown()");
+    	
     	Optional.ofNullable(commandPublisherUnsubscribe).ifPresent(Disposable::dispose);
     	Optional.ofNullable(clientRequestsUnsubscribe).ifPresent(Disposable::dispose);
         //commandPublisher.unsubscribe(this::receiveCommand);
@@ -114,7 +119,7 @@ public class DockerServiceManagerServerComponent
         return buffer;
     }
 
-    public void onStartServiceRequest(String imageName, Map<String, String> env, Consumer<String> idCallback) {
+    public synchronized void onStartServiceRequest(String imageName, Map<String, String> env, Consumer<String> idCallback) {
         //Map<String, String> env = n;
 
     	DockerServiceBuilder<?> builder = builderSupplier.get();
@@ -179,16 +184,25 @@ public class DockerServiceManagerServerComponent
         }, MoreExecutors.directExecutor());
 
 
-        service.startAsync();
-        service.awaitRunning();
-
+        // Note: We must not wait for service startup, as it may depend on the start of
+        // further services
+//        try {
+        	// TODO Make configurable via e.g. DOCKER_CONTAINER_STARTUP_TIMEOUT
+        	service.startAsync();//.awaitRunning(60, TimeUnit.SECONDS);
+//        } catch(Exception e) {
+//        	throw new RuntimeException("Timeout waiting for start up of " + imageName, e);
+//        }
     }
 
-    public void onStopServiceRequest(String containerId) {
+    public synchronized void onStopServiceRequest(String containerId) {
         DockerService service = runningManagedServices.get(containerId);
         if(service != null) {
-        	System.out.println("Stopping service: " + service.getImageName() + "; container " + service.getContainerId());
-            service.stopAsync().awaitTerminated();
+        	logger.info("Stopping service: " + service.getImageName() + "; container " + service.getContainerId());
+        	try {
+        		service.stopAsync().awaitTerminated(60, TimeUnit.SECONDS);
+        	} catch(Exception e) {
+        		logger.warn("Failed to stop " + containerId);
+        	}
         } else {
             logger.warn("Stop request ignored due to no running service known by id " + containerId);
         }
@@ -206,6 +220,7 @@ public class DockerServiceManagerServerComponent
     }
     
     public void onCommand(ByteBuffer buffer, Consumer<ByteBuffer> responseTarget) {
+    	logger.info("DockerServiceManagerServerComponent::onCommand() got an event; isRequest=" + (responseTarget != null));
     	buffer = buffer.duplicate();
 
     	if(buffer.hasRemaining()) {

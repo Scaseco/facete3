@@ -11,7 +11,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryUtilsSpringBoot;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
@@ -22,7 +21,6 @@ import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderDockerClient;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
-import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
@@ -160,21 +158,31 @@ public class TestDockerCommunication {
 			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "dockerServiceManagerClientComponent", null);
 		}
 
+		
 		@Bean(initMethod="startUp", destroyMethod="shutDown")
-		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
+		public DockerServiceManagerClientComponent client(
 				@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
 				@Qualifier("dockerServiceManagerClientConnection") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
-		) throws Exception {
-			DockerServiceManagerClientComponent core =
+
+				) {
+			DockerServiceManagerClientComponent result =
 					new DockerServiceManagerClientComponent(
 						commandPublisher,
 						requestToServer,
 						gson
 					);
 			
+			return result;
+		}
+
+		@Bean
+		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
+				DockerServiceManagerClientComponent client
+		) throws Exception {
+			
 			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
-					() -> DockerServiceBuilderJsonDelegate.create(core::create);
+					() -> DockerServiceBuilderJsonDelegate.create(client::create);
 
 			return result;
 		}
@@ -182,8 +190,10 @@ public class TestDockerCommunication {
 
 	public static class AppContext {
 		@Bean
-		public ApplicationRunner appRunner(DockerServiceBuilder<DockerService> client) {
+		public ApplicationRunner appRunner(DockerServiceBuilderFactory<?> clientFactory) {
 			return (args) -> {
+				
+				DockerServiceBuilder<?> client = clientFactory.get();
 				//client.setImageName("library/alpine"); 
 				client.setImageName("tenforce/virtuoso");
 				DockerService service = client.get();
