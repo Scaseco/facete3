@@ -199,7 +199,7 @@ public class DockerServiceManagerServerComponent
         if(service != null) {
         	logger.info("Stopping service: " + service.getImageName() + "; container " + service.getContainerId());
         	try {
-        		service.stopAsync().awaitTerminated(60, TimeUnit.SECONDS);
+        		service.stopAsync();//.awaitTerminated(60, TimeUnit.SECONDS);
         	} catch(Exception e) {
         		logger.warn("Failed to stop " + containerId);
         	}

@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.function.Supplier;
@@ -67,7 +68,13 @@ public class ConfigHobbitLocalServices {
 
     @Bean
     public TripleStreamSupplier dataGenerationMethod() {
-        return () -> PodiggWrapper.test();
+        return () -> {
+			try {
+				return PodiggWrapper.test();
+			} catch (IOException | InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		};
     }
 
     @Bean

@@ -1,50 +1,58 @@
 package org.hobbit.core.service.api;
 
+import org.hobbit.core.service.docker.DockerServiceSimpleDelegation;
+
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
-public class ExecutionThreadServiceDelegate<T>
+public class ExecutionThreadServiceDelegate<T extends RunnableServiceCapable>
     extends AbstractExecutionThreadService
     implements ServiceDelegate<T>
 {
-	protected T entity;
-    protected Runnable startUp;
-    protected Runnable run;
-    protected Runnable shutDown;
+	protected T delegate;
 
-    public ExecutionThreadServiceDelegate(T entity, Runnable startUp, Runnable run, Runnable shutDown) {
+    public ExecutionThreadServiceDelegate(T delegate) {
         super();
-        this.entity = entity;
-        this.startUp = startUp;
-        this.run = run;
-        this.shutDown = shutDown;
+        this.delegate = delegate;
     }
     
     @Override
     public T getEntity() {
-    	return entity;
+    	return delegate;
     }
 
     @Override
     protected void startUp() throws Exception {
-        super.startUp();
-        if(startUp != null) {
-            startUp.run();
-        }
+    	DockerServiceSimpleDelegation.nameThreadForAction(delegate.getClass().getName(), () -> {
+    		super.startUp();
+    		delegate.startUp();
+    		return null;
+    	});
     }
 
     @Override
     protected void run() throws Exception {
-        if(run != null) {
-            run.run();
-        }
+    	DockerServiceSimpleDelegation.nameThreadForAction(delegate.getClass().getName(), () -> {
+    		delegate.run();
+    		return null;
+    	});
     }
 
     @Override
     protected void triggerShutdown() {
-        if(shutDown != null) {
-            shutDown.run();
-        }
-
-        super.triggerShutdown();
+    	DockerServiceSimpleDelegation.nameThreadForAction(delegate.getClass().getName(), () -> {
+	    	try {
+				delegate.shutDown();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			} finally {
+				super.triggerShutdown();
+			}
+    	});
     }
+    
+//    @Override
+//    protected void shutDown() throws Exception {
+//		delegate.shutDown();
+//    	super.shutDown();
+//    }
 }

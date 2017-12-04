@@ -47,7 +47,7 @@ public class ServiceSpringApplicationBuilder
 			public void onApplicationEvent(ApplicationEvent event) {
 				if(event instanceof ContextClosedEvent) {
 					try {
-						logger.info("Context closed ; terminating service");
+						logger.info("Context closed ; terminating service " + appName);
 						shutDown();
 					} catch (Exception e) {
 						throw new RuntimeException(e);

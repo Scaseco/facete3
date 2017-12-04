@@ -138,11 +138,13 @@ public class DockerServiceManagerClientComponent
      */
     @Override
     public void startUp() throws Exception {
+    	logger.info("DockerServiceManagerClientComponent::startUp() invoked");
         commandPublisherUnsubscribe = commandPublisher.subscribe(this::handleMessage);
     }
 
     @Override
     public void shutDown() throws Exception {
+    	logger.info("DockerServiceManagerClientComponent::shutDown() invoked with " + runningManagedServices.size() + " services still running");
     	Optional.ofNullable(commandPublisherUnsubscribe).ifPresent(Disposable::dispose);
     }
 
@@ -209,7 +211,7 @@ public class DockerServiceManagerClientComponent
 
         
         // IMPORTANT The response should come on a separate queue separate from the commandPub
-        
+
         logger.info("Sending request to start a service " + imageName + " " + env + " and waiting for response");
         
 //        if(imageName.equals("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")) {

@@ -1,6 +1,7 @@
 package org.hobbit.core.service.docker;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -46,13 +47,24 @@ public class DockerServiceSimpleDelegation
     }
 
     public static void nameThreadForAction(String name, Runnable runnable) {
+    	try {
+			nameThreadForAction(name, () -> {
+				runnable.run();
+				return null;
+			});
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+    }
+
+    public static void nameThreadForAction(String name, Callable<Void> runnable) throws Exception {
     	String threadName = Thread.currentThread().getName();
     	Thread.currentThread().setName(threadName + " [" + name + "]");
 
     	try {
-    		logger.info("[Begin of action]");
-    		runnable.run();
-    		logger.info("[End of action]");
+    		logger.info("[Begin of action] + name");
+    		runnable.call();
+    		logger.info("[End of action] + name");
     	} finally {
     		Thread.currentThread().setName(threadName);
     	}

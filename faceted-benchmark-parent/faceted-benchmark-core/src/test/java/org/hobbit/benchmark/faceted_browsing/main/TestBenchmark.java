@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.main;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -11,10 +10,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.commons.collections.trees.Tree;
-import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.service.core.BeanWrapperService;
-import org.aksw.commons.service.core.ServiceCapableWrapper;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
@@ -40,6 +36,8 @@ import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
+import org.hobbit.core.service.api.IdleServiceCapable;
+import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
@@ -54,7 +52,6 @@ import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnection;
 import org.hobbit.service.podigg.PodiggWrapper;
-import org.hobbit.trash.DockerServiceFactoryUtilsSpringBoot;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
@@ -188,7 +185,7 @@ public class TestBenchmark {
 							requestToServer,
 							gson
 					);
-			return new BeanWrapperService<>(ServiceCapableWrapper.wrap(core));
+			return new BeanWrapperService<>(new IdleServiceDelegate<>(core));
 		}
 			
 		//ServiceDelegate<DockerServiceManagerClientComponent>
@@ -300,7 +297,13 @@ public class TestBenchmark {
 	public static class ConfigDataGeneratorFacetedBrowsing {
 	    @Bean
 	    public TripleStreamSupplier dataGenerationMethod() {
-	        return () -> PodiggWrapper.test();
+	        return () -> {
+				try {
+					return PodiggWrapper.test();
+				} catch (IOException | InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+			};
 	    }
 
 	}

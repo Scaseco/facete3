@@ -70,6 +70,12 @@
 			</dependency>
 
 
+			<dependency>
+			    <groupId>org.springframework.batch</groupId>
+			    <artifactId>spring-batch-core</artifactId>
+<!-- 			    <version>4.0.0.RELEASE</version> -->
+				<version>3.0.8.RELEASE</version>
+			</dependency>
 
 			<dependency>
 				<groupId>io.reactivex.rxjava2</groupId>
@@ -181,6 +187,7 @@
 				<version>1.5.8.RELEASE</version>
 			</dependency>
 
+
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-core</artifactId>
@@ -189,9 +196,23 @@
 
 			<dependency>
 				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>4.3.11.RELEASE </version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-aop</artifactId>
+				<version>4.3.11.RELEASE </version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
 				<artifactId>spring-context</artifactId>
 				<version>4.3.11.RELEASE </version>
 			</dependency>
+
+
 
 			<dependency>
 				<groupId>com.google.guava</groupId>

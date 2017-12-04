@@ -169,10 +169,10 @@ public class BenchmarkControllerFacetedBrowsing
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
                 taskGeneratorService,
-                //systemAdapterService,
                 evaluationStorageService
-                //evaluationModuleService
         ));
+        //evaluationModuleService
+        //systemAdapterService,
 
 
         logger.info("BenchmarkController::startUp() Waiting for services to start...");
