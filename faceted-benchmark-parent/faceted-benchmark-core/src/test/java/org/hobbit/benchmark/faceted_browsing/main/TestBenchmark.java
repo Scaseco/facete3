@@ -602,7 +602,8 @@ public class TestBenchmark {
 		public DockerServiceFactory<?> dockerServiceFactory() {
 
 			Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
-					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class);
+					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
+						.child(ConfigDockerServiceManagerClient.class);
 
 			// Note: We make the actual components children of the channel configuration, so that we ensure that
 			// channels are only closed once the components have shut down and sent their final messages

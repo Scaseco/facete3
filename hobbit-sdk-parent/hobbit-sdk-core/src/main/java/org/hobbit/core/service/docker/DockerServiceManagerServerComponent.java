@@ -107,7 +107,6 @@ public class DockerServiceManagerServerComponent
     
     public static ByteBuffer createTerminationMsg(String containerId, int exitCode) {
 
-    	logger.info("Sending out termination message for container " + containerId);
     	RabbitMQUtils.writeString(containerId);
 
         ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
@@ -135,10 +134,17 @@ public class DockerServiceManagerServerComponent
 
 
         service.addListener(new Listener() {
+        	@Override
+        	public void starting() {
+                logger.info("DockerServiceManagerServer: Service is starting");
+        		super.starting();
+        	}
+        	
             @Override
             public void running() {
                 String containerId = service.getContainerId();
 
+                logger.info("DockerServiceManagerServer: Service is running: " + containerId);
                 runningManagedServices.put(containerId, service);
                 
                 idCallback.accept(containerId);
@@ -163,6 +169,12 @@ public class DockerServiceManagerServerComponent
                 super.terminated(from);
             }
 
+            @Override
+            public void stopping(State from) {
+                String containerId = service.getContainerId();
+
+                logger.info("DockerServiceManagerServer: Service is stopping: " + containerId);
+            }
                         
             public void doTermination() {
                 String containerId = service.getContainerId();
@@ -175,6 +187,7 @@ public class DockerServiceManagerServerComponent
                 ByteBuffer buffer = createTerminationMsg(containerId, exitCode);
 
 //                try {
+            	logger.info("DockerServiceManagerServer: Sending out termination message for container " + containerId);
                     commandChannel.onNext(buffer);
 //                } catch (IOException e) {
 //                    throw new RuntimeException(e);

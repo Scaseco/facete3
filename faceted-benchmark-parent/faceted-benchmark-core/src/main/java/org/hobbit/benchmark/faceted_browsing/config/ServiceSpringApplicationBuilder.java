@@ -48,7 +48,7 @@ public class ServiceSpringApplicationBuilder
 				if(event instanceof ContextClosedEvent) {
 					try {
 						logger.info("Context closed ; terminating service " + appName);
-						shutDown();
+						stopAsync();
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
@@ -73,6 +73,6 @@ public class ServiceSpringApplicationBuilder
 		ctx = appBuilder.context();
 		if(ctx != null) {
 			ctx.close();
-		}
+		}		
 	}
 }

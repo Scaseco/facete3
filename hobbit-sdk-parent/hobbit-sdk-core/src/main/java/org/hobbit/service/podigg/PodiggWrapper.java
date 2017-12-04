@@ -59,13 +59,13 @@ public class PodiggWrapper {
 
     	Map<String, JobParameter> map = params.getParameters();
     	
-    	Map<String, String> identifyingEnv = map.entrySet().stream().filter(e -> e.getValue().isIdentifying()).collect(Collectors.toMap(
+    	Map<String, String> identifyingParams = map.entrySet().stream().filter(e -> e.getValue().isIdentifying()).collect(Collectors.toMap(
     			e -> Objects.toString(e.getKey()), e -> Objects.toString(e.getValue()),
     			(u, v) -> u, TreeMap::new));
     	
     	String dirname;
     	try {
-    		dirname = identifyingEnv.entrySet().stream().map(Object::toString).collect(Collectors.joining("_"));
+    		dirname = identifyingParams.entrySet().stream().map(Object::toString).collect(Collectors.joining("_"));
     		
 			dirname = dirname.replaceAll("[=\\./]", "-");
 			dirname = URLEncoder.encode(dirname, StandardCharsets.UTF_8.name());
