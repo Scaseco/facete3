@@ -31,7 +31,7 @@ public class LauncherServiceCapable {
 
 		ServiceDelegate<? extends ServiceCapable> activeService = ServiceCapableWrapper.wrap(serviceCapable);
 
-		// Add a listener that closes the context on service termination
+		// Add a listener that closes the service's (root) context on service termination
 		activeService.addListener(new Listener() {
 			@Override
 			public void terminated(State priorState) {
@@ -43,11 +43,12 @@ public class LauncherServiceCapable {
 		}, MoreExecutors.directExecutor());
 
 		
+		// If the service's context gets closed, terminate the service
 		ctx.addApplicationListener(new ApplicationListener<ContextClosedEvent>() {
 			@Override
 			public void onApplicationEvent(ContextClosedEvent event) {
 				logger.info("Context is closing - shutdown service " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
-				if(activeService != null) {
+				if(activeService != null && activeService.isRunning()) {
 					try {
 						activeService.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
 //							thread.interrupt();

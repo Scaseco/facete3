@@ -346,6 +346,7 @@ public class BenchmarkControllerFacetedBrowsing
         } finally {
         	super.shutDown();
         }
+        logger.info("BenchmarkController::shutDown() completed");
     }
 
 }

@@ -1,5 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -48,7 +50,7 @@ public class ServiceSpringApplicationBuilder
 				if(event instanceof ContextClosedEvent) {
 					try {
 						logger.info("Context closed ; terminating service " + appName);
-						stopAsync();
+						stopAsync();//.awaitTerminated(5, TimeUnit.SECONDS);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
@@ -73,6 +75,6 @@ public class ServiceSpringApplicationBuilder
 		ctx = appBuilder.context();
 		if(ctx != null) {
 			ctx.close();
-		}		
+		}
 	}
 }

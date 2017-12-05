@@ -250,22 +250,22 @@ public class TestBenchmark {
 	}
 
 
-	public static class ConfigBenchmarkController {
-		
-		@Bean
-		public BenchmarkControllerFacetedBrowsing bc() {
-			return new BenchmarkControllerFacetedBrowsing();
-		}
-	
-		@Bean
-		public ApplicationRunner applicationRunner(BenchmarkControllerFacetedBrowsing controller) throws Exception {
-			return (args) -> {
-				controller.startUp();
-				controller.run();
-				controller.shutDown();
-			};
-		}
-	}
+//	public static class ConfigBenchmarkController {
+//		
+//		@Bean
+//		public BenchmarkControllerFacetedBrowsing bc() {
+//			return new BenchmarkControllerFacetedBrowsing();
+//		}
+//	
+//		@Bean
+//		public ApplicationRunner applicationRunner(BenchmarkControllerFacetedBrowsing controller) throws Exception {
+//			return (args) -> {
+//				controller.startUp();
+//				controller.run();
+//				controller.shutDown();
+//			};
+//		}
+//	}
 
 
 	public static class ConfigDataGenerator {
@@ -609,7 +609,7 @@ public class TestBenchmark {
 			// channels are only closed once the components have shut down and sent their final messages
 			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
-						.child(ConfigBenchmarkController.class);
+						.child(BenchmarkControllerFacetedBrowsing.class, LauncherServiceCapable.class);
 			
 			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
