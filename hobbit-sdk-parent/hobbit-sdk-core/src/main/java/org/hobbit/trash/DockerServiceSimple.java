@@ -1,10 +1,12 @@
-package org.hobbit.core.service.docker;
+package org.hobbit.trash;
 
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hobbit.core.service.docker.DockerService;
+import org.hobbit.core.service.docker.DockerServiceDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

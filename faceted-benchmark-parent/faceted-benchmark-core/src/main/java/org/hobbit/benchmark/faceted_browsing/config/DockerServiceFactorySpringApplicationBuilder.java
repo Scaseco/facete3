@@ -30,14 +30,17 @@ public class DockerServiceFactorySpringApplicationBuilder
 		) {
 		super();
 		this.imageNameToConfigSupplier = imageNameToConfig;
-	}
-
+	}	
 
 	@Override
 	public DockerService create(String imageName, Map<String, String> env) {
 
 		Supplier<? extends SpringApplicationBuilder> imageConfigSupplier = imageNameToConfigSupplier.get(imageName);
-		Objects.requireNonNull(imageConfigSupplier);
+		if(imageConfigSupplier == null) {
+			throw new UnsupportedOperationException("No image " + imageName + " registered with this docker service factory");
+		}
+		
+		//Objects.requireNonNull(imageConfigSupplier);
 		
 		SpringApplicationBuilder appBuilder = imageConfigSupplier.get();
 		

@@ -49,6 +49,9 @@ public class PodiggWrapper {
 
     public static Stream<Triple> test() throws IOException, InterruptedException {
     	
+    	String podiggHomePath = "/home/raven/Projects/Eclipse/podigg-lc-bin";
+    	String basename = "podigg";
+    	
     	JobParameters params = new JobParametersBuilder()
     			.addString("GTFS_GEN_SEED", "123")
     			.toJobParameters();
@@ -69,7 +72,7 @@ public class PodiggWrapper {
     		
 			dirname = dirname.replaceAll("[=\\./]", "-");
 			dirname = URLEncoder.encode(dirname, StandardCharsets.UTF_8.name());
-			dirname = "podigg-" + dirname;
+			dirname = basename + "-" + dirname;
 		} catch (UnsupportedEncodingException e1) {
 			throw new RuntimeException(e1);
 		}
@@ -103,7 +106,7 @@ public class PodiggWrapper {
 	    	    	FileLock lock = channel.tryLock();
 	    	       
 	    	    	try {
-	    	    		exec("/home/raven/Projects/Eclipse/podigg-lc-bin", preparationFolder, env);
+	    	    		exec(podiggHomePath, preparationFolder, env);
 	    	    	} finally {
 		    	    	lock.release();
 		    	    	lockFile.delete();

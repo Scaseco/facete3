@@ -1,9 +1,20 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
@@ -21,6 +32,8 @@ import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryChain;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.core.Constants;
@@ -36,7 +49,6 @@ import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
-import org.hobbit.core.service.api.IdleServiceCapable;
 import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.docker.DockerService;
@@ -63,12 +75,18 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.PortBinding;
 
 import io.reactivex.Flowable;
 
@@ -597,9 +615,42 @@ public class TestBenchmark {
 	
 	
 	
+	
 	public static class ConfigDockerServiceFactory {
+		
+		public static DockerServiceFactory<?> createSpotifyDockerClientServiceFactory() throws DockerCertificateException {
+	        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
+
+
+	        // Bind container port 443 to an automatically allocated available host
+	        String[] ports = { }; //{ "80", "22" };
+	        Map<String, List<PortBinding>> portBindings = new HashMap<>();
+	        for (String port : ports) {
+	            List<PortBinding> hostPorts = new ArrayList<>();
+	            hostPorts.add(PortBinding.of("0.0.0.0", port));
+	            portBindings.put(port, hostPorts);
+	        }
+
+	        List<PortBinding> randomPort = new ArrayList<>();
+	        randomPort.add(PortBinding.randomPort("0.0.0.0"));
+//	        portBindings.put("443", randomPort);
+
+	        HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
+
+	        
+	        //DockerServiceBuilderDockerClient dockerServiceFactory = new DockerServiceBuilderDockerClient();
+
+	        //DockerServiceBuilderFactory<DockerServiceBuilder<? extends DockerService>>
+	        
+	        Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier = () -> ContainerConfig.builder().hostConfig(hostConfig);
+	        
+	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier);
+	        return result;
+		}
+		
+		
 		@Bean
-		public DockerServiceFactory<?> dockerServiceFactory() {
+		public DockerServiceFactory<?> dockerServiceFactory() throws DockerCertificateException {
 
 			Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
 					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
@@ -645,8 +696,33 @@ public class TestBenchmark {
 	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
 			
 	        // Configure the docker server component	        
-	        DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
+	        DockerServiceFactory<?> localOverrides = new DockerServiceFactorySpringApplicationBuilder(map);
 	        
+	        
+	        
+	        
+	        
+	        DockerServiceFactory<?> dockerClientDockerServiceFactory = createSpotifyDockerClientServiceFactory();
+	        
+	        
+	        DockerService service = dockerClientDockerServiceFactory.create("tenforce/virtuoso", ImmutableMap.<String, String>builder().build());
+	        service.startAsync().awaitRunning();
+	        String name = service.getContainerId();	        
+	        String url = "http://" + name + ":8890/sparql";
+	        System.out.println("url: <" + url + ">");
+	        
+			try {
+		        Thread.sleep(20000);
+				System.out.println(CharStreams.toString(new InputStreamReader(new URL(url).openStream(), StandardCharsets.UTF_8)));
+			} catch (IOException | InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		
+	        service.stopAsync().awaitTerminated();
+			System.exit(0);
+
+	        
+	        DockerServiceFactory<?> result = new DockerServiceFactoryChain(localOverrides, dockerClientDockerServiceFactory);	        
 
 	        if(false) {
 		        DockerService x = result.create("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", ImmutableMap.<String, String>builder().build());
@@ -661,8 +737,44 @@ public class TestBenchmark {
 	}
 	
 	@Test
-	public void testBenchmark() {
+	public void testBenchmark() throws MalformedURLException, IOException {
 
+		// In the local environment:
+		// Set up a URL stream handler that maps docker names to localhost
+        final String prefix = "docker+";
+		URL.setURLStreamHandlerFactory(protocol -> protocol.startsWith(prefix) ? new URLStreamHandler() {
+		    protected URLConnection openConnection(URL url) throws IOException {
+		        URI uri;
+				try {
+					uri = url.toURI();
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
+		    	
+
+		        String scheme = uri.getScheme();
+		        String host = uri.getHost();
+
+	        	scheme = scheme.substring(prefix.length());
+	        	host = "localhost";
+
+		        URL rewrite;
+				try {
+					rewrite = new URI(scheme, uri.getUserInfo(), host, uri.getPort(),
+					           uri.getPath(), uri.getQuery(), uri.getFragment()).toURL();
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
+		        
+		        
+		    	return rewrite.openConnection();
+		    }
+		} : null);
+		
+		
+		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
+		//System.exit(0);
+		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
 			// Add the amqp broker
 			.sources(ConfigQpidBroker.class)

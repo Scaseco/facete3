@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.config;
+package org.hobbit.trash;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
-import org.hobbit.core.service.docker.DockerServiceSimple;
+import org.hobbit.trash.DockerServiceSimple;
 
 /**
  * A generic service factory.

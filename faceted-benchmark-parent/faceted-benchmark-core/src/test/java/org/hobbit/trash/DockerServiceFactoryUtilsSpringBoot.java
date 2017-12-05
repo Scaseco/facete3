@@ -7,11 +7,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.service.core.ServiceCapableWrapper;
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryGeneric;
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryGeneric.Builder;
 import org.hobbit.core.service.api.ServiceCapable;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.trash.DockerServiceFactoryGeneric.Builder;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;

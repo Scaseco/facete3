@@ -58,11 +58,17 @@ public class DockerServiceDockerClient
 
         
         ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
-        containerName = containerInfo.name();
 
+        boolean localMode = true;
         
-        // Remove leading '/'
-        containerName = containerName.startsWith("/") ? containerName.substring(1) : containerName;
+        if(localMode) {
+        	containerName = containerInfo.networkSettings().ipAddress();
+        } else {
+        	containerName = containerInfo.name();
+        	containerName = containerName.startsWith("/") ? containerName.substring(1) : containerName;
+        }
+        
+        
         
         //NetworkCreation x = dockerClient.createNetwork(NetworkConfig.builder().name(containerName).build());
         //dockerClient.connectToNetwork(containerId, containerName);
