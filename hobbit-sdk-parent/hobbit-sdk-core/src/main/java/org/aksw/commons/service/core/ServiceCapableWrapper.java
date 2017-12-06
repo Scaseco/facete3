@@ -5,7 +5,7 @@ import org.hobbit.core.service.api.IdleServiceCapable;
 import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.hobbit.core.service.api.ServiceCapable;
-import org.hobbit.core.service.api.ServiceDelegate;
+import org.hobbit.core.service.api.ServiceDelegateEntity;
 
 import com.google.common.util.concurrent.Service;
 
@@ -25,8 +25,8 @@ public class ServiceCapableWrapper {
 	}
 
 	//<T extends ServiceCapable> 
-	public static ServiceDelegate<? extends ServiceCapable> wrap(Object obj) {
-		ServiceDelegate<? extends ServiceCapable> result;
+	public static ServiceDelegateEntity<? extends ServiceCapable> wrap(Object obj) {
+		ServiceDelegateEntity<? extends ServiceCapable> result;
 		
         // Determine the appropriate service wrapper for the component
         if(obj instanceof IdleServiceCapable) {

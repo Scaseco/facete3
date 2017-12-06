@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import org.aksw.commons.service.core.ServiceCapableWrapper;
 import org.hobbit.core.service.api.ServiceCapable;
-import org.hobbit.core.service.api.ServiceDelegate;
+import org.hobbit.core.service.api.ServiceDelegateEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;
@@ -29,7 +29,7 @@ public class LauncherServiceCapable {
 	public ApplicationRunner serviceLauncher(ServiceCapable serviceCapable, ConfigurableApplicationContext ctx) {
 		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx, ApplicationContext::getParent);
 
-		ServiceDelegate<? extends ServiceCapable> activeService = ServiceCapableWrapper.wrap(serviceCapable);
+		ServiceDelegateEntity<? extends ServiceCapable> activeService = ServiceCapableWrapper.wrap(serviceCapable);
 
 		// Add a listener that closes the service's (root) context on service termination
 		activeService.addListener(new Listener() {

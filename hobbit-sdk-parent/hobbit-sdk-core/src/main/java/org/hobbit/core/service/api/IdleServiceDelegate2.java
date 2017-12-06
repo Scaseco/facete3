@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 
 public class IdleServiceDelegate2<T>
     extends AbstractIdleService
-    implements ServiceDelegate<T>
+    implements ServiceDelegateEntity<T>
 {
 	protected T entity;
     protected Runnable startUp;

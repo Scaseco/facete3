@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 
 public class IdleServiceDelegate<T extends IdleServiceCapable>
     extends AbstractIdleService
-    implements ServiceDelegate<T>
+    implements ServiceDelegateEntity<T>
 {
 	protected T delegate;
 

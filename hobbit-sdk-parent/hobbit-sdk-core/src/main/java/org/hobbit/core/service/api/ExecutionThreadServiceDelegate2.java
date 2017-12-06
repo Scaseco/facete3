@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
 public class ExecutionThreadServiceDelegate2<T>
     extends AbstractExecutionThreadService
-    implements ServiceDelegate<T>
+    implements ServiceDelegateEntity<T>
 {
 	protected T entity;
     protected Runnable startUp;

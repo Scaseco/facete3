@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -24,10 +25,12 @@ import java.util.function.Supplier;
 import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
@@ -49,8 +52,10 @@ import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
+import org.hobbit.core.service.api.DockerServiceDelegateWrapper;
 import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegate;
+import org.hobbit.core.service.api.ServiceDelegateEntity;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
@@ -192,7 +197,7 @@ public class TestBenchmark {
 		//@Bean(initMethod="startUp", destroyMethod="shutDown")
 		//public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
 		@Bean
-		public BeanWrapperService<ServiceDelegate<DockerServiceManagerClientComponent>> dockerServiceManagerClientCore(
+		public BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
@@ -210,7 +215,7 @@ public class TestBenchmark {
 		@Bean
 		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
 				//DockerServiceManagerClientComponent core
-				BeanWrapperService<ServiceDelegate<DockerServiceManagerClientComponent>> tmp
+				BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> tmp
 		) throws Exception {
 			DockerServiceManagerClientComponent core = tmp.getService().getEntity();
 			
@@ -695,35 +700,78 @@ public class TestBenchmark {
 	        // NOTE The sa is started by the platform
 	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
 			
+	        
+	        // Service wrappers which modifies startup/shutdown of other services; mostly healthchecks
+	        // on startup
+	        Map<String, Function<DockerService, DockerService>> serviceWrappers = new HashMap<>();
+	        serviceWrappers.put("tenforce/virtuoso", dockerService -> {
+	        	DockerService r = new DockerServiceDelegateWrapper<DockerService>(dockerService) {
+	        		// FIXME We want to enhance the startup method within the thread allocated by the guava service
+	        		@Override
+	        		public ServiceDelegate<DockerService> startAsync() {
+	        			super.startAsync().awaitRunning();
+	        			// The delegate has started, so we have a container id
+	        			String host = delegate.getContainerId();
+	    	        	String destination = "http://" + host + ":8890/";
+	        			
+	    	        	new HealthcheckRunner(
+	    	        			60, 1, TimeUnit.SECONDS, () -> {
+    	        		        try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
+    	        		            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
+    	        		        }
+	    	        	}).run();
+	    	        	return this;
+	        		}
+	        	};
+	        	
+	        	return r;
+	        	//new org.hobbit.benchmark.faceted_browsing.config.ServiceDelegate<>(delegate);
+	        });
+	        
+	        	        
+	        
 	        // Configure the docker server component	        
 	        DockerServiceFactory<?> localOverrides = new DockerServiceFactorySpringApplicationBuilder(map);
 	        
 	        
+	        // TODO We should register a service wrapper for tenforce/virtuoso
+	        // which only enters running state if the sparql service is actually reachable
 	        
 	        
 	        
 	        DockerServiceFactory<?> dockerClientDockerServiceFactory = createSpotifyDockerClientServiceFactory();
 	        
-	        
-	        DockerService service = dockerClientDockerServiceFactory.create("tenforce/virtuoso", ImmutableMap.<String, String>builder().build());
-	        service.startAsync().awaitRunning();
-	        String name = service.getContainerId();	        
-	        String url = "http://" + name + ":8890/sparql";
-	        System.out.println("url: <" + url + ">");
-	        
-			try {
-		        Thread.sleep(20000);
-				System.out.println(CharStreams.toString(new InputStreamReader(new URL(url).openStream(), StandardCharsets.UTF_8)));
-			} catch (IOException | InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}		
-	        service.stopAsync().awaitTerminated();
-			System.exit(0);
+	        	        
+	        DockerServiceFactory<?> core = new DockerServiceFactoryChain(localOverrides, dockerClientDockerServiceFactory);	        
+
+	        DockerServiceFactory<?> result = (imageName, env) -> {
+	        	Function<DockerService, DockerService> fn = serviceWrappers.get(imageName);
+	        	DockerService r = core.create(imageName, env);
+	        	r = fn == null ? r : fn.apply(r);
+	        	return r;
+	        };
 
 	        
-	        DockerServiceFactory<?> result = new DockerServiceFactoryChain(localOverrides, dockerClientDockerServiceFactory);	        
+	        if(true) {
+	        	
+		        DockerService service = result.create("tenforce/virtuoso", ImmutableMap.<String, String>builder().build());
+		        service.startAsync().awaitRunning();
+		        String name = service.getContainerId();	        
+		        String url = "http://" + name + ":8890/sparql";
+		        System.out.println("url: <" + url + ">");
+		        
+				try {
+					System.out.println(CharStreams.toString(new InputStreamReader(new URL(url).openStream(), StandardCharsets.UTF_8)));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}		
+		        service.stopAsync().awaitTerminated();
+				System.exit(0);
+	
 
+	        }
+	        
 	        if(false) {
 		        DockerService x = result.create("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", ImmutableMap.<String, String>builder().build());
 		        x.startAsync().awaitRunning();

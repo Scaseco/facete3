@@ -6,7 +6,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
 public class ExecutionThreadServiceDelegate<T extends RunnableServiceCapable>
     extends AbstractExecutionThreadService
-    implements ServiceDelegate<T>
+    implements ServiceDelegateEntity<T>
 {
 	protected T delegate;
 
