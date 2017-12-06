@@ -1,0 +1,11 @@
+
+## Current approach
+Launching the docker container starts the dataset generation
+
+
+## Idea for an alternative:
+This is a wrapper around podigg which launches an apache server to host a generated dataset.
+Datasets are cached in a volume, and every launch first removes a symbolic link named 'latest' pointing to the most recent generated dataset,
+and after finishing the generation, the link is regenerated.
+
+

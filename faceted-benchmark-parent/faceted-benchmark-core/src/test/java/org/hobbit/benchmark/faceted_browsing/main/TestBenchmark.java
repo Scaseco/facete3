@@ -752,7 +752,8 @@ public class TestBenchmark {
 	        };
 
 	        
-	        if(true) {
+	        // Test starting a triple store and use it
+	        if(false) {
 	        	
 		        DockerService service = result.create("tenforce/virtuoso", ImmutableMap.<String, String>builder().build());
 		        service.startAsync().awaitRunning();
