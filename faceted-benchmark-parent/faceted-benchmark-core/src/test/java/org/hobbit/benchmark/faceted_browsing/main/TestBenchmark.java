@@ -1,5 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -21,17 +23,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEncodersFacetedBrowsing;
@@ -80,6 +87,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -318,7 +327,51 @@ public class TestBenchmark {
 	
 	
 	public static class ConfigDataGeneratorFacetedBrowsing {
+		public static <T> Stream<T> stream(ExtendedIterator<T> it) {
+			Stream<T> result = Streams.stream(it);
+			result.onClose(() -> it.close());
+			return result;
+		}
+		
+	    public static Stream<Triple> createTripleStream(String fileNameOrUrl, Lang langHint) {
+	    	ExtendedIterator<Triple> it = SupplierExtendedIteratorTriples.createTripleIterator(fileNameOrUrl, langHint);
+	    	Stream<Triple> result = stream(it);
+	    	
+	    	return result;
+	    }
+	    
 	    @Bean
+	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+	        return () -> {
+				DockerServiceBuilder<?> dockerServiceBuilder = dockerServiceBuilderFactory.get();
+				DockerService podiggService = dockerServiceBuilder
+					.setImageName("podigg")
+					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+					.get();
+				
+		    	podiggService.startAsync().awaitRunning();
+		    	
+		    	String host = podiggService.getContainerId();
+		    	
+		    	//File targetFile = new File("/tmp/podigg");
+		    	String url = "http://" + host + "/podigg/latest/lc.ttl";
+		    	
+		    	//ByteStreams.copy(new URL(url).openStream(), new FileOutputStream(targetFile));
+		    	
+		    	Stream<Triple> r = createTripleStream(url, null);
+		    	r.onClose(() -> {
+			    	try {
+						podiggService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+					} catch (TimeoutException e) {
+						throw new RuntimeException();
+					}
+		    	});			    	
+		    	
+		    	return r;
+			};
+	    }
+		
+//	    @Bean
 	    public TripleStreamSupplier dataGenerationMethod() {
 	        return () -> {
 				try {

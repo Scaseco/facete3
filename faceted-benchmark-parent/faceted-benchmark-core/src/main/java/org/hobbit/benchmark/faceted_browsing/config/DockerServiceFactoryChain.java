@@ -32,9 +32,9 @@ public class DockerServiceFactoryChain
 		for(DockerServiceFactory<?> factory : factories) {
 			try {
 				result = factory.create(imageName, env);
+				break;
 			} catch(UnsupportedOperationException e) {
 				logger.info("Service factory did not support " + imageName + ", trying next one");
-				continue;
 			}
 		}
 		
