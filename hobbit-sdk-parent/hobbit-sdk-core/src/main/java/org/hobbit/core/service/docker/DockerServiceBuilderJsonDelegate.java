@@ -1,5 +1,6 @@
 package org.hobbit.core.service.docker;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -8,6 +9,7 @@ import java.util.function.Function;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Delegates the creation of a docker container to the provided
@@ -30,6 +32,7 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
 	public static final String KEY_IMAGE_NAME = "imageName";
 	public static final String KEY_ENV = "env";
 	
+	protected static Gson gson = new Gson();
 	protected JsonObject config;
 	
 	protected Function<JsonObject, T> delegate;
@@ -82,10 +85,17 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
     }
 
     
+    public static Type mapStringStringType = new TypeToken<Map<String, String>>() {}.getType();
+    
     public static <T extends DockerService> DockerServiceBuilder<T> create(BiFunction<String, Map<String, String>, T> serviceFactory) {
     	Function<JsonObject, T> wrapperFn = jsonObj -> {
     		String imageName = jsonObj.get(KEY_IMAGE_NAME).getAsString();
-    		Map<String, String> env = new HashMap<>();
+    		
+    		
+    		JsonElement envE = jsonObj.get(KEY_ENV);
+    		Map<String, String> env = gson.fromJson(envE, mapStringStringType);
+    				
+    		//Map<String, String> env = new HashMap<>();
     		
     		T r = serviceFactory.apply(imageName, env);
     		return r;

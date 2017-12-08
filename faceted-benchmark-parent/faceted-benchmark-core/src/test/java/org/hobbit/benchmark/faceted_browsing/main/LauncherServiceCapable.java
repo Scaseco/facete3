@@ -50,7 +50,7 @@ public class LauncherServiceCapable {
 				logger.info("Context is closing - shutdown service " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
 				if(activeService != null && activeService.isRunning()) {
 					try {
-						activeService.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
+						activeService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
 //							thread.interrupt();
 					} catch (TimeoutException e) {
 						e.printStackTrace();

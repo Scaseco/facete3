@@ -180,7 +180,7 @@ public class TaskGeneratorFacetedBenchmark
          * As we have served out duty then, we can stop the services
          *
          */
-        streamManager.subscribe(tmpIn -> {        	
+        streamManager.subscribe(tmpIn -> {
         	try {
         		taskGeneratorModule.loadDataFromStream(tmpIn);
         	} finally {

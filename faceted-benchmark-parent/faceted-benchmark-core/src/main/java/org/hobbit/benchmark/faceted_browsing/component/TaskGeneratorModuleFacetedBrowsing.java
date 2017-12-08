@@ -191,7 +191,11 @@ public class TaskGeneratorModuleFacetedBrowsing
 
                     String graphName = "http://www.virtuoso-graph.com";
                     logger.debug("Clearing and loading graph: " + graphName);
-                    conn.delete(graphName);
+                    try {
+                    	conn.delete(graphName);
+                    } catch(Exception e) {
+                    	logger.warn("Delete graph raised exception", e);
+                    }
                     conn.load(graphName, tmpFile.getAbsolutePath());
                     tmpFile.delete();
                 } catch(Exception e) {

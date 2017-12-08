@@ -1,9 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,22 +11,24 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
@@ -38,6 +39,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.apache.jena.riot.Lang;
+import org.apache.jena.shared.NotFoundException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
@@ -63,6 +65,7 @@ import org.hobbit.core.service.api.DockerServiceDelegateWrapper;
 import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegateEntity;
+import org.hobbit.core.service.api.SparqlDockerApiService;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
@@ -88,7 +91,6 @@ import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -345,20 +347,50 @@ public class TestBenchmark {
 	        return () -> {
 				DockerServiceBuilder<?> dockerServiceBuilder = dockerServiceBuilderFactory.get();
 				DockerService podiggService = dockerServiceBuilder
-					.setImageName("podigg")
-					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+					.setImageName("podigg")					
+					.setLocalEnvironment(ImmutableMap.<String, String>builder().put("GTFS_GEN_SEED", "123").build())
 					.get();
-				
+
 		    	podiggService.startAsync().awaitRunning();
 		    	
 		    	String host = podiggService.getContainerId();
 		    	
 		    	//File targetFile = new File("/tmp/podigg");
-		    	String url = "http://" + host + "/podigg/latest/lc.ttl";
+		    	String str = "http://" + host + "/podigg/latest/lc.ttl";
 		    	
+		    	
+		    	URL url;
+				try {
+					url = new URL(str);
+				} catch (MalformedURLException e1) {
+					throw new RuntimeException(e1);
+				}
+		    	
+		    	new HealthcheckRunner(60, 1, TimeUnit.SECONDS, () -> {
+		    		try {
+				        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+			            connection.setRequestMethod("GET");
+			            connection.connect();
+			            int code = connection.getResponseCode();
+			            if(code != 200) {
+			            	throw new NotFoundException(url.toString());
+			            }
+			            connection.disconnect();
+		    		} catch(Exception e) {
+		    			throw new RuntimeException(e);
+		    		}
+ 		    	}).run();
+		    	
+		    	
+//		    	try {
+//					Desktop.getDesktop().browse(new URI("http://" + host + "/podigg/latst"));
+//				} catch (IOException | URISyntaxException e1) {
+//					throw new RuntimeException(e1);
+//				}
+
 		    	//ByteStreams.copy(new URL(url).openStream(), new FileOutputStream(targetFile));
 		    	
-		    	Stream<Triple> r = createTripleStream(url, null);
+		    	Stream<Triple> r = createTripleStream(url.toString(), null);
 		    	r.onClose(() -> {
 			    	try {
 						podiggService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
@@ -644,10 +676,39 @@ public class TestBenchmark {
 	// Configuration for the worker task generator fo the faceted browsing benchmark
 	public static class ConfigTaskGeneratorFacetedBenchmark {
 	    @Bean
-	    public SparqlBasedSystemService taskGeneratorSparqlService() {
-	        VirtuosoSystemService result = new VirtuosoSystemService(
-	                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
-	                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-task-generation_1112_8891/virtuoso.ini"));
+	    public SparqlBasedService taskGeneratorSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+	    	DockerService service = dockerServiceBuilderFactory.get()
+//	    			.setImageName("tenforce/virtuoso:virtuoso7.2.4")
+	    			.setImageName("tenforce/virtuoso")
+	    			.setLocalEnvironment(ImmutableMap.<String, String>builder()
+	    					.put("SPARQL_UPDATE", "true")
+	    					.build())
+	    			.get();
+
+	    	SparqlBasedService result = new SparqlDockerApiService(service) {
+	    		protected Supplier<RDFConnection> api;
+	    		
+	    		@Override
+	    		protected void startUp() throws Exception {
+	    			super.startUp();
+
+	    			String host = delegate.getContainerId();
+	    			
+	    			String baseUrl = "http://" + host + ":" + "8890";
+
+	    			
+	    			api = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
+	    			//api = () -> VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);	    			
+	    		}
+	    		
+	    		public Supplier<RDFConnection> getApi() {
+	    			return api;
+	    		}
+	    	};
+	    	
+//	        VirtuosoSystemService result = new VirtuosoSystemService(
+//	                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
+//	                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-task-generation_1112_8891/virtuoso.ini"));
 
 	        return result;
 	    }
@@ -675,6 +736,10 @@ public class TestBenchmark {
 	
 	
 	public static class ConfigDockerServiceFactory {
+		
+		private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.ConfigDockerServiceFactory.class);
+
+		
 		
 		public static DockerServiceFactory<?> createSpotifyDockerClientServiceFactory() throws DockerCertificateException {
 	        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
@@ -756,8 +821,8 @@ public class TestBenchmark {
 	        
 	        // Service wrappers which modifies startup/shutdown of other services; mostly healthchecks
 	        // on startup
-	        Map<String, Function<DockerService, DockerService>> serviceWrappers = new HashMap<>();
-	        serviceWrappers.put("tenforce/virtuoso", dockerService -> {
+	        Map<Pattern, Function<DockerService, DockerService>> serviceWrappers = new LinkedHashMap<>();
+	        serviceWrappers.put(Pattern.compile("tenforce/virtuoso"), dockerService -> {
 	        	DockerService r = new DockerServiceDelegateWrapper<DockerService>(dockerService) {
 	        		// FIXME We want to enhance the startup method within the thread allocated by the guava service
 	        		@Override
@@ -798,10 +863,21 @@ public class TestBenchmark {
 	        DockerServiceFactory<?> core = new DockerServiceFactoryChain(localOverrides, dockerClientDockerServiceFactory);	        
 
 	        DockerServiceFactory<?> result = (imageName, env) -> {
-	        	Function<DockerService, DockerService> fn = serviceWrappers.get(imageName);
+
 	        	DockerService r = core.create(imageName, env);
-	        	r = fn == null ? r : fn.apply(r);
-	        	return r;
+
+	        	Map<Pattern, Function<DockerService, DockerService>> cands =
+	        			serviceWrappers.entrySet().stream()
+	        			.filter(x -> x.getKey().matcher(imageName).find())
+	        			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+
+	        	for(Entry<Pattern, Function<DockerService, DockerService>> cand : cands.entrySet()) {	        		
+	        		logger.info("Applying service decorator: " + cand.getKey() + " to docker image " + imageName);
+	        		r = cand.getValue().apply(r);
+	        	}
+
+	        	return r;	        	
 	        };
 
 	        

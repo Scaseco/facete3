@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
+import org.aksw.commons.collections.cache.CountingIterator;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.graph.Triple;
@@ -175,9 +176,13 @@ public class DataGeneratorFacetedBrowsing
         // TODO Enable an optional validation step which keeps the output files if there are any problems
         
         datasetFile.deleteOnExit();
-        Stream<Triple> triples = tripleStreamSupplier.get();
-        RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), triples.iterator());
-
+        try(Stream<Triple> triples = tripleStreamSupplier.get()) {
+        	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
+        	
+        	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
+        	System.out.println("count: " + it.getNumItems());
+        }
+        
         Supplier<Stream<Triple>> triplesFromCache = () -> {
             try {
                 return Streams.stream(RDFDataMgr.createIteratorTriples(new FileInputStream(datasetFile), Lang.NTRIPLES, "http://example.org/"));
