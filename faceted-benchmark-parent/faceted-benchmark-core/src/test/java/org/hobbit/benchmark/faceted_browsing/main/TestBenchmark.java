@@ -31,7 +31,6 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
-import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.DatasetFactory;
@@ -672,45 +671,50 @@ public class TestBenchmark {
 			};
 		}
 	}
+	
+	public static SparqlBasedService createVirtuosoSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+    	DockerService service = dockerServiceBuilderFactory.get()
+//	    			.setImageName("tenforce/virtuoso:virtuoso7.2.4")
+    			.setImageName("tenforce/virtuoso")
+    			.setLocalEnvironment(ImmutableMap.<String, String>builder()
+    					.put("SPARQL_UPDATE", "true")
+    					.build())
+    			.get();
+
+    	SparqlBasedService result = new SparqlDockerApiService(service) {
+    		protected Supplier<RDFConnection> api;
+    		
+    		@Override
+    		protected void startUp() throws Exception {
+    			super.startUp();
+
+    			String host = delegate.getContainerId();	    			
+    			String baseUrl = "http://" + host + ":" + "8890";
+    			
+    			api = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
+    			//api = () -> VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);	    			
+    		}
+    		
+    		public Supplier<RDFConnection> getApi() {
+    			return api;
+    		}
+    	};
+    	
+    	return result;	    
+	}
 
 	// Configuration for the worker task generator fo the faceted browsing benchmark
 	public static class ConfigTaskGeneratorFacetedBenchmark {
 	    @Bean
 	    public SparqlBasedService taskGeneratorSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
-	    	DockerService service = dockerServiceBuilderFactory.get()
-//	    			.setImageName("tenforce/virtuoso:virtuoso7.2.4")
-	    			.setImageName("tenforce/virtuoso")
-	    			.setLocalEnvironment(ImmutableMap.<String, String>builder()
-	    					.put("SPARQL_UPDATE", "true")
-	    					.build())
-	    			.get();
-
-	    	SparqlBasedService result = new SparqlDockerApiService(service) {
-	    		protected Supplier<RDFConnection> api;
-	    		
-	    		@Override
-	    		protected void startUp() throws Exception {
-	    			super.startUp();
-
-	    			String host = delegate.getContainerId();
-	    			
-	    			String baseUrl = "http://" + host + ":" + "8890";
-
-	    			
-	    			api = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
-	    			//api = () -> VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);	    			
-	    		}
-	    		
-	    		public Supplier<RDFConnection> getApi() {
-	    			return api;
-	    		}
-	    	};
+	    	SparqlBasedService result = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+	    	return result;
 	    	
 //	        VirtuosoSystemService result = new VirtuosoSystemService(
 //	                Paths.get("/opt/virtuoso/vos/7.2.4.2/bin/virtuoso-t"),
 //	                Paths.get("/opt/virtuoso/vos/7.2.4.2/databases/hobbit-task-generation_1112_8891/virtuoso.ini"));
-
-	        return result;
+//
+//	        return result;
 	    }
 	    
 	    @Bean
