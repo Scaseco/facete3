@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Streams;
+import com.google.common.primitives.Bytes;
 
 @Component
 public class DataGeneratorFacetedBrowsing
@@ -53,7 +54,7 @@ public class DataGeneratorFacetedBrowsing
     protected int batchSize = 10000;
 
     @Resource(name="commandSender")
-    protected Subscriber<ByteBuffer> commandChannel;
+    protected Subscriber<ByteBuffer> commandSender;
 
     @Resource
     protected TripleStreamSupplier tripleStreamSupplier;
@@ -112,7 +113,7 @@ public class DataGeneratorFacetedBrowsing
             });
         }
         
-        commandChannel.onNext(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
+        commandSender.onNext(ByteBuffer.wrap(new byte[] {Commands.DATA_GENERATOR_READY_SIGNAL}));
     }
 
     @Override
@@ -201,6 +202,17 @@ public class DataGeneratorFacetedBrowsing
         logger.info("Data generator fulfilled its purpose and shuts down");
     }
 
+    public static void sendTriplesUsingMochaProtocol(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {
+    	Entry<Long, Long> numRecordsAndBatches = sendTriples(stream, batchSize, channel);
+    	
+    	channel.accept(ByteBuffer.wrap(Bytes.concat(
+    			new byte[]{MochaConstants.BULK_LOAD_DATA_GEN_FINISHED},
+    			ByteBuffer.allocate(4).putInt(numRecordsAndBatches.getKey().intValue()).array(),
+    			new byte[]{1})));
+    	
+    	
+    }
+    
     public static Entry<Long, Long> sendTriples(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {
 
         AtomicLong recordCount = new AtomicLong();

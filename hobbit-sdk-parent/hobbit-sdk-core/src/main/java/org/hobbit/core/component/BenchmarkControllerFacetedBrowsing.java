@@ -100,6 +100,10 @@ public class BenchmarkControllerFacetedBrowsing
         dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
 
+  
+        // TODO Enable waiting for BULK_LOADING_DATA_FINISHED
+        
+        
         taskGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_READY_SIGNAL));
 
@@ -254,6 +258,21 @@ public class BenchmarkControllerFacetedBrowsing
             throw new RuntimeException("Data generation phase did not complete in time", e);
         }
 
+// TODO Send out MochaConstants.BULK_LOAD_DATA_GEN_FINISHED [4bytes numSentMessages]
+//        boolean lastBulkLoad = true;
+//        ByteBuffer buffer = ByteBuffer.allocate(5);
+//        buffer.putInt(this.numberOfDataGenerators);
+//        buffer.put(lastBulkLoad ? (byte) 1 : (byte) 0);
+//sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED, buffer.array());
+
+        boolean isLastBulkLoad = true;
+        int numDataGenerators = 1;
+    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(6)
+    			.put(MochaConstants.BULK_LOAD_DATA_GEN_FINISHED)
+    			.putInt(numDataGenerators)
+    			.put((byte)(isLastBulkLoad ? 1 : 0))
+    			.rewind());
+        
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
 
         logger.info("Sending TASK_GENERATOR_START_SIGNAL");
