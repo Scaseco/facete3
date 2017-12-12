@@ -173,7 +173,9 @@ public class SystemAdapterRDFConnectionMocha
 	                60, TimeUnit.SECONDS);
         }
 
-        rdfBulkLoadProtocol = new RdfBulkLoadProtocolMocha(rdfConnection, () -> {});
+        rdfBulkLoadProtocol = new RdfBulkLoadProtocolMocha(rdfConnection,
+        		() -> commandSender.onNext(ByteBuffer.allocate(1).put(0, MochaConstants.BULK_LOADING_DATA_FINISHED)),
+        		() -> {});
         
         unsubscribe = new CompositeDisposable(
         		fromDataGenerator.subscribe(rdfBulkLoadProtocol::onData),

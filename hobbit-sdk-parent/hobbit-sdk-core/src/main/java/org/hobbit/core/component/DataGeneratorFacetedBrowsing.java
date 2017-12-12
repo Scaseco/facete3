@@ -196,14 +196,21 @@ public class DataGeneratorFacetedBrowsing
         };
 
         
-        commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
+        //commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
         
         logger.info("Data generator is sending dataset to task generater");
         sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         //sendTriplesViaStreamProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         
         logger.info("Data generator is sending dataset to system adapter");
-        sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
+        Entry<Long, Long> numRecordsAndBatches = sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
+
+    	// Notify the BC about this DC's contribution to the dataset generation
+    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(17)
+    			.put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR)
+    			.putLong(numRecordsAndBatches.getKey())
+    			.putLong(numRecordsAndBatches.getValue())
+    			.rewind());
 
         datasetFile.delete();
         logger.info("Data generator fulfilled its purpose and shuts down");
@@ -217,15 +224,9 @@ public class DataGeneratorFacetedBrowsing
      * @param channel
      * @throws IOException
      */
-    public static void sendTriplesViaMochaProtocol(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {
+    public static Entry<Long, Long> sendTriplesViaMochaProtocol(Stream<Triple> stream, int batchSize, Consumer<ByteBuffer> channel) throws IOException {
     	Entry<Long, Long> numRecordsAndBatches = sendTriplesRaw(stream, batchSize, channel, true);
-    	
-    	// Notify the BC about this DC's contribution to the dataset generation
-    	channel.accept((ByteBuffer)ByteBuffer.allocate(17)
-    			.put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR)
-    			.putLong(numRecordsAndBatches.getKey())
-    			.putLong(numRecordsAndBatches.getValue())
-    			.rewind());
+    	return numRecordsAndBatches;
     }
     
     public static Consumer<ByteBuffer> wrapAsConsumer(OutputStream out) {

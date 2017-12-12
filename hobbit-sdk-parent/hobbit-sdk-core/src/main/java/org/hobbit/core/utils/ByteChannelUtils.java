@@ -20,6 +20,11 @@ public class ByteChannelUtils {
         return result;
     }
 
+//    public static Predicate<ByteBuffer> byteAtIndexEquals(byte b) {
+//        Predicate<ByteBuffer> result = buffer -> buffer.limit() > 0 && buffer.get(0) == b;
+//        return result;
+//    }
+
 
     public static CompletableFuture<ByteBuffer> sendMessageAndAwaitResponse(WritableByteChannel dataChannel, ByteBuffer msg, Collection<Flowable<ByteBuffer>> publishers, Predicate<ByteBuffer> responseCondition) throws IOException {
         CompletableFuture<ByteBuffer> result = PublisherUtils.triggerOnMessage(publishers, responseCondition);

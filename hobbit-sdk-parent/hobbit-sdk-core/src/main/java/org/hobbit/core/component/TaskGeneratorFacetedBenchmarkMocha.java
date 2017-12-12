@@ -126,7 +126,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
     protected CompletableFuture<?> startTaskGenerationFuture;
     
     
-    protected CompletableFuture<?> loadDataFinishedFuture = new CompletableFuture<>();
+    //protected CompletableFuture<?> loadDataFinishedFuture;// = new CompletableFuture<>();
     protected CompletableFuture<ByteBuffer> startSignalReceivedFuture;
     
     
@@ -144,12 +144,20 @@ public class TaskGeneratorFacetedBenchmarkMocha
         startSignalReceivedFuture.whenComplete((v, e) -> {
         	logger.info("TaskGenerator: Start signal for sending out tasks received");
         });
-        
+
+        CompletableFuture<?> loadDataFinishedFuture = PublisherUtils.triggerOnMessage(
+        		commandReceiver, b -> {
+        			System.out.println(b.position());
+        			boolean r = b.remaining() >= 6 && b.get(0) == MochaConstants.BULK_LOAD_DATA_GEN_FINISHED && b.get(5) != (byte)0;
+        			return r;
+        		});
+
         loadDataFinishedFuture.whenComplete((v, e) -> {
         	logger.info("TaskGenerator: Finished loading data");
         });
         
-        
+
+
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
 
         taskGeneratorModule.startUp();

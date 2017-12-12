@@ -54,6 +54,7 @@ import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
+import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
@@ -795,7 +796,7 @@ public class TestBenchmark {
 			
 			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
-						.child(TaskGeneratorFacetedBenchmark.class, LauncherServiceCapable.class);
+						.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherServiceCapable.class);
 
 			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)

@@ -4,17 +4,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.hobbit.core.component.MochaConstants;
 import org.hobbit.core.component.DataProtocol;
+import org.hobbit.core.component.MochaConstants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 
 public class RdfBulkLoadProtocolMocha
 	implements DataProtocol
@@ -24,8 +26,10 @@ public class RdfBulkLoadProtocolMocha
 
 	
     protected boolean dataLoadingFinished = false;
-    protected NavigableSet<String> graphUris = new TreeSet<String>(); 
+    //protected NavigableSet<String> graphUris = new TreeSet<String>(); 
 
+    protected Multimap<String, File> graphToFiles = LinkedListMultimap.create();
+    
     protected int counter = 0;
 
     protected AtomicInteger totalReceived = new AtomicInteger(0);
@@ -35,40 +39,45 @@ public class RdfBulkLoadProtocolMocha
 	
 	
 	protected RDFConnection rdfConnection;
+	protected Runnable postLoad;
 	protected Runnable onAllDataReceived;
 	
-	public RdfBulkLoadProtocolMocha(RDFConnection rdfConnection, Runnable onAllDataReceivedUserAction) {
+	public RdfBulkLoadProtocolMocha(RDFConnection rdfConnection, Runnable postLoad, Runnable onAllDataReceivedUserAction) {
 		super();
 		this.rdfConnection = rdfConnection;
-		this.onAllDataReceived = () -> { dataLoadingFinished = true; onAllDataReceivedUserAction.run(); };
+		this.postLoad = postLoad;
+
+		this.onAllDataReceived = () -> {
+			dataLoadingFinished = true;
+			onAllDataReceivedUserAction.run();
+		};
 	}
 
 	public void onData(ByteBuffer buf) throws IOException {
 		ByteBuffer dataBuffer = buf.duplicate();    	
 		if(dataLoadingFinished == false) {
-			String fileName = RabbitMQUtils.readString(dataBuffer);
+			String graphUri = RabbitMQUtils.readString(dataBuffer);
 			
-			logger.info("Receiving graph URI " + fileName);
-			
-			
-			rdfConnection.update("CREATE SILENT GRAPH <" + fileName + ">");
-			
+			String filename = graphUri;
+			logger.info("Receiving graph URI " + filename);
+
 			byte [] content = new byte[dataBuffer.remaining()];
 			dataBuffer.get(content, 0, dataBuffer.remaining());
 
 			if(content.length != 0) {
-				if (fileName.contains("/")) {
-					fileName = "file" + String.format("%010d", counter++) + ".ttl";
+				if (filename.contains("/")) {
+					filename = "file" + String.format("%010d", counter++) + ".ttl";
 				}
-				File file = new File(datasetFolderName + File.separator + fileName);
+				File file = new File(datasetFolderName + File.separator + filename);
 
 				try(FileOutputStream fos = new FileOutputStream(file)) {
 					fos.write(content);
 					fos.flush();
 				}
 				
-				String finalFilename = file.getAbsolutePath();
-				rdfConnection.load(fileName, finalFilename);
+				graphToFiles.put(graphUri, file);
+				
+				//postLoad.run();
 			}
 
 			if(totalReceived.incrementAndGet() == totalSent.get()) {
@@ -96,12 +105,20 @@ public class RdfBulkLoadProtocolMocha
 			int numberOfMessages = buffer.getInt();
 			boolean lastBulkLoad = buffer.get() != 0;
 
-			if (lastBulkLoad) {
-				dataLoadingFinished = true;
+
+			logger.info("Bulk loading phase (" + loadingNumber + ") begins; data: " + graphToFiles);
+
+			for(Entry<String, File> e : graphToFiles.entries()) {
+				String graph = e.getKey();
+				String finalFilename = e.getValue().getAbsolutePath();
+
+				rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
+
+				rdfConnection.load(graph, finalFilename);
 			}
-
-			logger.info("Bulk loading phase (" + loadingNumber + ") begins");
-
+			
+			graphToFiles.clear();
+			
 			// if all data have been received before BULK_LOAD_DATA_GEN_FINISHED command received
 			// release before acquire, so it can immediately proceed to bulk loading
 			if(totalReceived.get() == totalSent.addAndGet(numberOfMessages)) {
@@ -110,7 +127,13 @@ public class RdfBulkLoadProtocolMocha
 			}
 
 			loadingNumber++;
-			
+
+			if (lastBulkLoad) {
+				dataLoadingFinished = true;
+			}
+
+			postLoad.run();
+
 //			logger.info("Wait for receiving all data for bulk load " + loadingNumber + ".");
 //			try {
 //				allDataReceivedMutex.acquire();

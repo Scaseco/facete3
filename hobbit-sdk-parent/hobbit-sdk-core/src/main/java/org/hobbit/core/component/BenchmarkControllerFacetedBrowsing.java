@@ -138,6 +138,9 @@ public class BenchmarkControllerFacetedBrowsing
         });
         
         dgBulkLoadingFinishedFutures.whenComplete((numRecordsAndBatches, t) -> {
+        	
+        	logger.info("Bulk loading finished - total records and batches: " + numRecordsAndBatches);
+        	
         	// Send out the message that data generation completed
             boolean isLastBulkLoad = true;
             int numBatches = numRecordsAndBatches.getValue().intValue();
@@ -316,13 +319,13 @@ public class BenchmarkControllerFacetedBrowsing
 //        buffer.put(lastBulkLoad ? (byte) 1 : (byte) 0);
 //sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED, buffer.array());
 
-        boolean isLastBulkLoad = true;
-        int numDataGenerators = 1;
-    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(6)
-    			.put(MochaConstants.BULK_LOAD_DATA_GEN_FINISHED)
-    			.putInt(numDataGenerators)
-    			.put((byte)(isLastBulkLoad ? 1 : 0))
-    			.rewind());
+//        boolean isLastBulkLoad = true;
+//        int numDataGenerators = 1;
+//    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(6)
+//    			.put(MochaConstants.BULK_LOAD_DATA_GEN_FINISHED)
+//    			.putInt(numDataGenerators)
+//    			.put((byte)(isLastBulkLoad ? 1 : 0))
+//    			.rewind());
         
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATION_FINISHED}));
 

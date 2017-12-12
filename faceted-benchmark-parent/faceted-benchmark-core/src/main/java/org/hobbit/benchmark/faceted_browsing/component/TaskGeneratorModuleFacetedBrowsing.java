@@ -72,7 +72,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         logger.info("TaskGeneratorWorker::startUp(): SPARQL service is now ready");
         
         RDFConnection conn = sparqlService.createDefaultConnection();
-        dataHandler = new RdfBulkLoadProtocolMocha(conn, () -> {});
+        dataHandler = new RdfBulkLoadProtocolMocha(conn, () -> {}, () -> {});
         
         logger.info("TaskGeneratorWorker::startUp(): Startup is complete");
 	}
