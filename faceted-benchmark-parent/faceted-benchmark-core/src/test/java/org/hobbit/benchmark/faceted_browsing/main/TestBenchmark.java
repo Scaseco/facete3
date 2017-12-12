@@ -76,7 +76,7 @@ import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
-import org.hobbit.rdf.component.SystemAdapterRDFConnection;
+import org.hobbit.rdf.component.SystemAdapterRDFConnectionMocha;
 import org.hobbit.service.podigg.PodiggWrapper;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
@@ -799,7 +799,7 @@ public class TestBenchmark {
 
 			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
-						.child(SystemAdapterRDFConnection.class, LauncherServiceCapable.class);
+						.child(SystemAdapterRDFConnectionMocha.class, LauncherServiceCapable.class);
 				
 			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
 					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)

@@ -5,15 +5,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -24,8 +22,10 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.utils.ServiceManagerUtils;
+import org.hobbit.rdf.component.RdfBulkLoadProtocolMocha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
@@ -51,6 +51,8 @@ public class TaskGeneratorModuleFacetedBrowsing
     @javax.annotation.Resource(name="taskGeneratorSparqlService")
     protected SparqlBasedService sparqlService;
 
+    protected DataProtocol dataHandler;
+    
     
     protected transient ServiceManager serviceManager;
     
@@ -68,6 +70,10 @@ public class TaskGeneratorModuleFacetedBrowsing
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(serviceManager,
                 60, TimeUnit.SECONDS, 60, TimeUnit.SECONDS);
         logger.info("TaskGeneratorWorker::startUp(): SPARQL service is now ready");
+        
+        RDFConnection conn = sparqlService.createDefaultConnection();
+        dataHandler = new RdfBulkLoadProtocolMocha(conn, () -> {});
+        
         logger.info("TaskGeneratorWorker::startUp(): Startup is complete");
 	}
 
@@ -221,6 +227,18 @@ public class TaskGeneratorModuleFacetedBrowsing
 //                throw new RuntimeException(e);
 //            }
     }
+
+
+	@Override
+	public void onCommand(ByteBuffer buffer) throws Exception {
+		dataHandler.onCommand(buffer);
+	}
+
+
+	@Override
+	public void onData(ByteBuffer buffer) throws Exception {
+		dataHandler.onData(buffer);
+	}
 
 
 }

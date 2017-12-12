@@ -62,9 +62,9 @@ public class DockerServiceSimpleDelegation
     	Thread.currentThread().setName(threadName + " [" + name + "]");
 
     	try {
-    		logger.info("[Begin of action] + name");
+    		logger.info("[Begin of action] " + name);
     		runnable.call();
-    		logger.info("[End of action] + name");
+    		logger.info("[End of action] " + name);
     	} finally {
     		Thread.currentThread().setName(threadName);
     	}

@@ -2,9 +2,13 @@ package org.hobbit.core.component;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -85,6 +89,19 @@ public class BenchmarkControllerFacetedBrowsing
 
     //public static final byte START_BENCHMARK_SIGNAL = 66;
 
+    // https://stackoverflow.com/questions/30025428/listfuture-to-futurelist-sequence
+    @SafeVarargs
+	public static <T> CompletableFuture<List<T>> allAsList(CompletableFuture<T> ... futures) {
+    	return allAsList(Arrays.asList(futures));
+    }
+    
+    public static <T> CompletableFuture<List<T>> allAsList(List<CompletableFuture<T>> futures) {
+        return CompletableFuture.allOf(
+            futures.toArray(new CompletableFuture[futures.size()])
+        ).thenApply(ignored ->
+            futures.stream().map(CompletableFuture::join).collect(Collectors.toList())
+        );
+    }
 
     @Override
     public void startUp() throws Exception {
@@ -101,6 +118,40 @@ public class BenchmarkControllerFacetedBrowsing
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
 
   
+//        dataGeneratorBulkLoadReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+//                ByteChannelUtils.firstByteEquals(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR));
+        
+        // Sum up results of the finished bulk loading events
+        CompletableFuture<Entry<Long, Long>> dgBulkLoadingFinishedFutures = allAsList(
+        		PublisherUtils.triggerOnMessage(commandReceiver,
+                        ByteChannelUtils.firstByteEquals(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR))
+        ).thenApply(msgs -> {
+        	Entry<Long, Long> r = msgs.stream()
+        			.map(buffer -> {
+        				buffer = buffer.duplicate();
+        				buffer.get(); // discard first byte
+        				Entry<Long, Long> s = new SimpleEntry<>(buffer.getLong(), buffer.getLong());
+        				return s;
+        			})
+        			.reduce(new SimpleEntry<>(0l, 0l), (x, y) -> new SimpleEntry<>(x.getKey() + y.getKey(), x.getValue() + y.getValue()));
+        	return r;
+        });
+        
+        dgBulkLoadingFinishedFutures.whenComplete((numRecordsAndBatches, t) -> {
+        	// Send out the message that data generation completed
+            boolean isLastBulkLoad = true;
+            int numBatches = numRecordsAndBatches.getValue().intValue();
+        	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(6)
+        			.put(MochaConstants.BULK_LOAD_DATA_GEN_FINISHED)
+        			.putInt(numBatches)
+        			.put((byte)(isLastBulkLoad ? 1 : 0))
+        			.rewind());
+
+        });
+        
+//        dataGeneratorBulkLoadDoneFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+//                ByteChannelUtils.firstByteEquals(MochaConstants.));
+        
         // TODO Enable waiting for BULK_LOADING_DATA_FINISHED
         
         
