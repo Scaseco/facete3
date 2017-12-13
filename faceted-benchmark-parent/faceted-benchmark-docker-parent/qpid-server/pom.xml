@@ -14,7 +14,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>hobbit-sdk-qpid</artifactId>
+			<artifactId>hobbit-sdk-qpid7</artifactId>
 		</dependency>
 	</dependencies>
 

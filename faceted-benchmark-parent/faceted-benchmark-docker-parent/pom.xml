@@ -15,6 +15,10 @@
 
 	<properties>
 		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</docker.benchmark-controller.repository>
+		<docker.data-generator.repository>git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator</docker.data-generator.repository>
+		<docker.task-generator.repository>git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator</docker.task-generator.repository>
+		<docker.evaluation-module.repository>git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule</docker.evaluation-module.repository>
+
 		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,7 +36,7 @@
 		<!-- <module>system-adapter</module> -->
 		<!-- <module>evaluation-storage</module> -->
 		<module>evaluation-module</module>
-		<module>virtuoso</module>
+<!--		<module>virtuoso</module> -->
 		<module>qpid-server</module>
 	</modules>
 
@@ -69,6 +73,7 @@
 						<tag>latest</tag>
 						<!-- <tag>${project.version}</tag> -->
 						<buildArgs>
+							<MAIN_CLASS>org.hobbit.benchmark.faceted_browsing.main.MainHobbitFacetedBrowsingBenchmark</MAIN_CLASS>
 							<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
 						</buildArgs>
 					</configuration>

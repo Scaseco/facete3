@@ -30,8 +30,13 @@
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<configuration>
 					<repository>${docker.benchmark-controller.repository}</repository>
+					<buildArgs>
+						<MAIN_IMAGE>${docker.benchmark-controller.repository}/image</MAIN_IMAGE>
+						<ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
+					</buildArgs>
 				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 
