@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 import com.google.common.base.MoreObjects;
 
 public class EnvironmentUtils {
-    public static Map<String, String> listToMap(String sep, List<String> list) {
+
+		
+	public static Map<String, String> listToMap(String sep, List<String> list) {
         Map<String, String> result = list.stream()
             .map(e -> e.split(sep, 2))
             .collect(Collectors.toMap(

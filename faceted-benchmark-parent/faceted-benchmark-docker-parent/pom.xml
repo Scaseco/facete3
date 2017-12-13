@@ -73,7 +73,7 @@
 						<tag>latest</tag>
 						<!-- <tag>${project.version}</tag> -->
 						<buildArgs>
-							<MAIN_CLASS>org.hobbit.benchmark.faceted_browsing.main.MainHobbitFacetedBrowsingBenchmark</MAIN_CLASS>
+							<MAIN_CLASS>org.hobbit.benchmark.faceted_browsing.main.MainDockerServiceLauncher</MAIN_CLASS>
 							<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
 						</buildArgs>
 					</configuration>
