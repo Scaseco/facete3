@@ -14,12 +14,12 @@
 	</parent>
 
 	<properties>
-		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</docker.benchmark-controller.repository>
-		<docker.data-generator.repository>git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator</docker.data-generator.repository>
-		<docker.task-generator.repository>git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator</docker.task-generator.repository>
-		<docker.evaluation-module.repository>git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule</docker.evaluation-module.repository>
+		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image</docker.benchmark-controller.repository>
+		<docker.data-generator.repository>git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image</docker.data-generator.repository>
+		<docker.task-generator.repository>git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image</docker.task-generator.repository>
+		<docker.evaluation-module.repository>git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image</docker.evaluation-module.repository>
 
-		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository>
+		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver/image</docker.qpid-server.repository>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -36,12 +36,24 @@
 		<!-- <module>system-adapter</module> -->
 		<!-- <module>evaluation-storage</module> -->
 		<module>evaluation-module</module>
-<!--		<module>virtuoso</module> -->
+		<!-- <module>virtuoso</module> -->
 		<module>qpid-server</module>
 	</modules>
 
 	<dependencyManagement>
 		<dependencies>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>hobbit-sdk-core</artifactId>
+				<version>${project.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>com.spotify</groupId>
+						<artifactId>docker-client</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>

@@ -26,6 +26,7 @@
 
 	<modules>
 		<module>faceted-benchmark-core</module>
+		<module>faceted-benchmark-docker-parent</module>
 	</modules>
 
 	<dependencyManagement>

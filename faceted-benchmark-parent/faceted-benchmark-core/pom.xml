@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>hobbit-sdk-qpid7</artifactId>
-			<scope>test</scope>
+<!-- 			<scope>test</scope> -->
 		</dependency>
 
 		<!-- log4j -->
@@ -35,7 +35,7 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>${slf4j.version}</version>
-			<scope>test</scope>
+<!-- 			<scope>test</scope> -->
 		</dependency>
 
 	</dependencies>

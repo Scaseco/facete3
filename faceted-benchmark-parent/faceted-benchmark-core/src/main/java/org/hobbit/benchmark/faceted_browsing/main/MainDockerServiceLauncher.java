@@ -3,13 +3,14 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.util.Map;
 
-import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigVirtualDockerServiceFactory;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.SpringEnvironmentUtils;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.StandardEnvironment;
-
-import com.spotify.docker.client.exceptions.DockerCertificateException;
 
 
 /**
@@ -18,9 +19,12 @@ import com.spotify.docker.client.exceptions.DockerCertificateException;
  * @author raven Dec 12, 2017
  *
  */
+@SpringBootApplication
+@EnableAutoConfiguration
+@ComponentScan
 public class MainDockerServiceLauncher {
 
-	public static void main(String[] args) throws DockerCertificateException {
+	public static void main(String[] args) {
 		
 		// TODO Make it possible to provide the config class from which to obtain the docker service factory
 		
@@ -32,7 +36,8 @@ public class MainDockerServiceLauncher {
 
 		
 		// Get the registry and launch an image
-		DockerServiceFactory<?> dockerServiceFactory = ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceFactory.createDockerServiceFactory();
+		DockerServiceFactory<?> dockerServiceFactory = ConfigVirtualDockerServiceFactory.createVirtualComponentDockerServiceFactory();
+		dockerServiceFactory = ConfigVirtualDockerServiceFactory.applyServiceWrappers(dockerServiceFactory);
 		
 		Map<String, String> env = SpringEnvironmentUtils.toStringMap(new StandardEnvironment());
 		DockerService dockerService = dockerServiceFactory.create(imageName, env);

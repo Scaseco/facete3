@@ -16,6 +16,11 @@
 			<groupId>org.hobbit</groupId>
 			<artifactId>hobbit-sdk-qpid7</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>faceted-benchmark-core</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -30,6 +35,10 @@
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<configuration>
 					<repository>${docker.qpid-server.repository}</repository>
+					<buildArgs>
+						<MAIN_IMAGE>${docker.qpid-server.repository}</MAIN_IMAGE>
+						<ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
+					</buildArgs>
 				</configuration>
 			</plugin>
 		</plugins>

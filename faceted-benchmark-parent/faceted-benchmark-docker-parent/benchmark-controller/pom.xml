@@ -31,7 +31,7 @@
 				<configuration>
 					<repository>${docker.benchmark-controller.repository}</repository>
 					<buildArgs>
-						<MAIN_IMAGE>${docker.benchmark-controller.repository}/image</MAIN_IMAGE>
+						<MAIN_IMAGE>${docker.benchmark-controller.repository}</MAIN_IMAGE>
 						<ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
 					</buildArgs>
 				</configuration>

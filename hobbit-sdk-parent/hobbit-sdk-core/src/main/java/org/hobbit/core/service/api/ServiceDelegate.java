@@ -4,9 +4,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 
-import jersey.repackaged.com.google.common.util.concurrent.MoreExecutors;
 
 public class ServiceDelegate<S extends Service>
 	implements Service

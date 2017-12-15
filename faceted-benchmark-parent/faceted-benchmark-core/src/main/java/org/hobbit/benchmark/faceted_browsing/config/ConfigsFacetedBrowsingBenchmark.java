@@ -4,26 +4,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.service.core.BeanWrapperService;
@@ -42,24 +34,13 @@ import org.apache.jena.shared.NotFoundException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
-import org.hobbit.benchmark.faceted_browsing.main.LauncherServiceCapable;
 import org.hobbit.core.Constants;
-import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
-import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
-import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModule;
-import org.hobbit.core.component.EvaluationModuleComponent;
-import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
-import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
 import org.hobbit.core.component.TaskGeneratorModule;
-import org.hobbit.core.config.ConfigGson;
-import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
-import org.hobbit.core.service.api.DockerServiceDelegateWrapper;
 import org.hobbit.core.service.api.IdleServiceDelegate;
-import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegateEntity;
 import org.hobbit.core.service.api.SparqlDockerApiService;
 import org.hobbit.core.service.docker.DockerService;
@@ -72,17 +53,12 @@ import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
 import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
 import org.hobbit.interfaces.TripleStreamSupplier;
-import org.hobbit.qpid.v7.config.ConfigQpidBroker;
-import org.hobbit.rdf.component.SystemAdapterRDFConnectionMocha;
 import org.hobbit.service.podigg.PodiggWrapper;
-import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
@@ -734,8 +710,6 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	
 	
-	
-	
 	public static class ConfigDockerServiceFactory {
 		
 		private static final Logger logger = LoggerFactory.getLogger(ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceFactory.class);
@@ -770,114 +744,21 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        
 	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier);
 	        return result;
-		}
+		}		
 
 		public static DockerServiceFactory<?> createDockerServiceFactory() throws DockerCertificateException {
-			Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
-					.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
-						.child(ConfigDockerServiceManagerClient.class);
-
-			// Note: We make the actual components children of the channel configuration, so that we ensure that
-			// channels are only closed once the components have shut down and sent their final messages
-			Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
-						.child(BenchmarkControllerFacetedBrowsing.class, LauncherServiceCapable.class);
-			
-			Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
-							.child(DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
-			
-			Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
-						.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherServiceCapable.class);
-
-			Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
-						.child(SystemAdapterRDFConnectionMocha.class, LauncherServiceCapable.class);
-				
-			Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
-						.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);
-
-			
-			
-			Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
-					.child(ConfigEvaluationModule.class)
-						.child(EvaluationModuleComponent.class, LauncherServiceCapable.class);
-			
-			Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
-	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
-			
-	        map.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
-	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
-	        map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
-	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
-
-	        // NOTE The sa is started by the platform
-	        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
-			
-	        
-	        // Service wrappers which modifies startup/shutdown of other services; mostly healthchecks
-	        // on startup
-	        Map<Pattern, Function<DockerService, DockerService>> serviceWrappers = new LinkedHashMap<>();
-	        serviceWrappers.put(Pattern.compile("tenforce/virtuoso"), dockerService -> {
-	        	DockerService r = new DockerServiceDelegateWrapper<DockerService>(dockerService) {
-	        		// FIXME We want to enhance the startup method within the thread allocated by the guava service
-	        		@Override
-	        		public ServiceDelegate<DockerService> startAsync() {
-	        			super.startAsync().awaitRunning();
-	        			// The delegate has started, so we have a container id
-	        			String host = delegate.getContainerId();
-	    	        	String destination = "http://" + host + ":8890/";
-	        			
-	    	        	new HealthcheckRunner(
-	    	        			60, 1, TimeUnit.SECONDS, () -> {
-    	        		        try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
-    	        		            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
-    	        		        }
-	    	        	}).run();
-	    	        	return this;
-	        		}
-	        	};
-	        	
-	        	return r;
-	        	//new org.hobbit.benchmark.faceted_browsing.config.ServiceDelegate<>(delegate);
-	        });
-	        
-	        	        
 	        
 	        // Configure the docker server component	        
-	        DockerServiceFactory<?> localOverrides = new DockerServiceFactorySpringApplicationBuilder(map);
-	        
-	        
+	        DockerServiceFactory<?> localOverrides = ConfigVirtualDockerServiceFactory.createVirtualComponentDockerServiceFactory();
+	        DockerServiceFactory<?> dockerClientDockerServiceFactory = createSpotifyDockerClientServiceFactory();
+	        	        
 	        // TODO We should register a service wrapper for tenforce/virtuoso
 	        // which only enters running state if the sparql service is actually reachable
-	        
-	        
-	        
-	        DockerServiceFactory<?> dockerClientDockerServiceFactory = createSpotifyDockerClientServiceFactory();
 	        
 	        	        
 	        DockerServiceFactory<?> core = new DockerServiceFactoryChain(localOverrides, dockerClientDockerServiceFactory);	        
 
-	        DockerServiceFactory<?> result = (imageName, env) -> {
-
-	        	DockerService r = core.create(imageName, env);
-
-	        	Map<Pattern, Function<DockerService, DockerService>> cands =
-	        			serviceWrappers.entrySet().stream()
-	        			.filter(x -> x.getKey().matcher(imageName).find())
-	        			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-
-	        	for(Entry<Pattern, Function<DockerService, DockerService>> cand : cands.entrySet()) {	        		
-	        		logger.info("Applying service decorator: " + cand.getKey() + " to docker image " + imageName);
-	        		r = cand.getValue().apply(r);
-	        	}
-
-	        	return r;	        	
-	        };
-
+	        DockerServiceFactory<?> result = ConfigVirtualDockerServiceFactory.applyServiceWrappers(core);
 	        
 	        // Test starting a triple store and use it
 	        if(false) {

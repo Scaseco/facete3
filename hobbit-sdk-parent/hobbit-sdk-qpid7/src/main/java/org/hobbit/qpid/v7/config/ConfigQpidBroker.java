@@ -11,6 +11,7 @@ import javax.inject.Inject;
 
 import org.apache.qpid.server.SystemLauncher;
 import org.apache.qpid.server.model.SystemConfig;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -20,8 +21,9 @@ import org.springframework.core.io.Resource;
 
 @Configuration
 @PropertySource("classpath:/local-config.properties")
-public class ConfigQpidBroker {
-	@Inject
+public class ConfigQpidBroker
+	implements EnvironmentAware
+{
 	protected Environment env;
 
 	/**
@@ -81,5 +83,10 @@ public class ConfigQpidBroker {
 		// System.out.println("Broker starting...");
 		// Thread.sleep(5000);
 		return broker;
+	}
+
+	@Override
+	public void setEnvironment(Environment environment) {
+		this.env = environment;
 	}
 }
