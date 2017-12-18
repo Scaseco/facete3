@@ -98,7 +98,8 @@ public class ConfigVirtualDockerServiceFactory {
 		
         result.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
         result.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
-        result.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
+//        result.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
+      result.put("git.project-hobbit.eu:4567/gkatsibras/defaultevaluationstorage/image", esAppBuilder);
         result.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
 
         // NOTE The sa is started by the platform

@@ -21,6 +21,12 @@
 
 		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver/image</docker.qpid-server.repository>
 
+
+<!-- defaulthobbituser -->
+		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/gkatsibras/defaultevaluationstorage/image</docker.evaluation-storage.repository>
+		<docker.system-adapter.repository>git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image</docker.system-adapter.repository>
+
+
 		<docker.docker-service-manager-server.repository>git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver/image</docker.docker-service-manager-server.repository>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -35,11 +41,12 @@
 		<module>benchmark-controller</module>
 		<module>data-generator</module>
 		<module>task-generator</module>
-		<!-- <module>system-adapter</module> -->
-		<!-- <module>evaluation-storage</module> -->
 		<module>evaluation-module</module>
-		<!-- <module>virtuoso</module> -->
+
 		<module>qpid-server</module>
+
+		<module>system-adapter</module>
+		<module>evaluation-storage</module>
 	</modules>
 
 	<dependencyManagement>

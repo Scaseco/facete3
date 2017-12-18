@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>hobbit-rdf-docker-system-adapter</artifactId>
+	<artifactId>faceted-benchmark-docker-system-adapter</artifactId>
 
 	<parent>
 		<groupId>org.hobbit</groupId>
@@ -29,9 +29,14 @@
 				<groupId>com.spotify</groupId>
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<configuration>
-<!--					<repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontrolle</repository> -->
+					<repository>${docker.system-adapter.repository}</repository>
+					<buildArgs>
+						<MAIN_IMAGE>${docker.system-adapter.repository}</MAIN_IMAGE>
+						<ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
+					</buildArgs>
 				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 
