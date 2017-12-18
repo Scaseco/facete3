@@ -1,6 +1,7 @@
 package org.hobbit.core.service.docker;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -94,8 +95,8 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
     		
     		JsonElement envE = jsonObj.get(KEY_ENV);
     		Map<String, String> env = gson.fromJson(envE, mapStringStringType);
-    				
-    		//Map<String, String> env = new HashMap<>();
+
+    		env = env != null ? env : Collections.emptyMap();
     		
     		T r = serviceFactory.apply(imageName, env);
     		return r;

@@ -19,6 +19,7 @@ public class DockerServiceBuilderDockerClient
 {
     protected DockerClient dockerClient;
     protected ContainerConfig.Builder containerConfigBuilder;
+    protected boolean hostMode;
 
     public DockerServiceBuilderDockerClient() {
         super();
@@ -28,10 +29,11 @@ public class DockerServiceBuilderDockerClient
 //        this(null, null); //new ContainerCon
 //    }
 
-    public DockerServiceBuilderDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder) {
+    public DockerServiceBuilderDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder, boolean hostMode) {
         super();
         this.dockerClient = dockerClient;
         this.containerConfigBuilder = containerConfigBuilder;
+        this.hostMode = hostMode;
     }
 
     public DockerClient getDockerClient() {
@@ -91,7 +93,7 @@ public class DockerServiceBuilderDockerClient
 
         ContainerConfig containerConfig = containerConfigBuilder.build();
 
-        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig);
+        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode);
         return result;
     }
 }

@@ -60,7 +60,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
@@ -723,7 +722,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 		
 		
-		public static DockerServiceFactory<?> createSpotifyDockerClientServiceFactory() throws DockerCertificateException {
+		public static DockerServiceFactory<?> createSpotifyDockerClientServiceFactory(
+				boolean hostMode) throws DockerCertificateException {
 	        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
 
 
@@ -749,22 +749,22 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        
 	        Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier = () -> ContainerConfig.builder().hostConfig(hostConfig);
 	        
-	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier);
+	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier, hostMode);
 	        return result;
 		}		
 
-		public static DockerServiceFactory<?> createDockerServiceFactory() throws DockerCertificateException {
+		public static DockerServiceFactory<?> createDockerServiceFactory(boolean hostMode) throws DockerCertificateException {
 	        
 	        // Configure the docker server component	        
-	        DockerServiceFactory<?> localOverrides = ConfigVirtualDockerServiceFactory.createVirtualComponentDockerServiceFactory();
-	        DockerServiceFactory<?> dockerClientDockerServiceFactory = createSpotifyDockerClientServiceFactory();
-	        	        
-	        // TODO We should register a service wrapper for tenforce/virtuoso
-	        // which only enters running state if the sparql service is actually reachable
+	        DockerServiceFactory<?> core = createSpotifyDockerClientServiceFactory(hostMode);
 	        
-	        	        
-	        DockerServiceFactory<?> core = new DockerServiceFactoryChain(localOverrides, dockerClientDockerServiceFactory);	        
 
+	        // FIXME Hostmode controlls two aspects which should be separated: (1) use container IPs instead of names (2) override docker images with the component registry
+	        if(hostMode) {	        
+	        	DockerServiceFactory<?> localOverrides = ConfigVirtualDockerServiceFactory.createVirtualComponentDockerServiceFactory();
+	        	core = new DockerServiceFactoryChain(localOverrides, core);	        
+	        }
+	        
 	        DockerServiceFactory<?> result = ConfigVirtualDockerServiceFactory.applyServiceWrappers(core);
 	        
 	        // Test starting a triple store and use it
@@ -800,8 +800,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 		
 		@Bean
-		public DockerServiceFactory<?> dockerServiceFactory() throws DockerCertificateException {
-			DockerServiceFactory<?> result = createDockerServiceFactory();
+		public DockerServiceFactory<?> dockerServiceFactory(@Value("${hostMode:false}") boolean hostMode) throws DockerCertificateException {
+			DockerServiceFactory<?> result = createDockerServiceFactory(hostMode);
 			return result;
 		}
 	}

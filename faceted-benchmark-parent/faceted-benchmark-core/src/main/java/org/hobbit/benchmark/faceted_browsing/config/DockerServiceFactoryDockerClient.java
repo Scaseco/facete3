@@ -19,11 +19,14 @@ public class DockerServiceFactoryDockerClient
 {
     protected DockerClient dockerClient;
     protected Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier;
-    
+    protected boolean hostMode;
+
 	
 	public DockerServiceFactoryDockerClient(
 			DockerClient dockerClient,
-			Supplier<Builder> containerConfigBuilderSupplier) {
+			Supplier<Builder> containerConfigBuilderSupplier,
+			boolean hostMode
+			) {
 		super();
 
 		Objects.requireNonNull(dockerClient);
@@ -31,6 +34,7 @@ public class DockerServiceFactoryDockerClient
 		
 		this.dockerClient = dockerClient;
 		this.containerConfigBuilderSupplier = containerConfigBuilderSupplier;
+		this.hostMode = hostMode;
 	}
 
 
@@ -43,7 +47,7 @@ public class DockerServiceFactoryDockerClient
 			.env(envList)
 			.build();
 		
-		DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig);
+		DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode);
 
 		return result;
 	}

@@ -147,7 +147,6 @@ public class TaskGeneratorFacetedBenchmarkMocha
 
         CompletableFuture<?> loadDataFinishedFuture = PublisherUtils.triggerOnMessage(
         		commandReceiver, b -> {
-        			System.out.println(b.position());
         			boolean r = b.remaining() >= 6 && b.get(0) == MochaConstants.BULK_LOAD_DATA_GEN_FINISHED && b.get(5) != (byte)0;
         			return r;
         		});

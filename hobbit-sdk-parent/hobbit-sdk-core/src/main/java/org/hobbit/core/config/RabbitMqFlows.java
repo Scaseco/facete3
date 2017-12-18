@@ -483,7 +483,6 @@ public class RabbitMqFlows {
     	
     	String nextId = idGenerator.get();
     	
-    	// TODO Make the component name part of the queue name 
     	String queueName = "receiver." + receiverBaseName + "." + nextId + "." + exchangeName;
     	channel.queueDeclare(queueName, false, true, true, null);
 

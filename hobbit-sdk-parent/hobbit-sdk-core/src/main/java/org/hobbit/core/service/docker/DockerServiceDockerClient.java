@@ -42,10 +42,13 @@ public class DockerServiceDockerClient
 
     protected String containerName;
     
-    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig) {
+    protected boolean hostMode;
+    
+    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig, boolean hostMode) {
         super();
         this.dockerClient = dockerClient;
         this.containerConfig = containerConfig;
+        this.hostMode = hostMode;
     }
 
     @Override
@@ -59,9 +62,7 @@ public class DockerServiceDockerClient
         
         ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
 
-        boolean localMode = true;
-        
-        if(localMode) {
+        if(hostMode) {
         	containerName = containerInfo.networkSettings().ipAddress();
         } else {
         	containerName = containerInfo.name();

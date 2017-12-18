@@ -9,7 +9,8 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<jena-sparql-api.version>3.5.0-1</jena-sparql-api.version>
+		<jena-sparql-api.version>3.5.0-2</jena-sparql-api.version>
+		<spring.version>4.3.11.RELEASE</spring.version>
 		<slf4j.version>1.7.24</slf4j.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -191,27 +192,32 @@
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-core</artifactId>
-				<version>4.3.11.RELEASE </version>
+				<version>${spring.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-beans</artifactId>
-				<version>4.3.11.RELEASE </version>
+				<version>${spring.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-aop</artifactId>
-				<version>4.3.11.RELEASE </version>
+				<version>${spring.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-context</artifactId>
-				<version>4.3.11.RELEASE </version>
+				<version>${spring.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-test</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
 
 
 			<dependency>
