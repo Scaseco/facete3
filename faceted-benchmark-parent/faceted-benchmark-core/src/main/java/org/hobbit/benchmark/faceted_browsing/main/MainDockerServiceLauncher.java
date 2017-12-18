@@ -2,13 +2,19 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.hobbit.benchmark.faceted_browsing.config.ConfigVirtualDockerServiceFactory;
+import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.SpringEnvironmentUtils;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.StandardEnvironment;
 
@@ -36,7 +42,14 @@ public class MainDockerServiceLauncher {
 
 		
 		// Get the registry and launch an image
+		//Map<String, Supplier<SpringApplicationBuilder>> map = ConfigVirtualDockerServiceFactory.getVirtualDockerComponentRegistry();
 		DockerServiceFactory<?> dockerServiceFactory = ConfigVirtualDockerServiceFactory.createVirtualComponentDockerServiceFactory();
+		
+//		map = map.entrySet().stream()
+//				.filter(e -> Objects.equals(e.getKey(), imageName))
+//				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		
+		//DockerServiceFactory<?> dockerServiceFactory = new DockerServiceFactorySpringApplicationBuilder(map);
 		dockerServiceFactory = ConfigVirtualDockerServiceFactory.applyServiceWrappers(dockerServiceFactory);
 		
 		Map<String, String> env = SpringEnvironmentUtils.toStringMap(new StandardEnvironment());

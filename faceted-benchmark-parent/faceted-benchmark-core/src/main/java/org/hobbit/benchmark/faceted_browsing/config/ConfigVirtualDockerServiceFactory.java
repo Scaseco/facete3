@@ -15,7 +15,9 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataGeneratorFacetedBrowsing;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceManagerClient;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceManagerServer;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigEvaluationModule;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigEvaluationStorage;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigEvaluationStorageStorageProvider;
@@ -41,39 +43,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
+import com.google.common.collect.ImmutableMap;
+
 public class ConfigVirtualDockerServiceFactory {
 	private static final Logger logger = LoggerFactory.getLogger(ConfigVirtualDockerServiceFactory.class);
 
 
-	public static DockerServiceFactory<?> createVirtualComponentDockerServiceFactory() {
+	public static Map<String, Supplier<SpringApplicationBuilder>> getVirtualDockerComponentRegistry() {
 
-		Supplier<SpringApplicationBuilder> createComponentBaseConfig = () -> new SpringApplicationBuilder()
+		Function<String, SpringApplicationBuilder> createComponentBaseConfig = componentName -> new SpringApplicationBuilder()
+				.properties(new ImmutableMap.Builder<String, Object>()
+						.put("componentName", componentName)
+						.build())
 				.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
 					.child(ConfigDockerServiceManagerClient.class);
 
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
 		// channels are only closed once the components have shut down and sent their final messages
-		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.get()
+		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.apply("bc")
 				.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
 					.child(BenchmarkControllerFacetedBrowsing.class, LauncherServiceCapable.class);
 		
-		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.get()
+		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.apply("dg")
 				.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
 						.child(DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
 		
-		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.get()
+		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.apply("tg")
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
 					.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherServiceCapable.class);
 
-		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.get()
+		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.apply("sa")
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
 					.child(SystemAdapterRDFConnectionMocha.class, LauncherServiceCapable.class);
 			
-		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.get()
+		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.apply("es")
 				.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
 					.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);		
 		
-		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.get()
+		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.apply("em")
 				.child(ConfigEvaluationModule.class)
 					.child(EvaluationModuleComponent.class, LauncherServiceCapable.class);
 		
@@ -81,22 +88,34 @@ public class ConfigVirtualDockerServiceFactory {
 		Supplier<SpringApplicationBuilder> qpidServerAppBuilder = () -> new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class);
 		
+		Supplier<SpringApplicationBuilder> dockerServiceManagerServerAppBuilder = () -> new SpringApplicationBuilder()
+				.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigDockerServiceFactory.class)
+					.child(ConfigDockerServiceManagerServer.class);
+
 		
-		Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
+		Map<String, Supplier<SpringApplicationBuilder>> result = new LinkedHashMap<>();
+        result.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
 		
-        map.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
-        map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
+        result.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
+        result.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);        
+        result.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
+        result.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
 
         // NOTE The sa is started by the platform
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
+        result.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
 		
 
-		map.put("git.project-hobbit.eu:4567/gkatsibras/qpidserver/image", qpidServerAppBuilder);
+		result.put("git.project-hobbit.eu:4567/gkatsibras/qpidserver/image", qpidServerAppBuilder);
 
-        DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
+		result.put("git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver/image", dockerServiceManagerServerAppBuilder);
+		
+		return result;
+	}
+	
+	public static DockerServiceFactory<?> createVirtualComponentDockerServiceFactory() {
+
+		Map<String, Supplier<SpringApplicationBuilder>> virtualDockerComponentRegistry = getVirtualDockerComponentRegistry();
+        DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(virtualDockerComponentRegistry);
 
 		return result;
 	}

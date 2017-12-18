@@ -13,7 +13,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+import org.apache.commons.text.CharacterPredicates;
+import org.apache.commons.text.RandomStringGenerator;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,13 @@ import io.reactivex.subscribers.DefaultSubscriber;
 public class RabbitMqFlows {
 	
 	private static final Logger logger = LoggerFactory.getLogger(RabbitMqFlows.class);
+	
+	public static final RandomStringGenerator randomStringGenerator = new RandomStringGenerator.Builder()
+			.withinRange('0', 'z')
+			.filteredBy(CharacterPredicates.LETTERS, CharacterPredicates.DIGITS)
+			.build();
+
+	public static Supplier<String> idGenerator = () -> randomStringGenerator.generate(6);
 	
     /**
      * Maximum number of retries that are executed to connect to RabbitMQ.
@@ -469,8 +479,12 @@ public class RabbitMqFlows {
      */
     public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName, String receiverBaseName) throws IOException {
         //String queueName = channel.queueDeclare().getQueue();
-    	int nextId = queueNames.computeIfAbsent(receiverBaseName, (name) -> new AtomicInteger()).incrementAndGet();
-    	String queueName = "receiver." + receiverBaseName + nextId + "." + exchangeName;
+    	//int nextId = queueNames.computeIfAbsent(receiverBaseName, (name) -> new AtomicInteger()).incrementAndGet();
+    	
+    	String nextId = idGenerator.get();
+    	
+    	// TODO Make the component name part of the queue name 
+    	String queueName = "receiver." + receiverBaseName + "." + nextId + "." + exchangeName;
     	channel.queueDeclare(queueName, false, true, true, null);
 
         
@@ -709,15 +723,17 @@ public class RabbitMqFlows {
      * @throws IOException
      * @throws TimeoutException
      */
-    static Map<String, AtomicInteger> queueNames  = new LinkedHashMap<>();
+    //static Map<String, AtomicInteger> queueNames  = new LinkedHashMap<>();
     
     public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(Channel channel, String exchangeName, String responseQueueBaseName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
     	
     	//String responseQueueName = channel.queueDeclare().getQueue();
 
     	//String name = responseQueueBaseName + "-" + exchangeName;
-    	int nextId = queueNames.computeIfAbsent(responseQueueBaseName, (key) -> new AtomicInteger()).incrementAndGet();
-    	String responseQueueName = "response." + responseQueueBaseName + nextId + "." + exchangeName;
+    	//int nextId = queueNames.computeIfAbsent(responseQueueBaseName, (key) -> new AtomicInteger()).incrementAndGet();
+    	
+    	String nextId = idGenerator.get();
+    	String responseQueueName = "response." + responseQueueBaseName + "." + nextId + "." + exchangeName;
     	
     	channel.queueDeclare(responseQueueName, false, true, true, null);
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);

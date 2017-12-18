@@ -58,7 +58,9 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 
 import com.google.common.collect.ImmutableMap;
@@ -80,6 +82,7 @@ import io.reactivex.Flowable;
 
 
 public class ConfigsFacetedBrowsingBenchmark {
+
 //	
 //	class ConfigDockerServiceManagerServiceComponent {
 //		@Bean
@@ -127,9 +130,12 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		@Bean
 		public Flowable<ByteBuffer> commandReceiver(
-				Channel channel) throws IOException {
+				Channel channel, @Value("${componentName:anonymous}") String componentName) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "cmd");
+						
+			//System.out.println("COMPONENT NAME: " + componentName);
+
+			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "cmd" + "." + componentName);
 		}
 		
 		@Bean
@@ -149,6 +155,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 	 *
 	 */
 	public static class ConfigReplyableCommandChannel {
+		
 		@Bean
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(
 				Channel channel) throws IOException {
@@ -446,8 +453,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel) throws IOException, TimeoutException {
-	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, "ack");
+	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel, @Value("${componentName:anonymous}") String componentName) throws IOException, TimeoutException {
+	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, "ack" + "." + componentName);
 	    }
 	}
 	

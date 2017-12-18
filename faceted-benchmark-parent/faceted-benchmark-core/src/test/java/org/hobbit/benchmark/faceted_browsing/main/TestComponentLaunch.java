@@ -6,7 +6,6 @@ import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
-import org.junit.Test;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -32,7 +31,7 @@ public class TestComponentLaunch
 		}
 	}
 	
-	@Test
+	//@Test
 	public void testDockerCommunication() throws InterruptedException {
 		try(ConfigurableApplicationContext ctx = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)

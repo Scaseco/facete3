@@ -21,6 +21,8 @@
 
 		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver/image</docker.qpid-server.repository>
 
+		<docker.docker-service-manager-server.repository>git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver/image</docker.docker-service-manager-server.repository>
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -47,12 +49,14 @@
 				<groupId>org.hobbit</groupId>
 				<artifactId>hobbit-sdk-core</artifactId>
 				<version>${project.version}</version>
+<!--
 				<exclusions>
 					<exclusion>
 						<groupId>com.spotify</groupId>
 						<artifactId>docker-client</artifactId>
 					</exclusion>
 				</exclusions>
+-->
 			</dependency>
 
 			<dependency>

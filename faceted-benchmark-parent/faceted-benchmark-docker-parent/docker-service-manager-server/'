@@ -1,8 +1,6 @@
 FROM openjdk:8-jdk-alpine
 MAINTAINER Claus Stadler <cstadler@informatik.uni-leipzig.de>
 
-RUN echo "Foobar111"
-
 ARG JAR_FILE
 ARG MAIN_CLASS
 ARG ARTIFACT_ID
@@ -14,6 +12,13 @@ ENV MAIN_CLASS=${MAIN_CLASS}
 ENV ARTIFACT_ID=${ARTIFACT_ID}
 ENV MAIN_IMAGE=${MAIN_IMAGE}
 
+# Install the docker client
+# https://stackoverflow.com/questions/38675925/is-it-possible-to-install-only-the-docker-cli-and-not-the-daemon
+ARG DOCKER_VERSION=17.09.1-ce
+RUN wget "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz" \
+  && tar xzvf "docker-${DOCKER_VERSION}.tgz" \
+  && mv docker/docker /usr/local/bin \
+  && rm -r docker "docker-${DOCKER_VERSION}.tgz"
 
 RUN echo "Build args: ${JAR_FILE} ${MAIN_CLASS} ${ARTIFACT_ID} ${MAIN_IMAGE}"
 

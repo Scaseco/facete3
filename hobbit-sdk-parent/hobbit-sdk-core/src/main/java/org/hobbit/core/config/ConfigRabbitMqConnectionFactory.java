@@ -1,22 +1,30 @@
 package org.hobbit.core.config;
 
-import javax.inject.Inject;
-
 import org.hobbit.core.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 import com.rabbitmq.client.ConnectionFactory;
 
-public class ConfigRabbitMqConnectionFactory {
+
+public class ConfigRabbitMqConnectionFactory
+	implements EnvironmentAware
+{	
 	
-	@Inject
+	private static final Logger logger = LoggerFactory.getLogger(ConfigRabbitMqConnectionFactory.class);
+
 	protected Environment env;
 	
 	@Bean
 	public ConnectionFactory connectionFactory() {
 
         String rabbitMQHostName = env.getProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost");
+        //int port = env.getProperty(Constants.po)
+        
+        logger.info("Expecting AMQP Server to be reachable at " + rabbitMQHostName);
         
 		ConnectionFactory result = new ConnectionFactory();
         result.setHost(rabbitMQHostName);
@@ -29,4 +37,8 @@ public class ConfigRabbitMqConnectionFactory {
         return result;
 	}
 
+	@Override
+	public void setEnvironment(Environment environment) {
+		this.env = environment;
+	}
 }
