@@ -30,6 +30,10 @@
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<configuration>
 					<repository>${docker.data-generator.repository}</repository>
+					<buildArgs>
+						<MAIN_IMAGE>${docker.data-generator.repository}</MAIN_IMAGE>
+						<ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
+					</buildArgs>
 				</configuration>
 			</plugin>
 		</plugins>

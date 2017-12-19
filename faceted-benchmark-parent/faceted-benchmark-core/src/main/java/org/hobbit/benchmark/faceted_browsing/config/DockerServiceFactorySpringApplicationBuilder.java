@@ -38,7 +38,7 @@ public class DockerServiceFactorySpringApplicationBuilder
 
 		Supplier<? extends SpringApplicationBuilder> imageConfigSupplier = imageNameToConfigSupplier.get(imageName);
 		if(imageConfigSupplier == null) {
-			throw new UnsupportedOperationException("No image " + imageName + " registered with this docker service factory");
+			throw new UnsupportedOperationException("No image '" + imageName + "' registered with this docker service factory");
 		}
 		
 		//Objects.requireNonNull(imageConfigSupplier);

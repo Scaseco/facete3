@@ -47,6 +47,8 @@
 
 		<module>system-adapter</module>
 		<module>evaluation-storage</module>
+
+		<module>docker-service-manager-server</module>
 	</modules>
 
 	<dependencyManagement>

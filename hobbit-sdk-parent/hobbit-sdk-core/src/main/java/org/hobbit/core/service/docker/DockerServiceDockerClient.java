@@ -12,8 +12,6 @@ import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerInfo;
 import com.spotify.docker.client.messages.ContainerState;
-import com.spotify.docker.client.messages.NetworkConfig;
-import com.spotify.docker.client.messages.NetworkCreation;
 
 /**
  * A DockerService backed by spotify's docker client
@@ -53,11 +51,43 @@ public class DockerServiceDockerClient
 
     @Override
     protected void startUp() throws Exception {
+    	String imageName = getImageName();
+    	//dockerClient.pull(imageName);
+    	
+    	
+    	
+    	
         ContainerCreation creation = dockerClient.createContainer(containerConfig);
         containerId = creation.id();
 
         // Start container
         dockerClient.startContainer(containerId);
+
+        // TODO Make this configurable from the context
+        String HOBBIT_DOCKER_NETWORK = "hobbit";
+        dockerClient.connectToNetwork(containerId, HOBBIT_DOCKER_NETWORK);
+
+//        gelfAddress = System.getenv(LOGGING_GELF_ADDRESS_KEY);
+//        if (gelfAddress == null) {
+//            LOGGER.info(
+//                    "Didn't find a gelf address ({}). Containers created by this platform will use the default logging.",
+//                    LOGGING_GELF_ADDRESS_KEY);
+//        }
+        // try to find hobbit network in existing ones
+//        List<Network> networks = dockerClient.listNetworks();
+//        String hobbitNetwork = null;
+//        for (Network net : networks) {
+//            if (net.name().equals(HOBBIT_DOCKER_NETWORK)) {
+//                hobbitNetwork = net.id();
+//                break;
+//            }
+//        }
+//        // if not found - create new one
+//        if (hobbitNetwork == null) {
+//            final NetworkConfig networkConfig = NetworkConfig.builder().name(HOBBIT_DOCKER_NETWORK).build();
+//            dockerClient.createNetwork(networkConfig);
+//        }
+//    }
 
         
         ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
