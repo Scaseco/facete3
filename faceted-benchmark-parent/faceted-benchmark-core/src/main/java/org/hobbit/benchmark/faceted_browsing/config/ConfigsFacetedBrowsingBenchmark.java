@@ -8,9 +8,11 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -50,6 +52,7 @@ import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
+import org.hobbit.core.service.docker.EnvironmentUtils;
 import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
 import org.hobbit.interfaces.TripleStreamSupplier;
@@ -723,7 +726,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		
 		public static DockerServiceFactory<?> createSpotifyDockerClientServiceFactory(
-				boolean hostMode) throws DockerCertificateException {
+				boolean hostMode, Map<String, String> env) throws DockerCertificateException {
 	        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
 
 
@@ -747,16 +750,22 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	        //DockerServiceBuilderFactory<DockerServiceBuilder<? extends DockerService>>
 	        
-	        Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier = () -> ContainerConfig.builder().hostConfig(hostConfig);
+	        Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier = () ->
+	        	ContainerConfig.builder()
+	        		.hostConfig(hostConfig)
+	        		.env(EnvironmentUtils.mapToList("=", env))
+	        		;
 	        
-	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier, hostMode);
+	        Set<String> networks = Collections.singleton("hobbit");
+	        
+	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier, hostMode, networks);
 	        return result;
 		}		
 
-		public static DockerServiceFactory<?> createDockerServiceFactory(boolean hostMode) throws DockerCertificateException {
+		public static DockerServiceFactory<?> createDockerServiceFactory(boolean hostMode, Map<String, String> env) throws DockerCertificateException {
 	        
 	        // Configure the docker server component	        
-	        DockerServiceFactory<?> core = createSpotifyDockerClientServiceFactory(hostMode);
+	        DockerServiceFactory<?> core = createSpotifyDockerClientServiceFactory(hostMode, env);
 	        
 
 	        // FIXME Hostmode controlls two aspects which should be separated: (1) use container IPs instead of names (2) override docker images with the component registry
@@ -800,8 +809,12 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 		
 		@Bean
-		public DockerServiceFactory<?> dockerServiceFactory(@Value("${hostMode:false}") boolean hostMode) throws DockerCertificateException {
-			DockerServiceFactory<?> result = createDockerServiceFactory(hostMode);
+		public DockerServiceFactory<?> dockerServiceFactory(@Value("${hostMode:false}") boolean hostMode, @Value("${HOBBIT_RABBIT_HOST:localhost}") String envStr) throws DockerCertificateException {
+			Map<String, String> env = new ImmutableMap.Builder<String, String>()
+					.put("HOBBIT_RABBIT_HOST", envStr)
+					.build();
+			
+			DockerServiceFactory<?> result = createDockerServiceFactory(hostMode, env);
 			return result;
 		}
 	}

@@ -1,5 +1,6 @@
 package org.hobbit.core.service.docker;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class DockerServiceDockerClient
 
     protected DockerClient dockerClient;
     protected ContainerConfig containerConfig;
+    protected Set<String> networks;
 
 
     // Status fields for running services
@@ -42,20 +44,18 @@ public class DockerServiceDockerClient
     
     protected boolean hostMode;
     
-    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig, boolean hostMode) {
+    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig, boolean hostMode, Set<String> networks) {
         super();
         this.dockerClient = dockerClient;
         this.containerConfig = containerConfig;
         this.hostMode = hostMode;
+        this.networks = networks;
     }
 
     @Override
     protected void startUp() throws Exception {
-    	String imageName = getImageName();
+    	//String imageName = getImageName();
     	//dockerClient.pull(imageName);
-    	
-    	
-    	
     	
         ContainerCreation creation = dockerClient.createContainer(containerConfig);
         containerId = creation.id();
@@ -64,8 +64,11 @@ public class DockerServiceDockerClient
         dockerClient.startContainer(containerId);
 
         // TODO Make this configurable from the context
-        String HOBBIT_DOCKER_NETWORK = "hobbit";
-        dockerClient.connectToNetwork(containerId, HOBBIT_DOCKER_NETWORK);
+        //String HOBBIT_DOCKER_NETWORK = "hobbit";
+        for(String network : networks) {
+        	dockerClient.connectToNetwork(containerId, network);
+        }
+        //dockerClient.connectToNetwork(containerId, HOBBIT_DOCKER_NETWORK);
 
 //        gelfAddress = System.getenv(LOGGING_GELF_ADDRESS_KEY);
 //        if (gelfAddress == null) {

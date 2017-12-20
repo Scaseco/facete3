@@ -1,8 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.hobbit.core.service.docker.DockerService;
@@ -20,12 +22,14 @@ public class DockerServiceFactoryDockerClient
     protected DockerClient dockerClient;
     protected Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier;
     protected boolean hostMode;
+    protected Set<String> networks;
 
 	
 	public DockerServiceFactoryDockerClient(
 			DockerClient dockerClient,
 			Supplier<Builder> containerConfigBuilderSupplier,
-			boolean hostMode
+			boolean hostMode,
+			Set<String> networks
 			) {
 		super();
 
@@ -35,19 +39,23 @@ public class DockerServiceFactoryDockerClient
 		this.dockerClient = dockerClient;
 		this.containerConfigBuilderSupplier = containerConfigBuilderSupplier;
 		this.hostMode = hostMode;
+		this.networks = networks;
 	}
 
 
 	@Override
-	public DockerService create(String imageName, Map<String, String> env) {
-        List<String> envList = EnvironmentUtils.mapToList("=", env);
-
-		ContainerConfig containerConfig = containerConfigBuilderSupplier.get()
+	public DockerService create(String imageName, Map<String, String> localEnv) {
+		Builder builder = containerConfigBuilderSupplier.get();
+		Map<String, String> env = new LinkedHashMap<>();
+		env.putAll(EnvironmentUtils.listToMap(builder.build().env()));
+		env.putAll(localEnv);
+		
+		ContainerConfig containerConfig = builder
 			.image(imageName)
-			.env(envList)
+			.env(EnvironmentUtils.mapToList(env))
 			.build();
 		
-		DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode);
+		DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode, networks);
 
 		return result;
 	}

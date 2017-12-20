@@ -1,9 +1,10 @@
 package org.hobbit.core.service.docker;
 
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.messages.ContainerConfig;
@@ -20,7 +21,10 @@ public class DockerServiceBuilderDockerClient
     protected DockerClient dockerClient;
     protected ContainerConfig.Builder containerConfigBuilder;
     protected boolean hostMode;
+    protected Set<String> networks;
 
+    protected Map<String, String> localEnv = new LinkedHashMap<>();
+    
     public DockerServiceBuilderDockerClient() {
         super();
     }
@@ -29,11 +33,12 @@ public class DockerServiceBuilderDockerClient
 //        this(null, null); //new ContainerCon
 //    }
 
-    public DockerServiceBuilderDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder, boolean hostMode) {
+    public DockerServiceBuilderDockerClient(DockerClient dockerClient, ContainerConfig.Builder containerConfigBuilder, boolean hostMode, Set<String> networks) {
         super();
         this.dockerClient = dockerClient;
         this.containerConfigBuilder = containerConfigBuilder;
         this.hostMode = hostMode;
+        this.networks = networks;
     }
 
     public DockerClient getDockerClient() {
@@ -67,22 +72,25 @@ public class DockerServiceBuilderDockerClient
 
     @Override
     public Map<String, String> getLocalEnvironment() {
-        List<String> env = containerConfigBuilder.build().env();
-        if(env == null) {
-            env = Collections.emptyList();
-        }
-
-        Map<String, String> result = EnvironmentUtils.listToMap("=", env);
-
-        return result;
+    	return localEnv;
+//        List<String> env = containerConfigBuilder.build().env();
+//        if(env == null) {
+//            env = Collections.emptyList();
+//        }
+//
+//        Map<String, String> result = EnvironmentUtils.listToMap("=", env);
+//
+//        return result;
     }
 
     @Override
     public DockerServiceBuilder<DockerServiceDockerClient> setLocalEnvironment(Map<String, String> environment) {
-        List<String> env = EnvironmentUtils.mapToList("=", environment);
-
-        containerConfigBuilder.env(env);
-        return this;
+    	this.localEnv = environment;
+    	return this;
+//        List<String> env = EnvironmentUtils.mapToList("=", environment);
+//
+//        containerConfigBuilder.env(env);
+//        return this;
     }
 
 
@@ -91,9 +99,15 @@ public class DockerServiceBuilderDockerClient
         Objects.requireNonNull(dockerClient);
         Objects.requireNonNull(containerConfigBuilder);
 
+        // Merge the local environment into that of the containerConfig
+        Map<String, String> env = EnvironmentUtils.listToMap(containerConfigBuilder.build().env());
+        env.putAll(localEnv);
+        
+        List<String> envList = EnvironmentUtils.mapToList(env);
+        containerConfigBuilder.env(envList);
         ContainerConfig containerConfig = containerConfigBuilder.build();
 
-        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode);
+        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode, networks);
         return result;
     }
 }
