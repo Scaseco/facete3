@@ -153,6 +153,7 @@ public class DockerServiceManagerServerComponent
             @Override
             public void failed(State from, Throwable failure) {
             	// If the state was starting, we have not yet sent back a response to the dockerServiceClint
+            	logger.warn("Failed to start docker service: ", failure);
             	if(State.STARTING.equals(from)) {
                 	idCallback.accept("fail:" + failure.toString());
             	}

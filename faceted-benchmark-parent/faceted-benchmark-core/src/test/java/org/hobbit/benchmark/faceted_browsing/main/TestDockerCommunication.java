@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.main;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,11 +126,12 @@ public class TestDockerCommunication {
 	        
 	        // Create a supplier that yields preconfigured builders
 	        Supplier<DockerServiceBuilder<? extends DockerService>> builderSupplier = () -> {
-	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient();
+	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient(
+	        			dockerClient, containerConfigBuilder, true, null);
 
-		        dockerServiceBuilder
-		        		.setDockerClient(dockerClient)
-		        		.setContainerConfigBuilder(containerConfigBuilder);
+//		        dockerServiceBuilder
+//		        		.setDockerClient(dockerClient)
+//		        		.setContainerConfigBuilder(containerConfigBuilder);
 		        
 		        return dockerServiceBuilder;
 	        };

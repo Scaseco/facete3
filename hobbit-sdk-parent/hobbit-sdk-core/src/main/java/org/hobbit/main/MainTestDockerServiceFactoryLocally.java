@@ -1,6 +1,7 @@
 package org.hobbit.main;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +42,13 @@ public class MainTestDockerServiceFactoryLocally {
 
         HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
 
-        DockerServiceBuilderDockerClient dockerServiceFactory = new DockerServiceBuilderDockerClient();
-
         ContainerConfig.Builder containerConfigBuilder = ContainerConfig.builder()
                 .hostConfig(hostConfig);
+
+        DockerServiceBuilderDockerClient dockerServiceFactory = new DockerServiceBuilderDockerClient(
+        		dockerClient, containerConfigBuilder, true, null
+        		);
+
 //        	    .image("busybox").exposedPorts(ports)
 //        	    .cmd("sh", "-c", "while :; do sleep 1; done")
 

@@ -1,7 +1,9 @@
 package org.hobbit.core.service.docker;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,10 +11,12 @@ import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.ContainerNotFoundException;
+import com.spotify.docker.client.messages.AttachedNetwork;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerInfo;
 import com.spotify.docker.client.messages.ContainerState;
+import com.spotify.docker.client.messages.Network;
 
 /**
  * A DockerService backed by spotify's docker client
@@ -34,7 +38,8 @@ public class DockerServiceDockerClient
     protected DockerClient dockerClient;
     protected ContainerConfig containerConfig;
     protected Set<String> networks;
-
+    protected String name;
+    
 
     // Status fields for running services
     // Container id (requires the service to be running)
@@ -44,30 +49,71 @@ public class DockerServiceDockerClient
     
     protected boolean hostMode;
     
-    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig, boolean hostMode, Set<String> networks) {
+    public DockerServiceDockerClient(DockerClient dockerClient, ContainerConfig containerConfig, String name, boolean hostMode, Set<String> networks) {
         super();
         this.dockerClient = dockerClient;
         this.containerConfig = containerConfig;
+        this.name = name;
         this.hostMode = hostMode;
         this.networks = networks;
     }
 
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() throws Exception {    	
     	//String imageName = getImageName();
     	//dockerClient.pull(imageName);
+    	logger.info("Attempting to start docker container: " + getImageName() + " env: " + containerConfig.env() + " hostMode: " + hostMode + " networks: " + networks);
     	
-        ContainerCreation creation = dockerClient.createContainer(containerConfig);
+        ContainerCreation creation = dockerClient.createContainer(containerConfig, name);
         containerId = creation.id();
 
+
+        ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
+
+        // If a list of networks was specified, disconnect from any other networks
+        String ip;
+//        hostMode = false;
+        if(!hostMode && networks != null) {
+	        for(String networkName : containerInfo.networkSettings().networks().keySet()) {
+	        	//String networkName = dockerClient.inspectNetwork(attachedNetwork.networkId()).name();
+	        	logger.info("Disconnecting container " + containerId + " from network " + networkName); //attachedNetwork.networkId() +" [" + networkName + "]");
+	        	dockerClient.disconnectFromNetwork(containerId, networkName); //attachedNetwork.networkId()
+	        }
+	        
+//	        Map<String, String> networkNameToId = dockerClient.listNetworks().stream()
+//	        		.collect(Collectors.toMap(Network::name, Network::id));
+	    	
+	        // TODO Make this configurable from the context
+	        //String HOBBIT_DOCKER_NETWORK = "hobbit";
+	        for(String networkName : networks) {
+	        	//String networkId = networkNameToId.get(network);
+	        	logger.info("Connecting container " + containerId + " to network " + networkName); // + " [" + networkId + "]");
+	        	dockerClient.connectToNetwork(containerId, networkName);
+	        }
+
+//	        containerInfo = dockerClient.inspectContainer(containerId);
+	        
+	        //String networkId = networkNameToId.get(Iterables.getFirst(networks, null));
+//	        String networkName = Iterables.getFirst(networks, null);
+//        	ip = containerInfo.networkSettings().networks().get(networkName).ipAddress();
+        } else {
+//        	ip = containerInfo.networkSettings().ipAddress();
+        }
+        
         // Start container
         dockerClient.startContainer(containerId);
 
-        // TODO Make this configurable from the context
-        //String HOBBIT_DOCKER_NETWORK = "hobbit";
-        for(String network : networks) {
-        	dockerClient.connectToNetwork(containerId, network);
-        }
+        containerInfo = dockerClient.inspectContainer(containerId);
+
+//        if(!hostMode && networks != null) {
+//	        for(AttachedNetwork attachedNetwork : containerInfo.networkSettings().networks().values()) {
+//	        	String networkName = dockerClient.inspectNetwork(attachedNetwork.networkId()).name();
+//	        	if(!networks.contains(networkName)) {
+//	        		logger.info("Disconnecting container " + containerId + " from network " + attachedNetwork.networkId() +" [" + networkName + "]");
+//	        		dockerClient.disconnectFromNetwork(containerId, attachedNetwork.networkId());
+//	        	}
+//	        }
+//        }
         //dockerClient.connectToNetwork(containerId, HOBBIT_DOCKER_NETWORK);
 
 //        gelfAddress = System.getenv(LOGGING_GELF_ADDRESS_KEY);
@@ -93,10 +139,12 @@ public class DockerServiceDockerClient
 //    }
 
         
-        ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
+        containerInfo = dockerClient.inspectContainer(containerId);
 
         if(hostMode) {
-        	containerName = containerInfo.networkSettings().ipAddress();
+        	ip = containerInfo.networkSettings().ipAddress();
+
+        	containerName = ip;
         } else {
         	containerName = containerInfo.name();
         	containerName = containerName.startsWith("/") ? containerName.substring(1) : containerName;

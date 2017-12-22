@@ -235,7 +235,7 @@ public class DockerServiceManagerClientComponent
         }
 
         if(result.isEmpty()) {
-        	throw new RuntimeException("DockerServiceManager client received a response with an invalid Id upon launching " + msg);
+        	throw new RuntimeException("DockerServiceManager client received a response with an invalid (empty) Id upon launching " + msg);
         }
         
         return result;

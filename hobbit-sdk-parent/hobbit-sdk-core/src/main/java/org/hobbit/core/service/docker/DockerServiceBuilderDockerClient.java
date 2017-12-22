@@ -1,5 +1,6 @@
 package org.hobbit.core.service.docker;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import com.spotify.docker.client.messages.ContainerConfig;
  * @author raven Sep 20, 2017
  *
  */
+@Deprecated
 public class DockerServiceBuilderDockerClient
     implements DockerServiceBuilder<DockerServiceDockerClient>
 {
@@ -25,9 +27,9 @@ public class DockerServiceBuilderDockerClient
 
     protected Map<String, String> localEnv = new LinkedHashMap<>();
     
-    public DockerServiceBuilderDockerClient() {
-        super();
-    }
+//    public DockerServiceBuilderDockerClient() {
+//        super();
+//    }
 
 //    public DockerServiceFactoryDockerClient(DockerClient dockerClient) {
 //        this(null, null); //new ContainerCon
@@ -100,14 +102,19 @@ public class DockerServiceBuilderDockerClient
         Objects.requireNonNull(containerConfigBuilder);
 
         // Merge the local environment into that of the containerConfig
-        Map<String, String> env = EnvironmentUtils.listToMap(containerConfigBuilder.build().env());
+        List<String> rawEnv = containerConfigBuilder.build().env();
+        if(rawEnv == null) {
+        	rawEnv = Collections.emptyList();
+        }
+
+        Map<String, String> env = EnvironmentUtils.listToMap(rawEnv);
         env.putAll(localEnv);
         
         List<String> envList = EnvironmentUtils.mapToList(env);
         containerConfigBuilder.env(envList);
         ContainerConfig containerConfig = containerConfigBuilder.build();
 
-        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, hostMode, networks);
+        DockerServiceDockerClient result = new DockerServiceDockerClient(dockerClient, containerConfig, null, hostMode, networks);
         return result;
     }
 }

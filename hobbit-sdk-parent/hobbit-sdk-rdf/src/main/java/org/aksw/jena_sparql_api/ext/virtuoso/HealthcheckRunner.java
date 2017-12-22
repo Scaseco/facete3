@@ -26,7 +26,8 @@ public class HealthcheckRunner
 		boolean success = false;
 		Exception lastException = null;
 
-		for(int i = 0; i < healthcheckRetryCount; ++i) {
+		int i = 0;
+		for(; i < healthcheckRetryCount; ++i) {
 			try {
 				healthcheckAction.run();
 				success = true;
@@ -43,7 +44,7 @@ public class HealthcheckRunner
 		}
 		
 		if(!success) {
-			throw new RuntimeException("Startup failed", lastException);
+			throw new RuntimeException("Startup considered failed after " + i + " failed health checks", lastException);
 		}		
 	}
 }
