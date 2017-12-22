@@ -162,7 +162,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(
 				Channel channel) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "replableCmd");
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "replyableCmd");
 		}
 		
 		@Bean
