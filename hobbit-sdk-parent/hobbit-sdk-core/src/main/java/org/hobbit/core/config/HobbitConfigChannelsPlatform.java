@@ -3,6 +3,8 @@ package org.hobbit.core.config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
@@ -100,7 +102,7 @@ public class HobbitConfigChannelsPlatform {
 //    }
 
 
-    public static ByteBuffer parseCommandBuffer(ByteBuffer buffer) {
+    public static Entry<String, ByteBuffer> parseCommandBuffer(ByteBuffer buffer) {
 
     	String sessionId = RabbitMQUtils.readString(buffer);
 //        if (acceptedCmdHeaderIds.contains(sessionId)) {
@@ -122,11 +124,9 @@ public class HobbitConfigChannelsPlatform {
     	byte[] remainingData = new byte[buffer.remaining()];
     	buffer.get(remainingData);
     	
-    	ByteBuffer result = ByteBuffer.wrap(remainingData);
+    	ByteBuffer buf = ByteBuffer.wrap(remainingData);
 
-    	//System.out.println("Received command: SessionId=" + sessionId + " Cmd=" + (result.hasRemaining() ? result.get(0) : "-") );
-
-    	
+    	Entry<String, ByteBuffer> result = new SimpleEntry<>(sessionId, buf);    	
     	
         return result;
     }
@@ -233,7 +233,7 @@ public class HobbitConfigChannelsPlatform {
     @Bean
     @Scope("prototype")
     public Flowable<ByteBuffer> commandPub(@Qualifier("incomingCommandConnection") Connection connection) throws IOException, TimeoutException {
-    	return RabbitMqFlows.createFanoutReceiver(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME).map(HobbitConfigChannelsPlatform::parseCommandBuffer);
+    	return RabbitMqFlows.createFanoutReceiver(connection, Constants.HOBBIT_COMMAND_EXCHANGE_NAME).map(HobbitConfigChannelsPlatform::parseCommandBuffer).map(Entry::getValue);
     }
 
 

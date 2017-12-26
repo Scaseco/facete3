@@ -8,10 +8,14 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +43,10 @@ import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedB
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.TaskGeneratorModule;
+import org.hobbit.core.config.HobbitConfigChannelsPlatform;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
+import org.hobbit.core.config.SimpleReplyableMessageImpl;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegateEntity;
@@ -63,7 +69,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
@@ -81,10 +89,11 @@ import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 
 import io.reactivex.Flowable;
+import io.reactivex.processors.PublishProcessor;
 
 
 public class ConfigsFacetedBrowsingBenchmark {
-
+	
 //	
 //	class ConfigDockerServiceManagerServiceComponent {
 //		@Bean
@@ -115,6 +124,95 @@ public class ConfigsFacetedBrowsingBenchmark {
 //			return connectionFactory.newConnection();
 //		}
 //	}
+
+	public static class HobbitCommandWrappersBase
+		implements EnvironmentAware {
+
+		protected Environment env;
+		
+		protected String sessionId;
+		protected Set<String> acceptedHeaderIds;
+
+		@Override
+		public void setEnvironment(Environment environment) {
+			this.env = environment;			
+			
+			sessionId = env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
+			
+			acceptedHeaderIds = new LinkedHashSet<>(Arrays.asList(
+					sessionId,
+					Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS
+				));
+		}
+		
+		public Subscriber<ByteBuffer> wrapSender(Subscriber<ByteBuffer> subscriber) {
+			return transformBeforePublish(subscriber, this::transformMsg);
+		}
+
+		public Flowable<ByteBuffer> wrapReceiver(Flowable<ByteBuffer> flowable) {			
+			return flowable
+					.map(HobbitConfigChannelsPlatform::parseCommandBuffer)
+					.filter(e -> acceptedHeaderIds.contains(e.getKey()))
+					.map(Entry::getValue);
+		}
+
+		public static <I, O> Subscriber<I> transformBeforePublish(Subscriber<O> subscriber, Function<? super I, ? extends O> transform) {
+			PublishProcessor<I> result = PublishProcessor.create();			
+			result.map(transform::apply).subscribe(subscriber);
+			return result;
+			
+		}
+		
+		public ByteBuffer transformMsg(ByteBuffer data) {
+			ByteBuffer result = HobbitConfigChannelsPlatform.createCmdMessage(data, sessionId);
+			return result;
+		}		
+	}
+	
+	public static class ConfigHobbitReplyableCommandWrappers
+		extends HobbitCommandWrappersBase
+	{
+
+		public Set<SimpleReplyableMessage<ByteBuffer>> wrap(SimpleReplyableMessage<ByteBuffer> msg) {
+			Entry<String, ByteBuffer> e = HobbitConfigChannelsPlatform.parseCommandBuffer(msg.getValue());
+
+			SimpleReplyableMessage<ByteBuffer> base = acceptedHeaderIds.contains(e.getKey())							
+					? new SimpleReplyableMessageImpl<>(e.getValue(), msg.getReplyConsumer())
+					: null;
+			
+			Set<SimpleReplyableMessage<ByteBuffer>> result = base == null ? Collections.emptySet() : Collections.singleton(base);
+			return result;
+		}
+		
+		@Bean
+		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(@Qualifier("replyableCommandReceiver") Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver) throws IOException {
+			return replyableCommandReceiver
+				.flatMap(msg -> Flowable.fromIterable(wrap(msg)));
+		}
+		
+		@Bean
+		public Subscriber<ByteBuffer> replyableCommandSender(
+				@Qualifier("replyableCommandReceiver") Subscriber<ByteBuffer> replyableCommandSender) throws IOException {
+			return wrapSender(replyableCommandSender);
+		}
+	
+	}
+	
+	public static class ConfigHobbitChannelWrappers
+		extends HobbitCommandWrappersBase
+	{		
+		@Bean
+		public Subscriber<ByteBuffer> commandSender(@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender) {
+			return wrapSender(commandSender);
+		}
+		
+		@Bean
+		public Flowable<ByteBuffer> commandReceiver(@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver) {
+			return wrapReceiver(commandReceiver);
+		}
+		
+		
+	}
 	
 	public static class ConfigRabbitMqConnection {
 		@Bean
@@ -134,7 +232,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		public Flowable<ByteBuffer> commandReceiver(
 				Channel channel, @Value("${componentName:anonymous}") String componentName) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-						
+
 			//System.out.println("COMPONENT NAME: " + componentName);
 
 			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "cmd" + "." + componentName);
@@ -142,8 +240,12 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		@Bean
 		public Subscriber<ByteBuffer> commandSender(
-				Channel channel) throws IOException {
+				Channel channel
+				) throws IOException {
+				//@Autowired(required=false) @Qualifier("foo") Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
+			
+			
 			return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
 			//return //RabbitMqFlows.createReplyableFanoutSender(channel, exchangeName, transformer)
 		}

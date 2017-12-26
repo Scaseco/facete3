@@ -22,7 +22,28 @@ import io.reactivex.processors.PublishProcessor;
 
 
 public class StreamTest {
-	
+
+	@Test
+	public void testFlowableTransformation() {
+		List<String> actual = new ArrayList<>();//core.toList().blockingGet();
+
+		
+		PublishProcessor<String> core = PublishProcessor.create();
+		core.subscribe(actual::add);
+		
+		PublishProcessor<String> enhanced = PublishProcessor.create();
+		
+		enhanced.map(x -> "Hello " + x).subscribe(core);
+		
+
+		enhanced.onNext("World");
+		enhanced.onNext("Bob");
+		enhanced.onComplete();
+
+		
+		Assert.assertEquals(Arrays.asList("Hello World", "Hello Bob"), actual);
+	}
+
 	@Test
 	public void testFlowableTransformationForLocalOrdering() {
 		List<Integer> expected = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
