@@ -1,10 +1,11 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,34 @@ public class DockerServiceFactorySpringApplicationBuilder
 		super();
 		this.imageNameToConfigSupplier = imageNameToConfig;
 	}	
+	
+	public static <T> T getRoot(T node, Function<? super T, ? extends T> getParent) {
+		T parent = node;
+		T current = node;
+		
+		if(parent != null) {
+			do {
+				current = parent;
+				parent = getParent.apply(current);
+			} while(parent != null);
+		}
+
+		return current;
+	}
+	
+	public static SpringApplicationBuilder getParent(SpringApplicationBuilder appBuilder) {
+		SpringApplicationBuilder result;
+		try {
+			Field field = appBuilder.getClass().getDeclaredField("parent");
+			field.setAccessible(true);
+			Object v = field.get(appBuilder);
+			result = (SpringApplicationBuilder)v;
+			field.setAccessible(false);
+		} catch(Exception e) {
+			 throw new RuntimeException(e);
+		}
+		return result;
+	}
 
 	@Override
 	public DockerService create(String imageName, Map<String, String> env) {
@@ -44,13 +73,14 @@ public class DockerServiceFactorySpringApplicationBuilder
 		//Objects.requireNonNull(imageConfigSupplier);
 		
 		SpringApplicationBuilder appBuilder = imageConfigSupplier.get();
-		
+		SpringApplicationBuilder rootBuilder = getRoot(appBuilder, DockerServiceFactorySpringApplicationBuilder::getParent);
 		
 		Map<String, Object> env2 = env.entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> (Object)x.getValue()));
 
 		ConfigurableEnvironment cenv = new StandardEnvironment();
 		cenv.getPropertySources().addFirst(new MapPropertySource("myPropertySource", env2));
-		appBuilder.environment(cenv);
+		
+		rootBuilder.environment(cenv);
 
 		Supplier<Integer> idSupplier = () -> imageToNextId.computeIfAbsent(imageName, (x) -> new AtomicInteger()).incrementAndGet();
 		Supplier<String> idStrSupplier = () -> imageName + "-" + idSupplier.get();

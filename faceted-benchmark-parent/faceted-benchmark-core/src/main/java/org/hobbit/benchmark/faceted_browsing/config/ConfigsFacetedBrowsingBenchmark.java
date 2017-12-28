@@ -136,7 +136,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		@Bean
 		public CommunicationWrapper<ByteBuffer> communicationWrapper() {			
-			sessionId = env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
+			sessionId = env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY);//, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
+			//sessionId = env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 			logger.info("SessionId obtained from the environment is: " + sessionId);
 			
 			acceptedHeaderIds = new LinkedHashSet<>(Arrays.asList(
@@ -150,7 +151,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		@Override
 		public void setEnvironment(Environment environment) {
-			this.env = environment;						
+			this.env = environment;
 		}
 		
 	}
@@ -756,8 +757,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 				
 				// The service builder factory is pre-configured to set Constants.HOBBIT_SESSION_ID_KEY
 				
-				//Map<String, String> serviceEnv = new HashMap<>();
-				//serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, "default-session"));
+				Map<String, String> serviceEnv = new HashMap<>();
+				serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
 				
 				// Launch the system adapter
 				Service saService = dockerServiceBuilderFactory.get()
