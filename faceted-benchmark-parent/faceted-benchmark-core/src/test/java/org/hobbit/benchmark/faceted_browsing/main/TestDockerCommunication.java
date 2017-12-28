@@ -12,7 +12,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
 import org.hobbit.core.Constants;
+import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
@@ -72,13 +74,13 @@ public class TestDockerCommunication {
 		}
 
 		@Bean
-		public Subscriber<ByteBuffer> commandChannel(Channel channel) throws IOException {
-			return RabbitMqFlows.createFanoutSender(channel, commandExchange, null);		
+		public Subscriber<ByteBuffer> commandChannel(Channel channel, CommunicationWrapper<ByteBuffer> wrapper) throws IOException {
+			return RabbitMqFlows.createFanoutSender(channel, commandExchange, wrapper::wrapSender);		
 		}
 
 		@Bean
-		public Flowable<ByteBuffer> commandPub(Channel channel) throws IOException {
-			return RabbitMqFlows.createFanoutReceiver(channel, commandExchange, "common");		
+		public Flowable<ByteBuffer> commandPub(Channel channel, CommunicationWrapper<ByteBuffer> wrapper) throws IOException {
+			return RabbitMqFlows.createFanoutReceiver(channel, commandExchange, "common", wrapper::wrapReceiver);		
 		}
 	}
 	
@@ -87,8 +89,8 @@ public class TestDockerCommunication {
 
 
 		@Bean
-		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange, "server");
+		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerServerConnection(Channel channel, CommunicationWrapper<ByteBuffer> wrapper) throws IOException, TimeoutException {
+			return RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange, "server", wrapper::wrapReceiver);
 					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
 		}
 
@@ -156,8 +158,8 @@ public class TestDockerCommunication {
 		
 		
 		@Bean
-		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "dockerServiceManagerClientComponent", null);
+		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerClientConnection(Channel channel, CommunicationWrapper<ByteBuffer> wrapper) throws IOException, TimeoutException {
+			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "dockerServiceManagerClientComponent", wrapper::wrapSender, x -> Collections.singletonList(x));
 		}
 
 		
@@ -219,8 +221,7 @@ public class TestDockerCommunication {
 		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)
-				.sources(ConfigGson.class)
-				.sources(ConfigRabbitMqConnectionFactory.class)
+				.child(ConfigGson.class, ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class)
 					.child(ServerContext.class)
 					.sibling(ClientContext.class, AppContext.class);
 

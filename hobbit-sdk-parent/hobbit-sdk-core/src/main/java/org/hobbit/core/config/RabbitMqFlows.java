@@ -3,8 +3,7 @@ package org.hobbit.core.config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -129,8 +128,13 @@ public class RabbitMqFlows {
     }
 
     
-    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, transformer);
+    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(
+    		Connection connection,
+    		String exchangeName,
+    		Function<? super ByteBuffer, ByteBuffer> senderTransform,
+    		Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform
+    		) throws IOException, TimeoutException {
+    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(connection, exchangeName, senderTransform, receiverTransform);
     	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry.getKey(), entry.getValue());
     	
     	return result;
@@ -288,12 +292,16 @@ public class RabbitMqFlows {
      * 
      * @param connection
      * @param exchangeName
-     * @param transformer
+     * @param senderTransform
      * @return
      * @throws IOException
      * @throws TimeoutException 
      */
-    public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(Connection connection, String exchangeName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
+    public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(
+    		Connection connection,
+    		String exchangeName,
+    		Function<? super ByteBuffer, ByteBuffer> senderTransform,
+    		Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException, TimeoutException {
     	Channel channel = connection.createChannel();
 
 //    	Channel responseChannel = connection.createChannel();
@@ -309,8 +317,8 @@ public class RabbitMqFlows {
     			.build();
 
     	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
-    	Consumer<ByteBuffer> consumer = transformer == null ? coreConsumer : (buffer) -> {
-    		ByteBuffer msg = transformer.apply(buffer);
+    	Consumer<ByteBuffer> consumer = senderTransform == null ? coreConsumer : (buffer) -> {
+    		ByteBuffer msg = senderTransform.apply(buffer);
     		coreConsumer.accept(msg);
     	};
 
@@ -467,6 +475,17 @@ public class RabbitMqFlows {
     }
 
 
+//	public List<SimpleReplyableMessage<ByteBuffer>> wrap(SimpleReplyableMessage<ByteBuffer> msg, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) {
+//		ByteBuffer raw = msg.getValue();
+//		Iterable<ByteBuffer> tmp = receiverTransform.apply(raw);
+//	
+//		List<SimpleReplyableMessage<ByteBuffer>> result = Streams.stream(tmp)
+//			.map(x -> new SimpleReplyableMessageImpl<>(x, msg.getReplyConsumer()))
+//			.collect(Collectors.toList());
+//		
+//		return result;
+//	}
+
     /**
      * Useful for the server side of an RPC pattern:
      * - Creates a new queue, binds it to a (possibly existing) (fanout) exchange, and
@@ -477,7 +496,8 @@ public class RabbitMqFlows {
      * @return
      * @throws IOException
      */
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName, String receiverBaseName) throws IOException {
+// 
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createReplyableFanoutReceiver(Channel channel, String exchangeName, String receiverBaseName, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
         //String queueName = channel.queueDeclare().getQueue();
     	//int nextId = queueNames.computeIfAbsent(receiverBaseName, (name) -> new AtomicInteger()).incrementAndGet();
     	
@@ -490,14 +510,21 @@ public class RabbitMqFlows {
         channel.exchangeDeclare(exchangeName, "fanout", false, true, null);
         channel.queueBind(queueName, exchangeName, "");
 
-        Flowable<SimpleReplyableMessage<ByteBuffer>> flowable = createFlowableForQueue(channel, queueName, channel);
+        Flowable<SimpleReplyableMessage<ByteBuffer>> flowable = createFlowableForQueue(channel, queueName, channel, receiverTransform);
   	
+//        if(receiverTransform != null) {
+//        	flowable = flowable.flatMap(msg -> {
+//        		Iterable<ByteBuffer> tmp = receiverTransform.apply(msg);
+//        		return Flowable.fromIterable(tmp);
+//        	});
+//        }
+        
         return flowable;
     }
   
 
-    public static Flowable<ByteBuffer> createFanoutReceiver(Channel channel, String exchangeName, String receiverBaseName) throws IOException {
-        Flowable<ByteBuffer> result = createReplyableFanoutReceiver(channel, exchangeName, receiverBaseName).map(SimpleReplyableMessage::getValue); 
+    public static Flowable<ByteBuffer> createFanoutReceiver(Channel channel, String exchangeName, String receiverBaseName, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
+        Flowable<ByteBuffer> result = createReplyableFanoutReceiver(channel, exchangeName, receiverBaseName, receiverTransform).map(SimpleReplyableMessage::getValue); 
   	
         return result;
     }
@@ -555,7 +582,7 @@ public class RabbitMqFlows {
     }
     
     
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Channel channel, String queueName, Channel responseChannel) throws IOException {
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Channel channel, String queueName, Channel responseChannel, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
     	PublishProcessor<SimpleReplyableMessage<ByteBuffer>> result = PublishProcessor.create();
 		
     	ShutdownListener shutdownListener = (throwable) -> {
@@ -581,18 +608,22 @@ public class RabbitMqFlows {
 				//System.out.println("Received message from queue " + queueName);
 		    	ByteBuffer buffer = ByteBuffer.wrap(body);
 		    	
-		    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buffer, reply);
+		    	Iterable<ByteBuffer> bufs = receiverTransform.apply(buffer);
 		    	
-		    	//result.onSubscribe();
-		    	
-		    	//result.onNext(buffer);
-		    	//logger.info("Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
-		    	
-		    	if(!result.hasSubscribers()) {
-			    	logger.warn("No subscribers on a flow, this may indicate a bug: Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+		    	for(ByteBuffer buf : bufs) {
+			    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buf, reply);
+			    	
+			    	//result.onSubscribe();
+			    	
+			    	//result.onNext(buffer);
+			    	//logger.info("Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+			    	
+			    	if(!result.hasSubscribers()) {
+				    	logger.warn("No subscribers on a flow, this may indicate a bug: Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+			    	}
+			    	
+			    	result.onNext(msg);
 		    	}
-		    	
-		    	result.onNext(msg);
 		    }	        		
     	});
 
@@ -717,15 +748,19 @@ public class RabbitMqFlows {
      * 
      * @param channel
      * @param exchangeName
-     * @param transformer
+     * @param senderTransformer
      * @return
      * @throws IOException
      * @throws TimeoutException
      */
     //static Map<String, AtomicInteger> queueNames  = new LinkedHashMap<>();
     
-    public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(Channel channel, String exchangeName, String responseQueueBaseName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-    	
+    public static Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> createReplyableFanoutSenderCore(
+    		Channel channel, 
+    		String exchangeName, 
+    		String responseQueueBaseName, 
+    		Function<? super ByteBuffer, ByteBuffer> senderTransformer, 
+    		Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
     	//String responseQueueName = channel.queueDeclare().getQueue();
 
     	//String name = responseQueueBaseName + "-" + exchangeName;
@@ -744,14 +779,14 @@ public class RabbitMqFlows {
     			.build();
 
     	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
-    	Consumer<ByteBuffer> consumer = transformer == null ? coreConsumer : (buffer) -> {
-    		ByteBuffer msg = transformer.apply(buffer);
+    	Consumer<ByteBuffer> consumer = senderTransformer == null ? coreConsumer : (buffer) -> {
+    		ByteBuffer msg = senderTransformer.apply(buffer);
     		coreConsumer.accept(msg);
     	};
 
     	Subscriber<ByteBuffer> subscriber = wrapPublishAsSubscriber(consumer, () -> 0);
 
-    	Flowable<ByteBuffer> flowable = createFlowableForQueue(channel, responseQueueName, channel).map(SimpleReplyableMessage::getValue);
+    	Flowable<ByteBuffer> flowable = createFlowableForQueue(channel, responseQueueName, channel, receiverTransform).map(SimpleReplyableMessage::getValue);
     	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> result = new SimpleEntry<>(subscriber, flowable);
     	
     	return result;
@@ -767,8 +802,8 @@ public class RabbitMqFlows {
      * @throws IOException
      * @throws TimeoutException
      */
-    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Channel channel, String exchangeName, String responseQueueBaseName, Function<ByteBuffer, ByteBuffer> transformer) throws IOException, TimeoutException {
-    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(channel, exchangeName, responseQueueBaseName, transformer);
+    public static Function<ByteBuffer, CompletableFuture<ByteBuffer>> createReplyableFanoutSender(Channel channel, String exchangeName, String responseQueueBaseName, Function<ByteBuffer, ByteBuffer> senderTransform, Function<? super ByteBuffer, Iterable<ByteBuffer>> receiverTransform) throws IOException, TimeoutException {
+    	Entry<Subscriber<ByteBuffer>, Flowable<ByteBuffer>> entry = createReplyableFanoutSenderCore(channel, exchangeName, responseQueueBaseName, senderTransform, receiverTransform);
     	Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = wrapAsFunction(entry.getKey(), entry.getValue());
     	
     	return result;
@@ -831,7 +866,7 @@ public class RabbitMqFlows {
 //    	};
 
 		channel.queueDeclare(queueName, false, false, true, null);
-    	Flowable<ByteBuffer> flowable = RabbitMqFlows.createFlowableForQueue(channel, queueName, channel).map(SimpleReplyableMessage::getValue);
+    	Flowable<ByteBuffer> flowable = RabbitMqFlows.createFlowableForQueue(channel, queueName, channel, x -> Collections.singletonList(x)).map(SimpleReplyableMessage::getValue);
 
     	return flowable;
     }

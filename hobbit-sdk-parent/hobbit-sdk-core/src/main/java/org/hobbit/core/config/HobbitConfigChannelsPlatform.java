@@ -3,6 +3,7 @@ package org.hobbit.core.config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeoutException;
@@ -103,8 +104,15 @@ public class HobbitConfigChannelsPlatform {
 
 
     public static Entry<String, ByteBuffer> parseCommandBuffer(ByteBuffer buffer) {
-
-    	String sessionId = RabbitMQUtils.readString(buffer);
+    	buffer = buffer.duplicate();
+    	
+    	String sessionId;
+    	try {
+    		sessionId = RabbitMQUtils.readString(buffer);
+    	} catch(Exception e) {
+    		throw new RuntimeException("Buffer content: " + Arrays.toString(buffer.array()), e);
+    	}
+    	System.out.println("Read sessionId: "+ sessionId);
 //        if (acceptedCmdHeaderIds.contains(sessionId)) {
     	
 //            byte command = buffer.get();

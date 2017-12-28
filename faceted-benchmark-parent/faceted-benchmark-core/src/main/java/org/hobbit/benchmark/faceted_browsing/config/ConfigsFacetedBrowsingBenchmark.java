@@ -14,8 +14,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -43,10 +41,9 @@ import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedB
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.TaskGeneratorModule;
-import org.hobbit.core.config.HobbitConfigChannelsPlatform;
+import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
-import org.hobbit.core.config.SimpleReplyableMessageImpl;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.service.api.IdleServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegateEntity;
@@ -89,7 +86,6 @@ import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 
 import io.reactivex.Flowable;
-import io.reactivex.processors.PublishProcessor;
 
 
 public class ConfigsFacetedBrowsingBenchmark {
@@ -125,7 +121,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 //		}
 //	}
 
-	public static class HobbitCommandWrappersBase
+	public static class ConfigCommunicationWrapper
 		implements EnvironmentAware {
 
 		protected Environment env;
@@ -133,86 +129,60 @@ public class ConfigsFacetedBrowsingBenchmark {
 		protected String sessionId;
 		protected Set<String> acceptedHeaderIds;
 
-		@Override
-		public void setEnvironment(Environment environment) {
-			this.env = environment;			
-			
+		
+		@Bean
+		public CommunicationWrapper<ByteBuffer> communicationWrapper() {			
 			sessionId = env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
 			
 			acceptedHeaderIds = new LinkedHashSet<>(Arrays.asList(
 					sessionId,
 					Constants.HOBBIT_SESSION_ID_FOR_BROADCASTS
 				));
-		}
-		
-		public Subscriber<ByteBuffer> wrapSender(Subscriber<ByteBuffer> subscriber) {
-			return transformBeforePublish(subscriber, this::transformMsg);
-		}
 
-		public Flowable<ByteBuffer> wrapReceiver(Flowable<ByteBuffer> flowable) {			
-			return flowable
-					.map(HobbitConfigChannelsPlatform::parseCommandBuffer)
-					.filter(e -> acceptedHeaderIds.contains(e.getKey()))
-					.map(Entry::getValue);
-		}
-
-		public static <I, O> Subscriber<I> transformBeforePublish(Subscriber<O> subscriber, Function<? super I, ? extends O> transform) {
-			PublishProcessor<I> result = PublishProcessor.create();			
-			result.map(transform::apply).subscribe(subscriber);
-			return result;
-			
-		}
-		
-		public ByteBuffer transformMsg(ByteBuffer data) {
-			ByteBuffer result = HobbitConfigChannelsPlatform.createCmdMessage(data, sessionId);
-			return result;
-		}		
-	}
-	
-	public static class ConfigHobbitReplyableCommandWrappers
-		extends HobbitCommandWrappersBase
-	{
-
-		public Set<SimpleReplyableMessage<ByteBuffer>> wrap(SimpleReplyableMessage<ByteBuffer> msg) {
-			Entry<String, ByteBuffer> e = HobbitConfigChannelsPlatform.parseCommandBuffer(msg.getValue());
-
-			SimpleReplyableMessage<ByteBuffer> base = acceptedHeaderIds.contains(e.getKey())							
-					? new SimpleReplyableMessageImpl<>(e.getValue(), msg.getReplyConsumer())
-					: null;
-			
-			Set<SimpleReplyableMessage<ByteBuffer>> result = base == null ? Collections.emptySet() : Collections.singleton(base);
+			CommunicationWrapper<ByteBuffer> result = new CommunicationWrapperSessionId(sessionId, acceptedHeaderIds);
 			return result;
 		}
 		
-		@Bean
-		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(@Qualifier("replyableCommandReceiver") Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver) throws IOException {
-			return replyableCommandReceiver
-				.flatMap(msg -> Flowable.fromIterable(wrap(msg)));
+		@Override
+		public void setEnvironment(Environment environment) {
+			this.env = environment;						
 		}
 		
-		@Bean
-		public Subscriber<ByteBuffer> replyableCommandSender(
-				@Qualifier("replyableCommandReceiver") Subscriber<ByteBuffer> replyableCommandSender) throws IOException {
-			return wrapSender(replyableCommandSender);
-		}
-	
 	}
 	
-	public static class ConfigHobbitChannelWrappers
-		extends HobbitCommandWrappersBase
-	{		
-		@Bean
-		public Subscriber<ByteBuffer> commandSender(@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender) {
-			return wrapSender(commandSender);
-		}
-		
-		@Bean
-		public Flowable<ByteBuffer> commandReceiver(@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver) {
-			return wrapReceiver(commandReceiver);
-		}
-		
-		
-	}
+//	public static class ConfigHobbitReplyableCommandWrappers
+//		extends ConfigCommunicationWrapper
+//	{
+//		
+//		@Bean
+//		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(@Qualifier("replyableCommandReceiver") Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver) throws IOException {
+//			return replyableCommandReceiver
+//				.flatMap(msg -> Flowable.fromIterable(wrap(msg)));
+//		}
+//		
+//		@Bean
+//		public Subscriber<ByteBuffer> replyableCommandSender(
+//				@Qualifier("replyableCommandReceiver") Subscriber<ByteBuffer> replyableCommandSender) throws IOException {
+//			return wrapSender(replyableCommandSender);
+//		}
+//	
+//	}
+	
+//	public static class ConfigHobbitChannelWrappers
+//		extends ConfigCommunicationWrapper
+//	{		
+//		@Bean
+//		public Subscriber<ByteBuffer> commandSender(@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender) {
+//			return wrapSender(commandSender);
+//		}
+//		
+//		@Bean
+//		public Flowable<ByteBuffer> commandReceiver(@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver) {
+//			return wrapReceiver(commandReceiver);
+//		}
+//		
+//		
+//	}
 	
 	public static class ConfigRabbitMqConnection {
 		@Bean
@@ -230,23 +200,26 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		@Bean
 		public Flowable<ByteBuffer> commandReceiver(
-				Channel channel, @Value("${componentName:anonymous}") String componentName) throws IOException {
+				Channel channel, CommunicationWrapper<ByteBuffer> wrapper, @Value("${componentName:anonymous}") String componentName) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
 
 			//System.out.println("COMPONENT NAME: " + componentName);
-
-			return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "cmd" + "." + componentName);
+			Flowable<ByteBuffer> result = RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "cmd" + "." + componentName, wrapper::wrapReceiver);
+//					.flatMap(msg -> Flowable.fromIterable(wrapper.wrapReceiver(msg)));
+			return result;
 		}
 		
 		@Bean
 		public Subscriber<ByteBuffer> commandSender(
-				Channel channel
+				Channel channel,
+				CommunicationWrapper<ByteBuffer> wrapper
 				) throws IOException {
 				//@Autowired(required=false) @Qualifier("foo") Function<ByteBuffer, ByteBuffer> transformer) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
 			
 			
-			return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
+			Subscriber<ByteBuffer> result = RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, wrapper::wrapSender);
+			return result;
 			//return //RabbitMqFlows.createReplyableFanoutSender(channel, exchangeName, transformer)
 		}
 	}
@@ -261,17 +234,24 @@ public class ConfigsFacetedBrowsingBenchmark {
 	public static class ConfigReplyableCommandChannel {
 		
 		@Bean
-		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(
-				Channel channel) throws IOException {
+		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(				
+				Channel channel,
+				CommunicationWrapper<ByteBuffer> wrapper) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "replyableCmd");
+			Flowable<SimpleReplyableMessage<ByteBuffer>> result = RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "replyableCmd", wrapper::wrapReceiver);
+
+			return result;
 		}
 		
 		@Bean
 		public Subscriber<ByteBuffer> replyableCommandSender(
-				Channel channel) throws IOException {
+				Channel channel,
+				CommunicationWrapper<ByteBuffer> wrapper
+				) throws IOException {
 				//@Value("commandExchange") String commandExchange) throws IOException {
-			return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, null);
+			Subscriber<ByteBuffer> result = RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, wrapper::wrapSender);
+			return result;
+			
 			//return //RabbitMqFlows.createReplyableFanoutSender(channel, exchangeName, transformer)
 		}
 	}
@@ -279,12 +259,20 @@ public class ConfigsFacetedBrowsingBenchmark {
 	
 	
 	
-	public static class ConfigDockerServiceManagerClient {
-		
+	public static class ConfigDockerServiceManagerClient
+		implements EnvironmentAware
+	{
+		protected Environment env;
+
 		
 		@Bean
-		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerConnectionClient(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerClient", null);
+		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> dockerServiceManagerConnectionClient(
+				Channel channel,
+				CommunicationWrapper<ByteBuffer> wrapper
+		) throws IOException, TimeoutException {
+			
+			
+			return RabbitMqFlows.createReplyableFanoutSender(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerClient", wrapper::wrapSender, x -> Collections.singletonList(x)); //wrapper::wrapReceiver);
 		}
 
 		
@@ -295,7 +283,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
-		) throws Exception {
+		) throws Exception {			
+			
 			DockerServiceManagerClientComponent core =
 					new DockerServiceManagerClientComponent(
 							commandReceiver,
@@ -314,12 +303,42 @@ public class ConfigsFacetedBrowsingBenchmark {
 			DockerServiceManagerClientComponent core = tmp.getService().getEntity();
 			
 			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
-					() -> DockerServiceBuilderJsonDelegate.create(core::create);
+					() -> {
+			            //envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
+			            //envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
+
+						DockerServiceBuilder<DockerService> r = DockerServiceBuilderJsonDelegate.create(core::create);
+						r.getLocalEnvironment().put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS));
+						return r;
+					};
 			
 			return result;
 		}
+
+
+		@Override
+		public void setEnvironment(Environment environment) {
+			this.env = environment;
+		}
 	}
 	
+	
+//	public static class ConfigDockerServiceManagerServerConnection {
+//		@Bean
+//		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(Channel channel) throws IOException, TimeoutException {
+//			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerServerComponent");
+//					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
+//		}		
+//	}
+	
+//	public static class ConfigDockerServiceManagerServerConnectionWrapper
+//		extends ConfigHobbitChannelWrappers
+//	{
+//		@Bean
+//		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(@Qualifier("dockerServiceManagerConnectionServer") Flowable<SimpleReplyableMessage<ByteBuffer>> delegate) {
+//			return wrap(delegate);
+//		}
+//	}
 	
 	
 	public static class ConfigDockerServiceManagerServer {
@@ -327,9 +346,12 @@ public class ConfigsFacetedBrowsingBenchmark {
 		// TODO: Make use of a docker service factory
 		
 		@Bean
-		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerServerComponent");
+		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(
+				Channel channel, 
+				CommunicationWrapper<ByteBuffer> wrapper) throws IOException, TimeoutException {
+			Flowable<SimpleReplyableMessage<ByteBuffer>> result = RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerServerComponent", wrapper::wrapReceiver);
 					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
+			return result;
 		}
 
 		@Bean
@@ -558,7 +580,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	    @Bean
 	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel, @Value("${componentName:anonymous}") String componentName) throws IOException, TimeoutException {
-	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, "ack" + "." + componentName);
+	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, "ack" + "." + componentName, x -> Collections.singletonList(x));
 	    }
 	}
 	
@@ -706,10 +728,13 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	}
 	
-	public static class BenchmarkLauncher {
+	public static class BenchmarkLauncher
+		implements EnvironmentAware
+	{
 		
 		private static final Logger logger = LoggerFactory.getLogger(ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher.class);
 
+		protected Environment env;
 		
 		@Bean
 		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
@@ -717,17 +742,20 @@ public class ConfigsFacetedBrowsingBenchmark {
 				
 				logger.info("Prepapring benchmark launch");
 				
+				Map<String, String> serviceEnv = new HashMap<>();
+				serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, "default-session"));
+				
 				// Launch the system adapter
 				Service saService = dockerServiceBuilderFactory.get()
 					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
-					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+					.setLocalEnvironment(serviceEnv)
 					.get();
 				
 				
 				// Launch the benchmark
 				Service bcService = dockerServiceBuilderFactory.get()
 					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
-					.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+					.setLocalEnvironment(serviceEnv)
 					.get();
 
 //				Service esService = dockerServiceBuilderFactory.get()
@@ -753,6 +781,13 @@ public class ConfigsFacetedBrowsingBenchmark {
 				
 				saService.stopAsync().awaitTerminated();
 			};
+		}
+
+
+
+		@Override
+		public void setEnvironment(Environment environment) {
+			this.env = environment;
 		}
 	}
 	

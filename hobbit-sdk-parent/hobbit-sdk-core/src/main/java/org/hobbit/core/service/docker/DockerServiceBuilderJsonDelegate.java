@@ -2,10 +2,11 @@ package org.hobbit.core.service.docker;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import org.hobbit.core.mapview.MapViewGson;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -64,8 +65,11 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
 
     @Override
     public Map<String, String> getLocalEnvironment() {
-    	// TODO Map wrapper around a json object...
-    	return new HashMap<>();
+    	if(!config.has(KEY_ENV)) {
+    		config.add(KEY_ENV, new JsonObject());
+    	}
+    	
+    	return MapViewGson.createMapViewString(config.getAsJsonObject(KEY_ENV));
     }
 
     @Override

@@ -3,11 +3,14 @@ package org.hobbit.benchmark.faceted_browsing.main;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
+import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
 import org.hobbit.core.Constants;
+import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
@@ -44,8 +47,8 @@ public class TestClientServerCommunication {
 	@Import(CommonContext.class)
 	public static class ServerContext {
 		@Bean
-		public Flowable<SimpleReplyableMessage<ByteBuffer>> serverRequests(Channel channel) throws IOException, TimeoutException {
-			Flowable<SimpleReplyableMessage<ByteBuffer>> result = RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange, "server");
+		public Flowable<SimpleReplyableMessage<ByteBuffer>> serverRequests(Channel channel, CommunicationWrapper<ByteBuffer> wrapper) throws IOException, TimeoutException {
+			Flowable<SimpleReplyableMessage<ByteBuffer>> result = RabbitMqFlows.createReplyableFanoutReceiver(channel, commandExchange, "server", wrapper::wrapReceiver);
 
 			// TODO Ideally move the handler somewhere else
 			result.subscribe(x -> {
@@ -62,8 +65,8 @@ public class TestClientServerCommunication {
 	@Import(CommonContext.class)
 	public static class ClientContext {
 		@Bean
-		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> client(Channel channel) throws IOException, TimeoutException {
-			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "client", null);
+		public Function<ByteBuffer, CompletableFuture<ByteBuffer>> client(Channel channel, CommunicationWrapper<ByteBuffer> wrapper) throws IOException, TimeoutException {
+			return RabbitMqFlows.createReplyableFanoutSender(channel, commandExchange, "client", wrapper::wrapSender, x -> Collections.singletonList(x));//wrapper::wrapReceiver);
 		}
 	}
 
@@ -96,8 +99,8 @@ public class TestClientServerCommunication {
 		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
 				.sources(ConfigQpidBroker.class)
-					.child(ConfigRabbitMqConnectionFactory.class, ServerContext.class)
-					.sibling(ConfigRabbitMqConnectionFactory.class, ClientContext.class, AppContext.class);
+					.child(ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ServerContext.class)
+					.sibling(ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ClientContext.class, AppContext.class);
 
 		try(ConfigurableApplicationContext ctx = builder.run()) {}
 	}
