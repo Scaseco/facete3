@@ -123,7 +123,11 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	public static class ConfigCommunicationWrapper
 		implements EnvironmentAware {
+			
+		private static final Logger logger = LoggerFactory
+				.getLogger(ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper.class);
 
+		
 		protected Environment env;
 		
 		protected String sessionId;
@@ -133,6 +137,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		@Bean
 		public CommunicationWrapper<ByteBuffer> communicationWrapper() {			
 			sessionId = env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS);
+			logger.info("SessionId obtained from the environment is: " + sessionId);
 			
 			acceptedHeaderIds = new LinkedHashSet<>(Arrays.asList(
 					sessionId,
@@ -261,7 +266,11 @@ public class ConfigsFacetedBrowsingBenchmark {
 	
 	public static class ConfigDockerServiceManagerClient
 		implements EnvironmentAware
-	{
+	{		
+		private static final Logger logger = LoggerFactory
+				.getLogger(ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceManagerClient.class);
+
+		
 		protected Environment env;
 
 		
@@ -307,8 +316,11 @@ public class ConfigsFacetedBrowsingBenchmark {
 			            //envVariables[envVariables.length - 2] = Constants.RABBIT_MQ_HOST_NAME_KEY + "=" + rabbitMQHostName;
 			            //envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
 
-						DockerServiceBuilder<DockerService> r = DockerServiceBuilderJsonDelegate.create(core::create);
-						r.getLocalEnvironment().put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS));
+						DockerServiceBuilderJsonDelegate<DockerService> r = DockerServiceBuilderJsonDelegate.create(core::create);
+						r.getBaseEnvironment().put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS));
+						
+						logger.info("Prepared docker service builder with base configuration: " + r.getBaseEnvironment());
+						
 						return r;
 					};
 			
@@ -742,20 +754,22 @@ public class ConfigsFacetedBrowsingBenchmark {
 				
 				logger.info("Prepapring benchmark launch");
 				
-				Map<String, String> serviceEnv = new HashMap<>();
-				serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, "default-session"));
+				// The service builder factory is pre-configured to set Constants.HOBBIT_SESSION_ID_KEY
+				
+				//Map<String, String> serviceEnv = new HashMap<>();
+				//serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, "default-session"));
 				
 				// Launch the system adapter
 				Service saService = dockerServiceBuilderFactory.get()
 					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
-					.setLocalEnvironment(serviceEnv)
+					//.setLocalEnvironment(serviceEnv)
 					.get();
 				
 				
 				// Launch the benchmark
 				Service bcService = dockerServiceBuilderFactory.get()
 					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
-					.setLocalEnvironment(serviceEnv)
+					//.setLocalEnvironment(serviceEnv)
 					.get();
 
 //				Service esService = dockerServiceBuilderFactory.get()

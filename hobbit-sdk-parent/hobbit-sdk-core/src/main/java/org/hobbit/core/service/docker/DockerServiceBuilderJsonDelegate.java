@@ -2,6 +2,7 @@ package org.hobbit.core.service.docker;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -33,6 +34,8 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
 {
 	public static final String KEY_IMAGE_NAME = "imageName";
 	public static final String KEY_ENV = "env";
+	public static final String KEY_BASE_ENV = "baseEnv";
+	
 	
 	protected static Gson gson = new Gson();
 	protected JsonObject config;
@@ -63,13 +66,34 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
     	return this;
     }
 
+    public Map<String, String> getBaseEnvironment() {
+    	if(!config.has(KEY_BASE_ENV)) {
+    		config.add(KEY_BASE_ENV, new JsonObject());
+    	}
+    	
+    	Map<String, String> result = MapViewGson.createMapViewString(config.getAsJsonObject(KEY_BASE_ENV));
+    	return result;    	
+    }
+    
+    public DockerServiceBuilderJsonDelegate<T> setBaseEnvironment(Map<String, String> environment) {
+    	Gson gson = new Gson();
+    	JsonElement json = gson.toJsonTree(environment);
+    	
+    	config.remove(KEY_BASE_ENV);
+    	config.add(KEY_BASE_ENV, json);
+    	//throw new UnsupportedOperationException();
+    	return this;
+    }
+
+    
     @Override
     public Map<String, String> getLocalEnvironment() {
     	if(!config.has(KEY_ENV)) {
     		config.add(KEY_ENV, new JsonObject());
     	}
     	
-    	return MapViewGson.createMapViewString(config.getAsJsonObject(KEY_ENV));
+    	Map<String, String> result = MapViewGson.createMapViewString(config.getAsJsonObject(KEY_ENV));
+    	return result;
     }
 
     @Override
@@ -92,17 +116,31 @@ public class DockerServiceBuilderJsonDelegate<T extends DockerService>
     
     public static Type mapStringStringType = new TypeToken<Map<String, String>>() {}.getType();
     
-    public static <T extends DockerService> DockerServiceBuilder<T> create(BiFunction<String, Map<String, String>, T> serviceFactory) {
+    public static <T extends DockerService> DockerServiceBuilderJsonDelegate<T> create(BiFunction<String, Map<String, String>, T> serviceFactory) {
     	Function<JsonObject, T> wrapperFn = jsonObj -> {
     		String imageName = jsonObj.get(KEY_IMAGE_NAME).getAsString();
     		
     		
-    		JsonElement envE = jsonObj.get(KEY_ENV);
-    		Map<String, String> env = gson.fromJson(envE, mapStringStringType);
-
-    		env = env != null ? env : Collections.emptyMap();
     		
-    		T r = serviceFactory.apply(imageName, env);
+    		Map<String, String> overallEnv = new HashMap<String, String>();
+
+    		{
+        		JsonElement envE = jsonObj.get(KEY_BASE_ENV);
+    			Map<String, String> env = gson.fromJson(envE, mapStringStringType);
+        		env = env != null ? env : Collections.emptyMap();
+    			overallEnv.putAll(env);
+    		}
+
+    		{
+        		JsonElement envE = jsonObj.get(KEY_ENV);
+    			Map<String, String> env = gson.fromJson(envE, mapStringStringType);
+        		env = env != null ? env : Collections.emptyMap();
+    			overallEnv.putAll(env);
+    		}
+    		
+    		
+    		
+    		T r = serviceFactory.apply(imageName, overallEnv);
     		return r;
     	};
     	

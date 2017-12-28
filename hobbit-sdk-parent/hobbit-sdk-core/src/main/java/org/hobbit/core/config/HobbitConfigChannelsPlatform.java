@@ -112,6 +112,10 @@ public class HobbitConfigChannelsPlatform {
     	} catch(Exception e) {
     		throw new RuntimeException("Buffer content: " + Arrays.toString(buffer.array()), e);
     	}
+    	
+    	if(sessionId.equals("SYSTEM")) {
+    		System.out.println("System session id");
+    	}
     	System.out.println("Read sessionId: "+ sessionId);
 //        if (acceptedCmdHeaderIds.contains(sessionId)) {
     	
