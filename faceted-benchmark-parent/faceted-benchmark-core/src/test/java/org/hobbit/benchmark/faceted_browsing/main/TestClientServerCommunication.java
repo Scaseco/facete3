@@ -22,6 +22,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
+import com.google.common.collect.ImmutableMap;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -98,6 +99,10 @@ public class TestClientServerCommunication {
 		// NOTE The broker shuts down when the context is closed
 		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
+				.properties(new ImmutableMap.Builder<String, Object>()
+						.put("hostMode", true)
+						.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + RabbitMqFlows.idGenerator.get())
+						.build())
 				.sources(ConfigQpidBroker.class)
 					.child(ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ServerContext.class)
 					.sibling(ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ClientContext.class, AppContext.class);

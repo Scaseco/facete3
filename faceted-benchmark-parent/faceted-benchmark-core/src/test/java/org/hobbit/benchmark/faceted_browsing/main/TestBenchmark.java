@@ -43,13 +43,11 @@ public class TestBenchmark {
 		
 		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
 		//System.exit(0);
-		String sessionId = RabbitMqFlows.idGenerator.get();
-		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
 			// Add the amqp broker
 			.properties(new ImmutableMap.Builder<String, Object>()
 					.put("hostMode", true)
-					.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + sessionId)
+					.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + RabbitMqFlows.idGenerator.get())
 					.build())
 			.sources(ConfigQpidBroker.class)
 			// Register the docker service manager server component; for this purpose:

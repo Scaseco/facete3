@@ -36,6 +36,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
@@ -220,6 +221,10 @@ public class TestDockerCommunication {
 		// NOTE The broker shuts down when the context is closed
 		
 		SpringApplicationBuilder builder = new SpringApplicationBuilder()
+				.properties(new ImmutableMap.Builder<String, Object>()
+						.put("hostMode", true)
+						.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + RabbitMqFlows.idGenerator.get())
+						.build())
 				.sources(ConfigQpidBroker.class)
 				.child(ConfigGson.class, ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class)
 					.child(ServerContext.class)
