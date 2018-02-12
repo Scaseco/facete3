@@ -9,9 +9,9 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<jena-sparql-api.version>3.5.0-2</jena-sparql-api.version>
+		<jena-sparql-api.version>3.6.0-2-SNAPSHOT</jena-sparql-api.version>
 		<spring.version>4.3.11.RELEASE</spring.version>
-		<slf4j.version>1.7.24</slf4j.version>
+		<slf4j.version>1.7.25</slf4j.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>

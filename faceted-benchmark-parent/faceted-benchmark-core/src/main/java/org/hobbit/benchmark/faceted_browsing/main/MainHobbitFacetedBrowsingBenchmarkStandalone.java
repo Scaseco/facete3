@@ -2,21 +2,30 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.RDFDatasetConnectionMultiplex;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionMultiplex;
+import org.aksw.jena_sparql_api.core.connection.TransactionalMultiplex;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.util.ModelUtils;
@@ -46,13 +55,28 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		
 		DockerServiceBuilderFactory<?> dsbf = () -> DockerServiceBuilderJsonDelegate.create(dsf::create);
 		
-		SparqlBasedService saService = ConfigsFacetedBrowsingBenchmark.createVirtuosoSparqlService(dsbf);
-	
+		SparqlBasedService saService = ConfigsFacetedBrowsingBenchmark.createVirtuosoSparqlService(dsbf);		
+		
 		saService.startAsync().awaitRunning();
 
+		RDFConnection coreConn = saService.createDefaultConnection();
+		
+		RDFConnection refConn = RDFConnectionFactory.connect(DatasetFactory.create());
+		
+		QueryExecutionFactory qefA = new QueryExecutionFactorySparqlQueryConnection(coreConn);
+		QueryExecutionFactory qefB = new QueryExecutionFactorySparqlQueryConnection(refConn);
+		QueryExecutionFactory qefCmp = new QueryExecutionFactoryCompare(qefA, qefB);
+		
+		List<RDFConnection> delegates = Arrays.asList(coreConn, refConn);
+		
+		RDFConnection conn = new RDFConnectionModular(
+			new SparqlQueryConnectionJsa(qefCmp, new TransactionalMultiplex<>(delegates)),
+			new SparqlUpdateConnectionMultiplex(delegates),
+			new RDFDatasetConnectionMultiplex(delegates));
+						
+		
 		//logger.info("SPARQL Endpoint online at: " + saService.);
 		
-		RDFConnection conn = saService.createDefaultConnection();
 //		SparqlBasedService saService = dsbf.get()
 //				.setImageName("virtuoso/tenforce")
 //				.setLocalEnvironment(ImmutableMap.<String, String>builder()
