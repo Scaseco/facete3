@@ -13,6 +13,14 @@
 
 	<dependencies>
 
+			<!-- Sparql server for investigating differences in query results between jena and virtuoso -->
+<!-- Clashes with docker client API... probably due to different jetty dep versions -->
+<!-- 			<dependency> -->
+<!-- 				<groupId>org.aksw.jena-sparql-api</groupId> -->
+<!-- 				<artifactId>jena-sparql-api-server-standalone</artifactId> -->
+<!-- 				<version>3.6.0-2-SNAPSHOT</version> -->
+<!-- 			</dependency> -->
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>hobbit-sdk-rdf</artifactId>

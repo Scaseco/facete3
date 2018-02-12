@@ -18,7 +18,9 @@ import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionMultiplex;
 import org.aksw.jena_sparql_api.core.connection.TransactionalMultiplex;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -49,6 +51,8 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 	
 	public static void main(String[] args) throws Exception {
 		
+        String graphName = "http://www.virtuoso-graph.com"; //"http://www.example.com/graph"; //"http://www.virtuoso-graph.com";
+
 		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(true,
 				ImmutableMap.<String, String>builder().build()
 		);
@@ -61,7 +65,9 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 
 		RDFConnection coreConn = saService.createDefaultConnection();
 		
-		RDFConnection refConn = RDFConnectionFactory.connect(DatasetFactory.create());
+		Dataset dataset = DatasetFactory.create();
+
+		RDFConnection refConn = RDFConnectionFactory.connect(dataset);
 		
 		QueryExecutionFactory qefA = new QueryExecutionFactorySparqlQueryConnection(coreConn);
 		QueryExecutionFactory qefB = new QueryExecutionFactorySparqlQueryConnection(refConn);
@@ -106,9 +112,12 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		RDFDataMgr.write(new FileOutputStream(tmpFile), model, RDFFormat.TURTLE_PRETTY);
 		
 		logger.info("Running task generation...");
-        String graphName = "http://www.virtuoso-graph.com"; //"http://www.example.com/graph"; //"http://www.virtuoso-graph.com";
 		conn.load(graphName, tmpFile.getAbsolutePath());
 
+		System.out.println(ResultSetFormatter.asText(refConn.query("SELECT (Count(*) AS ?c) { ?s ?p ?o }").execSelect()));
+		System.out.println(dataset.getUnionModel().size());
+		
+		
 		List<Resource> tasks = TaskGeneratorModuleFacetedBrowsing.runTaskGenerationCore(conn, conn).collect(Collectors.toList());
 		
 
@@ -146,14 +155,25 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		}
 		
 		
+				
+		
+		logger.info("Output written to " + baseOutputDir.getAbsolutePath());
+
+//		FactoryBeanSparqlServer.newInstance()
+//			.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(refConn))
+//			.setPort(7531)
+//			.create();
+		
+		logger.info("Press [ENTER] key to terminate servers");
+		System.in.read();
+		
 		
 		logger.info("Cleaning  up...");
 		saService.stopAsync().awaitTerminated();
 		// Load data into the task generator triple store
-		
-		logger.info("Output written to " + baseOutputDir.getAbsolutePath());
+
 		logger.info("Done.");
-		
+
 		// Run task generation
 
 		
