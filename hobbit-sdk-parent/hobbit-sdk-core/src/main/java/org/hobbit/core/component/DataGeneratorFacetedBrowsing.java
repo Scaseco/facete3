@@ -198,7 +198,7 @@ public class DataGeneratorFacetedBrowsing
         
         //commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
         
-        logger.info("Data generator is sending dataset to task generater");
+        logger.info("Data generator is sending dataset to task generator");
         sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         //sendTriplesViaStreamProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
         

@@ -460,65 +460,74 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    	return result;
 	    }
 	    
+	    public static Stream<Triple> createPodiggDatasetViaDocker(
+	    		DockerServiceBuilderFactory<?> dockerServiceBuilderFactory,
+	    		String imageName,
+	    		Map<String, String> env) {
+			DockerServiceBuilder<?> dockerServiceBuilder = dockerServiceBuilderFactory.get();
+			DockerService podiggService = dockerServiceBuilder
+				.setImageName(imageName)					
+				.setLocalEnvironment(env)
+				.get();
+
+	    	podiggService.startAsync().awaitRunning();
+	    	
+	    	String host = podiggService.getContainerId();
+	    	
+	    	//File targetFile = new File("/tmp/podigg");
+	    	String str = "http://" + host + "/podigg/latest/lc.ttl";
+	    	
+	    	
+	    	URL url;
+			try {
+				url = new URL(str);
+			} catch (MalformedURLException e1) {
+				throw new RuntimeException(e1);
+			}
+	    	
+	    	new HealthcheckRunner(60, 1, TimeUnit.SECONDS, () -> {
+	    		try {
+			        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		            connection.setRequestMethod("GET");
+		            connection.connect();
+		            int code = connection.getResponseCode();
+		            if(code != 200) {
+		            	throw new NotFoundException(url.toString());
+		            }
+		            connection.disconnect();
+	    		} catch(Exception e) {
+	    			throw new RuntimeException(e);
+	    		}
+		    	}).run();
+	    	
+	    	
+//	    	try {
+//				Desktop.getDesktop().browse(new URI("http://" + host + "/podigg/latst"));
+//			} catch (IOException | URISyntaxException e1) {
+//				throw new RuntimeException(e1);
+//			}
+
+	    	//ByteStreams.copy(new URL(url).openStream(), new FileOutputStream(targetFile));
+	    	
+	    	Stream<Triple> r = createTripleStream(url.toString(), null);
+	    	r.onClose(() -> {
+		    	try {
+					podiggService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+				} catch (TimeoutException e) {
+					throw new RuntimeException();
+				}
+	    	});			    	
+	    	
+	    	return r;	    	
+	    }
+	    
+	    
 	    @Bean
 	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
-	        return () -> {
-				DockerServiceBuilder<?> dockerServiceBuilder = dockerServiceBuilderFactory.get();
-				DockerService podiggService = dockerServiceBuilder
-					.setImageName("podigg")					
-					.setLocalEnvironment(ImmutableMap.<String, String>builder().put("GTFS_GEN_SEED", "123").build())
-					.get();
-
-		    	podiggService.startAsync().awaitRunning();
-		    	
-		    	String host = podiggService.getContainerId();
-		    	
-		    	//File targetFile = new File("/tmp/podigg");
-		    	String str = "http://" + host + "/podigg/latest/lc.ttl";
-		    	
-		    	
-		    	URL url;
-				try {
-					url = new URL(str);
-				} catch (MalformedURLException e1) {
-					throw new RuntimeException(e1);
-				}
-		    	
-		    	new HealthcheckRunner(60, 1, TimeUnit.SECONDS, () -> {
-		    		try {
-				        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-			            connection.setRequestMethod("GET");
-			            connection.connect();
-			            int code = connection.getResponseCode();
-			            if(code != 200) {
-			            	throw new NotFoundException(url.toString());
-			            }
-			            connection.disconnect();
-		    		} catch(Exception e) {
-		    			throw new RuntimeException(e);
-		    		}
- 		    	}).run();
-		    	
-		    	
-//		    	try {
-//					Desktop.getDesktop().browse(new URI("http://" + host + "/podigg/latst"));
-//				} catch (IOException | URISyntaxException e1) {
-//					throw new RuntimeException(e1);
-//				}
-
-		    	//ByteStreams.copy(new URL(url).openStream(), new FileOutputStream(targetFile));
-		    	
-		    	Stream<Triple> r = createTripleStream(url.toString(), null);
-		    	r.onClose(() -> {
-			    	try {
-						podiggService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
-					} catch (TimeoutException e) {
-						throw new RuntimeException();
-					}
-		    	});			    	
-		    	
-		    	return r;
-			};
+	        
+	    	String imageName = "podigg";
+	    	Map<String, String> env = ImmutableMap.<String, String>builder().put("GTFS_GEN_SEED", "123").build();
+	    	return () -> createPodiggDatasetViaDocker(dockerServiceBuilderFactory, imageName, env);
 	    }
 		
 //	    @Bean
@@ -609,22 +618,46 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        return RabbitMqFlows.createDataReceiver(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
+        //SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(tmp.getQueryExecutionFactory());
+        //SparqlUpdateConnection updateConn = new SparqlUpdateConnectionJsa(tmp.getUpdateExecutionFactory());
+        //RDFDatasetConnection
+        //RDFDatasetConnection datasetConn = new RDFDatasetConnectionVirtuoso(queryConn, sqlConn);
+        
+        //RDFConnection result = new RDFConnectionModular(queryConn, updateConn, null);
+
 		
+	    // Jena
 		@Bean
 		public RDFConnection systemUnderTestRdfConnection() {
-			SparqlService tmp = FluentSparqlService.forModel().create();
-			
-	        //SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(tmp.getQueryExecutionFactory());
-	        //SparqlUpdateConnection updateConn = new SparqlUpdateConnectionJsa(tmp.getUpdateExecutionFactory());
-	        //RDFDatasetConnection
-	        //RDFDatasetConnection datasetConn = new RDFDatasetConnectionVirtuoso(queryConn, sqlConn);
-	        
-	        //RDFConnection result = new RDFConnectionModular(queryConn, updateConn, null);
-
+			//SparqlService tmp = FluentSparqlService.forModel().create();
 			RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
 			
 	        return result;
 		}
+
+
+	    // Virtuoso
+//	    @Bean
+		public RDFConnection systemUnderTestRdfConnection(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+		    	SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+		    	service.startAsync().awaitRunning();
+//		    	return result;
+//		    	
+//	    	DockerService service = dockerClient.create("tenforce/virtuoso", null);
+//
+//			service.startAsync().awaitRunning();
+//			String host = service.getContainerId();
+//        	String url = "http://" + host + ":8890/";
+		    	RDFConnection result = service.createDefaultConnection();
+	        //RDFConnection result = RDFConnectionFactory.connect(url);
+
+			
+//	    	SparqlService tmp = FluentSparqlService.forModel().create();
+//			RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
+			
+	        return result;
+		}
+
 		
 		@Bean
 		public Channel tg2saChannel(Connection connection) throws IOException {
@@ -806,6 +839,11 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 	}
 	
+	
+	private static final Logger logger = LoggerFactory.getLogger(ConfigsFacetedBrowsingBenchmark.class);
+
+	// TODO I think this method is no longer needed, as the service wrapping is done by
+	// applySericeWrappers
 	public static SparqlBasedService createVirtuosoSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
     	DockerService service = dockerServiceBuilderFactory.get()
 //	    			.setImageName("tenforce/virtuoso:virtuoso7.2.4")
@@ -824,6 +862,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 
     			String host = delegate.getContainerId();	    			
     			String baseUrl = "http://" + host + ":" + "8890";
+    			
+    			logger.info("Sparql endpoint online at: " + baseUrl);
     			
     			api = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
     			//api = () -> VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);	    			

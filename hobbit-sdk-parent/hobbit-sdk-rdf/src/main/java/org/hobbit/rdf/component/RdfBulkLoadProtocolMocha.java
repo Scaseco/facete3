@@ -102,6 +102,8 @@ public class RdfBulkLoadProtocolMocha
     	
 		if (MochaConstants.BULK_LOAD_DATA_GEN_FINISHED == command) {
 
+			// TODO We need to ensure that all data has actually arrived - we may have to start a thread for this purpose
+			
 			int numberOfMessages = buffer.getInt();
 			boolean lastBulkLoad = buffer.get() != 0;
 
@@ -114,6 +116,10 @@ public class RdfBulkLoadProtocolMocha
 
 				rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
 
+				if(("" + rdfConnection).contains("Remote")) {
+					System.out.println("Debug point");
+				}
+				//System.out.println("RDF conn is " + rdfConnection);
 				rdfConnection.load(graph, finalFilename);
 			}
 			
