@@ -93,7 +93,7 @@ public class FacetedTaskGeneratorOld {
     // next Task id
     private long nextTaskId = 0;
 
-    private int randomSeed = 1234;
+    private int randomSeed = 123;
     //
     protected String containerName = null;
     // Virtuoso settings for gold-system service
