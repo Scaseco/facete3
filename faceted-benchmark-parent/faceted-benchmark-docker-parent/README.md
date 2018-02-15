@@ -14,7 +14,7 @@ Note: The virtuoso (docker) is currently needed by the task generator for legacy
 mvn clean install
 ```
 
-* Deploy to the image to a repository. Requires write access to that repository, with your credentials available in a typical `<server>` section in your [~/.m2/settings.xml](~/.m2/settings.xml) configuration.
+* Deploy the image to a repository - such as the hobbit platform one. Requires write access to that repository, with your credentials available in a typical `<server>` section in your [~/.m2/settings.xml](~/.m2/settings.xml) configuration.
 
 ```bash
 mvn deploy
