@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,6 +43,10 @@ public class RdfBulkLoadProtocolMocha
 	protected Runnable postLoad;
 	protected Runnable onAllDataReceived;
 	
+	
+	protected List<Integer> bulkLoadSizes;
+	protected boolean lastBulkLoadSeen = false;
+	
 	public RdfBulkLoadProtocolMocha(RDFConnection rdfConnection, Runnable postLoad, Runnable onAllDataReceivedUserAction) {
 		super();
 		this.rdfConnection = rdfConnection;
@@ -51,6 +56,10 @@ public class RdfBulkLoadProtocolMocha
 			dataLoadingFinished = true;
 			onAllDataReceivedUserAction.run();
 		};
+	}
+	
+	public void checkDataLoadingFinished() {
+		
 	}
 
 	public void onData(ByteBuffer buf) throws IOException {
@@ -101,8 +110,6 @@ public class RdfBulkLoadProtocolMocha
     	int command = buffer.get();
     	
 		if (MochaConstants.BULK_LOAD_DATA_GEN_FINISHED == command) {
-
-			// TODO We need to ensure that all data has actually arrived - we may have to start a thread for this purpose
 			
 			int numberOfMessages = buffer.getInt();
 			boolean lastBulkLoad = buffer.get() != 0;
