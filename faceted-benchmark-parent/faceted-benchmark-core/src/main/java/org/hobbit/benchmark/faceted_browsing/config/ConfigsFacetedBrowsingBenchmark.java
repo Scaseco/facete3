@@ -23,11 +23,9 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.aksw.commons.service.core.BeanWrapperService;
-import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
-import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -637,7 +635,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 
 	    // Virtuoso
-//	    @Bean
+	    //@Bean
 		public RDFConnection systemUnderTestRdfConnection(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 		    	SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
 		    	service.startAsync().awaitRunning();
