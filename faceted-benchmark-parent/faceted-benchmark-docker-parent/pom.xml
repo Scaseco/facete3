@@ -14,6 +14,8 @@
 	</parent>
 
 	<properties>
+<!--        <docker.repository>git.project-hobbit.eu:4567</docker.repository> -->
+
 		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image</docker.benchmark-controller.repository>
 		<docker.data-generator.repository>git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image</docker.data-generator.repository>
 		<docker.task-generator.repository>git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image</docker.task-generator.repository>
@@ -76,13 +78,15 @@
 
 		</dependencies>
 	</dependencyManagement>
+
+
 	<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
 					<groupId>com.spotify</groupId>
 					<artifactId>dockerfile-maven-plugin</artifactId>
-					<version>1.3.6</version>
+					<version>1.4.0</version>
 					<executions>
 						<execution>
 							<id>default</id>
@@ -93,7 +97,7 @@
 						</execution>
 					</executions>
 					<configuration>
-						<repository>docker-repo.example.com:8080/organization/image</repository>
+						<!-- <repository>${docker.repository}</repository> -->
 						<useMavenSettingsForAuth>true</useMavenSettingsForAuth>
 						<tag>latest</tag>
 						<!-- <tag>${project.version}</tag> -->
@@ -129,5 +133,15 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+
+<!--
+<distributionManagement>
+    <repository>
+        <id>git.project-hobbit.eu:4567</id>
+        <name>hobbit docker repo</name>
+        <url>git.project-hobbit.eu:4567</url>
+    </repository>
+</distributionManagement>
+-->
 
 </project>
