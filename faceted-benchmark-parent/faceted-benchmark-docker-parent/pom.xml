@@ -16,20 +16,20 @@
 	<properties>
 <!--        <docker.repository>git.project-hobbit.eu:4567</docker.repository> -->
 
-		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image</docker.benchmark-controller.repository>
+		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</docker.benchmark-controller.repository>
 		<docker.data-generator.repository>git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image</docker.data-generator.repository>
 		<docker.task-generator.repository>git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image</docker.task-generator.repository>
 		<docker.evaluation-module.repository>git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image</docker.evaluation-module.repository>
 
-		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver/image</docker.qpid-server.repository>
+		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository>
 
 
 <!-- defaulthobbituser -->
-		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/gkatsibras/defaultevaluationstorage/image</docker.evaluation-storage.repository>
-		<docker.system-adapter.repository>git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image</docker.system-adapter.repository>
+		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/gkatsibras/defaultevaluationstorage</docker.evaluation-storage.repository>
+		<docker.system-adapter.repository>git.project-hobbit.eu:4567/gkatsibras/facetedsystem</docker.system-adapter.repository>
 
 
-		<docker.docker-service-manager-server.repository>git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver/image</docker.docker-service-manager-server.repository>
+		<docker.docker-service-manager-server.repository>git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver</docker.docker-service-manager-server.repository>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -44,13 +44,14 @@
 		<module>data-generator</module>
 		<module>task-generator</module>
 		<module>evaluation-module</module>
-
+<!--
 		<module>qpid-server</module>
 
 		<module>system-adapter</module>
 		<module>evaluation-storage</module>
 
 		<module>docker-service-manager-server</module>
+-->
 	</modules>
 
 	<dependencyManagement>

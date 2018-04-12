@@ -9,7 +9,7 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<jena-sparql-api.version>3.6.0-2-SNAPSHOT</jena-sparql-api.version>
+		<jena-sparql-api.version>3.6.0-3-SNAPSHOT</jena-sparql-api.version>
 		<spring.version>4.3.11.RELEASE</spring.version>
 		<slf4j.version>1.7.25</slf4j.version>
 
@@ -120,6 +120,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-core</artifactId>
+				<version>${jena-sparql-api.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-virtuoso</artifactId>
 				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
