@@ -290,14 +290,18 @@ public class ConfigsFacetedBrowsingBenchmark {
 		public BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
-				Gson gson
+				Gson gson,
+                @Value("${" + Constants.CONTAINER_NAME_KEY + ":no-requester-container-id-set}") String requesterContainerId,
+                @Value("${" + ConfigVirtualDockerServiceFactory.DEFAULT_REQUESTED_CONTAINER_TYPE_KEY + ":no-default-requested-container-type-set}") String defaultRequestedContainerType				
 		) throws Exception {			
 			
 			DockerServiceManagerClientComponent core =
 					new DockerServiceManagerClientComponent(
 							commandReceiver,
 							requestToServer,
-							gson
+							gson,
+							requesterContainerId,
+							defaultRequestedContainerType
 					);
 			return new BeanWrapperService<>(new IdleServiceDelegate<>(core));
 		}
@@ -306,7 +310,10 @@ public class ConfigsFacetedBrowsingBenchmark {
 		@Bean
 		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
 				//DockerServiceManagerClientComponent core
-				BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> tmp
+				BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> tmp,
+                @Value("${" + Constants.HOBBIT_SESSION_ID_KEY + ":" + Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS + "}") String hobbitSessionId,                
+                @Value("${" + Constants.RABBIT_MQ_HOST_NAME_KEY + ":localhost}") String amqpHost                
+				
 		) throws Exception {
 			DockerServiceManagerClientComponent core = tmp.getService().getEntity();
 			
@@ -316,7 +323,10 @@ public class ConfigsFacetedBrowsingBenchmark {
 			            //envVariables[envVariables.length - 1] = Constants.HOBBIT_SESSION_ID_KEY + "=" + getHobbitSessionId();
 
 						DockerServiceBuilderJsonDelegate<DockerService> r = DockerServiceBuilderJsonDelegate.create(core::create);
-						r.getBaseEnvironment().put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS));
+						//r.getBaseEnvironment().put(Constants.HOBBIT_SESSION_ID_KEY, env.getProperty(Constants.HOBBIT_SESSION_ID_KEY, Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS));
+						r.getBaseEnvironment().put(Constants.HOBBIT_SESSION_ID_KEY, hobbitSessionId);
+                        r.getBaseEnvironment().put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpHost);
+						
 						
 						logger.info("Prepared docker service builder with base configuration: " + r.getBaseEnvironment());
 						

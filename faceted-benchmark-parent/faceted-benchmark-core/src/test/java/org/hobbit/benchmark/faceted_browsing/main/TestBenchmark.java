@@ -48,6 +48,7 @@ public class TestBenchmark {
 			.properties(new ImmutableMap.Builder<String, Object>()
 					.put("hostMode", true)
 					.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + RabbitMqFlows.idGenerator.get())
+					//.put(ConfigRabbitMqConnectionFactory.AMQP_VHOST, "default")
 					.build())
 			.sources(ConfigQpidBroker.class)
 			// Register the docker service manager server component; for this purpose:

@@ -175,7 +175,9 @@ public class TestDockerCommunication {
 					new DockerServiceManagerClientComponent(
 						commandPublisher,
 						requestToServer,
-						gson
+						gson,
+						"no-requester-id-needed",
+						"no-default-container-type-needed"
 					);
 			
 			return result;

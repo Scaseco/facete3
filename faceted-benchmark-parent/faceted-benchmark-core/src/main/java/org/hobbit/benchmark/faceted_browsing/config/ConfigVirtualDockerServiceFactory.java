@@ -27,6 +27,7 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchm
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGeneratorFacetedBenchmark;
 import org.hobbit.benchmark.faceted_browsing.main.LauncherServiceCapable;
+import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
 import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
@@ -49,39 +50,49 @@ import com.google.common.collect.ImmutableMap;
 public class ConfigVirtualDockerServiceFactory {
 	private static final Logger logger = LoggerFactory.getLogger(ConfigVirtualDockerServiceFactory.class);
 
+	public static final String COMPONENT_NAME_KEY = "componentName";
+    public static final String DEFAULT_REQUESTED_CONTAINER_TYPE_KEY = "defaultRequstedContainerType";
+	
+	
+	public static SpringApplicationBuilder createComponentBaseConfig(String componentName, String defaultRequestedContainerType) {
+	    SpringApplicationBuilder result = new SpringApplicationBuilder()
+	            .properties(new ImmutableMap.Builder<String, Object>()
+	                    .put(COMPONENT_NAME_KEY, componentName)
+	                    .put(DEFAULT_REQUESTED_CONTAINER_TYPE_KEY, defaultRequestedContainerType)
+	                    .build())
+	            .sources(ConfigGson.class, ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
+	                .child(ConfigDockerServiceManagerClient.class);
+	    return result;
+	}
 
+	
 	public static Map<String, Supplier<SpringApplicationBuilder>> getVirtualDockerComponentRegistry() {
 
-		Function<String, SpringApplicationBuilder> createComponentBaseConfig = componentName -> new SpringApplicationBuilder()
-				.properties(new ImmutableMap.Builder<String, Object>()
-						.put("componentName", componentName)
-						.build())
-				.sources(ConfigGson.class, ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
-					.child(ConfigDockerServiceManagerClient.class);
+		//Function<String, SpringApplicationBuilder> baseConfigFactory = ConfigVirtualDockerServiceFactory::createComponentBaseConfig;
 
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
 		// channels are only closed once the components have shut down and sent their final messages
-		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig.apply("bc")
+		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig("bc", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
 					.child(BenchmarkControllerFacetedBrowsing.class, LauncherServiceCapable.class);
 		
-		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig.apply("dg")
+		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig("dg", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
 						.child(DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
 		
-		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig.apply("tg")
+		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
 					.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherServiceCapable.class);
 
-		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig.apply("sa")
+		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
 					.child(SystemAdapterRDFConnectionMocha.class, LauncherServiceCapable.class);
 			
-		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig.apply("es")
+		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE)
 				.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
 					.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);		
 		
-		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig.apply("em")
+		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
 				.child(ConfigEvaluationModule.class)
 					.child(EvaluationModuleComponent.class, LauncherServiceCapable.class);
 		

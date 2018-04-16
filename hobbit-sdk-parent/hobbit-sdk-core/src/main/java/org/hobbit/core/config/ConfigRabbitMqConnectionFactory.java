@@ -18,19 +18,29 @@ public class ConfigRabbitMqConnectionFactory
 
 	protected Environment env;
 	
+	
+	public static final String AMQP_VHOST = "AMQP_VHOST";
+	
 	@Bean
 	public ConnectionFactory connectionFactory() {
 
         String rabbitMQHostName = env.getProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost");
         //int port = env.getProperty(Constants.po)
+
+        String amqpVHost = env.getProperty(AMQP_VHOST);
+
         
-        logger.info("Expecting AMQP Server to be reachable at " + rabbitMQHostName);
+        logger.info("Expecting AMQP Server to be reachable at " + rabbitMQHostName + " with vhost " + amqpVHost);
         
 		ConnectionFactory result = new ConnectionFactory();
         result.setHost(rabbitMQHostName);
         result.setPort(5672);
         result.setAutomaticRecoveryEnabled(true);
-        result.setVirtualHost("default");
+        
+        if(amqpVHost != null) {
+            result.setVirtualHost(amqpVHost);
+        }
+        
         // attempt recovery every 10 seconds
         result.setNetworkRecoveryInterval(10000);
 

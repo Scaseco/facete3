@@ -16,7 +16,7 @@
 	<properties>
 <!--        <docker.repository>git.project-hobbit.eu:4567</docker.repository> -->
 
-		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</docker.benchmark-controller.repository>
+		<docker.benchmark-controller.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image</docker.benchmark-controller.repository>
 		<docker.data-generator.repository>git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image</docker.data-generator.repository>
 		<docker.task-generator.repository>git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image</docker.task-generator.repository>
 		<docker.evaluation-module.repository>git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image</docker.evaluation-module.repository>
