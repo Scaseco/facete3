@@ -33,9 +33,17 @@ public class LauncherServiceCapable {
 
 		// Add a listener that closes the service's (root) context on service termination
 		activeService.addListener(new Listener() {
-			@Override
+            @Override
+            public void failed(State priorState, Throwable t) {
+                logger.info("ServiceCapable service wrapped [FAILED] for " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()), t);
+//              logger.info("ServiceCapable service wrapper stopped");
+//                  ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx.getParent(), ApplicationContext::getParent);
+                rootCtx.close();
+            }
+
+		    @Override
 			public void terminated(State priorState) {
-				logger.info("ServiceCapable service wrapper stopped for " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
+				logger.info("ServiceCapable service wrapper [TERMINATED] for " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
 //				logger.info("ServiceCapable service wrapper stopped");
 //					ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx.getParent(), ApplicationContext::getParent);
 				rootCtx.close();

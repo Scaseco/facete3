@@ -23,6 +23,7 @@ release.properties
 dependency-reduced-pom.xml
 
 deptree.txt
+output.txt
 felix-cache
 
 *.swp

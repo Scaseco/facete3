@@ -220,7 +220,7 @@ public abstract class DockerServiceManagerClientComponentBase
         
         // IMPORTANT The response should come on a separate queue separate from the commandPub
 
-        logger.info("Sending request to start a service " + imageName + " " + env + " and waiting for response");
+        logger.info("Sending request to start container form image '" + imageName + "' with env " + env + " and waiting for response");
         
 //        if(imageName.equals("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")) {
 //        	System.out.println("FOOBARITIS");
@@ -236,7 +236,7 @@ public abstract class DockerServiceManagerClientComponentBase
         }
         String result = DockerServiceManagerServerComponent.readRemainingBytesAsString(responseBuffer, StandardCharsets.UTF_8);;
         
-        logger.info("Client received response with docker id: " + result);
+        logger.info("Client received response with docker id: [" + result + "]");
         
         if(result.startsWith("fail:")) {
         	throw new RuntimeException("Failed to start image [" + imageName + "] - server returned: " + result);

@@ -28,7 +28,7 @@ import io.reactivex.Flowable;
 
 public class HobbitConfigChannelsPlatform {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(HobbitConfigChannelsPlatform.class);
+	private static final Logger logger = LoggerFactory.getLogger(HobbitConfigChannelsPlatform.class);
 		
 	@Inject
 	protected Environment env;
@@ -114,9 +114,9 @@ public class HobbitConfigChannelsPlatform {
     	}
     	
     	if(sessionId.equals("SYSTEM")) {
-    		System.out.println("System session id");
+    		logger.info("System session id");
     	}
-    	System.out.println("Read sessionId: "+ sessionId);
+    	logger.info("Read sessionId: "+ sessionId);
 //        if (acceptedCmdHeaderIds.contains(sessionId)) {
     	
 //            byte command = buffer.get();

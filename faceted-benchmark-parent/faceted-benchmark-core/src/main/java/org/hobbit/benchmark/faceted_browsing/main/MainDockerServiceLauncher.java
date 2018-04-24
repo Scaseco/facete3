@@ -2,19 +2,15 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.hobbit.benchmark.faceted_browsing.config.ConfigVirtualDockerServiceFactory;
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.SpringEnvironmentUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.StandardEnvironment;
 
@@ -30,15 +26,30 @@ import org.springframework.core.env.StandardEnvironment;
 @ComponentScan
 public class MainDockerServiceLauncher {
 
+    private static final Logger logger = LoggerFactory.getLogger(MainDockerServiceLauncher.class);
+    
 	public static void main(String[] args) {
-		
+        if(args.length != 1) {
+            throw new RuntimeException("Exactly 1 argument expected which is the name of a (virtual) docker image to launch");
+        }
+        
+        String imageName = args[0];
+
+        Map<String, String> env = SpringEnvironmentUtils.toStringMap(new StandardEnvironment());
+
+        try {
+            logger.info("Service launcher launching virtual image '" + imageName + "' with env " + env);
+	        mainCore(imageName, env);
+	        logger.info("Service launcher terminated normally with image '" + imageName + "'");
+	    } catch(Exception e) {
+            logger.info("Service launcher encountered an exception with image '" + imageName + "'");
+	    }	    
+	}
+	
+    public static void mainCore(String imageName, Map<String, String> env) {
+	
 		// TODO Make it possible to provide the config class from which to obtain the docker service factory
 		
-		if(args.length != 1) {
-			throw new RuntimeException("Exactly 1 argument expected which is the name of a (virtual) docker image to launch");
-		}
-		
-		String imageName = args[0];
 
 		
 		// Get the registry and launch an image
@@ -51,10 +62,10 @@ public class MainDockerServiceLauncher {
 		
 		//DockerServiceFactory<?> dockerServiceFactory = new DockerServiceFactorySpringApplicationBuilder(map);
 		dockerServiceFactory = ConfigVirtualDockerServiceFactory.applyServiceWrappers(dockerServiceFactory);
-		
-		Map<String, String> env = SpringEnvironmentUtils.toStringMap(new StandardEnvironment());
+
 		DockerService dockerService = dockerServiceFactory.create(imageName, env);
 		
+		logger.info("Service launcher waiting for termination...");
 		dockerService.startAsync().awaitTerminated();
 	}
 

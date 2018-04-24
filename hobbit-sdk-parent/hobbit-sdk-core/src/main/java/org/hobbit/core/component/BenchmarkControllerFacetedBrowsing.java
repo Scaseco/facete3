@@ -105,7 +105,7 @@ public class BenchmarkControllerFacetedBrowsing
 
     @Override
     public void startUp() throws Exception {
-        logger.debug("BenchmarkController::startUp()");
+        logger.info("BenchmarkController::startUp()");
     	super.startUp();
     	
 
@@ -216,7 +216,7 @@ public class BenchmarkControllerFacetedBrowsing
         evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
 
         evaluationDataReceivedFuture = evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
-            logger.debug("Evaluation model received");
+            logger.info("Evaluation model received");
             Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.limit() - 1);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             RDFDataMgr.write(baos, model, Lang.NTRIPLES);

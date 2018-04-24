@@ -41,7 +41,12 @@ public class ServiceManagerUtils {
         Listener listener = new Listener() {
 
             // TODO Add other states
-
+            @Override
+            public void failed(State from, Throwable failure) {
+                result.completeExceptionally(failure);
+                super.failed(from, failure);
+            }
+            
             @Override
             public void terminated(State from) {
                 if(state.equals(State.TERMINATED)) {

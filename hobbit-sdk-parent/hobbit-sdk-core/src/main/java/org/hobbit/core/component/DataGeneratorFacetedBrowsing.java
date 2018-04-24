@@ -89,7 +89,7 @@ public class DataGeneratorFacetedBrowsing
 
     @Override
     public void startUp() throws Exception {
-        logger.debug("DataGenerator::startUp()");
+        logger.info("DataGenerator::startUp()");
     	super.startUp();
 
 
@@ -121,7 +121,7 @@ public class DataGeneratorFacetedBrowsing
 
     @Override
     public void run() {
-        logger.debug("Waiting for message to start data generation");
+        logger.info("Waiting for message to start data generation");
 
         try {
             startSignalFuture.get(60, TimeUnit.SECONDS);
@@ -129,7 +129,7 @@ public class DataGeneratorFacetedBrowsing
             throw new RuntimeException(e);
         }
 
-        logger.debug("Data generation start message received.");
+        logger.info("Data generation start message received.");
 
         try {
             generateData();
@@ -137,7 +137,7 @@ public class DataGeneratorFacetedBrowsing
             throw new RuntimeException(e);
         }
 
-        logger.debug("Data generation finished, shutting myself down");
+        logger.info("Data generation finished, shutting myself down");
     }
 
 

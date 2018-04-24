@@ -235,7 +235,7 @@ public class TaskGeneratorFacetedBenchmark
                 		//createMessageForEvalStorage(task, referenceConn);
 
 //                try {
-                	logger.debug("Sending to eval store");
+                	logger.info("Sending to eval store");
                     toEvaluationStorage.onNext(buf);
 //                } catch(IOException e) {
 //                    throw new RuntimeException(e);
@@ -283,7 +283,7 @@ public class TaskGeneratorFacetedBenchmark
 
     @Override
     public void shutDown() throws Exception {
-    	logger.debug("TaskGenerator shutting down");
+    	logger.info("TaskGenerator shutting down");
     	try {
     		taskGeneratorModule.shutDown();
 

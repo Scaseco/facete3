@@ -524,7 +524,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 				} catch (TimeoutException e) {
 					throw new RuntimeException();
 				}
-	    	});			    	
+	    	});
 	    	
 	    	return r;	    	
 	    }
