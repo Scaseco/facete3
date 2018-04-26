@@ -49,7 +49,7 @@ public class DockerServiceIdleServiceDelegate
 	}
 
 	@Override
-	public int getExitCode() {
+	public Integer getExitCode() {
 		int result = delegate.getExitCode();
 		return result;
 	}

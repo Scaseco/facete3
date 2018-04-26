@@ -80,6 +80,7 @@ public class DockerServiceFactorySpringApplicationBuilder
 		ConfigurableEnvironment cenv = new StandardEnvironment();
 		cenv.getPropertySources().addFirst(new MapPropertySource("myPropertySource", env2));
 		
+		// TODO We may need to merge with a prior environment
 		rootBuilder.environment(cenv);
 
 		Supplier<Integer> idSupplier = () -> imageToNextId.computeIfAbsent(imageName, (x) -> new AtomicInteger()).incrementAndGet();

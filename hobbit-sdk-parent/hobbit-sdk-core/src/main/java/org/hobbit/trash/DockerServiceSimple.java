@@ -1,6 +1,5 @@
 package org.hobbit.trash;
 
-import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,7 +39,7 @@ public class DockerServiceSimple<A, B>
     protected String containerId;
     protected A a;
     protected B b;
-    
+    protected Integer exitCode;
 
     public DockerServiceSimple(
     		Supplier<A> start,
@@ -66,18 +65,34 @@ public class DockerServiceSimple<A, B>
 
 	@Override
     protected void startUp() throws Exception {
-    	a = start.get();
-    	containerId = getContainerId.apply(a);
+		try {
+	    	a = start.get();
+	    	containerId = getContainerId.apply(a);
+		} catch(Exception e) {
+			exitCode = 1;
+			throw new RuntimeException(e);
+		}
     }
 
     @Override
     protected void run() throws Exception {
-    	b = run.apply(a);
+    	try {
+    		b = run.apply(a);
+		} catch(Exception e) {
+			exitCode = 1;
+			throw new RuntimeException(e);
+		}
     }
     
     @Override
     protected void shutDown() throws Exception {
-    	stop.accept(a, b);
+    	try {
+    		stop.accept(a, b);
+    		exitCode = 0;
+		} catch(Exception e) {
+			exitCode = 1;
+			throw new RuntimeException(e);
+		}
     }
 
     @Override
@@ -91,9 +106,8 @@ public class DockerServiceSimple<A, B>
     }
 
     @Override
-    public int getExitCode() {
-        logger.warn("STUB! Exist code always returns 0");
-        return 0;
+    public Integer getExitCode() {
+    	return exitCode;
     }
 
 }

@@ -26,6 +26,7 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchm
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigSystemAdapter;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGeneratorFacetedBenchmark;
+import org.hobbit.benchmark.faceted_browsing.main.LauncherHobbitComponent;
 import org.hobbit.benchmark.faceted_browsing.main.LauncherServiceCapable;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
@@ -82,7 +83,7 @@ public class ConfigVirtualDockerServiceFactory {
 		
 		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
-					.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherServiceCapable.class);
+					.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherHobbitComponent.class);
 
 		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)

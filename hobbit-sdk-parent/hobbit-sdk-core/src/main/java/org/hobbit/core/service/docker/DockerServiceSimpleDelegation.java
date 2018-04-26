@@ -8,10 +8,17 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractService;
 
+/**
+ * Docker service wrapper that delegates start/stop request to lambdas. 
+ * This delegate does not use threads.
+ * 
+ * @author raven Apr 26, 2018
+ *
+ */
 public class DockerServiceSimpleDelegation
-    extends AbstractIdleService
+    extends AbstractService
     implements DockerService
 {
 	private static final Logger logger = LoggerFactory.getLogger(DockerServiceSimpleDelegation.class);
@@ -25,6 +32,7 @@ public class DockerServiceSimpleDelegation
     protected Consumer<String> stopServiceDelegate;
 
     protected String containerId;
+    protected Integer exitCode;
 
     public DockerServiceSimpleDelegation(String imageName,
     		Map<String, String> localEnvironment,
@@ -71,23 +79,48 @@ public class DockerServiceSimpleDelegation
     }
     
     @Override
-    protected void startUp() throws Exception {
-    	nameThreadForAction(imageName, () -> {
+    protected void doStart() {
+//    	nameThreadForAction(imageName, () -> {
+    	try {
     		containerId = startServiceDelegate.apply(imageName, localEnvironment);
-    	});
+    		notifyStarted();
+    	} catch(Exception e) {
+    		notifyFailed(e);
+    	}
+    		
+//    	});
     }
 
     @Override
-    protected void shutDown() throws Exception {
-    	nameThreadForAction(imageName, () -> {
-            stopServiceDelegate.accept(containerId);
-    	});
+    protected void doStop() {
+//    	nameThreadForAction(imageName, () -> {
+    	try {
+    		stopServiceDelegate.accept(containerId);
+    		notifyStopped();
+    	} catch(Exception e) {
+    		notifyFailed(e);
+    	}
+//    	});
+    }
+    
+    /**
+     * Method to externally declare a failure on this service delegate
+     * 
+     * @param cause
+     */
+    public void declareFailure(Throwable cause) {
+    	notifyFailed(cause);
+    }
+    
+    
+    public void setExitCode(int exitCode) {
+    	this.exitCode = exitCode;
     }
 
     @Override
-    public int getExitCode() {
-        // TODO Auto-generated method stub
-        return 0;
+    public Integer getExitCode() {
+        return exitCode;
     }
 
 }
+

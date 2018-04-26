@@ -113,10 +113,10 @@ public class HobbitConfigChannelsPlatform {
     		throw new RuntimeException("Buffer content: " + Arrays.toString(buffer.array()), e);
     	}
     	
-    	if(sessionId.equals("SYSTEM")) {
-    		logger.info("System session id");
-    	}
-    	logger.info("Read sessionId: "+ sessionId);
+//    	if(sessionId.equals("SYSTEM")) {
+//    		logger.info("System session id");
+//    	}
+//    	logger.info("Read sessionId: "+ sessionId);
 //        if (acceptedCmdHeaderIds.contains(sessionId)) {
     	
 //            byte command = buffer.get();

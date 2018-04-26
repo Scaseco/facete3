@@ -70,7 +70,7 @@ public abstract class DockerServiceManagerClientComponentBase
 
     protected Gson gson;
 	
-    protected Map<String, Service> runningManagedServices = Collections.synchronizedMap(new HashMap<>());
+    protected Map<String, DockerServiceSimpleDelegation> runningManagedServices = Collections.synchronizedMap(new HashMap<>());
     
     // Map used to suppress the stop event on services that are shutting down
     protected Map<String, Service> terminatedManagedServices = Collections.synchronizedMap(new HashMap<>());
@@ -124,13 +124,20 @@ public abstract class DockerServiceManagerClientComponentBase
     public DockerService create(String imageName, Map<String, String> env) {
         Objects.requireNonNull(imageName);
 
-        DockerService service = new DockerServiceSimpleDelegation(imageName, env, this::startService, this::stopService);
+        DockerServiceSimpleDelegation service = new DockerServiceSimpleDelegation(imageName, env, this::startService, this::stopService);
 
         service.addListener(new Listener() {
             @Override
             public void running() {
                 String serviceId = service.getContainerId();
                 runningManagedServices.put(serviceId, service);
+            }
+
+            @Override
+            public void failed(State from, Throwable failure) {
+                String serviceId = service.getContainerId();
+                runningManagedServices.remove(serviceId);
+//            	super.failed(from, failure);
             }
 
             @Override
@@ -181,15 +188,20 @@ public abstract class DockerServiceManagerClientComponentBase
     }
 
     public void handleServiceTermination(String serviceId, int exitCode) {
-        Service service = runningManagedServices.get(serviceId);
+    	DockerServiceSimpleDelegation service = runningManagedServices.get(serviceId);
 
         if(service != null) {
-            logger.info("Received termination message for " + serviceId + " and going to stop local stub " + service);
+            logger.info("Received termination message for " + serviceId + " with exit code " + exitCode + " and going to stop local stub " + service);
             // FIXME If the remote service failed, we would here incorrectly set the service to STOPPED
         	synchronized (service) {
 	        	//runningManagedServices.remove(serviceId);
 	        	terminatedManagedServices.put(serviceId, service);
-	        	service.stopAsync();
+	        	service.setExitCode(exitCode);
+	        	if(exitCode != 0) {
+	        		service.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
+	        	} else {
+		        	service.stopAsync();	        		
+	        	}
         	}
         }
 
@@ -220,7 +232,7 @@ public abstract class DockerServiceManagerClientComponentBase
         
         // IMPORTANT The response should come on a separate queue separate from the commandPub
 
-        logger.info("Sending request to start container form image '" + imageName + "' with env " + env + " and waiting for response");
+        logger.info("Sending request to start container from image '" + imageName + "' with env " + env + " and waiting for response");
         
 //        if(imageName.equals("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")) {
 //        	System.out.println("FOOBARITIS");
@@ -252,32 +264,31 @@ public abstract class DockerServiceManagerClientComponentBase
     public synchronized void stopService(String serviceId) {
     	//this.commandPublisher
 
-    	// If the service is no longere managed, then
+    	// If the service has already terminated, suppress sending the stop request
     	Service service = terminatedManagedServices.get(serviceId);
     	if(service != null) {
     		logger.info("Shutdown of local client for " + serviceId + " complete");
     		terminatedManagedServices.remove(serviceId);
-    		return;
+    	} else {
+	    	
+	    	logger.info("DockerServiceManagerClientComponent::stopService() invoked for id " + serviceId);
+	        StopCommandData msg = new StopCommandData(serviceId);
+	        String jsonStr = gson.toJson(msg);
+	
+	        ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
+	            new byte[]{Commands.DOCKER_CONTAINER_STOP},
+	            RabbitMQUtils.writeString(jsonStr)));
+	
+	//        try {
+	        CompletableFuture<ByteBuffer> responseFuture = requestToServer.apply(buffer);
+	        
+	        try {
+				responseFuture.get(60, TimeUnit.SECONDS);
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				logger.error("Exception encountered waiting for stop response for container id " + serviceId);
+				throw new RuntimeException(e);
+			}
     	}
-    	
-    	logger.info("DockerServiceManagerClientComponent::stopService() invoked for id " + serviceId);
-        StopCommandData msg = new StopCommandData(serviceId);
-        String jsonStr = gson.toJson(msg);
-
-        ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
-            new byte[]{Commands.DOCKER_CONTAINER_STOP},
-            RabbitMQUtils.writeString(jsonStr)));
-
-//        try {
-        CompletableFuture<ByteBuffer> responseFuture = requestToServer.apply(buffer);
-        
-        try {
-			responseFuture.get(60, TimeUnit.SECONDS);
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			logger.error("Timeout waiting for stop on container id " + serviceId);
-			throw new RuntimeException(e);
-		}
-        
             //commandChannel.onNext(buffer);
 //        } catch (Exception e) {
 //            throw new RuntimeException(e);

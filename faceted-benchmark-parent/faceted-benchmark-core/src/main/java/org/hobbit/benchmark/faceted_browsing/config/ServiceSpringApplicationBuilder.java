@@ -1,7 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -10,7 +8,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
 
 /**
@@ -19,7 +17,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
  *
  */
 public class ServiceSpringApplicationBuilder
-	extends AbstractIdleService//AbstractExecutionThreadService
+	//extends AbstractIdleService
+	extends AbstractExecutionThreadService
 {	
 	private static final Logger logger = LoggerFactory.getLogger(ServiceSpringApplicationBuilder.class);
 
@@ -49,8 +48,9 @@ public class ServiceSpringApplicationBuilder
 			public void onApplicationEvent(ApplicationEvent event) {
 				if(event instanceof ContextClosedEvent) {
 					try {
-						logger.info("Context closed ; terminating service " + appName);
+						logger.info("Spring Context closed; terminating service " + appName);
 						stopAsync();//.awaitTerminated(5, TimeUnit.SECONDS);
+						//triggerShutdown();
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
@@ -58,23 +58,26 @@ public class ServiceSpringApplicationBuilder
 			}
 		});
 		
-//		logger.info("Launching " );
+		//run();
+	}
+
+	@Override
+	protected void run() throws Exception {
 		logger.info("ServiceSpringApplicationBuilder::startUp [begin] " + appName + ", builderHash: " + appBuilder.hashCode());
 		ctx = appBuilder.run(args);
 		logger.info("ServiceSpringApplicationBuilder::startUp [end] " + appName + ", builderHash: " + appBuilder.hashCode());
-//		logger.info("ServiceSpringApplicationBuilder: context terminated, builderHash:" + appBuilder.hashCode());
 	}
-
-//	@Override
-//	protected void run() throws Exception {
-//	}
 	
 	@Override
-	protected void shutDown() {
+	protected void triggerShutdown() {
 		logger.info("ServiceSpringApplicationBuilder: Shutdown invoked");
 		ctx = appBuilder.context();
 		if(ctx != null) {
 			ctx.close();
 		}
 	}
+
+//	@Override
+//	protected void shutDown() {
+//	}
 }

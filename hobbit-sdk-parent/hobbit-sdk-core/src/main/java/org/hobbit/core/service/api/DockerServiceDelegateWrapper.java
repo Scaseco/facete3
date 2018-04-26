@@ -23,7 +23,7 @@ public class DockerServiceDelegateWrapper<S extends DockerService>
 	}
 
 	@Override
-	public int getExitCode() {
+	public Integer getExitCode() {
 		int result = delegate.getExitCode();
 		return result;
 	}

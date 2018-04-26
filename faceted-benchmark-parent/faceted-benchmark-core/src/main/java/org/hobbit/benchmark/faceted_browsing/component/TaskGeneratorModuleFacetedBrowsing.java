@@ -82,7 +82,6 @@ public class TaskGeneratorModuleFacetedBrowsing
 	@Override
 	public void shutDown() throws Exception {
         logger.debug("Stopping preparation sparql service");
-    	serviceManager.stopAsync();
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
         logger.debug("Stopped preparation sparql service");    	
 

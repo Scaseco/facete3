@@ -309,7 +309,7 @@ public class BenchmarkControllerFacetedBrowsing
         try {
             dataGenerationPhaseCompletion.get(180, TimeUnit.SECONDS);
         } catch(Exception e) {
-            throw new RuntimeException("Data generation phase did not complete in time", e);
+            throw new RuntimeException("Data generation phase failed or did not complete in time", e);
         }
 
 // TODO Send out MochaConstants.BULK_LOAD_DATA_GEN_FINISHED [4bytes numSentMessages]

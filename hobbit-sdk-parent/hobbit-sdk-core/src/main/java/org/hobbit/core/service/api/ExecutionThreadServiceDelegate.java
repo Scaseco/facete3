@@ -49,6 +49,11 @@ public class ExecutionThreadServiceDelegate<T extends RunnableServiceCapable>
 			}
     	});
     }
+
+	@Override
+	public String toString() {
+		return "ExecutionThreadServiceDelegate [delegate=" + delegate + "]";
+	}
     
 //    @Override
 //    protected void shutDown() throws Exception {

@@ -184,7 +184,7 @@ public class DataGeneratorFacetedBrowsing
         	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
         	
         	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
-        	System.out.println("count: " + it.getNumItems());
+        	logger.info("Data generator counted" + it.getNumItems() + " generated triples");
         }
         
         Supplier<Stream<Triple>> triplesFromCache = () -> {

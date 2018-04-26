@@ -153,7 +153,7 @@ public class DockerServiceManagerServerComponent
             @Override
             public void failed(State from, Throwable failure) {
             	// If the state was starting, we have not yet sent back a response to the dockerServiceClint
-            	logger.warn("Failure reached (from state " + from + ") while attempting to start docker service: ", failure);
+            	logger.warn("Failure reached (from state " + from + ") while attempting to start docker service [" + service + "]: ", failure);
             	if(State.STARTING.equals(from)) {
             	    idCallback.accept("");
                 	//idCallback.accept("fail:" + failure.toString());
@@ -185,11 +185,15 @@ public class DockerServiceManagerServerComponent
                 runningManagedServices.remove(containerId);
 
                 // Create the termination message and send it out
-                int exitCode = service.getExitCode();
+                Integer exitCode = service.getExitCode();
+                if(exitCode == null) {
+                	logger.warn("Terminated service returned NULL exit code");
+                	exitCode = 0;
+                }
                 ByteBuffer buffer = createTerminationMsg(containerId, exitCode);
 
 //                try {
-            	logger.info("DockerServiceManagerServer: Sending out termination message for container " + containerId);
+            	logger.info("DockerServiceManagerServer: Sending out termination message for container " + containerId + " with exit code " + exitCode);
                     commandChannel.onNext(buffer);
 //                } catch (IOException e) {
 //                    throw new RuntimeException(e);
@@ -251,19 +255,19 @@ public class DockerServiceManagerServerComponent
                 String[] rawEnv = data.getEnvironmentVariables();
                 Map<String, String> env = EnvironmentUtils.listToMap("=", Arrays.asList(rawEnv));
 
+                // Note We receive each start request on the command channel twice: Once as a 'simple event'
+                // and once as a request (i.e. message with response target)
             	if(responseTarget == null) {
-            		logger.warn("Received a request to start container " + imageName + " with " + env + ", however there was no target for the response; therefore ignoring request");
-            		return;
-            	}
-
-                
-                onStartServiceRequest(imageName, env, containerId -> {
-                	logger.info("Server started docker service " + imageName + ": " + containerId);
-                    ByteBuffer msg = ByteBuffer.wrap(RabbitMQUtils.writeString(containerId));
-                    responseTarget.accept(msg);
-                });
-
-                
+            		//logger.warn("Received a request to start container " + imageName + " with " + env + ", however there was no target for the response; therefore ignoring request");
+            	} else {
+	
+	                
+	                onStartServiceRequest(imageName, env, containerId -> {
+	                	logger.info("Server started docker service " + imageName + ": " + containerId);
+	                    ByteBuffer msg = ByteBuffer.wrap(RabbitMQUtils.writeString(containerId));
+	                    responseTarget.accept(msg);
+	                });
+            	}                
 //                byte data[] = RabbitMQUtils.writeString(
 //                        gson.toJson(new StartCommandData(imageName, "defaultContainerType", "defaultContainerName", EnvironmentU)));
 

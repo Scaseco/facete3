@@ -44,7 +44,8 @@ public class DockerServiceDockerClient
     // Status fields for running services
     // Container id (requires the service to be running)
     protected String containerId;
-
+    protected Integer exitCode;
+    
     protected String containerName;
     
     protected boolean hostMode;
@@ -172,11 +173,13 @@ public class DockerServiceDockerClient
     	} catch(Exception e) {
 
     		boolean acceptableException = false;
-    		// Maybe the underlying container is already stopped or already terminated
+    		// The underlying container is already stopped or already terminated
+    		// In case the container does no longer exist, we omit further exceptions (as startUp and run should have already thrown them)
     		try {
     			ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
     			boolean isContainerStopped = !containerInfo.state().running();
     			acceptableException = isContainerStopped;
+    			exitCode = containerInfo.state().exitCode();
     		} catch(ContainerNotFoundException f) {
     			acceptableException = true;
     		}
@@ -223,9 +226,9 @@ public class DockerServiceDockerClient
     }
 
     @Override
-    public int getExitCode() {
-        logger.warn("STUB! Exist code always returns 0");
-        return 0;
+    public Integer getExitCode() {
+        //logger.warn("STUB! Exist code always returns 0");
+        return exitCode;
     }
 
 }

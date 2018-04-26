@@ -12,20 +12,17 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
-import org.hobbit.transfer.InputStreamManagerImpl;
-import org.hobbit.transfer.StreamManager;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
@@ -55,9 +52,9 @@ import io.reactivex.disposables.Disposable;
 //}
 
 @Component
+@Qualifier("hobbit-component")
 public class TaskGeneratorFacetedBenchmarkMocha
-    extends ComponentBase
-    implements RunnableServiceCapable
+    extends ComponentBase2
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmarkMocha.class);
 
@@ -134,9 +131,9 @@ public class TaskGeneratorFacetedBenchmarkMocha
     protected transient Disposable unsubscribe; 
     
     @Override
-    public void startUp() throws Exception {
+    public void doStart() {
         logger.info("TaskGenerator::startUp() in progress");
-    	super.startUp();
+    	super.doStart();
     	
         CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
 
@@ -159,7 +156,11 @@ public class TaskGeneratorFacetedBenchmarkMocha
 
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
 
-        taskGeneratorModule.startUp();
+        try {
+			taskGeneratorModule.startUp();
+		} catch (Exception e1) {
+			throw new RuntimeException(e1);
+		}
 //        // Avoid duplicate services
 //        Set<Service> services = Sets.newIdentityHashSet();
 //        services.addAll(Arrays.asList(
@@ -212,17 +213,31 @@ public class TaskGeneratorFacetedBenchmarkMocha
         // The message should be sent out by the service wrapper:
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
 
+        
+        logger.info("TaskGenerator waiting for start signal");
+        
+        startTaskGenerationFuture.whenComplete((v, t) -> {
+        	sendOutTasks();
+            logger.info("TaskGenerator fulfilled its purpose and shutting down");
+        });
+
+        //logger.debug("Task generator received start signal; running task generation");
+        //runTaskGeneration();
+        //logger.debug("Task generator done with task generation; sending tasks out");
+        logger.info("TaskGenerator fulfilled its purpose and shutting down");
+
+        
         logger.info("TaskGenerator::startUp() completed");
     }
 
 
-    @Override
+    //@Override
     public void run() throws Exception {
         // Wait for the start signal; but also make sure the data was loaded!
         
         
-        logger.info("TaskGenerator waiting for start signal");
-        startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
+//        logger.info("TaskGenerator waiting for start signal");
+//        startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
@@ -296,10 +311,14 @@ public class TaskGeneratorFacetedBenchmarkMocha
     }
 
     @Override
-    public void shutDown() throws Exception {
-    	logger.debug("TaskGenerator shutting down");
+    public void doStop() {
+    	logger.info("TaskGenerator::shutDown() initiated");
     	try {
-    		taskGeneratorModule.shutDown();
+    		try {
+				taskGeneratorModule.shutDown();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 
 //	    	if(streamManager != null) {
 //	    		streamManager.close();
@@ -309,8 +328,9 @@ public class TaskGeneratorFacetedBenchmarkMocha
 	        //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
 	        Optional.ofNullable(unsubscribe).ifPresent(Disposable::dispose);
     	} finally {
-    		super.shutDown();
+    		super.doStop();
     	}
+    	logger.info("TaskGenerator::shutDown() completed");
     }
 }
 

@@ -5,11 +5,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import org.aksw.commons.service.core.ServiceCapableWrapper;
-import org.hobbit.core.service.api.ServiceCapable;
-import org.hobbit.core.service.api.ServiceDelegateEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
@@ -18,25 +16,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ContextClosedEvent;
 
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 
 
-public class LauncherServiceCapable {
-	private static final Logger logger = LoggerFactory.getLogger(LauncherServiceCapable.class);
+public class LauncherHobbitComponent {
+	private static final Logger logger = LoggerFactory.getLogger(LauncherHobbitComponent.class);
 			
 	@Bean
-	public ApplicationRunner serviceLauncher(ServiceCapable serviceCapable, ConfigurableApplicationContext ctx) {
+	public ApplicationRunner serviceLauncher(@Qualifier("hobbit-component") Service activeService, ConfigurableApplicationContext ctx) {
 		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx, ApplicationContext::getParent);
 //		ConfigurableApplicationContext rootCtx = ctx;
-
-		ServiceDelegateEntity<? extends ServiceCapable> activeService = ServiceCapableWrapper.wrap(serviceCapable);
 
 		// Add a listener that closes the service's (root) context on service termination
 		activeService.addListener(new Listener() {
             @Override
             public void failed(State priorState, Throwable t) {
-                logger.info("ServiceCapable service wrapped [FAILED] for " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()), t);
+                logger.info("ServiceCapable service wrapped [FAILED] for " + (activeService == null ? "(no active service)" : activeService.getClass()), t);
 //              logger.info("ServiceCapable service wrapper stopped");
 //                  ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx.getParent(), ApplicationContext::getParent);
                 rootCtx.close();
@@ -44,7 +41,7 @@ public class LauncherServiceCapable {
 
 		    @Override
 			public void terminated(State priorState) {
-				logger.info("ServiceCapable service wrapper [TERMINATED] for " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
+				logger.info("ServiceCapable service wrapper [TERMINATED] for " + (activeService == null ? "(no active service)" : activeService.getClass()));
 //				logger.info("ServiceCapable service wrapper stopped");
 //					ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx.getParent(), ApplicationContext::getParent);
 				rootCtx.close();
@@ -56,18 +53,12 @@ public class LauncherServiceCapable {
 		ctx.addApplicationListener(new ApplicationListener<ContextClosedEvent>() {
 			@Override
 			public void onApplicationEvent(ContextClosedEvent event) {
-				logger.info("Context is closing - shutdown service " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
+				logger.info("Context is closing - shutdown service " + (activeService == null ? "(no active service)" : activeService.getClass()));
 				if(activeService != null && activeService.isRunning()) {
 					try {
 						activeService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
 //							thread.interrupt();
-					} catch (TimeoutException e) {
-						try {
-							activeService.stopAsync().awaitTerminated(1000, TimeUnit.SECONDS);
-						} catch(Exception f) {
-							throw new RuntimeException(f);
-						}
-						
+					} catch (TimeoutException e) {						
 						//e.printStackTrace();
 						throw new RuntimeException(e);
 					}
@@ -76,11 +67,11 @@ public class LauncherServiceCapable {
 		});
 		
 		return args -> {
-			logger.info("LauncherServiceCapable::ApplicationRunner starting service... " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
+			logger.info("LauncherServiceCapable::ApplicationRunner starting service... " + (activeService == null ? "(no active service)" : activeService.getClass()));
 
 			//activeService.startAsync().awaitRunning();
 			activeService.startAsync().awaitTerminated();
-			logger.info("LauncherServiceCapable::ApplicationRunner service started... " + (activeService == null ? "(no active service)" : activeService.getEntity().getClass()));
+			logger.info("LauncherServiceCapable::ApplicationRunner service started... " + (activeService == null ? "(no active service)" : activeService.getClass()));
 		};
 	}
 

@@ -38,7 +38,7 @@ public class CommunicationWrapperSessionId
 	public List<ByteBuffer> wrapReceiver(ByteBuffer msg) {
 		List<ByteBuffer> result = Collections.singletonList(msg).stream()
 			.map(HobbitConfigChannelsPlatform::parseCommandBuffer)
-			.peek(e -> logger.info("CommunicationWrapper " + (acceptedHeaderIds.contains(e.getKey()) ? "accepted" : "rejected") + " message with session id " + e.getKey()))
+//			.peek(e -> logger.info("CommunicationWrapper " + (acceptedHeaderIds.contains(e.getKey()) ? "accepted" : "rejected") + " message with session id " + e.getKey()))
 			.filter(e -> acceptedHeaderIds.contains(e.getKey()))
 			.map(Entry::getValue)
 			.collect(Collectors.toList());

@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.Listener;
@@ -12,6 +14,8 @@ import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 
 public class ServiceManagerUtils {
+
+	private static final Logger logger = LoggerFactory.getLogger(ServiceManagerUtils.class);
 
 	
 	public static CompletableFuture<Object> awaitTerminatedOrStopAfterTimeout(Service service, long terminatedTimeout, TimeUnit terminatedUnit, long stopTimeout, TimeUnit stopUnit) {
@@ -67,6 +71,7 @@ public class ServiceManagerUtils {
         try {
             serviceManager.awaitStopped(timeout, unit);
         } catch(TimeoutException e) {
+        	logger.info("Timeout reached:\n" + serviceManager.servicesByState());
             throw new RuntimeException(e);
         }
     }

@@ -828,14 +828,14 @@ public class ConfigsFacetedBrowsingBenchmark {
 //				}
 				
 				saService.startAsync().awaitRunning();
-				
-				bcService.startAsync().awaitRunning();
-				
-				// Wait for the bc to finish
-				bcService.awaitTerminated();
-				
-				
-				saService.stopAsync().awaitTerminated();
+				try {					
+					//bcService.startAsync().awaitRunning();
+					
+					// Wait for the bc to finish
+					bcService.startAsync().awaitTerminated();
+				} finally {				
+					saService.stopAsync().awaitTerminated();
+				}
 			};
 		}
 
