@@ -2,17 +2,20 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import org.hobbit.benchmark.faceted_browsing.config.ServiceSpringApplicationBuilder;
 import org.hobbit.core.service.api.IdleServiceCapable;
-import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractIdleService;
 
 public class TestServiceLaunch {
 	
-	
+	@Qualifier("MainService")
 	public static class ExampleIdleServiceCapable
-		implements IdleServiceCapable
+		extends AbstractIdleService
 	{
 		private static final Logger logger = LoggerFactory.getLogger(ExampleIdleServiceCapable.class);
 
@@ -31,7 +34,7 @@ public class TestServiceLaunch {
 	
 	@Test
 	public void testIdleServiceLaunch() {
-		SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ExampleIdleServiceCapable.class, LauncherServiceCapable.class);
+		SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ExampleIdleServiceCapable.class);
 
 		ServiceSpringApplicationBuilder service = new ServiceSpringApplicationBuilder("testIdleServiceLaunch", appBuilder);
 		service.startAsync().awaitRunning();
@@ -39,28 +42,26 @@ public class TestServiceLaunch {
 	}
 
 	
+	@Qualifier("MainService")
 	public static class ExampleRunnableServiceCapable
-		implements RunnableServiceCapable {
+		extends AbstractExecutionThreadService {
 
 		private static final Logger logger = LoggerFactory.getLogger(ExampleRunnableServiceCapable.class);
-		
-		protected boolean isShutDown = false;
 		
 		@Override
 		public void startUp() throws Exception {
 			logger.info("RunnableServiceCapable::startUp()");
 		}
 
-		@Override
-		public void shutDown() throws Exception {
-			logger.info("RunnableServiceCapable::shutDown()");
-			isShutDown = true;			
-		}
+//		@Override
+//		public void triggerShutdown()  {
+//			logger.info("RunnableServiceCapable::triggerShutdown()");
+//		}
 
 		@Override
 		public void run() throws Exception {
 			logger.info("RunnableServiceCapable::run()");
-			while(!isShutDown) {
+			while(isRunning()) {
 				logger.info("Running...");
 				Thread.sleep(100);
 			}
@@ -69,7 +70,7 @@ public class TestServiceLaunch {
 	
 	@Test
 	public void testExecutionThreadServiceLaunch() {
-		SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ExampleRunnableServiceCapable.class, LauncherServiceCapable.class);
+		SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ExampleRunnableServiceCapable.class);
 
 		ServiceSpringApplicationBuilder service = new ServiceSpringApplicationBuilder("testExecutionThreadServiceLaunch", appBuilder);
 		service.startAsync().awaitRunning();

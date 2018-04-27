@@ -8,21 +8,27 @@ import java.util.function.Supplier;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
-import org.hobbit.trash.DockerServiceFactoryUtilsSpringBoot;
 import org.junit.Test;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.Banner;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Service;
+
 public class TestDockerSpringBootAbstraction {
 
 	public static class Context {
 		@Bean
-		public ApplicationRunner runner(Environment env) {
-			return (args) -> {
-				System.out.println("Hello " + env.getRequiredProperty("MSG"));
+		@Qualifier("MainService")
+		public Service runner(Environment env) {
+			return new AbstractExecutionThreadService() {
+				@Override
+				protected void run() throws Exception {
+					System.out.println("Hello " + env.getRequiredProperty("MSG"));
+				}
 			};
 		}
 	}
