@@ -35,14 +35,16 @@ public abstract class ComponentBaseExecutionThread
 
     @Override
     public void init() throws Exception {
-    	startUp();
+    	//startUp();
+    	this.startAsync().awaitRunning();
     }
 
     
     @Override
     public void close() throws IOException {
         try {
-            triggerShutdown();
+            this.triggerShutdown();
+            this.awaitTerminated();
         } catch(Exception e) {
             throw new RuntimeException(e);
         }

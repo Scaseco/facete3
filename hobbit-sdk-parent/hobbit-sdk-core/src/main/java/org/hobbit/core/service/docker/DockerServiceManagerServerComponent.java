@@ -161,14 +161,14 @@ public class DockerServiceManagerServerComponent
             	    doTermination();
             	}
 
-            	super.failed(from, failure);
+//            	super.failed(from, failure);
             }
             
             @Override
             public void terminated(State from) {
             	doTermination();
             	
-                super.terminated(from);
+//                super.terminated(from);
             }
 
             @Override

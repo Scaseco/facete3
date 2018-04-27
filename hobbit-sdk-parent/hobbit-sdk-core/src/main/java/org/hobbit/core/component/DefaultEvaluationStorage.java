@@ -99,6 +99,7 @@ public class DefaultEvaluationStorage
 
     @Override
     public void startUp() {
+        logger.info("EvaluationStorage::startUp() initiated");
     	super.startUp();
     	boolean[] resultSent = {false};
     	
@@ -205,6 +206,7 @@ public class DefaultEvaluationStorage
         });
 
 
+        logger.info("EvaluationStorage::startUp() completed");
     }
 
     
@@ -240,7 +242,8 @@ public class DefaultEvaluationStorage
 
     @Override
     public void shutDown() {
+        logger.info("EvaluationStorage::shutDown() initiated");
     	super.shutDown();
-        logger.debug("evaluation storage shut down done");
+        logger.info("EvaluationStorage::shutDown() completed");
     }
 }

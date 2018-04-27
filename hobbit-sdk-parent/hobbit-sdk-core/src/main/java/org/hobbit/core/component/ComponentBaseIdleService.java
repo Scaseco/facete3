@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.AbstractService;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -36,13 +35,15 @@ public abstract class ComponentBaseIdleService
 
     @Override
     public void init() throws Exception {
-    	startUp();
+    	this.startAsync().awaitRunning();
+    	//startUp();
     }
 
     
     @Override
     public void close() throws IOException {
-    	shutDown();
+    	this.stopAsync().awaitTerminated();
+    	//shutDown();
     }
     
     @Override
