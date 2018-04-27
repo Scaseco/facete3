@@ -74,9 +74,10 @@ public abstract class DockerServiceManagerClientComponentBase
 
     protected Gson gson;
 	
-    protected Map<String, DockerServiceSimpleDelegation> runningManagedServices = Collections.synchronizedMap(new HashMap<>());
+    // The set of running service stubs created via this manager
+    protected Map<String, DockerServiceSimpleDelegation> runningManagedServiceStubs = Collections.synchronizedMap(new HashMap<>());
     
-    // Map used to suppress the stop event on services that are shutting down
+    // Map used to suppress sending out stop requests to already remotely terminated services
     protected Map<String, Service> terminatedManagedServices = Collections.synchronizedMap(new HashMap<>());
 
 
@@ -134,20 +135,20 @@ public abstract class DockerServiceManagerClientComponentBase
             @Override
             public void running() {
                 String serviceId = service.getContainerId();
-                runningManagedServices.put(serviceId, service);
+                runningManagedServiceStubs.put(serviceId, service);
             }
 
             @Override
             public void failed(State from, Throwable failure) {
                 String serviceId = service.getContainerId();
-                runningManagedServices.remove(serviceId);
+                runningManagedServiceStubs.remove(serviceId);
 //            	super.failed(from, failure);
             }
 
             @Override
             public void terminated(State from) {
                 String serviceId = service.getContainerId();
-                runningManagedServices.remove(serviceId);
+                runningManagedServiceStubs.remove(serviceId);
                 //terminatedManagedServices.put(serviceId, service);
             }
         }, MoreExecutors.directExecutor());
@@ -168,7 +169,7 @@ public abstract class DockerServiceManagerClientComponentBase
 
     @Override
     public void shutDown() throws Exception {
-    	logger.info("DockerServiceManagerClientComponent::shutDown() invoked with " + runningManagedServices.size() + " services still running");
+    	logger.info("DockerServiceManagerClientComponent::shutDown() invoked with " + runningManagedServiceStubs.size() + " services still running");
     	Optional.ofNullable(commandPublisherUnsubscribe).ifPresent(Disposable::dispose);
     }
 
@@ -192,26 +193,28 @@ public abstract class DockerServiceManagerClientComponentBase
     }
 
     public void handleServiceTermination(String serviceId, int exitCode) {
-    	DockerServiceSimpleDelegation service = runningManagedServices.get(serviceId);
+    	DockerServiceSimpleDelegation serviceStub = runningManagedServiceStubs.get(serviceId);
 
-        if(service != null) {
-            logger.info("Received termination message for " + serviceId + " with exit code " + exitCode + " and going to stop local stub " + service);
-            // FIXME If the remote service failed, we would here incorrectly set the service to STOPPED
-        	synchronized (service) {
+        if(serviceStub != null) {
+            logger.info("Received termination message for " + serviceId + " with exit code " + exitCode + " and going to stop local stub " + serviceStub);
+
+            synchronized (serviceStub) {
 	        	//runningManagedServices.remove(serviceId);
-	        	terminatedManagedServices.put(serviceId, service);
-	        	service.setExitCode(exitCode);
+	        	terminatedManagedServices.put(serviceId, serviceStub);
+	        	serviceStub.setExitCode(exitCode);
 	        	if(exitCode != 0) {
-	        		try {
-	        			service.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
-	        		} catch(Exception e) {
-	        			// Ensure we do not raise an exception when handling a remote termination message
-	        			e.printStackTrace();
-	        		}
+//	        		try {
+	        			serviceStub.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
+//	        		} catch(Exception e) {
+//	        			// Ensure we do not raise an exception when handling a remote termination message
+//	        			e.printStackTrace();
+//	        		}
 	        	} else {
-		        	service.stopAsync();	        		
+		        	serviceStub.stopAsync();	        		
 	        	}
         	}
+        } else {
+            logger.info("Ignoring termination message for " + serviceId + " with exit code " + exitCode + " because no local stub exists");
         }
 
         //idToService.remove(service);
@@ -279,7 +282,7 @@ public abstract class DockerServiceManagerClientComponentBase
     		logger.info("Shutdown of local client for " + serviceId + " complete");
     		terminatedManagedServices.remove(serviceId);
     	} else {
-	    	service = runningManagedServices.get(serviceId);
+	    	service = runningManagedServiceStubs.get(serviceId);
 	    	Objects.requireNonNull(service);
 	    	
 	    	logger.info("DockerServiceManagerClientComponent::stopService() invoked for id " + serviceId);

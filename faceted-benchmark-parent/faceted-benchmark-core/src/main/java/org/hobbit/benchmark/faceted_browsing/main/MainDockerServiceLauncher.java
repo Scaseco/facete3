@@ -41,8 +41,10 @@ public class MainDockerServiceLauncher {
             logger.info("Service launcher launching virtual image '" + imageName + "' with env " + env);
 	        mainCore(imageName, env);
 	        logger.info("Service launcher terminated normally with image '" + imageName + "'");
+	        System.exit(0);
 	    } catch(Exception e) {
             logger.info("Service launcher encountered an exception with image '" + imageName + "'");
+            System.exit(1);
 	    }	    
 	}
 	
