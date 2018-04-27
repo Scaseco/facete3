@@ -3,18 +3,17 @@ package org.hobbit.core.service.api;
 import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
 import org.hobbit.core.service.docker.DockerService;
 
-import com.google.common.util.concurrent.AbstractIdleService;
-
+@Deprecated
 public class DockerServiceIdleServiceDelegate
-	extends AbstractIdleService
+	extends ServiceDelegate<DockerService>
 	implements DockerService
 {
 	protected DockerService delegate;
 
 	
 	public DockerServiceIdleServiceDelegate(DockerService delegate) {
-		super();
-		this.delegate = delegate;
+		super(delegate);
+		//this.delegate = delegate;
 
 		delegate.addListener(new Listener() {
 			@Override
@@ -26,15 +25,15 @@ public class DockerServiceIdleServiceDelegate
 		}, MoreExecutors.directExecutor());
 	}
 
-	@Override
-	protected void startUp() throws Exception {
-		delegate.startAsync().awaitRunning();
-	}
-
-	@Override
-	protected void shutDown() throws Exception {
-		delegate.stopAsync().awaitTerminated();
-	}
+//	@Override
+//	protected void doStart() throws Exception {
+//		delegate.startAsync().awaitRunning();
+//	}
+//
+//	@Override
+//	protected void shutDown() throws Exception {
+//		delegate.stopAsync().awaitTerminated();
+//	}
 
 	@Override
 	public String getContainerId() {

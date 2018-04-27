@@ -25,32 +25,29 @@ import javax.annotation.Resource;
 import org.aksw.commons.collections.cache.CountingIterator;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
-import org.apache.commons.io.Charsets;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.hobbit.core.Commands;
-import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
-import org.hobbit.interfaces.DataGenerator;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.OutputStreamChunkedTransfer;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 
 @Component
+@Qualifier("MainService")
 public class DataGeneratorFacetedBrowsing
-    extends ComponentBase
-    implements DataGenerator, RunnableServiceCapable
+    extends ComponentBaseExecutionThread
 {
     private static final Logger logger = LoggerFactory.getLogger(DataGeneratorFacetedBrowsing.class);
 
@@ -86,9 +83,15 @@ public class DataGeneratorFacetedBrowsing
 
 
 
+    @Override
+    protected void triggerShutdown() {
+        logger.info("DataGenerator::triggerShutdown()");
+    	startSignalFuture.cancel(true);
+    	super.triggerShutdown();
+    }
 
     @Override
-    public void startUp() throws Exception {
+    public void startUp() {
         logger.info("DataGenerator::startUp()");
     	super.startUp();
 
@@ -169,7 +172,7 @@ public class DataGeneratorFacetedBrowsing
 
 
     // TODO Separate actual data generation / caching from sending out platform specific events
-    @Override
+    //@Override
     public void generateData() throws Exception {
         logger.info("Data generator started.");
 

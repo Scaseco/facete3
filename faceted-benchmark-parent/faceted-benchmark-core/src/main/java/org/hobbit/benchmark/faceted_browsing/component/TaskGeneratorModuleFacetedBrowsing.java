@@ -81,9 +81,9 @@ public class TaskGeneratorModuleFacetedBrowsing
     //@PreDestroy
 	@Override
 	public void shutDown() throws Exception {
-        logger.debug("Stopping preparation sparql service");
+        logger.info("TaskGeneratorWorker::shutDown() - Stopping preparation sparql service");
         ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
-        logger.debug("Stopped preparation sparql service");    	
+        logger.info("TaskGeneratorWorker::shutDown() - Stopped preparation sparql service");    	
 
 	
 	}
@@ -167,7 +167,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         	ResultSetMem rsMem = new ResultSetMem(resultSet);
         	int numRows = ResultSetFormatter.consume(rsMem);
         	rsMem.rewind();
-            logger.debug("Number of result set rows for task " + task + ": " + numRows + " query: " + queryStr);
+            logger.info("Number of result set rows for task " + task + ": " + numRows + " query: " + queryStr);
 
         	
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -184,7 +184,7 @@ public class TaskGeneratorModuleFacetedBrowsing
 	
     public static void loadDataFromStream(InputStream tmpIn, RDFConnection conn) throws IOException {
         try(InputStream in = tmpIn) {
-            logger.debug("Data stream from data generator received");
+            logger.info("Data stream from data generator received");
 
                 try {
                     // Perform bulk load
@@ -195,7 +195,7 @@ public class TaskGeneratorModuleFacetedBrowsing
                     // TODO Bulk loading not yet implemented...
 
                     String graphName = "http://www.virtuoso-graph.com";
-                    logger.debug("Clearing and loading graph: " + graphName);
+                    logger.info("Clearing and loading graph: " + graphName);
                     try {
                     	conn.delete(graphName);
                     } catch(Exception e) {
@@ -208,7 +208,7 @@ public class TaskGeneratorModuleFacetedBrowsing
                     throw new RuntimeException(e);
                 }
                 
-                logger.debug("Bulk loading complete");
+                logger.info("Bulk loading complete");
 //                try {
 //                    Thread.sleep(5000);
 //                } catch(Exception e) {

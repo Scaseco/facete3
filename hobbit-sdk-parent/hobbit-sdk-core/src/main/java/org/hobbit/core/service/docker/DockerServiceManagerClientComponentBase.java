@@ -12,20 +12,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.IdleServiceCapable;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.primitives.Bytes;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.Service.Listener;
-import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
 
 import io.reactivex.Flowable;
@@ -44,8 +44,9 @@ import io.reactivex.disposables.Disposable;
  *
  */
 public abstract class DockerServiceManagerClientComponentBase
-    //extends AbstractIdleService
-    implements IdleServiceCapable, DockerServiceFactory<DockerService> // DockerServiceBuilder<DockerService>
+    extends AbstractIdleService
+    //implements IdleServiceCapable, DockerServiceFactory<DockerService> // DockerServiceBuilder<DockerService>
+    implements DockerServiceFactory<DockerService>
 {	
 	private static final Logger logger = LoggerFactory.getLogger(DockerServiceManagerClientComponentBase.class);
 
@@ -54,16 +55,19 @@ public abstract class DockerServiceManagerClientComponentBase
 	// internally
 	
 	protected Flowable<ByteBuffer> commandPublisher;
+	protected Subscriber<ByteBuffer> commandSender;
 	protected Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer;
 	
 	
 	
 	public DockerServiceManagerClientComponentBase(
 			Flowable<ByteBuffer> commandPublisher,
+			Subscriber<ByteBuffer> commandSender,
 			Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 			Gson gson) {
 		super();
 		this.commandPublisher = commandPublisher;
+		this.commandSender = commandSender;
 		this.requestToServer = requestToServer;
 		this.gson = gson;
 	}
@@ -198,7 +202,12 @@ public abstract class DockerServiceManagerClientComponentBase
 	        	terminatedManagedServices.put(serviceId, service);
 	        	service.setExitCode(exitCode);
 	        	if(exitCode != 0) {
-	        		service.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
+	        		try {
+	        			service.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
+	        		} catch(Exception e) {
+	        			// Ensure we do not raise an exception when handling a remote termination message
+	        			e.printStackTrace();
+	        		}
 	        	} else {
 		        	service.stopAsync();	        		
 	        	}
@@ -270,6 +279,8 @@ public abstract class DockerServiceManagerClientComponentBase
     		logger.info("Shutdown of local client for " + serviceId + " complete");
     		terminatedManagedServices.remove(serviceId);
     	} else {
+	    	service = runningManagedServices.get(serviceId);
+	    	Objects.requireNonNull(service);
 	    	
 	    	logger.info("DockerServiceManagerClientComponent::stopService() invoked for id " + serviceId);
 	        StopCommandData msg = new StopCommandData(serviceId);
@@ -280,14 +291,19 @@ public abstract class DockerServiceManagerClientComponentBase
 	            RabbitMQUtils.writeString(jsonStr)));
 	
 	//        try {
-	        CompletableFuture<ByteBuffer> responseFuture = requestToServer.apply(buffer);
 	        
-	        try {
-				responseFuture.get(60, TimeUnit.SECONDS);
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				logger.error("Exception encountered waiting for stop response for container id " + serviceId);
-				throw new RuntimeException(e);
-			}
+	        //CompletableFuture<ByteBuffer> responseFuture = requestToServer.apply(buffer);
+	        commandSender.onNext(buffer);
+	        
+//	        try {
+//		        //service.awaitTerminated(60, TimeUnit.SECONDS);
+//				//responseFuture.get(60, TimeUnit.SECONDS);
+//				logger.info("DockerServiceManagerClientstopService() stop confirmation received for id " + serviceId);
+//			//} catch (InterruptedException | ExecutionException | TimeoutException e) {
+//	        } catch(TimeoutException e) {
+//				logger.error("Exception encountered waiting for stop response from container with id " + serviceId, e);
+//				throw new RuntimeException(e);
+//			}
     	}
             //commandChannel.onNext(buffer);
 //        } catch (Exception e) {

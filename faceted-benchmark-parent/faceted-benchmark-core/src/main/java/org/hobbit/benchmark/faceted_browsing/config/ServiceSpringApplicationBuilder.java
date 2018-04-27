@@ -1,14 +1,16 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import org.hobbit.benchmark.faceted_browsing.main.MainServiceLauncher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.event.ContextClosedEvent;
 
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 
 
 /**
@@ -17,8 +19,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
  *
  */
 public class ServiceSpringApplicationBuilder
-	//extends AbstractIdleService
-	extends AbstractExecutionThreadService
+	extends AbstractService
 {	
 	private static final Logger logger = LoggerFactory.getLogger(ServiceSpringApplicationBuilder.class);
 
@@ -28,6 +29,7 @@ public class ServiceSpringApplicationBuilder
 	protected String[] args;
 
 	protected ConfigurableApplicationContext ctx = null;
+	protected Service mainService = null;
 
 	
 	public ServiceSpringApplicationBuilder(String appName, SpringApplicationBuilder appBuilder) {
@@ -42,42 +44,67 @@ public class ServiceSpringApplicationBuilder
 	}
 
 	@Override
-	protected void startUp() throws Exception {
-		appBuilder.listeners(new ApplicationListener<ApplicationEvent>() {
+	protected void doStart() {
+		// Create the application context
+		ctx = appBuilder.run(args);
+
+
+		// Get the service from the context
+		mainService = BeanFactoryAnnotationUtils.qualifiedBeanOfType(ctx.getBeanFactory(), Service.class, "MainService");
+		//mainService = ctx.getBean("MainService", Service.class);
+		
+		// Link the life cycle of the context to the service
+		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)MainServiceLauncher.getRoot(ctx, ApplicationContext::getParent);
+//		ConfigurableApplicationContext rootCtx = ctx;
+
+		// Add a listener that closes the service's (root) context on service termination
+		mainService.addListener(new Listener() {
 			@Override
-			public void onApplicationEvent(ApplicationEvent event) {
-				if(event instanceof ContextClosedEvent) {
-					try {
-						logger.info("Spring Context closed; terminating service " + appName);
-						stopAsync();//.awaitTerminated(5, TimeUnit.SECONDS);
-						//triggerShutdown();
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
+			public void running() {
+				notifyStarted();
+			}
+            @Override
+            public void failed(State priorState, Throwable t) {
+                logger.info("ServiceCapable service wrapped [FAILED] for " + (mainService == null ? "(no active service)" : mainService.getClass()), t);
+//              logger.info("ServiceCapable service wrapper stopped");
+//                  ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx.getParent(), ApplicationContext::getParent);
+                try {
+                	rootCtx.close();
+                } finally {
+                	notifyFailed(t);
+                }
+                //rootCtx.close();
+            }
+
+		    @Override
+			public void terminated(State priorState) {
+				logger.info("ServiceCapable service wrapper [TERMINATED] for " + (mainService == null ? "(no active service)" : mainService.getClass()));
+//				logger.info("ServiceCapable service wrapper stopped");
+//					ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx.getParent(), ApplicationContext::getParent);
+				//rootCtx.close();
+				try {
+					rootCtx.close();
+				} finally {
+					notifyStopped();
 				}
 			}
-		});
-		
-		//run();
+		}, MoreExecutors.directExecutor());
+
+		mainService.startAsync();
 	}
 
 	@Override
-	protected void run() throws Exception {
-		logger.info("ServiceSpringApplicationBuilder::startUp [begin] " + appName + ", builderHash: " + appBuilder.hashCode());
-		ctx = appBuilder.run(args);
-		logger.info("ServiceSpringApplicationBuilder::startUp [end] " + appName + ", builderHash: " + appBuilder.hashCode());
+	protected void doStop() {
+		mainService.stopAsync();
 	}
-	
-	@Override
-	protected void triggerShutdown() {
-		logger.info("ServiceSpringApplicationBuilder: Shutdown invoked");
-		ctx = appBuilder.context();
-		if(ctx != null) {
-			ctx.close();
-		}
-	}
-
 //	@Override
-//	protected void shutDown() {
+//	protected void run() throws Exception {
+//		logger.info("ServiceSpringApplicationBuilder::startUp [begin] " + appName + ", builderHash: " + appBuilder.hashCode());
+//		
+//
+//		mainService.startAsync().awaitTerminated();
+//		
+//		//ctx = appBuilder.run(args);
+//		logger.info("ServiceSpringApplicationBuilder::startUp [end] " + appName + ", builderHash: " + appBuilder.hashCode());
 //	}
 }

@@ -167,6 +167,7 @@ public class TestDockerCommunication {
 		@Bean(initMethod="startUp", destroyMethod="shutDown")
 		public DockerServiceManagerClientComponent client(
 				@Qualifier("commandPub") Flowable<ByteBuffer> commandPublisher,
+				@Qualifier("commandChannel") Subscriber<ByteBuffer> commandSender,				
 				@Qualifier("dockerServiceManagerClientConnection") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson
 
@@ -174,6 +175,7 @@ public class TestDockerCommunication {
 			DockerServiceManagerClientComponent result =
 					new DockerServiceManagerClientComponent(
 						commandPublisher,
+						commandSender,
 						requestToServer,
 						gson,
 						"no-requester-id-needed",

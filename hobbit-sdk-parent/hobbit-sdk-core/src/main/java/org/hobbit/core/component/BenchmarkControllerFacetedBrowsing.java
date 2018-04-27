@@ -7,7 +7,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -17,7 +19,6 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.core.Commands;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
@@ -25,16 +26,16 @@ import org.hobbit.core.utils.ServiceManagerUtils;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 
 @Component
+@Qualifier("MainService")
 public class BenchmarkControllerFacetedBrowsing
-    extends ComponentBase
-    implements RunnableServiceCapable
+    extends ComponentBaseExecutionThread
     //implements BenchmarkController
 {
     private static final Logger logger = LoggerFactory.getLogger(BenchmarkControllerFacetedBrowsing.class);
@@ -87,6 +88,8 @@ public class BenchmarkControllerFacetedBrowsing
     protected CompletableFuture<State> dataGenerationTerminatedFuture;
     protected CompletableFuture<State> taskGenerationTerminatedFuture;
 
+    protected CompletableFuture<?> initFuture;
+
     //public static final byte START_BENCHMARK_SIGNAL = 66;
 
     // https://stackoverflow.com/questions/30025428/listfuture-to-futurelist-sequence
@@ -104,7 +107,7 @@ public class BenchmarkControllerFacetedBrowsing
     }
 
     @Override
-    public void startUp() throws Exception {
+    public void startUp() {
         logger.info("BenchmarkController::startUp()");
     	super.startUp();
     	
@@ -239,7 +242,7 @@ public class BenchmarkControllerFacetedBrowsing
                 60, TimeUnit.SECONDS,
                 60, TimeUnit.SECONDS);
 
-        logger.info("BenchmarkController::startUp() completed.");
+        logger.info("BenchmarkController::startUp() completed");
         
 //        commandPublisher.subscribe(buffer -> {
 //            if(buffer.hasRemaining()) {
@@ -253,15 +256,20 @@ public class BenchmarkControllerFacetedBrowsing
 //                }
 //            }
 //        });
+        
+        logger.info("Waiting for data and task generators to become ready");
+        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
+
+//        initFuture.whenComplete((v, t) -> {
+//        	run();
+//        });
+        //initFuture.get(60, TimeUnit.SECONDS);
+
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() throws InterruptedException, ExecutionException, TimeoutException {
 
-
-
-        logger.info("Waiting for data and task generators to become ready");
-        CompletableFuture<?> initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
         initFuture.get(60, TimeUnit.SECONDS);
         
         
@@ -341,7 +349,7 @@ public class BenchmarkControllerFacetedBrowsing
         try {
             taskGenerationPhaseCompletion.get(5, TimeUnit.MINUTES);
         } catch(Exception e) {
-            throw new RuntimeException("Task generation phase did not complete in time", e);
+            throw new RuntimeException("Task generation phase failed or did not complete in time", e);
         }
 
 
@@ -381,7 +389,11 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("Starting evaluation module... ");
         evaluationModuleService.startAsync();
         // TODO If we do await running, it seems it blocks forever as terminated or failure is not handled properly
-        evaluationModuleService.awaitTerminated(60, TimeUnit.SECONDS);
+        try {
+			evaluationModuleService.awaitTerminated(60, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
 
         // Wait for the result
 
@@ -390,7 +402,11 @@ public class BenchmarkControllerFacetedBrowsing
         
         logger.info("Awaiting evaluation result...");
         //evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
-        evaluationDataReceivedFuture.get(10, TimeUnit.MINUTES);
+        try {
+			evaluationDataReceivedFuture.get(10, TimeUnit.MINUTES);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			throw new RuntimeException(e);
+		}
 
         
         logger.info("Benchmark controller done.");
@@ -410,8 +426,21 @@ public class BenchmarkControllerFacetedBrowsing
 //        sendResultModel(resultModel);
     }
 
+    
     @Override
-    public void shutDown() throws Exception {
+    protected void triggerShutdown() {
+        logger.info("BenchmarkController::triggerShutdown() invoked");
+    	initFuture.cancel(true);
+    	dataGenerationTerminatedFuture.cancel(true);
+    	taskGenerationTerminatedFuture.cancel(true);
+    	evaluationDataReceivedFuture.cancel(true);
+    	
+    	super.triggerShutdown();
+        logger.info("BenchmarkController::triggerShutdown() invoked");
+    }
+    
+    @Override
+    public void shutDown() {
         logger.info("BenchmarkController::shutDown() invoked");
     	
     	try {

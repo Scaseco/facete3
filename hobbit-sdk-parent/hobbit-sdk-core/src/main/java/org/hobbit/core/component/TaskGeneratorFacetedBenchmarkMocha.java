@@ -52,9 +52,9 @@ import io.reactivex.disposables.Disposable;
 //}
 
 @Component
-@Qualifier("hobbit-component")
+@Qualifier("MainService")
 public class TaskGeneratorFacetedBenchmarkMocha
-    extends ComponentBase2
+    extends ComponentBaseExecutionThread
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskGeneratorFacetedBenchmarkMocha.class);
 
@@ -131,9 +131,9 @@ public class TaskGeneratorFacetedBenchmarkMocha
     protected transient Disposable unsubscribe; 
     
     @Override
-    public void doStart() {
+    public void startUp() {
         logger.info("TaskGenerator::startUp() in progress");
-    	super.doStart();
+    	super.startUp();
     	
         CompletableFuture<ByteBuffer> startSignalReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_START_SIGNAL));
 
@@ -156,11 +156,6 @@ public class TaskGeneratorFacetedBenchmarkMocha
 
         startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
 
-        try {
-			taskGeneratorModule.startUp();
-		} catch (Exception e1) {
-			throw new RuntimeException(e1);
-		}
 //        // Avoid duplicate services
 //        Set<Service> services = Sets.newIdentityHashSet();
 //        services.addAll(Arrays.asList(
@@ -175,11 +170,20 @@ public class TaskGeneratorFacetedBenchmarkMocha
         //Consumer<ByteBuffer> fromDataGeneratorObserver
         //fromDataGeneratorUnsubscribe = fromDataGenerator.subscribe(streamManager::handleIncomingData);
 
+        // NOTE StartUp must happen before creating the unsubscribe object
+        try {
+			taskGeneratorModule.startUp();
+		} catch (Exception e1) {
+			throw new RuntimeException(e1);
+		}
+
+
         unsubscribe = new CompositeDisposable(
         	fromDataGenerator.subscribe(taskGeneratorModule::onData),
         	commandReceiver.subscribe(taskGeneratorModule::onCommand)
         );
         
+
         /*
          * The protocol here is:
          * We expect data to arrive exactly once in the form of a stream.
@@ -214,30 +218,30 @@ public class TaskGeneratorFacetedBenchmarkMocha
         commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATOR_READY_SIGNAL}));
 
         
-        logger.info("TaskGenerator waiting for start signal");
+        //logger.info("TaskGenerator waiting for start signal");
         
-        startTaskGenerationFuture.whenComplete((v, t) -> {
-        	sendOutTasks();
-            logger.info("TaskGenerator fulfilled its purpose and shutting down");
-        });
+//        startTaskGenerationFuture.whenComplete((v, t) -> {
+//        	sendOutTasks();
+//            logger.info("TaskGenerator fulfilled its purpose and shutting down");
+//        });
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
         //logger.debug("Task generator done with task generation; sending tasks out");
-        logger.info("TaskGenerator fulfilled its purpose and shutting down");
+        //logger.info("TaskGenerator fulfilled its purpose and shutting down");
 
         
         logger.info("TaskGenerator::startUp() completed");
     }
 
 
-    //@Override
+    @Override
     public void run() throws Exception {
         // Wait for the start signal; but also make sure the data was loaded!
         
         
-//        logger.info("TaskGenerator waiting for start signal");
-//        startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
+        logger.info("TaskGenerator waiting for start signal");
+        startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
@@ -311,7 +315,15 @@ public class TaskGeneratorFacetedBenchmarkMocha
     }
 
     @Override
-    public void doStop() {
+    public void triggerShutdown() {
+    	logger.info("TaskGenerator::triggerShutdown() initiated");
+    	startTaskGenerationFuture.cancel(true); //completeExceptionally(new InterruptedException());
+    	super.triggerShutdown();
+    	logger.info("TaskGenerator::triggerShutdown() completed");
+    }
+    
+    @Override
+	public void shutDown() {
     	logger.info("TaskGenerator::shutDown() initiated");
     	try {
     		try {
@@ -328,7 +340,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
 	        //fromDataGenerator.unsubscribe(streamManager::handleIncomingData);
 	        Optional.ofNullable(unsubscribe).ifPresent(Disposable::dispose);
     	} finally {
-    		super.doStop();
+    		super.shutDown();
     	}
     	logger.info("TaskGenerator::shutDown() completed");
     }

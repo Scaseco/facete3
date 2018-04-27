@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 
 
+// Use MainServiceLauncher instead
+@Deprecated
 public class LauncherServiceCapable {
 	private static final Logger logger = LoggerFactory.getLogger(LauncherServiceCapable.class);
 			
@@ -63,7 +65,7 @@ public class LauncherServiceCapable {
 //							thread.interrupt();
 					} catch (TimeoutException e) {
 						try {
-							activeService.stopAsync().awaitTerminated(1000, TimeUnit.SECONDS);
+							activeService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
 						} catch(Exception f) {
 							throw new RuntimeException(f);
 						}

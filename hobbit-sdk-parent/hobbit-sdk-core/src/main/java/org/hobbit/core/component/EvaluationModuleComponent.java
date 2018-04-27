@@ -13,19 +13,19 @@ import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractEvaluationStorage;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 
 @Component
+@Qualifier("MainService")
 public class EvaluationModuleComponent
-    extends ComponentBase
-    implements RunnableServiceCapable
+    extends ComponentBaseExecutionThread
 {
     private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleComponent.class);
 
@@ -51,7 +51,7 @@ public class EvaluationModuleComponent
     protected CompletableFuture<?> terminationFuture = new CompletableFuture<Object>();
     
     @Override
-    public void startUp() throws Exception {
+    public void startUp() {
     	logger.info("EvalModule::startUp() invoked");
     	super.startUp();
         //collectResponses();
@@ -63,7 +63,11 @@ public class EvaluationModuleComponent
 
 
         //EvaluationModuleFacetedBrowsingBenchmark evaluationCore = new EvaluationModuleFacetedBrowsingBenchmark();
-        evaluationModule.init();
+        try {
+			evaluationModule.init();
+		} catch (Exception e1) {
+			throw new RuntimeException(e1);
+		}
 
         boolean terminationConditionSatisfied[] = {false};
         
@@ -155,10 +159,10 @@ public class EvaluationModuleComponent
     }
 
     @Override
-    public void shutDown() throws Exception {
+    public void triggerShutdown() {
     	esSubscription.dispose();
 
-    	super.shutDown();
+    	super.triggerShutdown();
         // TODO Auto-generated method stub
 
     }

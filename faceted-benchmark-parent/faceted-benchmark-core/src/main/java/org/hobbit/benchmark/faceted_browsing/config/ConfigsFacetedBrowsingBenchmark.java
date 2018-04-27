@@ -43,8 +43,6 @@ import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
-import org.hobbit.core.service.api.IdleServiceDelegate;
-import org.hobbit.core.service.api.ServiceDelegateEntity;
 import org.hobbit.core.service.api.SparqlDockerApiService;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
@@ -287,8 +285,9 @@ public class ConfigsFacetedBrowsingBenchmark {
 		//@Bean(initMethod="startUp", destroyMethod="shutDown")
 		//public DockerServiceManagerClientComponent dockerServiceManagerClientCore(
 		@Bean
-		public BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> dockerServiceManagerClientCore(
+		public BeanWrapperService<DockerServiceManagerClientComponent> dockerServiceManagerClientCore(
 				@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver,
+				@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender,
 				@Qualifier("dockerServiceManagerConnectionClient") Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
 				Gson gson,
                 @Value("${" + Constants.CONTAINER_NAME_KEY + ":no-requester-container-id-set}") String requesterContainerId,
@@ -298,24 +297,27 @@ public class ConfigsFacetedBrowsingBenchmark {
 			DockerServiceManagerClientComponent core =
 					new DockerServiceManagerClientComponent(
 							commandReceiver,
+							commandSender,
 							requestToServer,
 							gson,
 							requesterContainerId,
 							defaultRequestedContainerType
 					);
-			return new BeanWrapperService<>(new IdleServiceDelegate<>(core));
+			
+			BeanWrapperService<DockerServiceManagerClientComponent> result = new BeanWrapperService<>(core);
+			return result;
 		}
 			
 		//ServiceDelegate<DockerServiceManagerClientComponent>
 		@Bean
 		public DockerServiceBuilderFactory<?> dockerServiceManagerClient(
 				//DockerServiceManagerClientComponent core
-				BeanWrapperService<ServiceDelegateEntity<DockerServiceManagerClientComponent>> tmp,
+				BeanWrapperService<DockerServiceManagerClientComponent> tmp,
                 @Value("${" + Constants.HOBBIT_SESSION_ID_KEY + ":" + Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS + "}") String hobbitSessionId,                
                 @Value("${" + Constants.RABBIT_MQ_HOST_NAME_KEY + ":localhost}") String amqpHost                
 				
 		) throws Exception {
-			DockerServiceManagerClientComponent core = tmp.getService().getEntity();
+			DockerServiceManagerClientComponent core = tmp.getService();
 			
 			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
 					() -> {
@@ -493,6 +495,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 				throw new RuntimeException(e1);
 			}
 	    	
+			// TODO Ensure the health check can be interrupted on service stop 
 	    	new HealthcheckRunner(60, 1, TimeUnit.SECONDS, () -> {
 	    		try {
 			        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -500,9 +503,11 @@ public class ConfigsFacetedBrowsingBenchmark {
 		            connection.connect();
 		            int code = connection.getResponseCode();
 		            if(code != 200) {
+		            	logger.info("Health check status: fail");
 		            	throw new NotFoundException(url.toString());
 		            }
 		            connection.disconnect();
+	            	logger.info("Health check status: success");
 	    		} catch(Exception e) {
 	    			throw new RuntimeException(e);
 	    		}
@@ -793,48 +798,51 @@ public class ConfigsFacetedBrowsingBenchmark {
 		@Bean
 		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 			return args -> {
-				
-				logger.info("Prepapring benchmark launch");
-				
-				// The service builder factory is pre-configured to set Constants.HOBBIT_SESSION_ID_KEY
-				
-				Map<String, String> serviceEnv = new HashMap<>();
-				serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
-				
-				// Launch the system adapter
-				Service saService = dockerServiceBuilderFactory.get()
-					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
-					//.setLocalEnvironment(serviceEnv)
-					.get();
-				
-				
-				// Launch the benchmark
-				Service bcService = dockerServiceBuilderFactory.get()
-					.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
-					//.setLocalEnvironment(serviceEnv)
-					.get();
-
-//				Service esService = dockerServiceBuilderFactory.get()
-//						.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
-//						.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
-//						.get();
-
-//				esService.startAsync().awaitRunning();
-//				esService.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
-//				
-//				if(true) {
-//					System.out.println("yay");
-//					return;
-//				}
-				
-				saService.startAsync().awaitRunning();
-				try {					
-					//bcService.startAsync().awaitRunning();
+				try {
+					logger.info("BenchmarkLauncher starting");
 					
-					// Wait for the bc to finish
-					bcService.startAsync().awaitTerminated();
-				} finally {				
-					saService.stopAsync().awaitTerminated();
+					// The service builder factory is pre-configured to set Constants.HOBBIT_SESSION_ID_KEY
+					
+					Map<String, String> serviceEnv = new HashMap<>();
+					serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
+					
+					// Launch the system adapter
+					Service saService = dockerServiceBuilderFactory.get()
+						.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
+						//.setLocalEnvironment(serviceEnv)
+						.get();
+					
+					
+					// Launch the benchmark
+					Service bcService = dockerServiceBuilderFactory.get()
+						.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
+						//.setLocalEnvironment(serviceEnv)
+						.get();
+	
+	//				Service esService = dockerServiceBuilderFactory.get()
+	//						.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
+	//						.setLocalEnvironment(ImmutableMap.<String, String>builder().build())
+	//						.get();
+	
+	//				esService.startAsync().awaitRunning();
+	//				esService.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
+	//				
+	//				if(true) {
+	//					System.out.println("yay");
+	//					return;
+	//				}
+					
+					saService.startAsync().awaitRunning();
+					try {					
+						//bcService.startAsync().awaitRunning();
+						
+						// Wait for the bc to finish
+						bcService.startAsync().awaitTerminated();
+					} finally {
+						saService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+					}
+				} finally {
+					logger.info("BenchmarkLauncher terminating");
 				}
 			};
 		}
@@ -862,23 +870,19 @@ public class ConfigsFacetedBrowsingBenchmark {
     			.get();
 
     	SparqlBasedService result = new SparqlDockerApiService(service) {
-    		protected Supplier<RDFConnection> api;
-    		
-    		@Override
-    		protected void startUp() throws Exception {
-    			super.startUp();
-
-    			String host = delegate.getContainerId();	    			
-    			String baseUrl = "http://" + host + ":" + "8890";
-    			
-    			logger.info("Sparql endpoint online at: " + baseUrl);
-    			
-    			api = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
-    			//api = () -> VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);	    			
-    		}
-    		
     		public Supplier<RDFConnection> getApi() {
-    			return api;
+    			Supplier<RDFConnection> result;
+    			if(isRunning()) {
+        			String host = delegate.getContainerId();
+        			String baseUrl = "http://" + host + ":" + "8890";
+        			
+        			result = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
+        			
+        			logger.info("Sparql endpoint online at: " + baseUrl);
+        		} else {
+        			throw new IllegalStateException("Can only access API of running services");
+        		}
+    			return result;
     		}
     	};
     	

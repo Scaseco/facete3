@@ -26,8 +26,6 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchm
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigSystemAdapter;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGeneratorFacetedBenchmark;
-import org.hobbit.benchmark.faceted_browsing.main.LauncherHobbitComponent;
-import org.hobbit.benchmark.faceted_browsing.main.LauncherServiceCapable;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
 import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
@@ -36,7 +34,7 @@ import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
-import org.hobbit.core.service.api.DockerServiceDelegateWrapper;
+import org.hobbit.core.service.api.DockerServiceDelegate;
 import org.hobbit.core.service.api.ServiceDelegate;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
@@ -75,27 +73,27 @@ public class ConfigVirtualDockerServiceFactory {
 		// channels are only closed once the components have shut down and sent their final messages
 		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> createComponentBaseConfig("bc", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
-					.child(BenchmarkControllerFacetedBrowsing.class, LauncherServiceCapable.class);
+					.child(BenchmarkControllerFacetedBrowsing.class);
 		
 		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> createComponentBaseConfig("dg", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
-						.child(DataGeneratorFacetedBrowsing.class, LauncherServiceCapable.class);
+						.child(DataGeneratorFacetedBrowsing.class);
 		
 		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
-					.child(TaskGeneratorFacetedBenchmarkMocha.class, LauncherHobbitComponent.class);
+					.child(TaskGeneratorFacetedBenchmarkMocha.class);
 
 		Supplier<SpringApplicationBuilder> saAppBuilder = () -> createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
-					.child(SystemAdapterRDFConnectionMocha.class, LauncherServiceCapable.class);
+					.child(SystemAdapterRDFConnectionMocha.class);
 			
 		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE)
 				.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
-					.child(DefaultEvaluationStorage.class, LauncherServiceCapable.class);		
+					.child(DefaultEvaluationStorage.class);		
 		
 		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
 				.child(ConfigEvaluationModule.class)
-					.child(EvaluationModuleComponent.class, LauncherServiceCapable.class);
+					.child(EvaluationModuleComponent.class);
 		
 		
 		Supplier<SpringApplicationBuilder> qpidServerAppBuilder = () -> new SpringApplicationBuilder()
@@ -142,7 +140,7 @@ public class ConfigVirtualDockerServiceFactory {
         // on startup
         Map<Pattern, Function<DockerService, DockerService>> serviceWrappers = new LinkedHashMap<>();
         serviceWrappers.put(Pattern.compile("tenforce/virtuoso"), dockerService -> {
-        	DockerService r = new DockerServiceDelegateWrapper<DockerService>(dockerService) {
+        	DockerService r = new DockerServiceDelegate<DockerService>(dockerService) {
         		// FIXME We want to enhance the startup method within the thread allocated by the guava service
         		@Override
         		public ServiceDelegate<DockerService> startAsync() {

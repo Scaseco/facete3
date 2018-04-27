@@ -21,11 +21,11 @@ import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 
 
-public class LauncherHobbitComponent {
-	private static final Logger logger = LoggerFactory.getLogger(LauncherHobbitComponent.class);
+public class MainServiceLauncher {
+	private static final Logger logger = LoggerFactory.getLogger(MainServiceLauncher.class);
 			
 	@Bean
-	public ApplicationRunner serviceLauncher(@Qualifier("hobbit-component") Service activeService, ConfigurableApplicationContext ctx) {
+	public ApplicationRunner serviceLauncher(@Qualifier("MainService") Service activeService, ConfigurableApplicationContext ctx) {
 		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx, ApplicationContext::getParent);
 //		ConfigurableApplicationContext rootCtx = ctx;
 
@@ -56,7 +56,7 @@ public class LauncherHobbitComponent {
 				logger.info("Context is closing - shutdown service " + (activeService == null ? "(no active service)" : activeService.getClass()));
 				if(activeService != null && activeService.isRunning()) {
 					try {
-						activeService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+						activeService.stopAsync().awaitTerminated(1000, TimeUnit.SECONDS);
 //							thread.interrupt();
 					} catch (TimeoutException e) {						
 						//e.printStackTrace();
@@ -67,11 +67,11 @@ public class LauncherHobbitComponent {
 		});
 		
 		return args -> {
-			logger.info("LauncherServiceCapable::ApplicationRunner starting service... " + (activeService == null ? "(no active service)" : activeService.getClass()));
+			logger.info("MainServiceLauncher::ApplicationRunner starting service... " + (activeService == null ? "(no active service)" : activeService.getClass()));
 
 			//activeService.startAsync().awaitRunning();
 			activeService.startAsync().awaitTerminated();
-			logger.info("LauncherServiceCapable::ApplicationRunner service started... " + (activeService == null ? "(no active service)" : activeService.getClass()));
+			logger.info("MainServiceLauncher::ApplicationRunner service started... " + (activeService == null ? "(no active service)" : activeService.getClass()));
 		};
 	}
 

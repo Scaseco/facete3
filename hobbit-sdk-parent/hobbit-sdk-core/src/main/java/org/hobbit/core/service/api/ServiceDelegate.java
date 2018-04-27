@@ -4,7 +4,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 
 
@@ -17,11 +16,11 @@ public class ServiceDelegate<S extends Service>
 		super();
 		this.delegate = delegate;
 		
-		delegate.addListener(new Listener() {
-		    public void terminated(State from) {
-		    	stopAsync();
-		    }
-		}, MoreExecutors.directExecutor());
+//		delegate.addListener(new Listener() {
+//		    public void terminated(State from) {
+//		    	stopAsync();
+//		    }
+//		}, MoreExecutors.directExecutor());
 	}
 
 	@Override

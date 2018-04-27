@@ -6,22 +6,21 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.function.BiConsumer;
 
 import javax.annotation.Resource;
 
-import org.hobbit.core.Constants;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.IdleServiceCapable;
 import org.hobbit.core.storage.Storage;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
@@ -41,9 +40,10 @@ import io.reactivex.Flowable;
  * @author raven Sep 21, 2017
  *
  */
+@Component
+@Qualifier("MainService")
 public class DefaultEvaluationStorage
-    extends ComponentBase
-    implements IdleServiceCapable
+    extends ComponentBaseIdleService
 {
     private static final Logger logger = LoggerFactory.getLogger(DefaultEvaluationStorage.class);
 
@@ -98,7 +98,7 @@ public class DefaultEvaluationStorage
     }
 
     @Override
-    public void startUp() throws Exception {
+    public void startUp() {
     	super.startUp();
     	boolean[] resultSent = {false};
     	
@@ -239,7 +239,7 @@ public class DefaultEvaluationStorage
 //    }
 
     @Override
-    public void shutDown() throws Exception {
+    public void shutDown() {
     	super.shutDown();
         logger.debug("evaluation storage shut down done");
     }

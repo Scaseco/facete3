@@ -282,19 +282,19 @@ public class DockerServiceManagerServerComponent
             	StopCommandData data = gson.fromJson(str, StopCommandData.class);
             	String containerId = data.getContainerName();
 
-            	if(responseTarget == null) {
-            		logger.warn("Received a request to stop container " + containerId + ", however there was no target for the response; therefore ignoring request");
-            		return;
-            	}
-
-            	try {
-            		onStopServiceRequest(containerId);
-            	} finally {
-	                // Reply to the requester that its requets was executed
-	                ByteBuffer response = createTerminationMsg(containerId, -1);
-	                
-	                responseTarget.accept(response);
-            	}
+//            	if(responseTarget == null) {
+//            		//logger.warn("Received a request to stop container " + containerId + ", however there was no target for the response; therefore ignoring request");
+//            	} else {
+	
+	            	//try {
+	            		onStopServiceRequest(containerId);
+//	            	} finally {
+//		                // Reply to the requester that its requets was executed
+//		                ByteBuffer response = createTerminationMsg(containerId, -1);
+//		                
+//		                responseTarget.accept(response);
+//	            	}
+//            	}
 
                 break; }
             }

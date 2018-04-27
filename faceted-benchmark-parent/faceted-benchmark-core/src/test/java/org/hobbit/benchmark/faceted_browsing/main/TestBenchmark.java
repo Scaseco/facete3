@@ -7,8 +7,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.util.function.Supplier;
 
-import org.apache.commons.text.RandomStringGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
@@ -22,6 +22,8 @@ import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -33,13 +35,65 @@ import com.google.common.collect.ImmutableMap;
 //@ContextConfiguration(loader = AnnotationConfigContextLoader.class)
 public class TestBenchmark {
 	
+	private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.class);
+
 //	@Configuration
 //	@TestPropertySource(properties = {"hostMode=true"})
 //	public static class Context {
 //	}
 	
+	
+	/**
+	 * A different context layout, where the infrastructure (qpid server and docker service manager) are separated
+	 * from the benchmark (controller) launcher
+	 * 
+	 * @throws MalformedURLException
+	 * @throws IOException
+	 */
 	@Test
-	public void testBenchmark() throws MalformedURLException, IOException {		
+	public void testBenchmarkTwoAppContexts() throws MalformedURLException, IOException {		
+		
+		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
+		//System.exit(0);
+		
+		String sessionId = RabbitMqFlows.idGenerator.get();
+
+		Supplier<SpringApplicationBuilder> builderFactory = () ->
+			new SpringApplicationBuilder()
+			// Add the amqp broker
+			.properties(new ImmutableMap.Builder<String, Object>()
+					.put("hostMode", true)
+					.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + sessionId)
+					//.put(ConfigRabbitMqConnectionFactory.AMQP_VHOST, "default")
+					.build());
+		
+		SpringApplicationBuilder infrastructureBuilder = builderFactory.get()
+			.sources(ConfigQpidBroker.class)
+			// Register the docker service manager server component; for this purpose:
+			// (1) Register any pseudo docker images - i.e. launchers of local components
+			// (2) Configure a docker service factory - which creates service instances that can be launched
+			// (3) configure the docker service manager server component which listens on the amqp infrastructure
+			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
+			;
+
+			
+		SpringApplicationBuilder launcherBuilder = builderFactory.get()
+				.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class, BenchmarkLauncher.class);
+
+		try(ConfigurableApplicationContext envCtx = infrastructureBuilder.run()) {
+			try(ConfigurableApplicationContext launcherCtx = launcherBuilder.run()) {
+				logger.info("LAUNCHER CLOSING");
+			} finally {
+				logger.info("LAUNCHER CLOSED");
+				logger.info("INFRA CLOSING");
+			}
+		} finally {
+			logger.info("INFRA CLOSED");
+		}
+	}
+	
+	//@Test
+	public void testBenchmarkCompact() throws MalformedURLException, IOException {		
 		
 		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
 		//System.exit(0);
@@ -56,7 +110,7 @@ public class TestBenchmark {
 			// (2) Configure a docker service factory - which creates service instances that can be launched
 			// (3) configure the docker service manager server component which listens on the amqp infrastructure
 			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
-			.sibling(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class, BenchmarkLauncher.class);
+			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class, BenchmarkLauncher.class);
 			;
 
 		try(ConfigurableApplicationContext ctx = builder.run()) {}

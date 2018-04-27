@@ -10,6 +10,7 @@ import java.util.function.Function;
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.reactivestreams.Subscriber;
 
 import com.google.common.primitives.Bytes;
 import com.google.gson.Gson;
@@ -36,12 +37,13 @@ public class DockerServiceManagerClientComponent
     
 	public DockerServiceManagerClientComponent(
             Flowable<ByteBuffer> commandPublisher,
+            Subscriber<ByteBuffer> commandSender,
             Function<ByteBuffer, CompletableFuture<ByteBuffer>> requestToServer,
             Gson gson,
             String requesterContainerId,
             String requestedContainerType
 	        ) {
-        super(commandPublisher, requestToServer, gson);
+        super(commandPublisher, commandSender, requestToServer, gson);
 
         this.requesterContainerId = requesterContainerId;
         this.requestedContainerType = requestedContainerType;

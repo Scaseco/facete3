@@ -1,53 +1,39 @@
 package org.hobbit.rdf.component;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NavigableSet;
-import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import javax.annotation.Resource;
 
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
-import org.apache.jena.ext.com.google.common.io.Files;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
-import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
-import org.hobbit.core.component.ComponentBase;
-import org.hobbit.core.component.MochaConstants;
+import org.hobbit.core.component.ComponentBaseExecutionThread;
 import org.hobbit.core.component.DataProtocol;
-import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.RunnableServiceCapable;
+import org.hobbit.core.component.MochaConstants;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.core.utils.ServiceManagerUtils;
-import org.hobbit.transfer.InputStreamManagerImpl;
-import org.hobbit.transfer.StreamManager;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.FileCopyUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.Service;
@@ -66,9 +52,10 @@ import io.reactivex.disposables.Disposable;
  * @author raven Sep 19, 2017
  *
  */
+@Component
+@Qualifier("MainService")
 public class SystemAdapterRDFConnectionMocha
-    extends ComponentBase
-    implements RunnableServiceCapable
+    extends ComponentBaseExecutionThread
 {
     private static final Logger logger = LoggerFactory.getLogger(SystemAdapterRDFConnectionMocha.class);
 
@@ -115,7 +102,7 @@ public class SystemAdapterRDFConnectionMocha
     
     
     @Override
-    public void startUp() throws Exception {
+    public void startUp() {
     	logger.info("SystemAdapter::startUp() started");    
     	
     	super.startUp();
@@ -194,7 +181,8 @@ public class SystemAdapterRDFConnectionMocha
 
     
     @Override
-    public void shutDown() throws Exception {
+    public void triggerShutdown() {
+    	taskGenerationFinishedFuture.cancel(true);
     	try {
 	    	logger.info("SystemAdapter::shutDown() [begin]");    
 	    	unsubscribe.dispose();
@@ -207,18 +195,18 @@ public class SystemAdapterRDFConnectionMocha
 	    		ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
 	    	}
     	} finally {
-    		super.shutDown();
+    		super.triggerShutdown();
     	}
     	logger.info("SystemAdapter::shutDown() [end]");    
     }
 
     @Override
     public void run() throws Exception {
-        logger.info("Waiting for task generation to finish");
+        logger.info("SA: waiting for task generation to finish");
         taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
 //        taskGenerationFinishedFuture.get(60, TimeUnit.SECONDS);
 
-        logger.info("Task generation finished");
+        logger.info("SA: Task generation finished");
     }
 
     

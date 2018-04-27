@@ -48,7 +48,6 @@ public class ServiceManagerUtils {
             @Override
             public void failed(State from, Throwable failure) {
                 result.completeExceptionally(failure);
-                super.failed(from, failure);
             }
             
             @Override
@@ -57,7 +56,6 @@ public class ServiceManagerUtils {
                     result.complete(State.TERMINATED);
                     // TODO Remove listener - but there is no remove on service, so we would have to do things in a more complicated way...
                 }
-                super.terminated(from);
             }
         };
 

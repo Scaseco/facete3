@@ -1,11 +1,11 @@
 package org.hobbit.core.service.api;
 
-import org.hobbit.core.service.docker.DockerService;
+import com.google.common.util.concurrent.Service;
 
-public abstract class DockerApiService<A>
-	extends DockerServiceIdleServiceDelegate
+public abstract class DockerApiService<S extends Service, A>
+	extends ServiceDelegate<S>
 {
-	public DockerApiService(DockerService delegate) {
+	public DockerApiService(S delegate) {
 		super(delegate);
 	}
 

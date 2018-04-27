@@ -838,7 +838,7 @@ public class RabbitMqFlows {
     				}
     			});
 
-    			System.out.println("[STATUS] RequestId " + requestId + ": Sending request to subscriber" + subscriber);
+    			System.out.println("[STATUS] RequestId " + requestId + ": Sending request to subscriber " + subscriber);
 	    		subscriber.onNext(t);
     		} catch(Exception e) {
     			tmp.completeExceptionally(e);

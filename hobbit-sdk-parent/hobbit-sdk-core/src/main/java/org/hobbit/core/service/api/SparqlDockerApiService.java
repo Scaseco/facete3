@@ -7,7 +7,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.service.docker.DockerService;
 
 public abstract class SparqlDockerApiService
-	extends DockerApiService<Supplier<RDFConnection>>
+	extends DockerApiService<DockerService, Supplier<RDFConnection>>
 	implements SparqlBasedService
 {
 	public SparqlDockerApiService(DockerService delegate) {

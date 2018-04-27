@@ -9,14 +9,14 @@ import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
 
-public abstract class ComponentBase2
-	extends AbstractService
+public abstract class ComponentBaseExecutionThread
+	extends AbstractExecutionThreadService
     implements BaseComponent
 {
     private static final Logger logger = LoggerFactory.getLogger(ComponentBase.class);
@@ -35,38 +35,28 @@ public abstract class ComponentBase2
 
     @Override
     public void init() throws Exception {
-    	doStart();
+    	startUp();
     }
 
     
     @Override
     public void close() throws IOException {
         try {
-            doStop();
+            triggerShutdown();
         } catch(Exception e) {
             throw new RuntimeException(e);
         }
     }
     
     @Override
-    public void doStart() {
-    	try {
-    		coreInit();
-        	notifyStarted();
-    	} catch(Exception e) {
-    		notifyFailed(e);
-    	}
+    public void startUp() {
+		coreInit();
     }
 
     
     @Override
-    public void doStop() {
-    	try {
-	    	Optional.ofNullable(commandPublisherDisposable).ifPresent(Disposable::dispose);
-	    	notifyStopped();
-    	} catch(Exception e) {
-    		notifyFailed(e);
-    	}
+    public void shutDown() {
+    	Optional.ofNullable(commandPublisherDisposable).ifPresent(Disposable::dispose);
     }
 
     // FIXME Should we rename to init() ? If so, we must ensure that subclasses' init() methods call super.init()

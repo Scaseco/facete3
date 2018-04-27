@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.hobbit.core.service.api.DockerServiceDelegate;
+import org.hobbit.core.service.api.DockerServicePseudoDelegate;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -88,7 +88,7 @@ public class DockerServiceFactorySpringApplicationBuilder
 
 		Service service = new ServiceSpringApplicationBuilder(imageName, appBuilder);
 
-		DockerService result = new DockerServiceDelegate<>(service, imageName, idStrSupplier);
+		DockerService result = new DockerServicePseudoDelegate<>(service, imageName, idStrSupplier);
 		return result;
 	}
 
