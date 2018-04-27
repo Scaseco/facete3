@@ -8,6 +8,12 @@ docker build -t podigg .
 docker run -it podigg
 ```
 
+Deployment
+```
+docker tag podigg git.project-hobbit.eu:4567/cstadler/podigg/image
+docker login
+docker push git.project-hobbit.eu:4567/cstadler/podigg/image
+```
 
 ## Idea for an alternative workflow
 This is a wrapper around podigg which launches an apache server to host a generated dataset.

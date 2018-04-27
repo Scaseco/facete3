@@ -538,7 +538,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    @Bean
 	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 	        
-	    	String imageName = "podigg";
+	    	//String imageName = "podigg";
+	    	String imageName = "git.project-hobbit.eu:4567/cstadler/podigg/image";
 	    	Map<String, String> env = ImmutableMap.<String, String>builder().put("GTFS_GEN_SEED", "123").build();
 	    	return () -> createPodiggDatasetViaDocker(dockerServiceBuilderFactory, imageName, env);
 	    }
