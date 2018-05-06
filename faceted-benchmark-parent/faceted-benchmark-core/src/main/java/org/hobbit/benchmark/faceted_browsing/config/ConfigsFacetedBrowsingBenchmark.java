@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -28,10 +29,17 @@ import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.NotFoundException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
@@ -535,12 +543,49 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    }
 	    
 	    
+	    
 	    @Bean
-	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModel) {
+	        
+	        logger.info("DG: Configuring podigg with parameters: " + paramModel);
+	        
+	        // Load the benchmark.ttl config as it contains the parameter mapping
+	        Model model = ModelFactory.createDefaultModel();
+	        RDFDataMgr.read(model, new ByteArrayInputStream(paramModel.getBytes()), Lang.JSONLD);
+
+	        Model meta = RDFDataMgr.loadModel("benchmark.ttl");
+	        model.add(meta);
+
+	        Map<String, String> params = new HashMap<>();
+	        Property pOption = ResourceFactory.createProperty("http://w3id.org/bench#podiggOption");
+	        List<Resource> props = model.listSubjectsWithProperty(pOption).toList();
+	        for(Resource p : props) {
+	            String key = p.getProperty(pOption).getString();
+
+	            Property pp = ResourceFactory.createProperty(p.getURI());
+	            List<RDFNode> values = model.listObjectsOfProperty(pp).toList();
+
+                logger.info("DG: Values of " + pp + " " + values);
+
+                if(values.size() > 1) {
+	                throw new RuntimeException("Too many values; at most one expected for " + pp + ": " + values);
+	            }
+
+                if(!values.isEmpty()) {
+                    RDFNode o = values.get(0);
+                    String val = o.asNode().getLiteralLexicalForm();
+                    
+                    params.put(key, val);
+                }	            
+	        }
+	        
+	        logger.info("Podigg options: " + params);
+	        
+	        
 	        
 	    	//String imageName = "podigg";
 	    	String imageName = "git.project-hobbit.eu:4567/cstadler/podigg/image";
-	    	Map<String, String> env = ImmutableMap.<String, String>builder().put("GTFS_GEN_SEED", "123").build();
+	    	Map<String, String> env = ImmutableMap.<String, String>builder().putAll(params).build();
 	    	return () -> createPodiggDatasetViaDocker(dockerServiceBuilderFactory, imageName, env);
 	    }
 		

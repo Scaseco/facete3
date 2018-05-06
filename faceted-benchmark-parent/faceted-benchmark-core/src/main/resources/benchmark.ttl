@@ -19,9 +19,22 @@ bench:Faceted a    hobbit:Benchmark;
 	hobbit:usesImage "git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image";
 	hobbit:usesImage "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage";
 	hobbit:usesImage "git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image";
+    hobbit:usesImage "git.project-hobbit.eu:4567/cstadler/podigg/image";
 	hobbit:version "V1.1";     
 	hobbit:hasAPI <https://project-hobbit.eu/challenges/MOCHA2017-API>  ;
-	hobbit:hasParameter bench:FacetedSeed ;     
+	hobbit:hasParameter bench:paramPodiggSeed ;
+	hobbit:hasParameter bench:paramPodiggRegionSizeX ;
+	hobbit:hasParameter bench:paramPodiggRegionSizeY ;
+	hobbit:hasParameter bench:paramPodiggCellsPerLatLon ;
+	hobbit:hasParameter bench:paramPodiggStops ;
+	hobbit:hasParameter bench:paramPodiggDelayChance ;
+	hobbit:hasParameter bench:paramPodiggConnections ;
+	hobbit:hasParameter bench:paramPodiggRoutes ;
+	hobbit:hasParameter bench:paramPodiggMinRouteLength ;
+	hobbit:hasParameter bench:paramPodiggMaxRouteLength ;
+	hobbit:hasParameter bench:paramPodiggRouteChoicePower ;
+	hobbit:hasParameter bench:paramPodiggTripTimeInitial ;
+	hobbit:hasParameter bench:paramPodiggTripTimeFinal ;
 	hobbit:measuresKPI bench:precision_total ;     
 	hobbit:measuresKPI bench:recall_total ;     
 	hobbit:measuresKPI bench:fmeasure_total ;     
@@ -556,11 +569,108 @@ bench:query_per_second_score_choke_point4 a hobbit:KPI;
  
  bench:FacetedApi a hobbit:API . 
  
- bench:FacetedSeed a hobbit:ConfigurableParameter; 
-     rdfs:label    "Seed for Faceted Browsing Benchmark"@en; 
-     rdfs:comment    "A seed for the generation of a benchmark for faceted browsing"@en; 
-     rdfs:range xsd:integer;
-     hobbit:defaultValue "100"^^xsd:integer .
+bench:paramPodiggSeed a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_SEED" ;
+    rdfs:label "Random Seed for Faceted Browsing Benchmark"@en ;
+    rdfs:comment "A seed for the generation of a benchmark for faceted browsing"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "111"^^xsd:integer .
  
- <https://project-hobbit.eu/challenges/MOCHA2017-API> a hobbit:API .
+bench:paramPodiggRegionSizeX a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_REGION__SIZE_X" ;
+    rdfs:label "Region Size X"@en ;
+    rdfs:comment "The width of the region in number of cells"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "2000"^^xsd:integer .
 
+bench:paramPodiggRegionSizeY a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_REGION__SIZE_Y" ;
+    rdfs:label "Region Size Y"@en ;
+    rdfs:comment "The height of the region in number of cells"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "2000"^^xsd:integer .
+
+bench:paramPodiggCellsPerLatLon a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_REGION__CELLS_PER_LATLON" ;
+    rdfs:label "Cells per LatLon"@en ;
+    rdfs:comment "The precision of the cells, how many cells go in 1 latitude or 1 longitude."@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "200"^^xsd:integer .
+
+bench:paramPodiggStops a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_STOPS__STOPS" ;
+    rdfs:label "Number of Stops"@en ;
+    rdfs:comment "How many stops should be generated"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "3000"^^xsd:integer .
+
+bench:paramPodiggDelayChance a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_CONNECTIONS__DELAY_CHANCE" ;
+    rdfs:label "Delay Chance"@en ;
+    rdfs:comment "Probability of a delay to occurr"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:float ;
+    hobbit:defaultValue "0.02"^^xsd:float .
+
+bench:paramPodiggConnections a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_CONNECTIONS__CONNECTIONS";
+    rdfs:label "Number of Connections"@en ;
+    rdfs:comment "How many connections should be generated"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "200000"^^xsd:integer .
+
+bench:paramPodiggRoutes a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_ROUTES__ROUTES" ;
+    rdfs:label "Number of Routes"@en ;
+    rdfs:comment "How many routes should be generated"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "1000"^^xsd:integer .
+
+bench:paramPodiggMinRouteLength a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH" ;
+    rdfs:label "Minimum Route Length"@en ;
+    rdfs:comment "The minimum number of edges a route must have in the macro-step"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "10"^^xsd:integer .
+
+bench:paramPodiggMaxRouteLength a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH" ;
+    rdfs:label "Maximum Route Length"@en ;
+    rdfs:comment "The maximum number of edges a route can have in the macro-step, the larger, the slower this generator"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "50"^^xsd:integer .
+
+bench:paramPodiggRouteChoicePower a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER" ;
+    rdfs:label "Route Choice Power"@en ;
+    rdfs:comment "The power for selecting longer routes for instantiating connections"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:float ;
+    hobbit:defaultValue "1"^^xsd:float .
+
+bench:paramPodiggTripTimeInitial a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_CONNECTIONS__TIME_INITIAL" ;
+    rdfs:label "Initial Trip Time"@en ;
+    rdfs:comment "The initial timestamp (ms)"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:integer ;
+    hobbit:defaultValue "0"^^xsd:integer .
+
+bench:paramPodiggTripTimeFinal a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    bench:podiggOption "GTFS_GEN_CONNECTIONS__TIME_FINAL" ;
+    rdfs:label "Final Trip Time"@en ;
+    rdfs:comment "The final timestamp (ms) of trip starting times"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:long ;
+    hobbit:defaultValue "31536000000"^^xsd:long .
+
+ <https://project-hobbit.eu/challenges/MOCHA2017-API> a hobbit:API .
