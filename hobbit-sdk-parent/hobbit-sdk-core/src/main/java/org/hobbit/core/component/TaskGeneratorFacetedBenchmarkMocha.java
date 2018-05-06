@@ -303,9 +303,9 @@ public class TaskGeneratorFacetedBenchmarkMocha
                try {
             	   taskAckFuture.get(60, TimeUnit.SECONDS);
                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            	   throw new RuntimeException("Timeout waiting for acknowledgement of task " + taskId);
+            	   throw new RuntimeException("Timeout or failure waiting for acknowledgement of task " + taskId, e);
                }
-               logger.info("Acknowledged: " + taskId);
+               logger.info("Successfully acknowledged: " + taskId);
                
 //                } catch(IOException e) {
 //                    throw new RuntimeException(e);

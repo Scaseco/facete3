@@ -258,6 +258,7 @@ public class TaskGeneratorFacetedBenchmark
 						.triggerOnMessage(taskAckPub, (buffer) -> {
 							String ackMsg = RabbitMQUtils.readString(buffer.array());
 							boolean r = taskId.equals(ackMsg);
+			            	logger.info("Acknowledgement check triggered and evaluated to " + r + "; actual=" + ackMsg + ", expected=" + taskId);
 							return r;
 						});
 

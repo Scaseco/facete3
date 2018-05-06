@@ -44,6 +44,8 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 
+import jersey.repackaged.com.google.common.primitives.Ints;
+
 @Component
 @Qualifier("MainService")
 public class DataGeneratorFacetedBrowsing
@@ -282,7 +284,7 @@ public class DataGeneratorFacetedBrowsing
 	                ///byte[] bytes = RabbitMQUtils.writeString(graphURI);
 	                
 	                ByteBuffer msg = ByteBuffer.wrap(Bytes.concat(
-	                		ByteBuffer.allocate(4).putInt(graphURI.length()).array(),
+	                		Ints.toByteArray(graphURI.length()),
 	                		graphURI.getBytes(StandardCharsets.UTF_8),
 	                		data));
 	                

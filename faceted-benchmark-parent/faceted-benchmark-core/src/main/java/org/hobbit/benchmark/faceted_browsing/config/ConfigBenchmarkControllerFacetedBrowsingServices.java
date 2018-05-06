@@ -55,8 +55,9 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
     public ServiceBuilder<?> evaluationStorageServiceFactory() {
         return CountingSupplier.from(count ->
 	        dockerServiceBuilderFactory.get()
-	        		.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage/image")
+//	        		.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage/image")
 //	                .setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
+	        		.setImageName("git.project-hobbit.eu:4567/cstadler/evaluationstorage/image")
 	                .setLocalEnvironment(ImmutableMap.<String, String>builder()
 	                        .put("ACKNOWLEDGEMENT_FLAG", "true")
 	                        .build())

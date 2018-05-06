@@ -24,7 +24,7 @@
 		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository>
 
 
-		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage</docker.evaluation-storage.repository>
+		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/cstadler/evaluationstorage/image</docker.evaluation-storage.repository>
 		<docker.system-adapter.repository>git.project-hobbit.eu:4567/gkatsibras/facetedsystem</docker.system-adapter.repository>
 
 
@@ -47,8 +47,9 @@
 		<module>qpid-server</module>
 
 		<module>system-adapter</module>
+-->
 		<module>evaluation-storage</module>
-
+<!--
 		<module>docker-service-manager-server</module>
 -->
 	</modules>

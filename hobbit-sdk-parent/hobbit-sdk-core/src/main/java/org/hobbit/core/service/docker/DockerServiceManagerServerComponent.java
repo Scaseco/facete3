@@ -3,12 +3,13 @@ package org.hobbit.core.service.docker;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 
@@ -111,11 +113,19 @@ public class DockerServiceManagerServerComponent
 
         ByteBuffer buffer = ByteBuffer.wrap(Bytes.concat(
                 new byte[]{Commands.DOCKER_CONTAINER_TERMINATED},
-                RabbitMQUtils.writeString(containerId),
+                Ints.toByteArray(containerId.length()),
+                containerId.getBytes(StandardCharsets.UTF_8),
                 new byte[]{(byte)exitCode}
         ));
         
         return buffer;
+    }
+    
+    // Assumes that the first byte indicating the command has already been consumed
+    public static Entry<String, Integer> parseTerminationMessage(ByteBuffer buffer) {
+    	String containerId = RabbitMQUtils.readString(buffer);
+    	int exitCode = buffer.get();
+    	return new SimpleEntry<>(containerId, exitCode);
     }
 
     public synchronized void onStartServiceRequest(String imageName, Map<String, String> env, Consumer<String> idCallback) {

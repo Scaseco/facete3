@@ -181,11 +181,14 @@ public abstract class DockerServiceManagerClientComponentBase
             byte cmd = msg.get();
             switch(cmd) {
             case Commands.DOCKER_CONTAINER_TERMINATED:
-            	msg.limit(msg.limit() - 1);
-                String serviceId = DockerServiceManagerServerComponent.readRemainingBytesAsString(msg, StandardCharsets.UTF_8);
-            	msg.limit(msg.limit() + 1);
+            	Entry<String, Integer> serviceIdAndExitCode = DockerServiceManagerServerComponent.parseTerminationMessage(msg);
+            	
+//            	msg.limit(msg.limit() - 1);
+//                String serviceId = DockerServiceManagerServerComponent.readRemainingBytesAsString(msg, StandardCharsets.UTF_8);
+//            	msg.limit(msg.limit() + 1);
 
-            	int exitCode = msg.get();
+            	String serviceId = serviceIdAndExitCode.getKey();
+            	int exitCode = serviceIdAndExitCode.getValue();
                 handleServiceTermination(serviceId, exitCode);
                 break;
             }

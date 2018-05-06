@@ -139,7 +139,7 @@ public class BenchmarkControllerFacetedBrowsing
         			.reduce(new SimpleEntry<>(0l, 0l), (x, y) -> new SimpleEntry<>(x.getKey() + y.getKey(), x.getValue() + y.getValue()));
         	return r;
         });
-        
+
         dgBulkLoadingFinishedFutures.whenComplete((numRecordsAndBatches, t) -> {
         	
         	logger.info("Bulk loading finished - total records and batches: " + numRecordsAndBatches);
