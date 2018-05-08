@@ -29,7 +29,6 @@ public class ConfigRabbitMqConnectionFactory
 
         String amqpVHost = env.getProperty(AMQP_VHOST);
 
-        
         logger.info("Expecting AMQP Server to be reachable at " + rabbitMQHostName + " with vhost " + amqpVHost);
         
 		ConnectionFactory result = new ConnectionFactory();

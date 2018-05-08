@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -22,6 +23,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import javax.inject.Inject;
 
 import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
@@ -47,6 +50,7 @@ import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedB
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.TaskGeneratorModule;
+import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
@@ -193,6 +197,74 @@ public class ConfigsFacetedBrowsingBenchmark {
 //		
 //		
 //	}
+	
+	public static class ConfigQueueNameMapper {	    
+	    @Bean
+	    public Function<String, String> queueNameMapper(@Value("${" + Constants.HOBBIT_SESSION_ID_KEY + ":" + Constants.HOBBIT_SESSION_ID_FOR_PLATFORM_COMPONENTS + "}") String hobbitSessionId) {
+	        return queueName -> queueName + "." + hobbitSessionId;
+	    }
+	}
+	
+	public static interface DataQueueFactory {
+	    Subscriber<ByteBuffer> createSender(Channel channel, String queueName) throws Exception;
+	    Flowable<ByteBuffer> createReceiver(Channel channel, String queueName) throws Exception;	    
+	}
+	
+	public static class DataQueueFactoryImpl
+           implements DataQueueFactory
+    {
+       @Override
+       public Subscriber<ByteBuffer> createSender(Channel channel, String queueName) throws IOException {
+           return RabbitMqFlows.createDataSender(channel, queueName);           
+       }
+
+       @Override
+       public Flowable<ByteBuffer> createReceiver(Channel channel, String queueName) throws IOException, TimeoutException {
+           return RabbitMqFlows.createDataReceiver(channel, queueName);           
+       }
+   }
+
+	
+	public static class DataQueueFactoryRenaming
+	    implements DataQueueFactory
+	{
+        protected DataQueueFactory delegate;
+	    protected Function<String, String> queueNameMapper;
+	    
+        public DataQueueFactoryRenaming(DataQueueFactory delegate,
+                Function<String, String> queueNameMapper) {
+            super();
+            this.delegate = delegate;
+            this.queueNameMapper = queueNameMapper;
+        }
+
+        @Override
+        public Subscriber<ByteBuffer> createSender(Channel channel, String baseQueueName) throws Exception {
+            String queueName = queueNameMapper.apply(baseQueueName);
+            return delegate.createSender(channel, queueName);            
+        }
+
+        @Override
+        public Flowable<ByteBuffer> createReceiver(Channel channel, String baseQueueName) throws Exception {
+            String queueName = queueNameMapper.apply(baseQueueName);
+            return delegate.createReceiver(channel, queueName);            
+        }
+	}
+	
+	public static class ConfigDataQueueFactory {
+	    @Bean
+	    public DataQueueFactory dataQueueFactory(@Qualifier("queueNameMapper") Function<String, String> queueNameMapper) {
+	        DataQueueFactory result = new DataQueueFactoryImpl();
+	        
+	        if(queueNameMapper != null) {
+	            result = new DataQueueFactoryRenaming(result, queueNameMapper);
+	        }
+	        
+	        return result;
+	    }
+	    
+	}
+	
 	
 	public static class ConfigRabbitMqConnection {
 		@Bean
@@ -440,14 +512,17 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	public static class ConfigDataGenerator {
 		
+        @Inject
+        protected DataQueueFactory dataQueueFactory;
+
 		@Bean
 		public Channel dg2tgChannel(Connection connection) throws IOException {
 			return connection.createChannel();
 		}
 		
 	    @Bean
-	    public Subscriber<ByteBuffer> dg2tgSender(@Qualifier("dg2tgChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> dg2tgSender(@Qualifier("dg2tgChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 	    }
 
 	    
@@ -457,8 +532,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> dg2saSender(@Qualifier("dg2saChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> dg2saSender(@Qualifier("dg2saChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
 	}
@@ -504,7 +579,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 			}
 	    	
 			// TODO Ensure the health check can be interrupted on service stop 
-	    	new HealthcheckRunner(60, 1, TimeUnit.SECONDS, () -> {
+	    	new HealthcheckRunner(60 * 5, 1, TimeUnit.SECONDS, () -> {
 	    		try {
 			        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 		            connection.setRequestMethod("GET");
@@ -581,6 +656,25 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        
 	        logger.info("Podigg options: " + params);
 	        
+	        params = ImmutableMap.<String, String>builder()
+	                .put("GTFS_GEN_SEED", "111")
+	                .put("GTFS_GEN_REGION__SIZE_X", "2000")
+	                .put("GTFS_GEN_REGION__SIZE_Y", "2000")
+	                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
+	                .put("GTFS_GEN_STOPS__STOPS", "3000")
+	                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
+	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "200000")
+	                .put("GTFS_GEN_ROUTES__ROUTES", "1000")
+	                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
+	                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
+	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1")
+	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
+	                .build();
+
+	        params = new HashMap<>();
+	        
+	        logger.warn("BENCHMARK PARAMETERS ARE IGNORED FOR TESTING - THIS MESSAGE MUST NOT APPEAR IN PRODUCTION LOGS");
+	        logger.warn("Using params: " + params);
 	        
 	        
 	    	//String imageName = "podigg";
@@ -605,6 +699,9 @@ public class ConfigsFacetedBrowsingBenchmark {
 	
 	public static class ConfigTaskGenerator {
 
+        @Inject
+        protected DataQueueFactory dataQueueFactory;
+
 		/*
 		 * Reception from dg 
 		 */
@@ -615,8 +712,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 		
 	    @Bean
-	    public Flowable<ByteBuffer> dg2tgReceiver(@Qualifier("dg2tgChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
+	    public Flowable<ByteBuffer> dg2tgReceiver(@Qualifier("dg2tgChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME);
 	    }
 
 		/*
@@ -630,8 +727,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 		
 	    @Bean
-	    public Subscriber<ByteBuffer> tg2saSender(@Qualifier("tg2saChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> tg2saSender(@Qualifier("tg2saChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
 
@@ -645,8 +742,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> tg2esSender(@Qualifier("tg2esChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> tg2esSender(@Qualifier("tg2esChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 	    
 	    
@@ -667,14 +764,17 @@ public class ConfigsFacetedBrowsingBenchmark {
 	
 	public static class ConfigSystemAdapter {
 
+	    @Inject
+	    protected DataQueueFactory dataQueueFactory;
+	    
 		@Bean
 		public Channel dg2saChannel(Connection connection) throws IOException {
 			return connection.createChannel();
 		}
 		
 	    @Bean
-	    public Flowable<ByteBuffer> dg2saReceiver(@Qualifier("dg2saChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
+	    public Flowable<ByteBuffer> dg2saReceiver(@Qualifier("dg2saChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.DATA_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
         //SparqlQueryConnection queryConn = new SparqlQueryConnectionJsa(tmp.getQueryExecutionFactory());
@@ -724,8 +824,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> tg2saReceiver(@Qualifier("tg2saChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
+	    public Flowable<ByteBuffer> tg2saReceiver(@Qualifier("tg2saChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.TASK_GEN_2_SYSTEM_QUEUE_NAME);
 	    }
 
 		@Bean
@@ -734,13 +834,16 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> sa2esSender(@Qualifier("sa2esChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> sa2esSender(@Qualifier("sa2esChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 	}
 	
 	
 	public static class ConfigEvaluationStorage {
+
+        @Inject
+        protected DataQueueFactory dataQueueFactory;
 
 		@Bean
 		public Channel tg2esChannel(Connection connection) throws IOException {
@@ -748,8 +851,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> tg2esReceiver(@Qualifier("tg2esChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Flowable<ByteBuffer> tg2esReceiver(@Qualifier("tg2esChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.TASK_GEN_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
 		@Bean
@@ -758,8 +861,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> sa2esReceiver(@Qualifier("sa2esChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Flowable<ByteBuffer> sa2esReceiver(@Qualifier("sa2esChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.SYSTEM_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 		
 
@@ -769,8 +872,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("es2emChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("es2emChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
 	    }
 	    
 	    
@@ -780,8 +883,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 	    
 	    @Bean
-	    public Flowable<ByteBuffer> em2esReceiver(@Qualifier("em2esChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Flowable<ByteBuffer> em2esReceiver(@Qualifier("em2esChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
 	    
@@ -806,14 +909,17 @@ public class ConfigsFacetedBrowsingBenchmark {
 	
 	public static class ConfigEvaluationModule {
 
+        @Inject
+        protected DataQueueFactory dataQueueFactory;
+
 		@Bean
 		public Channel em2esChannel(Connection connection) throws IOException {
 			return connection.createChannel();
 		}
 
 		@Bean
-	    public Subscriber<ByteBuffer> em2esSender(@Qualifier("em2esChannel") Channel channel) throws IOException {
-	        return RabbitMqFlows.createDataSender(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Subscriber<ByteBuffer> em2esSender(@Qualifier("em2esChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createSender(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
 	    }
 
 		@Bean
@@ -822,8 +928,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> es2emReceiver(@Qualifier("es2emChannel") Channel channel) throws IOException, TimeoutException {
-	        return RabbitMqFlows.createDataReceiver(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+	    public Flowable<ByteBuffer> es2emReceiver(@Qualifier("es2emChannel") Channel channel) throws Exception {
+	        return dataQueueFactory.createReceiver(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
 	    }
 
 	    @Bean
@@ -840,6 +946,63 @@ public class ConfigsFacetedBrowsingBenchmark {
 		private static final Logger logger = LoggerFactory.getLogger(ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher.class);
 
 		protected Environment env;
+		
+		
+		
+		
+		
+		// Hack from https://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+		public static void setEnv(Map<String, String> newenv) throws Exception {
+		    try {
+		      Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+		      Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
+		      theEnvironmentField.setAccessible(true);
+		      Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+		      env.putAll(newenv);
+		      Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
+		      theCaseInsensitiveEnvironmentField.setAccessible(true);
+		      Map<String, String> cienv = (Map<String, String>)     theCaseInsensitiveEnvironmentField.get(null);
+		      cienv.putAll(newenv);
+		    } catch (NoSuchFieldException e) {
+		      Class[] classes = Collections.class.getDeclaredClasses();
+		      Map<String, String> env = System.getenv();
+		      for(Class cl : classes) {
+		        if("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+		          Field field = cl.getDeclaredField("m");
+		          field.setAccessible(true);
+		          Object obj = field.get(env);
+		          Map<String, String> map = (Map<String, String>) obj;
+		          map.clear();
+		          map.putAll(newenv);
+		        }
+		      }
+		    }
+		  }
+		public void mockAbstractSa() throws Exception {
+		    Map<String, String> map = new HashMap<>(System.getenv());
+		    map.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
+		    map.put(Constants.RABBIT_MQ_HOST_NAME_KEY, env.getProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost"));
+		    setEnv(map);
+		    
+		    AbstractSystemAdapter asa = new AbstractSystemAdapter() {
+                
+                @Override
+                public void receiveGeneratedTask(String taskId, byte[] data) {
+                    System.out.println("SA Received task " + taskId);
+                }
+                
+                @Override
+                public void receiveGeneratedData(byte[] data) {
+                    System.out.println("SA Received some data");
+                    
+                }
+            };
+            
+
+            asa.init();
+            
+            
+		}
 		
 		@Bean
 		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
@@ -877,6 +1040,9 @@ public class ConfigsFacetedBrowsingBenchmark {
 	//					System.out.println("yay");
 	//					return;
 	//				}
+					
+					//mockAbstractSa();
+					
 					
 					saService.startAsync().awaitRunning();
 					try {					

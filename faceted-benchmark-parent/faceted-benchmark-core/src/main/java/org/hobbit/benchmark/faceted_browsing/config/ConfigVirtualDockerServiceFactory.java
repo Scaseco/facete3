@@ -16,12 +16,14 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchm
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataGeneratorFacetedBrowsing;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataQueueFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceManagerClient;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceManagerServer;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigEvaluationModule;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigEvaluationStorage;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigEvaluationStorageStorageProvider;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigQueueNameMapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigRabbitMqConnection;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigSystemAdapter;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigTaskGenerator;
@@ -59,7 +61,7 @@ public class ConfigVirtualDockerServiceFactory {
 	                    .put(COMPONENT_NAME_KEY, componentName)
 	                    .put(DEFAULT_REQUESTED_CONTAINER_TYPE_KEY, defaultRequestedContainerType)
 	                    .build())
-	            .sources(ConfigGson.class, ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class)
+	            .sources(ConfigGson.class, ConfigCommunicationWrapper.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommandChannel.class, ConfigQueueNameMapper.class, ConfigDataQueueFactory.class)
 	                .child(ConfigDockerServiceManagerClient.class);
 	    return result;
 	}

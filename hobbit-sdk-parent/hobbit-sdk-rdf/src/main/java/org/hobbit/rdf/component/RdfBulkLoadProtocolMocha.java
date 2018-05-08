@@ -92,10 +92,10 @@ public class RdfBulkLoadProtocolMocha
 				}
 
 				//if(("" + rdfConnection).contains("Remote")) {
-					System.out.println("Debug point: " + rdfConnection);
+					logger.info("Debug point: " + rdfConnection);
 				//}
 				try(QueryExecution qe = rdfConnection.query("SELECT (COUNT(*) AS ?c) { GRAPH ?g { ?s ?p ?o } }")) {
-					System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+					logger.info(ResultSetFormatter.asText(qe.execSelect()));
 				}
 				
 				loadingNumber++;

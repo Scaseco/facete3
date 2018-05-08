@@ -241,7 +241,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
         
         
         logger.info("TaskGenerator waiting for start signal");
-        startTaskGenerationFuture.get(60, TimeUnit.SECONDS);
+        startTaskGenerationFuture.get(60 * 5, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();

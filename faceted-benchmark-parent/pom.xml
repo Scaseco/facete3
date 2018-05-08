@@ -26,7 +26,7 @@
 
 	<modules>
 		<module>faceted-benchmark-core</module>
-<!--		<module>faceted-benchmark-docker-parent</module> -->
+		<!-- <module>faceted-benchmark-docker-parent</module> -->
 	</modules>
 
 	<dependencyManagement>
@@ -62,8 +62,8 @@
 
 		<plugins>
 			<plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-surefire-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
 			</plugin>
 		</plugins>
 
@@ -81,19 +81,21 @@
 					<goals> <goal>shade</goal> </goals> </execution> </executions> </plugin> -->
 
 
-                        <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-surefire-plugin</artifactId>
-                                <version>2.20</version>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.20</version>
 
 
-<!-- The spring based unit tests presently cannot configure properties across all containers -->
-                                <configuration>
-					<systemPropertyVariables>
-			                    <AMQP_VHOST>default</AMQP_VHOST>
-                			</systemPropertyVariables>
-                                </configuration>
-                        </plugin>
+					<!-- The spring based unit tests presently cannot configure properties 
+						across all containers -->
+					<configuration>
+<!-- VHOST no longer has to be set -->
+<!-- 						<systemPropertyVariables> -->
+<!-- 							<AMQP_VHOST>default</AMQP_VHOST> -->
+<!-- 						</systemPropertyVariables> -->
+					</configuration>
+				</plugin>
 
 			</plugins>
 		</pluginManagement>

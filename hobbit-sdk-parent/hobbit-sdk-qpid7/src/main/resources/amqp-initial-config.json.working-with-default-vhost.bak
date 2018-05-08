@@ -1,7 +1,6 @@
 {
   "name": "Embedded Test Broker",
-  "modelVersion": "7.0",
-  "defaultVirtualHost" : "default",
+  "modelVersion": "6.1",
   "authenticationproviders" : [{
     "name": "password",
     "type": "Plain",
@@ -15,14 +14,13 @@
     "protocols": [ "AMQP_0_9_1" ],
     "transports": [ "TCP" ],
     "virtualhostaliases": [{
-      "name": "defaultAlias",
-      "type": "defaultAlias"
+      "name": "default",
+      "type": "nameAlias"
     }]
   }],
   "virtualhostnodes" : [{
     "name": "default",
     "type": "Memory",
-    "defaultVirtualHostNode" : "true",
     "virtualHostInitialConfiguration": "{ \"type\": \"Memory\" }"
   }]
 }
