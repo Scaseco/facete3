@@ -35,6 +35,7 @@ bench:Faceted a    hobbit:Benchmark;
 	hobbit:hasParameter bench:paramPodiggRouteChoicePower ;
 	hobbit:hasParameter bench:paramPodiggTripTimeInitial ;
 	hobbit:hasParameter bench:paramPodiggTripTimeFinal ;
+	hobbit:hasParameter bench:paramQuickTestRun ;
 	hobbit:measuresKPI bench:precision_total ;     
 	hobbit:measuresKPI bench:recall_total ;     
 	hobbit:measuresKPI bench:fmeasure_total ;     
@@ -672,5 +673,12 @@ bench:paramPodiggTripTimeFinal a hobbit:Parameter, hobbit:FeatureParameter, hobb
     rdfs:domain hobbit:Experiment, hobbit:Challenge ;
     rdfs:range xsd:long ;
     hobbit:defaultValue "31536000000"^^xsd:long .
+
+bench:paramQuickTestRun a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    rdfs:label "Quick Test Run"@en ;
+    rdfs:comment "If true, *ALL* parameters are ignored and an internal quick test configuration is used instead. This is useful to quickly test for any problems in the overall benchmarking process."@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:boolean ;
+    hobbit:defaultValue "false"^^xsd:boolean .
 
  <https://project-hobbit.eu/challenges/MOCHA2017-API> a hobbit:API .
