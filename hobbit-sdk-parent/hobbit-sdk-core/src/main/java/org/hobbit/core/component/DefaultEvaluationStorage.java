@@ -1,15 +1,14 @@
 package org.hobbit.core.component;
 
 import java.nio.ByteBuffer;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import javax.annotation.Resource;
 
-import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
@@ -83,6 +82,11 @@ public class DefaultEvaluationStorage
     @Resource(name="taskAckSender")
     protected Subscriber<ByteBuffer> taskAck;
 
+    @Resource(name="expectedResultDecoder")
+    protected Function<ByteBuffer, Entry<String, Result>> expectedResultDecoder;
+
+    @Resource(name="actualResultDecoder")
+    protected Function<ByteBuffer, Entry<String, Result>> actualResultDecoder;
 
     public Iterator<ResultPair> createIterator() {
         return storage.streamResults()
@@ -106,25 +110,27 @@ public class DefaultEvaluationStorage
         // TODO We could add detection of duplicate keys
 
         expectedResultsFromTaskGenerator.subscribe(data -> {
-            logger.debug("Got expected result from task generator");
+        	data = data.duplicate();
+            logger.info("Got expected result from task generator");
 
             if(resultSent[0]) {
             	throw new RuntimeException("Evaluation module already requested data, yet an attempt to add another expected result was seen");
             }
             
-            Entry<String, Result> record = parseMessage(data);
+            Entry<String, Result> record = expectedResultDecoder.apply(data);
             storage.putExpectedValue(record.getKey(), record.getValue());
         });
 
         actualResultsFromSystemAdapter.subscribe(data -> {
-            logger.debug("Got actual result from system adapter");
+        	data = data.duplicate();
+            logger.info("Got actual result from system adapter");
 
             if(resultSent[0]) {
             	throw new RuntimeException("Evaluation module already requested data, yet an attempt to add another actual result was seen");
             }
             
             //final String ackExchangeName = generateSessionQueueName(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-            Entry<String, Result> record = parseMessage(data);
+            Entry<String, Result> record = actualResultDecoder.apply(data);
             String taskId = record.getKey();
 
             logger.info("Acknowledging received evaluation data for task " + taskId);
@@ -210,20 +216,6 @@ public class DefaultEvaluationStorage
     }
 
     
-    public static Entry<String, Result> parseMessage(ByteBuffer buffer) {
-        String taskId = RabbitMQUtils.readString(buffer);
-        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-
-        //System.out.println("For " + consumer + " Received taskId " + taskId);
-        
-        // FIMXE hack for timestamps
-        long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
-
-        Result r = new ResultImpl(timestamp, taskData);
-
-        Entry<String, Result> result = new SimpleEntry<>(taskId, r);
-        return result;
-    }
 
 
 //    // TODO Move to some util function

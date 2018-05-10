@@ -1,10 +1,10 @@
 package org.hobbit.core.component;
 
 import java.io.InputStream;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.apache.jena.rdf.model.Resource;
-import org.hobbit.core.service.api.IdleServiceCapable;
 
 public interface TaskGeneratorModule
 	extends DataProtocol
@@ -16,4 +16,7 @@ public interface TaskGeneratorModule
 	
 	void loadDataFromStream(InputStream tmpIn);
 	Stream<Resource> generateTasks();
+	
+	
+    CompletableFuture<?> getDataLoadingComplete();
 }

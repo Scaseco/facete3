@@ -6,15 +6,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
 
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.MochaConstants;
@@ -80,11 +80,14 @@ public class RdfBulkLoadProtocolMocha
 
 				pendingBulkLoadSizes.removeFirst();
 				
+				Set<String> graphNames = new HashSet<>();
 				for(int i = 0; i < requiredMessageCountForBatch; ++i) {
 					Entry<String, File> e = graphToFiles.pollFirst();
 					String graph = e.getKey();
 					String finalFilename = e.getValue().getAbsolutePath();
 
+					graphNames.add(graph);
+					
 					rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
 
 					//System.out.println("RDF conn is " + rdfConnection);
@@ -92,10 +95,15 @@ public class RdfBulkLoadProtocolMocha
 				}
 
 				//if(("" + rdfConnection).contains("Remote")) {
-					logger.info("Debug point: " + rdfConnection);
+					//logger.info("Debug point: " + rdfConnection);
 				//}
-				try(QueryExecution qe = rdfConnection.query("SELECT (COUNT(*) AS ?c) { GRAPH ?g { ?s ?p ?o } }")) {
-					logger.info(ResultSetFormatter.asText(qe.execSelect()));
+				for(String graph : graphNames) {
+					try(QueryExecution qe = rdfConnection.query("SELECT (COUNT(*) AS ?c) { GRAPH <" + graph + "> { ?s ?p ?o } }")) {
+						Integer count = ServiceUtils.fetchInteger(qe, Vars.c);
+						
+						logger.info("Counted " + count + " triples in graph " + graph);
+						//logger.info(ResultSetFormatter.asText(qe.execSelect()));
+					}
 				}
 				
 				loadingNumber++;

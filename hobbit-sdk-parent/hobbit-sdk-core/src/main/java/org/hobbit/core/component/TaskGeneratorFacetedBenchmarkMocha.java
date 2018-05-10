@@ -154,7 +154,11 @@ public class TaskGeneratorFacetedBenchmarkMocha
         
 
 
-        startTaskGenerationFuture = CompletableFuture.allOf(startSignalReceivedFuture, loadDataFinishedFuture);
+        startTaskGenerationFuture = CompletableFuture.allOf(
+        		startSignalReceivedFuture,
+        		loadDataFinishedFuture,
+        		taskGeneratorModule.getDataLoadingComplete()
+        		);
 
 //        // Avoid duplicate services
 //        Set<Service> services = Sets.newIdentityHashSet();

@@ -7,15 +7,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.stream.Stream;
 
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
+import org.hobbit.core.data.Result;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -48,18 +60,66 @@ public class FacetedBrowsingEncoders {
     	
     	return result;
     }
-//
-//    public static ByteBuffer formatForSystemAdapter(Resource r) {
-//    	String taskIdStr = r.getURI();
-//    	String queryStr = r.getProperty(RDFS.label).getString();
-//
-//        byte[] tmp = RabbitMQUtils.writeByteArrays(
-//                new byte[][] { RabbitMQUtils.writeString(taskIdStr), queryStr.getBytes(StandardCharsets.UTF_8) });
-//
-//        ByteBuffer result = ByteBuffer.wrap(tmp);
-//        return result;
-//
-//    }
+    
+    
+    
+    // TODO Make a unit test
+    /**
+     * Test a round trip of the encoding for the system adapter
+     * @param args
+     */
+    public static void main(String[] args) {
+    	Resource a = ModelFactory.createDefaultModel().createResource("http://example.org/task1")
+    			.addProperty(RDFS.label, "task specification string");
+    	
+    	Resource b = readResourceForSystemAdapter(formatResourceForSystemAdapter(a));
+    	System.out.println(a.getProperty(RDFS.label).getString().equals(b.getProperty(RDFS.label).getString()));
+    	System.out.println(a.getURI().equals(b.getURI()));
+    }
+    
+    
+    public static ByteBuffer formatResourceForSystemAdapter(Resource r) {
+    	String taskIdStr = r.getURI();
+    	String queryStr = r.getProperty(RDFS.label).getString();
+
+        byte[] tmp = RabbitMQUtils.writeByteArrays(
+                new byte[][] { RabbitMQUtils.writeString(taskIdStr), queryStr.getBytes(StandardCharsets.UTF_8) });
+        
+        
+        ByteBuffer result = ByteBuffer.wrap(tmp);
+        return result;
+    }
+    
+    
+    public static Resource readResourceForSystemAdapter(ByteBuffer buffer) {
+    	
+        String taskId = RabbitMQUtils.readString(buffer);
+        String taskStr = RabbitMQUtils.readString(buffer);
+        //byte[] payload = RabbitMQUtils.readByteArray(buffer);
+        //String taskStr = RabbitMQUtils.readString(payload);
+        //byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+        
+        //String taskStr = new String(taskData, StandardCharsets.UTF_8);
+        
+        Resource result = ModelFactory.createDefaultModel().createResource(taskId)
+        		.addProperty(RDFS.label, taskStr);
+        
+        return result;
+    }
+    
+    
+    public static ByteBuffer writeResourceJson(Resource subResource, Gson gson) {
+		JsonObject json = FacetedBrowsingEncoders.resourceToJson(subResource);
+		ByteBuffer r = ByteBuffer.wrap(gson.toJson(json).getBytes(StandardCharsets.UTF_8));    
+		return r;
+    }
+
+ 
+    public Resource readResourceJson(ByteBuffer buffer, Gson gson) {
+		String jsonStr = new String(buffer.array(), StandardCharsets.UTF_8);
+		org.apache.jena.rdf.model.Resource r = FacetedBrowsingEncoders.jsonToResource(jsonStr, gson);
+		return r;	
+    }
 //
 //    public static Resource readSystemAdapter(ByteBuffer r) {
 //    	Resource result = 
@@ -171,6 +231,23 @@ public class FacetedBrowsingEncoders {
         return s.hasNext() ? s.next() : "";
     }
 
+    
+    
+    public static Entry<String, Result> parseExpectedOrActualTaskResult(ByteBuffer buffer) {
+        String taskId = RabbitMQUtils.readString(buffer);
+        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+
+        //System.out.println("For " + consumer + " Received taskId " + taskId);
+        
+        // FIMXE hack for timestamps
+        long timestamp = buffer.hasRemaining() ? buffer.getLong() : System.currentTimeMillis();
+
+        Result r = new ResultImpl(timestamp, taskData);
+
+        Entry<String, Result> result = new SimpleEntry<>(taskId, r);
+        return result;
+    }
+
 /*
 
 
@@ -207,5 +284,52 @@ public class FacetedBrowsingEncoders {
     }
 
 */
+    
+    
+	private static final Logger logger = LoggerFactory.getLogger(FacetedBrowsingEncoders.class);
 
+	
+	
+	
+	public static ByteBuffer formatActualResults(String taskIdStr, byte[] data) {
+        byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
+        // + 4 for taskIdBytes.length
+        // + 4 for data.length
+        int capacity = 4 + 4 + taskIdBytes.length + data.length;
+        ByteBuffer buffer = ByteBuffer.allocate(capacity);
+        buffer.putInt(taskIdBytes.length);
+        buffer.put(taskIdBytes);
+        buffer.putInt(data.length);
+        buffer.put(data);
+        buffer.rewind();
+        
+        return buffer;
+	}
+    
+    public static Stream<ByteBuffer> formatActualSparqlResults(String taskIdStr, ResultSet rs) {
+        //String taskIdStr = task.getURI();
+    	
+    	ResultSetMem rsMem = new ResultSetMem(rs);
+    	int numRows = ResultSetFormatter.consume(rsMem);
+    	rsMem.rewind();
+        logger.info("Actual Number of result set rows for task " + taskIdStr + ": " + numRows);
+
+    	
+    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ResultSetFormatter.outputAsJSON(out, rsMem);
+
+        //sendResultToEvalStorage(taskId, outputStream.toByteArray());
+
+        //String taskIdStr = "task-id-foobar";
+        byte[] data = out.toByteArray();
+
+        ByteBuffer b = formatActualResults(taskIdStr, data);
+
+        
+        Collection<ByteBuffer> result = Collections.singleton(b);
+        return result.stream();
+    }
+    
+    
+    
 }

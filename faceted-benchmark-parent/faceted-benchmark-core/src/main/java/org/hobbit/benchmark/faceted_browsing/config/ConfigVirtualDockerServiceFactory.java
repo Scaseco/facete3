@@ -90,11 +90,11 @@ public class ConfigVirtualDockerServiceFactory {
 					.child(SystemAdapterRDFConnectionMocha.class);
 			
 		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE)
-				.child(ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
+				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
 					.child(DefaultEvaluationStorage.class);		
 		
 		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
-				.child(ConfigEvaluationModule.class)
+				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationModule.class)
 					.child(EvaluationModuleComponent.class);
 		
 		

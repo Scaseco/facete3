@@ -38,6 +38,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
@@ -55,6 +56,7 @@ import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.SparqlDockerApiService;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
@@ -620,62 +622,90 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    
 	    
 	    @Bean
-	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModel) {
+	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
 	        
-	        logger.info("DG: Configuring podigg with parameters: " + paramModel);
+	        logger.info("DG: Supplied param model is: " + paramModelStr);
 	        
 	        // Load the benchmark.ttl config as it contains the parameter mapping
-	        Model model = ModelFactory.createDefaultModel();
-	        RDFDataMgr.read(model, new ByteArrayInputStream(paramModel.getBytes()), Lang.JSONLD);
+	        Model paramModel = ModelFactory.createDefaultModel();
+	        RDFDataMgr.read(paramModel, new ByteArrayInputStream(paramModelStr.getBytes()), Lang.JSONLD);
 
 	        Model meta = RDFDataMgr.loadModel("benchmark.ttl");
+	        
+	        Model model = ModelFactory.createDefaultModel();
+	        model.add(paramModel);
 	        model.add(meta);
 
+	        
+	        // Check if the quickTestRun parameter is set to true - if so, use test settings
+	        Property pQueryTestRun = ResourceFactory.createProperty("http://w3id.org/bench#paramQuickTestRun");
+	        
+	        boolean isParamModelEmpty = paramModel.isEmpty(); 
+	        boolean isQuickTestRunSet = model.listStatements(null, pQueryTestRun, (RDFNode)null).nextOptional().map(Statement::getBoolean).orElse(false);
+
+	        boolean doQuickRun = false;
+	        if(isParamModelEmpty) {
+		        logger.warn("*** TEST RUN FLAG HAS BEEN AUTOMATICALLY SET BECAUSE NO BENCHMARK PARAMETERS WERE PROVIDED - MAKE SURE THAT THIS IS EXPECTED ***");
+	        	doQuickRun = true;
+	        } else if(isQuickTestRunSet) {
+		        logger.warn("*** TEST RUN FLAG WAS MANUALLY SET - ANY OTHER PROVIDED BENCHMARK PARAMETERS ARE IGNORED - MAKE SURE THAT THIS IS EXPECTED ***");
+		        doQuickRun = true;
+	        }	        
+	        
+	        
 	        Map<String, String> params = new HashMap<>();
-	        Property pOption = ResourceFactory.createProperty("http://w3id.org/bench#podiggOption");
-	        List<Resource> props = model.listSubjectsWithProperty(pOption).toList();
-	        for(Resource p : props) {
-	            String key = p.getProperty(pOption).getString();
-
-	            Property pp = ResourceFactory.createProperty(p.getURI());
-	            List<RDFNode> values = model.listObjectsOfProperty(pp).toList();
-
-                logger.info("DG: Values of " + pp + " " + values);
-
-                if(values.size() > 1) {
-	                throw new RuntimeException("Too many values; at most one expected for " + pp + ": " + values);
-	            }
-
-                if(!values.isEmpty()) {
-                    RDFNode o = values.get(0);
-                    String val = o.asNode().getLiteralLexicalForm();
-                    
-                    params.put(key, val);
-                }	            
-	        }
 	        
-	        logger.info("Podigg options: " + params);
 	        
-	        params = ImmutableMap.<String, String>builder()
-	                .put("GTFS_GEN_SEED", "111")
-	                .put("GTFS_GEN_REGION__SIZE_X", "2000")
-	                .put("GTFS_GEN_REGION__SIZE_Y", "2000")
-	                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
-	                .put("GTFS_GEN_STOPS__STOPS", "3000")
-	                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
-	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "200000")
-	                .put("GTFS_GEN_ROUTES__ROUTES", "1000")
-	                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
-	                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
-	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1")
-	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
-	                .build();
+	        if(doQuickRun) {
 
-	        params = new HashMap<>();
+                params.put("GTFS_GEN_SEED", "111");
+	        	
+	        } else {
+
+		        Property pOption = ResourceFactory.createProperty("http://w3id.org/bench#podiggOption");
+		        List<Resource> props = model.listSubjectsWithProperty(pOption).toList();
+		        for(Resource p : props) {
+		            String key = p.getProperty(pOption).getString();
+	
+		            Property pp = ResourceFactory.createProperty(p.getURI());
+		            List<RDFNode> values = model.listObjectsOfProperty(pp).toList();
+	
+	                logger.info("DG: Values of " + pp + " " + values);
+	
+	                if(values.size() > 1) {
+		                throw new RuntimeException("Too many values; at most one expected for " + pp + ": " + values);
+		            }
+	
+	                if(!values.isEmpty()) {
+	                    RDFNode o = values.get(0);
+	                    String val = o.asNode().getLiteralLexicalForm();
+	                    
+	                    params.put(key, val);
+	                }	            
+		        }
+		    }
 	        
-	        logger.warn("BENCHMARK PARAMETERS ARE IGNORED FOR TESTING - THIS MESSAGE MUST NOT APPEAR IN PRODUCTION LOGS");
-	        logger.warn("Using params: " + params);
+//	        logger.info("Podigg options: " + params);
+//	        
+//	        params = ImmutableMap.<String, String>builder()
+//	                .put("GTFS_GEN_SEED", "111")
+//	                .put("GTFS_GEN_REGION__SIZE_X", "2000")
+//	                .put("GTFS_GEN_REGION__SIZE_Y", "2000")
+//	                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
+//	                .put("GTFS_GEN_STOPS__STOPS", "3000")
+//	                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
+//	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "200000")
+//	                .put("GTFS_GEN_ROUTES__ROUTES", "1000")
+//	                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
+//	                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
+//	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1")
+//	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
+//	                .build();
+//
+//	        params = new HashMap<>();
 	        
+	        logger.info("DG: Configuring podigg with parameters: " + params);
+
 	        
 	    	//String imageName = "podigg";
 	    	String imageName = "git.project-hobbit.eu:4567/cstadler/podigg/image";
@@ -988,11 +1018,13 @@ public class ConfigsFacetedBrowsingBenchmark {
                 
                 @Override
                 public void receiveGeneratedTask(String taskId, byte[] data) {
-                    System.out.println("SA Received task " + taskId);
+                	String queryString = RabbitMQUtils.readString(data);
+                    System.out.println("SA Received task " + taskId + ": " + queryString);
                 }
                 
                 @Override
                 public void receiveGeneratedData(byte[] data) {
+                	
                     System.out.println("SA Received some data");
                     
                 }

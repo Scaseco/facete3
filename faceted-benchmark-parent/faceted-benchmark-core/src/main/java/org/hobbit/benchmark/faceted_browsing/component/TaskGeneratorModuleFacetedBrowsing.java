@@ -8,17 +8,24 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
@@ -56,7 +63,16 @@ public class TaskGeneratorModuleFacetedBrowsing
     
     protected transient ServiceManager serviceManager;
     
-    //@PostConstruct
+    protected CompletableFuture<Void> dataLoadingComplete = new CompletableFuture<>();
+    
+    
+    
+    public CompletableFuture<Void> getDataLoadingComplete() {
+		return dataLoadingComplete;
+	}
+
+
+	//@PostConstruct
 	@Override
 	public void startUp() throws Exception {
         Set<Service> services = Sets.newIdentityHashSet();
@@ -72,7 +88,9 @@ public class TaskGeneratorModuleFacetedBrowsing
         logger.info("TaskGeneratorWorker::startUp(): SPARQL service is now ready");
         
         RDFConnection conn = sparqlService.createDefaultConnection();
-        dataHandler = new RdfBulkLoadProtocolMocha(conn, () -> {}, () -> {});
+        dataHandler = new RdfBulkLoadProtocolMocha(conn, () -> {}, () -> {
+        	dataLoadingComplete.complete(null);
+        });
         
         logger.info("TaskGeneratorWorker::startUp(): Startup is complete");
 	}
@@ -145,7 +163,18 @@ public class TaskGeneratorModuleFacetedBrowsing
         gen.initializeParameters();
         Stream<Resource> tasks = gen.generateTasks();
 
+        SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, false);
+
         Stream<Resource> result = tasks.map(task -> {
+        	
+        	Statement stmt = task.getProperty(RDFS.label);
+        	String str = stmt.getString();
+        	Query query = parser.apply(str).getAsQueryStmt().getQuery();
+        	query.addGraphURI("http://example.org/graph");
+        	String newQueryStr = Objects.toString(query);
+        	stmt.changeObject(newQueryStr);
+        	
+        	
         	Resource r = annotateTaskWithReferenceResult(task, conn, refConn);
         	return r;
         });

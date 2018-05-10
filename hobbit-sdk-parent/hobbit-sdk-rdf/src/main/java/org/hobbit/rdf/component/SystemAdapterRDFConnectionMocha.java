@@ -1,24 +1,30 @@
 package org.hobbit.rdf.component;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.aksw.jena_sparql_api.utils.ResultSetUtils;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
@@ -43,6 +49,7 @@ import com.google.gson.Gson;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import jersey.repackaged.com.google.common.collect.Iterators;
 
 /**
  * TODO Rename to something like TaskExecutorSparql
@@ -100,7 +107,10 @@ public class SystemAdapterRDFConnectionMocha
     	
 	protected DataProtocol rdfBulkLoadProtocol;
     
+	@Resource(name="actualResultEncoder")
+	protected BiFunction<String, ResultSet, Stream<ByteBuffer>> actualResultEncoder;
     
+	
     @Override
     public void startUp() {
     	logger.info("SystemAdapter::startUp() started");    
@@ -208,6 +218,23 @@ public class SystemAdapterRDFConnectionMocha
 
         logger.info("SA: Task generation finished");
     }
+    
+    public void sendResultSet(String taskIdStr, ResultSet rs) {
+        logger.debug("Forwarding task result to evaluation storage");
+        Stream<ByteBuffer> actualResultMsgs = actualResultEncoder.apply(taskIdStr, rs);
+        Iterator<ByteBuffer> it = actualResultMsgs.iterator();
+        while(it.hasNext()) {
+        	ByteBuffer buffer = it.next();
+            sa2es.onNext(buffer);
+        }	
+    }
+    
+    public static ResultSet createErrorResultSet() {
+    	Var xxx = Var.alloc("xxx");
+    	Binding binding = BindingFactory.binding(xxx, NodeFactory.createLiteral("XXX"));
+    	ResultSet result = ResultSetUtils.create2(Collections.singleton(xxx), Iterators.singletonIterator(binding));
+    	return result;
+    }
 
     
     public void onTask(ByteBuffer buf) {
@@ -230,66 +257,62 @@ public class SystemAdapterRDFConnectionMocha
 
         SparqlStmt stmt = parser.apply(sparqlStmtStr);
 
-        Stopwatch stopwatch = Stopwatch.createStarted();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ResultSet rs;
         if(stmt.isQuery()) {
             try(QueryExecution qe = rdfConnection.query(stmt.getOriginalString())) {
-                ResultSet rs = qe.execSelect();
-                ResultSetMem rsMem = new ResultSetMem(rs);
-                int numRows = ResultSetFormatter.consume(rsMem);
-                rsMem.rewind();
-                logger.debug("Number of result set rows for task " + taskIdStr + ": " + numRows + " query: " + stmt.getOriginalString());
-
-                ResultSetFormatter.outputAsJSON(out, rsMem);
+            	rs = qe.execSelect();
+            	sendResultSet(taskIdStr, rs);
+//                ResultSetMem rsMem = new ResultSetMem(rs);
+//                int numRows = ResultSetFormatter.consume(rsMem);
+//                rsMem.rewind();
+//                logger.debug("Number of result set rows for task " + taskIdStr + ": " + numRows + " query: " + stmt.getOriginalString());
+//
+//                ResultSetFormatter.outputAsJSON(out, rsMem);                
             } catch(Exception e) {
                 logger.warn("Sparql select query failed", e);
-
-                try {
-                    out.write("{\"head\":{\"vars\":[\"xxx\"]},\"results\":{\"bindings\":[{\"xxx\":{\"type\":\"literal\",\"value\":\"XXX\"}}]}}".getBytes(StandardCharsets.UTF_8));
-                } catch (IOException f) {}
+            	sendResultSet(taskIdStr, createErrorResultSet());
             }
         } else if(stmt.isUpdateRequest()) {
             try {
                 rdfConnection.update(stmt.getOriginalString());
+            	sendResultSet(taskIdStr, new ResultSetMem());
             } catch(Exception e) {
-                try {
-                    out.write("{\"head\":{\"vars\":[\"xxx\"]},\"results\":{\"bindings\":[{\"xxx\":{\"type\":\"literal\",\"value\":\"XXX\"}}]}}".getBytes(StandardCharsets.UTF_8));
-                } catch (IOException f) {}
                 logger.warn("Sparql update query failed", e);
+            	sendResultSet(taskIdStr, createErrorResultSet());
             }
         }
-
-        long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
-
-        //sendResultToEvalStorage(taskId, outputStream.toByteArray());
-
-        //String taskIdStr = "task-id-foobar";
-        byte[] data = out.toByteArray();
-
-
-        byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
-        // + 4 for taskIdBytes.length
-        // + 4 for data.length
-        int capacity = 4 + 4 + taskIdBytes.length + data.length;
-        ByteBuffer buffer = ByteBuffer.allocate(capacity);
-        buffer.putInt(taskIdBytes.length);
-        buffer.put(taskIdBytes);
-        buffer.putInt(data.length);
-        buffer.put(data);
-
+        
+//        
+//        long elapsed = stopwatch.stop().elapsed(TimeUnit.MILLISECONDS);
+//
+//        //sendResultToEvalStorage(taskId, outputStream.toByteArray());
+//
+//        //String taskIdStr = "task-id-foobar";
+//        byte[] data = out.toByteArray();
+//
+//
 //        byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
-//        int capacity = 8 + taskIdBytes.length + data.length;
+//        // + 4 for taskIdBytes.length
+//        // + 4 for data.length
+//        int capacity = 4 + 4 + taskIdBytes.length + data.length;
 //        ByteBuffer buffer = ByteBuffer.allocate(capacity);
 //        buffer.putInt(taskIdBytes.length);
 //        buffer.put(taskIdBytes);
 //        buffer.putInt(data.length);
 //        buffer.put(data);
-
-        buffer.rewind();
+//
+////        byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
+////        int capacity = 8 + taskIdBytes.length + data.length;
+////        ByteBuffer buffer = ByteBuffer.allocate(capacity);
+////        buffer.putInt(taskIdBytes.length);
+////        buffer.put(taskIdBytes);
+////        buffer.putInt(data.length);
+////        buffer.put(data);
+//
+//        buffer.rewind();
 
 //        try {
-            logger.debug("Forwarding task result to evaluation storage");
-            sa2es.onNext(buffer);
+        
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }

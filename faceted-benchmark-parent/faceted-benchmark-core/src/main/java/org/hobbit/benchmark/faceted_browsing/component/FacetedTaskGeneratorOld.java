@@ -41,9 +41,11 @@ import javax.xml.bind.DatatypeConverter;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -108,14 +110,14 @@ public class FacetedTaskGeneratorOld {
     protected SparqlQueryConnection queryConn;
 
 
-    public void init() throws Exception {
-        logger.info("INITIALIZING REASONS...");
-        initializeReasonClasses();
-        logger.info("INITIALIZING PARAMETERS...");
-        loadParameterFiles();
-        computeParameters();
-        logger.info("DONE!");
-    }
+//    public void init() throws Exception {
+//        logger.info("INITIALIZING REASONS...");
+//        initializeReasonClasses();
+//        logger.info("INITIALIZING PARAMETERS...");
+//        loadParameterFiles();
+//        computeParameters();
+//        logger.info("DONE!");
+//    }
 //
 //    LOGGER.info("Executing query for gold standard...");
 //    // finally execute query against gold-system
@@ -310,8 +312,19 @@ public class FacetedTaskGeneratorOld {
 
         // compute variables For_All
         List<Map<String, String>> forAll = (List<Map<String, String>>)preQueries.get("For_All");
+
+		try(QueryExecution qe = queryConn.query("SELECT (COUNT(*) AS ?c) { GRAPH <http://www.example.com/graph> { ?s ?p ?o } }")) {
+			Integer count = ServiceUtils.fetchInteger(qe, Vars.c);
+			
+			logger.info("Counted " + count + " triples");
+			//logger.info(ResultSetFormatter.asText(qe.execSelect()));
+		}
+
+        
+        
         for (Map<String, String> entry : forAll){
             Object finalValue = computeVariable(entry);
+            logger.info("FacetedTaskGenerator: Task parameter " + entry + " -> " + finalValue + " computed from dataset");
             globalVariables.put((String) entry.get("variable"), finalValue);
         }
         // construct queries for each scenario
@@ -484,8 +497,8 @@ public class FacetedTaskGeneratorOld {
 //        	System.out.println("Eval: " + expression);
         	result = engine.eval(expression);
         } catch (ScriptException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            //e.printStackTrace();
+            throw new RuntimeException("Could not evaluate expression " + expression, e);
         }
         return result;
     }
