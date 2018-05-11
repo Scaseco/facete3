@@ -34,6 +34,7 @@ import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
+import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.service.api.DockerServiceDelegate;
@@ -44,7 +45,9 @@ import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnectionMocha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -66,7 +69,7 @@ public class ConfigVirtualDockerServiceFactory {
 	    return result;
 	}
 
-	
+
 	public static Map<String, Supplier<SpringApplicationBuilder>> getVirtualDockerComponentRegistry() {
 
 		//Function<String, SpringApplicationBuilder> baseConfigFactory = ConfigVirtualDockerServiceFactory::createComponentBaseConfig;
@@ -91,7 +94,7 @@ public class ConfigVirtualDockerServiceFactory {
 			
 		Supplier<SpringApplicationBuilder> esAppBuilder = () -> createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
-					.child(DefaultEvaluationStorage.class);		
+					.child(DefaultEvaluationStorage.class);
 		
 		Supplier<SpringApplicationBuilder> emAppBuilder = () -> createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
 				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationModule.class)

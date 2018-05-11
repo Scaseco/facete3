@@ -65,6 +65,8 @@ public class BenchmarkControllerFacetedBrowsing
     protected ServiceManager serviceManager;
 
 
+//    @Resource
+//    protected AbstractEvaluationStorage HACKmockEs;
 
     //protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
 
@@ -232,6 +234,18 @@ public class BenchmarkControllerFacetedBrowsing
                 taskGeneratorService,
                 evaluationStorageService
         ));
+        
+
+//        boolean hack = false;
+//        if(hack) {
+//	        try {
+//				HACKmockEs.init();
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//        }
+        
         //evaluationModuleService
         //systemAdapterService,
 

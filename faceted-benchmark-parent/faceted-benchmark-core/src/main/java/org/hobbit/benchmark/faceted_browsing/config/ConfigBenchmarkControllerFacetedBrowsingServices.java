@@ -1,9 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.core.Constants;
+import org.hobbit.core.components.AbstractEvaluationStorage;
+import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.utils.CountingSupplier;
@@ -13,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 
 
@@ -38,6 +44,35 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
     @Autowired
     protected DockerServiceBuilderFactory<?> dockerServiceBuilderFactory;
 
+//	@Bean
+//	@Autowired
+//	public AbstractEvaluationStorage mockEs(Environment env) throws Exception {
+//		
+//		
+//	    Map<String, String> map = new HashMap<>(System.getenv());
+//	    map.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
+//	    map.put(Constants.RABBIT_MQ_HOST_NAME_KEY, env.getProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost"));
+//	    map.put(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true");
+//	    ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher.setEnv(map);
+//	    
+//	    InMemoryEvaluationStore es = new InMemoryEvaluationStore() {
+//			@Override
+//			public void receiveExpectedResponseData(String taskId, long timestamp, byte[] data) {
+//				System.out.println("Got expected result for " + taskId);
+//				super.receiveExpectedResponseData(taskId, timestamp, data);
+//			}
+//			
+//			@Override
+//			public void receiveResponseData(String taskId, long timestamp, byte[] data) {
+//				System.out.println("Got actual result for " + taskId);
+//				super.receiveResponseData(taskId, timestamp, data);
+//			}
+//		};
+//
+//        return es;
+//	}
+
+    
     @Bean
     public ServiceBuilder<?> dataGeneratorServiceFactory(@Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModel) {
         
@@ -71,7 +106,7 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
 //	                .setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
 	        		.setImageName("git.project-hobbit.eu:4567/cstadler/evaluationstorage/image")
 	                .setLocalEnvironment(ImmutableMap.<String, String>builder()
-	                        .put("ACKNOWLEDGEMENT_FLAG", "true")
+	                        .put(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true")
 	                        .build())
 	                ).get();
     }

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import javax.annotation.Resource;
 
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
+import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.data.ResultPair;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -73,11 +74,11 @@ public class DefaultEvaluationStorage
     @Resource(name="sa2esReceiver")
     protected Flowable<ByteBuffer> actualResultsFromSystemAdapter;
 
-    @Resource(name="em2esReceiver")
-    protected Flowable<ByteBuffer> fromEvaluationModule;
+    @Resource(name="es2emServer")
+    protected Flowable<SimpleReplyableMessage<ByteBuffer>> fromEvaluationModule;
 
-    @Resource(name="es2emSender")
-    protected Subscriber<ByteBuffer> toEvaluationModule;
+//    @Resource(name="es2emSender")
+//    protected Subscriber<ByteBuffer> toEvaluationModule;
 
     @Resource(name="taskAckSender")
     protected Subscriber<ByteBuffer> taskAck;
@@ -111,14 +112,17 @@ public class DefaultEvaluationStorage
 
         expectedResultsFromTaskGenerator.subscribe(data -> {
         	data = data.duplicate();
-            logger.info("Got expected result from task generator");
+            logger.info("Got event about an expected result from task generator");
 
             if(resultSent[0]) {
             	throw new RuntimeException("Evaluation module already requested data, yet an attempt to add another expected result was seen");
             }
             
             Entry<String, Result> record = expectedResultDecoder.apply(data);
-            storage.putExpectedValue(record.getKey(), record.getValue());
+            String taskIdStr = record.getKey();
+
+            logger.info("Got expected result of task " + taskIdStr);
+            storage.putExpectedValue(taskIdStr, record.getValue());
         });
 
         actualResultsFromSystemAdapter.subscribe(data -> {
@@ -133,6 +137,8 @@ public class DefaultEvaluationStorage
             Entry<String, Result> record = actualResultDecoder.apply(data);
             String taskId = record.getKey();
 
+            logger.info("Got actual result of task " + taskId);
+
             logger.info("Acknowledging received evaluation data for task " + taskId);
             taskAck.onNext(ByteBuffer.wrap(RabbitMQUtils.writeString(taskId)));
             
@@ -140,7 +146,8 @@ public class DefaultEvaluationStorage
         });
 
 
-        fromEvaluationModule.subscribe(buffer -> {
+        fromEvaluationModule.subscribe(msg -> {
+        	ByteBuffer buffer = msg.get();
         	buffer = buffer.duplicate();
             logger.info("Got request from evaluation module: " + Arrays.toString(buffer.array())); // storage contains " + Iterators.size(createIterator()) + " items");
 
@@ -204,7 +211,8 @@ public class DefaultEvaluationStorage
                 // Fortunately, at present, we can just use the static channel to the em
 //                try {
                     logger.info("Sending " + response.length + " bytes to evaluation module");
-                    toEvaluationModule.onNext(ByteBuffer.wrap(response));
+                    msg.reply(ByteBuffer.wrap(response));
+                    //toEvaluationModule.onNext(ByteBuffer.wrap(response));
 //                } catch (IOException e) {
 //                    throw new RuntimeException(e);
 //                }

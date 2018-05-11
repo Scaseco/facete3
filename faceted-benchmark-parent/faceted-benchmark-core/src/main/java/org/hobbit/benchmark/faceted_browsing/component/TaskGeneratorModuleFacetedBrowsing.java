@@ -29,7 +29,9 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DataProtocol;
+import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.rdf.component.RdfBulkLoadProtocolMocha;
@@ -167,10 +169,12 @@ public class TaskGeneratorModuleFacetedBrowsing
 
         Stream<Resource> result = tasks.map(task -> {
         	
+        	// Inject the graph name into the FROM clause of the query
+        	// TODO
         	Statement stmt = task.getProperty(RDFS.label);
         	String str = stmt.getString();
         	Query query = parser.apply(str).getAsQueryStmt().getQuery();
-        	query.addGraphURI("http://example.org/graph");
+        	query.addGraphURI(DataGeneratorFacetedBrowsing.GRAPH_IRI);
         	String newQueryStr = Objects.toString(query);
         	stmt.changeObject(newQueryStr);
         	
@@ -223,7 +227,7 @@ public class TaskGeneratorModuleFacetedBrowsing
 
                     // TODO Bulk loading not yet implemented...
 
-                    String graphName = "http://www.virtuoso-graph.com";
+                    String graphName = DataGeneratorFacetedBrowsing.GRAPH_IRI;
                     logger.info("Clearing and loading graph: " + graphName);
                     try {
                     	conn.delete(graphName);

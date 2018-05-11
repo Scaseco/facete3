@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -85,9 +86,11 @@ import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.QueueingConsumer;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
@@ -787,8 +790,9 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 	    @Bean
-	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel, @Value("${componentName:anonymous}") String componentName) throws IOException, TimeoutException {
-	    	return RabbitMqFlows.createFanoutReceiver(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, "ack" + "." + componentName, x -> Collections.singletonList(x));
+	    public Flowable<ByteBuffer> taskAckReceiver(@Qualifier("ackChannel") Channel channel, @Value("${componentName:anonymous}") String componentName, @Qualifier("queueNameMapper") Function<String, String> queueNameMapper) throws IOException, TimeoutException {
+	    	String queueName = queueNameMapper.apply(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+	    	return RabbitMqFlows.createFanoutReceiver(channel, queueName, "ack" + "." + componentName, x -> Collections.singletonList(x));
 	    }
 	}
 	
@@ -901,10 +905,10 @@ public class ConfigsFacetedBrowsingBenchmark {
 			return connection.createChannel();
 		}
 
-	    @Bean
-	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("es2emChannel") Channel channel) throws Exception {
-	        return dataQueueFactory.createSender(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
-	    }
+//	    @Bean
+//	    public Subscriber<ByteBuffer> es2emSender(@Qualifier("es2emChannel") Channel channel) throws Exception {
+//	        return dataQueueFactory.createSender(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+//	    }
 	    
 	    
 		@Bean
@@ -912,9 +916,23 @@ public class ConfigsFacetedBrowsingBenchmark {
 			return connection.createChannel();
 		}
 	    
+//	    @Bean
+//	    public Flowable<ByteBuffer> em2esReceiver(@Qualifier("em2esChannel") Channel channel) throws Exception {
+//	        return dataQueueFactory.createReceiver(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+//	    }
+
+		
+		//@Qualifier("requestQueueFactory")
 	    @Bean
-	    public Flowable<ByteBuffer> em2esReceiver(@Qualifier("em2esChannel") Channel channel) throws Exception {
-	        return dataQueueFactory.createReceiver(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+	    public Flowable<SimpleReplyableMessage<ByteBuffer>> es2emServer(
+	    		@Qualifier("em2esChannel") Channel channel,
+	    		@Qualifier("queueNameMapper") Function<String, String> queueNameMapper,
+	            @Value("${" + Constants.EVAL_MODULE_2_EVAL_STORAGE_QUEUE_NAME_KEY + ":" + Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME + "}") String baseQueueName
+	    		) throws Exception {
+            String queueName = queueNameMapper.apply(baseQueueName);
+	    	
+            channel.queueDeclare(queueName, false, false, true, null);
+            return RabbitMqFlows.createFlowableForQueue(() -> channel, c -> queueName);            
 	    }
 
 	    
@@ -924,8 +942,9 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 		@Bean
-	    public Subscriber<ByteBuffer> taskAckSender(@Qualifier("ackChannel") Channel channel) throws IOException {
-	    	return RabbitMqFlows.createFanoutSender(channel, Constants.HOBBIT_ACK_EXCHANGE_NAME, null);
+	    public Subscriber<ByteBuffer> taskAckSender(@Qualifier("ackChannel") Channel channel, @Qualifier("queueNameMapper") Function<String, String> queueNameMapper) throws IOException {
+			String queueName = queueNameMapper.apply(Constants.HOBBIT_ACK_EXCHANGE_NAME);
+			return RabbitMqFlows.createFanoutSender(channel, queueName, null);
 	    }		
 	}
 	
@@ -948,19 +967,32 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 		@Bean
-	    public Subscriber<ByteBuffer> em2esSender(@Qualifier("em2esChannel") Channel channel) throws Exception {
-	        return dataQueueFactory.createSender(channel, Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
-	    }
-
-		@Bean
 		public Channel es2emChannel(Connection connection) throws IOException {
 			return connection.createChannel();
 		}
 
-	    @Bean
-	    public Flowable<ByteBuffer> es2emReceiver(@Qualifier("es2emChannel") Channel channel) throws Exception {
-	        return dataQueueFactory.createReceiver(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
-	    }
+		@Bean
+	    public Function<ByteBuffer, CompletableFuture<ByteBuffer>> em2esClient(
+	    		@Qualifier("em2esChannel") Channel em2esChannel,
+	    		@Qualifier("es2emChannel") Channel es2emChannel,
+	    		@Qualifier("queueNameMapper") Function<String, String> queueNameMapper) throws Exception {
+
+			String em2esQueueName = queueNameMapper.apply(Constants.EVAL_MODULE_2_EVAL_STORAGE_DEFAULT_QUEUE_NAME);
+			String es2emQueueName = queueNameMapper.apply(Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+
+			Subscriber<ByteBuffer> sender = RabbitMqFlows.createDataSender(em2esChannel, em2esQueueName, es2emQueueName);
+			Flowable<ByteBuffer> receiver = RabbitMqFlows.createDataReceiver(es2emChannel, es2emQueueName);
+			
+			Function<ByteBuffer, CompletableFuture<ByteBuffer>> result = RabbitMqFlows.wrapAsFunction(sender, receiver);
+
+			return result;
+		}
+
+
+//	    @Bean
+//	    public Flowable<ByteBuffer> es2emReceiver(@Qualifier("es2emChannel") Channel channel) throws Exception {
+//	        return dataQueueFactory.createReceiver(channel, Constants.EVAL_STORAGE_2_EVAL_MODULE_DEFAULT_QUEUE_NAME);
+//	    }
 
 	    @Bean
 	    public EvaluationModule evaluationModule() {
@@ -1008,7 +1040,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		      }
 		    }
 		  }
-		public void mockAbstractSa() throws Exception {
+		public void mockSa() throws Exception {
 		    Map<String, String> map = new HashMap<>(System.getenv());
 		    map.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
 		    map.put(Constants.RABBIT_MQ_HOST_NAME_KEY, env.getProperty(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost"));
@@ -1018,8 +1050,14 @@ public class ConfigsFacetedBrowsingBenchmark {
                 
                 @Override
                 public void receiveGeneratedTask(String taskId, byte[] data) {
+                	
                 	String queryString = RabbitMQUtils.readString(data);
                     System.out.println("SA Received task " + taskId + ": " + queryString);
+                    try {
+						sendResultToEvalStorage(taskId, RabbitMQUtils.writeString(""));
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
                 }
                 
                 @Override
@@ -1032,9 +1070,9 @@ public class ConfigsFacetedBrowsingBenchmark {
             
 
             asa.init();
-            
-            
 		}
+		
+		
 		
 		@Bean
 		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {

@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.MochaConstants;
@@ -51,7 +52,7 @@ public class RdfBulkLoadProtocolMocha
 	
 	protected RDFConnection rdfConnection;
 	protected Runnable postLoad;
-	protected Runnable onAllDataReceived;
+	protected Runnable onAllDataReceivedUserAction;
 	
 	
 	protected Deque<Integer> pendingBulkLoadSizes = new ArrayDeque<>();
@@ -61,11 +62,14 @@ public class RdfBulkLoadProtocolMocha
 		super();
 		this.rdfConnection = rdfConnection;
 		this.postLoad = postLoad;
+		this.onAllDataReceivedUserAction = onAllDataReceivedUserAction;
+	}
+	
+	protected void onAllDataReceived() {
+		logger.info("All data received - bulk loading phase over.");
 
-		this.onAllDataReceived = () -> {
-			dataLoadingFinished = true;
-			onAllDataReceivedUserAction.run();
-		};
+		dataLoadingFinished = true;
+		onAllDataReceivedUserAction.run();
 	}
 	
 	public synchronized void checkWhetherToProcessBatch() {
@@ -91,7 +95,9 @@ public class RdfBulkLoadProtocolMocha
 					rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
 
 					//System.out.println("RDF conn is " + rdfConnection);
+					rdfConnection.begin(ReadWrite.WRITE);
 					rdfConnection.load(graph, finalFilename);
+					rdfConnection.commit();
 				}
 
 				//if(("" + rdfConnection).contains("Remote")) {
@@ -115,7 +121,9 @@ public class RdfBulkLoadProtocolMocha
 		}
 		
 		if (pendingBulkLoadSizes.isEmpty() && lastBulkLoadSeen) {
-			onAllDataReceived.run();
+			onAllDataReceived();
+		} else {
+			logger.info("Bulk load is still waiting for more data");
 		}
 	}
 
@@ -133,6 +141,8 @@ public class RdfBulkLoadProtocolMocha
 			if(content.length != 0) {
 				if (filename.contains("/")) {
 					filename = "file" + String.format("%010d", counter++) + ".ttl";
+					// .ttl suffix needed for jena to automatically recognize the format
+					//filename = filename.replaceAll("[^/]*[/]", "") + ".ttl";
 				}
 				File file = new File(datasetFolderName + File.separator + filename);
 

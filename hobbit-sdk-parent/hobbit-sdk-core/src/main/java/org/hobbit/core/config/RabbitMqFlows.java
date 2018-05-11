@@ -262,8 +262,8 @@ public class RabbitMqFlows {
 		    			.deliveryMode(2)
 		    			.build();
 
-				tmpChannel.basicPublish(replyTo, "", props, byteBuffer.array());
 				System.out.println("[STATUS] Publishing reply to " + replyTo);
+				tmpChannel.basicPublish(replyTo, "", props, byteBuffer.array());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			} finally {
@@ -282,7 +282,19 @@ public class RabbitMqFlows {
 		return result;
     }
     
-    
+    public static Consumer<ByteBuffer> createSimpleReplyToConsumer(Channel channel, String replyTo) {
+
+		Consumer<ByteBuffer> result = replyTo == null ? null : (byteBuffer) -> {
+			try {
+				System.out.println("[STATUS] Publishing reply to " + replyTo);
+				channel.basicPublish("", replyTo, null, byteBuffer.array());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
+		
+		return result;
+    }
 
     
 
@@ -317,7 +329,7 @@ public class RabbitMqFlows {
     			.build();
 
     	Consumer<ByteBuffer> coreConsumer = wrapPublishAsConsumer(channel, exchangeName, "", properties);
-    	Consumer<ByteBuffer> consumer = senderTransform == null ? coreConsumer : (buffer) -> {
+    	Consumer<ByteBuffer> consumer = senderTransform == null ? coreConsumer : buffer -> {
     		ByteBuffer msg = senderTransform.apply(buffer);
     		coreConsumer.accept(msg);
     	};
@@ -333,7 +345,18 @@ public class RabbitMqFlows {
     	return result;
     }
 
-    
+
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Connection conn, Function<Channel, String> queueDeclare) throws IOException {
+    	Supplier<Channel> channelSupplier = () -> {
+			try {
+				return conn.createChannel();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
+    	
+    	return createFlowableForQueue(channelSupplier, queueDeclare);
+    }
 
     /**
      * Creates a flowable which on every subscription creates a new channel to the declared queue
@@ -344,16 +367,16 @@ public class RabbitMqFlows {
      * @return
      * @throws IOException
      */
-    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Connection connection, Function<Channel, String> queueDeclare) throws IOException {
+    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Supplier<Channel> channelSupplier, Function<Channel, String> queueDeclare) throws IOException {
     	Flowable<SimpleReplyableMessage<ByteBuffer>> result = Flowable.create(new FlowableOnSubscribe<SimpleReplyableMessage<ByteBuffer>>() {
 	        @Override
 	        public void subscribe(final FlowableEmitter<SimpleReplyableMessage<ByteBuffer>> emitter) throws Exception {
 
-	        	Channel channel = connection.createChannel();
+	        	Channel channel = channelSupplier.get();//connection.createChannel();
 
 	        	String queueName = queueDeclare.apply(channel);
 	        	
-	        	System.out.println("Created channel " + channel + " for queue " + queueName + " connIsOpen=" + connection.isOpen());
+	        	System.out.println("Created channel " + channel + " for queue " + queueName + " connIsOpen=" + channel.getConnection().isOpen());
 	        	
 	        	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
 	        		@Override
@@ -361,7 +384,8 @@ public class RabbitMqFlows {
 	        				throws IOException {
 	    				String replyTo = properties.getReplyTo();
 	    				
-	    				Consumer<ByteBuffer> reply = createReplyToConsumer(connection, replyTo);
+	    				Channel replyChannel = getChannel();
+	    				Consumer<ByteBuffer> reply = createSimpleReplyToConsumer(replyChannel, replyTo);//createReplyToConsumer(connection, replyTo);
 	    				
 	    				
 	    				//System.out.println("Received message from queue " + queueName);
@@ -380,7 +404,7 @@ public class RabbitMqFlows {
 	        	//emitter.setCancellable(channel::close);
 
 	        	emitter.setCancellable(() -> {
-	        		System.out.println("Closing channel " + channel + " isOpen=" + channel.isOpen() + " connIsOpen=" + connection.isOpen());
+	        		System.out.println("Closing channel " + channel + " isOpen=" + channel.isOpen()); // + " connIsOpen=" + connection.isOpen());
 	        		
 	        		channel.close();
 	        	});
@@ -873,12 +897,36 @@ public class RabbitMqFlows {
 
     public static Subscriber<ByteBuffer> createDataSender(Channel channel, String queueName) throws IOException {
 
-    	channel.queueDeclare(queueName, false, false, true, null);
+//    	channel.queueDeclare(queueName, false, false, true, null);
+//
+//    	BasicProperties properties = new BasicProperties.Builder()
+//    			.deliveryMode(2)
+//    			.build();
+//    	
+//    	Consumer<ByteBuffer> coreConsumer = RabbitMqFlows.wrapPublishAsConsumer(channel, "", queueName, properties);
+//    	Subscriber<ByteBuffer> subscriber = RabbitMqFlows.wrapPublishAsSubscriber(coreConsumer, () -> {
+//    		channel.close();
+//    		return 0;
+//    	});
+//    	
+//    	return subscriber;
+
+    	return createDataSender(channel, queueName, (String)null);
+    }
+
+    public static Subscriber<ByteBuffer> createDataSender(Channel channel, String queueName, String replyTo) throws IOException {
 
     	BasicProperties properties = new BasicProperties.Builder()
     			.deliveryMode(2)
+    			.replyTo(replyTo)
     			.build();
-    	
+
+    	return createDataSender(channel, queueName, properties);
+    }
+
+    public static Subscriber<ByteBuffer> createDataSender(Channel channel, String queueName, BasicProperties properties) throws IOException {
+    	channel.queueDeclare(queueName, false, false, true, null);
+
     	Consumer<ByteBuffer> coreConsumer = RabbitMqFlows.wrapPublishAsConsumer(channel, "", queueName, properties);
     	Subscriber<ByteBuffer> subscriber = RabbitMqFlows.wrapPublishAsSubscriber(coreConsumer, () -> {
     		channel.close();

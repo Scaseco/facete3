@@ -63,6 +63,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,8 +103,8 @@ public class FacetedTaskGeneratorOld {
     protected String VIRTUOSO_GOLD_SERVICE_URL; //"http://localhost:8890/sparql";
     //protected String VIRTUOSO_GOLD_GRAPH_IRI = "http://trainingdata.org";
     //protected String VIRTUOSO_TD_GRAPH_IRI = "http://tdonto.org";
-    String GRAPH_URI = "http://www.virtuoso-graph.com";
-    protected List<String> VIRTUOSO_GRAPHS = Arrays.asList(GRAPH_URI);
+    //String GRAPH_URI = "http://www.virtuoso-graph.com";
+    //protected List<String> VIRTUOSO_GRAPHS = Arrays.asList(GRAPH_URI);
     protected int VIRTUOSO_TIMEOUT_SECS = 100;
 
 
@@ -313,7 +314,7 @@ public class FacetedTaskGeneratorOld {
         // compute variables For_All
         List<Map<String, String>> forAll = (List<Map<String, String>>)preQueries.get("For_All");
 
-		try(QueryExecution qe = queryConn.query("SELECT (COUNT(*) AS ?c) { GRAPH <http://www.example.com/graph> { ?s ?p ?o } }")) {
+		try(QueryExecution qe = queryConn.query("SELECT (COUNT(*) AS ?c) { GRAPH <" + DataGeneratorFacetedBrowsing.GRAPH_IRI + "> { ?s ?p ?o } }")) {
 			Integer count = ServiceUtils.fetchInteger(qe, Vars.c);
 			
 			logger.info("Counted " + count + " triples");

@@ -51,6 +51,8 @@ import jersey.repackaged.com.google.common.primitives.Ints;
 public class DataGeneratorFacetedBrowsing
     extends ComponentBaseExecutionThread
 {
+	public static final String GRAPH_IRI = "http://example.org";
+	
     private static final Logger logger = LoggerFactory.getLogger(DataGeneratorFacetedBrowsing.class);
 
     protected int batchSize = 10000;
@@ -280,7 +282,7 @@ public class DataGeneratorFacetedBrowsing
                 //logger.info("byte array: " + data);
 
             	if(useMocha) {
-	                String graphURI = "http://www.example.com/graph";
+	                String graphURI =  DataGeneratorFacetedBrowsing.GRAPH_IRI;
 	                ///byte[] bytes = RabbitMQUtils.writeString(graphURI);
 	                
 	                ByteBuffer msg = ByteBuffer.wrap(Bytes.concat(

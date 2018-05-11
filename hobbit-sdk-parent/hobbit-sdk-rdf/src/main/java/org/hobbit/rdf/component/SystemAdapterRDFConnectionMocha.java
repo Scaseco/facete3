@@ -142,7 +142,6 @@ public class SystemAdapterRDFConnectionMocha
 //                
 //                
 //                // Load data
-//                String graphName = "http://www.virtuoso-graph.com";
 //                logger.debug("Clearing and loading graph: " + graphName);
 //                rdfConnection.delete(graphName);
 //                rdfConnection.load(graphName, file.getAbsolutePath());
@@ -253,14 +252,13 @@ public class SystemAdapterRDFConnectionMocha
         //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_PRETTY);
         logger.debug("TaskId - Sparql stmt: " + taskIdStr + " - " + sparqlStmtStr);
 
-        Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, true);
+        Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, true);
 
         SparqlStmt stmt = parser.apply(sparqlStmtStr);
 
-        ResultSet rs;
         if(stmt.isQuery()) {
             try(QueryExecution qe = rdfConnection.query(stmt.getOriginalString())) {
-            	rs = qe.execSelect();
+            	ResultSet rs = qe.execSelect();
             	sendResultSet(taskIdStr, rs);
 //                ResultSetMem rsMem = new ResultSetMem(rs);
 //                int numRows = ResultSetFormatter.consume(rsMem);
