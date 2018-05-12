@@ -17,6 +17,25 @@ import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
 
+/**
+ * A subscriber that performs local ordering of the items by their sequence id.
+ * Local ordering means, that ordering is accomplished in a streaming fashion
+ * without the need of a global view of *all* items.
+ * This is the case when items arrive "mostly" sequentially, with some "outliers" arriving out of order,
+ * as it can happen e.g. due to network delay.
+ * 
+ * This implementation uses a 'extractSeqId' lambda to obtain an item's sequence id,
+ * and 'incrementSeqId' in order to find out next id to expect.
+ * This class then caches all arriving items in memory until
+ * an item with the expected id arrives. In this case that item and all consecutive
+ * ones are emitted and removed from the cache.
+ * 
+ * 
+ * @author raven May 12, 2018
+ *
+ * @param <T>
+ * @param <S>
+ */
 public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 	implements Subscriber<T>
 {
@@ -147,21 +166,5 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 			return result;
 		};
 	}
-	
-//	new Subscriber<T>() {
-//	@Override
-//	public void onSubscribe(Subscription s) { }
-//
-//	@Override
-//	public void onNext(T t) { e.onNext(t); }
-//
-//	@Override
-//	public void onError(Throwable t) { e.onError(t); }
-//
-//	@Override
-//	public void onComplete() { e.onComplete(); }						
-//});
-
-//upstream.subscribe()
-
 }
+

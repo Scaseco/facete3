@@ -50,7 +50,7 @@ public class StreamTest {
 		
 		List<Integer> actual = Flowable
 			.just(5, 4, 3, 2, 1, 6, 7, 9, 8, 10)
-			.compose(FlowableTransformerLocalOrdering.<Integer, Integer>transformer(1, (id) -> id + 1, item -> item)::apply)
+			.compose(FlowableTransformerLocalOrdering.<Integer, Integer>transformer(1, id -> id + 1, item -> item)::apply)
 			.toList().blockingGet();
 		
 		Assert.assertEquals(expected, actual);

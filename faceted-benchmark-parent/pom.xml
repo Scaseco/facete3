@@ -27,6 +27,10 @@
 	<modules>
 		<module>faceted-benchmark-core</module>
 		<!-- <module>faceted-benchmark-docker-parent</module> -->
+
+
+		<module>faceted-benchmark-streaming-core</module>
+		<module>faceted-benchmark-streaming-integration-hobbit</module>
 	</modules>
 
 	<dependencyManagement>
@@ -37,6 +41,21 @@
 				<artifactId>faceted-benchmark-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+                        <dependency>
+                                <groupId>org.hobbit</groupId>
+                                <artifactId>faceted-benchmark-streaming-core</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
+
+
+                        <dependency>
+                                <groupId>org.hobbit</groupId>
+                                <artifactId>faceted-benchmark-streaming-integration-hobbit</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
+
+
 
 			<dependency>
 				<groupId>org.hobbit</groupId>

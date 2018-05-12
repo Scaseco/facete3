@@ -297,8 +297,8 @@ public class BenchmarkControllerFacetedBrowsing
 //            }
 //        });
         
-        logger.info("Waiting for data and task generators to become ready");
-        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
+        logger.info("Waiting for system, data and task generators to become ready");
+        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture, systemReadyFuture);
 
 //        initFuture.whenComplete((v, t) -> {
 //        	run();
