@@ -14,7 +14,8 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestBuilderWindowedInMemory;
+import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFactory;
+import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFactoryWindowedInMemory;
 import org.junit.Assert;
 
 import io.reactivex.processors.PublishProcessor;
@@ -27,16 +28,15 @@ public class TestSparqlWindowedInsert {
 		// (for the sake of the demo this is in memory, but the factory also supports remote sparql access)
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
 
-
-
 		// Set up a flow that transform insert requests of a collection of quads into
 		// corresponding update requests
-		PublishProcessor<Collection<Quad>> graphWindowProcessor = PublishProcessor.create();
+		PublishProcessor<Collection<Quad>> quadsInserter = PublishProcessor.create();
 
 		// ... thereby remove old records once the data grows too large
-		SimpleSparqlInsertRequestBuilderWindowedInMemory insertHandler = new SimpleSparqlInsertRequestBuilderWindowedInMemory(3);
+		int expectedModelSize = 3;
+		SimpleSparqlInsertRequestFactory insertHandler = new SimpleSparqlInsertRequestFactoryWindowedInMemory(expectedModelSize);
 
-		graphWindowProcessor
+		quadsInserter
 			//.map(SetDatasetGraph::new)
 			.map(insertHandler::createUpdateRequest)
 			.forEach(conn::update);
@@ -49,15 +49,16 @@ public class TestSparqlWindowedInsert {
 				new Quad(Quad.defaultGraphIRI, s, RDF.type.asNode(), OWL.Thing.asNode()));
 			
 			
-			graphWindowProcessor.onNext(insertQuads);
+			quadsInserter.onNext(insertQuads);
 		}
 		
 		
-		// Output the data (TODO Make this a unit test)
+		// Fetch the data we have generated
 		Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+		
+		// Output the data for convenience
 		RDFDataMgr.write(System.err, model, RDFFormat.TURTLE_PRETTY);
 
-		int expectedModelSize = 3;
 		int actualModelSize = (int)model.size(); 
 		Assert.assertEquals(expectedModelSize, actualModelSize);
 	}

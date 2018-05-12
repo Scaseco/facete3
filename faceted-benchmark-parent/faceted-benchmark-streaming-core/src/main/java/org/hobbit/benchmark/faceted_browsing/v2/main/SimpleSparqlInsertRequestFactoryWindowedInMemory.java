@@ -20,16 +20,16 @@ import com.google.common.collect.EvictingQueue;
  * @author raven May 12, 2018
  *
  */
-public class SimpleSparqlInsertRequestBuilderWindowedInMemory
-	implements SimpleSparqlInsertRequestBuilder
+public class SimpleSparqlInsertRequestFactoryWindowedInMemory
+	implements SimpleSparqlInsertRequestFactory
 {
 	protected EvictingQueue<Collection<Quad>> evictingQueue;
 	
-	public SimpleSparqlInsertRequestBuilderWindowedInMemory(int maxSize) {
+	public SimpleSparqlInsertRequestFactoryWindowedInMemory(int maxSize) {
 		this(EvictingQueue.create(maxSize));
 	}
 	
-	public SimpleSparqlInsertRequestBuilderWindowedInMemory(EvictingQueue<Collection<Quad>> evictingQueue) {
+	public SimpleSparqlInsertRequestFactoryWindowedInMemory(EvictingQueue<Collection<Quad>> evictingQueue) {
 		this.evictingQueue = evictingQueue;
 	}
 	

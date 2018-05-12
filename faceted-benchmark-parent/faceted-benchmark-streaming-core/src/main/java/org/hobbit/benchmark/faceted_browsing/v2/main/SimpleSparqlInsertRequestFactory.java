@@ -13,6 +13,6 @@ import org.apache.jena.update.UpdateRequest;
  * @author raven May 12, 2018
  *
  */
-public interface SimpleSparqlInsertRequestBuilder {
+public interface SimpleSparqlInsertRequestFactory {
 	UpdateRequest createUpdateRequest(Collection<Quad> insertQuads);
 }
