@@ -624,10 +624,17 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    	return r;	    	
 	    }
 	    
-	    
-	    
 	    @Bean
-	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
+	    public TripleStreamSupplier dataGenerationMethod() {
+	        logger.info("*** DG: USING STATIC TEST DATASET - DO NOT USE FOR PRODUCTION ***");
+	    	return () -> {
+		    	ExtendedIterator<Triple> it = RDFDataMgr.loadModel("podigg-lc-small.ttl").getGraph().find();
+	    		return Streams.stream(it).onClose(it::close);
+	    	};
+	    }
+	    
+	    //@Bean
+	    public TripleStreamSupplier dataGenerationMethodX(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
 	        
 	        logger.info("DG: Supplied param model is: " + paramModelStr);
 	        
@@ -733,7 +740,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    }
 		
 //	    @Bean
-	    public TripleStreamSupplier dataGenerationMethod() {
+	    public TripleStreamSupplier dataGenerationMethodOld() {
 	        return () -> {
 				try {
 					return PodiggWrapper.test();
@@ -1150,7 +1157,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 								saContainerId.getBytes(StandardCharsets.UTF_8)
 							)));							
 						}
-					}, MoreExecutors.directExecutor());
+					});
 
 					serviceManager.startAsync();
 					try {					

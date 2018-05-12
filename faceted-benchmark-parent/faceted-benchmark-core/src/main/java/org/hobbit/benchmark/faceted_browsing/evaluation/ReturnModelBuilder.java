@@ -7,6 +7,7 @@ import org.apache.jena.riot.out.NodeFormatter;
 import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.riot.writer.NTriplesWriter;
 import org.apache.jena.vocabulary.RDF;
+import org.hobbit.core.Constants;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,7 @@ public class ReturnModelBuilder {
                               ArrayList<QueryID> queriesWithTimeout){
         Model rdfModel = createDefaultModel();
 
-        Resource experimentResource = experimentUri == null ? rdfModel.createResource() : rdfModel.createResource(experimentUri);
+        Resource experimentResource = experimentUri == null ? rdfModel.createResource(Constants.NEW_EXPERIMENT_URI) : rdfModel.createResource(experimentUri);
         rdfModel.add(experimentResource , RDF.type, HOBBIT.Experiment);
 
         experimentUri = NodeUtils.toNTriplesString(experimentResource.asNode());

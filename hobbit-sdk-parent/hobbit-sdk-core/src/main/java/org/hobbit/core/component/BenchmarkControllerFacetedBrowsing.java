@@ -2,6 +2,7 @@ package org.hobbit.core.component;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.List;
@@ -133,16 +134,6 @@ public class BenchmarkControllerFacetedBrowsing
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
 
         
-        systemReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
-                ByteChannelUtils.firstByteEquals(Commands.START_BENCHMARK_SIGNAL));
-
-        systemReadyFuture.whenComplete((b, e) -> {
-        	b = b.duplicate();
-        	b.get(); // Skip first byte
-            String systemContainerId = RabbitMQUtils.readString(b);
-            logger.info("System container id: " + systemContainerId);
-        	// Register a 
-        });
   
 //        dataGeneratorBulkLoadReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
 //                ByteChannelUtils.firstByteEquals(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR));
@@ -224,36 +215,32 @@ public class BenchmarkControllerFacetedBrowsing
         });
         
         
-        taskGenerationTerminatedFuture = ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED);
-
-        //systemAdapterTerminatedFuture = ServiceManagerUtils.awaitState(systemAdapterService, State.TERMINATED);
-
-
-        taskGenerationTerminatedFuture.whenComplete((v, t) -> {
+        taskGenerationTerminatedFuture =
+        		ServiceManagerUtils.awaitState(taskGeneratorService, State.TERMINATED)
+        		.whenComplete((v, t) -> {
 //            try {
                 logger.info("Sending out task TASK_GENERATION_FINISHED signal");
                 commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.TASK_GENERATION_FINISHED}));
 //            } catch(IOException e) {
 //                throw new RuntimeException(e);
 //            }
-        });
+        		});
 
         
-        evaluationDataReceivedFuture = PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL));
-
-        evaluationDataReceivedFuture = evaluationDataReceivedFuture.whenComplete((buffer, ex) -> {
-            logger.info("Evaluation model received");
-            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.limit() - 1);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            RDFDataMgr.write(baos, model, Lang.NTRIPLES);
-            String str = baos.toString();
-            logger.info("Received eval model is: " + str);
-            
-            // Rename any NEW_EXPERIMENT_URI resources to the experiment URI
-            org.apache.jena.rdf.model.Resource tmp = model.createResource(Constants.NEW_EXPERIMENT_URI);
-            ResourceUtils.renameResource(tmp, experimentResult.getURI());
-            
-        });
+        evaluationDataReceivedFuture =
+    		PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL))
+    		.whenComplete((buffer, ex) -> {
+	            logger.info("Evaluation model received");
+	            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.limit() - 1);
+	            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	            RDFDataMgr.write(baos, model, Lang.NTRIPLES);
+	            String str = baos.toString();
+	            logger.info("Received eval model is: " + str);
+	            
+	            // Rename any NEW_EXPERIMENT_URI resources to the experiment URI
+	            org.apache.jena.rdf.model.Resource tmp = model.createResource(Constants.NEW_EXPERIMENT_URI);
+	            ResourceUtils.renameResource(tmp, experimentResult.getURI());            
+    		});
         
         serviceManager = new ServiceManager(Arrays.asList(
                 dataGeneratorService,
@@ -275,14 +262,32 @@ public class BenchmarkControllerFacetedBrowsing
         //evaluationModuleService
         //systemAdapterService,
 
+        systemReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+                ByteChannelUtils.firstByteEquals(Commands.START_BENCHMARK_SIGNAL))
+        	.whenComplete((b, e) -> {
+        		if(e == null) {
+		        	b = b.duplicate();
+		        	b.get(); // Skip first byte
+		        	
+		        	byte[] bs = new byte[b.remaining()];
+		        	b.get(bs);
+		            String systemContainerId = new String(bs, StandardCharsets.UTF_8);
+		            logger.info("System container id: " + systemContainerId);
+        		}
+	        	// Register a 
+        	});
+//        	.whenComplete((x, e) -> {
+//        		if(e == null) {
+//		            logger.info("BenchmarkController::startUp() Waiting for services to start...");
+//		            ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
+//		                    serviceManager,
+//		                    60, TimeUnit.SECONDS,
+//		                    60, TimeUnit.SECONDS);
+//		
+//		            logger.info("BenchmarkController::startUp() completed");
+//        		}
+//        	});
 
-        logger.info("BenchmarkController::startUp() Waiting for services to start...");
-        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
-                serviceManager,
-                60, TimeUnit.SECONDS,
-                60, TimeUnit.SECONDS);
-
-        logger.info("BenchmarkController::startUp() completed");
         
 //        commandPublisher.subscribe(buffer -> {
 //            if(buffer.hasRemaining()) {
@@ -296,7 +301,14 @@ public class BenchmarkControllerFacetedBrowsing
 //                }
 //            }
 //        });
-        
+
+        logger.info("BenchmarkController::startUp() Waiting for services to start...");
+        ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
+                serviceManager,
+                60, TimeUnit.SECONDS,
+                60, TimeUnit.SECONDS);
+
+
         logger.info("Waiting for system, data and task generators to become ready");
         initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture, systemReadyFuture);
 
@@ -305,6 +317,7 @@ public class BenchmarkControllerFacetedBrowsing
 //        });
         //initFuture.get(60, TimeUnit.SECONDS);
 
+        logger.info("BenchmarkController::startUp() completed");
     }
 
     @Override
@@ -315,6 +328,8 @@ public class BenchmarkControllerFacetedBrowsing
     		experimentResult
     			.addProperty(HOBBIT.terminatedWithError, HobbitErrors.BenchmarkCrashed);
         }
+    	
+    	logger.info("Result Model: " + RabbitMQUtils.writeModel2String(experimentResult.getModel()));
     	
         commandSender.onNext(ByteBuffer.wrap(Bytes.concat(
         		new byte[] {Commands.BENCHMARK_FINISHED_SIGNAL},
@@ -400,7 +415,7 @@ public class BenchmarkControllerFacetedBrowsing
                 //CompletableFuture.allOf(dataGenerationFuture);
 
         try {
-            taskGenerationPhaseCompletion.get(5, TimeUnit.MINUTES);
+            taskGenerationPhaseCompletion.get(60 * 15, TimeUnit.SECONDS);
         } catch(Exception e) {
             throw new RuntimeException("Task generation phase failed or did not complete in time", e);
         }
@@ -456,7 +471,7 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("Awaiting evaluation result...");
         //evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
         try {
-			evaluationDataReceivedFuture.get(10, TimeUnit.MINUTES);
+			evaluationDataReceivedFuture.get(60 * 20, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			throw new RuntimeException(e);
 		}
