@@ -15,20 +15,27 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
+import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.core.utils.ServiceManagerUtils;
+import org.hobbit.vocab.HOBBIT;
+import org.hobbit.vocab.HobbitErrors;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
@@ -56,12 +63,14 @@ public class BenchmarkControllerFacetedBrowsing
     protected ServiceBuilder<Service> evaluationModuleServiceFactory;
 
 
-    // Issue: How to get the result from the evaluation module?
-
 
     @Resource(name="commandSender")
     protected Subscriber<ByteBuffer> commandSender;
 
+    @Resource(name="experimentResult")
+    protected org.apache.jena.rdf.model.Resource experimentResult;
+    
+    // Service manager that upon initialization holds services for the DG, TG and ES
     protected ServiceManager serviceManager;
 
 
@@ -71,6 +80,7 @@ public class BenchmarkControllerFacetedBrowsing
     //protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
 
     // FIXME HACK - A service should not be considered started unless they are ready 
+    protected CompletableFuture<ByteBuffer> systemReadyFuture;
     protected CompletableFuture<ByteBuffer> dataGeneratorReadyFuture;
     protected CompletableFuture<ByteBuffer> taskGeneratorReadyFuture;
 
@@ -122,6 +132,17 @@ public class BenchmarkControllerFacetedBrowsing
         dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
 
+        
+        systemReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+                ByteChannelUtils.firstByteEquals(Commands.START_BENCHMARK_SIGNAL));
+
+        systemReadyFuture.whenComplete((b, e) -> {
+        	b = b.duplicate();
+        	b.get(); // Skip first byte
+            String systemContainerId = RabbitMQUtils.readString(b);
+            logger.info("System container id: " + systemContainerId);
+        	// Register a 
+        });
   
 //        dataGeneratorBulkLoadReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
 //                ByteChannelUtils.firstByteEquals(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR));
@@ -227,6 +248,11 @@ public class BenchmarkControllerFacetedBrowsing
             RDFDataMgr.write(baos, model, Lang.NTRIPLES);
             String str = baos.toString();
             logger.info("Received eval model is: " + str);
+            
+            // Rename any NEW_EXPERIMENT_URI resources to the experiment URI
+            org.apache.jena.rdf.model.Resource tmp = model.createResource(Constants.NEW_EXPERIMENT_URI);
+            ResourceUtils.renameResource(tmp, experimentResult.getURI());
+            
         });
         
         serviceManager = new ServiceManager(Arrays.asList(
@@ -282,7 +308,20 @@ public class BenchmarkControllerFacetedBrowsing
     }
 
     @Override
-    public void run() throws InterruptedException, ExecutionException, TimeoutException {
+    public void run() throws Exception {
+    	try {
+    		runCore();
+    	} catch(Exception e) {
+    		experimentResult
+    			.addProperty(HOBBIT.terminatedWithError, HobbitErrors.BenchmarkCrashed);
+        }
+    	
+        commandSender.onNext(ByteBuffer.wrap(Bytes.concat(
+        		new byte[] {Commands.BENCHMARK_FINISHED_SIGNAL},
+        		RabbitMQUtils.writeModel(experimentResult.getModel()))));
+    }
+
+    public void runCore() throws InterruptedException, ExecutionException, TimeoutException {
 
         initFuture.get(60, TimeUnit.SECONDS);
         
@@ -329,7 +368,7 @@ public class BenchmarkControllerFacetedBrowsing
                 //systemUnderTestReadyFuture);
 
         try {
-            dataGenerationPhaseCompletion.get(180, TimeUnit.SECONDS);
+            dataGenerationPhaseCompletion.get(60 * 15, TimeUnit.SECONDS);
         } catch(Exception e) {
             throw new RuntimeException("Data generation phase failed or did not complete in time", e);
         }

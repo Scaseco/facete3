@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -49,6 +48,7 @@ import org.apache.jena.shared.NotFoundException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.evaluation.EvaluationModuleFacetedBrowsingBenchmark;
+import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.component.TaskGeneratorModule;
@@ -84,13 +84,15 @@ import org.springframework.core.env.Environment;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
+import com.google.common.primitives.Bytes;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
+import com.google.common.util.concurrent.ServiceManager.Listener;
 import com.google.gson.Gson;
-import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.QueueingConsumer;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
@@ -584,7 +586,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 			}
 	    	
 			// TODO Ensure the health check can be interrupted on service stop 
-	    	new HealthcheckRunner(60 * 5, 1, TimeUnit.SECONDS, () -> {
+	    	new HealthcheckRunner(60 * 15, 1, TimeUnit.SECONDS, () -> {
 	    		try {
 			        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 		            connection.setRequestMethod("GET");
@@ -662,7 +664,21 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        if(doQuickRun) {
 
                 params.put("GTFS_GEN_SEED", "111");
-	        	
+//		        params = ImmutableMap.<String, String>builder()
+//	                .put("GTFS_GEN_SEED", "111")
+//	                .put("GTFS_GEN_REGION__SIZE_X", "2000")
+//	                .put("GTFS_GEN_REGION__SIZE_Y", "2000")
+//	                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
+//	                .put("GTFS_GEN_STOPS__STOPS", "4000")
+//	                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
+//	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "900000")
+//	                .put("GTFS_GEN_ROUTES__ROUTES", "4000")
+//	                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
+//	                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
+//	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1")
+//	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
+//	                .build();                               
+                
 	        } else {
 
 		        Property pOption = ResourceFactory.createProperty("http://w3id.org/bench#podiggOption");
@@ -944,7 +960,13 @@ public class ConfigsFacetedBrowsingBenchmark {
 		@Bean
 	    public Subscriber<ByteBuffer> taskAckSender(@Qualifier("ackChannel") Channel channel, @Qualifier("queueNameMapper") Function<String, String> queueNameMapper) throws IOException {
 			String queueName = queueNameMapper.apply(Constants.HOBBIT_ACK_EXCHANGE_NAME);
-			return RabbitMqFlows.createFanoutSender(channel, queueName, null);
+            channel.exchangeDeclare(queueName, "fanout", false, true, null);
+            
+            return RabbitMqFlows.wrapPublishAsSubscriber(
+            		RabbitMqFlows.wrapPublishAsConsumer(channel, queueName, "", null),
+            		() -> 0);
+			
+			//return RabbitMqFlows.createFanoutSender(channel, queueName, null);
 	    }		
 	}
 	
@@ -1075,7 +1097,10 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 		
 		@Bean
-		public ApplicationRunner benchmarkLauncher(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+		public ApplicationRunner benchmarkLauncher(
+				DockerServiceBuilderFactory<?> dockerServiceBuilderFactory,
+				@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender		
+		) {
 			return args -> {
 				try {
 					logger.info("BenchmarkLauncher starting");
@@ -1086,7 +1111,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 					serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
 					
 					// Launch the system adapter
-					Service saService = dockerServiceBuilderFactory.get()
+					DockerService saService = dockerServiceBuilderFactory.get()
 						.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
 						//.setLocalEnvironment(serviceEnv)
 						.get();
@@ -1112,16 +1137,27 @@ public class ConfigsFacetedBrowsingBenchmark {
 	//				}
 					
 					//mockAbstractSa();
-					
-					
-					saService.startAsync().awaitRunning();
+
+					// Ensure that both the SA and BC are healthy before sending out the start signal
+					// This ensures that the BC is ready to accept the start event
+					ServiceManager serviceManager = new ServiceManager(Arrays.asList(saService, bcService));
+					serviceManager.addListener(new Listener() {
+						@Override
+						public void healthy() {
+							String saContainerId = saService.getContainerId();
+							commandSender.onNext(ByteBuffer.wrap(Bytes.concat(
+								new byte[] {Commands.START_BENCHMARK_SIGNAL},
+								saContainerId.getBytes(StandardCharsets.UTF_8)
+							)));							
+						}
+					}, MoreExecutors.directExecutor());
+
+					serviceManager.startAsync();
 					try {					
-						//bcService.startAsync().awaitRunning();
-						
 						// Wait for the bc to finish
-						bcService.startAsync().awaitTerminated();
+						bcService.awaitTerminated();
 					} finally {
-						saService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+						saService.awaitTerminated(10, TimeUnit.SECONDS);
 					}
 				} finally {
 					logger.info("BenchmarkLauncher terminating");

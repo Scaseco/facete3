@@ -750,7 +750,7 @@ public class RabbitMqFlows {
     public static Consumer<ByteBuffer> wrapPublishAsConsumer(Channel channel, String exchangeName, String routingKey, BasicProperties properties) {
     	Consumer<ByteBuffer> result = (buffer) -> {
     		try {
-    			logger.debug("Publishing on channel " + channel + " exchange=" + exchangeName + " routingKey=" + routingKey + " replyTo=" + properties.getReplyTo() + " isOpen=" + channel.isOpen());
+    			logger.debug("Publishing on channel " + channel + " exchange=" + exchangeName + " routingKey=" + routingKey + " replyTo=" + Optional.ofNullable(properties).map(BasicProperties::getReplyTo).orElse(null) + " isOpen=" + channel.isOpen());
     	    	byte[] payload = new byte[buffer.remaining()];
     	    	buffer.duplicate().get(payload);
     			

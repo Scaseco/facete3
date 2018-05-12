@@ -1,14 +1,15 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.ByteArrayInputStream;
 
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.util.ResourceUtils;
 import org.hobbit.core.Constants;
-import org.hobbit.core.components.AbstractEvaluationStorage;
-import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.utils.CountingSupplier;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 
 
@@ -72,6 +72,24 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
 //        return es;
 //	}
 
+    @Bean
+    public Resource experimentResult(
+    	@Value("${" + Constants.HOBBIT_EXPERIMENT_URI_KEY + ":" + Constants.NEW_EXPERIMENT_URI + "}") String experimentUri,
+    	@Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
+    	
+    	
+    	// Deserialize the paramModel, rename them to the given experiment URI, and yield the
+    	// resource of the experiment
+        Model paramModel = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(paramModel, new ByteArrayInputStream(paramModelStr.getBytes()), Lang.JSONLD);
+
+        Resource tmp = paramModel.getResource(Constants.NEW_EXPERIMENT_URI);
+        
+        ResourceUtils.renameResource(tmp, experimentUri);
+        Resource result = paramModel.getResource(experimentUri);
+
+        return result;
+    }
     
     @Bean
     public ServiceBuilder<?> dataGeneratorServiceFactory(@Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModel) {

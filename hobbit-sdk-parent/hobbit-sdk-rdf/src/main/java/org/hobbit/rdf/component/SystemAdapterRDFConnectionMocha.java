@@ -212,8 +212,9 @@ public class SystemAdapterRDFConnectionMocha
     @Override
     public void run() throws Exception {
         logger.info("SA: waiting for task generation to finish");
-        taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
+        //taskGenerationFinishedFuture.get(10, TimeUnit.MINUTES);
 //        taskGenerationFinishedFuture.get(60, TimeUnit.SECONDS);
+        taskGenerationFinishedFuture.get(60 * 30, TimeUnit.SECONDS);
 
         logger.info("SA: Task generation finished");
     }
