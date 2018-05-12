@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>faceted-benchmark-system-adapter</artifactId>
+
+    <parent>
+        <groupId>org.hobbit</groupId>
+        <artifactId>faceted-benchmark-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+
+<!--
+        <repository>
+            <id>Apache Repo</id>
+            <name>Apache Repository</name>
+            <url>https://repository.apache.org/content/repositories/releases/</url>
+        </repository>
+-->
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-arq</artifactId>
+        </dependency>
+
+        <!-- HOBBIT Core -->
+        <dependency>
+            <groupId>org.hobbit</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+
+        <!-- RabbitMQ -->
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.hobbit</groupId>
+            <artifactId>virtjdbc4</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hobbit</groupId>
+            <artifactId>virt_jena3</artifactId>
+        </dependency>
+
+        <!-- Apache Jena -->
+
+        <!-- log4j -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

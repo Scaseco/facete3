@@ -19,3 +19,27 @@ If you want to run the benchmark using the platform, please follow the guideline
 # Description of the Faceted Browsing parameters
 
 All you need to provide is an integer value for a seed which allows for the randomization of the benchmark scenarios. 
+
+
+
+
+## Changelog
+
+* Created `hobbit-sdk-core` artifact which defines abstract default components according to the platform specification (bc, dg, tg, sa, es, em).
+* Created `hobbit-sdk-rdf` module for RDF/SPARQL-centric benchmarks
+  * Provides e.g. jena-virtuoso adapter, further vendor drivers could be added
+* Docker container creation refactored:
+  * There is now a `DockerServiceFactory` interface with three fundamental implementations:
+    * `DockerServiceFactoryDockerClient` creates real docker containers using Spotify's docker client library
+    * `DockerServiceFactoryDelegating` implements the DockerServiceFactory interface, but delegates to custom (lambda) functions; mostly for use to intantiate those component classes that would run in separate, real docker containers. 
+    * `DockerServiceManagerClientComponent` a `DockerServiceFactory` that translates container creation requests to messages on a (command) channel
+  * Furthermore, the class which can handle docker container creation requests on a channel is
+    * `DockerServiceMangerServerComponent` a component that listens on a command channel and delegates container creation requests to calls to a configured DockerServiceFactory
+* All component communication refactored
+  * using rxJava flows; components are not dependent on RabbitMQ anymore
+  * Implemented flow wrappers for RabbitMQ
+ 
+ 
+
+
+
