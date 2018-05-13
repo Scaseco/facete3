@@ -80,11 +80,15 @@ public class BenchmarkControllerFacetedBrowsing
 
     //protected CompletableFuture<ByteBuffer> systemUnderTestReadyFuture;
 
-    // FIXME HACK - A service should not be considered started unless they are ready 
+    // FIXME HACK - A service should not be considered started unless they are ready
+    // So these futures should actually be managed with the service abstraction
     protected CompletableFuture<ByteBuffer> systemReadyFuture;
     protected CompletableFuture<ByteBuffer> dataGeneratorReadyFuture;
     protected CompletableFuture<ByteBuffer> taskGeneratorReadyFuture;
-
+    protected CompletableFuture<ByteBuffer> evalStorageReadyFuture;
+    
+    
+    //protected CompletableFuture<ByteBuffer> evalModuleReadyFuture;
 
     // The future for whether the evaluation data has been received
     protected CompletableFuture<ByteBuffer> evaluationDataReceivedFuture;
@@ -178,13 +182,17 @@ public class BenchmarkControllerFacetedBrowsing
         taskGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
                 ByteChannelUtils.firstByteEquals(Commands.TASK_GENERATOR_READY_SIGNAL));
 
-        dataGeneratorReadyFuture.whenComplete((v, t) -> {
-        	logger.info("DataGenerator ready signal received");	
-        });
+        evalStorageReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+                ByteChannelUtils.firstByteEquals(Commands.EVAL_STORAGE_READY_SIGNAL));
 
-        taskGeneratorReadyFuture.whenComplete((v, t) -> {
-        	logger.info("TaskGenerator ready signal received");	
-        });
+//        evalModuleReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+//                ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_READY_SIGNAL));
+        
+        dataGeneratorReadyFuture.whenComplete((v, t) -> { logger.info("DataGenerator ready signal received"); });
+        taskGeneratorReadyFuture.whenComplete((v, t) -> { logger.info("TaskGenerator ready signal received"); });
+        evalStorageReadyFuture.whenComplete((v, t) -> { logger.info("EvalStorage ready signal received"); });
+        //evalModuleReadyFuture.whenComplete((v, t) -> { logger.info("EvalModule ready signal received"); });
+
 
         dataGeneratorService = dataGeneratorServiceFactory.get();
         taskGeneratorService = taskGeneratorServiceFactory.get();
@@ -314,7 +322,7 @@ public class BenchmarkControllerFacetedBrowsing
 
         logger.info("Waiting for system, data and task generators to become ready");
         //systemReadyFuture
-        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
+        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture, evalStorageReadyFuture);
 
 //        initFuture.whenComplete((v, t) -> {
 //        	run();

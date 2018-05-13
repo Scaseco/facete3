@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import javax.annotation.Resource;
 
+import org.hobbit.core.Commands;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultPairImpl;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.Result;
@@ -88,6 +89,10 @@ public class DefaultEvaluationStorage
 
     @Resource(name="actualResultDecoder")
     protected Function<ByteBuffer, Entry<String, Result>> actualResultDecoder;
+
+    @Resource(name="commandSender")
+    protected Subscriber<ByteBuffer> commandSender;
+
 
     public Iterator<ResultPair> createIterator() {
         return storage.streamResults()
@@ -218,6 +223,8 @@ public class DefaultEvaluationStorage
 //                }
             //}
         });
+
+        commandSender.onNext(ByteBuffer.wrap(new byte[] { Commands.EVAL_STORAGE_READY_SIGNAL }));
 
 
         logger.info("EvaluationStorage::startUp() completed");

@@ -116,12 +116,16 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
     }
 
     @Bean
-    public ServiceBuilder<?> evaluationStorageServiceFactory() {
+    public ServiceBuilder<?> evaluationStorageServiceFactory() { //@Value("${hostMode:false}") boolean devMode) {
+//		.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage/image")
+//        .setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
+
+    	
+    	String imageName = "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage";
+    	
         return CountingSupplier.from(count ->
 	        dockerServiceBuilderFactory.get()
-	        		.setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage/image")
-//	                .setImageName("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0")
-//	        		.setImageName("git.project-hobbit.eu:4567/cstadler/evaluationstorage/image")
+	        		.setImageName(imageName)
 	                .setLocalEnvironment(ImmutableMap.<String, String>builder()
 	                        .put(Constants.ACKNOWLEDGEMENT_FLAG_KEY, "true")
 	                        .build())
