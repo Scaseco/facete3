@@ -85,8 +85,6 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
 
         Resource tmp = paramModel.createResource(Constants.NEW_EXPERIMENT_URI);
         
-        experimentUri = "http://test.foo/";
-        
         Resource result = ResourceUtils.renameResource(tmp, experimentUri);
 
         return result;
