@@ -138,6 +138,28 @@ public class ConfigVirtualDockerServiceFactory {
 		return result;
 	}
 
+	public static DockerService wrapSparqlServiceWithHealthCheck(DockerService dockerService, Integer port) {
+    	DockerService result = new DockerServiceDelegate<DockerService>(dockerService) {
+    		// FIXME We want to enhance the startup method within the thread allocated by the guava service
+    		@Override
+    		public ServiceDelegate<DockerService> startAsync() {
+    			super.startAsync().awaitRunning();
+    			// The delegate has started, so we have a container id
+    			String host = delegate.getContainerId();
+	        	String destination = "http://" + host + (port == null ? "" : ":" + port) + "/";
+    			
+	        	new HealthcheckRunner(
+	        			60, 1, TimeUnit.SECONDS, () -> {
+        		        try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
+        		            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
+        		        }
+	        	}).run();
+	        	return this;
+    		}
+    	};
+    	
+    	return result;
+	}
 	
 
 	public static DockerServiceFactory<?> applyServiceWrappers(DockerServiceFactory<?> delegate) {
@@ -145,29 +167,7 @@ public class ConfigVirtualDockerServiceFactory {
         // Service wrappers which modifies startup/shutdown of other services; mostly healthchecks
         // on startup
         Map<Pattern, Function<DockerService, DockerService>> serviceWrappers = new LinkedHashMap<>();
-        serviceWrappers.put(Pattern.compile("tenforce/virtuoso"), dockerService -> {
-        	DockerService r = new DockerServiceDelegate<DockerService>(dockerService) {
-        		// FIXME We want to enhance the startup method within the thread allocated by the guava service
-        		@Override
-        		public ServiceDelegate<DockerService> startAsync() {
-        			super.startAsync().awaitRunning();
-        			// The delegate has started, so we have a container id
-        			String host = delegate.getContainerId();
-    	        	String destination = "http://" + host + ":8890/";
-        			
-    	        	new HealthcheckRunner(
-    	        			60, 1, TimeUnit.SECONDS, () -> {
-	        		        try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
-	        		            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
-	        		        }
-    	        	}).run();
-    	        	return this;
-        		}
-        	};
-        	
-        	return r;
-        	//new org.hobbit.benchmark.faceted_browsing.config.ServiceDelegate<>(delegate);
-        });
+        serviceWrappers.put(Pattern.compile("tenforce/virtuoso"), dockerService -> wrapSparqlServiceWithHealthCheck(dockerService, 8890));
 
         DockerServiceFactory<?> result = (imageName, env) -> {
 

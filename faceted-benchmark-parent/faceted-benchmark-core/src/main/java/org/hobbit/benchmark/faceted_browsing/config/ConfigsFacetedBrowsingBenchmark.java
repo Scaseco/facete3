@@ -404,7 +404,10 @@ public class ConfigsFacetedBrowsingBenchmark {
                 @Value("${" + Constants.RABBIT_MQ_HOST_NAME_KEY + ":localhost}") String amqpHost                
 				
 		) throws Exception {
-			DockerServiceManagerClientComponent core = tmp.getService();
+			DockerServiceManagerClientComponent tmpCore = tmp.getService();
+			
+			// Apply client side service wrappers
+			DockerServiceFactory<?> core = ConfigVirtualDockerServiceFactory.applyServiceWrappers(tmpCore);
 			
 			DockerServiceBuilderFactory<DockerServiceBuilder<DockerService>> result =
 					() -> {

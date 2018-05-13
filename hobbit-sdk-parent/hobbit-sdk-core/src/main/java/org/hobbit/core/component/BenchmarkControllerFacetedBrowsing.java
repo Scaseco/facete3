@@ -310,7 +310,8 @@ public class BenchmarkControllerFacetedBrowsing
 
 
         logger.info("Waiting for system, data and task generators to become ready");
-        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture, systemReadyFuture);
+        //systemReadyFuture
+        initFuture = CompletableFuture.allOf(dataGeneratorReadyFuture, taskGeneratorReadyFuture);
 
 //        initFuture.whenComplete((v, t) -> {
 //        	run();
@@ -327,13 +328,16 @@ public class BenchmarkControllerFacetedBrowsing
     	} catch(Exception e) {
     		experimentResult
     			.addProperty(HOBBIT.terminatedWithError, HobbitErrors.BenchmarkCrashed);
+    		
+    		throw new RuntimeException(e);
+        } finally {
+	    	
+	    	logger.info("Result Model: " + RabbitMQUtils.writeModel2String(experimentResult.getModel()));
+	    	
+	        commandSender.onNext(ByteBuffer.wrap(Bytes.concat(
+	        		new byte[] {Commands.BENCHMARK_FINISHED_SIGNAL},
+	        		RabbitMQUtils.writeModel(experimentResult.getModel()))));
         }
-    	
-    	logger.info("Result Model: " + RabbitMQUtils.writeModel2String(experimentResult.getModel()));
-    	
-        commandSender.onNext(ByteBuffer.wrap(Bytes.concat(
-        		new byte[] {Commands.BENCHMARK_FINISHED_SIGNAL},
-        		RabbitMQUtils.writeModel(experimentResult.getModel()))));
     }
 
     public void runCore() throws InterruptedException, ExecutionException, TimeoutException {
