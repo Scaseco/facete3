@@ -17,13 +17,16 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFactory;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFactoryWindowedInMemory;
 import org.junit.Assert;
+import org.junit.Test;
 
 import io.reactivex.processors.PublishProcessor;
 
 
 
 public class TestSparqlWindowedInsert {
-	public static void main(String[] args) {
+	
+	@Test
+	public void testSparqlWindowedInsert() {
 		// Set up a connection to a triple store
 		// (for the sake of the demo this is in memory, but the factory also supports remote sparql access)
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
