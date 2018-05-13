@@ -83,10 +83,11 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
         Model paramModel = ModelFactory.createDefaultModel();
         RDFDataMgr.read(paramModel, new ByteArrayInputStream(paramModelStr.getBytes()), Lang.JSONLD);
 
-        Resource tmp = paramModel.getResource(Constants.NEW_EXPERIMENT_URI);
+        Resource tmp = paramModel.createResource(Constants.NEW_EXPERIMENT_URI);
         
-        ResourceUtils.renameResource(tmp, experimentUri);
-        Resource result = paramModel.getResource(experimentUri);
+        experimentUri = "http://test.foo/";
+        
+        Resource result = ResourceUtils.renameResource(tmp, experimentUri);
 
         return result;
     }

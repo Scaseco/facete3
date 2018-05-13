@@ -231,15 +231,18 @@ public class BenchmarkControllerFacetedBrowsing
     		PublisherUtils.triggerOnMessage(commandReceiver, ByteChannelUtils.firstByteEquals(Commands.EVAL_MODULE_FINISHED_SIGNAL))
     		.whenComplete((buffer, ex) -> {
 	            logger.info("Evaluation model received");
-	            Model model = RabbitMQUtils.readModel(buffer.array(), 1, buffer.limit() - 1);
-	            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	            RDFDataMgr.write(baos, model, Lang.NTRIPLES);
-	            String str = baos.toString();
-	            logger.info("Received eval model is: " + str);
+	            Model evalModel = RabbitMQUtils.readModel(buffer.array(), 1, buffer.limit() - 1);
+//	            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//	            RDFDataMgr.write(baos, evalModel, Lang.NTRIPLES);
+//	            String str = baos.toString();
+	            //logger.info("Received eval model is: " + str);
 	            
-	            // Rename any NEW_EXPERIMENT_URI resources to the experiment URI
-	            org.apache.jena.rdf.model.Resource tmp = model.createResource(Constants.NEW_EXPERIMENT_URI);
-	            ResourceUtils.renameResource(tmp, experimentResult.getURI());            
+	            // In evalModel, rename any NEW_EXPERIMENT_URI resources to the experiment URI
+	            org.apache.jena.rdf.model.Resource tmp = evalModel.createResource(Constants.NEW_EXPERIMENT_URI);
+	            ResourceUtils.renameResource(tmp, experimentResult.getURI());
+	            
+	            // Then add them to the final result model
+	            experimentResult.getModel().add(evalModel);
     		});
         
         serviceManager = new ServiceManager(Arrays.asList(
