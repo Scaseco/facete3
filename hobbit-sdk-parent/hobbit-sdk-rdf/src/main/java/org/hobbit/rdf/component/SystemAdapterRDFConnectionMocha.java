@@ -19,7 +19,10 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.Var;
@@ -29,6 +32,7 @@ import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.component.ComponentBaseExecutionThread;
+import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.MochaConstants;
 import org.hobbit.core.utils.ByteChannelUtils;
@@ -257,27 +261,43 @@ public class SystemAdapterRDFConnectionMocha
 
         SparqlStmt stmt = parser.apply(sparqlStmtStr);
 
+//        try(QueryExecution xxx = rdfConnection.query("SELECT ?g (COUNT(*) AS ?c) { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ORDER BY DESC(COUNT(*))")) {
+//       try(QueryExecution xxx = rdfConnection.query("SELECT ?g ?s ?p ?o { GRAPH ?g { ?s ?p ?o } } ORDER BY ?g ?s ?p ?o LIMIT 10")) {
+//        	System.out.println(ResultSetFormatter.asText(xxx.execSelect()));
+//        }
+        
         if(stmt.isQuery()) {
-            try(QueryExecution qe = rdfConnection.query(stmt.getOriginalString())) {
+        	//System.out.println("isInTransaction: " + rdfConnection.isInTransaction());
+        	//xrdfConnection.begin(ReadWrite.READ);
+        	String queryStr = stmt.getOriginalString();
+            try(QueryExecution qe = rdfConnection.query(queryStr)) {
             	ResultSet rs = qe.execSelect();
+            	//System.out.println(ResultSetFormatter.asText(rs));
             	sendResultSet(taskIdStr, rs);
 //                ResultSetMem rsMem = new ResultSetMem(rs);
 //                int numRows = ResultSetFormatter.consume(rsMem);
 //                rsMem.rewind();
 //                logger.debug("Number of result set rows for task " + taskIdStr + ": " + numRows + " query: " + stmt.getOriginalString());
 //
-//                ResultSetFormatter.outputAsJSON(out, rsMem);                
+//                ResultSetFormatter.outputAsJSON(out, rsMem);
+            	//xrdfConnection.commit();
             } catch(Exception e) {
                 logger.warn("Sparql select query failed", e);
             	sendResultSet(taskIdStr, createErrorResultSet());
+            } finally {
+        		//xrdfConnection.end();
             }
         } else if(stmt.isUpdateRequest()) {
-            try {
-                rdfConnection.update(stmt.getOriginalString());
+        	//xrdfConnection.begin(ReadWrite.READ);
+        	try {
+                //xrdfConnection.update(stmt.getOriginalString());
+            	//xrdfConnection.commit();
             	sendResultSet(taskIdStr, new ResultSetMem());
             } catch(Exception e) {
                 logger.warn("Sparql update query failed", e);
             	sendResultSet(taskIdStr, createErrorResultSet());
+            } finally {
+        		//xrdfConnection.end();
             }
         }
         

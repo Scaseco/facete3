@@ -849,8 +849,9 @@ public class ConfigsFacetedBrowsingBenchmark {
 		@Bean
 		public RDFConnection systemUnderTestRdfConnection() {
 			//SparqlService tmp = FluentSparqlService.forModel().create();
-			RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
-			
+			//RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
+
+			RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create());
 	        return result;
 		}
 
@@ -1205,6 +1206,8 @@ public class ConfigsFacetedBrowsingBenchmark {
         			String baseUrl = "http://" + host + ":" + "8890";
         			
         			result = () -> RDFConnectionFactory.connect(baseUrl + "/sparql", baseUrl + "/sparql", baseUrl + "/sparql-graph-crud/");
+        			
+        			//result = () -> RDFConnectionFactory.connect(baseUrl);
         			
         			logger.info("Sparql endpoint online at: " + baseUrl);
         		} else {

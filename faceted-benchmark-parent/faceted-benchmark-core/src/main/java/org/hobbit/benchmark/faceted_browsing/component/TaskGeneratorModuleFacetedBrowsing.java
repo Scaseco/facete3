@@ -174,7 +174,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         	Statement stmt = task.getProperty(RDFS.label);
         	String str = stmt.getString();
         	Query query = parser.apply(str).getAsQueryStmt().getQuery();
-        	query.addGraphURI(DataGeneratorFacetedBrowsing.GRAPH_IRI);
+        	//query.addGraphURI(DataGeneratorFacetedBrowsing.GRAPH_IRI);
         	String newQueryStr = Objects.toString(query);
         	stmt.changeObject(newQueryStr);
         	
@@ -200,7 +200,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         	ResultSetMem rsMem = new ResultSetMem(resultSet);
         	int numRows = ResultSetFormatter.consume(rsMem);
         	rsMem.rewind();
-            logger.info("Number of result set rows for task " + task + ": " + numRows + " query: " + queryStr);
+            logger.info("Number of expected result set rows for task " + task + ": " + numRows + " query: " + queryStr);
 
         	
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();

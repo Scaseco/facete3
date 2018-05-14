@@ -1,5 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -10,8 +13,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.shared.NotFoundException;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataGenerator;
@@ -34,7 +36,6 @@ import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
-import org.hobbit.core.components.test.InMemoryEvaluationStore;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.service.api.DockerServiceDelegate;
@@ -45,9 +46,7 @@ import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnectionMocha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -149,13 +148,19 @@ public class ConfigVirtualDockerServiceFactory {
     			super.startAsync().awaitRunning();
     			// The delegate has started, so we have a container id
     			String host = delegate.getContainerId();
-	        	String destination = "http://" + host + (port == null ? "" : ":" + port) + "/";
+	        	String destination = "http://" + host + (port == null ? "" : ":" + port) + "/sparql";
     			
+	        	URL url = HealthcheckUtils.createUrl(destination);
+	        	
 	        	new HealthcheckRunner(
 	        			60, 1, TimeUnit.SECONDS, () -> {
-        		        try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
-        		            conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
-        		        }
+	        			HealthcheckUtils.checkUrl(url);
+	        			
+	        			// This part seems to leak connections with jena 3.7.0 as long as the endpoint is not ready
+//        		        try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
+//        		            //conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
+//        		            ResultSetFormatter.consume(conn.query("SELECT * { <http://example.org/healthcheck> a ?t }").execSelect());
+//        		        }
 	        	}).run();
 	        	return this;
     		}
@@ -163,7 +168,7 @@ public class ConfigVirtualDockerServiceFactory {
     	
     	return result;
 	}
-	
+
 
 	public static DockerServiceFactory<?> applyServiceWrappers(DockerServiceFactory<?> delegate) {
 

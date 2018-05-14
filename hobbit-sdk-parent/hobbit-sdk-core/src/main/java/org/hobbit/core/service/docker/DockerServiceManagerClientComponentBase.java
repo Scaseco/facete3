@@ -259,7 +259,7 @@ public abstract class DockerServiceManagerClientComponentBase
         try {
             responseBuffer = response.get(60, TimeUnit.SECONDS).duplicate();
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failure while waiting for image [" + imageName + "] to start", e);
         }
         String result = DockerServiceManagerServerComponent.readRemainingBytesAsString(responseBuffer, StandardCharsets.UTF_8);;
         

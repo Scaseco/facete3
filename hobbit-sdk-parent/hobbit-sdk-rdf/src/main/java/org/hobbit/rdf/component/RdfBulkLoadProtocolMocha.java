@@ -92,12 +92,14 @@ public class RdfBulkLoadProtocolMocha
 
 					graphNames.add(graph);
 					
-					rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
+					//rdfConnection.begin(ReadWrite.WRITE);
+					//rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
 
 					//System.out.println("RDF conn is " + rdfConnection);
-					rdfConnection.begin(ReadWrite.WRITE);
+					//String loadGraph = "default".equals(graph) ? null : graph;
 					rdfConnection.load(graph, finalFilename);
-					rdfConnection.commit();
+					//rdfConnection.load(finalFilename);
+					//rdfConnection.commit();
 				}
 
 				//if(("" + rdfConnection).contains("Remote")) {
@@ -140,10 +142,11 @@ public class RdfBulkLoadProtocolMocha
 
 			if(content.length != 0) {
 				if (filename.contains("/")) {
-					filename = "file" + String.format("%010d", counter++) + ".ttl";
+					//filename = "file" + String.format("%010d", counter++) + ".ttl";
 					// .ttl suffix needed for jena to automatically recognize the format
-					//filename = filename.replaceAll("[^/]*[/]", "") + ".ttl";
+					filename = filename.replaceAll("[^/]*[/]", "");//+ ".ttl";
 				}
+				filename += ".ttl";
 				File file = new File(datasetFolderName + File.separator + filename);
 
 				try(FileOutputStream fos = new FileOutputStream(file)) {
