@@ -19,7 +19,7 @@ Hobbit SDK II is a complete reimplementation of the hobbit components to overcom
 
 ## Service Abstraction
 The service abstraction comprises classes to abstract Spring Boot components and docker services alike.
-It is based on (Guava Services)[https://github.com/google/guava/wiki/ServiceExplained].
+It is based on [Guava Services](https://github.com/google/guava/wiki/ServiceExplained).
 
 ### Docker Service Abstraction
 
