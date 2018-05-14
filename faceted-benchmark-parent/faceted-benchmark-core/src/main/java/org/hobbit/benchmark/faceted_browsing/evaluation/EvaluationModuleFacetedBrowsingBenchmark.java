@@ -6,11 +6,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -67,7 +69,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
     }
 
     @Override
-    public void evaluateResponse(byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
+    public void evaluateResponse( byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
                                     long responseReceivedTimestamp) throws Exception {
 
 
@@ -134,16 +136,37 @@ public class EvaluationModuleFacetedBrowsingBenchmark
             goldsArray[i]=goldsArray[i].trim();
         }
 
+        
+        
         ArrayList<String> receivedDataInstances = new ArrayList<>(Arrays.asList(resultsArray));
         ArrayList<String> expectedDataInstances = new ArrayList<>(Arrays.asList(goldsArray));
 
         LOGGER.debug("expected data items: " + expectedDataInstances.size());
         LOGGER.debug("actual data items: " + receivedDataInstances.size());
+
         
         ArrayList<String> empties = new ArrayList<>();
         empties.add("");
         receivedDataInstances.removeAll(empties);
         expectedDataInstances.removeAll(empties);
+        
+        
+        
+        boolean showDiffs = true;
+        if(showDiffs) {
+            Set<String> expected = new HashSet<>(expectedDataInstances);
+            Set<String> actual = new HashSet<>(receivedDataInstances);
+            
+            Set<String> eWithoutA = Sets.difference(expected, actual);
+            Set<String> aWithoutE = Sets.difference(actual, expected);
+            if(!eWithoutA.isEmpty() || !aWithoutE.isEmpty()) {
+                System.out.println("DIFFERENCE ON " + taskidGold);
+                System.out.println(eWithoutA);
+                System.out.println(aWithoutE);
+            }            
+        }
+
+        
         QueryID key = new QueryID(Integer.parseInt(scenario), Integer.parseInt(query));
 
         if (!scenario.contains("0") || (scenario.contains("10"))) {
@@ -160,6 +183,12 @@ public class EvaluationModuleFacetedBrowsingBenchmark
                 }
             }
             fp = receivedDataInstances.size() - tp;
+            
+            
+            if(fp != 0) {
+                System.out.println("DEBUG POINT REACHED");
+            }
+            
 
             int time_needed = responseReceivedTimestamp > 0L && responseReceivedTimestamp - taskSentTimestamp < timeOut ?
                     (int) (responseReceivedTimestamp - taskSentTimestamp) : timeOut;

@@ -245,7 +245,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
         
         
         logger.info("TaskGenerator waiting for start signal");
-        startTaskGenerationFuture.get(60 * 15, TimeUnit.SECONDS);
+        startTaskGenerationFuture.get(BenchmarkControllerFacetedBrowsing.MAX_DATAGENERATION_TIME_IN_SECONDS, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
@@ -305,7 +305,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
                     
                // Wait for acknowledgement
                try {
-            	   taskAckFuture.get(60, TimeUnit.SECONDS);
+            	   taskAckFuture.get(BenchmarkControllerFacetedBrowsing.MAX_TASK_EXECUTION_TIME_IN_SECONDS, TimeUnit.SECONDS);
                } catch (InterruptedException | ExecutionException | TimeoutException e) {
             	   throw new RuntimeException("Timeout or failure waiting for acknowledgement of task " + taskId, e);
                }

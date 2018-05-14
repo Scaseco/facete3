@@ -627,17 +627,20 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    	return r;	    	
 	    }
 	    
+//	    @Bean
+//	    public TripleStreamSupplier dataGenerationMethod() {
+//	        logger.info("*** DG: USING STATIC TEST DATASET - DO NOT USE FOR PRODUCTION ***");
+//	    	return () -> {
+//	    	    //String staticFile = "podigg-lc-small.ttl";
+//	    	    //String staticFile = "podigg-lc-large.ttl";
+//                //String staticFile = "podigg-lc-medium.ttl";
+//		    	ExtendedIterator<Triple> it = RDFDataMgr.loadModel(staticFile).getGraph().find();
+//	    		return Streams.stream(it).onClose(it::close);
+//	    	};
+//	    }
+//	    
 	    @Bean
-	    public TripleStreamSupplier dataGenerationMethod() {
-	        logger.info("*** DG: USING STATIC TEST DATASET - DO NOT USE FOR PRODUCTION ***");
-	    	return () -> {
-		    	ExtendedIterator<Triple> it = RDFDataMgr.loadModel("podigg-lc-small.ttl").getGraph().find();
-	    		return Streams.stream(it).onClose(it::close);
-	    	};
-	    }
-	    
-	    //@Bean
-	    public TripleStreamSupplier dataGenerationMethodX(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
+	    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
 	        
 	        logger.info("DG: Supplied param model is: " + paramModelStr);
 	        
@@ -655,7 +658,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        // Check if the quickTestRun parameter is set to true - if so, use test settings
 	        Property pQueryTestRun = ResourceFactory.createProperty("http://w3id.org/bench#paramQuickTestRun");
 	        
-	        boolean isParamModelEmpty = paramModel.isEmpty(); 
+	        boolean isParamModelEmpty = paramModel.isEmpty();
 	        boolean isQuickTestRunSet = model.listStatements(null, pQueryTestRun, (RDFNode)null).nextOptional().map(Statement::getBoolean).orElse(false);
 
 	        boolean doQuickRun = false;
@@ -673,7 +676,28 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        
 	        if(doQuickRun) {
 
-                params.put("GTFS_GEN_SEED", "111");
+                //params.put("GTFS_GEN_SEED", "111");
+                
+// Podigg medium
+	           if(true) {
+              params = ImmutableMap.<String, String>builder()
+              .put("GTFS_GEN_SEED", "111")
+              .put("GTFS_GEN_REGION__SIZE_X", "2000")
+              .put("GTFS_GEN_REGION__SIZE_Y", "2000")
+              .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
+              .put("GTFS_GEN_STOPS__STOPS", "3000")
+              .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
+              .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "250000")
+              .put("GTFS_GEN_ROUTES__ROUTES", "1500")
+              .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
+              .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
+              .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1.3")
+              .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
+              .put("GTFS_GEN_CONNECTIONS__TIME_INITIAL", "0")
+              .build();                               
+	           }
+	            
+// Podigg large (to verify)	            
 //		        params = ImmutableMap.<String, String>builder()
 //	                .put("GTFS_GEN_SEED", "111")
 //	                .put("GTFS_GEN_REGION__SIZE_X", "2000")
@@ -681,12 +705,12 @@ public class ConfigsFacetedBrowsingBenchmark {
 //	                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
 //	                .put("GTFS_GEN_STOPS__STOPS", "4000")
 //	                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
-//	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "900000")
+//	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "750000")
 //	                .put("GTFS_GEN_ROUTES__ROUTES", "4000")
 //	                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
 //	                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
-//	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1")
-//	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
+//	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1.3")
+//	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "977616000000")
 //	                .build();                               
                 
 	        } else {
@@ -847,31 +871,32 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 		
 	    // Jena
-	    @Bean
-	    public BeanHolder<FusekiServer> fusekiServer() {
-			//Dataset ds = DatasetFactory.create();
-	    	Dataset ds = DatasetFactory.createTxnMem() ;
-			FusekiServer server = FusekiServer.create()
-			  .add("/ds", ds)
-			  .build();
-			
-			//server.start() ;
-			
-			return new BeanHolder<>(server, FusekiServer::start, FusekiServer::stop);
-	    }
-		@Bean
-		public RDFConnection systemUnderTestRdfConnection(BeanHolder<FusekiServer> fusekiServer) {
-			int port = fusekiServer.getBean().getPort();
-			String url = "http://localhost:" + port + "/ds";
-			return RDFConnectionFactory.connect(url);
-		}
+//	    @Bean
+//	    public BeanHolder<FusekiServer> fusekiServer() {
+//			//Dataset ds = DatasetFactory.create();
+//	    	Dataset ds = DatasetFactory.createTxnMem() ;
+//			FusekiServer server = FusekiServer.create()
+//			  .add("/ds", ds)
+//			  .build();
+//			
+//			//server.start() ;
+//			
+//			return new BeanHolder<>(server, FusekiServer::start, FusekiServer::stop);
+//	    }
+//		@Bean
+//		public RDFConnection systemUnderTestRdfConnection(BeanHolder<FusekiServer> fusekiServer) {
+//			int port = fusekiServer.getBean().getPort();
+//			String url = "http://localhost:" + port + "/ds";
+//			return RDFConnectionFactory.connect(url);
+//		}
 		
-		//@Bean
-		public RDFConnection systemUnderTestRdfConnectionX() {
+		@Bean
+		public RDFConnection systemUnderTestRdfConnection() {
 			//SparqlService tmp = FluentSparqlService.forModel().create();
-			//RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
+		    //RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
+		    RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create());
 
-			RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create(ModelFactory.createDefaultModel()));
+			//RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create(ModelFactory.createDefaultModel()));
 	        
 			
 			
@@ -1218,6 +1243,7 @@ public class ConfigsFacetedBrowsingBenchmark {
     			.setImageName("tenforce/virtuoso")
     			.setLocalEnvironment(ImmutableMap.<String, String>builder()
     					.put("SPARQL_UPDATE", "true")
+    					.put("VIRT_SPARQL_ResultSetMaxRows", "50000")
     					.build())
     			.get();
 

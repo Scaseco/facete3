@@ -1,6 +1,5 @@
 package org.hobbit.core.component;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
@@ -16,11 +15,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.util.ResourceUtils;
-import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -46,6 +41,29 @@ public class BenchmarkControllerFacetedBrowsing
     extends ComponentBaseExecutionThread
     //implements BenchmarkController
 {
+    public static final int MAX_DATAGENERATION_TIME_IN_SECONDS = 60 * 15;
+    
+    // Time allowed for the task generator to finish
+    public static final int MAX_BENCHMARK_TIME_IN_SECONDS = 60 * 45;    
+
+    public static final int MAX_COMPONENT_STARTUP_TIME_IN_SECONDS = 60 * 2;    
+    public static final int MAX_COMPONENT_SHUTDOWN_TIME_IN_SECONDS = 60;
+ 
+    // Short requests should usually be served within a few seconds
+    // Example is the request to retrieve data from the ES
+    // TODO We could break these different times down into separate constants
+    public static final int MAX_SHORT_REQUEST_TIME_IN_SECONDS = 15;
+
+    // Long requests are e.g. starting a docker container
+    public static final int MAX_LONG_REQUEST_TIME_IN_SECONDS = 60;
+
+    // Long requests are e.g. starting a docker container
+    public static final int MAX_TASK_EXECUTION_TIME_IN_SECONDS = 60;
+
+    
+    //  
+    
+    
     private static final Logger logger = LoggerFactory.getLogger(BenchmarkControllerFacetedBrowsing.class);
 
     @Resource(name="dataGeneratorServiceFactory")
@@ -316,8 +334,8 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("BenchmarkController::startUp() Waiting for services to start...");
         ServiceManagerUtils.startAsyncAndAwaitHealthyAndStopOnFailure(
                 serviceManager,
-                60, TimeUnit.SECONDS,
-                60, TimeUnit.SECONDS);
+                MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS,
+                MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
 
 
         logger.info("Waiting for system, data and task generators to become ready");
@@ -398,7 +416,7 @@ public class BenchmarkControllerFacetedBrowsing
                 //systemUnderTestReadyFuture);
 
         try {
-            dataGenerationPhaseCompletion.get(60 * 15, TimeUnit.SECONDS);
+            dataGenerationPhaseCompletion.get(MAX_DATAGENERATION_TIME_IN_SECONDS, TimeUnit.SECONDS);
         } catch(Exception e) {
             throw new RuntimeException("Data generation phase failed or did not complete in time", e);
         }
@@ -430,9 +448,9 @@ public class BenchmarkControllerFacetedBrowsing
                 //CompletableFuture.allOf(dataGenerationFuture);
 
         try {
-            taskGenerationPhaseCompletion.get(60 * 15, TimeUnit.SECONDS);
+            taskGenerationPhaseCompletion.get(MAX_BENCHMARK_TIME_IN_SECONDS, TimeUnit.SECONDS);
         } catch(Exception e) {
-            throw new RuntimeException("Task generation phase failed or did not complete in time", e);
+            throw new RuntimeException("Task generation and benchmarking phase failed or did not complete in time", e);
         }
 
 
@@ -473,7 +491,7 @@ public class BenchmarkControllerFacetedBrowsing
         evaluationModuleService.startAsync();
         // TODO If we do await running, it seems it blocks forever as terminated or failure is not handled properly
         try {
-			evaluationModuleService.awaitTerminated(60, TimeUnit.SECONDS);
+			evaluationModuleService.awaitTerminated(MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			throw new RuntimeException(e);
 		}
@@ -486,7 +504,7 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("Awaiting evaluation result...");
         //evaluationDataReceivedFuture.get(60, TimeUnit.SECONDS);
         try {
-			evaluationDataReceivedFuture.get(60 * 20, TimeUnit.SECONDS);
+			evaluationDataReceivedFuture.get(MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			throw new RuntimeException(e);
 		}
@@ -527,7 +545,7 @@ public class BenchmarkControllerFacetedBrowsing
         logger.info("BenchmarkController::shutDown() invoked");
     	
     	try {
-        	ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, 60, TimeUnit.SECONDS);
+        	ServiceManagerUtils.stopAsyncAndWaitStopped(serviceManager, MAX_COMPONENT_SHUTDOWN_TIME_IN_SECONDS, TimeUnit.SECONDS);
         } finally {
         	super.shutDown();
         }

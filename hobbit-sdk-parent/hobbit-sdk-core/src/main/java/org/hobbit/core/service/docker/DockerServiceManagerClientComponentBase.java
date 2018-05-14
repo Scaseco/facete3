@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.hobbit.core.Commands;
+import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.reactivestreams.Subscriber;
@@ -257,7 +258,7 @@ public abstract class DockerServiceManagerClientComponentBase
         CompletableFuture<ByteBuffer> response = requestToServer.apply(buffer);
         ByteBuffer responseBuffer;
         try {
-            responseBuffer = response.get(60, TimeUnit.SECONDS).duplicate();
+            responseBuffer = response.get(BenchmarkControllerFacetedBrowsing.MAX_LONG_REQUEST_TIME_IN_SECONDS, TimeUnit.SECONDS).duplicate();
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException("Failure while waiting for image [" + imageName + "] to start", e);
         }

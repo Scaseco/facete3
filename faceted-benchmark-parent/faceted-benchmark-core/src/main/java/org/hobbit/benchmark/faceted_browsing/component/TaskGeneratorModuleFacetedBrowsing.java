@@ -196,9 +196,9 @@ public class TaskGeneratorModuleFacetedBrowsing
         // The task generation is not complete without the reference result
         // TODO Reference result should be computed against TDB
         try(QueryExecution qe = refConn.query(queryStr)) {
-        	if(task.getURI().equals("http://example.org/Scenario_10-1")) {
-        		System.out.println("DEBUG POINT REACHED");
-        	}
+//        	if(task.getURI().equals("http://example.org/Scenario_10-1")) {
+//        		System.out.println("DEBUG POINT REACHED");
+//        	}
         	
         	ResultSet resultSet = qe.execSelect();
         	//int wtf = ResultSetFormatter.consume(resultSet);

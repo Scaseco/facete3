@@ -314,12 +314,12 @@ public class FacetedTaskGeneratorOld {
         // compute variables For_All
         List<Map<String, String>> forAll = (List<Map<String, String>>)preQueries.get("For_All");
 
-		try(QueryExecution qe = queryConn.query("SELECT (COUNT(*) AS ?c) { GRAPH <" + DataGeneratorFacetedBrowsing.GRAPH_IRI + "> { ?s ?p ?o } }")) {
-			Integer count = ServiceUtils.fetchInteger(qe, Vars.c);
-			
-			logger.info("Counted " + count + " triples");
-			//logger.info(ResultSetFormatter.asText(qe.execSelect()));
-		}
+//		try(QueryExecution qe = queryConn.query("SELECT (COUNT(*) AS ?c) { GRAPH <" + DataGeneratorFacetedBrowsing.GRAPH_IRI + "> { ?s ?p ?o } }")) {
+//			Integer count = ServiceUtils.fetchInteger(qe, Vars.c);
+//			
+//			logger.info("Counted " + count + " triples");
+//			//logger.info(ResultSetFormatter.asText(qe.execSelect()));
+//		}
 
         
         

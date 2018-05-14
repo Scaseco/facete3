@@ -131,7 +131,7 @@ public class DataGeneratorFacetedBrowsing
         logger.info("Waiting for message to start data generation");
 
         try {
-            startSignalFuture.get(60, TimeUnit.SECONDS);
+            startSignalFuture.get(BenchmarkControllerFacetedBrowsing.MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }
@@ -191,7 +191,7 @@ public class DataGeneratorFacetedBrowsing
         	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
         	
         	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
-        	logger.info("Data generator counted" + it.getNumItems() + " generated triples");
+        	logger.info("Data generator counted " + it.getNumItems() + " generated triples");
         }
         
         Supplier<Stream<Triple>> triplesFromCache = () -> {
@@ -265,6 +265,8 @@ public class DataGeneratorFacetedBrowsing
 
         //ChunkedProtocolWriter protocol = new ChunkedProtocolWriterSimple(666);
 
+        int chunkId[] = {0};
+        
     	StreamUtils
             .mapToBatch(stream, batchSize)
             .peek(x -> batchCount.incrementAndGet())
@@ -282,7 +284,11 @@ public class DataGeneratorFacetedBrowsing
                 //logger.info("byte array: " + data);
 
             	if(useMocha) {
-	                String graphURI =  DataGeneratorFacetedBrowsing.GRAPH_IRI;
+	                //String graphURI =  DataGeneratorFacetedBrowsing.GRAPH_IRI;
+	                
+            	    String graphURI = "default-" + (chunkId[0]++) + ".ttl";
+	                
+	                
 	                ///byte[] bytes = RabbitMQUtils.writeString(graphURI);
 	                
 	                ByteBuffer msg = ByteBuffer.wrap(Bytes.concat(

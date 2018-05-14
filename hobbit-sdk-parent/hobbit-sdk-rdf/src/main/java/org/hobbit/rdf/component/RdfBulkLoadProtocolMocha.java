@@ -62,7 +62,7 @@ public class RdfBulkLoadProtocolMocha
 	protected String remappedDefaultGraph;
 	
 	public static boolean isDefaultGraph(String graphName) {
-		boolean result = graphName == null || graphName.equals("") || graphName.equals("default");
+		boolean result = graphName == null || graphName.equals("") || graphName.equals("default") || graphName.startsWith("default");
 		return result;
 	}
 	
@@ -99,18 +99,18 @@ public class RdfBulkLoadProtocolMocha
 					Entry<String, File> e = graphToFiles.pollFirst();
 					String graph = e.getKey();
 					String finalFilename = e.getValue().getAbsolutePath();
-
-					graphNames.add(graph);
 					
 					//rdfConnection.begin(ReadWrite.WRITE);
 					//rdfConnection.update("CREATE SILENT GRAPH <" + graph + ">");
 
 					//System.out.println("RDF conn is " + rdfConnection);
 					//String loadGraph = "default".equals(graph) ? null : graph;
-					String finalGraphName = remappedDefaultGraph != null && isDefaultGraph(graph)
+					String finalGraphName = isDefaultGraph(graph)
 							? remappedDefaultGraph
 							: graph;
-					
+
+	                graphNames.add(finalGraphName);
+
 					rdfConnection.load(finalGraphName, finalFilename);
 					//rdfConnection.load(finalFilename);
 					//rdfConnection.commit();
@@ -120,7 +120,11 @@ public class RdfBulkLoadProtocolMocha
 					//logger.info("Debug point: " + rdfConnection);
 				//}
 				for(String graph : graphNames) {
-					try(QueryExecution qe = rdfConnection.query("SELECT (COUNT(*) AS ?c) { GRAPH <" + graph + "> { ?s ?p ?o } }")) {
+//				    if(isDefaultGraph(graph)) {
+//				        graph = null;
+//				    }
+
+					try(QueryExecution qe = rdfConnection.query("SELECT (COUNT(*) AS ?c) { " + (graph == null ? "" : "GRAPH <" + graph + "> { ") + "?s ?p ?o" + (graph == null ? "" : " } ") + " }")) {
 						Integer count = ServiceUtils.fetchInteger(qe, Vars.c);
 						
 						logger.info("Counted " + count + " triples in graph " + graph);
@@ -139,7 +143,7 @@ public class RdfBulkLoadProtocolMocha
 		if (pendingBulkLoadSizes.isEmpty() && lastBulkLoadSeen) {
 			onAllDataReceived();
 		} else {
-			logger.info("Bulk load is still waiting for more data");
+			//logger.info("Bulk load is still waiting for more data");
 		}
 	}
 
@@ -149,18 +153,18 @@ public class RdfBulkLoadProtocolMocha
 			String graphUri = RabbitMQUtils.readString(dataBuffer);
 			
 			String filename = graphUri;
-			logger.info("Receiving graph URI " + filename);
+			//logger.info("Receiving graph URI " + filename);
 
 			byte [] content = new byte[dataBuffer.remaining()];
 			dataBuffer.get(content, 0, dataBuffer.remaining());
 
 			if(content.length != 0) {
-				if (filename.contains("/")) {
-					filename = "file" + String.format("%010d", counter++) + ".ttl";
+				//if (filename.contains("/")) {
+					//filename = "file" + String.format("%010d", counter++) + ".ttl";
 					// .ttl suffix needed for jena to automatically recognize the format
-					//filename = filename.replaceAll("[^/]*[/]", "");//+ ".ttl";
-				}
-				filename += ".ttl";
+					filename = filename.replaceAll("[^/]*[/]", "");//+ ".ttl";
+				//}
+				//filename += ".ttl";
 				File file = new File(datasetFolderName + File.separator + filename);
 
 				try(FileOutputStream fos = new FileOutputStream(file)) {
