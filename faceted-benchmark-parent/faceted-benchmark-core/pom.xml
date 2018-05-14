@@ -21,6 +21,8 @@
 <!-- 				<version>3.6.0-2-SNAPSHOT</version> -->
 <!-- 			</dependency> -->
 
+
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>hobbit-sdk-rdf</artifactId>

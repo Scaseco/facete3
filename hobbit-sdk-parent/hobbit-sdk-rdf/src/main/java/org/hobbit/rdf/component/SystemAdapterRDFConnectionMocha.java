@@ -1,6 +1,5 @@
 package org.hobbit.rdf.component;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,10 +18,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.Var;
@@ -32,7 +28,6 @@ import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
 import org.hobbit.core.component.ComponentBaseExecutionThread;
-import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.MochaConstants;
 import org.hobbit.core.utils.ByteChannelUtils;
@@ -45,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.gson.Gson;
@@ -115,6 +109,10 @@ public class SystemAdapterRDFConnectionMocha
 	protected BiFunction<String, ResultSet, Stream<ByteBuffer>> actualResultEncoder;
     
 	
+	/** Remap bulk load requests to the default graph to the given one instead */
+	//@Autowire(name="remappedDefaultGraph", required=false)
+	protected String remappedDefaultGraph = null;
+	
     @Override
     public void startUp() {
     	logger.info("SystemAdapter::startUp() started");    
@@ -174,6 +172,7 @@ public class SystemAdapterRDFConnectionMocha
         }
 
         rdfBulkLoadProtocol = new RdfBulkLoadProtocolMocha(rdfConnection,
+        		remappedDefaultGraph,
         		() -> commandSender.onNext(ByteBuffer.allocate(1).put(0, MochaConstants.BULK_LOADING_DATA_FINISHED)),
         		() -> {});
         

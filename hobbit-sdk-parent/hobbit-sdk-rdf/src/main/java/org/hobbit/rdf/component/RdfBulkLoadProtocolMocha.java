@@ -15,7 +15,6 @@ import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.MochaConstants;
@@ -58,9 +57,20 @@ public class RdfBulkLoadProtocolMocha
 	protected Deque<Integer> pendingBulkLoadSizes = new ArrayDeque<>();
 	protected boolean lastBulkLoadSeen = false;
 	
-	public RdfBulkLoadProtocolMocha(RDFConnection rdfConnection, Runnable postLoad, Runnable onAllDataReceivedUserAction) {
+	// If non-null, remap requests to this graph to the given one.
+	// Used to hack around the fact that virtuos's graph store protocol has the default graph disabled by default
+	protected String remappedDefaultGraph;
+	
+	public static boolean isDefaultGraph(String graphName) {
+		boolean result = graphName == null || graphName.equals("") || graphName.equals("default");
+		return result;
+	}
+	
+	public RdfBulkLoadProtocolMocha(RDFConnection rdfConnection, String remappedDefaultGraph ,Runnable postLoad, Runnable onAllDataReceivedUserAction) {
 		super();
 		this.rdfConnection = rdfConnection;
+		this.remappedDefaultGraph = remappedDefaultGraph;
+		
 		this.postLoad = postLoad;
 		this.onAllDataReceivedUserAction = onAllDataReceivedUserAction;
 	}
@@ -97,7 +107,11 @@ public class RdfBulkLoadProtocolMocha
 
 					//System.out.println("RDF conn is " + rdfConnection);
 					//String loadGraph = "default".equals(graph) ? null : graph;
-					rdfConnection.load(graph, finalFilename);
+					String finalGraphName = remappedDefaultGraph != null && isDefaultGraph(graph)
+							? remappedDefaultGraph
+							: graph;
+					
+					rdfConnection.load(finalGraphName, finalFilename);
 					//rdfConnection.load(finalFilename);
 					//rdfConnection.commit();
 				}
@@ -142,9 +156,9 @@ public class RdfBulkLoadProtocolMocha
 
 			if(content.length != 0) {
 				if (filename.contains("/")) {
-					//filename = "file" + String.format("%010d", counter++) + ".ttl";
+					filename = "file" + String.format("%010d", counter++) + ".ttl";
 					// .ttl suffix needed for jena to automatically recognize the format
-					filename = filename.replaceAll("[^/]*[/]", "");//+ ".ttl";
+					//filename = filename.replaceAll("[^/]*[/]", "");//+ ".ttl";
 				}
 				filename += ".ttl";
 				File file = new File(datasetFolderName + File.separator + filename);

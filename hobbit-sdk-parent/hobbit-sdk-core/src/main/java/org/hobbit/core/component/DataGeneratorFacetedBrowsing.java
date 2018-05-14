@@ -51,7 +51,7 @@ import jersey.repackaged.com.google.common.primitives.Ints;
 public class DataGeneratorFacetedBrowsing
     extends ComponentBaseExecutionThread
 {
-	public static final String GRAPH_IRI = "http://example.org"; //"default";//
+	public static final String GRAPH_IRI = "default"; //"http://example.org"; //"default";//
 	
     private static final Logger logger = LoggerFactory.getLogger(DataGeneratorFacetedBrowsing.class);
 

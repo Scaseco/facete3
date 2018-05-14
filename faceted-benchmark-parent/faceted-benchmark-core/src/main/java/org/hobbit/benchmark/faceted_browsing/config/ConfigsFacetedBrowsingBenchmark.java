@@ -30,7 +30,9 @@ import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
+import org.apache.jena.fuseki.embedded.FusekiServer;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -41,7 +43,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.NotFoundException;
@@ -85,7 +86,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.common.util.concurrent.ServiceManager.Listener;
@@ -827,6 +827,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 	    @Inject
 	    protected DataQueueFactory dataQueueFactory;
 	    
+	    
 		@Bean
 		public Channel dg2saChannel(Connection connection) throws IOException {
 			return connection.createChannel();
@@ -846,13 +847,35 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 		
 	    // Jena
+	    @Bean
+	    public BeanHolder<FusekiServer> fusekiServer() {
+			//Dataset ds = DatasetFactory.create();
+	    	Dataset ds = DatasetFactory.createTxnMem() ;
+			FusekiServer server = FusekiServer.create()
+			  .add("/ds", ds)
+			  .build();
+			
+			//server.start() ;
+			
+			return new BeanHolder<>(server, FusekiServer::start, FusekiServer::stop);
+	    }
 		@Bean
-		public RDFConnection systemUnderTestRdfConnection() {
+		public RDFConnection systemUnderTestRdfConnection(BeanHolder<FusekiServer> fusekiServer) {
+			int port = fusekiServer.getBean().getPort();
+			String url = "http://localhost:" + port + "/ds";
+			return RDFConnectionFactory.connect(url);
+		}
+		
+		//@Bean
+		public RDFConnection systemUnderTestRdfConnectionX() {
 			//SparqlService tmp = FluentSparqlService.forModel().create();
 			//RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
 
-			RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create());
-	        return result;
+			RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create(ModelFactory.createDefaultModel()));
+	        
+			
+			
+			return result;
 		}
 
 

@@ -35,6 +35,7 @@ bench:Faceted a    hobbit:Benchmark;
 	hobbit:hasParameter bench:paramPodiggTripTimeInitial ;
 	hobbit:hasParameter bench:paramPodiggTripTimeFinal ;
 	hobbit:hasParameter bench:paramQuickTestRun ;
+	hobbit:hasParameter bench:paramPreconfig ;
 	hobbit:measuresKPI bench:precision_total ;     
 	hobbit:measuresKPI bench:recall_total ;     
 	hobbit:measuresKPI bench:fmeasure_total ;     
@@ -679,5 +680,12 @@ bench:paramQuickTestRun a hobbit:Parameter, hobbit:FeatureParameter, hobbit:Conf
     rdfs:domain hobbit:Experiment, hobbit:Challenge ;
     rdfs:range xsd:boolean ;
     hobbit:defaultValue "false"^^xsd:boolean .
+
+bench:paramPreconfig a hobbit:Parameter, hobbit:FeatureParameter, hobbit:ConfigurableParameter ;
+    rdfs:label "Preconfiguration"@en ;
+    rdfs:comment "Use preconfigured settings with the given name. *If a non-empty string is provided, ALL parameters will be overridden.* Benchmark will report an error if no preconfiguration exists with the name"@en ;
+    rdfs:domain hobbit:Experiment, hobbit:Challenge ;
+    rdfs:range xsd:string ;
+    hobbit:defaultValue "" .
 
  <https://project-hobbit.eu/challenges/MOCHA2017-API> a hobbit:API .

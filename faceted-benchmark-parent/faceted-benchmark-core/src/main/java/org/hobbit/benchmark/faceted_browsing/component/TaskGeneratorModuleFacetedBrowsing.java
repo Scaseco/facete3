@@ -90,7 +90,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         logger.info("TaskGeneratorWorker::startUp(): SPARQL service is now ready");
         
         RDFConnection conn = sparqlService.createDefaultConnection();
-        dataHandler = new RdfBulkLoadProtocolMocha(conn, () -> {}, () -> {
+        dataHandler = new RdfBulkLoadProtocolMocha(conn, "http://example.org", () -> {}, () -> {
         	dataLoadingComplete.complete(null);
         });
         
@@ -196,7 +196,12 @@ public class TaskGeneratorModuleFacetedBrowsing
         // The task generation is not complete without the reference result
         // TODO Reference result should be computed against TDB
         try(QueryExecution qe = refConn.query(queryStr)) {
+        	if(task.getURI().equals("http://example.org/Scenario_10-1")) {
+        		System.out.println("DEBUG POINT REACHED");
+        	}
+        	
         	ResultSet resultSet = qe.execSelect();
+        	//int wtf = ResultSetFormatter.consume(resultSet);
         	ResultSetMem rsMem = new ResultSetMem(resultSet);
         	int numRows = ResultSetFormatter.consume(rsMem);
         	rsMem.rewind();
