@@ -30,9 +30,7 @@ import org.aksw.commons.service.core.BeanWrapperService;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.core.utils.SupplierExtendedIteratorTriples;
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
-import org.apache.jena.fuseki.embedded.FusekiServer;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -687,7 +685,7 @@ public class ConfigsFacetedBrowsingBenchmark {
               .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
               .put("GTFS_GEN_STOPS__STOPS", "3000")
               .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
-              .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "250000")
+              .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "200000")
               .put("GTFS_GEN_ROUTES__ROUTES", "1500")
               .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
               .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
@@ -890,8 +888,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 //			return RDFConnectionFactory.connect(url);
 //		}
 		
-		@Bean
-		public RDFConnection systemUnderTestRdfConnection() {
+		//@Bean
+		public RDFConnection systemUnderTestRdfConnectionx() {
 			//SparqlService tmp = FluentSparqlService.forModel().create();
 		    //RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
 		    RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create());
@@ -904,11 +902,17 @@ public class ConfigsFacetedBrowsingBenchmark {
 		}
 
 
+		@Bean
+		public BeanWrapperService<SparqlBasedService> systemService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+            SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+		    return new BeanWrapperService<>(service);
+		}
+		
 	    // Virtuoso
-	    //@Bean
-		public RDFConnection systemUnderTestRdfConnection(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
-		    	SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
-		    	service.startAsync().awaitRunning();
+	    @Bean
+		public RDFConnection systemUnderTestRdfConnection(BeanWrapperService<SparqlBasedService> systemService) {
+//		    	SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+//		    	service.startAsync().awaitRunning();
 //		    	return result;
 //		    	
 //	    	DockerService service = dockerClient.create("tenforce/virtuoso", null);
@@ -916,7 +920,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 //			service.startAsync().awaitRunning();
 //			String host = service.getContainerId();
 //        	String url = "http://" + host + ":8890/";
-		    	RDFConnection result = service.createDefaultConnection();
+		    RDFConnection result = systemService.getService().createDefaultConnection();
 	        //RDFConnection result = RDFConnectionFactory.connect(url);
 
 			

@@ -58,7 +58,7 @@ public class BenchmarkControllerFacetedBrowsing
     public static final int MAX_LONG_REQUEST_TIME_IN_SECONDS = 60;
 
     // Long requests are e.g. starting a docker container
-    public static final int MAX_TASK_EXECUTION_TIME_IN_SECONDS = 60;
+    public static final int MAX_TASK_EXECUTION_TIME_IN_SECONDS = 60 * 5;
 
     
     //  

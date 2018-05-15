@@ -1,7 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,7 +11,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.ext.virtuoso.HealthcheckRunner;
-import org.apache.jena.shared.NotFoundException;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDataGenerator;
@@ -140,7 +137,36 @@ public class ConfigVirtualDockerServiceFactory {
 		return result;
 	}
 
+	
+	
 	public static DockerService wrapSparqlServiceWithHealthCheck(DockerService dockerService, Integer port) {
+	       DockerService result = new AbstractDockerServiceDelegate<DockerService>(dockerService) {
+	            // FIXME We want to enhance the startup method within the thread allocated by the guava service
+	            @Override
+	            public void afterStart() {
+	                // The delegate has started, so we have a container id
+	                String host = delegate.getContainerId();
+	                String destination = "http://" + host + (port == null ? "" : ":" + port) + "/sparql";
+	                
+	                URL url = HealthcheckUtils.createUrl(destination);
+	                
+	                new HealthcheckRunner(
+	                        60, 1, TimeUnit.SECONDS, () -> {
+	                        HealthcheckUtils.checkUrl(url);
+	                        
+	                        // This part seems to leak connections with jena 3.7.0 as long as the endpoint is not ready
+//	                      try (RDFConnection conn = RDFConnectionFactory.connect(destination)) {
+//	                          //conn.querySelect("SELECT * { <http://example.org/healthcheck> a ?t }", qs -> {});
+//	                          ResultSetFormatter.consume(conn.query("SELECT * { <http://example.org/healthcheck> a ?t }").execSelect());
+//	                      }
+	                }).run();
+	            }
+	        };
+	        
+	        return result;
+	}
+
+	public static DockerService wrapSparqlServiceWithHealthCheckOld(DockerService dockerService, Integer port) {
     	DockerService result = new DockerServiceDelegate<DockerService>(dockerService) {
     		// FIXME We want to enhance the startup method within the thread allocated by the guava service
     		@Override

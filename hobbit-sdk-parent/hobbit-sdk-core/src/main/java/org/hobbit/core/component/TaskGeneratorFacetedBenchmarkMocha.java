@@ -1,7 +1,11 @@
 package org.hobbit.core.component;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -262,7 +266,18 @@ public class TaskGeneratorFacetedBenchmarkMocha
     	try(Stream<Resource> taskStream = taskGeneratorModule.generateTasks()) {
 
             logger.info("TaskGenerator: Task generation complete, sending out tasks...");
-            taskStream.forEach(task -> {
+            //taskStream.forEach(task -> {
+            Iterator<Resource> it = taskStream.iterator();
+            
+            Set<String> taskBlacklist = new HashSet<>(Arrays.asList("http://example.org/Scenario_7-2"));
+            while(it.hasNext()) {
+                Resource task = it.next();
+                
+                // http://example.org/Scenario_7-2 takes ages - lets skip it
+                if(taskBlacklist.contains(task.getURI())) {
+                    continue;
+                }
+                
             	
                 // We are now sending out the task, so track the timestamp
                 long timestamp = System.currentTimeMillis();
@@ -314,7 +329,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
 //                } catch(IOException e) {
 //                    throw new RuntimeException(e);
 //                }
-            });
+            }
         }
     }
 
