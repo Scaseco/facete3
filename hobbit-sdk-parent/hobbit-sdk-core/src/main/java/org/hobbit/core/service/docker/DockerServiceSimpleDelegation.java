@@ -82,8 +82,11 @@ public class DockerServiceSimpleDelegation
     protected void doStart() {
 //    	nameThreadForAction(imageName, () -> {
     	try {
-    		containerId = startServiceDelegate.apply(imageName, localEnvironment);
-    		notifyStarted();
+//    		new Thread(() -> {
+//    		System.out.println("STARTING SERVICE USING THREAD");
+    			containerId = startServiceDelegate.apply(imageName, localEnvironment);
+        		notifyStarted();
+//    		}).start();
     	} catch(Exception e) {
     		notifyFailed(e);
     	}

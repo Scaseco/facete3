@@ -491,7 +491,7 @@ public class BenchmarkControllerFacetedBrowsing
         evaluationModuleService.startAsync();
         // TODO If we do await running, it seems it blocks forever as terminated or failure is not handled properly
         try {
-			evaluationModuleService.awaitTerminated(MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
+			evaluationModuleService.awaitTerminated(60 * 5, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			throw new RuntimeException(e);
 		}

@@ -37,7 +37,9 @@ public class BeanWrapperService<T extends Service>
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		System.out.println(service + ": AWAITING RUNNING STATE");
 		service.startAsync().awaitRunning();
+		System.out.println(service + ": RUNNING");
 	}
 
 	@Override

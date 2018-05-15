@@ -14,7 +14,9 @@ import com.google.common.util.concurrent.Service;
 
 
 /**
- * Wrap a SpringApplicationBuilder as a service
+ * Service implementation that when started, looks up a Service in the given
+ * context and starts it.
+ * 
  * @author raven Nov 22, 2017
  *
  */

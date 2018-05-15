@@ -901,6 +901,14 @@ public class ConfigsFacetedBrowsingBenchmark {
 			return result;
 		}
 
+//		@Bean
+		public RDFConnection systemUnderTestRdfConnectionz(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+            SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+
+            service.startAsync().awaitRunning();
+            
+            return service.createDefaultConnection();
+		}
 
 		@Bean
 		public BeanWrapperService<SparqlBasedService> systemService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {

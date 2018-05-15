@@ -217,7 +217,18 @@ public class DockerServiceManagerServerComponent
         // further services
 //        try {
         	// TODO Make configurable via e.g. DOCKER_CONTAINER_STARTUP_TIMEOUT
-        	service.startAsync();//.awaitRunning(60, TimeUnit.SECONDS);
+        
+        
+        // Invoke startAsync in a new thread to prevent this case:
+        // startAsync may use the calling thread to obtain a reference
+        // to another docker service that is then started async - e.g. via a spring context.
+        // However, obtaining the service reference may make another request to this DockerServiceManager
+        // that would still be blocked
+        
+        // TODO Maybe use thread pooling (however, since requests are relatively scarce, it may make things just more complex (pool config & shutdown)
+        // TODO Maybe add a 'watchdog' that reports any containers that fail to start
+        new Thread(service::startAsync).start();
+        	//service.startAsync();//.awaitRunning(60, TimeUnit.SECONDS);
 //        } catch(Exception e) {
 //        	throw new RuntimeException("Timeout waiting for start up of " + imageName, e);
 //        }

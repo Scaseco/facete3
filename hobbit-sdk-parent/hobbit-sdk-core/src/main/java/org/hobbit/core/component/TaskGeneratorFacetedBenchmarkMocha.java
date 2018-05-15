@@ -269,7 +269,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
             //taskStream.forEach(task -> {
             Iterator<Resource> it = taskStream.iterator();
             
-            Set<String> taskBlacklist = new HashSet<>(Arrays.asList("http://example.org/Scenario_7-2"));
+            Set<String> taskBlacklist = new HashSet<>(Arrays.asList("http://example.org/Scenario_1-1", "http://example.org/Scenario_7-2"));
             while(it.hasNext()) {
                 Resource task = it.next();
                 
