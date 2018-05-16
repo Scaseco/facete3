@@ -674,26 +674,26 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        
 	        if(doQuickRun) {
 
-                //params.put("GTFS_GEN_SEED", "111");
+                params.put("GTFS_GEN_SEED", "111");
                 
 // Podigg medium
-	           if(true) {
-              params = ImmutableMap.<String, String>builder()
-              .put("GTFS_GEN_SEED", "111")
-              .put("GTFS_GEN_REGION__SIZE_X", "2000")
-              .put("GTFS_GEN_REGION__SIZE_Y", "2000")
-              .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
-              .put("GTFS_GEN_STOPS__STOPS", "3000")
-              .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
-              .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "200000")
-              .put("GTFS_GEN_ROUTES__ROUTES", "1500")
-              .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
-              .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
-              .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1.3")
-              .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
-              .put("GTFS_GEN_CONNECTIONS__TIME_INITIAL", "0")
-              .build();                               
-	           }
+//	           if(true) {
+//              params = ImmutableMap.<String, String>builder()
+//              .put("GTFS_GEN_SEED", "111")
+//              .put("GTFS_GEN_REGION__SIZE_X", "2000")
+//              .put("GTFS_GEN_REGION__SIZE_Y", "2000")
+//              .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
+//              .put("GTFS_GEN_STOPS__STOPS", "3000")
+//              .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
+//              .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "200000")
+//              .put("GTFS_GEN_ROUTES__ROUTES", "1500")
+//              .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
+//              .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
+//              .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1.3")
+//              .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "31536000000")
+//              .put("GTFS_GEN_CONNECTIONS__TIME_INITIAL", "0")
+//              .build();                               
+//	           }
 	            
 // Podigg large (to verify)	            
 //		        params = ImmutableMap.<String, String>builder()

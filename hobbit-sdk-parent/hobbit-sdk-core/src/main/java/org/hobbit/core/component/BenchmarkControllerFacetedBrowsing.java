@@ -46,7 +46,7 @@ public class BenchmarkControllerFacetedBrowsing
     // Time allowed for the task generator to finish
     public static final int MAX_BENCHMARK_TIME_IN_SECONDS = 60 * 45;    
 
-    public static final int MAX_COMPONENT_STARTUP_TIME_IN_SECONDS = 60 * 2;    
+    public static final int MAX_COMPONENT_STARTUP_TIME_IN_SECONDS = 60 * 3;    
     public static final int MAX_COMPONENT_SHUTDOWN_TIME_IN_SECONDS = 60;
  
     // Short requests should usually be served within a few seconds
@@ -60,6 +60,8 @@ public class BenchmarkControllerFacetedBrowsing
     // Long requests are e.g. starting a docker container
     public static final int MAX_TASK_EXECUTION_TIME_IN_SECONDS = 60 * 5;
 
+    
+    public static final int MAX_EVAL_ANALYSIS_TIME_IN_SECONDS = 60 * 5;
     
     //  
     
@@ -371,7 +373,7 @@ public class BenchmarkControllerFacetedBrowsing
 
     public void runCore() throws InterruptedException, ExecutionException, TimeoutException {
 
-        initFuture.get(60, TimeUnit.SECONDS);
+        initFuture.get(MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
         
         
         logger.info("Benchmark execution initiated");
@@ -491,7 +493,7 @@ public class BenchmarkControllerFacetedBrowsing
         evaluationModuleService.startAsync();
         // TODO If we do await running, it seems it blocks forever as terminated or failure is not handled properly
         try {
-			evaluationModuleService.awaitTerminated(60 * 5, TimeUnit.SECONDS);
+			evaluationModuleService.awaitTerminated(MAX_EVAL_ANALYSIS_TIME_IN_SECONDS, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			throw new RuntimeException(e);
 		}
