@@ -111,7 +111,8 @@ public class SystemAdapterRDFConnectionMocha
 	
 	/** Remap bulk load requests to the default graph to the given one instead */
 	//@Autowire(name="remappedDefaultGraph", required=false)
-	protected String remappedDefaultGraph = "http://example.org";//null;
+//	protected String remappedDefaultGraph = "http://example.org";//null;
+	protected String remappedDefaultGraph = null;
 	
     @Override
     public void startUp() {

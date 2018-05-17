@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
-import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -20,6 +21,8 @@ import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Sets;
 
 /**
  * Created on 9/12/2016.
@@ -138,15 +141,22 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
         
         
-        ArrayList<String> receivedDataInstances = new ArrayList<>(Arrays.asList(resultsArray));
-        ArrayList<String> expectedDataInstances = new ArrayList<>(Arrays.asList(goldsArray));
+//        ArrayList<String> receivedDataInstances = new ArrayList<>(Arrays.asList(resultsArray));
+//        ArrayList<String> expectedDataInstances = new ArrayList<>(Arrays.asList(goldsArray));
 
-        LOGGER.debug("expected data items: " + expectedDataInstances.size());
-        LOGGER.debug("actual data items: " + receivedDataInstances.size());
+//        Multiset<String> receivedDataInstances = HashMultiset.create(Arrays.asList(resultsArray));
+//        Multiset<String> expectedDataInstances = HashMultiset.create(Arrays.asList(goldsArray));
+
+        Set<String> receivedDataInstances = new HashSet<>(Arrays.asList(resultsArray));
+        Set<String> expectedDataInstances = new HashSet<>(Arrays.asList(goldsArray));
 
         
-        ArrayList<String> empties = new ArrayList<>();
-        empties.add("");
+//        LOGGER.debug("expected data items: " + expectedDataInstances.size());
+//        LOGGER.debug("actual data items: " + receivedDataInstances.size());
+
+        
+        Set<String> empties = Collections.singleton("");
+        //empties.add("");
         receivedDataInstances.removeAll(empties);
         expectedDataInstances.removeAll(empties);
         
@@ -154,15 +164,17 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         
         boolean showDiffs = true;
         if(showDiffs) {
-            Set<String> expected = new HashSet<>(expectedDataInstances);
-            Set<String> actual = new HashSet<>(receivedDataInstances);
+//            Set<String> expected = new HashSet<>(expectedDataInstances);
+//            Set<String> actual = new HashSet<>(receivedDataInstances);
             
-            Set<String> eWithoutA = Sets.difference(expected, actual);
-            Set<String> aWithoutE = Sets.difference(actual, expected);
+//            Multiset<String> eWithoutA = Multisets.difference(expectedDataInstances, receivedDataInstances);
+//            Multiset<String> aWithoutE = Multisets.difference(receivedDataInstances, expectedDataInstances);
+        	Set<String> eWithoutA = Sets.difference(expectedDataInstances, receivedDataInstances);
+        	Set<String> aWithoutE = Sets.difference(receivedDataInstances, expectedDataInstances);
             if(!eWithoutA.isEmpty() || !aWithoutE.isEmpty()) {
-                System.out.println("DIFFERENCE ON " + taskidGold);
-                System.out.println(eWithoutA);
-                System.out.println(aWithoutE);
+                LOGGER.warn("DIFFERENCE ON " + taskidGold);
+                LOGGER.warn(StringUtils.substring("" + eWithoutA, 0, 3000));
+                LOGGER.warn(StringUtils.substring("" + aWithoutE, 0, 3000));
             }            
         }
 
@@ -213,14 +225,14 @@ public class EvaluationModuleFacetedBrowsingBenchmark
             LOGGER.info("Scenario id is zero!");
             Integer receivedCount;
             try {
-                receivedCount = Integer.parseInt((receivedDataInstances.get(0).split("\\^")[0]));
+                receivedCount = Integer.parseInt((receivedDataInstances.iterator().next().split("\\^")[0]));
                 //receivedCount = Integer.parseInt(receivedDataInstances.get(0));
             } catch (NumberFormatException e) {
                 receivedCount = 0;
             }
             Integer expectedCount;
             try {
-                expectedCount = Integer.parseInt((expectedDataInstances.get(0).split("\\^")[0]));
+                expectedCount = Integer.parseInt((expectedDataInstances.iterator().next().split("\\^")[0]));
             } catch (NumberFormatException e) {
                 expectedCount = 0;
             }

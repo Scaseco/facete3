@@ -52,4 +52,12 @@ public class DockerServiceFactoryChain
 	public List<DockerServiceFactory<?>> getFactories() {
 		return factories;
 	}
+
+	@Override
+	public void close() throws Exception {
+		for(DockerServiceFactory<?> factory : factories) {
+			// TODO Capture all exceptions
+			factory.close();
+		}
+	}
 }

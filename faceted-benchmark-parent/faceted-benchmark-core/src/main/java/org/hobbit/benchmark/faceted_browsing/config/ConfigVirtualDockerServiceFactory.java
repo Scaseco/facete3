@@ -201,24 +201,31 @@ public class ConfigVirtualDockerServiceFactory {
         // Service wrappers which modifies startup/shutdown of other services; mostly healthchecks
         // on startup
         Map<Pattern, Function<DockerService, DockerService>> serviceWrappers = new LinkedHashMap<>();
-        serviceWrappers.put(Pattern.compile("tenforce/virtuoso"), dockerService -> wrapSparqlServiceWithHealthCheck(dockerService, 8890));
+        serviceWrappers.put(Pattern.compile("virtuoso"), dockerService -> wrapSparqlServiceWithHealthCheck(dockerService, 8890));
+        DockerServiceFactory<?> result = new DockerServiceFactory<DockerService>() {
 
-        DockerServiceFactory<?> result = (imageName, env) -> {
-
-        	DockerService r = delegate.create(imageName, env);
-
-        	Map<Pattern, Function<DockerService, DockerService>> cands =
-        			serviceWrappers.entrySet().stream()
-        			.filter(x -> x.getKey().matcher(imageName).find())
-        			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-
-        	for(Entry<Pattern, Function<DockerService, DockerService>> cand : cands.entrySet()) {	        		
-        		logger.info("Applying service decorator: " + cand.getKey() + " to docker image " + imageName);
-        		r = cand.getValue().apply(r);
+        	@Override
+        	public DockerService create(String imageName, java.util.Map<String,String> env) {
+	        	DockerService r = delegate.create(imageName, env);
+	
+	        	Map<Pattern, Function<DockerService, DockerService>> cands =
+	        			serviceWrappers.entrySet().stream()
+	        			.filter(x -> x.getKey().matcher(imageName).find())
+	        			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+	
+	
+	        	for(Entry<Pattern, Function<DockerService, DockerService>> cand : cands.entrySet()) {	        		
+	        		logger.info("Applying service decorator: " + cand.getKey() + " to docker image " + imageName);
+	        		r = cand.getValue().apply(r);
+	        	}
+	
+	        	return r;
         	}
-
-        	return r;	        	
+        	
+        	@Override
+        	public void close() throws Exception {
+        		delegate.close();
+        	}
         };
 
         return result;

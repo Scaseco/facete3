@@ -318,6 +318,10 @@ public abstract class DockerServiceManagerClientComponentBase
 //        }
     }
 
+    @Override
+    public void close() throws Exception {
+    	stopAsync().awaitTerminated();
+    }
 }
 
 

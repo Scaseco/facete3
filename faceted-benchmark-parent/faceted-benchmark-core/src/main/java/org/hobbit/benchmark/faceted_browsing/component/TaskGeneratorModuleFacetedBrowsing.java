@@ -165,7 +165,7 @@ public class TaskGeneratorModuleFacetedBrowsing
         gen.initializeParameters();
         Stream<Resource> tasks = gen.generateTasks();
 
-        SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, false);
+        SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, false);
 
         Stream<Resource> result = tasks.map(task -> {
         	

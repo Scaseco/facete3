@@ -655,27 +655,32 @@ public class ConfigsFacetedBrowsingBenchmark {
 	        
 	        // Check if the quickTestRun parameter is set to true - if so, use test settings
 	        Property pQueryTestRun = ResourceFactory.createProperty("http://w3id.org/bench#paramQuickTestRun");
-	        
+	        Property pPreconfig = ResourceFactory.createProperty("http://w3id.org/bench#paramPreconfig");
+
 	        boolean isParamModelEmpty = paramModel.isEmpty();
 	        boolean isQuickTestRunSet = model.listStatements(null, pQueryTestRun, (RDFNode)null).nextOptional().map(Statement::getBoolean).orElse(false);
-
-	        boolean doQuickRun = false;
+	        
+	        String preconfig = model.listStatements(null, pPreconfig, (RDFNode)null).nextOptional().map(Statement::getString).orElse("").trim(); 
+	        
 	        if(isParamModelEmpty) {
 		        logger.warn("*** TEST RUN FLAG HAS BEEN AUTOMATICALLY SET BECAUSE NO BENCHMARK PARAMETERS WERE PROVIDED - MAKE SURE THAT THIS IS EXPECTED ***");
-	        	doQuickRun = true;
+	        	preconfig = "test";
 	        } else if(isQuickTestRunSet) {
 		        logger.warn("*** TEST RUN FLAG WAS MANUALLY SET - ANY OTHER PROVIDED BENCHMARK PARAMETERS ARE IGNORED - MAKE SURE THAT THIS IS EXPECTED ***");
-		        doQuickRun = true;
+	        	preconfig = "test";
 	        }	        
-	        
 	        
 	        Map<String, String> params = new HashMap<>();
 	        
 	        
-	        if(doQuickRun) {
+	        if(!preconfig.isEmpty()) {
+		        logger.warn("*** PROVIDED BENCHMARK PARAMETERS ARE IGNORED - LOADING PRECONFIG: " + preconfig + " ***");
 
-                params.put("GTFS_GEN_SEED", "111");
-                
+	        	Map<String, Map<String, String>> preconfigs = new HashMap<>();
+	        	preconfigs.put("test", ImmutableMap.<String, String>builder()
+		                .put("GTFS_GEN_SEED", "111")
+		                .build());
+	        	                
 // Podigg medium
 //	           if(true) {
 //              params = ImmutableMap.<String, String>builder()
@@ -696,21 +701,44 @@ public class ConfigsFacetedBrowsingBenchmark {
 //	           }
 	            
 // Podigg large (to verify)	            
-//		        params = ImmutableMap.<String, String>builder()
+//	        	preconfigs.put("mocha2018", ImmutableMap.<String, String>builder()
 //	                .put("GTFS_GEN_SEED", "111")
 //	                .put("GTFS_GEN_REGION__SIZE_X", "2000")
 //	                .put("GTFS_GEN_REGION__SIZE_Y", "2000")
 //	                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
 //	                .put("GTFS_GEN_STOPS__STOPS", "4000")
 //	                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
-//	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "750000")
+//	                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "500000")
 //	                .put("GTFS_GEN_ROUTES__ROUTES", "4000")
 //	                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
 //	                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
 //	                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1.3")
 //	                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "977616000000")
-//	                .build();                               
-                
+//	                .build());
+	        
+	        	preconfigs.put("mocha2018", ImmutableMap.<String, String>builder()
+		                .put("GTFS_GEN_SEED", "111")
+		                .put("GTFS_GEN_REGION__SIZE_X", "2000")
+		                .put("GTFS_GEN_REGION__SIZE_Y", "2000")
+		                .put("GTFS_GEN_REGION__CELLS_PER_LATLON", "200")
+		                .put("GTFS_GEN_STOPS__STOPS", "3000")
+		                .put("GTFS_GEN_CONNECTIONS__DELAY_CHANCE", "0.02")
+		                .put("GTFS_GEN_CONNECTIONS__CONNECTIONS", "230000")
+		                .put("GTFS_GEN_ROUTES__ROUTES", "3000")
+		                .put("GTFS_GEN_ROUTES__MAX_ROUTE_LENGTH", "50")
+		                .put("GTFS_GEN_ROUTES__MIN_ROUTE_LENGTH", "10")
+		                .put("GTFS_GEN_CONNECTIONS__ROUTE_CHOICE_POWER", "1.3")
+		                .put("GTFS_GEN_CONNECTIONS__TIME_FINAL", "977616000000")
+		                .build());
+	        	
+	        	
+	        	//preconfigs.put("test", preconfigs.get("mocha2018"));
+	        	
+		        params = preconfigs.get(preconfig);
+		        if(params == null) {
+		        	throw new RuntimeException("No preconfiguration [" + preconfig + "] registered");
+		        }
+	        
 	        } else {
 
 		        Property pOption = ResourceFactory.createProperty("http://w3id.org/bench#podiggOption");
@@ -888,8 +916,8 @@ public class ConfigsFacetedBrowsingBenchmark {
 //			return RDFConnectionFactory.connect(url);
 //		}
 		
-		//@Bean
-		public RDFConnection systemUnderTestRdfConnectionx() {
+		@Bean
+		public RDFConnection systemUnderTestRdfConnection() {
 			//SparqlService tmp = FluentSparqlService.forModel().create();
 		    //RDFConnection result = new RDFConnectionLocal(DatasetFactory.create());
 		    RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.create());
@@ -903,21 +931,21 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 //		@Bean
 		public RDFConnection systemUnderTestRdfConnectionz(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
-            SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+            SparqlBasedService service = createVirtuosoSparqlService("tenforce/virtuoso", dockerServiceBuilderFactory);
 
             service.startAsync().awaitRunning();
             
             return service.createDefaultConnection();
 		}
 
-		@Bean
+		///v@Bean
 		public BeanWrapperService<SparqlBasedService> systemService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
-            SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+			SparqlBasedService service = createVirtuosoSparqlService("tenforce/virtuoso", dockerServiceBuilderFactory);
 		    return new BeanWrapperService<>(service);
 		}
 		
 	    // Virtuoso
-	    @Bean
+	    ///v@Bean
 		public RDFConnection systemUnderTestRdfConnection(BeanWrapperService<SparqlBasedService> systemService) {
 //		    	SparqlBasedService service = createVirtuosoSparqlService(dockerServiceBuilderFactory);
 //		    	service.startAsync().awaitRunning();
@@ -1249,13 +1277,14 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 	// TODO I think this method is no longer needed, as the service wrapping is done by
 	// applySericeWrappers
-	public static SparqlBasedService createVirtuosoSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
+	public static SparqlBasedService createVirtuosoSparqlService(String imageName, DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
     	DockerService service = dockerServiceBuilderFactory.get()
 //	    			.setImageName("tenforce/virtuoso:virtuoso7.2.4")
-    			.setImageName("tenforce/virtuoso")
+    			//"tenforce/virtuoso"
+    			.setImageName(imageName)
     			.setLocalEnvironment(ImmutableMap.<String, String>builder()
     					.put("SPARQL_UPDATE", "true")
-    					.put("VIRT_SPARQL_ResultSetMaxRows", "50000")
+    					.put("VIRT_SPARQL_ResultSetMaxRows", "1000000")
     					.build())
     			.get();
 
@@ -1270,7 +1299,7 @@ public class ConfigsFacetedBrowsingBenchmark {
         			
         			//result = () -> RDFConnectionFactory.connect(baseUrl);
         			
-        			logger.info("Sparql endpoint online at: " + baseUrl);
+        			logger.info("Sparql endpoint of image " + imageName + " online at: " + baseUrl);
         		} else {
         			throw new IllegalStateException("Can only access API of running services");
         		}
@@ -1285,7 +1314,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 	public static class ConfigTaskGeneratorFacetedBenchmark {
 	    @Bean
 	    public SparqlBasedService taskGeneratorSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
-	    	SparqlBasedService result = createVirtuosoSparqlService(dockerServiceBuilderFactory);
+	    	SparqlBasedService result = createVirtuosoSparqlService("tenforce/virtuoso", dockerServiceBuilderFactory);
 	    	return result;
 	    	
 //	        VirtuosoSystemService result = new VirtuosoSystemService(
@@ -1321,47 +1350,12 @@ public class ConfigsFacetedBrowsingBenchmark {
 
 		
 		
-		public static DockerServiceFactory<?> createSpotifyDockerClientServiceFactory(
-				boolean hostMode, Map<String, String> env) throws DockerCertificateException {
-	        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
 
-
-	        // Bind container port 443 to an automatically allocated available host
-	        String[] ports = { }; //{ "80", "22" };
-	        Map<String, List<PortBinding>> portBindings = new HashMap<>();
-	        for (String port : ports) {
-	            List<PortBinding> hostPorts = new ArrayList<>();
-	            hostPorts.add(PortBinding.of("0.0.0.0", port));
-	            portBindings.put(port, hostPorts);
-	        }
-
-	        List<PortBinding> randomPort = new ArrayList<>();
-	        randomPort.add(PortBinding.randomPort("0.0.0.0"));
-//	        portBindings.put("443", randomPort);
-
-	        HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
-
-	        
-	        //DockerServiceBuilderDockerClient dockerServiceFactory = new DockerServiceBuilderDockerClient();
-
-	        //DockerServiceBuilderFactory<DockerServiceBuilder<? extends DockerService>>
-	        
-	        Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier = () ->
-	        	ContainerConfig.builder()
-	        		.hostConfig(hostConfig)
-	        		.env(EnvironmentUtils.mapToList("=", env))
-	        		;
-	        
-	        Set<String> networks = Collections.singleton("hobbit");
-	        
-	        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier, hostMode, networks);
-	        return result;
-		}		
 
 		public static DockerServiceFactory<?> createDockerServiceFactory(boolean hostMode, Map<String, String> env) throws DockerCertificateException {
 	        
 	        // Configure the docker server component	        
-	        DockerServiceFactory<?> core = createSpotifyDockerClientServiceFactory(hostMode, env);
+	        DockerServiceFactory<?> core = DockerServiceFactoryDockerClient.create(hostMode, env, Collections.singleton("hobbit"));
 	        
 
 	        // FIXME Hostmode controlls two aspects which should be separated: (1) use container IPs instead of names (2) override docker images with the component registry

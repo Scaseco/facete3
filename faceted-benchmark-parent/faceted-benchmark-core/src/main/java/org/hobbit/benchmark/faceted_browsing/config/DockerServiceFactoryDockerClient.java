@@ -1,6 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -12,8 +16,12 @@ import org.hobbit.core.service.docker.DockerServiceDockerClient;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.EnvironmentUtils;
 
+import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.exceptions.DockerCertificateException;
 import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.PortBinding;
 import com.spotify.docker.client.messages.ContainerConfig.Builder;
 
 public class DockerServiceFactoryDockerClient
@@ -109,4 +117,46 @@ public class DockerServiceFactoryDockerClient
 		return result;
 	}
 
+	
+	public static DockerServiceFactory<?> create(
+			boolean hostMode, Map<String, String> env, Set<String> networks) throws DockerCertificateException {
+        DockerClient dockerClient = DefaultDockerClient.fromEnv().build();
+
+
+        // Bind container port 443 to an automatically allocated available host
+        String[] ports = { }; //{ "80", "22" };
+        Map<String, List<PortBinding>> portBindings = new HashMap<>();
+        for (String port : ports) {
+            List<PortBinding> hostPorts = new ArrayList<>();
+            hostPorts.add(PortBinding.of("0.0.0.0", port));
+            portBindings.put(port, hostPorts);
+        }
+
+        List<PortBinding> randomPort = new ArrayList<>();
+        randomPort.add(PortBinding.randomPort("0.0.0.0"));
+//        portBindings.put("443", randomPort);
+
+        HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
+
+        
+        //DockerServiceBuilderDockerClient dockerServiceFactory = new DockerServiceBuilderDockerClient();
+
+        //DockerServiceBuilderFactory<DockerServiceBuilder<? extends DockerService>>
+        
+        Supplier<ContainerConfig.Builder> containerConfigBuilderSupplier = () ->
+        	ContainerConfig.builder()
+        		.hostConfig(hostConfig)
+        		.env(EnvironmentUtils.mapToList("=", env))
+        		;
+        
+        //Set<String> networks = Collections.singleton("hobbit");
+        DockerServiceFactoryDockerClient result = new DockerServiceFactoryDockerClient(dockerClient, containerConfigBuilderSupplier, hostMode, networks);
+        return result;
+	}
+
+
+	@Override
+	public void close() throws Exception {
+		dockerClient.close();
+	}		
 }

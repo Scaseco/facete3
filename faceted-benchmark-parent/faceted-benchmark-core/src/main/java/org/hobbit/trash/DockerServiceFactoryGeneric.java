@@ -32,6 +32,7 @@ import org.hobbit.trash.DockerServiceSimple;
  * @param <A>
  * @param <B>
  */
+@Deprecated
 public class DockerServiceFactoryGeneric<X, A, B>
 	implements DockerServiceFactory<DockerService>
 {
@@ -117,6 +118,15 @@ public class DockerServiceFactoryGeneric<X, A, B>
 				ea -> run.apply(ea.getValue()),
 				(ea, b) -> stop.accept(ea.getValue(), b),
 				imageName);
+	}
+
+
+
+
+	@Override
+	public void close() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

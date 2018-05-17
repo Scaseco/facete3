@@ -66,7 +66,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		
 		DockerServiceBuilderFactory<?> dsbf = () -> DockerServiceBuilderJsonDelegate.create(dsf::create);
 		
-		SparqlBasedService saService = ConfigsFacetedBrowsingBenchmark.createVirtuosoSparqlService(dsbf);		
+		SparqlBasedService saService = ConfigsFacetedBrowsingBenchmark.createVirtuosoSparqlService("tenforce/virtuoso", dsbf);		
 		
 		saService.startAsync().awaitRunning();
 

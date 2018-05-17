@@ -92,6 +92,10 @@ public class DockerServiceFactorySpringApplicationBuilder
 		return result;
 	}
 
+	@Override
+	public void close() throws Exception {
+	}
+
 }
 
 

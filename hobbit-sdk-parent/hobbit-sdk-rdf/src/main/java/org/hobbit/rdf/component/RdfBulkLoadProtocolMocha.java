@@ -111,6 +111,7 @@ public class RdfBulkLoadProtocolMocha
 
 	                graphNames.add(finalGraphName);
 
+	                logger.info("Requesting to load file " + finalFilename + " into " + finalGraphName);
 					rdfConnection.load(finalGraphName, finalFilename);
 					//rdfConnection.load(finalFilename);
 					//rdfConnection.commit();

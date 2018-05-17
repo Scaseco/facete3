@@ -61,7 +61,7 @@ public class BenchmarkControllerFacetedBrowsing
     public static final int MAX_TASK_EXECUTION_TIME_IN_SECONDS = 60 * 5;
 
     
-    public static final int MAX_EVAL_ANALYSIS_TIME_IN_SECONDS = 60 * 5;
+    public static final int MAX_EVAL_ANALYSIS_TIME_IN_SECONDS = 60 * 10;
     
     //  
     
