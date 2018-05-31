@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -85,7 +86,7 @@ public class FacetedQueryGenerator<P> {
 
 	public BinaryRelation getRemainingFacets(P basePath, boolean isReverse, Set<Expr> effectiveConstraints) {
 		BinaryRelation br = new BinaryRelation(
-				ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
+				ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o)), Vars.s, Vars.o);
 		
 		BinaryRelation result = getFacets(basePath, br, Vars.p, effectiveConstraints);
 
@@ -123,10 +124,20 @@ public class FacetedQueryGenerator<P> {
 		
 		// Rename all instances of 'p' and 'o' variables 
 		Set<Var> vars = facetRelation.getVarsMentioned();//new HashSet<>(Arrays.asList(Vars.p, Vars.o));
-		Map<Var, Var> rename = VarUtils.createDistinctVarMap(vars, forbiddenVars, true, VarGeneratorBlacklist.create(forbiddenVars));
-		//rename.put(facetRelation.getSourceVar(), s);
+		vars.remove(facetRelation.getSourceVar());
+//		vars.remove(facetRelation.getTargetVar());
 		
-		s = rename.getOrDefault(s, s);
+		Map<Var, Var> rename = VarUtils.createDistinctVarMap(vars, forbiddenVars, true, VarGeneratorBlacklist.create(forbiddenVars));
+//		rename.put(facetRelation.getSourceVar(), s);
+//		rename.put(s, facetRelation.getSourceVar());
+	
+		// Rename the source of the facet relation
+		Map<Var, Var> r2 = new HashMap<>();
+		r2.put(facetRelation.getSourceVar(), s);
+	
+		facetRelation = facetRelation.applyNodeTransform(new NodeTransformRenameMap(r2));
+		
+		//s = rename.getOrDefault(s, s);
 		
 		List<Element> es = new ArrayList<>();
 		for(Element e : elements) {
@@ -240,12 +251,17 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 	
+	public static Concept getFacets(TernaryRelation tr) {
+		Concept result = new Concept(tr.getElement(), tr.getP());
+		return result;
+	}
+	
 	/**
 	 * 
 	 * 
 	 * @return
 	 */
-	public static TernaryRelation countFacetValues(TernaryRelation tr, Boolean order) {
+	public static TernaryRelation countFacetValues(TernaryRelation tr, int sortDirection) {
 		Query query = new Query();
 		query.setQuerySelectType();
 
@@ -265,6 +281,11 @@ public class FacetedQueryGenerator<P> {
 		query.addGroupBy(o);
 		
 		TernaryRelation result = new TernaryRelation(p, o, c, new ElementSubQuery(query));
+		
+		if(sortDirection != 0) {
+			query.addOrderBy(agg, sortDirection);
+		}
+		
 		return result;
 	}
 	

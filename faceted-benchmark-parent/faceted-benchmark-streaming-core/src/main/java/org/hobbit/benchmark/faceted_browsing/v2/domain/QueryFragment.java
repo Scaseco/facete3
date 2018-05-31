@@ -315,6 +315,8 @@ public class QueryFragment {
 //						.collect(Collectors.toSet());
 	
 				Set<Var> vars = br.getVarsMentioned();
+				vars.remove(br.getSourceVar());
+				vars.remove(br.getTargetVar());
 	
 				Map<Var, Var> map = VarUtils.createDistinctVarMap(forbiddenVars, vars, false, varGen);
 				map.put(br.getSourceVar(), s);

@@ -72,10 +72,10 @@ public class MainFacetedBenchmark2 {
 
 		//Map<String, BinaryRelation> facets = g.getFacets(somePath.getParent(), false);
 		
-		Map<String, TernaryRelation> facetValues = g.getFacetValues(somePath.getParent(), somePath, false);
+		Map<String, TernaryRelation> facetValues = g.getFacetValues(somePath.getParent(), somePath.getParent(), false);
 
 		Map<String, TernaryRelation> map = facetValues.entrySet().stream()
-		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), null)));
+		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), -1)));
 		
 		
 		System.out.println("FACETS: " + facetValues);
