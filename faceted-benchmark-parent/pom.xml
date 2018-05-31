@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -37,23 +38,42 @@
 		<dependencies>
 
 			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-core</artifactId>
+				<version>3.7.0-1-SNAPSHOT</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-mapper</artifactId>
+				<version>3.7.0-1-SNAPSHOT</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-query-containment</artifactId>
+				<version>3.7.0-1-SNAPSHOT</version>
+			</dependency>
+
+
+			<dependency>
 				<groupId>org.hobbit</groupId>
 				<artifactId>faceted-benchmark-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
-                        <dependency>
-                                <groupId>org.hobbit</groupId>
-                                <artifactId>faceted-benchmark-streaming-core</artifactId>
-                                <version>${project.version}</version>
-                        </dependency>
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>faceted-benchmark-streaming-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 
-                        <dependency>
-                                <groupId>org.hobbit</groupId>
-                                <artifactId>faceted-benchmark-streaming-integration-hobbit</artifactId>
-                                <version>${project.version}</version>
-                        </dependency>
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>faceted-benchmark-streaming-integration-hobbit</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 
 
@@ -109,10 +129,10 @@
 					<!-- The spring based unit tests presently cannot configure properties 
 						across all containers -->
 					<configuration>
-<!-- VHOST no longer has to be set -->
-<!-- 						<systemPropertyVariables> -->
-<!-- 							<AMQP_VHOST>default</AMQP_VHOST> -->
-<!-- 						</systemPropertyVariables> -->
+						<!-- VHOST no longer has to be set -->
+						<!-- <systemPropertyVariables> -->
+						<!-- <AMQP_VHOST>default</AMQP_VHOST> -->
+						<!-- </systemPropertyVariables> -->
 					</configuration>
 				</plugin>
 
