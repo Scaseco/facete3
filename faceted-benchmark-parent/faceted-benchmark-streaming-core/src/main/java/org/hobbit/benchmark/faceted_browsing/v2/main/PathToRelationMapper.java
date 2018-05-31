@@ -95,10 +95,11 @@ public class PathToRelationMapper<P> {
 		List<BinaryRelation> brs = segments.stream()
 			.map(map::get)
 			// Filter out the root segment which corresponds to an empty path
-			.filter(x -> !BinaryRelation.isEmpty(x))
+			//.filter(x -> !BinaryRelation.isEmpty(x))
 			.collect(Collectors.toList());
 		
 		List<Element> elts = brs.stream()
+				.filter(x -> !BinaryRelation.isEmpty(x))
 				.map(BinaryRelation::getElement)
 				.collect(Collectors.toList());
 		
