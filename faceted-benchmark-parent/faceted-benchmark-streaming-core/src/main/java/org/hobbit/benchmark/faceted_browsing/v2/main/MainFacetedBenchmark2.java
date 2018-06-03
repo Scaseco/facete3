@@ -11,7 +11,10 @@ import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -29,6 +32,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 
+import com.google.common.collect.Range;
 import com.google.common.collect.Streams;
 import com.google.common.graph.Traverser;
 
@@ -51,9 +55,21 @@ public class MainFacetedBenchmark2 {
 		return result;
 	}
 	
+	
 	public static void main(String[] args) {
 		JenaSystem.init();
 		init(BuiltinPersonalities.model);
+		
+		// Fetch the available properties (without counts)
+		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
+		
+		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
+
+		SPath typePath = session.root.get(RDF.type.getURI(), false);
+		Map<Node, Range<Long>> map = session.getFacetsAndCounts(typePath, false)
+				.toMap(Entry::getKey, Entry::getValue).blockingGet();
+		
+		System.out.println(map);
 		
 		FactoryWithModel<SPath> dimensionFactory = new FactoryWithModel<>(SPath.class);
 		
@@ -72,10 +88,15 @@ public class MainFacetedBenchmark2 {
 
 		//Map<String, BinaryRelation> facets = g.getFacets(somePath.getParent(), false);
 		
+		
+		//g.getFacets(tr);
+		
 		Map<String, TernaryRelation> facetValues = g.getFacetValues(somePath.getParent(), somePath.getParent(), false);
 
-		Map<String, TernaryRelation> map = facetValues.entrySet().stream()
-		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), -1)));
+//		Map<String, TernaryRelation> map = facetValues.entrySet().stream()
+//		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), -1)));
+
+		
 		
 		
 		System.out.println("FACETS: " + facetValues);

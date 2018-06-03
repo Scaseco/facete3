@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -23,7 +24,9 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -197,6 +200,18 @@ public class FacetedQueryGenerator<P> {
 
 		BinaryRelation brr = getRemainingFacets(path, isReverse, constraintSet);
 
+		// Build the constraint to remove all prior properties
+		ExprList constrainedPredicates = new ExprList(result.keySet().stream()
+				.map(NodeFactory::createURI)
+				.map(NodeValue::makeNode)
+				.collect(Collectors.toList()));
+
+		if(!constrainedPredicates.isEmpty()) {		
+			List<Element> foo = ElementUtils.toElementList(brr.getElement());
+			foo.add(new ElementFilter(new E_NotOneOf(new ExprVar(brr.getSourceVar()), constrainedPredicates)));
+			brr = new BinaryRelation(ElementUtils.groupIfNeeded(foo), brr.getSourceVar(), brr.getTargetVar());
+		}
+
 		result.put(null, brr);
 		
 		return result;
@@ -255,6 +270,7 @@ public class FacetedQueryGenerator<P> {
 		Concept result = new Concept(tr.getElement(), tr.getP());
 		return result;
 	}
+	
 	
 	/**
 	 * 
