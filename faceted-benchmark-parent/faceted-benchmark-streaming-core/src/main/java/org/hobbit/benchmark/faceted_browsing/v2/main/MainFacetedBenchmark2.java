@@ -65,7 +65,7 @@ public class MainFacetedBenchmark2 {
 		
 		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
 
-		SPath typePath = session.root.get(RDF.type.getURI(), false);
+		SPath typePath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
 		Map<Node, Range<Long>> map = session.getFacetsAndCounts(typePath, false)
 				.toMap(Entry::getKey, Entry::getValue).blockingGet();
 		

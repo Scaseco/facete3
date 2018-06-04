@@ -29,11 +29,14 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.FactoryWithModel;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
@@ -41,6 +44,10 @@ import com.google.common.collect.Sets;
 import io.reactivex.Flowable;
 
 public class FacetedBrowsingSession {
+	
+	private static final Logger logger = LoggerFactory.getLogger(FacetedBrowsingSession.class);
+
+	
 	protected RDFConnection conn;
 	protected SPath root;
 	
@@ -60,8 +67,14 @@ public class FacetedBrowsingSession {
 		queryGenerator = new FacetedQueryGenerator<>(pathAccessor);
 		
 		this.focus = root;
+		
+		queryGenerator.getFacets(root, false);
 	}
 	
+	public SPath getRoot() {
+		return root;
+	}
+
 	/**
 	 * Returns a flow of mappings from predicate to count.
 	 * If the count is known, the range will include a single element,
@@ -76,9 +89,11 @@ public class FacetedBrowsingSession {
 		
 		Query query = RelationUtils.createQuery(br);
 		
+		logger.info("Requesting facet counts: " + query);
+		
 		return ReactiveSparql.queryCore(() -> conn.query(query))
 			.flatMap(ReactiveSparql::mapToBinding)
-			.map(b -> new SimpleEntry<>(b.get(Vars.p), Range.atLeast(10l)));
+			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton((Long)b.get(br.getTargetVar()).getLiteral().getValue())));
 	}
 	
 	public BinaryRelation createQueryFacetsAndCounts(SPath path, boolean isReverse) {
@@ -176,7 +191,7 @@ public class FacetedBrowsingSession {
 			query.addGroupBy(groupVar);
 		}
 		
-		Relation result = new RelationImpl(r.getElement(), newVars);
+		Relation result = new RelationImpl(new ElementSubQuery(query), newVars);
 		return result;
 	}
 	

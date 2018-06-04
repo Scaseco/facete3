@@ -102,15 +102,22 @@ public class FacetedQueryGenerator<P> {
 		
 		
 		Set<Element> elements = new LinkedHashSet<>();
-		
-		for(Expr expr : effectiveConstraints) {
-			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor.getPathClass());
 
-			for(P p : paths) {
-				BinaryRelation br = mapper.getOverallRelation(p);
-				elements.addAll(ElementUtils.toElementList(br.getElement()));
-			}
+		Set<P> paths = new LinkedHashSet<>();
+		paths.add(basePath);
+
+		for(Expr expr : effectiveConstraints) {
+			Set<P> tmpPaths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor.getPathClass());
+			paths.addAll(tmpPaths);
+		}
+		
+		
+		for(P p : paths) {
+			BinaryRelation br = mapper.getOverallRelation(p);
+			elements.addAll(ElementUtils.toElementList(br.getElement()));
+		}
 			
+		for(Expr expr : effectiveConstraints) {
 			Expr resolved = ExprTransformer.transform(exprTransform, expr);
 			elements.add(new ElementFilter(resolved));
 		}
