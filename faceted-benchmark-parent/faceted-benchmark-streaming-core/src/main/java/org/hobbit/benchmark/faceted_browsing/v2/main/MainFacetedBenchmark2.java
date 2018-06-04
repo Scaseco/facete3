@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
@@ -20,9 +22,11 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.system.JenaSystem;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Dimension;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.DimensionImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.ExprPath;
@@ -60,6 +64,10 @@ public class MainFacetedBenchmark2 {
 		JenaSystem.init();
 		init(BuiltinPersonalities.model);
 		
+		
+		Concept k = KeywordSearchUtils.createConceptBifContains(BinaryRelation.create(new P_Link(RDFS.label.asNode())), "test");
+		System.out.println("Keyword search: " + k);
+
 		// Fetch the available properties (without counts)
 		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
 		
@@ -68,6 +76,8 @@ public class MainFacetedBenchmark2 {
 		SPath typePath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
 		Map<Node, Range<Long>> map = session.getFacetsAndCounts(typePath, false)
 				.toMap(Entry::getKey, Entry::getValue).blockingGet();
+
+		
 		
 		System.out.println(map);
 		
