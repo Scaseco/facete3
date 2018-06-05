@@ -1,14 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
@@ -36,9 +36,15 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Range;
 import com.google.common.collect.Streams;
+import com.google.common.collect.Table;
+import com.google.common.collect.Table.Cell;
 import com.google.common.graph.Traverser;
+
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 
 public class MainFacetedBenchmark2 {
@@ -60,26 +66,43 @@ public class MainFacetedBenchmark2 {
 	}
 	
 	
+	public static <R, C, V> Single<Table<R, C, V>> toTable(Flowable<Cell<R, C, V>> cell) {
+		return cell.toList().map(list -> {
+			Table<R, C, V> r = HashBasedTable.create();
+			//r.cellSet().addAll(list);
+			list.forEach(c -> r.put(c.getRowKey(), c.getColumnKey(), c.getValue()));
+			return r;
+		});
+	}
+	
 	public static void main(String[] args) {
 		JenaSystem.init();
 		init(BuiltinPersonalities.model);
 		
 		
-		Concept k = KeywordSearchUtils.createConceptBifContains(BinaryRelation.create(new P_Link(RDFS.label.asNode())), "test");
+		Concept k = KeywordSearchUtils.createConceptBifContains(BinaryRelationImpl.create(new P_Link(RDFS.label.asNode())), "test");
+
+		//ConceptUtils.createFilterConcept(nodes)
 		System.out.println("Keyword search: " + k);
 
 		// Fetch the available properties (without counts)
-		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
+//		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
+		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8950/sparql");
 		
 		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
 
-		SPath typePath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
-		Map<Node, Range<Long>> map = session.getFacetsAndCounts(typePath, false)
-				.toMap(Entry::getKey, Entry::getValue).blockingGet();
+		SPath rootPath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
+		SPath typePath = rootPath.get(RDF.type.getURI(), false);
+		
+		Concept pFilter = ConceptUtils.createFilterConcept(RDF.type.asNode(), RDFS.label.asNode());;
+
+		Map<Node, Range<Long>> facets = new HashMap<>();
+//		Map<Node, Range<Long>> facets = session.getFacetsAndCounts(rootPath, false, pFilter)
+//				.toMap(Entry::getKey, Entry::getValue).blockingGet();
 
 		
 		
-		System.out.println(map);
+//		System.out.println(map);
 		
 		FactoryWithModel<SPath> dimensionFactory = new FactoryWithModel<>(SPath.class);
 		
@@ -96,23 +119,30 @@ public class MainFacetedBenchmark2 {
 
 		g.getConstraints().add(tmp);
 
+		
+		//g.getFacets(path, isReverse)
 		//Map<String, BinaryRelation> facets = g.getFacets(somePath.getParent(), false);
 		
 		
 		//g.getFacets(tr);
 		
-		Map<String, TernaryRelation> facetValues = g.getFacetValues(somePath.getParent(), somePath.getParent(), false);
+		//Map<String, TernaryRelation> facetValues = g.getFacetValues(somePath.getParent(), somePath.getParent(), false);
 
+		
 //		Map<String, TernaryRelation> map = facetValues.entrySet().stream()
 //		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), -1)));
 
 		
 		
 		
-		System.out.println("FACETS: " + facetValues);
+		System.out.println("FACETS: " + facets);
 		
-		System.out.println("FACET VALUE COUNTS: " + map);
+		Table<Node, Node, Range<Long>> facetValues = toTable(session.getFacetValues(rootPath, false, pFilter, null)).blockingGet();
 		
+		for(Cell<Node, Node, Range<Long>> cell : facetValues.cellSet()) {
+			System.out.println("FACET VALUES: " + cell);			
+		}
+
 //		System.out.println("Path mentioned: " + getPathsMentioned(tmp, SPath.class));
 //		
 //		System.out.println("Relation: " + br);

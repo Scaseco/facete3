@@ -12,9 +12,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -81,14 +83,14 @@ public class FacetedQueryGenerator<P> {
 		List<Element> elts = ElementUtils.toElementList(rel.getElement());
 		elts.add(new ElementBind(Vars.p, NodeValue.makeNode(NodeFactory.createURI(pathAccessor.getPredicate(childPath)))));
 		
-		rel = new BinaryRelation(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
+		rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
 		
 		BinaryRelation result = getFacets(pathAccessor.getParent(childPath), rel, Vars.p, effectiveConstraints);
 		return result;
 	}
 
 	public BinaryRelation getRemainingFacets(P basePath, boolean isReverse, Set<Expr> effectiveConstraints) {
-		BinaryRelation br = new BinaryRelation(
+		BinaryRelation br = new BinaryRelationImpl(
 				ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o)), Vars.s, Vars.o);
 		
 		BinaryRelation result = getFacets(basePath, br, Vars.p, effectiveConstraints);
@@ -160,7 +162,7 @@ public class FacetedQueryGenerator<P> {
 		es.add(facetRelation.getElement());//ElementUtils.createElement(t));
 		
 		//BinaryRelation result = new BinaryRelation(ElementUtils.groupIfNeeded(es), Vars.p, Vars.o);
-		BinaryRelation result = new BinaryRelation(ElementUtils.groupIfNeeded(es), pVar, facetRelation.getTargetVar());
+		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(es), pVar, facetRelation.getTargetVar());
 		
 		return result;
 	}
@@ -216,7 +218,7 @@ public class FacetedQueryGenerator<P> {
 		if(!constrainedPredicates.isEmpty()) {		
 			List<Element> foo = ElementUtils.toElementList(brr.getElement());
 			foo.add(new ElementFilter(new E_NotOneOf(new ExprVar(brr.getSourceVar()), constrainedPredicates)));
-			brr = new BinaryRelation(ElementUtils.groupIfNeeded(foo), brr.getSourceVar(), brr.getTargetVar());
+			brr = new BinaryRelationImpl(ElementUtils.groupIfNeeded(foo), brr.getSourceVar(), brr.getTargetVar());
 		}
 
 		result.put(null, brr);
@@ -249,7 +251,10 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
-	public Map<String, TernaryRelation> getFacetValues(P focusPath, P facetPath, boolean isReverse) {
+	public Map<String, TernaryRelation> getFacetValues(P focusPath, P facetPath, Concept pFilter, Concept oFilter, boolean isReverse) {
+		// This is incorrect; we need the values of the facet here;
+		// we could take the parent path and restrict it to a set of given predicates
+		//pathAccessor.getParent(facetPath);
 		Map<String, BinaryRelation> facets = getFacets(facetPath, isReverse);
 
 		// Get the focus element
@@ -264,7 +269,7 @@ public class FacetedQueryGenerator<P> {
 			
 			Set<Element> e3 = Sets.union(e1, e2);
 			Element e4 = ElementUtils.groupIfNeeded(e3);
-			TernaryRelation tr = new TernaryRelation(focusRelation.getSourceVar(), rel.getSourceVar(), rel.getTargetVar(), e4);
+			TernaryRelation tr = new TernaryRelationImpl(focusRelation.getSourceVar(), rel.getSourceVar(), rel.getTargetVar(), e4);
 			
 			String p = facet.getKey();
 			result.put(p, tr);
@@ -272,6 +277,8 @@ public class FacetedQueryGenerator<P> {
 
 		return result;
 	}
+	
+	//public TernaryRelation get
 	
 	public static Concept getFacets(TernaryRelation tr) {
 		Concept result = new Concept(tr.getElement(), tr.getP());
@@ -303,7 +310,7 @@ public class FacetedQueryGenerator<P> {
 		query.addGroupBy(p);
 		query.addGroupBy(o);
 		
-		TernaryRelation result = new TernaryRelation(p, o, c, new ElementSubQuery(query));
+		TernaryRelation result = new TernaryRelationImpl(p, o, c, new ElementSubQuery(query));
 		
 		if(sortDirection != 0) {
 			query.addOrderBy(agg, sortDirection);

@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -75,7 +76,7 @@ public class SPathImpl
 		//Node p = getPredicate().asNode();
 		String pStr = getPredicate();
 		Node p = NodeFactory.createURI(pStr);
-		BinaryRelation result = new BinaryRelation(ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, p, Vars.o)), Vars.s, Vars.o);
+		BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, p, Vars.o)), Vars.s, Vars.o);
 		return result;
 	}
 

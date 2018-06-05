@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VPath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -295,7 +296,7 @@ public class QueryFragment {
 			if(parentPath == null) {
 				
 				Var s = getOrCreateAlias(path, accessor, pathToNode, forbiddenVars, varGen);
-				result = new BinaryRelation(new ElementGroup(), s, s);
+				result = new BinaryRelationImpl(new ElementGroup(), s, s);
 				
 			} else {
 				//boolean isReverse = accessor.isReverse(path);
@@ -325,7 +326,7 @@ public class QueryFragment {
 				
 				Element segment = ElementUtils.createRenamedElement(br.getElement(), map);
 
-				result = new BinaryRelation(segment, s, o);
+				result = new BinaryRelationImpl(segment, s, o);
 			}
 			
 			pathToNode.put(path, result);

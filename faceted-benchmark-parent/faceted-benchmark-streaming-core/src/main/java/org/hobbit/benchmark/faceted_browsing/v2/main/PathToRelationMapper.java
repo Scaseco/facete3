@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -99,7 +100,7 @@ public class PathToRelationMapper<P> {
 			.collect(Collectors.toList());
 		
 		List<Element> elts = brs.stream()
-				.filter(x -> !BinaryRelation.isEmpty(x))
+				.filter(x -> !x.isEmpty())
 				.map(BinaryRelation::getElement)
 				.collect(Collectors.toList());
 		
@@ -108,7 +109,7 @@ public class PathToRelationMapper<P> {
 		Var o = Iterables.getLast(brs, null).getTargetVar();
 		
 		
-		BinaryRelation result = new BinaryRelation(elt, s, o);
+		BinaryRelation result = new BinaryRelationImpl(elt, s, o);
 		
 		//TreeUtils.inOrderSearch(path, path -> Streams.stream()));
 		

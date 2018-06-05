@@ -13,9 +13,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -40,6 +45,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Table.Cell;
+import com.google.common.collect.Tables;
 
 import io.reactivex.Flowable;
 
@@ -84,19 +91,22 @@ public class FacetedBrowsingSession {
 	 * @param isReverse
 	 * @return
 	 */
-	public Flowable<Entry<Node, Range<Long>>> getFacetsAndCounts(SPath path, boolean isReverse) {
-		BinaryRelation br = createQueryFacetsAndCounts(path, isReverse);
+	public Flowable<Entry<Node, Range<Long>>> getFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
+		BinaryRelation br = createQueryFacetsAndCounts(path, isReverse, pConstraint);
+		
+		
+		//RelationUtils.attr
 		
 		Query query = RelationUtils.createQuery(br);
 		
 		logger.info("Requesting facet counts: " + query);
 		
-		return ReactiveSparql.queryCore(() -> conn.query(query))
-			.flatMap(ReactiveSparql::mapToBinding)
-			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton((Long)b.get(br.getTargetVar()).getLiteral().getValue())));
+		return ReactiveSparqlUtils.queryCore(() -> conn.query(query))
+			.flatMap(ReactiveSparqlUtils::mapToBinding)
+			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
 	}
 	
-	public BinaryRelation createQueryFacetsAndCounts(SPath path, boolean isReverse) {
+	public BinaryRelation createQueryFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
 		Map<String, BinaryRelation> relations = queryGenerator.getFacets(path, isReverse);
 
 		// Align the relations
@@ -111,13 +121,15 @@ public class FacetedBrowsingSession {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relations.values().stream()
 				.map(e -> rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(Relation::toBinaryRelation)
+				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
 				.map(e -> groupBy(e, Vars.o, countVar))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 		
 		Element e = ElementUtils.union(elements);
 
-		BinaryRelation result = new BinaryRelation(e, Vars.p, countVar);
+		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
 
 		return result;
 		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
@@ -130,17 +142,19 @@ public class FacetedBrowsingSession {
 			throw new IllegalArgumentException("Number of distinct variables of the relation must match the number of distinct target variables");
 		}
 		
-		Map<Var, Var> rename = new HashMap<>();
-		Streams.zip(
+		Map<Var, Var> rename = Streams.zip(
 			relationVars.stream(),
 			vs.stream(),
-			(a, b) -> rename.put(a, b));
+			(a, b) -> new SimpleEntry<>(a, b))
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		
 		// Extend the map by renaming all remaining variables
 		Set<Var> mentionedVars = r.getVarsMentioned();
 		Set<Var> remainingVars = Sets.difference(mentionedVars, relationVars);
 		
 		Map<Var, Var> map = VarUtils.createDistinctVarMap(targetVars, remainingVars, false, VarGeneratorImpl2.create());
+		map.putAll(rename);
+		
 		Relation result = r.applyNodeTransform(new NodeTransformSubst(map));
 		return result;
 	}
@@ -196,6 +210,53 @@ public class FacetedBrowsingSession {
 	}
 	
 	
+	public Flowable<Cell<Node, Node, Range<Long>>> getFacetValues(SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
+		TernaryRelation tr = createQueryFacetValues(facetPath, isReverse, pFilter, oFilter);
+		Query query = tr.toQuery();
+//		Query query = RelationUtils.createQuery(tr);
+		
+		logger.info("Requesting facet value counts: " + query);
+		
+		
+		return ReactiveSparqlUtils.queryCore(() -> conn.query(query))
+			.flatMap(ReactiveSparqlUtils::mapToBinding)
+			.map(b -> Tables.immutableCell(b.get(tr.getS()), b.get(tr.getP()), Range.singleton(((Number)b.get(tr.getO()).getLiteral().getValue()).longValue())));
+
+	}
+	
+	public TernaryRelation createQueryFacetValues(SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
+	
+		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValues(focus, facetPath, pFilter, oFilter, isReverse);
+
+		Var countVar = Vars.c;
+		List<Element> elements = facetValues.values().stream()
+				.map(e -> rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(Relation::toTernaryRelation)
+				.map(e -> e.joinOn(e.getP()).with(pFilter))
+				.map(e -> groupBy(e, Vars.s, countVar))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+
+		
+		Element e = ElementUtils.union(elements);
+
+		TernaryRelation result = new TernaryRelationImpl(Vars.p, Vars.o, countVar, e);
+
+		
+		
+		return result;
+
+//		FacetedBrowsingSession.align(r, Arrays.asList(Vars.s, Vars.p, Vars.o)
+//		List<Relation> aligned = facetValues.values().stream()
+//		.map(r -> ))
+//		.collect(Collectors.toList());
+
+		
+		
+//		Map<String, TernaryRelation> map = facetValues.entrySet().stream()
+//		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), -1)));
+		
+	}
 	
 	/**
 	 * TODO How to do combined filters such as "label must match a regex pattern and the count < 1000"? 

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -34,7 +35,7 @@ public class CountUtils {
     		
     		if(r == null) {
     			TernaryRelation tr = defaultRelation.filterP(p);
-    			BinaryRelation br = new BinaryRelation(tr.getElement(), tr.getS(), tr.getO());
+    			BinaryRelation br = new BinaryRelationImpl(tr.getElement(), tr.getS(), tr.getO());
     			result.put(p, br);
     		} else {
     			result.put(p, r);
