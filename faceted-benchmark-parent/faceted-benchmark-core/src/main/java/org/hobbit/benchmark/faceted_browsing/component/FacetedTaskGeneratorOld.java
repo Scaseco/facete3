@@ -63,7 +63,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
+import org.hobbit.core.component.DataGeneratorMochaTmp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

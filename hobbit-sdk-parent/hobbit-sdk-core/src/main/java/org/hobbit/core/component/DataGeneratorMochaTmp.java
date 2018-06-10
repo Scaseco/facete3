@@ -44,32 +44,41 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 
+import io.reactivex.Flowable;
 import jersey.repackaged.com.google.common.primitives.Ints;
 
 @Component
 @Qualifier("MainService")
-public class DataGeneratorFacetedBrowsing
+public class DataGeneratorMochaTmp<T>
     extends ComponentBaseExecutionThread
 {
 	public static final String GRAPH_IRI = "default"; //"http://example.org"; //"default";//
 	
-    private static final Logger logger = LoggerFactory.getLogger(DataGeneratorFacetedBrowsing.class);
+    private static final Logger logger = LoggerFactory.getLogger(DataGeneratorMochaTmp.class);
 
-    protected int batchSize = 10000;
+//    protected int batchSize = 10000;
 
     @Resource(name="commandSender")
     protected Subscriber<ByteBuffer> commandSender;
 
     @Resource
-    protected TripleStreamSupplier tripleStreamSupplier;
+    //protected TripleStreamSupplier tripleStreamSupplier;
 
-    @Resource(name="dg2tgSender")
-    protected Subscriber<ByteBuffer> toTaskGenerator;
+    protected Supplier<Flowable<T>> dataFlowableSupplier;
+    
+    /** Supplier for data streams */
+    //protected Supplier<Flowable<?>> flowableSupplier;
+    
+    /** TODO Some function to convert the incoming items */
+    
+//    @Resource(name="dg2tgSender")
+//    protected Subscriber<ByteBuffer> toTaskGenerator;
+//
+//    @Resource(name="dg2saSender")
+//    protected Subscriber<ByteBuffer> toSystemAdatper;
 
-    @Resource(name="dg2saSender")
-    protected Subscriber<ByteBuffer> toSystemAdatper;
 
-
+    protected Consumer<Supplier<Flowable<T>>> dataProcessor;
 
     protected CompletableFuture<ByteBuffer> startSignalFuture;
 
@@ -179,47 +188,53 @@ public class DataGeneratorFacetedBrowsing
     //@Override
     public void generateData() throws Exception {
         logger.info("Data generator started.");
-
-        // Generate the data once and store it in a temp file
-        // TODO Add a flag whether to cache in a file
-        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing-", ".nt");
         
-        // TODO Enable an optional validation step which keeps the output files if there are any problems
+        dataProcessor.accept(dataFlowableSupplier);
         
-        datasetFile.deleteOnExit();
-        try(Stream<Triple> triples = tripleStreamSupplier.get()) {
-        	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
-        	
-        	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
-        	logger.info("Data generator counted " + it.getNumItems() + " generated triples");
-        }
-        
-        Supplier<Stream<Triple>> triplesFromCache = () -> {
-            try {
-                return Streams.stream(RDFDataMgr.createIteratorTriples(new FileInputStream(datasetFile), Lang.NTRIPLES, "http://example.org/"));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        };
-
-        
-        //commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
-        
-        logger.info("Data generator is sending dataset to task generator");
-        sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
-        //sendTriplesViaStreamProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
-        
-        logger.info("Data generator is sending dataset to system adapter");
-        Entry<Long, Long> numRecordsAndBatches = sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
-
-    	// Notify the BC about this DC's contribution to the dataset generation
-    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(17)
-    			.put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR)
-    			.putLong(numRecordsAndBatches.getKey())
-    			.putLong(numRecordsAndBatches.getValue())
-    			.rewind());
-
-        datasetFile.delete();
+//
+//        // Generate the data once and store it in a temp file
+//        // TODO Add a flag whether to cache in a file
+//        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing-", ".nt");
+//        
+//        // TODO Enable an optional validation step which keeps the output files if there are any problems
+//        
+//        datasetFile.deleteOnExit();
+////        Flowable<?> flowable = flowableSupplier.get();
+////        flowable.blockingIterable().iterator();
+//        
+//        try(Stream<Triple> triples = tripleStreamSupplier.get()) {
+//        	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
+//        	
+//        	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
+//        	logger.info("Data generator counted " + it.getNumItems() + " generated triples");
+//        }
+//        
+//        Supplier<Stream<Triple>> triplesFromCache = () -> {
+//            try {
+//                return Streams.stream(RDFDataMgr.createIteratorTriples(new FileInputStream(datasetFile), Lang.NTRIPLES, "http://example.org/"));
+//            } catch (FileNotFoundException e) {
+//                throw new RuntimeException(e);
+//            }
+//        };
+//
+//        
+//        //commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
+//        
+//        logger.info("Data generator is sending dataset to task generator");
+//        sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
+//        //sendTriplesViaStreamProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
+//        
+//        logger.info("Data generator is sending dataset to system adapter");
+//        Entry<Long, Long> numRecordsAndBatches = sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
+//
+//    	// Notify the BC about this DC's contribution to the dataset generation
+//    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(17)
+//    			.put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR)
+//    			.putLong(numRecordsAndBatches.getKey())
+//    			.putLong(numRecordsAndBatches.getValue())
+//    			.rewind());
+//
+//        datasetFile.delete();
         logger.info("Data generator fulfilled its purpose and shuts down");
     }
 

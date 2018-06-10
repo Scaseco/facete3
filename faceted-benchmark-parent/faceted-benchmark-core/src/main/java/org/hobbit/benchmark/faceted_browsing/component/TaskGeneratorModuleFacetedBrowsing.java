@@ -29,7 +29,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
+import org.hobbit.core.component.DataGeneratorMochaTmp;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.component.TaskGeneratorModule;
@@ -232,7 +232,7 @@ public class TaskGeneratorModuleFacetedBrowsing
 
                     // TODO Bulk loading not yet implemented...
 
-                    String graphName = DataGeneratorFacetedBrowsing.GRAPH_IRI;
+                    String graphName = DataGeneratorMochaTmp.GRAPH_IRI;
                     logger.info("Clearing and loading graph: " + graphName);
                     try {
                     	conn.delete(graphName);

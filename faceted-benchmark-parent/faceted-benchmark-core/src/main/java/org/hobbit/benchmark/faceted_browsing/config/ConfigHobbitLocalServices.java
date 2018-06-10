@@ -10,7 +10,7 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
-import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
+import org.hobbit.core.component.DataGeneratorMochaTmp;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
@@ -79,7 +79,7 @@ public class ConfigHobbitLocalServices {
 
     @Bean
     public ServiceBuilder<Service> dataGeneratorServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(DataGeneratorFacetedBrowsing.class);
+        return new LocalHobbitComponentServiceFactory<>(DataGeneratorMochaTmp.class);
     }
 
     @Bean

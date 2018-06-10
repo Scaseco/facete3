@@ -40,7 +40,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigDockerServiceFactory;
-import org.hobbit.core.component.DataGeneratorFacetedBrowsing;
+import org.hobbit.core.component.DataGeneratorMochaTmp;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceFactory;
@@ -58,7 +58,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws Exception {
 		
-        String graphName = DataGeneratorFacetedBrowsing.GRAPH_IRI;
+        String graphName = DataGeneratorMochaTmp.GRAPH_IRI;
 
 		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(true,
 				ImmutableMap.<String, String>builder().build()
