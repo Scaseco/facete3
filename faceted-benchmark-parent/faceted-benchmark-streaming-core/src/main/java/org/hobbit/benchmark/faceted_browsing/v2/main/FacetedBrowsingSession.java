@@ -101,8 +101,7 @@ public class FacetedBrowsingSession {
 		
 		logger.info("Requesting facet counts: " + query);
 		
-		return ReactiveSparqlUtils.queryCore(() -> conn.query(query))
-			.flatMap(ReactiveSparqlUtils::mapToBinding)
+		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
 			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
 	}
 	
@@ -218,8 +217,7 @@ public class FacetedBrowsingSession {
 		logger.info("Requesting facet value counts: " + query);
 		
 		
-		return ReactiveSparqlUtils.queryCore(() -> conn.query(query))
-			.flatMap(ReactiveSparqlUtils::mapToBinding)
+		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
 			.map(b -> Tables.immutableCell(b.get(tr.getS()), b.get(tr.getP()), Range.singleton(((Number)b.get(tr.getO()).getLiteral().getValue()).longValue())));
 
 	}
@@ -240,7 +238,7 @@ public class FacetedBrowsingSession {
 		
 		Element e = ElementUtils.union(elements);
 
-		TernaryRelation result = new TernaryRelationImpl(Vars.p, Vars.o, countVar, e);
+		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
 
 		
 		

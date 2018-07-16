@@ -87,7 +87,7 @@ public class MainFacetedBenchmark2 {
 
 		// Fetch the available properties (without counts)
 //		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
-		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8950/sparql");
+		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
 		
 		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
 

@@ -12,6 +12,7 @@
 	<properties>
 		<hobbit-sdk.version>1.0.0-SNAPSHOT</hobbit-sdk.version>
 		<slf4j.version>1.7.24</slf4j.version>
+		<jena-sparql-api.version>3.8.0-1-SNAPSHOT</jena-sparql-api.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -40,21 +41,26 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-core</artifactId>
-				<version>3.7.0-1-SNAPSHOT</version>
+				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-mapper</artifactId>
-				<version>3.7.0-1-SNAPSHOT</version>
+				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-query-containment</artifactId>
-				<version>3.7.0-1-SNAPSHOT</version>
+				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-query-ext</artifactId>
+				<version>${jena-sparql-api.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>

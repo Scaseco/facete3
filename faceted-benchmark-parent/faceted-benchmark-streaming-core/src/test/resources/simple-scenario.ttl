@@ -1,0 +1,19 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix eg: <http://www.example.org/> .
+
+eg:scenario1
+  a eg:Scenario ;
+  eg:sequence (
+    eg:action1
+  ) ;
+  .
+
+eg:action1
+  a eg:PanAction ;
+  eg:from [
+    eg:georef "Leipzig"
+  ] ;
+  eg:to [
+    eg:georef "London"
+  ] ;
+  .

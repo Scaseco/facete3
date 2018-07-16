@@ -3,13 +3,17 @@ package org.hobbit.benchmark.faceted_browsing.v2.engine;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
+
+import com.google.common.collect.Range;
 
 
 //interface Relation2 {
@@ -20,12 +24,26 @@ import org.apache.jena.sparql.core.Var;
 //}
 
 public class CountUtils {
-		Map<Node, BinaryRelation> createQueriesPreCountCore(
-    		Map<Node, BinaryRelation> overrides,
-    		TernaryRelation defaultRelation, // TODO Maybe use a lambda Function<Node, BinaryRelation> instead
-    		Var countVar,
-    		Collection<Node> properties) {
-    	    	
+	public static CountInfo toCountInfo(Range<Long> range) {
+		CountInfo result;
+
+		if(range.hasLowerBound()) {
+			long lowerBound = range.lowerEndpoint();
+			boolean hasMoreItems = !(range.hasUpperBound() && lowerBound == range.upperEndpoint().longValue());
+			result = new CountInfo(lowerBound, hasMoreItems, null);			
+		} else {
+			throw new IllegalArgumentException("Range must have a lower bound");
+		}
+		
+		return result;
+	}
+	
+	public static Map<Node, BinaryRelation> createQueriesPreCountCore(
+		Map<Node, BinaryRelation> overrides,
+		TernaryRelation defaultRelation, // TODO Maybe use a lambda Function<Node, BinaryRelation> instead
+		Var countVar,
+		Collection<Node> properties) {
+	    	
     	
     	Map<Node, BinaryRelation> result = new HashMap<>();
     	

@@ -269,7 +269,7 @@ public class FacetedQueryGenerator<P> {
 			
 			Set<Element> e3 = Sets.union(e1, e2);
 			Element e4 = ElementUtils.groupIfNeeded(e3);
-			TernaryRelation tr = new TernaryRelationImpl(focusRelation.getSourceVar(), rel.getSourceVar(), rel.getTargetVar(), e4);
+			TernaryRelation tr = new TernaryRelationImpl(e4, focusRelation.getSourceVar(), rel.getSourceVar(), rel.getTargetVar());
 			
 			String p = facet.getKey();
 			result.put(p, tr);
@@ -310,7 +310,7 @@ public class FacetedQueryGenerator<P> {
 		query.addGroupBy(p);
 		query.addGroupBy(o);
 		
-		TernaryRelation result = new TernaryRelationImpl(p, o, c, new ElementSubQuery(query));
+		TernaryRelation result = new TernaryRelationImpl(new ElementSubQuery(query), p, o, c);
 		
 		if(sortDirection != 0) {
 			query.addOrderBy(agg, sortDirection);
