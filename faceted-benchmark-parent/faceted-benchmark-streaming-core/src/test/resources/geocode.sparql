@@ -1,4 +1,5 @@
-# Resolve geocoordinates of places by their name
+# Search for resources with eg:georef attribute but without geo:geometry
+# For these resources, obtain a the geometry from a geocoding service such as nominatim
 
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 CONSTRUCT {

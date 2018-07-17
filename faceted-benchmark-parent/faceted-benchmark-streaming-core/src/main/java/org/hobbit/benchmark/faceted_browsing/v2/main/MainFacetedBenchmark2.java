@@ -48,11 +48,6 @@ import io.reactivex.Single;
 
 
 public class MainFacetedBenchmark2 {
-	public static void init(Personality<RDFNode> p) {
-		//p.add(Selection.class, new SimpleImplementation(SelectionImpl::new));
-		p.add(SPath.class, new SimpleImplementation(SPathImpl::new));
-		p.add(Dimension.class, new SimpleImplementation(DimensionImpl::new));
-	}
 	
 	public static <P> Set<P> getPathsMentioned(Expr expr, Class<P> pathClass) {
 		Set<P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
@@ -75,10 +70,7 @@ public class MainFacetedBenchmark2 {
 		});
 	}
 	
-	public static void main(String[] args) {
-		JenaSystem.init();
-		init(BuiltinPersonalities.model);
-		
+	public static void main(String[] args) {		
 		
 		Concept k = KeywordSearchUtils.createConceptBifContains(BinaryRelationImpl.create(new P_Link(RDFS.label.asNode())), "test");
 
