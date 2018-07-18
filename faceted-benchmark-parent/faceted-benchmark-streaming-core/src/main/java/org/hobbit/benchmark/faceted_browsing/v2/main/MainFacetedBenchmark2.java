@@ -1,40 +1,42 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
-import org.apache.jena.enhanced.BuiltinPersonalities;
-import org.apache.jena.enhanced.Personality;
 import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Link;
-import org.apache.jena.system.JenaSystem;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.Dimension;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.DimensionImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.ExprPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.FactoryWithModel;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Range;
@@ -70,7 +72,28 @@ public class MainFacetedBenchmark2 {
 		});
 	}
 	
-	public static void main(String[] args) {		
+	public static void main(String[] args) throws IOException {		
+		
+		Model x = RDFDataMgr.loadModel("cyclic-data.nt");
+		
+		System.out.println(ResultSetFormatter.asText(QueryExecutionFactory.create("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+				+ "SELECT (GROUP_CONCAT(STR(?related)) AS ?cycle) ?member {\n" + 
+				"  { SELECT ?member ?related {\n" + 
+				"    { SELECT DISTINCT ?member {\n" + 
+				"      ?member rdfs:subClassOf+ ?end\n" + 
+				"      FILTER(?member = ?end)\n" + 
+				"    } }\n" + 
+				"    ?member rdfs:subClassOf+ ?related\n" + 
+				"  } ORDER BY ?member ?related }\n" + 
+				"} GROUP BY ?member", x).execSelect()));
+		
+		
+		Model m = ModelFactory.createDefaultModel();
+		RDFDataMgr.read(m, new MetaBZip2CompressorInputStream(ClassLoader.getSystemClassLoader().getResourceAsStream("sensor-data.sample.nt.bz2")), null, Lang.NTRIPLES);
+		
+		System.out.println("Triples in model: " + m.size());
+
+		//RDFDataMgr.write(new FileOutputStream("/tmp/wtf.nt"), m, RDFFormat.NTRIPLES_ASCII);
 		
 		Concept k = KeywordSearchUtils.createConceptBifContains(BinaryRelationImpl.create(new P_Link(RDFS.label.asNode())), "test");
 
@@ -79,7 +102,9 @@ public class MainFacetedBenchmark2 {
 
 		// Fetch the available properties (without counts)
 //		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
-		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+		//RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+		
+		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(m));
 		
 		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
 
