@@ -45,6 +45,16 @@
 
 		<dependency>
 			<groupId>org.geotools</groupId>
+			<artifactId>gt-epsg-hsql</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-epsg-extension</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.geotools</groupId>
 			<artifactId>gt-api</artifactId>
 		</dependency>
 
