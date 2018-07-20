@@ -1,9 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,7 +14,9 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -24,11 +25,12 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -72,20 +74,44 @@ public class MainFacetedBenchmark2 {
 		});
 	}
 	
+	
+	public static Query createQueryCycleTest(Path path) {
+		Path p = PathFactory.pathZeroOrMore1(path);
+		String ps = p.toString(); //"(" + PathWriter.asString(p) + ")";
+		
+		
+		// TODO Build with objects
+		String queryStr =
+			"SELECT (GROUP_CONCAT(STR(?related)) AS ?cycle) ?member {\n" + 
+			"  { SELECT ?member ?related {\n" + 
+			"    { SELECT DISTINCT ?member {\n" + 
+			"      ?member " + ps + " ?end\n" + 
+			"      FILTER(?member = ?end)\n" + 
+			"    } }\n" + 
+			"    ?member " + ps + " ?related\n" + 
+			"  } ORDER BY ?member ?related }\n" + 
+			"} GROUP BY ?member";
+		
+		Query result = QueryFactory.create(queryStr);
+		return result;
+	}
+	
 	public static void main(String[] args) throws IOException {		
 		
 		Model x = RDFDataMgr.loadModel("cyclic-data.nt");
-		
-		System.out.println(ResultSetFormatter.asText(QueryExecutionFactory.create("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-				+ "SELECT (GROUP_CONCAT(STR(?related)) AS ?cycle) ?member {\n" + 
-				"  { SELECT ?member ?related {\n" + 
-				"    { SELECT DISTINCT ?member {\n" + 
-				"      ?member rdfs:subClassOf+ ?end\n" + 
-				"      FILTER(?member = ?end)\n" + 
-				"    } }\n" + 
-				"    ?member rdfs:subClassOf+ ?related\n" + 
-				"  } ORDER BY ?member ?related }\n" + 
-				"} GROUP BY ?member", x).execSelect()));
+
+		System.out.println(ResultSetFormatter.asText(QueryExecutionFactory.create(createQueryCycleTest(new P_Link(RDFS.subClassOf.asNode())), x).execSelect()));
+
+//		System.out.println(ResultSetFormatter.asText(QueryExecutionFactory.create("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+//				+ "SELECT (GROUP_CONCAT(STR(?related)) AS ?cycle) ?member {\n" + 
+//				"  { SELECT ?member ?related {\n" + 
+//				"    { SELECT DISTINCT ?member {\n" + 
+//				"      ?member rdfs:subClassOf+ ?end\n" + 
+//				"      FILTER(?member = ?end)\n" + 
+//				"    } }\n" + 
+//				"    ?member rdfs:subClassOf+ ?related\n" + 
+//				"  } ORDER BY ?member ?related }\n" + 
+//				"} GROUP BY ?member", x).execSelect()));
 		
 		
 		Model m = ModelFactory.createDefaultModel();
@@ -113,9 +139,9 @@ public class MainFacetedBenchmark2 {
 		
 		Concept pFilter = ConceptUtils.createFilterConcept(RDF.type.asNode(), RDFS.label.asNode());;
 
-		Map<Node, Range<Long>> facets = new HashMap<>();
-//		Map<Node, Range<Long>> facets = session.getFacetsAndCounts(rootPath, false, pFilter)
-//				.toMap(Entry::getKey, Entry::getValue).blockingGet();
+//		Map<Node, Range<Long>> facets = new HashMap<>();
+		Map<Node, Range<Long>> facets = session.getFacetsAndCounts(rootPath, false, pFilter)
+				.toMap(Entry::getKey, Entry::getValue).blockingGet();
 
 		
 		
@@ -186,6 +212,8 @@ public class MainFacetedBenchmark2 {
 		RDFDataMgr.write(System.out, dimensionFactory.getModel(), RDFFormat.TURTLE);
 	}
 }
+
+
 
 //PathToRelationMapper<SPath> mapper = new PathToRelationMapper<>(pathAccessor);
 //DimensionConstraintBlock constraintBlock = new DimensionConstraintBlock();
