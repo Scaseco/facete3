@@ -208,7 +208,7 @@ public class TaskGeneratorFacetedBenchmark
         
         
         logger.info("TaskGenerator waiting for start signal");
-        startTaskGenerationFuture.get(BenchmarkControllerFacetedBrowsing.MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
+        startTaskGenerationFuture.get(BenchmarkControllerComponentImpl.MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
@@ -269,7 +269,7 @@ public class TaskGeneratorFacetedBenchmark
                     
                // Wait for acknowledgement
                try {
-            	   taskAckFuture.get(BenchmarkControllerFacetedBrowsing.MAX_TASK_EXECUTION_TIME_IN_SECONDS, TimeUnit.SECONDS);
+            	   taskAckFuture.get(BenchmarkControllerComponentImpl.MAX_TASK_EXECUTION_TIME_IN_SECONDS, TimeUnit.SECONDS);
                } catch (InterruptedException | ExecutionException | TimeoutException e) {
             	   throw new RuntimeException("Timeout waiting for acknowledgement of task " + taskId);
                }

@@ -1,6 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.component;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,7 +7,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -16,22 +14,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.ext.com.google.common.collect.Sets;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.sparql.resultset.ResultSetMem;
-import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.core.component.DataGeneratorMochaTmp;
+import org.hobbit.core.component.DataGeneratorComponentBase;
 import org.hobbit.core.component.DataProtocol;
-import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.rdf.component.RdfBulkLoadProtocolMocha;
@@ -41,6 +28,8 @@ import org.springframework.util.FileCopyUtils;
 
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
+
+import io.reactivex.Flowable;
 
 /**
  * 
@@ -67,6 +56,7 @@ public class TaskGeneratorModuleFacetedBrowsing
     
     protected CompletableFuture<Void> dataLoadingComplete = new CompletableFuture<>();
     
+    protected Flowable<Resource> taskSupplier;
     
     
     public CompletableFuture<Void> getDataLoadingComplete() {
@@ -139,11 +129,12 @@ public class TaskGeneratorModuleFacetedBrowsing
         try(RDFConnection conn = sparqlService.createDefaultConnection();
     		  RDFConnection refConn = sparqlService.createDefaultConnection()) {
     	
-            try {
-				tasks = runTaskGenerationCore(conn, refConn).collect(Collectors.toList());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+//            try {
+				//tasks = FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList());
+            	tasks = taskSupplier.toList().blockingGet();
+//			} catch (IOException e) {
+//				throw new RuntimeException(e);
+//			}
     	
             logger.info("TaskGenerator created " + tasks.size() + " tasks");
 
@@ -153,72 +144,7 @@ public class TaskGeneratorModuleFacetedBrowsing
 
     
     
-    public static Stream<Resource> runTaskGenerationCore(RDFConnection conn, RDFConnection refConn) throws IOException {
 
-        // Now invoke the actual task generation
-        FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
-
-//        try(RDFConnection conn = sparqlService.createDefaultConnection();
-//            RDFConnection refConn = sparqlService.createDefaultConnection()) {
-
-    	gen.setQueryConn(conn);
-        gen.initializeParameters();
-        Stream<Resource> tasks = gen.generateTasks();
-
-        SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxSPARQL_11, false);
-
-        Stream<Resource> result = tasks.map(task -> {
-        	
-        	// Inject the graph name into the FROM clause of the query
-        	// TODO
-        	Statement stmt = task.getProperty(RDFS.label);
-        	String str = stmt.getString();
-        	Query query = parser.apply(str).getAsQueryStmt().getQuery();
-        	//query.addGraphURI(DataGeneratorFacetedBrowsing.GRAPH_IRI);
-        	String newQueryStr = Objects.toString(query);
-        	stmt.changeObject(newQueryStr);
-        	
-        	
-        	Resource r = annotateTaskWithReferenceResult(task, conn, refConn);
-        	return r;
-        });
-        
-        return result;
-    }
-    
-    
-	public static Resource annotateTaskWithReferenceResult(Resource task, RDFConnection conn, RDFConnection refConn) {
-
-        logger.info("Generated task: " + task);
-        
-        String queryStr = task.getProperty(RDFS.label).getString();
-        
-        // The task generation is not complete without the reference result
-        // TODO Reference result should be computed against TDB
-        try(QueryExecution qe = refConn.query(queryStr)) {
-//        	if(task.getURI().equals("http://example.org/Scenario_10-1")) {
-//        		System.out.println("DEBUG POINT REACHED");
-//        	}
-        	
-        	ResultSet resultSet = qe.execSelect();
-        	//int wtf = ResultSetFormatter.consume(resultSet);
-        	ResultSetMem rsMem = new ResultSetMem(resultSet);
-        	int numRows = ResultSetFormatter.consume(rsMem);
-        	rsMem.rewind();
-            logger.info("Number of expected result set rows for task " + task + ": " + numRows + " query: " + queryStr);
-
-        	
-        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        	ResultSetFormatter.outputAsJSON(baos, rsMem); //resultSet);
-        	//baos.flush();
-        	String resultSetStr = baos.toString();
-        	task.addLiteral(RDFS.comment, resultSetStr);
-        }
-            	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
-        
-
-        return task;
-	}
 	
     public static void loadDataFromStream(InputStream tmpIn, RDFConnection conn) throws IOException {
         try(InputStream in = tmpIn) {
@@ -232,7 +158,7 @@ public class TaskGeneratorModuleFacetedBrowsing
 
                     // TODO Bulk loading not yet implemented...
 
-                    String graphName = DataGeneratorMochaTmp.GRAPH_IRI;
+                    String graphName = DataGeneratorComponentBase.GRAPH_IRI;
                     logger.info("Clearing and loading graph: " + graphName);
                     try {
                     	conn.delete(graphName);

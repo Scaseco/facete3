@@ -62,6 +62,13 @@
 				<version>${project.version}</version>
 			</dependency>
 
+                        <dependency>
+                                <groupId>org.hobbit</groupId>
+                                <artifactId>faceted-benchmark-v1</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
+
+
 			<dependency>
 				<groupId>org.hobbit</groupId>
 				<artifactId>faceted-benchmark-streaming-core</artifactId>
