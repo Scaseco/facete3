@@ -38,9 +38,10 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
-import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigDataGeneratorFacetedBrowsing;
+import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigVirtualDockerServiceFactory;
+import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
 import org.hobbit.core.component.DataGeneratorComponentBase;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
@@ -62,8 +63,10 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
         String graphName = DataGeneratorComponentBase.GRAPH_IRI;
 
         
-		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(true,
-				ImmutableMap.<String, String>builder().build()
+		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(
+				true,
+				ImmutableMap.<String, String>builder().build(),
+				ConfigVirtualDockerServiceFactory.getDockerServiceFactoryOverrides()
 		);
 		
 		DockerServiceBuilderFactory<?> dsbf = () -> DockerServiceBuilderJsonDelegate.create(dsf::create);
@@ -156,7 +159,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		System.out.println(dataset.getUnionModel().size());
 		
 		
-		List<Resource> tasks = TaskGeneratorModuleFacetedBrowsing.runTaskGenerationCore(conn, conn).collect(Collectors.toList());
+		List<Resource> tasks = FacetedTaskGeneratorOld.runTaskGenerationCore(conn, conn).collect(Collectors.toList());
 		
 
 		

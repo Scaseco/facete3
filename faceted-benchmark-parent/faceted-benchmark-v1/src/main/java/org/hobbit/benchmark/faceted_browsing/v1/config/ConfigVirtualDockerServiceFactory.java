@@ -33,11 +33,7 @@ import org.springframework.context.annotation.Bean;
 
 public class ConfigVirtualDockerServiceFactory {
 
-	@Bean
-	//public Map<String, Supplier<SpringApplicationBuilder>> dockerServiceFactoryOverrides() {
-	public DockerServiceFactory<?> dockerServiceFactoryOverrides() {
-
-	
+	public static DockerServiceFactory<?> getDockerServiceFactoryOverrides() { 
 		//Function<String, SpringApplicationBuilder> baseConfigFactory = ConfigVirtualDockerServiceFactory::createComponentBaseConfig;
 
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
@@ -98,6 +94,13 @@ public class ConfigVirtualDockerServiceFactory {
 		
 		DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
 		
+		return result;	
+	}
+	
+	@Bean
+	//public Map<String, Supplier<SpringApplicationBuilder>> dockerServiceFactoryOverrides() {
+	public DockerServiceFactory<?> dockerServiceFactoryOverrides() {
+		DockerServiceFactory<?> result = getDockerServiceFactoryOverrides();
 		return result;
 	}
 	
