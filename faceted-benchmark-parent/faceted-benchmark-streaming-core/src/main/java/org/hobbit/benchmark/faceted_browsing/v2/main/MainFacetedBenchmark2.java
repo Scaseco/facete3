@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -39,6 +40,8 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.FactoryWithModel;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.ConceptAnalyser;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.ExprUtilsGeo;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Range;
@@ -46,6 +49,7 @@ import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 import com.google.common.graph.Traverser;
+import com.vividsolutions.jts.geom.Envelope;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -96,7 +100,18 @@ public class MainFacetedBenchmark2 {
 		return result;
 	}
 	
+	
+	// gremlin uses 'is' for inequality comparison: count().is(gte(2))
 	public static void main(String[] args) throws IOException {		
+		
+		Concept c = Concept.create("?s a <http://example.org/Person>", "s");
+		Query q = ConceptAnalyser.checkDatatypes(c);
+		System.out.println(q);
+		
+		
+		Envelope env = new Envelope(0, 10, 0, 10);
+		System.out.println(org.apache.jena.sparql.util.ExprUtils.fmtSPARQL(ExprUtilsGeo.createExprOgcIntersects(Vars.s, env, null, null)));
+		
 		
 		Model x = RDFDataMgr.loadModel("cyclic-data.nt");
 
@@ -133,7 +148,7 @@ public class MainFacetedBenchmark2 {
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(m));
 		
 		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
-
+		
 		SPath rootPath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
 		SPath typePath = rootPath.get(RDF.type.getURI(), false);
 		

@@ -34,7 +34,7 @@ public interface QuadTreeNodeOps<N> {
 
 	default boolean hasChildren(N node) {
 		List<N> children = getChildren(node);
-		boolean  result = children != null && !children.isEmpty();
+		boolean  result = children != null &&  !children.isEmpty();
 		return result;
 	}
 	
