@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import org.hobbit.benchmark.faceted_browsing.config.ConfigsFacetedBrowsingBenchmark.ConfigCommunicationWrapper;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigCommunicationWrapper;
 import org.hobbit.core.Constants;
 import org.hobbit.core.config.CommunicationWrapper;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;

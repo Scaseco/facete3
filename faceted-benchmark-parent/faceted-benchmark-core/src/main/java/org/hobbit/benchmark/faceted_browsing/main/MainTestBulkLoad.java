@@ -6,7 +6,7 @@ import java.util.HashMap;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigVirtualDockerServiceFactory;
+import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilder;
@@ -24,7 +24,7 @@ public class MainTestBulkLoad {
 	
 	public static void main(String[] args) throws Exception {
 		try(DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, new HashMap<>(), Collections.singleton("hobbit"))) {
-			DockerServiceFactory<?> core = ConfigVirtualDockerServiceFactory.applyServiceWrappers(dsf);
+			DockerServiceFactory<?> core = ComponentUtils.applyServiceWrappers(dsf);
 			DockerServiceBuilder<?> dsb = DockerServiceBuilderJsonDelegate.create(core::create);
 
 	    	DockerService service = dsb

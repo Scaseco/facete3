@@ -3,7 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.util.Map;
 
-import org.hobbit.benchmark.faceted_browsing.config.ConfigVirtualDockerServiceFactory;
+import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.SpringEnvironmentUtils;
@@ -56,14 +56,16 @@ public class MainDockerServiceLauncher {
 		
 		// Get the registry and launch an image
 		//Map<String, Supplier<SpringApplicationBuilder>> map = ConfigVirtualDockerServiceFactory.getVirtualDockerComponentRegistry();
-		DockerServiceFactory<?> dockerServiceFactory = ConfigVirtualDockerServiceFactory.createVirtualComponentDockerServiceFactory();
+
+    	// TODO The class providing the config docker service beans must be configurable...
+    	DockerServiceFactory<?> dockerServiceFactory = null; //ComponentUtils.createVirtualComponentDockerServiceFactory();
 		
 //		map = map.entrySet().stream()
 //				.filter(e -> Objects.equals(e.getKey(), imageName))
 //				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		
 		//DockerServiceFactory<?> dockerServiceFactory = new DockerServiceFactorySpringApplicationBuilder(map);
-		dockerServiceFactory = ConfigVirtualDockerServiceFactory.applyServiceWrappers(dockerServiceFactory);
+		dockerServiceFactory = ComponentUtils.applyServiceWrappers(dockerServiceFactory);
 
 		DockerService dockerService = dockerServiceFactory.create(imageName, env);
 		
