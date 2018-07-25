@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -8,9 +9,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
+import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -107,8 +111,8 @@ public class MainFacetedBenchmark2 {
 		Concept c = Concept.create("?s a <http://example.org/Person>", "s");
 		Query q = ConceptAnalyser.checkDatatypes(c);
 		System.out.println(q);
-		
-		
+
+				
 		Envelope env = new Envelope(0, 10, 0, 10);
 		System.out.println(org.apache.jena.sparql.util.ExprUtils.fmtSPARQL(ExprUtilsGeo.createExprOgcIntersects(Vars.s, env, null, null)));
 		
@@ -145,9 +149,34 @@ public class MainFacetedBenchmark2 {
 //		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
 		//RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
 		
+		{
+			RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(RDFDataMgr.loadModel("path-data.ttl")));
+
+			
+			System.out.println("Paths: " + ConceptPathFinder.findPaths(
+				new QueryExecutionFactorySparqlQueryConnection(conn),
+				Concept.create("?s a <http://www.example.org/ThingB>", "s"),
+				//Concept.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
+				Concept.create("?s <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?x ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?y", "s"),
+				100,
+				100
+			));
+			
+			System.out.println("Paths: " + ConceptPathFinder.findPaths(
+				new QueryExecutionFactorySparqlQueryConnection(conn),
+				Concept.create("?s a <http://www.example.org/ThingA>", "s"),
+				//Concept.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
+				Concept.create("?s <http://www.opengis.net/ont/geosparql#geometry> ?y", "s"),
+				100,
+				100
+			));
+	
+		}
+
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(m));
 		
-		FacetedBrowsingSession session = new FacetedBrowsingSession(conn);
+				
+		FacetedBrowsingSessionImpl session = new FacetedBrowsingSessionImpl(conn);
 		
 		SPath rootPath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
 		SPath typePath = rootPath.get(RDF.type.getURI(), false);

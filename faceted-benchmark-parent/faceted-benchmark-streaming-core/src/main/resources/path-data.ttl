@@ -1,0 +1,15 @@
+@prefix eg: <http://www.example.org/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix wgs: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+
+
+eg:a a eg:ThingA .
+eg:a eg:p1 eg:x1 .
+eg:x1 eg:p2 eg:x2 .
+eg:x2 eg:p3 eg:x3 .
+eg:x3 eg:p4 eg:x4 .
+eg:x4 geo:geometry eg:ag .
+eg:ag geo:asWKT "POINT (1 2)"^^geo:wktLiteral .
+
+eg:b a eg:ThingB ; eg:q1 [ eg:q2 [ eg:q3 [ eg:q4 eg:bg ] ] ] .
+eg:bg wgs:lat 10 ; wgs:long 20 .

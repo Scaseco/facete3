@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.v2.main;
+package org.aksw.facete.v3.impl;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -40,6 +40,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.FactoryWithModel;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
+import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +51,9 @@ import com.google.common.collect.Tables;
 
 import io.reactivex.Flowable;
 
-public class FacetedBrowsingSession {
+public class FacetedBrowsingSessionImpl {
 	
-	private static final Logger logger = LoggerFactory.getLogger(FacetedBrowsingSession.class);
+	private static final Logger logger = LoggerFactory.getLogger(FacetedBrowsingSessionImpl.class);
 
 	
 	protected RDFConnection conn;
@@ -62,7 +63,7 @@ public class FacetedBrowsingSession {
 
 	protected FacetedQueryGenerator<SPath> queryGenerator;
 	
-	public FacetedBrowsingSession(RDFConnection conn) {
+	public FacetedBrowsingSessionImpl(RDFConnection conn) {
 		super();
 		this.conn = conn;
 		
@@ -167,7 +168,7 @@ public class FacetedBrowsingSession {
 	 */
 	public static Relation align(Collection<? extends Relation> relations, List<Var> vars) {
 		List<Relation> tmp = relations.stream()
-				.map(r -> FacetedBrowsingSession.rename(r, vars))
+				.map(r -> FacetedBrowsingSessionImpl.rename(r, vars))
 				.collect(Collectors.toList());
 
 		List<Element> es = tmp.stream()
