@@ -32,7 +32,7 @@ public class FacetedQueryImpl
 		
 		this.modelRoot.addProperty(Vocab.property("root"), rootSubject);
 		
-		this.root = new FacetNodeImpl(rootSubject);
+		this.root = new FacetNodeImpl(null, rootSubject);
 		
 		
 		this.focus = this.root;

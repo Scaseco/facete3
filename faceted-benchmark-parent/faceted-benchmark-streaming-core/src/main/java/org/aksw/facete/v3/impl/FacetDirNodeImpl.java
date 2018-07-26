@@ -52,7 +52,7 @@ public class FacetDirNodeImpl
 	
 	@Override
 	public FacetMultiNode via(Property property) {
-		return new FacetMultiNodeImpl(parent, property);
+		return new FacetMultiNodeImpl(parent, property, isFwd);
 		
 	}
 	

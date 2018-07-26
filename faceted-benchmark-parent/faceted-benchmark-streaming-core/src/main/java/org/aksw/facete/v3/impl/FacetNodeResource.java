@@ -7,4 +7,5 @@ public interface FacetNodeResource
 	extends FacetNode
 {
 	Resource state();
+	FacetNodeResource parent();
 }

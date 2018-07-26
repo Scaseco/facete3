@@ -9,6 +9,8 @@ public interface FacetMultiNode {
 	/** getOrCreate the one single alias for this multi node. Raises an exception if there are already multiple aliases */
 	FacetNode one();
 	
+	boolean contains(FacetNode facetNode);
+	
 	// Set to conjunctive mode
 	// Fetching the facet values on the parent will yield the remaining values instead of the available ones.
 	void setConjunctive();
