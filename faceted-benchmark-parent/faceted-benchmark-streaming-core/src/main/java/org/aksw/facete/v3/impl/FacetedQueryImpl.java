@@ -1,20 +1,21 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Collection;
 import java.util.function.Supplier;
 
+import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
 public class FacetedQueryImpl
-	implements FacetedQuery
+	implements FacetedQueryResource
 {
 	// The actual state is stored in a model rooted in a certain resource
 	protected SparqlQueryConnection conn;
@@ -32,10 +33,15 @@ public class FacetedQueryImpl
 		
 		this.modelRoot.addProperty(Vocab.property("root"), rootSubject);
 		
-		this.root = new FacetNodeImpl(null, rootSubject);
+		this.root = new FacetNodeImpl(this, rootSubject);
 		
 		
 		this.focus = this.root;
+	}
+	
+	@Override
+	public Resource modelRoot() {
+		return modelRoot;
 	}
 	
 	@Override
@@ -76,6 +82,12 @@ public class FacetedQueryImpl
 	public FacetedQuery connection(SparqlQueryConnection conn) {
 		this.conn = conn;
 		return this;
+	}
+
+	@Override
+	public Collection<FacetConstraint> constraints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

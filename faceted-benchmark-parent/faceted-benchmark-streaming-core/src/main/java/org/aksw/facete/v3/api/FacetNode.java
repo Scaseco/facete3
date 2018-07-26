@@ -13,6 +13,8 @@ import org.apache.jena.sparql.core.Var;
  *
  */
 public interface FacetNode {
+	FacetedQuery query();
+	
 	FacetDirNode fwd();
 	FacetDirNode bwd();
 
@@ -49,7 +51,7 @@ public interface FacetNode {
 	 */
 //	Set<FacetConstraint> constraints();
 
-	ConstraintFacade<FacetNode> constraints();
+	ConstraintFacade<? extends FacetNode> constraints();
 	
 	//Concept toConcept();
 	

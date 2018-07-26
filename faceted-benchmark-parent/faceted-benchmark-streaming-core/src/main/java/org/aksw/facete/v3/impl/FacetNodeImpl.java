@@ -1,11 +1,13 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Objects;
 import java.util.Set;
 
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -17,19 +19,40 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
 public class FacetNodeImpl
 	implements FacetNodeResource
 {
+	protected FacetedQueryResource query;
 	protected FacetNodeResource parent;
 	protected Resource state;
-	
-	protected FacetNodeImpl(FacetNodeResource parent, Resource state) {
+
+	public FacetNodeImpl(FacetedQueryResource query, Resource state) {
+		this(query, null, state);
+	}
+
+	public FacetNodeImpl(FacetNodeResource parent, Resource state) {
+		this(Objects.requireNonNull(parent).query(), parent, state);
+	}
+
+	/**
+	 * Avoid using this ctor directly
+	 * 
+	 * @param query
+	 * @param parent
+	 * @param state
+	 */
+	public FacetNodeImpl(FacetedQueryResource query, FacetNodeResource parent, Resource state) {
+		this.query = query;
 		this.parent = parent;
 		this.state = state; 
+	}
+
+	@Override
+	public FacetedQueryResource query() {
+		return query;
 	}
 	
 	@Override
@@ -118,8 +141,7 @@ public class FacetNodeImpl
 	}
 
 	@Override
-	public ConstraintFacade<FacetNode> constraints() {
-		// TODO Auto-generated method stub
-		return null;
+	public ConstraintFacade<? extends FacetNodeResource> constraints() {
+		return new ConstraintFacadeImpl<FacetNodeResource>(this);
 	}
 }

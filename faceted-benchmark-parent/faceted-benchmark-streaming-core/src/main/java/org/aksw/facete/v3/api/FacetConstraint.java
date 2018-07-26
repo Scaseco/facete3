@@ -17,4 +17,5 @@ public interface FacetConstraint
 	FacetConstraint enabled(boolean onOrOff);
 	
 	Expr expr();
+	FacetConstraint expr(Expr expr);
 }

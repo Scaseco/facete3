@@ -6,6 +6,7 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
 
 public class MainFacetedQueryApi {
@@ -33,6 +34,13 @@ public class MainFacetedQueryApi {
 		
 		//fq.getRoot().out().getFacetsAndCounts();
 		fq.root().fwd(RDF.type).one().as("test").bwd(RDF.type).availableValues();
+		
+		
+		fq.root().fwd(RDF.type).one().as("test")
+			.constraints()
+				.eq(NodeValue.makeInteger(5).asNode())
+			.end();
+		
 		
 		System.out.println("Test: " + new PathAccessorImpl().isReverse(fq.root().fwd(RDF.type).one()));
 		System.out.println("Test: " + new PathAccessorImpl().isReverse(fq.root().bwd(RDF.type).one()));

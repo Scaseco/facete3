@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.api;
 
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -17,6 +18,7 @@ public interface FacetedQuery {
 	
 	Concept toConcept();
 	
+	Collection<FacetConstraint> constraints();
 	
 	FacetedQuery baseConcept(Supplier<? extends UnaryRelation> conceptSupplier);
 	FacetedQuery baseConcept(UnaryRelation concept);

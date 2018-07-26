@@ -1,5 +1,7 @@
 package org.hobbit.faceted_browsing.action;
 
+import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
@@ -15,6 +17,9 @@ public class JenaPluginFacetedBrowsing {
 	}
 	
 	public static void init(Personality<RDFNode> p) {
+		
+		p.add(FacetConstraint.class, new SimpleImplementation(FacetConstraintImpl::new));
+		
 		p.add(SPath.class, new SimpleImplementation(SPathImpl::new));
 		p.add(Dimension.class, new SimpleImplementation(DimensionImpl::new));
 
