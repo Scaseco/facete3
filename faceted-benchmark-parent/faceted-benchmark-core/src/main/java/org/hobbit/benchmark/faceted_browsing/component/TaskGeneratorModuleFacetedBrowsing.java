@@ -10,13 +10,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.hobbit.core.component.DataGeneratorComponentBase;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.TaskGeneratorModule;
@@ -32,6 +33,7 @@ import com.google.common.util.concurrent.ServiceManager;
 import io.reactivex.Flowable;
 
 /**
+ * TODO This class seems quite flawed... the task generation and sparql endpoint stuff are separate, although they belong together
  * 
  * 
  * Note: The life cycle of this worker is managed by the TaskGeneratorComponent
@@ -55,9 +57,14 @@ public class TaskGeneratorModuleFacetedBrowsing
     protected transient ServiceManager serviceManager;
     
     protected CompletableFuture<Void> dataLoadingComplete = new CompletableFuture<>();
+
+    //@javax.annotation.Resource
+    protected BiFunction<? super SparqlQueryConnection, ? super SparqlQueryConnection, ? extends Flowable<? extends Resource>> taskSupplierFactory;
     
-    protected Flowable<Resource> taskSupplier;
     
+    public TaskGeneratorModuleFacetedBrowsing(BiFunction<? super SparqlQueryConnection, ? super SparqlQueryConnection, ? extends Flowable<? extends Resource>> taskSupplierFactory) {
+    	this.taskSupplierFactory = taskSupplierFactory;
+    }
     
     public CompletableFuture<Void> getDataLoadingComplete() {
 		return dataLoadingComplete;
@@ -114,24 +121,25 @@ public class TaskGeneratorModuleFacetedBrowsing
     
 	//public Stream<Resource>
 	@Override
-	public Stream<Resource> generateTasks() {
-		Stream<Resource> result = runTaskGeneration().stream();
+	public Stream<? extends Resource> generateTasks() {
+		Stream<? extends Resource> result = runTaskGeneration().stream();
 		return result;
 	}
 	
 	
 	
 	
-    public List<Resource> runTaskGeneration() {
+    public List<? extends Resource> runTaskGeneration() {
 
-        List<Resource> tasks;
+        List<? extends Resource> tasks;
 
         try(RDFConnection conn = sparqlService.createDefaultConnection();
     		  RDFConnection refConn = sparqlService.createDefaultConnection()) {
     	
 //            try {
 				//tasks = FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList());
-            	tasks = taskSupplier.toList().blockingGet();
+        		tasks = taskSupplierFactory.apply(conn, refConn).toList().blockingGet();
+        	//tasks = taskSupplier.toList().blockingGet();
 //			} catch (IOException e) {
 //				throw new RuntimeException(e);
 //			}

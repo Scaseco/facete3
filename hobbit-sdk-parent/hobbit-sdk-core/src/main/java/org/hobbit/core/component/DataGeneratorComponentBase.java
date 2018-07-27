@@ -1,6 +1,10 @@
 package org.hobbit.core.component;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -13,24 +17,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
+import org.aksw.commons.collections.cache.CountingIterator;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.hobbit.core.Commands;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
+import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.transfer.OutputStreamChunkedTransfer;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 
 import jersey.repackaged.com.google.common.primitives.Ints;
@@ -42,7 +51,7 @@ public abstract class DataGeneratorComponentBase
 	
     private static final Logger logger = LoggerFactory.getLogger(DataGeneratorComponentBase.class);
 
-//    protected int batchSize = 10000;
+    protected int batchSize = 10000;
 
     @Resource(name="commandSender")
     protected Subscriber<ByteBuffer> commandSender;
@@ -53,8 +62,8 @@ public abstract class DataGeneratorComponentBase
 //    	this.commandSender = commandSender;
 //    }
 
-	//@Resource
-    //protected TripleStreamSupplier tripleStreamSupplier;
+	@Resource
+    protected TripleStreamSupplier tripleStreamSupplier;
 
 //    protected Supplier<Flowable<T>> dataFlowableSupplier;
     
@@ -64,11 +73,11 @@ public abstract class DataGeneratorComponentBase
     
     /** TODO Some function to convert the incoming items */
     
-//    @Resource(name="dg2tgSender")
-//    protected Subscriber<ByteBuffer> toTaskGenerator;
-//
-//    @Resource(name="dg2saSender")
-//    protected Subscriber<ByteBuffer> toSystemAdatper;
+    @Resource(name="dg2tgSender")
+    protected Subscriber<ByteBuffer> toTaskGenerator;
+
+    @Resource(name="dg2saSender")
+    protected Subscriber<ByteBuffer> toSystemAdatper;
 
 
 
@@ -185,50 +194,50 @@ public abstract class DataGeneratorComponentBase
         
 //        dataProcessor.accept(dataFlowableSupplier);
         
-//
-//        // Generate the data once and store it in a temp file
-//        // TODO Add a flag whether to cache in a file
-//        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing-", ".nt");
-//        
-//        // TODO Enable an optional validation step which keeps the output files if there are any problems
-//        
-//        datasetFile.deleteOnExit();
-////        Flowable<?> flowable = flowableSupplier.get();
-////        flowable.blockingIterable().iterator();
-//        
-//        try(Stream<Triple> triples = tripleStreamSupplier.get()) {
-//        	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
-//        	
-//        	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
-//        	logger.info("Data generator counted " + it.getNumItems() + " generated triples");
-//        }
-//        
-//        Supplier<Stream<Triple>> triplesFromCache = () -> {
-//            try {
-//                return Streams.stream(RDFDataMgr.createIteratorTriples(new FileInputStream(datasetFile), Lang.NTRIPLES, "http://example.org/"));
-//            } catch (FileNotFoundException e) {
-//                throw new RuntimeException(e);
-//            }
-//        };
-//
-//        
-//        //commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
-//        
-//        logger.info("Data generator is sending dataset to task generator");
-//        sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
-//        //sendTriplesViaStreamProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
-//        
-//        logger.info("Data generator is sending dataset to system adapter");
-//        Entry<Long, Long> numRecordsAndBatches = sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
-//
-//    	// Notify the BC about this DC's contribution to the dataset generation
-//    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(17)
-//    			.put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR)
-//    			.putLong(numRecordsAndBatches.getKey())
-//    			.putLong(numRecordsAndBatches.getValue())
-//    			.rewind());
-//
-//        datasetFile.delete();
+
+        // Generate the data once and store it in a temp file
+        // TODO Add a flag whether to cache in a file
+        File datasetFile = File.createTempFile("hobbit-data-generator-faceted-browsing-", ".nt");
+        
+        // TODO Enable an optional validation step which keeps the output files if there are any problems
+        
+        datasetFile.deleteOnExit();
+//        Flowable<?> flowable = flowableSupplier.get();
+//        flowable.blockingIterable().iterator();
+        
+        try(Stream<Triple> triples = tripleStreamSupplier.get()) {
+        	CountingIterator<Triple> it = new CountingIterator<>(triples.iterator());
+        	
+        	RDFDataMgr.writeTriples(new FileOutputStream(datasetFile), it);
+        	logger.info("Data generator counted " + it.getNumItems() + " generated triples");
+        }
+        
+        Supplier<Stream<Triple>> triplesFromCache = () -> {
+            try {
+                return Streams.stream(RDFDataMgr.createIteratorTriples(new FileInputStream(datasetFile), Lang.NTRIPLES, "http://example.org/"));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        
+        //commandSender.onNext((ByteBuffer)ByteBuffer.allocate(1).put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR).rewind());
+        
+        logger.info("Data generator is sending dataset to task generator");
+        sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
+        //sendTriplesViaStreamProtocol(triplesFromCache.get(), batchSize, toTaskGenerator::onNext);
+        
+        logger.info("Data generator is sending dataset to system adapter");
+        Entry<Long, Long> numRecordsAndBatches = sendTriplesViaMochaProtocol(triplesFromCache.get(), batchSize, toSystemAdatper::onNext);
+
+    	// Notify the BC about this DC's contribution to the dataset generation
+    	commandSender.onNext((ByteBuffer)ByteBuffer.allocate(17)
+    			.put(MochaConstants.BULK_LOAD_FROM_DATAGENERATOR)
+    			.putLong(numRecordsAndBatches.getKey())
+    			.putLong(numRecordsAndBatches.getValue())
+    			.rewind());
+
+        datasetFile.delete();
         logger.info("Data generator fulfilled its purpose and shuts down");
     }
 

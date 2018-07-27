@@ -724,7 +724,7 @@ public class FacetedTaskGeneratorOld {
     }
     
     
-    public static Stream<Resource> runTaskGenerationCore(RDFConnection conn, RDFConnection refConn) throws IOException {
+    public static Stream<Resource> runTaskGenerationCore(SparqlQueryConnection conn, SparqlQueryConnection refConn) throws IOException {
 
         // Now invoke the actual task generation
         FacetedTaskGeneratorOld gen = new FacetedTaskGeneratorOld();
@@ -759,7 +759,7 @@ public class FacetedTaskGeneratorOld {
     
     
     
-	public static Resource annotateTaskWithReferenceResult(Resource task, RDFConnection conn, RDFConnection refConn) {
+	public static Resource annotateTaskWithReferenceResult(Resource task, SparqlQueryConnection conn, SparqlQueryConnection refConn) {
 
         logger.info("Generated task: " + task);
         

@@ -222,7 +222,7 @@ public class TaskGeneratorFacetedBenchmark
         // Pretend we have a stream of tasks because this is what it should eventually be        
 
         logger.info("TaskGenerator: Generating tasks...");
-    	try(Stream<Resource> taskStream = taskGeneratorModule.generateTasks()) {
+    	try(Stream<? extends Resource> taskStream = taskGeneratorModule.generateTasks()) {
 
             logger.info("TaskGenerator: Task generation complete, sending out tasks...");
             taskStream.forEach(task -> {

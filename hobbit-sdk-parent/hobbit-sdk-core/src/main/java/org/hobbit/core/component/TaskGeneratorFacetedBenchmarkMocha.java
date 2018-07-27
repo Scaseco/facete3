@@ -263,11 +263,11 @@ public class TaskGeneratorFacetedBenchmarkMocha
         // Pretend we have a stream of tasks because this is what it should eventually be        
 
         logger.info("TaskGenerator: Generating tasks...");
-    	try(Stream<Resource> taskStream = taskGeneratorModule.generateTasks()) {
+    	try(Stream<? extends Resource> taskStream = taskGeneratorModule.generateTasks()) {
 
             logger.info("TaskGenerator: Task generation complete, sending out tasks...");
             //taskStream.forEach(task -> {
-            Iterator<Resource> it = taskStream.iterator();
+            Iterator<? extends Resource> it = taskStream.iterator();
             
             //"http://example.org/Scenario_1-1", "http://example.org/Scenario_7-2",
             Set<String> taskBlacklist = new HashSet<>(Arrays.asList("http://example.org/Scenario_7-14"));
