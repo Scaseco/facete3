@@ -21,7 +21,6 @@ import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -33,9 +32,9 @@ import com.google.common.collect.ImmutableMap;
 
 //@RunWith(SpringJUnit4ClassRunner.class)
 //@ContextConfiguration(loader = AnnotationConfigContextLoader.class)
-public class TestBenchmark {
+public class HobbitBenchmarkUtils {
 	
-	private static final Logger logger = LoggerFactory.getLogger(TestBenchmark.class);
+	private static final Logger logger = LoggerFactory.getLogger(HobbitBenchmarkUtils.class);
 
 //	@Configuration
 //	@TestPropertySource(properties = {"hostMode=true"})
@@ -50,8 +49,9 @@ public class TestBenchmark {
 	 * @throws MalformedURLException
 	 * @throws IOException
 	 */
-	@Test
-	public void testBenchmarkTwoAppContexts() throws MalformedURLException, IOException {		
+	//@Test
+	public static void testBenchmarkTwoAppContexts(Class<?> dockerServiceFactoryOverridesClass) throws MalformedURLException, IOException {		
+		
 		
 		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
 		//System.exit(0);
@@ -73,7 +73,7 @@ public class TestBenchmark {
 			// (1) Register any pseudo docker images - i.e. launchers of local components
 			// (2) Configure a docker service factory - which creates service instances that can be launched
 			// (3) configure the docker service manager server component which listens on the amqp infrastructure
-			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
+			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, dockerServiceFactoryOverridesClass, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
 			;
 
 			
