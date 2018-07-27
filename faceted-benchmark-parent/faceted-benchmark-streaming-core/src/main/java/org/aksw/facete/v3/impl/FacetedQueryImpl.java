@@ -8,6 +8,7 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -31,7 +32,7 @@ public class FacetedQueryImpl
 		
 		Resource rootSubject = modelRoot.getModel().createResource();
 		
-		this.modelRoot.addProperty(Vocab.property("root"), rootSubject);
+		this.modelRoot.addProperty(Vocab.root, rootSubject);
 		
 		this.root = new FacetNodeImpl(this, rootSubject);
 		
@@ -86,8 +87,20 @@ public class FacetedQueryImpl
 
 	@Override
 	public Collection<FacetConstraint> constraints() {
-		// TODO Auto-generated method stub
-		return null;
+		Collection<FacetConstraint> result = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
+		return result;
 	}
+
+//	@Override
+//	public FacetNode find(Object id) {
+//		FacetNode result = id instanceof FacetNode
+//				? (FacetNode)id
+//				: id instanceof Node ? : null;
+//		
+//		if(id instanceof FacetNode) {
+//		if(id instanceof Node) {
+//			node = 
+//		}
+//	}
 
 }

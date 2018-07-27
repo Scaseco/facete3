@@ -14,9 +14,8 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.Element;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
@@ -56,13 +55,20 @@ public class PathToRelationMapper<P> {
 	
 	
 	
-	public Expr getExpr(P path) {
+//	public Expr getExpr(P path) {
+//		BinaryRelation br = getOrCreate(path);
+//		Var var = br.getTargetVar();
+//		Expr result = new ExprVar(var);
+//		return result;
+//	}
+
+	public Node getNode(P path) {
 		BinaryRelation br = getOrCreate(path);
-		Var var = br.getTargetVar();
-		Expr result = new ExprVar(var);
+		Var result = br.getTargetVar();
+//		Expr result = new ExprVar(var);
 		return result;
 	}
-	
+
 	public PathToRelationMapper(
 			PathAccessor<P> pathAccessor,
 			Map<P, BinaryRelation> map,

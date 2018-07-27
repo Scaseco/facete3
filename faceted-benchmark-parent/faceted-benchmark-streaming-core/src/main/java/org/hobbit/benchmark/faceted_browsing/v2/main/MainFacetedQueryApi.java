@@ -1,8 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -17,7 +17,7 @@ public class MainFacetedQueryApi {
 	}
 	
 	public void testSimpleFacetedQuery() {
-		FacetedQuery fq = new FacetedQueryImpl();
+		FacetedQueryResource fq = new FacetedQueryImpl();
 		
 		RDFConnection conn = null;
 		fq
@@ -33,7 +33,7 @@ public class MainFacetedQueryApi {
 		// .getOutgoingFacets
 		
 		//fq.getRoot().out().getFacetsAndCounts();
-		fq.root().fwd(RDF.type).one().as("test").bwd(RDF.type).availableValues();
+		fq.root().fwd(RDF.type).one().as("test").availableValues();
 		
 		
 		fq.root().fwd(RDF.type).one().as("test")
@@ -42,10 +42,14 @@ public class MainFacetedQueryApi {
 			.end();
 		
 		
-		System.out.println("Test: " + new PathAccessorImpl().isReverse(fq.root().fwd(RDF.type).one()));
-		System.out.println("Test: " + new PathAccessorImpl().isReverse(fq.root().bwd(RDF.type).one()));
+		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
+		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));
 		
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl());
+		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(fq));
+		
+		fq.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+//		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		//qgen.getConstraints()
 		
 		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), false));
 		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), true));

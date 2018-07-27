@@ -102,10 +102,6 @@ public interface Viewport
 		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(0, 0)), screenToData));
 		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(viewport.getWidth().doubleValue(), viewport.getHeight().doubleValue())), screenToData));
 	}
-	
-	
-	public void viewportToQuadTreeCell(Viewport viewport) {
 		
-	}
 }
 

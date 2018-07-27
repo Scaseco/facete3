@@ -7,7 +7,6 @@ import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -26,16 +25,16 @@ public class FacetNodeImpl
 	implements FacetNodeResource
 {
 	protected FacetedQueryResource query;
-	protected FacetNodeResource parent;
+//	protected FacetNodeResource parent;
 	protected Resource state;
 
-	public FacetNodeImpl(FacetedQueryResource query, Resource state) {
-		this(query, null, state);
-	}
+//	public FacetNodeImpl(FacetedQueryResource query, Resource state) {
+//		this(query, state);
+//	}
 
-	public FacetNodeImpl(FacetNodeResource parent, Resource state) {
-		this(Objects.requireNonNull(parent).query(), parent, state);
-	}
+//	public FacetNodeImpl(Resource state) {
+//		this(Objects.requireNonNull(parent).query(), parent, state);
+//	}
 
 	/**
 	 * Avoid using this ctor directly
@@ -44,12 +43,19 @@ public class FacetNodeImpl
 	 * @param parent
 	 * @param state
 	 */
-	public FacetNodeImpl(FacetedQueryResource query, FacetNodeResource parent, Resource state) {
+	public FacetNodeImpl(FacetedQueryResource query, Resource state) {
 		this.query = query;
-		this.parent = parent;
-		this.state = state; 
+//		this.parent = parent;
+		this.state = Objects.requireNonNull(state); 
 	}
 
+	@Override
+	public FacetNodeResource parent() {
+		Resource p = ResourceUtils.getPropertyValue(state, Vocab.parent, Resource.class).orElse(null);
+		
+		return p == null ? null : new FacetNodeImpl(query, p);
+	}
+	
 	@Override
 	public FacetedQueryResource query() {
 		return query;
@@ -74,6 +80,7 @@ public class FacetNodeImpl
 	public BinaryRelation getReachingRelation() {
 		BinaryRelation result;
 
+		FacetNodeResource parent = parent();
 		if(parent == null) {
 			result = null;
 		} else {
@@ -129,10 +136,10 @@ public class FacetNodeImpl
 			.map(Var::alloc).orElse(null);
 	}
 
-	@Override
-	public FacetNodeResource parent() {
-		return parent;
-	}
+//	@Override
+//	public FacetNodeResource parent() {
+//		return parent;
+//	}
 
 	@Override
 	public FacetNode root() {
@@ -143,5 +150,36 @@ public class FacetNodeImpl
 	@Override
 	public ConstraintFacade<? extends FacetNodeResource> constraints() {
 		return new ConstraintFacadeImpl<FacetNodeResource>(this);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((query == null) ? 0 : query.hashCode());
+		result = prime * result + ((state == null) ? 0 : state.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FacetNodeImpl other = (FacetNodeImpl) obj;
+		if (query == null) {
+			if (other.query != null)
+				return false;
+		} else if (!query.equals(other.query))
+			return false;
+		if (state == null) {
+			if (other.state != null)
+				return false;
+		} else if (!state.equals(other.state))
+			return false;
+		return true;
 	}
 }

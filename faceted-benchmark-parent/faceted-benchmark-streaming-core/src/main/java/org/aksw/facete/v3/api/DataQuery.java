@@ -38,7 +38,7 @@ public interface DataQuery {
 	
 	DataNode getRoot();
 	
-	MultiNode add(Property property);
+	DataMultiNode add(Property property);
 	
 	
 	// Return the same data query with intersection on the given concept

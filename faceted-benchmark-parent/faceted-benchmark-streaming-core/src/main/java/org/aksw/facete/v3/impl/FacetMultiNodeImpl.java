@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.utils.model.SetFromResourceAndInverseProperty;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
 public class FacetMultiNodeImpl
@@ -60,12 +61,14 @@ public class FacetMultiNodeImpl
 		FacetNode result;
 		Resource r;
 		if(set.isEmpty()) {
-			r = ResourceFactory.createResource();
+			r = parent.state().getModel().createResource();
 			set.add(r);
+
+			r.addProperty(Vocab.parent, parent.state());
 		}
 		
 		if(set.size() == 1) {
-			result = new FacetNodeImpl(parent, set.iterator().next());
+			result = new FacetNodeImpl(parent.query(), set.iterator().next());
 		} else {
 			throw new RuntimeException("Multiple aliases defined");
 		}

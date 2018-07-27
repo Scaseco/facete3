@@ -52,7 +52,7 @@ public class CountUtils {
     		BinaryRelation r = overrides.get(p);
     		
     		if(r == null) {
-    			TernaryRelation tr = defaultRelation.filterP(p);
+    			TernaryRelation tr = null; //defaultRelation.filterP(p);
     			BinaryRelation br = new BinaryRelationImpl(tr.getElement(), tr.getS(), tr.getO());
     			result.put(p, br);
     		} else {

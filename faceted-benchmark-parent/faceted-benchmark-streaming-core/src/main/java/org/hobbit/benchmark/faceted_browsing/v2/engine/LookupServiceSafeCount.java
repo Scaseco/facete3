@@ -18,24 +18,30 @@ public class LookupServiceSafeCount<K>
 {
 	protected LookupService<K, Range<Long>> preCountService;
 	protected LookupService<K, Range<Long>> exactCountService;
-
 	@Override
-	public Flowable<Entry<K, Range<Long>>> apply(Iterable<K> items) {
-		// TODO buffer by condition if there are too many items without exact count
-		return preCountService.apply(items).toMap(Entry::getKey, Entry::getValue).flatMap(preMap -> {
-			List<K> winners = preMap.entrySet().stream()
-					.filter(e -> !CountUtils.toCountInfo(e.getValue()).isHasMoreItems())
-					.map(Entry::getKey)
-					.collect(Collectors.toList());
-			
-			return exactCountService.apply(winners).toMap(Entry::getKey, Entry::getValue)
-					.flatMap(exactMap -> {
-					Map<K, Range<Long>> r = Streams.stream(items)
-						.collect(Collectors.toMap(item -> item, item -> exactMap.getOrDefault(
-								item, preMap.getOrDefault(item, Range.singleton(0l)))));
-					return Flowable.fromIterable(exactMap.entrySet());
-			});
-		}).toFlowable();
+	public Flowable<Entry<K, Range<Long>>> apply(Iterable<K> arg0) {
+		// TODO Auto-generated method stub
+		return null;
 	}
+
+//	@Override
+//	public Flowable<Entry<K, Range<Long>>> apply(Iterable<K> items) {
+//		// TODO buffer by condition if there are too many items without exact count
+//		return preCountService.apply(items).toMap(Entry::getKey, Entry::getValue).flatMap(preMap -> {
+//			List<K> winners = preMap.entrySet().stream()
+//					.filter(e -> !CountUtils.toCountInfo(e.getValue()).isHasMoreItems())
+//					.map(Entry::getKey)
+//					.collect(Collectors.toList());
+//			
+//			return exactCountService.apply(winners).toMap(Entry::getKey, Entry::getValue)
+//					.flatMap(exactMap -> {
+//					Map<K, Range<Long>> r = Streams.stream(items)
+//						.collect(Collectors.toMap(item -> item, item -> exactMap.getOrDefault(
+//								item, preMap.getOrDefault(item, Range.singleton(0l)))));
+//					return Flowable.fromIterable(exactMap.entrySet());
+//			});
+//		}).toFlowable();
+//	}
+
 	
 }

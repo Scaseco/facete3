@@ -1,9 +1,13 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Optional;
+
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
@@ -18,16 +22,16 @@ public class FacetConstraintImpl
 
 	@Override
 	public boolean enabled() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.property("disabled"), Boolean.class).orElse(true);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.enabled, Boolean.class).orElse(true);
 	}
 
 	@Override
 	public FacetConstraint enabled(boolean onOrOff) {
 
 		if(onOrOff) {
-			ResourceUtils.setLiteralProperty(this, Vocab.property("disabled"), null);			
+			ResourceUtils.setLiteralProperty(this, Vocab.enabled, null);			
 		} else {
-			ResourceUtils.setLiteralProperty(this, Vocab.property("disabled"), onOrOff);
+			ResourceUtils.setLiteralProperty(this, Vocab.enabled, onOrOff);
 		}
 		
 		return this;
@@ -35,16 +39,36 @@ public class FacetConstraintImpl
 
 	@Override
 	public Expr expr() {
-		String str = ResourceUtils.getLiteralPropertyValue(this, Vocab.property("expr"), String.class).orElse(null);
+		String str = ResourceUtils.getLiteralPropertyValue(this, Vocab.expr, String.class).orElse(null);
 		Expr result = ExprUtils.parse(str);
+		
+		result = result.applyNodeTransform(FacetConstraintImpl::varToBlankNode);
+
 		return result;
 	}
 
+	public static Node varToBlankNode(Node node) {
+		return Optional.of(node)
+				.filter(Node::isVariable)
+				.map(y -> (Var)y)
+				.map(Var::getName)
+				.filter(n -> n.startsWith("___"))
+				.map(n -> n.substring(3).replace("_", "-"))
+				.map(NodeFactory::createBlankNode)
+				.orElse(node);
+	}
+	
+	
+	public static Node blankNodeToVar(Node node) {
+		return !node.isBlank() ? node : Var.alloc("___" + node.getBlankNodeLabel().replace("-", "_"));
+	}
 	
 	@Override
 	public FacetConstraint expr(Expr expr) {
-		String str = expr.toString();		
-		ResourceUtils.setLiteralProperty(this, Vocab.property("expr"), str);
+		expr = expr.applyNodeTransform(FacetConstraintImpl::blankNodeToVar);
+		
+		String str = ExprUtils.fmtSPARQL(expr);
+		ResourceUtils.setLiteralProperty(this, Vocab.expr, str);
 
 		return this;
 	}

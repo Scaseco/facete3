@@ -32,7 +32,7 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	public ConstraintFacade<B> eq(Node node) {
 		Resource modelRoot = parent.query().modelRoot();
 
-		Set<FacetConstraint> set = new SetFromPropertyValues<>(modelRoot, Vocab.property("constraint"), FacetConstraint.class);
+		Set<FacetConstraint> set = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
 		
 		FacetConstraint c = modelRoot.getModel().createResource().as(FacetConstraint.class);
 		c.expr(new E_Equals(NodeValue.makeNode(parent.state().asNode()), NodeValue.makeNode(node)));

@@ -8,7 +8,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -22,6 +24,7 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -29,17 +32,15 @@ import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
-import org.apache.jena.sparql.expr.ExprTransform;
-import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.ExprTransformViaPathMapper;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
@@ -56,6 +57,27 @@ public class FacetedQueryGenerator<P> {
 	//protected Class<P> pathClass;
 	protected PathAccessor<P> pathAccessor;
 	
+	public static <P> NodeTransform createNodeTransformSubstitutePathReferences(
+			Function<? super Node, ? extends P> tryMapToPath,
+			Function<? super P, ? extends Node> mapToNode) {
+		return n -> Optional.ofNullable(
+				tryMapToPath.apply(n))
+				.map(x -> (Node)mapToNode.apply(x))
+				.orElse(n);
+	}
+
+	public <P> NodeTransform createNodeTransformSubstitutePathReferences() {
+		NodeTransform result = createNodeTransformSubstitutePathReferences(pathAccessor::tryMapToPath, mapper::getNode);
+		return result;
+	}
+
+//	public Expr substitutePathReferences(Expr expr) {
+//		//Set<P> tmpPaths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+//		NodeTransform t = createNodeTransformSubstitutePathReferences(pathAccessor::tryMapToPath, mapper::getNode);
+//		Expr result = expr.applyNodeTransform(t);
+//		
+//		return result;
+//	}
 	
 	
 	public FacetedQueryGenerator(PathAccessor<P> pathAccessor) {
@@ -68,6 +90,11 @@ public class FacetedQueryGenerator<P> {
 
 	public Collection<Expr> getConstraints() {
 		return constraints;
+	}
+	
+	public void addConstraint(Expr expr) {
+		Expr rewritten = expr.applyNodeTransform(createNodeTransformSubstitutePathReferences());
+		constraints.add(rewritten);
 	}
 
 	
@@ -99,8 +126,9 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	public BinaryRelation getFacets(P basePath, BinaryRelation facetRelation, Var pVar, Set<Expr> effectiveConstraints) {
-		ExprTransform exprTransform = new ExprTransformViaPathMapper<>(mapper);
-		
+		//ExprTransform exprTransform = new ExprTransformViaPathMapper<>(mapper);
+		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences();
+
 		
 		
 		Set<Element> elements = new LinkedHashSet<>();
@@ -109,7 +137,7 @@ public class FacetedQueryGenerator<P> {
 		paths.add(basePath);
 
 		for(Expr expr : effectiveConstraints) {
-			Set<P> tmpPaths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor.getPathClass());
+			Set<P> tmpPaths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 			paths.addAll(tmpPaths);
 		}
 		
@@ -120,11 +148,11 @@ public class FacetedQueryGenerator<P> {
 		}
 			
 		for(Expr expr : effectiveConstraints) {
-			Expr resolved = ExprTransformer.transform(exprTransform, expr);
+			Expr resolved = expr.applyNodeTransform(nodeTransform); //ExprTransformer.transform(exprTransform, expr);
 			elements.add(new ElementFilter(resolved));
 		}
 		
-		Var s = ((ExprVar)mapper.getExpr(basePath)).asVar();
+		Var s = (Var)mapper.getNode(basePath);//.asVar();
 		
 		// Rename all instances of ?p and ?o
 		
@@ -172,7 +200,7 @@ public class FacetedQueryGenerator<P> {
 		// Find all constraints on successor paths
 		SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
 		for(Expr expr : constraints) {
-			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor.getPathClass());
+			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 
 			// Check if any parent of the path is the given path
 			boolean skipExpr = false;

@@ -1,11 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
@@ -61,17 +60,29 @@ import io.reactivex.Single;
 
 public class MainFacetedBenchmark2 {
 	
-	public static <P> Set<P> getPathsMentioned(Expr expr, Class<P> pathClass) {
+//	public static <P> Set<P> getPathsMentioned(Expr expr, Class<P> pathClass) {
+//		Set<P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
+//			.filter(e -> e instanceof ExprPath)
+//			.map(e -> ((ExprPath<?>)e).getPath())
+//			.filter(p -> !Objects.isNull(p) && pathClass.isAssignableFrom(p.getClass()))
+//			.map(p -> (P)p)
+//			.collect(Collectors.toSet());
+//		
+//		return result;
+//	}
+
+	public static <P> Set<P> getPathsMentioned(Expr expr, Function<? super Node, ? extends P> tryMapPath) {
 		Set<P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
-			.filter(e -> e instanceof ExprPath)
-			.map(e -> ((ExprPath<?>)e).getPath())
-			.filter(p -> !Objects.isNull(p) && pathClass.isAssignableFrom(p.getClass()))
-			.map(p -> (P)p)
+			.filter(Expr::isConstant)
+			.map(org.apache.jena.sparql.util.ExprUtils::eval)
+			.map(NodeValue::asNode)
+			.map(tryMapPath)
+			.filter(p -> p != null)
 			.collect(Collectors.toSet());
 		
 		return result;
 	}
-	
+
 	
 	public static <R, C, V> Single<Table<R, C, V>> toTable(Flowable<Cell<R, C, V>> cell) {
 		return cell.toList().map(list -> {

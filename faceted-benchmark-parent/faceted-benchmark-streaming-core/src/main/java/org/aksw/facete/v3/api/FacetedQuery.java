@@ -11,7 +11,7 @@ public interface FacetedQuery {
 	FacetNode root();
 	
 //	SPath getFocus();
-//	void setFocus(SPath path);	
+//	void setFocus(SPath path);
 
 	FacetNode focus();
 	void focus(FacetNode node);
@@ -24,6 +24,13 @@ public interface FacetedQuery {
 	FacetedQuery baseConcept(UnaryRelation concept);
 	
 	FacetedQuery connection(SparqlQueryConnection conn);
+	
+	/**
+	 * Lookup a facet node by id
+	 * @param id
+	 * @return
+	 */
+	//FacetNode find(Object id);
 	
 	
 	//void UnaryRelation getBaseConcept();

@@ -1,7 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.apache.jena.rdf.model.Property;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 
 public class PathAccessorSPath
@@ -35,5 +35,10 @@ public class PathAccessorSPath
 	@Override
 	public String getPredicate(SPath path) {
 		return path.getPredicate();
+	}
+
+	@Override
+	public SPath tryMapToPath(Node node) {
+		return null;
 	}
 }
