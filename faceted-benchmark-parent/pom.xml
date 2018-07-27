@@ -30,9 +30,13 @@
 		<module>faceted-benchmark-core</module>
 		<!-- <module>faceted-benchmark-docker-parent</module> -->
 
+		<module>faceted-benchmark-v1</module>
 
 		<module>faceted-benchmark-streaming-core</module>
 		<module>faceted-benchmark-streaming-integration-hobbit</module>
+
+
+		<module>faceted-benchmark-v2</module>
 	</modules>
 
 	<dependencyManagement>
