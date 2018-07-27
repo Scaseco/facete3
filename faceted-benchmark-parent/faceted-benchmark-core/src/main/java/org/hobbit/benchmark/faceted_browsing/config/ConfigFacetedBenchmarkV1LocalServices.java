@@ -10,16 +10,13 @@ import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.component.BenchmarkControllerComponentImpl;
-import org.hobbit.core.component.DataGeneratorComponentBase;
+import org.hobbit.core.component.DataGeneratorComponentImpl;
 import org.hobbit.core.component.DefaultEvaluationStorage;
 import org.hobbit.core.component.EvaluationModuleComponent;
 import org.hobbit.core.component.PseudoHobbitPlatformController;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmark;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.service.api.ServiceBuilder;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilder;
-import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
 import org.hobbit.interfaces.TripleStreamSupplier;
@@ -40,7 +37,8 @@ import io.reactivex.Flowable;
 //}
 
 //@Configuration(LocalChannels.class)
-public class ConfigHobbitLocalServices {
+@Deprecated // Should not be used anymore
+public class ConfigFacetedBenchmarkV1LocalServices {
 
 
 //    @Bean
@@ -79,7 +77,7 @@ public class ConfigHobbitLocalServices {
 
     @Bean
     public ServiceBuilder<Service> dataGeneratorServiceFactory() {
-        return new LocalHobbitComponentServiceFactory<>(DataGeneratorComponentBase.class);
+        return new LocalHobbitComponentServiceFactory<>(DataGeneratorComponentImpl.class);
     }
 
     @Bean

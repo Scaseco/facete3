@@ -1,7 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigHobbitLocalServices;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigFacetedBenchmarkV1LocalServices;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.HobbitConfigChannelsPlatform;
@@ -23,7 +23,7 @@ public class MainHobbitFacetedBrowsingBenchmark {
     		.sources(ConfigEncodersFacetedBrowsing.class)
         	.sources(ConfigDockerServiceFactory.class)
         	.sources(HobbitConfigChannelsPlatform.class)
-        	.sources(ConfigHobbitLocalServices.class)
+        	.sources(ConfigFacetedBenchmarkV1LocalServices.class)
         	.bannerMode(Banner.Mode.OFF)
         	.run(args);
 	}

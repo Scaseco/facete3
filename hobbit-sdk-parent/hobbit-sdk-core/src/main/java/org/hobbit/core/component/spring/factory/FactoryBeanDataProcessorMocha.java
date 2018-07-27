@@ -18,6 +18,13 @@ import com.google.common.util.concurrent.Service;
 
 import io.reactivex.Flowable;
 
+/**
+ * Experiment of using dep injection on the factory instead of
+ * the component directly.
+ * 
+ * @author raven
+ *
+ */
 public class FactoryBeanDataProcessorMocha
 	implements FactoryBean<Service>
 {
@@ -47,9 +54,10 @@ public class FactoryBeanDataProcessorMocha
 		DataSink<Triple> dataSink = new DataProcessorMocha(toTaskGenerator, toSystemAdatper, commandSender, batchSize);
 		DataPipe<Triple> dataPipe = new DataPipe<>(dataSource, dataSink);
 		
-		return new DataGeneratorComponentImpl<Triple>(
-				commandSender,
-				dataPipe);
+		return null;
+//		return new DataGeneratorComponentImpl<Triple>(
+//				commandSender,
+//				dataPipe);
 	}
 
 	@Override

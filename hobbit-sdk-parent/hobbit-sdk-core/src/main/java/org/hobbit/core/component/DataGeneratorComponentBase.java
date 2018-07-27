@@ -30,15 +30,11 @@ import org.hobbit.transfer.OutputStreamChunkedTransfer;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 
 import com.google.common.primitives.Bytes;
 
 import jersey.repackaged.com.google.common.primitives.Ints;
 
-@Component
-@Qualifier("MainService")
 public abstract class DataGeneratorComponentBase
     extends ComponentBaseExecutionThread
 {
@@ -52,10 +48,10 @@ public abstract class DataGeneratorComponentBase
     protected Subscriber<ByteBuffer> commandSender;
 
     
-    public DataGeneratorComponentBase(Subscriber<ByteBuffer> commandSender) {
-    	super();
-    	this.commandSender = commandSender;
-    }
+//    public DataGeneratorComponentBase(Subscriber<ByteBuffer> commandSender) {
+//    	super();
+//    	this.commandSender = commandSender;
+//    }
 
 	//@Resource
     //protected TripleStreamSupplier tripleStreamSupplier;
@@ -182,7 +178,7 @@ public abstract class DataGeneratorComponentBase
 
     // TODO Separate actual data generation / caching from sending out platform specific events
     //@Override
-    abstract void runDataGeneration();
+    //abstract void runDataGeneration();
     
     public void generateData() throws Exception {
         logger.info("Data generator started.");
