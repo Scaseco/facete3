@@ -56,12 +56,14 @@ public class DataQueryImpl
 		this.template = template;
 	}
 
-	public void setLimit(Long limit) {
+	public DataQuery limit(Long limit) {
 		this.limit = limit;
+		return this;
 	}
 
-	public void setOffset(Long offset) {
+	public DataQuery offset(Long offset) {
 		this.offset = offset;
+		return this;
 	}
 	//protected void setOffset(10);
 
@@ -106,6 +108,8 @@ public class DataQueryImpl
 	@Override
 	public Flowable<Resource> exec() {
 		Query query = new Query();
+		query.setQueryResultStar(true);
+		query.setQuerySelectType();
 
 		query.setQueryPattern(baseQueryPattern);
 		QueryUtils.applySlice(query, offset, limit, false);

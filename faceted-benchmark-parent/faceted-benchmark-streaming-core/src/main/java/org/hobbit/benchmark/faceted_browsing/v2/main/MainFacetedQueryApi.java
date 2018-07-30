@@ -5,8 +5,13 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 
 public class MainFacetedQueryApi {
@@ -19,7 +24,9 @@ public class MainFacetedQueryApi {
 	public void testSimpleFacetedQuery() {
 		FacetedQueryResource fq = new FacetedQueryImpl();
 		
-		RDFConnection conn = null;
+		Model m = RDFDataMgr.loadModel("path-data.ttl");
+		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
+		
 		fq
 			.connection(conn)
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
@@ -33,13 +40,14 @@ public class MainFacetedQueryApi {
 		// .getOutgoingFacets
 		
 		//fq.getRoot().out().getFacetsAndCounts();
-		fq.root().fwd(RDF.type).one().as("test").availableValues();
+		//fq.root().fwd(RDF.type).one().as("test").availableValues();
 		
 		
 		FacetNode facetNode = fq.root().fwd(RDF.type).one().as("test")
-			.constraints()
-				.eq(NodeValue.makeInteger(5).asNode())
-			.end();
+			.fwd(RDF.type).one()
+				.constraints()
+					.eq(OWL.Class.asNode())
+				.end();
 		
 		
 		System.out.println(facetNode.availableValues().exec().toList().blockingGet());

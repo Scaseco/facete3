@@ -36,7 +36,10 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 		
 		FacetConstraint c = modelRoot.getModel().createResource().as(FacetConstraint.class);
 		c.expr(new E_Equals(NodeValue.makeNode(parent.state().asNode()), NodeValue.makeNode(node)));
+		// TODO Using blank nodes for exprs was a bad idea...
+		// We should just allocate var names
 		
+		//c.expr(new E_Equals(new ExprVar((Var)parent.state().asNode()), NodeValue.makeNode(node)));
 		set.add(c);
 		
 		return this;

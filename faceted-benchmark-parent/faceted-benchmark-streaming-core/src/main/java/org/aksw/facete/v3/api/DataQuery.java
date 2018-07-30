@@ -44,6 +44,9 @@ public interface DataQuery {
 	// Return the same data query with intersection on the given concept
 	DataQuery filter(UnaryRelation concept);
 	
+	DataQuery limit(Long limit);
+	DataQuery offset(Long offset);
+	
 	/**
 	 * Return a SPARQL construct query together with the designated root variable
 	 * 
