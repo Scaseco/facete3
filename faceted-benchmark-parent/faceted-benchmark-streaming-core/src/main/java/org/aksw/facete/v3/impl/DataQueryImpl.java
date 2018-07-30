@@ -36,7 +36,7 @@ public class DataQueryImpl
 {
 	protected SparqlQueryConnection conn;
 	
-	protected Var rootVar;
+	protected Node rootVar;
 	protected Element baseQueryPattern;
 	
 	protected Template template;
@@ -48,10 +48,10 @@ public class DataQueryImpl
 	protected Long limit;
 	protected Long offset;
 
-	public DataQueryImpl(SparqlQueryConnection conn, Var rootVar, Element baseQueryPattern, Template template) {
+	public DataQueryImpl(SparqlQueryConnection conn, Node rootNode, Element baseQueryPattern, Template template) {
 		super();
 		this.conn = conn;
-		this.rootVar = rootVar;
+		this.rootVar = rootNode;
 		this.baseQueryPattern = baseQueryPattern;
 		this.template = template;
 	}
@@ -119,15 +119,24 @@ public class DataQueryImpl
 			.map(b -> {
 				Graph graph = GraphFactory.createDefaultGraph();
 
+				// TODO Re-allocate blank nodes
 				Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
 				while(it.hasNext()) {
 					Triple t = it.next();
 					graph.add(t);
 				}
 				
-				Node rootNode = b.get(rootVar);
+				Node rootNode = rootVar.isVariable() ? b.get((Var)rootVar) : rootVar;
+				
 				Model m = ModelFactory.createModelForGraph(graph);
 				Resource r = m.wrapAsResource(rootNode);
+				
+//				Resource r = m.createResource()
+//				.addProperty(RDF.predicate, m.asRDFNode(valueNode))
+//				.addProperty(Vocab.facetValueCount, );
+//			//m.wrapAsResource(valueNode);
+//			return r;
+
 				return r;
 			});
 		

@@ -12,6 +12,7 @@ public class Vocab {
 	public static final Property constraint = property("constraint");
 	public static final Property enabled = property("enabled");
 
+	public static final Property value = property("facetValueCount");
 	public static final Property facetValueCount = property("facetValueCount");
 
 	public static Property property(String localName) {

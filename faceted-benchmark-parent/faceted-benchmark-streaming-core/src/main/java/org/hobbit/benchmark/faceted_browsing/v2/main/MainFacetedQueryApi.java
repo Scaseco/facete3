@@ -43,21 +43,21 @@ public class MainFacetedQueryApi {
 		//fq.root().fwd(RDF.type).one().as("test").availableValues();
 		
 		
-		FacetNode facetNode = fq.root().fwd(RDF.type).one().as("test")
+		FacetNode facetNode = fq.root().fwd(RDF.type).one()
 			.fwd(RDF.type).one()
 				.constraints()
 					.eq(OWL.Class.asNode())
 				.end();
 		
 		
-		System.out.println(facetNode.availableValues().exec().toList().blockingGet());
+		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
 		
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));
 		
 		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(fq));
 		
-		fq.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 //		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 		//qgen.getConstraints()
 		

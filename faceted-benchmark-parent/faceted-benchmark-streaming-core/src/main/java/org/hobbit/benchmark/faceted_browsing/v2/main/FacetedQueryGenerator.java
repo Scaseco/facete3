@@ -96,10 +96,10 @@ public class FacetedQueryGenerator<P> {
 		return constraints;
 	}
 	
-	public void addConstraint(Expr expr) {
-		Expr rewritten = expr.applyNodeTransform(createNodeTransformSubstitutePathReferences());
-		constraints.add(rewritten);
-	}
+//	public void addConstraint(Expr expr) {
+//		Expr rewritten = expr.applyNodeTransform(createNodeTransformSubstitutePathReferences());
+//		constraints.add(rewritten);
+//	}
 
 	
 	public BinaryRelation getFacets(P childPath, SetMultimap<P, Expr> childPathToExprs, Set<Expr> constraints) {

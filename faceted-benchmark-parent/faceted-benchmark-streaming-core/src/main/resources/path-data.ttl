@@ -2,6 +2,9 @@
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix wgs: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
 
 eg:a a eg:ThingA .
 eg:a eg:p1 eg:x1 .
@@ -13,3 +16,13 @@ eg:ag geo:asWKT "POINT (1 2)"^^geo:wktLiteral .
 
 eg:b a eg:ThingB ; eg:q1 [ eg:q2 [ eg:q3 [ eg:q4 eg:bg ] ] ] .
 eg:bg wgs:lat 10 ; wgs:long 20 .
+
+
+eg:ThingA
+  a owl:Class ;
+  rdfs:label "ThingA" .
+  
+
+eg:ThingB
+  a owl:Class ;
+  rdfs:label "ThingB" .

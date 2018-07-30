@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -23,6 +24,7 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
@@ -136,7 +138,7 @@ public class FacetNodeImpl
 	public DataQuery availableValues() {
 		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(query));
 		
-		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+		query.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
 		FacetNode focus = query().focus();
 
@@ -147,11 +149,17 @@ public class FacetNodeImpl
 		//RelationUtils.createQuery(br);
 		
 		BasicPattern bgp = new BasicPattern();
-		bgp.add(new Triple(br.getSourceVar(), Vocab.facetValueCount.asNode(), br.getTargetVar()));
+		Node s = NodeFactory.createBlankNode();
+		//bgp.add(new Triple(s, RDF.type.asNode(), Vocab.root.asNode()));
+		bgp.add(new Triple(s, Vocab.value.asNode(), br.getSourceVar()));
+		bgp.add(new Triple(s, Vocab.facetValueCount.asNode(), br.getTargetVar()));
+		//bgp.add(new Triple(br.getSourceVar(), Vocab.facetValueCount.asNode(), br.getTargetVar()));
 		Template template = new Template(bgp);
 		
+		System.out.println("Facet Value relation: " + br);
+		
 		SparqlQueryConnection conn = query.connection();
-		DataQuery result = new DataQueryImpl(conn, br.getSourceVar(), br.getElement(), template);
+		DataQuery result = new DataQueryImpl(conn, s, br.getElement(), template);
 
 		return result;
 	}
