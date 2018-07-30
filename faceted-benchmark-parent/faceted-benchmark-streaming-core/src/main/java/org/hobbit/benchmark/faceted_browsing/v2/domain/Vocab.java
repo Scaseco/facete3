@@ -12,6 +12,8 @@ public class Vocab {
 	public static final Property constraint = property("constraint");
 	public static final Property enabled = property("enabled");
 
+	public static final Property facetValueCount = property("facetValueCount");
+
 	public static Property property(String localName) {
 		return ResourceFactory.createProperty("http://aksw.org/adhoc/ontology/" + localName);
 	}

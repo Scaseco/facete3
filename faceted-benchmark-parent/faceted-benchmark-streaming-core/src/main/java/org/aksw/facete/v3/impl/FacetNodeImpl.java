@@ -9,6 +9,8 @@ import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -18,7 +20,9 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Template;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
@@ -137,26 +141,19 @@ public class FacetNodeImpl
 		FacetNode focus = query().focus();
 
 		UnaryRelation pFilter = null; // get the reaching predicate
-		qgen.getFacetValues(focus, this.parent(), pFilter, null, isReverse());
+		TernaryRelation pvc = qgen.getFacetValues(focus, this.parent(), isReverse(), pFilter, null);
+		// Project away the predicate column (as it is constant)
+		BinaryRelation br = new BinaryRelationImpl(pvc.getElement(), pvc.getP(), pvc.getO());
+		//RelationUtils.createQuery(br);
 		
-		BinaryRelation br = qgen.createQueryFacetsAndCounts(this, , pConstraint);
-//		
-//		
-////		//RelationUtils.attr
-////		
-////		Query query = RelationUtils.createQuery(br);
-////		
-////		logger.info("Requesting facet counts: " + query);
-////		
-////		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
-////			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
-
+		BasicPattern bgp = new BasicPattern();
+		bgp.add(new Triple(br.getSourceVar(), Vocab.facetValueCount.asNode(), br.getTargetVar()));
+		Template template = new Template(bgp);
+		
 		SparqlQueryConnection conn = query.connection();
-		DataQuery result = new DataQueryImpl(conn, rootVar, baseQueryPattern, template);
-		
-		
-		// TODO Auto-generated method stub
-		return null;
+		DataQuery result = new DataQueryImpl(conn, br.getSourceVar(), br.getElement(), template);
+
+		return result;
 	}
 
 	public FacetNode as(String varName) {

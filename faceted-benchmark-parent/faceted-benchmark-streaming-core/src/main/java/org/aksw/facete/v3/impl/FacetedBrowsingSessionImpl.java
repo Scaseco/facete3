@@ -227,7 +227,7 @@ public class FacetedBrowsingSessionImpl {
 	
 	public TernaryRelation createQueryFacetValues(SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
 	
-		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValues(focus, facetPath, pFilter, oFilter, isReverse);
+		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()

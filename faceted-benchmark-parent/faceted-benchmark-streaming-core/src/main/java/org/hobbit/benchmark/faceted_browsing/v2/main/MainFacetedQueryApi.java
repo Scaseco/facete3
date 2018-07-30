@@ -42,7 +42,7 @@ public class MainFacetedQueryApi {
 			.end();
 		
 		
-		System.out.println(facetNode.availableValues());
+		System.out.println(facetNode.availableValues().exec().toList().blockingGet());
 		
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));

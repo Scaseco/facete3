@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -21,10 +20,9 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -49,13 +47,10 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Range;
 import com.google.common.collect.SetMultimap;
 
-import io.reactivex.Flowable;
 import jersey.repackaged.com.google.common.collect.Sets;
 
 public class FacetedQueryGenerator<P> {
@@ -330,7 +325,7 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
-	public TernaryRelation getFacetFacetValues(P focus, P facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
+	public TernaryRelation getFacetValues(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
 		
 		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
 
@@ -353,7 +348,7 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, Concept pFilter, Concept oFilter, boolean isReverse) {
+	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);

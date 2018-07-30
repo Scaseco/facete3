@@ -48,7 +48,7 @@ public class DataQueryImpl
 	protected Long limit;
 	protected Long offset;
 
-	public DataQueryImpl(RDFConnection conn, Var rootVar, Element baseQueryPattern, Template template) {
+	public DataQueryImpl(SparqlQueryConnection conn, Var rootVar, Element baseQueryPattern, Template template) {
 		super();
 		this.conn = conn;
 		this.rootVar = rootVar;
