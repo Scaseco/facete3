@@ -86,6 +86,11 @@ public class FacetedQueryImpl
 	}
 
 	@Override
+	public SparqlQueryConnection connection() {
+		return conn;
+	}
+	
+	@Override
 	public Collection<FacetConstraint> constraints() {
 		Collection<FacetConstraint> result = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
 		return result;

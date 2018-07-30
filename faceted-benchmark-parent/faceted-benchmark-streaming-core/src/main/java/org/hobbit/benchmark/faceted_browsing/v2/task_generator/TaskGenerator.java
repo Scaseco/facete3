@@ -3,13 +3,21 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 import java.util.stream.Stream;
 
 import org.apache.jena.query.Query;
+import org.apache.jena.rdfconnection.RDFConnection;
 
 public class TaskGenerator {
 
-	public Stream<Query> generate() {
+	protected RDFConnection conn;
+	
+	
+	public TaskGenerator(RDFConnection conn) {
+		this.conn = conn;
+	}
+	
 
-		// Zoom into the map and find a region with amount of data in certain ranges
+	public Stream<Query> generate() {
 		
+		// Zoom into the map and find a region with amount of data in certain ranges
 		
 		
 		

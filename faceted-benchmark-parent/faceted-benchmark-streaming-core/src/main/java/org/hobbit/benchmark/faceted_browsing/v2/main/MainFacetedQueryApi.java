@@ -36,11 +36,13 @@ public class MainFacetedQueryApi {
 		fq.root().fwd(RDF.type).one().as("test").availableValues();
 		
 		
-		fq.root().fwd(RDF.type).one().as("test")
+		FacetNode facetNode = fq.root().fwd(RDF.type).one().as("test")
 			.constraints()
 				.eq(NodeValue.makeInteger(5).asNode())
 			.end();
 		
+		
+		System.out.println(facetNode.availableValues());
 		
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));

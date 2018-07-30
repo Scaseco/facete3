@@ -17,8 +17,10 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
 
 public class FacetNodeImpl
@@ -102,6 +104,18 @@ public class FacetNodeImpl
 		return result;
 	}
 	
+	public boolean isReverse() {
+		boolean isReverse = false;
+		Set<Statement> set = ResourceUtils.listProperties(parent().state(), null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
+		
+		if(set.isEmpty()) {
+			isReverse = true;
+//			set = ResourceUtils.listReverseProperties(parent().state(), null).filterKeep(stmt -> stmt.getSubject().equals(state)).toSet();
+		}
+		
+		return isReverse;
+	}
+	
 	public static BinaryRelation create(Node node, boolean isReverse) {
 		//ElementUtils.createElement(triple)
 		Triple t = isReverse
@@ -116,6 +130,31 @@ public class FacetNodeImpl
 
 	@Override
 	public DataQuery availableValues() {
+		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(query));
+		
+		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+
+		FacetNode focus = query().focus();
+
+		UnaryRelation pFilter = null; // get the reaching predicate
+		qgen.getFacetValues(focus, this.parent(), pFilter, null, isReverse());
+		
+		BinaryRelation br = qgen.createQueryFacetsAndCounts(this, , pConstraint);
+//		
+//		
+////		//RelationUtils.attr
+////		
+////		Query query = RelationUtils.createQuery(br);
+////		
+////		logger.info("Requesting facet counts: " + query);
+////		
+////		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
+////			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
+
+		SparqlQueryConnection conn = query.connection();
+		DataQuery result = new DataQueryImpl(conn, rootVar, baseQueryPattern, template);
+		
+		
 		// TODO Auto-generated method stub
 		return null;
 	}

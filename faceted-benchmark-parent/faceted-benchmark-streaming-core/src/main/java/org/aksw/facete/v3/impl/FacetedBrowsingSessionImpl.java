@@ -118,19 +118,21 @@ public class FacetedBrowsingSessionImpl {
 //				.collect(Collectors.toList());
 		
 		
-		Var countVar = Var.alloc("__count__");
-		List<Element> elements = relations.values().stream()
-				.map(e -> rename(e, Arrays.asList(Vars.p, Vars.o)))
-				.map(Relation::toBinaryRelation)
-				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
-				.map(e -> groupBy(e, Vars.o, countVar))
-				.map(Relation::getElement)
-				.collect(Collectors.toList());
+//		Var countVar = Var.alloc("__count__");
+//		List<Element> elements = relations.values().stream()
+//				.map(e -> rename(e, Arrays.asList(Vars.p, Vars.o)))
+//				.map(Relation::toBinaryRelation)
+//				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
+//				.map(e -> groupBy(e, Vars.o, countVar))
+//				.map(Relation::getElement)
+//				.collect(Collectors.toList());
+//		
+//		Element e = ElementUtils.union(elements);
+//
+//		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
+
+		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, isReverse, pConstraint);
 		
-		Element e = ElementUtils.union(elements);
-
-		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
-
 		return result;
 		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
 	}

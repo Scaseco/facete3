@@ -24,6 +24,8 @@ public interface FacetedQuery {
 	FacetedQuery baseConcept(UnaryRelation concept);
 	
 	FacetedQuery connection(SparqlQueryConnection conn);
+	SparqlQueryConnection connection();
+	
 	
 	/**
 	 * Lookup a facet node by id

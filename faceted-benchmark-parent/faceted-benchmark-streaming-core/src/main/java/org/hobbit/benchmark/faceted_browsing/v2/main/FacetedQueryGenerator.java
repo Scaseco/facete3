@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,15 +11,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -43,10 +49,13 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Range;
 import com.google.common.collect.SetMultimap;
 
+import io.reactivex.Flowable;
 import jersey.repackaged.com.google.common.collect.Sets;
 
 public class FacetedQueryGenerator<P> {
@@ -195,6 +204,48 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
+	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, boolean isReverse, Concept pConstraint) {
+		Var countVar = Var.alloc("__count__");
+		List<Element> elements = relations.values().stream()
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(Relation::toBinaryRelation)
+				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
+				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.o, countVar))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+		
+		Element e = ElementUtils.union(elements);
+
+		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
+
+		return result;
+	}
+
+
+	public BinaryRelation createQueryFacetsAndCounts(P path, boolean isReverse, Concept pConstraint) {
+		Map<String, BinaryRelation> relations = getFacets(path, isReverse);
+		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, isReverse, pConstraint);
+		
+		return result;
+		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
+	}
+
+//	public BinaryRelation getFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
+//		BinaryRelation br = createQueryFacetsAndCounts(path, isReverse, pConstraint);
+//		
+//		
+////		//RelationUtils.attr
+////		
+////		Query query = RelationUtils.createQuery(br);
+////		
+////		logger.info("Requesting facet counts: " + query);
+////		
+////		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
+////			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
+//	}
+
+	
+	
 	public Map<String, BinaryRelation> getFacets(P path, boolean isReverse) {
 		
 		// Find all constraints on successor paths
@@ -279,7 +330,30 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
-	public Map<String, TernaryRelation> getFacetValues(P focusPath, P facetPath, Concept pFilter, Concept oFilter, boolean isReverse) {
+	public TernaryRelation getFacetFacetValues(P focus, P facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
+		
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
+
+		Var countVar = Vars.c;
+		List<Element> elements = facetValues.values().stream()
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(Relation::toTernaryRelation)
+				.map(e -> e.joinOn(e.getP()).with(pFilter))
+				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+
+		
+		Element e = ElementUtils.union(elements);
+
+		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
+
+		
+		
+		return result;
+	}
+
+	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, Concept pFilter, Concept oFilter, boolean isReverse) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
