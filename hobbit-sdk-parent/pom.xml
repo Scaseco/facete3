@@ -11,8 +11,8 @@
 
 	<properties>
 		<!-- <jena-sparql-api.version>3.7.0-1-SNAPSHOT</jena-sparql-api.version> -->
-		<jena.version>3.6.0</jena.version>
-		<jena-sparql-api.version>${jena.version}-3-SNAPSHOT</jena-sparql-api.version>
+		<jena.version>3.8.0</jena.version>
+		<jena-sparql-api.version>${jena.version}-1-SNAPSHOT</jena-sparql-api.version>
 		<spring.version>4.3.11.RELEASE</spring.version>
 		<slf4j.version>1.7.25</slf4j.version>
 

@@ -1,0 +1,31 @@
+version: '2.1'
+
+services:
+  qpid-server:
+    build: qpid-server/
+    ports:
+      - 5672:5672
+    networks:
+      - hobbit
+
+  docker-service-manager-server:
+    build: docker-service-manager-server/
+    depends_on:
+      - qpid-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - hobbit
+
+  benchmark-controller:
+    build: benchmark-controller/
+    depends_on:
+      - qpid-server
+    networks:
+      - hobbit
+
+networks:
+  hobbit:
+    external:
+      name: hobbit
+
