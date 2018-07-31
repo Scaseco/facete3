@@ -18,8 +18,8 @@ import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.GraphFactory;
@@ -106,30 +106,36 @@ public class DataQueryImpl
 
 
 	@Override
-	public Flowable<Resource> exec() {
+	public Flowable<RDFNode> exec() {
 		Query query = new Query();
 		query.setQueryResultStar(true);
 		query.setQuerySelectType();
+		
+		// TODO Controlling distinct should be possible on this class
+		query.setDistinct(true);
 
 		query.setQueryPattern(baseQueryPattern);
 		QueryUtils.applySlice(query, offset, limit, false);
 		
-		Flowable<Resource> result = ReactiveSparqlUtils
-			.execSelect(() -> conn.query(query))
+		Flowable<RDFNode> result = ReactiveSparqlUtils
+			// FIXME WHY DO WE GET AN EMPTY RESULT SET WHEN WE USE THE QUERY OBJECT???
+			.execSelect(() -> conn.query("" + query))
 			.map(b -> {
 				Graph graph = GraphFactory.createDefaultGraph();
 
 				// TODO Re-allocate blank nodes
-				Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
-				while(it.hasNext()) {
-					Triple t = it.next();
-					graph.add(t);
+				if(template != null) {
+					Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
+					while(it.hasNext()) {
+						Triple t = it.next();
+						graph.add(t);
+					}
 				}
-				
+
 				Node rootNode = rootVar.isVariable() ? b.get((Var)rootVar) : rootVar;
 				
 				Model m = ModelFactory.createModelForGraph(graph);
-				Resource r = m.wrapAsResource(rootNode);
+				RDFNode r = m.asRDFNode(rootNode);
 				
 //				Resource r = m.createResource()
 //				.addProperty(RDF.predicate, m.asRDFNode(valueNode))

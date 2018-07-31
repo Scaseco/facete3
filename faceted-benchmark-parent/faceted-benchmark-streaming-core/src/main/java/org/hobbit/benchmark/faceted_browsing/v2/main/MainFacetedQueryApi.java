@@ -5,6 +5,7 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -31,7 +32,16 @@ public class MainFacetedQueryApi {
 			.connection(conn)
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
 		
-		
+		ReactiveSparqlUtils.execSelect(() -> 
+		conn.query("SELECT  *\n" + 
+				"WHERE\n" + 
+				"  { { ?v_1  a                     ?v_2 . \n" + 
+				"      ?v_2  a                     ?v_3\n" + 
+				"      FILTER ( ?v_3 = <http://www.w3.org/2002/07/owl#Class> )\n" + 
+				"    }\n" + 
+				"    ?v_1  ?p  ?o\n" + 
+				"  }\n" + 
+				"")).toList().blockingGet().forEach(x -> System.out.println("Item: " + x));
 		// One .out() method moves along a given property
 		// Another .out() method makes the api state head 'forth' or 'back' and the getFacetCounts method
 		// then yields these facets
@@ -61,8 +71,8 @@ public class MainFacetedQueryApi {
 //		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 		//qgen.getConstraints()
 		
-		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), false));
-		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), true));
+		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), false, false));
+		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), true, false));
 		
 		//fq.root().fwd(RDF.type).one().constraints().eq("foo").addEq("bar").end()
 

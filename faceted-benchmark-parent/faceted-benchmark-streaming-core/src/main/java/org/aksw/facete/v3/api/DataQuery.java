@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 
 import io.reactivex.Flowable;
@@ -30,7 +30,7 @@ interface MultiNode {
  * @author raven
  *
  */
-public interface DataQuery {
+public interface DataQuery<T extends RDFNode> {
 	// For every predicate, list how many root root resources there are having this predicate
 	//getPredicatesAndRootCount();
 	
@@ -42,10 +42,10 @@ public interface DataQuery {
 	
 	
 	// Return the same data query with intersection on the given concept
-	DataQuery filter(UnaryRelation concept);
+	DataQuery<T> filter(UnaryRelation concept);
 	
-	DataQuery limit(Long limit);
-	DataQuery offset(Long offset);
+	DataQuery<T> limit(Long limit);
+	DataQuery<T> offset(Long offset);
 	
 	/**
 	 * Return a SPARQL construct query together with the designated root variable
@@ -55,5 +55,5 @@ public interface DataQuery {
 	Entry<Var, Query> toConstructQuery();
 
 	
-	Flowable<Resource> exec();
+	Flowable<T> exec();
 }

@@ -142,26 +142,35 @@ public class FacetNodeImpl
 
 		FacetNode focus = query().focus();
 
-		UnaryRelation pFilter = null; // get the reaching predicate
-		TernaryRelation pvc = qgen.getFacetValues(focus, this.parent(), isReverse(), pFilter, null);
-		// Project away the predicate column (as it is constant)
-		BinaryRelation br = new BinaryRelationImpl(pvc.getElement(), pvc.getP(), pvc.getO());
-		//RelationUtils.createQuery(br);
+		UnaryRelation c = qgen.getConceptForAtPath(focus, this.parent(), false);
 		
-		BasicPattern bgp = new BasicPattern();
-		Node s = NodeFactory.createBlankNode();
-		//bgp.add(new Triple(s, RDF.type.asNode(), Vocab.root.asNode()));
-		bgp.add(new Triple(s, Vocab.value.asNode(), br.getSourceVar()));
-		bgp.add(new Triple(s, Vocab.facetValueCount.asNode(), br.getTargetVar()));
-		//bgp.add(new Triple(br.getSourceVar(), Vocab.facetValueCount.asNode(), br.getTargetVar()));
-		Template template = new Template(bgp);
-		
-		System.out.println("Facet Value relation: " + br);
+		//System.out.println("Available values: " + c);
 		
 		SparqlQueryConnection conn = query.connection();
-		DataQuery result = new DataQueryImpl(conn, s, br.getElement(), template);
+		DataQuery result = new DataQueryImpl(conn, c.getVar(), c.getElement(), null);
 
 		return result;
+		
+//		UnaryRelation pFilter = null; // get the reaching predicate
+//		TernaryRelation pvc = qgen.getFacetValues(focus, this.parent(), isReverse(), pFilter, null);
+//		// Project away the predicate column (as it is constant)
+//		BinaryRelation br = new BinaryRelationImpl(pvc.getElement(), pvc.getP(), pvc.getO());
+//		//RelationUtils.createQuery(br);
+//		
+//		BasicPattern bgp = new BasicPattern();
+//		Node s = NodeFactory.createBlankNode();
+//		//bgp.add(new Triple(s, RDF.type.asNode(), Vocab.root.asNode()));
+//		bgp.add(new Triple(s, Vocab.value.asNode(), br.getSourceVar()));
+//		bgp.add(new Triple(s, Vocab.facetValueCount.asNode(), br.getTargetVar()));
+//		//bgp.add(new Triple(br.getSourceVar(), Vocab.facetValueCount.asNode(), br.getTargetVar()));
+//		Template template = new Template(bgp);
+//		
+//		System.out.println("Facet Value relation: " + br);
+//		
+//		SparqlQueryConnection conn = query.connection();
+//		DataQuery result = new DataQueryImpl(conn, s, br.getElement(), template);
+//
+//		return result;
 	}
 
 	public FacetNode as(String varName) {

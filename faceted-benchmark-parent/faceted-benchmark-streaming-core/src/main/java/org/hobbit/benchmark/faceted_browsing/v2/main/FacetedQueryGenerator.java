@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -33,6 +34,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
@@ -218,7 +220,7 @@ public class FacetedQueryGenerator<P> {
 
 
 	public BinaryRelation createQueryFacetsAndCounts(P path, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = getFacets(path, isReverse);
+		Map<String, BinaryRelation> relations = getFacets(path, isReverse, false);
 		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, isReverse, pConstraint);
 		
 		return result;
@@ -241,7 +243,15 @@ public class FacetedQueryGenerator<P> {
 
 	
 	
-	public Map<String, BinaryRelation> getFacets(P path, boolean isReverse) {
+	/**
+	 * For the give path and direction, yield a map of binary relations for the corresponding facets.
+	 * An entry with key null indicates the predicate / distinct value count pairs with all constraints in place
+	 * 
+	 * @param path
+	 * @param isReverse
+	 * @return
+	 */
+	public Map<String, BinaryRelation> getFacets(P path, boolean isReverse, boolean applySelfConstraints) {
 		
 		// Find all constraints on successor paths
 		SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
@@ -255,7 +265,7 @@ public class FacetedQueryGenerator<P> {
 				boolean candIsReverse = pathAccessor.isReverse(candPath);
 				
 				// We need to exclude this constraint for the given path
-				if(path.equals(parentPath) && isReverse == candIsReverse) {
+				if(applySelfConstraints && path.equals(parentPath) && isReverse == candIsReverse) {
 					skipExpr = true;
 					childPathToExprs.put(candPath, expr);
 				}
@@ -265,7 +275,7 @@ public class FacetedQueryGenerator<P> {
 				continue;
 			}			
 		}
-		
+
 		
 		Map<String, BinaryRelation> result = new HashMap<>();
 
@@ -347,12 +357,129 @@ public class FacetedQueryGenerator<P> {
 		
 		return result;
 	}
+	
+	// TODO Move to tree utils
+	public static <T> T getRoot(T item, Function<? super T, ? extends T> getParent) {
+		T result = null;
+		while(item != null) {
+			result = item;
+			item = getParent.apply(result);
+		}
 
+		return result;
+	}
+
+	public UnaryRelation getConceptForAtPath(P focusPath, P facetPath, boolean applySelfConstraints) {
+		
+//		P parent = pathAccessor.getParent(facetPath);
+//		boolean isReverse = pathAccessor.isReverse(facetPath);
+//		String p = pathAccessor.getPredicate(facetPath);
+//		Concept pFilter = new Concept(new ElementFilter(new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(NodeFactory.createURI(p)))), Vars.p);
+//		
+//		
+//		
+		// Find all constraints on successor paths
+		SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
+		for(Expr expr : constraints) {
+			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+			
+			// Check if any parent of the path is the given path
+//			boolean skipExpr = false;
+			for(P candPath : paths) {
+				// We need to exclude this constraint for the given path
+//				if(Objects.equals(candPath, facetPath)) {
+//					skipExpr = true;
+					childPathToExprs.put(candPath, expr);
+//				}
+			}
+
+//			if(skipExpr) {
+//				continue;
+//			}			
+		}
+		
+		// Assemble the triple patterns for the referenced paths
+		
+		Set<Element> elts = new LinkedHashSet<>();
+		//List<Collection<Expr>> exprs = new ArrayList<>();
+
+		P rootPath = getRoot(facetPath, pathAccessor::getParent);
+		
+		Var rootVar = (Var)mapper.getNode(rootPath);
+				
+		Var resultVar = (Var)mapper.getNode(facetPath);
+
+		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
+		elts.addAll(ElementUtils.toElementList(focusRelation.getElement()));
+		
+		for(P path : childPathToExprs.keySet()) {
+			BinaryRelation pathRelation = mapper.getOverallRelation(path);
+			elts.addAll(ElementUtils.toElementList(pathRelation.getElement()));
+		}	
+				
+		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences();
+
+		for(Expr expr : constraints) {
+			Expr resolved = expr.applyNodeTransform(nodeTransform); //ExprTransformer.transform(exprTransform, expr);
+			elts.add(new ElementFilter(resolved));
+		}
+
+		UnaryRelation result = new Concept(ElementUtils.groupIfNeeded(elts), resultVar);
+		
+		if(baseConcept != null) {
+			result = result.joinOn(rootVar).with(baseConcept).toUnaryRelation();
+		}
+		
+		return result;
+//		
+//		Map<String, BinaryRelation> result = new HashMap<>();
+//
+//
+//		Set<Expr> constraintSet = new HashSet<>(constraints);
+//		Set<P> constrainedChildPaths = childPathToExprs.keySet();
+//		for(P childPath : constrainedChildPaths) {
+//			BinaryRelation br = getFacets(childPath, childPathToExprs, constraintSet);
+//			
+//			String pStr = pathAccessor.getPredicate(childPath);
+//			result.put(pStr, br);			
+//		}
+//		
+//		// exclude all predicates that are constrained
+//
+//		BinaryRelation brr = getRemainingFacets(path, isReverse, constraintSet);
+//
+//		
+//		
+//		
+//		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, parent, pFilter, null, isReverse);
+//
+//		TernaryRelation r = facetValues.getOrDefault(p, facetValues.get(null));
+//		
+////		Var countVar = Vars.c;
+////		List<Element> elements = facetValues.values().stream()
+////				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+////				.map(Relation::toTernaryRelation)
+////				.map(e -> e.joinOn(e.getP()).with(pFilter))
+////				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar))
+////				.map(Relation::getElement)
+////				.collect(Collectors.toList());
+////
+////		
+////		Element e = ElementUtils.union(elements);
+////
+////		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
+//
+//		UnaryRelation result = new Concept(r.getElement(), r.getO());
+//		
+//		return result;
+	}
+
+	// [focus, facet, facetValue]
 	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
-		Map<String, BinaryRelation> facets = getFacets(facetPath, isReverse);
+		Map<String, BinaryRelation> facets = getFacets(facetPath, isReverse, false);
 
 		// Get the focus element
 		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
