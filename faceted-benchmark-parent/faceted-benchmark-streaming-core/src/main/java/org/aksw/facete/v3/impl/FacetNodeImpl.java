@@ -132,45 +132,34 @@ public class FacetNodeImpl
 		return result;
 	}
 
-	
 
-	@Override
-	public DataQuery availableValues() {
+	public DataQuery<?> createValueQuery(boolean excludeConstraints) {
 		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(query));
-		
 		query.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
 		FacetNode focus = query().focus();
 
-		UnaryRelation c = qgen.getConceptForAtPath(focus, this.parent(), false);
+		UnaryRelation c = qgen.getConceptForAtPath(focus, this, excludeConstraints);
 		
 		//System.out.println("Available values: " + c);
 		
 		SparqlQueryConnection conn = query.connection();
-		DataQuery result = new DataQueryImpl(conn, c.getVar(), c.getElement(), null);
+		DataQuery<?> result = new DataQueryImpl(conn, c.getVar(), c.getElement(), null);
 
 		return result;
-		
-//		UnaryRelation pFilter = null; // get the reaching predicate
-//		TernaryRelation pvc = qgen.getFacetValues(focus, this.parent(), isReverse(), pFilter, null);
-//		// Project away the predicate column (as it is constant)
-//		BinaryRelation br = new BinaryRelationImpl(pvc.getElement(), pvc.getP(), pvc.getO());
-//		//RelationUtils.createQuery(br);
-//		
-//		BasicPattern bgp = new BasicPattern();
-//		Node s = NodeFactory.createBlankNode();
-//		//bgp.add(new Triple(s, RDF.type.asNode(), Vocab.root.asNode()));
-//		bgp.add(new Triple(s, Vocab.value.asNode(), br.getSourceVar()));
-//		bgp.add(new Triple(s, Vocab.facetValueCount.asNode(), br.getTargetVar()));
-//		//bgp.add(new Triple(br.getSourceVar(), Vocab.facetValueCount.asNode(), br.getTargetVar()));
-//		Template template = new Template(bgp);
-//		
-//		System.out.println("Facet Value relation: " + br);
-//		
-//		SparqlQueryConnection conn = query.connection();
-//		DataQuery result = new DataQueryImpl(conn, s, br.getElement(), template);
-//
-//		return result;
+
+	}
+
+	@Override
+	public DataQuery<?> availableValues() {
+		DataQuery<?> result = createValueQuery(true);
+		return result;		
+	}
+
+	@Override
+	public DataQuery<?> remainingValues() {
+		DataQuery<?> result = createValueQuery(false);
+		return result;
 	}
 
 	public FacetNode as(String varName) {

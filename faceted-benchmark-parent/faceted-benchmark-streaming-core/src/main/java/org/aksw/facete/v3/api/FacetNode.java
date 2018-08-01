@@ -56,7 +56,7 @@ public interface FacetNode {
 	//Concept toConcept();
 	
 	// TODO Some API to get the values of this node by excluding all constraints
-	DataQuery availableValues();
-
+	DataQuery<?> availableValues();
+	DataQuery<?> remainingValues();
 }
 

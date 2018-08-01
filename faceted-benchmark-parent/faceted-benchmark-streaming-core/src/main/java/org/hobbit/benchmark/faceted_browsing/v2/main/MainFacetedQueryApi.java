@@ -6,6 +6,7 @@ import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -53,14 +54,19 @@ public class MainFacetedQueryApi {
 		//fq.root().fwd(RDF.type).one().as("test").availableValues();
 		
 		
-		FacetNode facetNode = fq.root().fwd(RDF.type).one()
-			.fwd(RDF.type).one()
-				.constraints()
-					.eq(OWL.Class.asNode())
-				.end();
+//		FacetNode facetNode = fq.root().fwd(RDF.type).one()
+//			.fwd(RDF.type).one()
+//				.constraints()
+//					.eq(OWL.Class.asNode())
+//				.end();
 		
+		FacetNode facetNode = fq.root().fwd(RDF.type).one()
+			.constraints()
+				.eq(NodeFactory.createURI("http://www.example.org/ThingA"))
+			.end();
 		
 		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
+		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());
 		
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));

@@ -379,24 +379,30 @@ public class FacetedQueryGenerator<P> {
 //		
 //		
 		// Find all constraints on successor paths
-		SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
+		Set<P> activePaths = new LinkedHashSet<>();
+		Set<Expr> activeExprs = new LinkedHashSet<>();
+		//SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
 		for(Expr expr : constraints) {
 			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 			
 			// Check if any parent of the path is the given path
-//			boolean skipExpr = false;
+			boolean skipExpr = false;
 			for(P candPath : paths) {
 				// We need to exclude this constraint for the given path
-//				if(Objects.equals(candPath, facetPath)) {
-//					skipExpr = true;
-					childPathToExprs.put(candPath, expr);
-//				}
+				if(!applySelfConstraints && Objects.equals(candPath, facetPath)) {
+					skipExpr = true;
+				}
 			}
 
-//			if(skipExpr) {
-//				continue;
-//			}			
+			if(!skipExpr) {
+				for(P path : paths) {
+					activePaths.add(path);
+				}
+				activeExprs.add(expr);
+			}
 		}
+		
+		activePaths.add(facetPath);
 		
 		// Assemble the triple patterns for the referenced paths
 		
@@ -412,14 +418,14 @@ public class FacetedQueryGenerator<P> {
 		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
 		elts.addAll(ElementUtils.toElementList(focusRelation.getElement()));
 		
-		for(P path : childPathToExprs.keySet()) {
+		for(P path : activePaths) {
 			BinaryRelation pathRelation = mapper.getOverallRelation(path);
 			elts.addAll(ElementUtils.toElementList(pathRelation.getElement()));
 		}	
 				
 		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences();
 
-		for(Expr expr : constraints) {
+		for(Expr expr : activeExprs) {
 			Expr resolved = expr.applyNodeTransform(nodeTransform); //ExprTransformer.transform(exprTransform, expr);
 			elts.add(new ElementFilter(resolved));
 		}
