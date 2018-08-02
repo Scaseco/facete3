@@ -15,6 +15,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 
 public class MainFacetedQueryApi {
 
@@ -60,10 +61,17 @@ public class MainFacetedQueryApi {
 //					.eq(OWL.Class.asNode())
 //				.end();
 		
-		FacetNode facetNode = fq.root().fwd(RDF.type).one()
-			.constraints()
-				.eq(NodeFactory.createURI("http://www.example.org/ThingA"))
-			.end();
+//		FacetNode facetNode = fq.root().fwd(RDF.type).one()
+//			.constraints()
+//				.eq(NodeFactory.createURI("http://www.example.org/ThingA"))
+//			.end();
+
+		FacetNode facetNode = fq.root().fwd("http://www.opengis.net/ont/geosparql#geometry").one()
+				.constraints()
+					.exists()
+				.end();
+
+		TaskGenerator.applyCp1(facetNode);
 		
 		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
 		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());

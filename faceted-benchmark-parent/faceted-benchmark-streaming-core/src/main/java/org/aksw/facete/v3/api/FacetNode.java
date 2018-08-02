@@ -2,6 +2,7 @@ package org.aksw.facete.v3.api;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
 
 
@@ -25,6 +26,16 @@ public interface FacetNode {
 	}
 
 	default FacetMultiNode bwd(Property property) {
+		return bwd().via(property);
+	}
+
+	default FacetMultiNode fwd(String p) {
+		Property property = ResourceFactory.createProperty(p);
+		return fwd().via(property);
+	}
+
+	default FacetMultiNode bwd(String p) {
+		Property property = ResourceFactory.createProperty(p);
 		return bwd().via(property);
 	}
 

@@ -131,7 +131,7 @@ public class FacetedBrowsingSessionImpl {
 //
 //		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
 
-		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, isReverse, pConstraint);
+		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
 		
 		return result;
 		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);

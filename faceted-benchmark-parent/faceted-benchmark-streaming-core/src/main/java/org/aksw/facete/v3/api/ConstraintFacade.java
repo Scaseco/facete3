@@ -18,6 +18,8 @@ public interface ConstraintFacade<B> {
 	/** Add an anonymous equal constraint */
 	ConstraintFacade<B> eq(Node node);
 
+	ConstraintFacade<B> exists();
+	
 	ConstraintFacade<B> gt(Node node);
 	
 	

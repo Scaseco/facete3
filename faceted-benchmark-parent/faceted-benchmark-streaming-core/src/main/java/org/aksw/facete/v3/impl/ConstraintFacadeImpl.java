@@ -8,6 +8,7 @@ import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
@@ -27,6 +28,20 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public ConstraintFacade<B> exists() {
+		Resource modelRoot = parent.query().modelRoot();
+		Set<FacetConstraint> set = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
+		
+		FacetConstraint c = modelRoot.getModel().createResource().as(FacetConstraint.class);
+		c.expr(new E_Bound(NodeValue.makeNode(parent.state().asNode())));
+		
+		set.add(c);
+
+		return this;
+	}
+	
 
 	@Override
 	public ConstraintFacade<B> eq(Node node) {

@@ -201,7 +201,7 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, boolean isReverse, Concept pConstraint) {
+	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, Concept pConstraint) {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relations.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
@@ -221,7 +221,7 @@ public class FacetedQueryGenerator<P> {
 
 	public BinaryRelation createQueryFacetsAndCounts(P path, boolean isReverse, Concept pConstraint) {
 		Map<String, BinaryRelation> relations = getFacets(path, isReverse, false);
-		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, isReverse, pConstraint);
+		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
 		
 		return result;
 		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);

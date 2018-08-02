@@ -18,6 +18,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -144,7 +145,7 @@ public class FacetNodeImpl
 		//System.out.println("Available values: " + c);
 		
 		SparqlQueryConnection conn = query.connection();
-		DataQuery<?> result = new DataQueryImpl(conn, c.getVar(), c.getElement(), null);
+		DataQuery<?> result = new DataQueryImpl<>(conn, c.getVar(), c.getElement(), null, RDFNode.class);
 
 		return result;
 

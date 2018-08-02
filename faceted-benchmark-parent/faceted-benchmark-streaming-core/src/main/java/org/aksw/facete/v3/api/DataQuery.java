@@ -43,9 +43,21 @@ public interface DataQuery<T extends RDFNode> {
 	
 	// Return the same data query with intersection on the given concept
 	DataQuery<T> filter(UnaryRelation concept);
-	
+		
 	DataQuery<T> limit(Long limit);
+
+	default DataQuery<T> limit(Integer limit) {
+		return limit(limit == null ? null : limit.longValue());
+	}
+
 	DataQuery<T> offset(Long offset);
+
+	default DataQuery<T> offset(Integer offset) {
+		return offset(offset == null ? null : offset.longValue());
+	}
+
+	DataQuery<T> sample(boolean onOrOff);
+	boolean sample();
 	
 	/**
 	 * Return a SPARQL construct query together with the designated root variable

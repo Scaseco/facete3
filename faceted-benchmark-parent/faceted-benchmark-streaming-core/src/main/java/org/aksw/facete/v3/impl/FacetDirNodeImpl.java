@@ -1,19 +1,23 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.Collection;
+import java.util.Map;
 
+import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetMultiNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.sparql.syntax.Template;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
 public class FacetDirNodeImpl
 	implements FacetDirNode
@@ -36,7 +40,7 @@ public class FacetDirNodeImpl
 	}
 	
 	@Override
-	public FacetNode parent() {
+	public FacetNodeResource parent() {
 		return parent;
 	}
 
@@ -57,9 +61,25 @@ public class FacetDirNodeImpl
 	}
 	
 	@Override
-	public Collection<FacetCount> getFacetsAndCounts() {
-		// TODO Auto-generated method stub
-		return null;
+	public DataQuery<FacetCount> facetCounts() {
+		FacetedQueryResource facetedQuery = this.parent().query();
+
+//		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
+		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+
+		Map<String, BinaryRelation> relations = qgen.getFacets(parent, !this.isFwd, false);
+		
+		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null);
+
+		
+		BasicPattern bgp = new BasicPattern();
+		bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
+		Template template = new Template(bgp);
+		
+		DataQuery<FacetCount> result = new DataQueryImpl<>(parent.query().connection(), br.getSourceVar(), br.getElement(), template, FacetCount.class);
+
+		return result;
 	}
 
 	@Override
