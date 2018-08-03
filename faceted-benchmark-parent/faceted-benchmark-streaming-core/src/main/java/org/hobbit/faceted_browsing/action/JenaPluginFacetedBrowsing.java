@@ -1,7 +1,11 @@
 package org.hobbit.faceted_browsing.action;
 
 import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.impl.FacetConstraintImpl;
+import org.aksw.facete.v3.impl.FacetCountImpl;
+import org.aksw.facete.v3.impl.FacetValueCountImpl;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
@@ -26,5 +30,9 @@ public class JenaPluginFacetedBrowsing {
 		
     	p.add(MapState.class, new SimpleImplementation(MapStateImpl::new));
     	p.add(Viewport.class, new SimpleImplementation(ViewportImpl::new));
-    }
+
+	
+		p.add(FacetCount.class, new SimpleImplementation(FacetCountImpl::new));
+		p.add(FacetValueCount.class, new SimpleImplementation(FacetValueCountImpl::new));
+	}
 }

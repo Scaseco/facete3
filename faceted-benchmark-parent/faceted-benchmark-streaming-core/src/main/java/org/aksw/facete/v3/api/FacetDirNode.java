@@ -29,7 +29,7 @@ public interface FacetDirNode {
 	DataQuery<FacetCount> facetCounts();
 	
 	// Get the facets of this set of values with the counts referring the the query's focus
-	void getFacetValuesAndCounts();
+	DataQuery<FacetValueCount> facetValueCounts();
 
 
 	//FacetMultiNode out(Path propertyPath);

@@ -34,7 +34,6 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
@@ -49,6 +48,7 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -103,6 +103,39 @@ public class FacetedQueryGenerator<P> {
 //		constraints.add(rewritten);
 //	}
 
+//	public TernaryRelation createQueryFacetValues(SPath focus, SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
+//		
+//		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
+//
+//		Var countVar = Vars.c;
+//		List<Element> elements = facetValues.values().stream()
+//				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+//				.map(Relation::toTernaryRelation)
+//				.map(e -> e.joinOn(e.getP()).with(pFilter))
+//				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar))
+//				.map(Relation::getElement)
+//				.collect(Collectors.toList());
+//
+//		
+//		Element e = ElementUtils.union(elements);
+//
+//		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
+//
+//		
+//		
+//		return result;
+//
+////		FacetedBrowsingSession.align(r, Arrays.asList(Vars.s, Vars.p, Vars.o)
+////		List<Relation> aligned = facetValues.values().stream()
+////		.map(r -> ))
+////		.collect(Collectors.toList());
+//
+//		
+//		
+////		Map<String, TernaryRelation> map = facetValues.entrySet().stream()
+////		.collect(Collectors.toMap(Entry::getKey, e -> FacetedQueryGenerator.countFacetValues(e.getValue(), -1)));
+//		
+//	}
 	
 	public BinaryRelation getFacets(P childPath, SetMultimap<P, Expr> childPathToExprs, Set<Expr> constraints) {
 		Set<Expr> excludes = childPathToExprs.get(childPath);
@@ -358,7 +391,7 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 	
-	// TODO Move to tree utils
+	// TODO Move to TreeUtils
 	public static <T> T getRoot(T item, Function<? super T, ? extends T> getParent) {
 		T result = null;
 		while(item != null) {

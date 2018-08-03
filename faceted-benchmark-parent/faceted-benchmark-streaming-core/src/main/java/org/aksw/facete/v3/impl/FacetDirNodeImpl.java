@@ -7,8 +7,10 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetMultiNode;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
@@ -83,9 +85,24 @@ public class FacetDirNodeImpl
 	}
 
 	@Override
-	public void getFacetValuesAndCounts() {
-		// TODO Auto-generated method stub
+	public DataQuery<FacetValueCount> facetValueCounts() {
+		FacetedQueryResource facetedQuery = this.parent().query();
+
+//		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
+		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+
+		TernaryRelation tr = qgen.getFacetValues(this.parent().query().focus(), this.parent(), !this.isFwd, null, null);
 		
+		
+		BasicPattern bgp = new BasicPattern();
+		bgp.add(new Triple(tr.getS(), Vocab.value.asNode(), tr.getP()));
+		bgp.add(new Triple(tr.getS(), Vocab.facetCount.asNode(), tr.getO()));
+		Template template = new Template(bgp);
+		
+		DataQuery<FacetValueCount> result = new DataQueryImpl<>(parent.query().connection(), tr.getS(), tr.getElement(), template, FacetValueCount.class);
+
+		return result;
 	}
 
 

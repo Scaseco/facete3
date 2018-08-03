@@ -7,7 +7,7 @@ import org.apache.jena.rdf.model.Resource;
 public interface FacetValueCount
 	extends Resource
 {
-	//String getPredicate();
+	Node getPredicate();
 	
 	Node getValue();
 	CountInfo getFocusCount();

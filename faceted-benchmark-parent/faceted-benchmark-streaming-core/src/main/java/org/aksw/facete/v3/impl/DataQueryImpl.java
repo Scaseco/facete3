@@ -37,6 +37,7 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.hobbit.benchmark.faceted_browsing.v2.main.QueryGroupExecutor;
 
 import com.google.common.collect.Iterators;
 
@@ -168,7 +169,10 @@ public class DataQueryImpl<T extends RDFNode>
 			Generator<Var> varGen = VarGeneratorBlacklist.create(allVars);
 			Var innerRootVar = varGen.next();
 			
-			
+//			if(baseQueryPattern instanceof ElementSubQuery) {
+//				QueryGroupExecutor.createQueryGroup()
+//
+//			}
 			
 			Element innerE = ElementUtils.createRenamedElement(baseQueryPattern, Collections.singletonMap(rootVar, innerRootVar));
 

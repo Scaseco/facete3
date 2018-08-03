@@ -186,8 +186,8 @@ public class FacetNodeImpl
 
 	@Override
 	public FacetNode root() {
-		// TODO Auto-generated method stub
-		return null;
+		FacetNode result = FacetedQueryGenerator.getRoot(this, FacetNode::parent);
+		return result;
 	}
 
 	@Override

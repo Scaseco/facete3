@@ -9,6 +9,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.engine.CountUtils;
 
 import com.google.common.collect.Range;
@@ -23,13 +24,16 @@ public class FacetCountImpl
 
 	@Override
 	public Node getPredicate() {
-		return getProperty(RDF.predicate).getObject().asNode();
+		return this.asNode();
+//		return getProperty(RDF.predicate).getObject().asNode();
 	}
 
 	@Override
 	public CountInfo getDistinctValueCount() {
-		Long min = Optional.ofNullable(getProperty(OWL.minCardinality)).map(Statement::getLong).orElse(null);
-		Long max = Optional.ofNullable(getProperty(OWL.maxCardinality)).map(Statement::getLong).orElse(null);
+		Long min = Optional.ofNullable(getProperty(Vocab.facetCount)).map(Statement::getLong).orElse(null);
+		Long max = min;
+//		Long min = Optional.ofNullable(getProperty(OWL.minCardinality)).map(Statement::getLong).orElse(null);
+//		Long max = Optional.ofNullable(getProperty(OWL.maxCardinality)).map(Statement::getLong).orElse(null);
 	
 		Range<Long> range;
 		if(min == null) {
@@ -41,4 +45,11 @@ public class FacetCountImpl
 		CountInfo result = CountUtils.toCountInfo(range);
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return "FacetCountImpl [" + getPredicate() + ": " + getDistinctValueCount() + "]";
+	}
+	
+	
 }
