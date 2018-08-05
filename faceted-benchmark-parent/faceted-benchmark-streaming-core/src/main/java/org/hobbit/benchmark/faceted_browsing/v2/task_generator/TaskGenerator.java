@@ -106,7 +106,90 @@ public class TaskGenerator {
 		}
 	}
 
+
+	/** 
+     * Transition of a selected property value class to one of its subclasses \\
+     * (For a selected class that a property value should belong to, select a subclass) 
+	 */
+	public static void applyCp5(FacetNode fn) {
+		// TODO What is the best way to deal with hierarchical data?
+		// Probably we need some wrapper object with the two straight forward implementations:
+		// fetch relations on demand, and fetch the whole hierarchy once and answer queries from cache
+
+	}
+	
+   /**
+    * Change of bounds of directly related numerical data\\
+    * (Find all instances that additionally have numerical data lying within a certain interval behind a directly related property)
+    * 
+    * @param fn
+    */
+	public static void applyCp6(FacetNode fn) {
 		
+	}
+	
+
+	/**
+     * Change of numerical data related via a property path of length strictly greater than one edge\\
+     * (Similar to 7, but now the numerical data is indirectly related to the instances via a property path)
+	 * 
+	 * @param fn
+	 */
+	public static void applyCp7(FacetNode fn) {
+		
+	}
+
+	
+	/**
+	 * Restrictions of numerical data where multiple dimensions are involved\\
+     * (Choke points 7 and 8 under the assumption that bounds have been chosen for more than one dimension of numerical data, here, we count latitude and longitude numerical values together as one dimension)
+	 * 
+	 * @param fn
+	 */
+	public static void applyCp8(FacetNode fn) {
+		
+	}
+
+	/**
+	 * Unbounded intervals involved in numerical data
+     * (Choke points 7,8,9 when intervals are unbounded and only an upper or lower bound is chosen)
+	 */
+	public static void applyCp9(FacetNode fn) {
+		
+	}
+
+	/**
+	 * Undoing former restrictions to previous state\\
+	 * (Go back to instances of a previous step)
+	 * @param fn
+	 */
+	public static void applyCp10(FacetNode fn) {
+		
+	}
+
+	/**
+	 * Entity-type switch changing the solution space
+	 * (Change of the solution space while keeping the current filter selections)
+	 * @param fn
+	 */
+	public static void applyCp11(FacetNode fn) {
+		
+	}
+
+	
+	public static void applyCp12(FacetNode fn) {
+		
+	}
+
+	public static void applyCp13(FacetNode fn) {
+		
+	}
+
+	public static void applyCp14(FacetNode fn) {
+		
+	}
+
+	
 	
 	
 	
