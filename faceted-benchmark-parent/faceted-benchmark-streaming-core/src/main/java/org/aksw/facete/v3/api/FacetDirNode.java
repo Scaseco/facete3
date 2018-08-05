@@ -22,10 +22,12 @@ public interface FacetDirNode {
 	FacetMultiNode via(Node node);
 	FacetMultiNode via(Property property);
 	
+		
+	/** Facets - without counts */
+	DataQuery<?> facets();
 	
 	// Get the facets of this set of values with count of their distinct values
 	//Collection<FacetCount> getFacetsAndCounts();
-	
 	DataQuery<FacetCount> facetCounts();
 	
 	// Get the facets of this set of values with the counts referring the the query's focus

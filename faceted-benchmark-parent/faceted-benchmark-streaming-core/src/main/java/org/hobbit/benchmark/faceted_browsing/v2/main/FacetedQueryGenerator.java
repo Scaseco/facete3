@@ -164,6 +164,15 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
+	/**
+	 * Returns a binary relation with facet - facet value columns.
+	 * 
+	 * @param basePath
+	 * @param facetRelation
+	 * @param pVar
+	 * @param effectiveConstraints
+	 * @return
+	 */
 	public BinaryRelation getFacets(P basePath, BinaryRelation facetRelation, Var pVar, Set<Expr> effectiveConstraints) {
 		//ExprTransform exprTransform = new ExprTransformViaPathMapper<>(mapper);
 		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences();
@@ -234,6 +243,28 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
+	public UnaryRelation createConceptFacets(P path, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
+		Map<String, BinaryRelation> relations = getFacets(path, isReverse, false);
+	
+		UnaryRelation result = createConceptFacets(relations, pConstraint);
+		return result;
+	}
+	
+	public static UnaryRelation createConceptFacets(Map<String, BinaryRelation> relations, Concept pConstraint) {
+		List<Element> elements = relations.values().stream()
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(Relation::toBinaryRelation)
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+		
+		Element e = ElementUtils.union(elements);
+
+		UnaryRelation result = new Concept(e, Vars.p);
+		//BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
+
+		return result;
+	}
+
 	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, Concept pConstraint) {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relations.values().stream()
@@ -276,6 +307,27 @@ public class FacetedQueryGenerator<P> {
 
 	
 	
+    /** Create helper functions for filtering out the expressions that do not apply for a given path */
+	public boolean isExprExcluded(Expr expr, P path, boolean isReverse) {
+		boolean result = false;
+
+		// Find all constraints on successor paths
+		Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+
+		// Check if any parent of the path is the given path
+		for(P candPath : paths) {
+			P parentPath = pathAccessor.getParent(candPath);
+			boolean candIsReverse = pathAccessor.isReverse(candPath);
+			
+			// We need to exclude this constraint for the given path
+			if(path.equals(parentPath) && isReverse == candIsReverse) {
+				result = true;
+			}
+		}
+
+		return result;
+	}
+//	
 	/**
 	 * For the give path and direction, yield a map of binary relations for the corresponding facets.
 	 * An entry with key null indicates the predicate / distinct value count pairs with all constraints in place
@@ -288,6 +340,12 @@ public class FacetedQueryGenerator<P> {
 		
 		// Find all constraints on successor paths
 		SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
+//		for(Expr expr : constraints) {
+//			if(isExprExcluded(expr, path, isReverse)) {
+//				childPathToExprs.put(candPath, expr);
+//			}
+//		}
+		
 		for(Expr expr : constraints) {
 			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 
