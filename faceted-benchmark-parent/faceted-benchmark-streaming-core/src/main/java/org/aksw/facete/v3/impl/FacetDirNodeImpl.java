@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
@@ -80,7 +81,7 @@ public class FacetDirNodeImpl
 //		bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
 //		Template template = new Template(bgp);
 //		
-		DataQuery<FacetCount> result = new DataQueryImpl<>(parent.query().connection(), concept.getVar(), concept.getElement(), null, FacetCount.class);
+		DataQuery<?> result = new DataQueryImpl<>(parent.query().connection(), concept.getVar(), concept.getElement(), null, RDFNode.class);
 //
 		return result;
 	}

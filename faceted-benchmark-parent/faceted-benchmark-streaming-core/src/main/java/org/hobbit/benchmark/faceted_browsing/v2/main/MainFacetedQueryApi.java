@@ -66,15 +66,16 @@ public class MainFacetedQueryApi {
 //				.eq(NodeFactory.createURI("http://www.example.org/ThingA"))
 //			.end();
 
-		FacetNode facetNode = fq.root().fwd("http://www.opengis.net/ont/geosparql#geometry").one()
-				.constraints()
-					.exists()
-				.end();
+//		FacetNode facetNode = fq.root().fwd("http://www.opengis.net/ont/geosparql#geometry").one()
+//				.constraints()
+//					.exists()
+//				.end();
 
-		TaskGenerator.applyCp1(facetNode);
+		//TaskGenerator.applyCp1(facetNode);
+		TaskGenerator.applyCp4(fq.root());
 		
-		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
-		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());
+//		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
+//		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());
 		
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
 		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));
