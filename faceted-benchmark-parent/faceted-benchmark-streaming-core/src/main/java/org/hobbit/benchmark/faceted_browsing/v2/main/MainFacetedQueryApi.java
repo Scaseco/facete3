@@ -31,9 +31,9 @@ public class MainFacetedQueryApi {
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
 
-//		ReactiveSparqlUtils.execSelect(() -> 
-//			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
-//			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
+		ReactiveSparqlUtils.execSelect(() -> 
+			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
+			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
 //		ReactiveSparqlUtils.execSelect(() -> 
 //		conn.query("SELECT DISTINCT ?root {\n" + 

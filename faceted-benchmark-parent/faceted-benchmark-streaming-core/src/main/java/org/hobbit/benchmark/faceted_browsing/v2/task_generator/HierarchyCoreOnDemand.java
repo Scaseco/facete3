@@ -11,7 +11,6 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.syntax.ElementGroup;
 
 public class HierarchyCoreOnDemand
 	implements HierarchyCore
@@ -29,8 +28,19 @@ public class HierarchyCoreOnDemand
 		this.path = path;
 	}
 
+	@Override
+	public UnaryRelation roots() {
+		UnaryRelation result = createConceptForRoots(path);
+		return result;
+	}
+
 	/**
+	 * Below is wrong:
+	 * 
 	 * Roots are all nodes having no ancestor without parents
+	 * Reason for incorrectness: Consider a cycle "childCycle" which is connected to another cycle "rootCycle".
+	 * All members of "childCycle" would be incorrectly classified as roots.
+	 * 
 	 * 
 	 * <pre>
 	 * {@code
@@ -43,20 +53,26 @@ public class HierarchyCoreOnDemand
      * 
 	 * This means that every node in a cycle which does not have any parent outside of that cycle will become a root.
 	 */
-	@Override
-	public UnaryRelation roots() {
-		UnaryRelation result = createConceptForRoots(path);
-		return result;
-	}
 	
 	
+	/**
+	 * 
+	 * Roots are all nodes for which all parents occur as descendents - a node without a parent trivially satisfies this condition.
+	 * Conversely: root nodes are all nodes for which there is no parent that does not occur as a descendent
+     * SELECT DISTINCT ?root {
+     *   [] <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?root
+	 *   FILTER(NOT EXISTS { ?root <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent . FILTER(NOT EXISTS {?parent (<http://www.w3.org/2000/01/rdf-schema#subClassOf>)+ ?root }) . })\n" + 
+     * }
+	 * 
+	 * 
+	 */
 	public static UnaryRelation createConceptForRoots(Path path) {
 		Element e = ElementUtils.createElementGroup(
 			ElementUtils.createElement(new TriplePath(NodeFactory.createBlankNode(), path, root)),
 			new ElementFilter(new E_NotExists(
 				ElementUtils.createElementGroup(
-					ElementUtils.createElement(new TriplePath(root, PathFactory.pathOneOrMore1(path), ancestor)),
-					new ElementFilter(new E_NotExists(ElementUtils.createElementGroup(ElementUtils.createElement(new TriplePath(ancestor, path, parent)))))
+					ElementUtils.createElement(new TriplePath(root, path, parent)),
+					new ElementFilter(new E_NotExists(ElementUtils.createElementGroup(ElementUtils.createElement(new TriplePath(parent, PathFactory.pathOneOrMore1(path), root)))))
 		))));
 		
 		System.out.println(e);
