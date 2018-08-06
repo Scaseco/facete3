@@ -5,16 +5,17 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 
 public class MainFacetedQueryApi {
@@ -29,7 +30,24 @@ public class MainFacetedQueryApi {
 		
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
-		
+
+		ReactiveSparqlUtils.execSelect(() -> 
+			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createRootConcept(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
+			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
+
+//		ReactiveSparqlUtils.execSelect(() -> 
+//		conn.query("SELECT DISTINCT ?root {\n" + 
+//				"  [] <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?root\n" + 
+//				"  FILTER(NOT EXISTS { ?root (<http://www.w3.org/2000/01/rdf-schema#subClassOf>)+ ?ancestor . FILTER(NOT EXISTS {?ancestor <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent }) . })\n" + 
+//				"}")).toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
+
+//		ReactiveSparqlUtils.execSelect(() -> 
+//		conn.query("SELECT ?root {\n" + 
+//				"  [] <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?root\n" + 
+//				"    FILTER(NOT EXISTS { ?root (<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?ancestor . ?ancestor <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent . FILTER(?root = ?ancestor) . })\n" + 
+//				"}")).toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
+
+		System.out.println("Done listing roots");
 		fq
 			.connection(conn)
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));

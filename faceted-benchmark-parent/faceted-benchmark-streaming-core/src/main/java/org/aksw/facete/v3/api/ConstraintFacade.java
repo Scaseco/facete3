@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.api;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.apache.jena.graph.Node;
 
@@ -14,6 +15,10 @@ import org.apache.jena.graph.Node;
  */
 public interface ConstraintFacade<B> {
 	Collection<FacetConstraint> list();
+	
+	default Stream<FacetConstraint> stream() {
+		return list().stream();
+	}
 	
 	/** Add an anonymous equal constraint */
 	ConstraintFacade<B> eq(Node node);

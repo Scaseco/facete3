@@ -1,12 +1,19 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +69,7 @@ public class TaskGenerator {
 			logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
 		}
 	}
-		
+
 
 	/**
 	 * (Find all instances which additionally have a certain value at the end of a property path)
@@ -108,10 +115,27 @@ public class TaskGenerator {
 
 
 	/** 
-     * Transition of a selected property value class to one of its subclasses \\
+     * Transition of a selected property value class to one of its subclasses
      * (For a selected class that a property value should belong to, select a subclass) 
 	 */
 	public static void applyCp5(FacetNode fn) {
+		// Applicability check: There must be at least constraint on the type facet
+		List<Node> typeConstraints = fn.root().fwd(RDF.type).one().constraints().stream()
+				.map(FacetConstraint::expr)
+				.filter(e -> e instanceof E_Equals)
+				.map(ExprUtils::tryGetVarConst)
+				.filter(e -> e != null)
+				.map(Entry::getValue)
+				.collect(Collectors.toList());
+				
+		//boolean isApplicable = !typeConstraints.isEmpty();
+		
+		// TODO Use deterministic random function here
+		// Pick a random type for which there is a subclass
+		Collections.shuffle(typeConstraints);
+
+		
+		
 		// TODO What is the best way to deal with hierarchical data?
 		// Probably we need some wrapper object with the two straight forward implementations:
 		// fetch relations on demand, and fetch the whole hierarchy once and answer queries from cache
@@ -173,18 +197,35 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public static void applyCp11(FacetNode fn) {
+		// Iterate the available types until we find one for whose corresponding
+		// concept there is a path from the current concept
 		
 	}
 
-	
+	/**
+	 * Complicated property paths or circles
+	 * (Choke points 3 and 4 with advanced property paths involved)
+	 * 
+	 * @param fn
+	 */
 	public static void applyCp12(FacetNode fn) {
 		
 	}
 
+	/**
+	 * Inverse direction of an edge involved in property path based transition
+	 * (Property path value and property value based transitions where the property path involves traversing edges in the inverse direction)
+	 * @param fn
+	 */
 	public static void applyCp13(FacetNode fn) {
 		
 	}
 
+	/**
+	 * Numerical restriction over a property path involving the inverse direction of an edge
+	 * (Additional numerical data restrictions at the end of a property path where the property path involves traversing edges in the inverse direction)
+	 * @param fn
+	 */
 	public static void applyCp14(FacetNode fn) {
 		
 	}

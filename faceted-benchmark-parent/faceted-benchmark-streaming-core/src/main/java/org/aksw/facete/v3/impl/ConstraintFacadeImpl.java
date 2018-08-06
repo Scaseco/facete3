@@ -25,14 +25,16 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	
 	@Override
 	public Collection<FacetConstraint> list() {
-		// TODO Auto-generated method stub
-		return null;
+		Resource modelRoot = parent.query().modelRoot();
+		Set<FacetConstraint> set = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
+
+		return set;
 	}
 	
 	@Override
 	public ConstraintFacade<B> exists() {
 		Resource modelRoot = parent.query().modelRoot();
-		Set<FacetConstraint> set = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
+		Collection<FacetConstraint> set = list();
 		
 		FacetConstraint c = modelRoot.getModel().createResource().as(FacetConstraint.class);
 		c.expr(new E_Bound(NodeValue.makeNode(parent.state().asNode())));

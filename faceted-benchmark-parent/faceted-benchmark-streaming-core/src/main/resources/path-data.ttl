@@ -26,3 +26,22 @@ eg:ThingA
 eg:ThingB
   a owl:Class ;
   rdfs:label "ThingB" .
+
+eg:ThingC
+  a owl:Class ;
+  rdfs:label "ThingC" .
+  
+eg:ThingD
+  a owl:Class ;
+  rdfs:label "ThingC" .
+
+
+eg:ThingB rdfs:subClassOf eg:ThingA .
+eg:ThingC rdfs:subClassOf eg:ThingB .
+eg:ThingA rdfs:subClassOf eg:ThingC .
+
+eg:ThingD rdfs:subClassOf eg:ThingC .
+
+eg:ThingX rdfs:subClassOf eg:ThingY .
+
+eg:ThingZ rdfs:subClassOf eg:ThingZ .
