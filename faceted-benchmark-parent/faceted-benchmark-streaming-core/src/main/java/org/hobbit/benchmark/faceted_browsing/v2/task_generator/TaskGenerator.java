@@ -11,9 +11,13 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +108,7 @@ public class TaskGenerator {
 		
 		// TODO Exclude values that denote meta vocabulary, such as 'owl:Class', 'rdf:Property' etc
 		FacetNode typeFacetNode = fn.fwd(RDF.type).one();
-		Node node = typeFacetNode.remainingValues().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+		Node node = typeFacetNode.remainingValues().exclude(OWL.Class).sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
 		if(node != null) {
 			typeFacetNode.constraints().eq(node);
 			
@@ -123,6 +127,10 @@ public class TaskGenerator {
 		List<Node> typeConstraints = fn.root().fwd(RDF.type).one().constraints().stream()
 				.map(FacetConstraint::expr)
 				.filter(e -> e instanceof E_Equals)
+				// HACK To get rid of blank nodes in exprs
+				.map(e -> e.applyNodeTransform(n -> n.isBlank() ? Var.alloc("hack") : n))
+//				.peek(x -> System.out.println("Peek: " + x))
+//				.map(e -> new E_Equals(new ExprVar("hack"), ))
 				.map(ExprUtils::tryGetVarConst)
 				.filter(e -> e != null)
 				.map(Entry::getValue)
@@ -134,6 +142,7 @@ public class TaskGenerator {
 		// Pick a random type for which there is a subclass
 		Collections.shuffle(typeConstraints);
 
+		
 		
 		
 		// TODO What is the best way to deal with hierarchical data?

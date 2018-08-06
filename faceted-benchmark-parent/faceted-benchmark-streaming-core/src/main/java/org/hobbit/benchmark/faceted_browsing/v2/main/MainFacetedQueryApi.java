@@ -31,9 +31,9 @@ public class MainFacetedQueryApi {
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
 
-		ReactiveSparqlUtils.execSelect(() -> 
-			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createRootConcept(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
-			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
+//		ReactiveSparqlUtils.execSelect(() -> 
+//			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
+//			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
 //		ReactiveSparqlUtils.execSelect(() -> 
 //		conn.query("SELECT DISTINCT ?root {\n" + 
@@ -52,16 +52,16 @@ public class MainFacetedQueryApi {
 			.connection(conn)
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
 		
-		ReactiveSparqlUtils.execSelect(() -> 
-		conn.query("SELECT  *\n" + 
-				"WHERE\n" + 
-				"  { { ?v_1  a                     ?v_2 . \n" + 
-				"      ?v_2  a                     ?v_3\n" + 
-				"      FILTER ( ?v_3 = <http://www.w3.org/2002/07/owl#Class> )\n" + 
-				"    }\n" + 
-				"    ?v_1  ?p  ?o\n" + 
-				"  }\n" + 
-				"")).toList().blockingGet().forEach(x -> System.out.println("Item: " + x));
+//		ReactiveSparqlUtils.execSelect(() -> 
+//		conn.query("SELECT  *\n" + 
+//				"WHERE\n" + 
+//				"  { { ?v_1  a                     ?v_2 . \n" + 
+//				"      ?v_2  a                     ?v_3\n" + 
+//				"      FILTER ( ?v_3 = <http://www.w3.org/2002/07/owl#Class> )\n" + 
+//				"    }\n" + 
+//				"    ?v_1  ?p  ?o\n" + 
+//				"  }\n" + 
+//				"")).toList().blockingGet().forEach(x -> System.out.println("Item: " + x));
 		// One .out() method moves along a given property
 		// Another .out() method makes the api state head 'forth' or 'back' and the getFacetCounts method
 		// then yields these facets
@@ -90,8 +90,12 @@ public class MainFacetedQueryApi {
 //				.end();
 
 		//TaskGenerator.applyCp1(facetNode);
-		TaskGenerator.applyCp4(fq.root());
 		
+		TaskGenerator.applyCp4(fq.root());
+		TaskGenerator.applyCp5(fq.root());
+
+		
+		if(false) { 
 //		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
 //		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());
 		
@@ -113,7 +117,7 @@ public class MainFacetedQueryApi {
 		
 		// Test whether we get the correct alias
 		System.out.println("Alias: " + fq.root().fwd(RDF.type).one().alias());
-		
+		}
 		
 		//fq.root().fwd(RDF.type).one().bwd(RDF.type).one().as("foobar");
 		

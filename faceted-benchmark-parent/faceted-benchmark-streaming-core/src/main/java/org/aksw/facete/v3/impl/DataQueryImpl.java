@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -11,6 +12,8 @@ import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -37,7 +40,6 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
-import org.hobbit.benchmark.faceted_browsing.v2.main.QueryGroupExecutor;
 
 import com.google.common.collect.Iterators;
 
@@ -59,6 +61,8 @@ public class DataQueryImpl<T extends RDFNode>
 
 	protected Long limit;
 	protected Long offset;
+	
+	protected UnaryRelation filter;
 	
 	protected boolean sample;
 	protected Class<T> resultClass;
@@ -125,11 +129,14 @@ public class DataQueryImpl<T extends RDFNode>
 
 
 	@Override
-	public DataQuery filter(UnaryRelation concept) {
+	public DataQuery<T> filter(UnaryRelation concept) {
+		if(filter == null) {
+			filter = concept;
+		} else {
+			filter = filter.joinOn(filter.getVar()).with(concept).toUnaryRelation();
+		}
 		
-		
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 
@@ -160,6 +167,11 @@ public class DataQueryImpl<T extends RDFNode>
 			query.getProject().add(v);
 		}
 		
+		
+		Element effectivePattern = filter == null
+				? baseQueryPattern
+				: new RelationImpl(baseQueryPattern, new ArrayList<>(PatternVars.vars(baseQueryPattern))).joinOn((Var)rootVar).with(filter).getElement()
+				;
 
 		if(sample) {
 			Set<Var> allVars = new LinkedHashSet<>();
@@ -174,7 +186,7 @@ public class DataQueryImpl<T extends RDFNode>
 //
 //			}
 			
-			Element innerE = ElementUtils.createRenamedElement(baseQueryPattern, Collections.singletonMap(rootVar, innerRootVar));
+			Element innerE = ElementUtils.createRenamedElement(effectivePattern, Collections.singletonMap(rootVar, innerRootVar));
 
 			
 			Query inner = new Query();
@@ -184,7 +196,7 @@ public class DataQueryImpl<T extends RDFNode>
 			inner.getProject().add((Var)rootVar, agg);
 			QueryUtils.applySlice(inner, offset, limit, false);
 
-			Element e = ElementUtils.groupIfNeeded(new ElementSubQuery(inner), baseQueryPattern);
+			Element e = ElementUtils.groupIfNeeded(new ElementSubQuery(inner), effectivePattern);
 						
 			query.setQueryPattern(e);
 		} else {
@@ -192,7 +204,7 @@ public class DataQueryImpl<T extends RDFNode>
 			// TODO Controlling distinct should be possible on this class
 			query.setDistinct(true);
 	
-			query.setQueryPattern(baseQueryPattern);
+			query.setQueryPattern(effectivePattern);
 			QueryUtils.applySlice(query, offset, limit, false);
 		}
 		

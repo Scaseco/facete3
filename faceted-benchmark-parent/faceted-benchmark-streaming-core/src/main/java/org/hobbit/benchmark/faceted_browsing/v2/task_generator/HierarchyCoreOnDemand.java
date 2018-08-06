@@ -45,12 +45,12 @@ public class HierarchyCoreOnDemand
 	 */
 	@Override
 	public UnaryRelation roots() {
-		UnaryRelation result = createRootConcept(path);
+		UnaryRelation result = createConceptForRoots(path);
 		return result;
 	}
 	
 	
-	public static UnaryRelation createRootConcept(Path path) {
+	public static UnaryRelation createConceptForRoots(Path path) {
 		Element e = ElementUtils.createElementGroup(
 			ElementUtils.createElement(new TriplePath(NodeFactory.createBlankNode(), path, root)),
 			new ElementFilter(new E_NotExists(

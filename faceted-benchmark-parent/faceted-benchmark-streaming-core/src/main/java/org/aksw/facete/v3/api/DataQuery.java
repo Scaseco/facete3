@@ -1,13 +1,23 @@
 package org.aksw.facete.v3.api;
 
+import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.utils.ExprListUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_NotOneOf;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.util.NodeUtils;
 
 import io.reactivex.Flowable;
 
@@ -43,7 +53,25 @@ public interface DataQuery<T extends RDFNode> {
 	
 	// Return the same data query with intersection on the given concept
 	DataQuery<T> filter(UnaryRelation concept);
-		
+
+	
+	default DataQuery<T> exclude(Iterable<Node> nodes) {
+		Expr e = new E_NotOneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes));
+		return filter(new Concept(new ElementFilter(e), Vars.s));				
+	}
+
+	default DataQuery<T> exclude(Node ... nodes) {
+		return exclude(Arrays.asList(nodes));
+	}
+
+	default DataQuery<T> exclude(RDFNode ... rdfNodes) {
+		return exclude(Arrays.asList(rdfNodes).stream().map(RDFNode::asNode).collect(Collectors.toList()));
+	}
+
+	default DataQuery<T> exclude(String ... iris) {
+		return exclude(NodeUtils.convertToNodes(Arrays.asList(iris)));
+	}
+	
 	DataQuery<T> limit(Long limit);
 
 	default DataQuery<T> limit(Integer limit) {
@@ -58,6 +86,8 @@ public interface DataQuery<T extends RDFNode> {
 
 	DataQuery<T> sample(boolean onOrOff);
 	boolean sample();
+	
+	
 	
 	/**
 	 * Return a SPARQL construct query together with the designated root variable
