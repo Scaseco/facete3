@@ -4,9 +4,14 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -17,6 +22,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.ConceptAnalyser;
 
 public class MainFacetedQueryApi {
 
@@ -51,6 +57,10 @@ public class MainFacetedQueryApi {
 		fq
 			.connection(conn)
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
+		
+		
+		BinaryRelation br = new BinaryRelationImpl(ElementUtils.createElement(new Triple(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
+		System.out.println("Analysis: " + ConceptAnalyser.checkDatatypes(br).connection(conn).exec().toList().blockingGet());
 		
 //		ReactiveSparqlUtils.execSelect(() -> 
 //		conn.query("SELECT  *\n" + 
@@ -91,8 +101,8 @@ public class MainFacetedQueryApi {
 
 		//TaskGenerator.applyCp1(facetNode);
 		
-		TaskGenerator.applyCp4(fq.root());
-		TaskGenerator.applyCp5(fq.root());
+		//TaskGenerator.applyCp4(fq.root());
+		TaskGenerator.applyCp6(fq.root());
 
 		
 		if(false) { 

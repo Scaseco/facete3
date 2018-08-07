@@ -16,6 +16,13 @@ public class Vocab {
 	public static final Property facetCount = property("facetCount");
 	public static final Property facetValueCount = property("facetValueCount");
 
+	
+	public static final Property totalValueCount = property("totalValueCount");
+	public static final Property distinctValueCount = property("distinctValueCount");
+	public static final Property min = property("min");
+	public static final Property max = property("max");
+	public static final Property groupKey = property("groupKey");
+
 	public static Property property(String localName) {
 		return ResourceFactory.createProperty("http://aksw.org/adhoc/ontology/" + localName);
 	}

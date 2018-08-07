@@ -57,14 +57,16 @@ public class HierarchyCoreOnDemand
 	
 	/**
 	 * 
-	 * Roots are all nodes for which all parents occur as descendents - a node without a parent trivially satisfies this condition.
+	 * Roots (of a path) are all nodes for which all parents occur as descendents - a node without a parent trivially satisfies this condition.
 	 * Conversely: root nodes are all nodes for which there is no parent that does not occur as a descendent
      * SELECT DISTINCT ?root {
      *   [] <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?root
 	 *   FILTER(NOT EXISTS { ?root <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent . FILTER(NOT EXISTS {?parent (<http://www.w3.org/2000/01/rdf-schema#subClassOf>)+ ?root }) . })\n" + 
      * }
 	 * 
-	 * 
+	 * Note, that the roots for a given concept and a path is
+	 *   { { [] path ?root } UNION { concept(?root) } FILTER(NOT EXISTS ....) }
+	 * i.e. nodes that are not part of the hierarchy become roots
 	 */
 	public static UnaryRelation createConceptForRoots(Path path) {
 		Element e = ElementUtils.createElementGroup(
@@ -75,12 +77,14 @@ public class HierarchyCoreOnDemand
 					new ElementFilter(new E_NotExists(ElementUtils.createElementGroup(ElementUtils.createElement(new TriplePath(parent, PathFactory.pathOneOrMore1(path), root)))))
 		))));
 		
-		System.out.println(e);
+//		System.out.println(e);
 		
 		UnaryRelation result = new Concept(e, root);
 		return result;
 	}
 
+	
+	
 	/**
 	 * If any child is part of a cycle, all members of the cycle become children
 	 * 
@@ -89,8 +93,9 @@ public class HierarchyCoreOnDemand
 	 */
 	@Override
 	public UnaryRelation children(UnaryRelation nodes) {
-		return null;
-	
+		
+		
+		return null;	
 	}
 
 	@Override

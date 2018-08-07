@@ -12,6 +12,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
@@ -55,6 +56,10 @@ public interface DataQuery<T extends RDFNode> {
 	DataQuery<T> filter(UnaryRelation concept);
 
 	
+	DataQuery<T> connection(SparqlQueryConnection connection);
+	SparqlQueryConnection connection();
+	
+	
 	default DataQuery<T> exclude(Iterable<Node> nodes) {
 		Expr e = new E_NotOneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes));
 		return filter(new Concept(new ElementFilter(e), Vars.s));				
@@ -97,5 +102,7 @@ public interface DataQuery<T extends RDFNode> {
 	Entry<Var, Query> toConstructQuery();
 
 	
+	UnaryRelation baseConcept();
+
 	Flowable<T> exec();
 }

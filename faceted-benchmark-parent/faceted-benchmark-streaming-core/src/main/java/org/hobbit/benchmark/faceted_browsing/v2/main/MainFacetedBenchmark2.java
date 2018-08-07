@@ -119,9 +119,9 @@ public class MainFacetedBenchmark2 {
 	// gremlin uses 'is' for inequality comparison: count().is(gte(2))
 	public static void main(String[] args) throws IOException {		
 		
-		Concept c = Concept.create("?s a <http://example.org/Person>", "s");
-		Query q = ConceptAnalyser.checkDatatypes(c);
-		System.out.println(q);
+//		Concept c = Concept.create("?s a <http://example.org/Person>", "s");
+//		Query q = ConceptAnalyser.checkDatatypes(c);
+//		System.out.println(q);
 
 				
 		Envelope env = new Envelope(0, 10, 0, 10);

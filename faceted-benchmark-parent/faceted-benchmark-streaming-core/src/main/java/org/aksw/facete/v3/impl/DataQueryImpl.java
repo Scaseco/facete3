@@ -12,7 +12,6 @@ import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
@@ -76,6 +75,17 @@ public class DataQueryImpl<T extends RDFNode>
 		this.resultClass = resultClass;
 	}
 
+	@Override
+	public SparqlQueryConnection connection() {
+		return conn;
+	}
+	
+	@Override
+	public DataQuery<T> connection(SparqlQueryConnection connection) {
+		this.conn = connection;
+		return this;
+	}
+	
 	public <U extends RDFNode> DataQuery<U> as(Class<U> clazz) {
 		return new DataQueryImpl<U>(conn, rootVar, baseQueryPattern, template, clazz);
 	}
@@ -241,6 +251,17 @@ public class DataQueryImpl<T extends RDFNode>
 			})
 			.map(r -> r.as(resultClass));
 		
+		return result;
+	}
+
+	@Override
+	public UnaryRelation baseConcept() {
+//		Element effectivePattern = filter == null
+//				? baseQueryPattern
+//				: new RelationImpl(baseQueryPattern, new ArrayList<>(PatternVars.vars(baseQueryPattern))).joinOn((Var)rootVar).with(filter).getElement()
+//				;
+
+		UnaryRelation result = new Concept(baseQueryPattern, (Var)rootVar);
 		return result;
 	}
 	

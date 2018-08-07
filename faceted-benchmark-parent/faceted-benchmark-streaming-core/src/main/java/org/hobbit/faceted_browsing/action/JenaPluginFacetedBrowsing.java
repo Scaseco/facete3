@@ -14,6 +14,8 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.Dimension;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.DimensionImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummaryImpl;
 
 public class JenaPluginFacetedBrowsing {
 	public static void init() {
@@ -34,5 +36,9 @@ public class JenaPluginFacetedBrowsing {
 	
 		p.add(FacetCount.class, new SimpleImplementation(FacetCountImpl::new));
 		p.add(FacetValueCount.class, new SimpleImplementation(FacetValueCountImpl::new));
+		
+
+		// TODO Make an interface
+		p.add(SetSummary.class, new SimpleImplementation(SetSummaryImpl::new));
 	}
 }

@@ -11,14 +11,14 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.ConceptAnalyser;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,6 +143,8 @@ public class TaskGenerator {
 		Collections.shuffle(typeConstraints);
 
 		
+		//HierarchyCoreOnDemand.
+		
 		
 		
 		// TODO What is the best way to deal with hierarchical data?
@@ -158,7 +160,10 @@ public class TaskGenerator {
     * @param fn
     */
 	public static void applyCp6(FacetNode fn) {
+		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.remainingValues().baseConcept())
+		.connection(fn.query().connection()).exec().blockingFirst();
 		
+		System.out.println("Summary: " + summary);
 	}
 	
 
