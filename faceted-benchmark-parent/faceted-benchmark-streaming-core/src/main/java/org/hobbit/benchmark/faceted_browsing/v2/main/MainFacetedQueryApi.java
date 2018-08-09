@@ -8,7 +8,9 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Triple;
@@ -40,14 +42,15 @@ public class MainFacetedQueryApi {
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
 
-		
-		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
 
 		
 		ReactiveSparqlUtils.execSelect(() -> 
 			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
 			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
+		
+		
+		
 //		ReactiveSparqlUtils.execSelect(() -> 
 //		conn.query("SELECT DISTINCT ?root {\n" + 
 //				"  [] <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?root\n" + 
@@ -107,7 +110,9 @@ public class MainFacetedQueryApi {
 		//TaskGenerator.applyCp1(facetNode);
 		
 		//TaskGenerator.applyCp4(fq.root());
-		TaskGenerator.applyCp6(fq.root());
+
+		TaskGenerator taskGenerator = TaskGenerator.configure(conn);
+		taskGenerator.applyCp6(fq.root());
 
 		
 		//ConceptPathFinder.

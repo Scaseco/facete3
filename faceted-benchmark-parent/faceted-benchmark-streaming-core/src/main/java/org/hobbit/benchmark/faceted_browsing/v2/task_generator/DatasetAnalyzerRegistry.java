@@ -138,7 +138,7 @@ import io.reactivex.Flowable;
 
 public class DatasetAnalyzerRegistry {
 
-	public static Flowable<Resource> analyzeNumericProperties(SparqlQueryConnection conn) {
+	public static Flowable<SetSummary> analyzeNumericProperties(SparqlQueryConnection conn) {
 		Model model = ModelFactory.createDefaultModel();
 
 		model.add(RDFDataMgr.loadModel("xsd-facets.ttl"));
@@ -159,7 +159,7 @@ public class DatasetAnalyzerRegistry {
 		
 		
 		String numericRangeQueryStr = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?p { ?p rdfs:range [ rdfs:subClassOf* xsd:numeric ] }";
-		Flowable<Resource> result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
+		Flowable<SetSummary> result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
 			.map(b -> b.getResource("p").as(SetSummary.class));
 
 				 

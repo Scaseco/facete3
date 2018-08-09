@@ -9,15 +9,25 @@ import java.util.stream.Stream;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_OneOf;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.ConceptAnalyser;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +36,28 @@ public class TaskGenerator {
 
 	private static final Logger logger = LoggerFactory.getLogger(TaskGenerator.class);
 	
+	protected List<SetSummary> numericProperties;
+	
 	protected RDFConnection conn;
 	
 	
-	public TaskGenerator(RDFConnection conn) {
+	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties) {
 		this.conn = conn;
+		this.numericProperties = numericProperties;
 	}
 
+	
+	public static TaskGenerator configure(RDFConnection conn) {
+		
+		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
+
+		
+		
+//		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
+
+		TaskGenerator result = new TaskGenerator(conn, numericProperties);
+		return result;
+	}
 	
 	
 	public Stream<Query> generate() {
@@ -160,11 +185,30 @@ public class TaskGenerator {
     * 
     * @param fn
     */
-	public static void applyCp6(FacetNode fn) {
-		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
-		.connection(fn.query().connection()).exec().blockingFirst();
+	public void applyCp6(FacetNode fn) {
+
+		// The concept is the set of values that appear as values of numeric properties
+		UnaryRelation numericValuesConcept = new Concept(
+			ElementUtils.createElementGroup(
+				ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
+				new ElementFilter(new E_OneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(numericProperties.stream().map(RDFNode::asNode).collect(Collectors.toSet()))))),
+			Vars.o);
 		
-		System.out.println("CP6 Summary: " + summary);
+		UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
+		
+		System.out.println("Paths: " + ConceptPathFinder.findPaths(
+				new QueryExecutionFactorySparqlQueryConnection(conn),
+				valuesConcept,
+				numericValuesConcept,
+				100,
+				100
+			));
+
+		
+//		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
+//		.connection(fn.query().connection()).exec().blockingFirst();
+//		
+//		System.out.println("CP6 Summary: " + summary);
 	}
 	
 
