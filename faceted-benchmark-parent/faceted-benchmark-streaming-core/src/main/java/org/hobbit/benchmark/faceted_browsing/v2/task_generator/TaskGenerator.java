@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -10,6 +11,7 @@ import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
@@ -40,10 +42,13 @@ public class TaskGenerator {
 	
 	protected RDFConnection conn;
 	
+	protected Random rand;
+	
 	
 	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties) {
 		this.conn = conn;
 		this.numericProperties = numericProperties;
+		this.rand = new Random(1000);
 	}
 
 	
@@ -187,23 +192,33 @@ public class TaskGenerator {
     */
 	public void applyCp6(FacetNode fn) {
 
-		// The concept is the set of values that appear as values of numeric properties
+		// The source concept denotes the set of resources matching the facet constraints
+		UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
+
+		// The target concept denotes the set of resources carrying numeric properties
 		UnaryRelation numericValuesConcept = new Concept(
 			ElementUtils.createElementGroup(
 				ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
 				new ElementFilter(new E_OneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(numericProperties.stream().map(RDFNode::asNode).collect(Collectors.toSet()))))),
-			Vars.o);
-		
-		UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
-		
-		System.out.println("Paths: " + ConceptPathFinder.findPaths(
+			Vars.s);
+				
+		List<Path> paths = ConceptPathFinder.findPaths(
 				new QueryExecutionFactorySparqlQueryConnection(conn),
 				valuesConcept,
 				numericValuesConcept,
 				100,
-				100
-			));
-
+				100);
+	
+		// Choose a path at random
+		if(!paths.isEmpty()) {
+			int index = rand.nextInt(paths.size());
+			Path path = paths.get(index);
+		
+			FacetNode target = fn.nav(Path.toJena(path));
+			System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
+		}
+		
+		
 		
 //		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
 //		.connection(fn.query().connection()).exec().blockingFirst();
