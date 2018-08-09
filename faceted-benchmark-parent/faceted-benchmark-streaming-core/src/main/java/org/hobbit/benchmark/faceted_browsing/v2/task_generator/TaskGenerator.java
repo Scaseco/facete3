@@ -11,6 +11,7 @@ import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -195,11 +196,15 @@ public class TaskGenerator {
 		// The source concept denotes the set of resources matching the facet constraints
 		UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
 
+		UnaryRelation numRel = new Concept(
+				new ElementFilter(new E_OneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(numericProperties.stream().map(RDFNode::asNode).collect(Collectors.toSet())))),
+				Vars.p);
+		
 		// The target concept denotes the set of resources carrying numeric properties
 		UnaryRelation numericValuesConcept = new Concept(
 			ElementUtils.createElementGroup(
 				ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
-				new ElementFilter(new E_OneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(numericProperties.stream().map(RDFNode::asNode).collect(Collectors.toSet()))))),
+				numRel.getElement()),
 			Vars.s);
 				
 		List<Path> paths = ConceptPathFinder.findPaths(
@@ -210,14 +215,28 @@ public class TaskGenerator {
 				100);
 	
 		// Choose a path at random
+		
+		FacetNode target = null;
 		if(!paths.isEmpty()) {
 			int index = rand.nextInt(paths.size());
 			Path path = paths.get(index);
 		
-			FacetNode target = fn.nav(Path.toJena(path));
-			System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
+			target = fn.nav(Path.toJena(path));
 		}
-		
+
+		if(target != null) {
+			Node p = target.fwd().facets().filter(numRel).sample(true).exec().map(n -> n.asNode()).firstElement().blockingGet();
+			
+			System.out.println("Chose numeric property " + p);
+			//System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
+
+			// Sample the set of values and create a range constraint from it
+			
+			FacetNode v = target.fwd(p).one();
+			List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
+
+			System.out.println("Values: " + vals);
+		}
 		
 		
 //		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
