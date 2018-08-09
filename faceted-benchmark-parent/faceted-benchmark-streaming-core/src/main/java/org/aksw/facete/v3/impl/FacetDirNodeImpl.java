@@ -10,6 +10,7 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.graph.Node;
@@ -134,6 +135,19 @@ public class FacetDirNodeImpl
 	public FacetedQuery getQuery() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public BinaryRelation facetValueRelation() {
+		FacetedQueryResource facetedQuery = this.parent().query();
+
+		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
+		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+
+		TernaryRelation tr = qgen.getFacetValueRelation(this.parent().query().focus(), this.parent(), !this.isFwd, null, null);
+
+		BinaryRelation result = new BinaryRelationImpl(tr.getElement(), tr.getP(), tr.getO());
+		return result;
 	}
 	
 }

@@ -1,7 +1,6 @@
 package org.aksw.facete.v3.api;
 
-import java.util.Collection;
-
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 
@@ -22,18 +21,23 @@ public interface FacetDirNode {
 	FacetMultiNode via(Node node);
 	FacetMultiNode via(Property property);
 	
+	
+	/** The relation of facet and facet value */
+	// TODO We may want to make this a default method that derives the relation from\
+	// a ternary focus, facet, value relation
+	BinaryRelation facetValueRelation();
 		
-	/** Facets - without counts */
+	/** Facets without counts, i.e. just the available predicates */
 	DataQuery<?> facets();
 	
 	// Get the facets of this set of values with count of their distinct values
 	//Collection<FacetCount> getFacetsAndCounts();
+	/** Facets and counts **/
 	DataQuery<FacetCount> facetCounts();
 	
 	// Get the facets of this set of values with the counts referring the the query's focus
 	DataQuery<FacetValueCount> facetValueCounts();
-
-
+	
 	//FacetMultiNode out(Path propertyPath);
 	
 	

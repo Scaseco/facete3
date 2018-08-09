@@ -426,6 +426,22 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
+	public TernaryRelation getFacetValueRelation(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
+
+		List<Element> elements = facetValues.values().stream()
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(Relation::toTernaryRelation)
+				.map(e -> e.joinOn(e.getP()).with(pFilter))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+
+		Element e = ElementUtils.union(elements);
+
+		TernaryRelation result = new TernaryRelationImpl(e, Vars.s, Vars.p, Vars.o);
+		return result;
+	}
+
 	public TernaryRelation getFacetValues(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
 		
 		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);

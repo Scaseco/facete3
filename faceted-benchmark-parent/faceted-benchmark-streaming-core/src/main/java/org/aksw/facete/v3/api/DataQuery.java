@@ -5,11 +5,13 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -21,6 +23,7 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.util.NodeUtils;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 
 interface MultiNode {
@@ -45,7 +48,9 @@ public interface DataQuery<T extends RDFNode> {
 	// For every predicate, list how many root root resources there are having this predicate
 	//getPredicatesAndRootCount();
 	
-	Concept fetchPredicates();
+	Single<Model> execConstruct();
+	
+	UnaryRelation fetchPredicates();
 	
 	DataNode getRoot();
 	
@@ -102,7 +107,7 @@ public interface DataQuery<T extends RDFNode> {
 	Entry<Var, Query> toConstructQuery();
 
 	
-	UnaryRelation baseConcept();
+	Relation baseRelation();
 
 	Flowable<T> exec();
 }

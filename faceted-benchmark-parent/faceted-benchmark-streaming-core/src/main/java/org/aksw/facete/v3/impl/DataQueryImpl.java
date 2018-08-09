@@ -12,6 +12,7 @@ import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
@@ -43,14 +44,17 @@ import org.apache.jena.sparql.syntax.Template;
 import com.google.common.collect.Iterators;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public class DataQueryImpl<T extends RDFNode>
 	implements DataQuery<T>
 {
 	protected SparqlQueryConnection conn;
 	
-	protected Node rootVar;
-	protected Element baseQueryPattern;
+//	protected Node rootVar;
+//	protected Element baseQueryPattern;
+
+	protected Relation baseRelation;
 	
 	protected Template template;
 	
@@ -67,10 +71,15 @@ public class DataQueryImpl<T extends RDFNode>
 	protected Class<T> resultClass;
 
 	public DataQueryImpl(SparqlQueryConnection conn, Node rootNode, Element baseQueryPattern, Template template, Class<T> resultClass) {
+		this(conn, new Concept(baseQueryPattern, (Var)rootNode), template, resultClass);
+	}
+		
+	public DataQueryImpl(SparqlQueryConnection conn, Relation baseRelation, Template template, Class<T> resultClass) {
 		super();
 		this.conn = conn;
-		this.rootVar = rootNode;
-		this.baseQueryPattern = baseQueryPattern;
+//		this.rootVar = rootNode;
+//		this.baseQueryPattern = baseQueryPattern;
+		this.baseRelation = baseRelation;
 		this.template = template;
 		this.resultClass = resultClass;
 	}
@@ -87,7 +96,7 @@ public class DataQueryImpl<T extends RDFNode>
 	}
 	
 	public <U extends RDFNode> DataQuery<U> as(Class<U> clazz) {
-		return new DataQueryImpl<U>(conn, rootVar, baseQueryPattern, template, clazz);
+		return new DataQueryImpl<U>(conn, baseRelation, template, clazz);
 	}
 	
 	@Override
@@ -161,6 +170,7 @@ public class DataQueryImpl<T extends RDFNode>
 	public Flowable<T> exec() {
 		
 		Set<Var> vars = new LinkedHashSet<>();
+		Node rootVar = baseRelation.getVars().get(0);
 		if(rootVar.isVariable()) {
 			vars.add((Var)rootVar);
 		}
@@ -177,6 +187,7 @@ public class DataQueryImpl<T extends RDFNode>
 			query.getProject().add(v);
 		}
 		
+		Element baseQueryPattern = baseRelation.getElement();
 		
 		Element effectivePattern = filter == null
 				? baseQueryPattern
@@ -255,14 +266,28 @@ public class DataQueryImpl<T extends RDFNode>
 	}
 
 	@Override
-	public UnaryRelation baseConcept() {
+	public Relation baseRelation() {
 //		Element effectivePattern = filter == null
 //				? baseQueryPattern
 //				: new RelationImpl(baseQueryPattern, new ArrayList<>(PatternVars.vars(baseQueryPattern))).joinOn((Var)rootVar).with(filter).getElement()
 //				;
 
-		UnaryRelation result = new Concept(baseQueryPattern, (Var)rootVar);
-		return result;
+		//UnaryRelation result = new Concept(baseQueryPattern, (Var)rootVar);
+		return baseRelation;
+	}
+
+	@Override
+	public Single<Model> execConstruct() {
+		return exec().toList().map(l -> {
+			Model r = ModelFactory.createDefaultModel();
+			for(RDFNode item : l) {
+				Model tmp = item.getModel();
+				if(tmp != null) {
+					r.add(tmp);
+				}
+			}
+			return r;
+		});
 	}
 	
 	

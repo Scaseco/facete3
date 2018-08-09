@@ -32,8 +32,9 @@ public class TaskGenerator {
 	public TaskGenerator(RDFConnection conn) {
 		this.conn = conn;
 	}
-	
 
+	
+	
 	public Stream<Query> generate() {
 		
 		// Zoom into the map and find a region with amount of data in certain ranges
@@ -160,10 +161,10 @@ public class TaskGenerator {
     * @param fn
     */
 	public static void applyCp6(FacetNode fn) {
-		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.remainingValues().baseConcept())
+		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
 		.connection(fn.query().connection()).exec().blockingFirst();
 		
-		System.out.println("Summary: " + summary);
+		System.out.println("CP6 Summary: " + summary);
 	}
 	
 
@@ -180,7 +181,8 @@ public class TaskGenerator {
 	
 	/**
 	 * Restrictions of numerical data where multiple dimensions are involved\\
-     * (Choke points 7 and 8 under the assumption that bounds have been chosen for more than one dimension of numerical data, here, we count latitude and longitude numerical values together as one dimension)
+     * (Choke points 7 and 8 under the assumption that bounds have been chosen for more than one dimension of numerical data,
+     * here, we count latitude and longitude numerical values together as one dimension)
 	 * 
 	 * @param fn
 	 */

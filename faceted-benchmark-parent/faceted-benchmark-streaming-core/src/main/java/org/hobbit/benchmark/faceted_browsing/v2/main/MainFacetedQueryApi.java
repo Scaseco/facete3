@@ -20,6 +20,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.DatasetAnalyzerRegistry;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.ConceptAnalyser;
@@ -34,9 +35,15 @@ public class MainFacetedQueryApi {
 	public void testSimpleFacetedQuery() {
 		FacetedQueryResource fq = new FacetedQueryImpl();
 		
+
+		
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
 
+		
+		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
+
+		
 		ReactiveSparqlUtils.execSelect(() -> 
 			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
 			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
@@ -59,8 +66,6 @@ public class MainFacetedQueryApi {
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
 		
 		
-		BinaryRelation br = new BinaryRelationImpl(ElementUtils.createElement(new Triple(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
-		System.out.println("Analysis: " + ConceptAnalyser.checkDatatypes(br).connection(conn).exec().toList().blockingGet());
 		
 //		ReactiveSparqlUtils.execSelect(() -> 
 //		conn.query("SELECT  *\n" + 
@@ -104,6 +109,10 @@ public class MainFacetedQueryApi {
 		//TaskGenerator.applyCp4(fq.root());
 		TaskGenerator.applyCp6(fq.root());
 
+		
+		//ConceptPathFinder.
+		
+		//fq.root().fwd().facetValueCounts();
 		
 		if(false) { 
 //		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
