@@ -11,11 +11,14 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -36,25 +39,34 @@ public class MainFacetedQueryApi {
 	public void testSimpleFacetedQuery() {
 
 		// Test of the selector - works
-//		{
-//			Map<String, Integer> map = new HashMap<>();
-//			map.put("a", 80);
-//			map.put("b", 15);
-//			map.put("c", 5);
-//	
-//			Map<String, Integer> xx = new TreeMap<>();
-//			Function<Double, String> fn = WeightedSelector.create(map.entrySet(), Entry::getKey, Entry::getValue);
-//			Random rand = new Random();
-//			for(int i = 0; i < 100000; ++i) {
-//				double x = rand.nextDouble();
-//				String v = fn.apply(x);
-//				
-//				xx.compute(v, (kk, vv) -> vv == null ? 1 : vv + 1);
-//				//System.out.println();
-//			}
-//			
-//			System.out.println(xx);
-//		}
+		{
+			Model distModel = ModelFactory.createDefaultModel();
+			distModel.createResource().addLiteral(RDF.subject, "a").addLiteral(RDF.object, 80);
+			distModel.createResource().addLiteral(RDF.subject, "b").addLiteral(RDF.object, 15);
+			distModel.createResource().addLiteral(RDF.subject, "c").addLiteral(RDF.object, 5);
+			Map<String, Integer> map = new MapFromBinaryRelation(distModel, BinaryRelationImpl.create("?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> ?k ; <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> ?v", "k", "v"));
+			
+			
+			Map<String, Integer> map2 = new HashMap<>();
+			map2.put("a", 80);
+			map2.put("b", 15);
+			map2.put("c", 5);
+	
+			Map<String, Integer> xx = new TreeMap<>();
+			WeightedSelector<String> fn = WeightedSelector.create(map.entrySet(), Entry::getKey, Entry::getValue);
+			Random rand = new Random();
+			for(int i = 0; i < 100000; ++i) {
+				double x = rand.nextDouble();
+				String v = fn.sampleValue(x);
+				
+				fn.setWeight(v, fn.getWeight(v) - 1.0);
+				
+				xx.compute(v, (kk, vv) -> vv == null ? 1 : vv + 1);
+				//System.out.println();
+			}
+			
+			System.out.println(xx);
+		}
 
 		FacetedQueryResource fq = new FacetedQueryImpl();
 		

@@ -52,36 +52,6 @@ public class TaskGenerator {
 	
 	protected Random rand;
 
-	
-	// Based on https://stackoverflow.com/questions/6409652/random-weighted-selection-in-java
-	// May also EnumeratedDistribution
-	public static <T> T chooseRandomItem(Random rand, Iterable<T> items, Function<? super T, ? extends Number> getWeight) {
-		double totalWeight = getTotalWeight(items, getWeight);
-        double r = rand.nextDouble() * totalWeight;
-		T result = chooseItem(r, items, getWeight);
-			
-        return result;
-    }
-	
-	public static <T> double getTotalWeight(Iterable<T> items, Function<? super T, ? extends Number> getWeight) {
-		double result = Streams.stream(items).mapToDouble(x -> getWeight.apply(x).doubleValue()).sum();	
-		return result;
-	}
-
-	public static <T> T chooseItem(double score, Iterable<T> items, Function<? super T, ? extends Number> getWeight) {
-		T result = null;
-
-        double countWeight = 0.0;
-        for (T item : items) {
-            countWeight += getWeight.apply(item).doubleValue();
-            if (countWeight >= score) {
-            	result = item;
-            	break;
-            }
-        }
-        
-        return result;
-    }
 
 	
 	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties) {
