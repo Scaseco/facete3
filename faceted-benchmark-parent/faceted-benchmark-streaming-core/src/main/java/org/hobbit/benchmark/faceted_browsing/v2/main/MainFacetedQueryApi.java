@@ -2,6 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
@@ -40,11 +41,11 @@ public class MainFacetedQueryApi {
 
 		// Test of the selector - works
 		{
-			Model distModel = ModelFactory.createDefaultModel();
-			distModel.createResource().addLiteral(RDF.subject, "a").addLiteral(RDF.object, 80);
-			distModel.createResource().addLiteral(RDF.subject, "b").addLiteral(RDF.object, 15);
-			distModel.createResource().addLiteral(RDF.subject, "c").addLiteral(RDF.object, 5);
-			Map<String, Integer> map = new MapFromBinaryRelation(distModel, BinaryRelationImpl.create("?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> ?k ; <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> ?v", "k", "v"));
+//			Model distModel = ModelFactory.createDefaultModel();
+//			distModel.createResource().addLiteral(RDF.subject, "a").addLiteral(RDF.object, 80);
+//			distModel.createResource().addLiteral(RDF.subject, "b").addLiteral(RDF.object, 15);
+//			distModel.createResource().addLiteral(RDF.subject, "c").addLiteral(RDF.object, 5);
+//			Map<String, Integer> map = new MapFromBinaryRelation(distModel, BinaryRelationImpl.create("?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> ?k ; <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> ?v", "k", "v"));
 			
 			
 			Map<String, Integer> map2 = new HashMap<>();
@@ -53,13 +54,19 @@ public class MainFacetedQueryApi {
 			map2.put("c", 5);
 	
 			Map<String, Integer> xx = new TreeMap<>();
-			WeightedSelector<String> fn = WeightedSelector.create(map.entrySet(), Entry::getKey, Entry::getValue);
+			WeightedSelector<String> fn = WeightedSelector.create(map2.entrySet(), Entry::getKey, Entry::getValue);
 			Random rand = new Random();
 			for(int i = 0; i < 100000; ++i) {
 				double x = rand.nextDouble();
 				String v = fn.sampleValue(x);
+				if(v == null) {
+					break;
+				}
+
+				Double weight = fn.getWeight(v);
+				System.out.println("Sampled " + v + " [" + weight + "]");
 				
-				fn.setWeight(v, fn.getWeight(v) - 1.0);
+				fn.setWeight(v, Optional.ofNullable(weight).map(w -> w.doubleValue() - 1.0).orElse(0.0));
 				
 				xx.compute(v, (kk, vv) -> vv == null ? 1 : vv + 1);
 				//System.out.println();
@@ -69,8 +76,6 @@ public class MainFacetedQueryApi {
 		}
 
 		FacetedQueryResource fq = new FacetedQueryImpl();
-		
-
 		
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		

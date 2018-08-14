@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 public class Vocab {
@@ -20,10 +21,29 @@ public class Vocab {
 	public static final Property totalValueCount = property("totalValueCount");
 	public static final Property distinctValueCount = property("distinctValueCount");
 	public static final Property min = property("min");
+	public static final Property minInclusive = property("minInclusive");
 	public static final Property max = property("max");
+	public static final Property maxInclusive = property("maxInclusive");
 	public static final Property groupKey = property("groupKey");
 
+	// TODO Add minInclusive / maxInclusive
+	
+	public static final Property key = property("key");
+	public static final Property entry = property("entry");
+//	public static final Property value = property("value");
+	public static final Property weights = property("weights");
+
+	
+	public static final Resource ScenarioConfig = resource("ScenarioConfig");
+	public static final Property randomSeed = property("randomSeed");
+
+	
 	public static Property property(String localName) {
 		return ResourceFactory.createProperty("http://aksw.org/adhoc/ontology/" + localName);
 	}
+
+	public static Resource resource(String localName) {
+		return ResourceFactory.createResource("http://aksw.org/adhoc/ontology/" + localName);
+	}
+
 }

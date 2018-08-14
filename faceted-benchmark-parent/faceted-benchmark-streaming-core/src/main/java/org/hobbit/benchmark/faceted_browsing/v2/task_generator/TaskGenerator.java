@@ -2,16 +2,21 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -21,10 +26,20 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
+import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
+import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
@@ -32,12 +47,15 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
+import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
 
@@ -58,6 +76,8 @@ public class TaskGenerator {
 		this.conn = conn;
 		this.numericProperties = numericProperties;
 		this.rand = new Random(1000);
+		
+		generateScenario();
 	}
 
 	
@@ -73,6 +93,63 @@ public class TaskGenerator {
 		return result;
 	}
 	
+	
+	public static Function<? super FacetedQuery, ? extends Runnable> wrap(Function<? super FacetNode, ? extends Runnable> fn) {
+		return fq ->fn.apply(fq.focus());
+	}
+
+	public static Map<RDFNode, RDFNode> viewResourceAsMap(Resource s) {
+		Map<RDFNode, Collection<RDFNode>> multimap = new MapFromBinaryRelation(s.getModel(), new BinaryRelationImpl(
+				ElementUtils.createElementGroup(
+						ElementUtils.createElementTriple(
+								new Triple(s.asNode(), RDFS.member.asNode(), Vars.e),
+								new Triple(Vars.e, Vocab.key.asNode(), Vars.k),
+								new Triple(Vars.e, Vocab.value.asNode(), Vars.v))),
+				Vars.k, Vars.v));
+		
+		Map<RDFNode, RDFNode> result = MapFromMultimap.createView(multimap);
+		return result;
+	}
+	
+	public void generateScenario() {		
+		Map<String, Function<? super FacetedQuery, ? extends Runnable>> cpToAction = new HashMap<>();
+		
+		cpToAction.put("cp1", wrap(this::applyCp1));
+		cpToAction.put("cp2", wrap(this::applyCp2));
+		
+//		cpToAction.put("cp3", wrap(this::applyCp3));
+//		cpToAction.put("cp4", wrap(this::applyCp4));
+//		cpToAction.put("cp5", wrap(this::applyCp5));
+//		cpToAction.put("cp6", wrap(this::applyCp6));
+//		cpToAction.put("cp7", wrap(this::applyCp7));
+//		cpToAction.put("cp8", wrap(this::applyCp8));
+//		cpToAction.put("cp9", wrap(this::applyCp9));
+//		cpToAction.put("cp10", wrap(this::applyCp10));
+//		cpToAction.put("cp11", wrap(this::applyCp11));
+//		cpToAction.put("cp12", wrap(this::applyCp12));
+//		cpToAction.put("cp13", wrap(this::applyCp13));
+//		cpToAction.put("cp14", wrap(this::applyCp14));
+
+		Model weightModel = RDFDataMgr.loadModel("task-generator-config.ttl");
+		Set<Resource> configs = weightModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
+		
+		Resource config = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
+				.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
+		
+		Map<RDFNode, RDFNode> map = viewResourceAsMap(config.getPropertyResourceValue(Vocab.weights));
+		
+		Map<String, RDFNode> mmm = new MapFromKeyConverter<>(map, new ConverterFromNodeMapperAndModel<>(weightModel, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.string)));
+		//new MapFromValueConverter<>(mmm, converter);
+		
+		Map<String, Range<Double>> xxx = Maps.transformValues(mmm, n -> n.as(RangeSpec.class).toRange(Double.class));//new MapFromValueConverter<>(mmm, new ConverterFromNode)
+		//Map<String >
+		//RangeUtils.
+		
+		System.out.println("Lookup: " + map.get(weightModel.createLiteral("cp1")));
+		System.out.println("Lookup2: " + mmm.get("cp1"));
+		
+		System.out.println("Map content: " + xxx);
+	}
 	
 	public Flowable<Query> generate() {
 		
@@ -105,7 +182,9 @@ public class TaskGenerator {
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
 	 */
-	public static void applyCp1(FacetNode fn) {
+	public Runnable applyCp1(FacetNode fn) {
+		//FacetNode fn = fq.focus();
+
 		FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if(fc != null) {
 			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
@@ -113,12 +192,16 @@ public class TaskGenerator {
 			// Pick one of the facet values
 			logger.info("Applying cp1: " + fn.root().availableValues().exec().toList().blockingGet());
 		}
+		
+		// TODO Yield an action that removes the constraint
+		return null;
 	}
+
 	
 	/**
 	 * Find all instances which additionally realize this property path with any property value
 	 */
-	public static void applyCp2(FacetNode fn) {
+	public Runnable applyCp2(FacetNode fn) {
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 		
 		Node node = fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
@@ -128,6 +211,8 @@ public class TaskGenerator {
 			// Pick one of the facet values
 			logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
 		}
+		
+		return null;
 	}
 
 

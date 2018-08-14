@@ -65,6 +65,8 @@ public class WeightedSelector<T>
 	}
 	
 	public void setWeight(T item, double weight) {
+		Objects.requireNonNull(item);
+		
 		Entry<T, Double> e = itemToEntry.get(item);
 		if(e != null) {
 			remove(e);
