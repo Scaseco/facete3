@@ -32,6 +32,7 @@ import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
+import org.apache.commons.math3.optim.nonlinear.vector.Weight;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -149,6 +150,30 @@ public class TaskGenerator {
 		System.out.println("Lookup2: " + mmm.get("cp1"));
 		
 		System.out.println("Map content: " + xxx);
+		
+		
+		// Derive a concrete map
+		Map<String, Double> concreteWeights = xxx.entrySet().stream()
+				.map(x -> {
+					Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
+					double rr = r.lowerEndpoint() + rand.nextDouble() * (r.upperEndpoint() - r.lowerEndpoint());
+					return Maps.immutableEntry(x.getKey(), rr);
+				})
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		
+		System.out.println("Concrete weights " + concreteWeights);
+		
+		WeightedSelector<String> s = WeightedSelector.create(concreteWeights);
+		
+		int scenarioLength = 10; // TODO Obtain value from config
+		
+		for(int i = 0; i < scenarioLength; ++i) {
+			double w = rand.nextDouble();
+			String step = s.sample(w);
+			System.out.println("Step: " + step);
+			
+			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
+		}
 	}
 	
 	public Flowable<Query> generate() {

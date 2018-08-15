@@ -38,7 +38,7 @@ public class WeightedSelector<T>
 	}
 
 	//@Override
-	public Entry<T, Double> sample(Double t) {
+	public Entry<T, Double> sampleEntry(Double t) {
 		double d = Objects.requireNonNull(t).doubleValue();
 		if(d < 0.0 || d > 1.0) {
 			throw new IllegalArgumentException("Argument must be in the interval [0, 1]");
@@ -55,8 +55,8 @@ public class WeightedSelector<T>
 //		return Optional.ofNullable(sample(t)).map(Entry::getValue);
 //	}
 
-	public T sampleValue(Double t) {
-		return Optional.ofNullable(sample(t)).map(Entry::getKey).orElse(null);
+	public T sample(Double t) {
+		return Optional.ofNullable(sampleEntry(t)).map(Entry::getKey).orElse(null);
 	}
 
 	public Double getWeight(T item) {
@@ -153,7 +153,7 @@ public class WeightedSelector<T>
 		add(Maps.immutableEntry(item, weight));
 	}
 
-	public static <T> WeightedSelector<T> create(Map<T, ? extends Number> map, Function<? super T, ? extends Number> getWeight) {
+	public static <T> WeightedSelector<T> create(Map<T, ? extends Number> map) {
 		return create(map.entrySet(), Entry::getKey, Entry::getValue);
 	}
 

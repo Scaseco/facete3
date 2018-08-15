@@ -58,7 +58,7 @@ public class MainFacetedQueryApi {
 			Random rand = new Random();
 			for(int i = 0; i < 100000; ++i) {
 				double x = rand.nextDouble();
-				String v = fn.sampleValue(x);
+				String v = fn.sample(x);
 				if(v == null) {
 					break;
 				}
