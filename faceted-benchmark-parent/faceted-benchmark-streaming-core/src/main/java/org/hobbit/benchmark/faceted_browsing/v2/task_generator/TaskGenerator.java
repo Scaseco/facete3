@@ -10,12 +10,14 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
@@ -32,7 +34,6 @@ import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
-import org.apache.commons.math3.optim.nonlinear.vector.Weight;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -95,8 +96,15 @@ public class TaskGenerator {
 	}
 	
 	
-	public static Function<? super FacetedQuery, ? extends Runnable> wrap(Function<? super FacetNode, ? extends Runnable> fn) {
-		return fq ->fn.apply(fq.focus());
+	/**
+	 * Wrap any function accepting a {@link FacetNode} argument such that
+	 * a {@link FacetedQuery}'s focus is accepted instead.
+	 * 
+	 * @param fn
+	 * @return
+	 */
+	public static <X> Function<? super FacetedQuery, X> wrap(Function<? super FacetNode, X> fn) {
+		return fq -> fn.apply(fq.focus());
 	}
 
 	public static Map<RDFNode, RDFNode> viewResourceAsMap(Resource s) {
@@ -112,8 +120,11 @@ public class TaskGenerator {
 		return result;
 	}
 	
-	public void generateScenario() {		
-		Map<String, Function<? super FacetedQuery, ? extends Runnable>> cpToAction = new HashMap<>();
+	public void generateScenario() {
+		// Maps a chokepoint id to a function that given a faceted query
+		// yields a supplier. Invoking the supplier applies the action and yields a runnable for undo.
+		// if an action is not applicable, the supplier is null
+		Map<String, Function<? super FacetedQuery, ? extends Supplier<? extends Runnable>>> cpToAction = new HashMap<>();
 		
 		cpToAction.put("cp1", wrap(this::applyCp1));
 		cpToAction.put("cp2", wrap(this::applyCp2));
@@ -167,10 +178,24 @@ public class TaskGenerator {
 		
 		int scenarioLength = 10; // TODO Obtain value from config
 		
+		FacetedQuery fq = new FacetedQueryImpl();
 		for(int i = 0; i < scenarioLength; ++i) {
 			double w = rand.nextDouble();
 			String step = s.sample(w);
 			System.out.println("Step: " + step);
+			
+			Function<? super FacetedQuery, ? extends Supplier<? extends Runnable>> actionFactory = cpToAction.get(step);
+			if(actionFactory == null) {
+				// TODO Prevent encountering this case using prior check
+				logger.warn(step + " not associated with an implementation");
+			}
+			
+			if(actionFactory != null) {
+				Supplier<? extends Runnable> action = actionFactory.apply(fq);
+				Runnable undo = action.get();
+			} else {
+				logger.info("Skipping " + step + "; not applicable");
+			}
 			
 			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
 		}
@@ -207,26 +232,37 @@ public class TaskGenerator {
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
 	 */
-	public Runnable applyCp1(FacetNode fn) {
+	public Supplier<Runnable> applyCp1(FacetNode fn) {
 		//FacetNode fn = fq.focus();
 
+		Supplier<Runnable> result = null;
+		
 		FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if(fc != null) {
 			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
 			
 			// Pick one of the facet values
 			logger.info("Applying cp1: " + fn.root().availableValues().exec().toList().blockingGet());
+
+			result = () -> {
+				fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+
+				// Set up undo action
+				return () -> {
+					
+				};
+			};
+
 		}
 		
-		// TODO Yield an action that removes the constraint
-		return null;
+		return result;
 	}
 
 	
 	/**
 	 * Find all instances which additionally realize this property path with any property value
 	 */
-	public Runnable applyCp2(FacetNode fn) {
+	public Supplier<Runnable> applyCp2(FacetNode fn) {
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 		
 		Node node = fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
