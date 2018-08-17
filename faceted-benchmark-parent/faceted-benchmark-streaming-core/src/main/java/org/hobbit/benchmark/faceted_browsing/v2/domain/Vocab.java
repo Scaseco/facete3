@@ -37,6 +37,9 @@ public class Vocab {
 	public static final Resource ScenarioConfig = resource("ScenarioConfig");
 	public static final Property randomSeed = property("randomSeed");
 
+	public static final Property last = property("last");
+	public static final Property prior = property("prior");
+
 	
 	public static Property property(String localName) {
 		return ResourceFactory.createProperty("http://aksw.org/adhoc/ontology/" + localName);

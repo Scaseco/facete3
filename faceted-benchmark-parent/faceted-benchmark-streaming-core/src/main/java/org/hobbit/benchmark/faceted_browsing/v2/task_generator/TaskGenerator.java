@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
@@ -38,6 +39,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -228,7 +230,6 @@ public class TaskGenerator {
 		return null;
 	}
 	
-
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
 	 */
@@ -247,6 +248,9 @@ public class TaskGenerator {
 			result = () -> {
 				fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
 
+				Resource undoStack = ModelFactory.createDefaultModel().createResource();
+				
+				
 				// Set up undo action
 				return () -> {
 					

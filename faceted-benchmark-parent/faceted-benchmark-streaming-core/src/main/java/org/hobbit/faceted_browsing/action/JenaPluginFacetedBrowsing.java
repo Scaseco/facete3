@@ -18,6 +18,8 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpecImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummaryImpl;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.Stack;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.StackImpl;
 
 public class JenaPluginFacetedBrowsing {
 	public static void init() {
@@ -44,5 +46,7 @@ public class JenaPluginFacetedBrowsing {
 		p.add(SetSummary.class, new SimpleImplementation(SetSummaryImpl::new));
 		
 		p.add(RangeSpec.class, new SimpleImplementation(RangeSpecImpl::new));
+		
+		p.add(Stack.class, new SimpleImplementation(StackImpl::new));
 	}
 }
