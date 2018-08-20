@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.config;
+package org.hobbit.benchmark.faceted_browsing.v1.config;
 
 import java.io.ByteArrayInputStream;
 
@@ -94,10 +94,13 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
     public ServiceBuilder<?> dataGeneratorServiceFactory(@Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModel) {
         
         logger.info("BC: Configuring DG with parameter model: " + paramModel);
-                
+        
+        //String imageName = "git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image";
+        String imageName = FacetedBrowsingBenchmarkV1Constants.config.getDataGeneratorImageName();
+        
         return CountingSupplier.from(count ->
         	dockerServiceBuilderFactory.get()
-                .setImageName("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image")
+        		.setImageName(imageName)
                 .setLocalEnvironment(ImmutableMap.<String, String>builder()
                         .put("NODE_MEM", "1000")
                         .put(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, paramModel)
@@ -107,9 +110,14 @@ public class ConfigBenchmarkControllerFacetedBrowsingServices {
 
     @Bean
     public ServiceBuilder<?> taskGeneratorServiceFactory() {
+    	
+        //String imageName = "git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image";
+        String imageName = FacetedBrowsingBenchmarkV1Constants.config.getTaskGeneratorImageName();
+    	
         return CountingSupplier.from(count ->
 	    	dockerServiceBuilderFactory.get()
-	            .setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")
+//	            .setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image")
+    			.setImageName(imageName)
 	            .setLocalEnvironment(ImmutableMap.<String, String>builder()
 	                    .build())
 	            ).get();

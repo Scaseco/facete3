@@ -4,8 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.hobbit.benchmark.faceted_browsing.config.BenchmarkConfig;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerServer;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEvaluationModule;
@@ -72,25 +74,38 @@ public class ConfigVirtualDockerServiceFactory {
 
 		
 		Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image", bcAppBuilder);
-		
-        map.put("git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image", dgAppBuilder);
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image", tgAppBuilder);
         
+		BenchmarkConfig config = FacetedBrowsingBenchmarkV1Constants.config;
+
+		map.put(config.getBenchmarkControllerImageName(), bcAppBuilder);
+		map.put(config.getDataGeneratorImageName(), dgAppBuilder);
+		map.put(config.getTaskGeneratorImageName(), tgAppBuilder);
+		map.put(config.getEvaluationModuleImageName(), emAppBuilder);
+		
+//		{
+//			String prefixV1 = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-";
+//	
+//			map.put(prefixV1 + "benchmark-controller", bcAppBuilder);		
+//	        map.put(prefixV1 + "data-generator", dgAppBuilder);
+//	        map.put(prefixV1 + "task-generator", tgAppBuilder);
+//	        map.put(prefixV1 + "evaluation-module", emAppBuilder);
+//		}
+
+        {
+	        String prefixSdk = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-common-";
+	
+	        
+	        map.put(prefixSdk + "evaluation-storage", esAppBuilder);
+	        map.put(prefixSdk + "system-adapter-jena-in-memory", saAppBuilder);		
+			map.put(prefixSdk + "qpid-server", qpidServerAppBuilder);
+			map.put(prefixSdk + "docker-service-manager-server", dockerServiceManagerServerAppBuilder);
+        }
 //        result.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.0", esAppBuilder);
-        map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage", esAppBuilder);
         //result.put("git.project-hobbit.eu:4567/cstadler/evaluationstorage/image", esAppBuilder);
 
         //result.put("git.project-hobbit.eu:4567/cstadler/evaluationstorage/image", esAppBuilder);
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image", emAppBuilder);
 
         // NOTE The sa is started by the platform
-        map.put("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image", saAppBuilder);		
-		
-
-		map.put("git.project-hobbit.eu:4567/gkatsibras/qpidserver/image", qpidServerAppBuilder);
-
-		map.put("git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver/image", dockerServiceManagerServerAppBuilder);
 		
 		DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
 		
