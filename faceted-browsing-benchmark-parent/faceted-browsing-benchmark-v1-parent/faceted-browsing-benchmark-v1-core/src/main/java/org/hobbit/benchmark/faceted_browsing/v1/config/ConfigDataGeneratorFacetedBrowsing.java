@@ -145,7 +145,7 @@ public class ConfigDataGeneratorFacetedBrowsing {
 	        Model paramModel = ModelFactory.createDefaultModel();
 	        RDFDataMgr.read(paramModel, new ByteArrayInputStream(paramModelStr.getBytes()), Lang.JSONLD);
 
-	        Model meta = RDFDataMgr.loadModel("benchmark.ttl");
+	        Model meta = RDFDataMgr.loadModel("faceted-browsing-benchmark-v1-benchmark.ttl");
 	        
 	        Model model = ModelFactory.createDefaultModel();
 	        model.add(paramModel);
