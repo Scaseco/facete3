@@ -208,7 +208,7 @@ public abstract class DockerServiceManagerClientComponentBase
 	        	serviceStub.setExitCode(exitCode);
 	        	if(exitCode != 0) {
 //	        		try {
-	        			serviceStub.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
+	        			serviceStub.declareFailure(new RuntimeException("Remote service from " + serviceStub.getImageName() + " terminated with non-zero exit code"));
 //	        		} catch(Exception e) {
 //	        			// Ensure we do not raise an exception when handling a remote termination message
 //	        			e.printStackTrace();

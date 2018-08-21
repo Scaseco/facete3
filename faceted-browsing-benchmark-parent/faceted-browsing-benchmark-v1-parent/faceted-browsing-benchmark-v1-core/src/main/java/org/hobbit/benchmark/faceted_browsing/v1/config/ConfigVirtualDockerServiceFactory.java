@@ -92,11 +92,14 @@ public class ConfigVirtualDockerServiceFactory {
 //		}
 
         {
-	        String prefixSdk = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-common-";
+	        String prefixSdk = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/";
 	
 	        
-	        map.put(prefixSdk + "evaluation-storage", esAppBuilder);
-	        map.put(prefixSdk + "system-adapter-jena-in-memory", saAppBuilder);		
+	        //map.put(prefixSdk + "evaluation-storage", esAppBuilder);
+                map.put("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage", esAppBuilder);
+
+
+	        map.put(prefixSdk + "system-adapter-mocha-jena-in-memory", saAppBuilder);		
 			map.put(prefixSdk + "qpid-server", qpidServerAppBuilder);
 			map.put(prefixSdk + "docker-service-manager-server", dockerServiceManagerServerAppBuilder);
         }

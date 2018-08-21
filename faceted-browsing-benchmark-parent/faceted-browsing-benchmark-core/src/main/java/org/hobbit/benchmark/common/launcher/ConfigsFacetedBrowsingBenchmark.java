@@ -258,16 +258,22 @@ public class ConfigsFacetedBrowsingBenchmark {
 					Map<String, String> serviceEnv = new HashMap<>();
 					serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
 					
+					String bcImageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-benchmark-controller";
+					String saImageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/system-adapter-mocha-jena-in-memory";
+
+					// "git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image"
+					// git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image
+					
 					// Launch the system adapter
 					DockerService saService = dockerServiceBuilderFactory.get()
-						.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image")
+						.setImageName(saImageName)
 						//.setLocalEnvironment(serviceEnv)
 						.get();
 					
 					
 					// Launch the benchmark
 					Service bcService = dockerServiceBuilderFactory.get()
-						.setImageName("git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image")
+						.setImageName(bcImageName)
 						//.setLocalEnvironment(serviceEnv)
 						.get();
 	
