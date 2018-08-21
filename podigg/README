@@ -1,22 +1,24 @@
+## podigg-lc-via-webserver
 
-## Current approach
-Launching the docker container starts the dataset generation
+This is a wrapper of podigg-lc that simply forwards all podigg parameters passed via the docker environment to the podigg-lc tool.
+The essence of this image is, that the generated data is exposed via a web server ready for download.
+
+Note, that podigg-lc is the RDF output wrapper around podigg; lc stands for "linked connections".
+
 
 ##Build and run
 ```bash
-docker build -t podigg .
-docker run -it podigg
+docker build -t podigg-lc-via-web-server .
+docker run -it podigg-lc-via-web-server
 ```
 
 Deployment
 ```
-docker tag podigg git.project-hobbit.eu:4567/cstadler/podigg/image
-docker login
-docker push git.project-hobbit.eu:4567/cstadler/podigg/image
+docker tag podigg-lc-via-web-server git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/podigg-lc-via-web-server
+docker login git.project-hobbit.eu:4567
+docker push git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/podigg-lc-via-web-server
 ```
 
-## Idea for an alternative workflow
-This is a wrapper around podigg which launches an apache server to host a generated dataset.
-Datasets are cached in a volume, and every launch first removes a symbolic link named 'latest' pointing to the most recent generated dataset,
-and after finishing the generation, the link is regenerated.
+## Idea for future work
+Cache priorly generated datasets in a volume; this would make any repeated data generation with the same (identifying) parameters nearly instant.
 

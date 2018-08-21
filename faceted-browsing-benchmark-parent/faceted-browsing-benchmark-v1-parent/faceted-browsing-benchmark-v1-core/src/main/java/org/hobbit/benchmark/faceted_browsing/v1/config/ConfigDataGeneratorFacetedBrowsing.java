@@ -286,7 +286,7 @@ public class ConfigDataGeneratorFacetedBrowsing {
 
 	        
 	    	//String imageName = "podigg";
-	    	String imageName = "git.project-hobbit.eu:4567/cstadler/podigg/image";
+	    	String imageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/podigg-lc-via-web-server";
 	    	Map<String, String> env = ImmutableMap.<String, String>builder().putAll(params).build();
 	    	return () -> createPodiggDatasetViaDocker(dockerServiceBuilderFactory, imageName, env);
 	    }
