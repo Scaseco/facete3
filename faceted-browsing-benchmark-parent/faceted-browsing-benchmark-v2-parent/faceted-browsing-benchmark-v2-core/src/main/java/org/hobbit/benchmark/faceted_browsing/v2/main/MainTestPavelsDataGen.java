@@ -2,19 +2,13 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.util.Collections;
 
-import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigCommunicationWrapper;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerClient;
-import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerServer;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.benchmark.faceted_browsing.config.ServiceSpringApplicationBuilder;
-import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
-import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnection;
+import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
 import org.hobbit.core.Constants;
-import org.hobbit.core.config.ConfigGson;
-import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
+import org.hobbit.core.component.ServiceNoOp;
+import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
@@ -22,7 +16,6 @@ import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -34,7 +27,6 @@ public class MainTestPavelsDataGen {
 	
 	public static void main(String[] args) throws DockerCertificateException {
 		DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, Collections.emptyMap(), Collections.emptySet());
-
 		
 		Service amqpService = new ServiceSpringApplicationBuilder("qpid-server", new SpringApplicationBuilder()
 				// Add the amqp broker
@@ -43,7 +35,8 @@ public class MainTestPavelsDataGen {
 						.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + RabbitMqFlows.idGenerator.get())
 						//.put(ConfigRabbitMqConnectionFactory.AMQP_VHOST, "default")
 						.build())
-				.sources(ConfigQpidBroker.class))
+				.sources(ConfigQpidBroker.class)
+				.sources(ServiceNoOp.class))
 				;
 
 		amqpService.startAsync().awaitRunning();
@@ -76,6 +69,12 @@ public class MainTestPavelsDataGen {
 				.put("SPARQL_ENDPOINT_URL", sparqlEndpoint)
 				.build());
 
+
+		ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
+			.child(ConfigEncodersFacetedBrowsing.class) //, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
+				.child(TaskGeneratorFacetedBenchmarkMocha.class)
+				.run();
+			
 
 		
 		dgService.startAsync().awaitTerminated();

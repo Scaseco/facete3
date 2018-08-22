@@ -14,6 +14,7 @@ import com.google.common.util.concurrent.Service;
 
 
 /**
+ * 
  * Service implementation that when started, looks up a Service in the given
  * context and starts it.
  * 
