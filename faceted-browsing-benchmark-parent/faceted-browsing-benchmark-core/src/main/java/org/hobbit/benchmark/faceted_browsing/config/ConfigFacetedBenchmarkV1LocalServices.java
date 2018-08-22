@@ -1,6 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.function.Supplier;
@@ -19,9 +18,7 @@ import org.hobbit.core.data.Result;
 import org.hobbit.core.service.api.ServiceBuilder;
 import org.hobbit.core.storage.Storage;
 import org.hobbit.core.storage.StorageInMemory;
-import org.hobbit.interfaces.TripleStreamSupplier;
 import org.hobbit.rdf.component.SystemAdapterRDFConnection;
-import org.hobbit.service.podigg.PodiggWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 
@@ -64,16 +61,16 @@ public class ConfigFacetedBenchmarkV1LocalServices {
     }
 
 
-    @Bean
-    public TripleStreamSupplier dataGenerationMethod() {
-        return () -> {
-			try {
-				return PodiggWrapper.test();
-			} catch (IOException | InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-		};
-    }
+//    @Bean
+//    public TripleStreamSupplier dataGenerationMethod() {
+//        return () -> {
+//			try {
+//				return PodiggWrapper.test();
+//			} catch (IOException | InterruptedException e) {
+//				throw new RuntimeException(e);
+//			}
+//		};
+//    }
 
     @Bean
     public ServiceBuilder<Service> dataGeneratorServiceFactory() {

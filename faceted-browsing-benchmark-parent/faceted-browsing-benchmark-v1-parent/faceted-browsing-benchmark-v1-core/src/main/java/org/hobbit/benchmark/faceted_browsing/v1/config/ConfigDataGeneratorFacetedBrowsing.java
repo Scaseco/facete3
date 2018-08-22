@@ -292,14 +292,14 @@ public class ConfigDataGeneratorFacetedBrowsing {
 	    }
 		
 //	    @Bean
-	    public TripleStreamSupplier dataGenerationMethodOld() {
-	        return () -> {
-				try {
-					return PodiggWrapper.test();
-				} catch (IOException | InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-			};
-	    }
+	// public TripleStreamSupplier dataGenerationMethodOld() {
+	// return () -> {
+	// try {
+	// return PodiggWrapper.test();
+	// } catch (IOException | InterruptedException e) {
+	// throw new RuntimeException(e);
+	// }
+	// };
+	// }
 
 	}

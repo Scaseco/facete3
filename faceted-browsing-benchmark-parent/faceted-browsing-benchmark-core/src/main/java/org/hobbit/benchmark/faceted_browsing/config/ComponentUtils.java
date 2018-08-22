@@ -55,18 +55,20 @@ public class ComponentUtils {
 //		return result;
 //	}
 
-	
-	
-	public static DockerService wrapSparqlServiceWithHealthCheck(DockerService dockerService, Integer port) {
-	       DockerService result = new AbstractDockerServiceDelegate<DockerService>(dockerService) {
+
+	public static <S extends DockerService> DockerService wrapSparqlServiceWithHealthCheck(S dockerService, Function<? super S, String> healthCheckUrlFromServiceDelegate) {
+	       
+		DockerService result = new AbstractDockerServiceDelegate<S>(dockerService) {
 	            // FIXME We want to enhance the startup method within the thread allocated by the guava service
 	            @Override
 	            public void afterStart() {
 	                // The delegate has started, so we have a container id
-	                String host = delegate.getContainerId();
-	                String destination = "http://" + host + (port == null ? "" : ":" + port) + "/sparql";
+	                //String host = delegate.getContainerId();
+	        		String urlStr = healthCheckUrlFromServiceDelegate.apply(delegate);
+
+	                //String destination = "http://" + host + (port == null ? "" : ":" + port) + "/sparql";
 	                
-	                URL url = HealthcheckUtils.createUrl(destination);
+	                URL url = HealthcheckUtils.createUrl(urlStr);
 	                
 	                new HealthcheckRunner(
 	                        60, 1, TimeUnit.SECONDS, () -> {
@@ -80,8 +82,12 @@ public class ComponentUtils {
 	                }).run();
 	            }
 	        };
-	        
+		
 	        return result;
+	}
+	
+	public static DockerService wrapSparqlServiceWithHealthCheck(DockerService dockerService, Integer port) {
+		return wrapSparqlServiceWithHealthCheck(dockerService, delegate -> "http://" + delegate.getContainerId() + (port == null ? "" : ":" + port) + "/sparql");
 	}
 
 	public static DockerService wrapSparqlServiceWithHealthCheckOld(DockerService dockerService, Integer port) {
