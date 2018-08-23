@@ -1,8 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.benchmark.faceted_browsing.config.ServiceSpringApplicationBuilder;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
@@ -10,6 +12,7 @@ import org.hobbit.core.Constants;
 import org.hobbit.core.component.ServiceNoOp;
 import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
 import org.hobbit.core.config.RabbitMqFlows;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
@@ -21,6 +24,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 
+import io.reactivex.Flowable;
+
 public class MainTestPavelsDataGen {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestPavelsDataGen.class);
 
@@ -28,17 +33,25 @@ public class MainTestPavelsDataGen {
 	public static void main(String[] args) throws DockerCertificateException {
 		DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, Collections.emptyMap(), Collections.emptySet());
 		
-		Service amqpService = new ServiceSpringApplicationBuilder("qpid-server", new SpringApplicationBuilder()
-				// Add the amqp broker
-				.properties(new ImmutableMap.Builder<String, Object>()
-						.put("hostMode", true)
-						.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + RabbitMqFlows.idGenerator.get())
-						//.put(ConfigRabbitMqConnectionFactory.AMQP_VHOST, "default")
-						.build())
-				.sources(ConfigQpidBroker.class)
-				.sources(ServiceNoOp.class))
-				;
+		String amqpHost = "localhost";
+		String amqpFromContainer = "10.128.128.128";
+		String sessionId = "testsession" + "." + RabbitMqFlows.idGenerator.get();
 
+		
+		DockerService amqpServer = 
+		
+//		Service amqpService = new ServiceSpringApplicationBuilder("qpid-server", new SpringApplicationBuilder()
+//				// Add the amqp broker
+//				.properties(new ImmutableMap.Builder<String, Object>()
+//						.put("hostMode", true)
+//						.put(Constants.HOBBIT_SESSION_ID_KEY, sessionId)
+//						//.put(ConfigRabbitMqConnectionFactory.AMQP_VHOST, "default")
+//						.build())
+//				.sources(ConfigQpidBroker.class)
+//				.sources(ServiceNoOp.class))
+//				;
+
+		logger.info("AMQP server starting ...");
 		amqpService.startAsync().awaitRunning();
 		
 		logger.info("AMQP server started");
@@ -52,14 +65,12 @@ public class MainTestPavelsDataGen {
 		String sparqlEndpoint = "http://" + dbService.getContainerId() + ":8890/sparql";
 		
 		logger.info("Sparql endpoint online at " + sparqlEndpoint);
-		
-		
-		
+
 		
 		DockerService dgService = dsf.create("git.project-hobbit.eu:4567/smirnp/grow-smarter-benchmark/datagen", ImmutableMap.<String, String>builder()
-				.put(Constants.RABBIT_MQ_HOST_NAME_KEY, "localhost")
-				.put(Constants.HOBBIT_SESSION_ID_KEY, "local-test-session")
-				.put(Constants.DATA_QUEUE_NAME_KEY, "my queue")
+				.put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpFromContainer)
+				.put(Constants.HOBBIT_SESSION_ID_KEY, sessionId)
+				.put(Constants.DATA_QUEUE_NAME_KEY, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)
 				.put("HOUSES_COUNT", "1000")
 				.put("DEVICES_PER_HOUSEHOLD_MIN", "5")
 				.put("DEVICES_PER_HOUSEHOLD_MAX", "20")
@@ -70,13 +81,32 @@ public class MainTestPavelsDataGen {
 				.build());
 
 
-		ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
-			.child(ConfigEncodersFacetedBrowsing.class) //, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
-				.child(TaskGeneratorFacetedBenchmarkMocha.class)
-				.run();
-			
-
+		ServiceSpringApplicationBuilder tgService = new ServiceSpringApplicationBuilder("tg", ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
+				.properties(ImmutableMap.<String, Object>builder()
+						.put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpHost)
+						.put(Constants.HOBBIT_SESSION_ID_KEY, sessionId)
+						.build())
+				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class) // ConfigTaskGeneratorFacetedBenchmark.class)
+				.child(ServiceNoOp.class));
 		
-		dgService.startAsync().awaitTerminated();
+		logger.info("TG starting ...");
+		tgService.startAsync().awaitRunning();
+
+		Flowable<ByteBuffer> flow = (Flowable<ByteBuffer>)tgService.getAppBuilder().context().getBean("dg2tgReceiver");	
+
+		logger.info("TG started - obtained receiver " + flow);
+		flow.subscribe(msg -> System.out.println("Got message: " + RabbitMQUtils.readString(msg)));
+		
+		logger.info("DG starting ...");
+		dgService.startAsync().awaitRunning();
+		
+		
+		logger.info("DG started");
+		
+		
+		logger.info("TG termination awaited");
+		dgService.awaitTerminated();
+		
+		logger.info("Done");
 	}
 }

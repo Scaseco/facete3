@@ -1,12 +1,12 @@
-package org.hobbit.benchmark.faceted_browsing.main;
+package org.hobbit.sdk.main;
 
 
 import java.util.Map;
 
-import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.SpringEnvironmentUtils;
+import org.hobbit.sdk.docker.registry.DockerServiceRegistryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -58,16 +58,20 @@ public class MainDockerServiceLauncher {
 		//Map<String, Supplier<SpringApplicationBuilder>> map = ConfigVirtualDockerServiceFactory.getVirtualDockerComponentRegistry();
 
     	// TODO The class providing the config docker service beans must be configurable...
-    	DockerServiceFactory<?> dockerServiceFactory = null; //ComponentUtils.createVirtualComponentDockerServiceFactory();
+    	//DockerServiceFactory<?> dockerServiceFactory = null; //ComponentUtils.createVirtualComponentDockerServiceFactory();
 		
+    	Map<String, DockerServiceBuilderFactory<?>> serviceFactoryMap = DockerServiceRegistryImpl.get().getServiceFactoryMap();
+    	DockerServiceBuilderFactory<?> dockerServiceBuilder = serviceFactoryMap.get(imageName);
+    	DockerService dockerService = dockerServiceBuilder.get().setLocalEnvironment(env).get();
+    	
 //		map = map.entrySet().stream()
 //				.filter(e -> Objects.equals(e.getKey(), imageName))
 //				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		
 		//DockerServiceFactory<?> dockerServiceFactory = new DockerServiceFactorySpringApplicationBuilder(map);
-		dockerServiceFactory = ComponentUtils.applyServiceWrappers(dockerServiceFactory);
+		//dockerServiceFactory = ComponentUtils.applyServiceWrappers(dockerServiceFactory);
 
-		DockerService dockerService = dockerServiceFactory.create(imageName, env);
+		//DockerService dockerService = dockerServiceFactory.create(imageName, env);
 		
 		logger.info("Service launcher waiting for termination...");
 		dockerService.startAsync().awaitTerminated();

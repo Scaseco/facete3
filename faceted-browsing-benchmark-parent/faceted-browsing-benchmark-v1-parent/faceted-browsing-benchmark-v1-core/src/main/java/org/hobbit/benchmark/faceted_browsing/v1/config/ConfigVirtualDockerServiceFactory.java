@@ -13,6 +13,7 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerSe
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEvaluationModule;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEvaluationStorage;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigEvaluationStorageStorageProvider;
+import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigDataGenerator;

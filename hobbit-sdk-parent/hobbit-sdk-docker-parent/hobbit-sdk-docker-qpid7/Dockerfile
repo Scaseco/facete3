@@ -1,8 +1,6 @@
 FROM openjdk:8-jdk-alpine
 MAINTAINER Claus Stadler <cstadler@informatik.uni-leipzig.de>
 
-RUN echo "foobar12"
-
 ARG JAR_FILE
 ARG MAIN_CLASS
 ARG ARTIFACT_ID

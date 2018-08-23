@@ -29,6 +29,7 @@
 		<module>hobbit-sdk-qpid6</module>
 		<module>hobbit-sdk-qpid7</module>
 
+		<module>hobbit-sdk-docker-parent</module>
 		<!-- <module>hobbit-platform-sdk</module> -->
 	</modules>
 
@@ -99,9 +100,12 @@
 				<version>${project.version}</version>
 			</dependency>
 			<!-- <dependency> <groupId>org.hobbit</groupId> <artifactId>hobbit-sdk-qpid6</artifactId> 
-				<version>${project.version}</version> </dependency> <dependency> <groupId>org.hobbit</groupId> 
+				<version>${project.version}</version> </dependency> -->
+
+<dependency> <groupId>org.hobbit</groupId> 
 				<artifactId>hobbit-sdk-qpid7</artifactId> <version>${project.version}</version> 
-				</dependency> -->
+				</dependency>
+
 			<dependency>
 				<groupId>org.ini4j</groupId>
 				<artifactId>ini4j</artifactId>

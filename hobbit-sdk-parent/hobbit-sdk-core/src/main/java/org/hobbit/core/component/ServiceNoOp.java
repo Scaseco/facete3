@@ -4,7 +4,7 @@ package org.hobbit.core.component;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
  * A no-op service with a 'MainService' qualifier.
@@ -33,13 +33,15 @@ import com.google.common.util.concurrent.AbstractService;
 @Component
 @Qualifier("MainService")
 public class ServiceNoOp
-	extends AbstractService
+	extends AbstractIdleService
 {
+
 	@Override
-	protected void doStart() {
+	protected void startUp() throws Exception {
 	}
 
 	@Override
-	protected void doStop() {
+	protected void shutDown() throws Exception {
+		
 	}
 }

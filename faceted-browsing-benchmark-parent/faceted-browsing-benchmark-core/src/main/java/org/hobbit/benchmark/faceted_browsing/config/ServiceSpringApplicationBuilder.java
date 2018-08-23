@@ -96,6 +96,10 @@ public class ServiceSpringApplicationBuilder
 		mainService.startAsync();
 	}
 
+	public SpringApplicationBuilder getAppBuilder() {
+		return appBuilder;
+	}
+	
 	@Override
 	protected void doStop() {
 		mainService.stopAsync();
