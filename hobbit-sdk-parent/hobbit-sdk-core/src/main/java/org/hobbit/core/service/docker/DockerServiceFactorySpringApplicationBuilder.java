@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.config;
+package org.hobbit.core.service.docker;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -10,8 +10,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hobbit.core.service.api.DockerServicePseudoDelegate;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;

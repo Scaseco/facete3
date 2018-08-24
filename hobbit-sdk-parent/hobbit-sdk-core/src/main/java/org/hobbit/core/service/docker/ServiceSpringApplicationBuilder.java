@@ -1,6 +1,6 @@
-package org.hobbit.benchmark.faceted_browsing.config;
+package org.hobbit.core.service.docker;
 
-import org.hobbit.benchmark.faceted_browsing.main.MainServiceLauncher;
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
@@ -57,7 +57,7 @@ public class ServiceSpringApplicationBuilder
 		//mainService = ctx.getBean("MainService", Service.class);
 		
 		// Link the life cycle of the context to the service
-		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)MainServiceLauncher.getRoot(ctx, ApplicationContext::getParent);
+		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)TreeUtils.findRoot(ctx, ApplicationContext::getParent);
 //		ConfigurableApplicationContext rootCtx = ctx;
 
 		// Add a listener that closes the service's (root) context on service termination

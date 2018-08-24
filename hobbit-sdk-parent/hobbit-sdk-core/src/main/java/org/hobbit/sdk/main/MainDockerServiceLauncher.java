@@ -2,7 +2,9 @@ package org.hobbit.sdk.main;
 
 
 import java.util.Map;
+import java.util.Optional;
 
+import org.apache.jena.sys.JenaSystem;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.SpringEnvironmentUtils;
@@ -29,6 +31,8 @@ public class MainDockerServiceLauncher {
     private static final Logger logger = LoggerFactory.getLogger(MainDockerServiceLauncher.class);
     
 	public static void main(String[] args) {
+		JenaSystem.init();
+		
         if(args.length != 1) {
             throw new RuntimeException("Exactly 1 argument expected which is the name of a (virtual) docker image to launch");
         }
@@ -38,12 +42,13 @@ public class MainDockerServiceLauncher {
         Map<String, String> env = SpringEnvironmentUtils.toStringMap(new StandardEnvironment());
 
         try {
-            logger.info("Service launcher launching virtual image '" + imageName + "' with env " + env);
-	        mainCore(imageName, env);
+            logger.info("Service launcher launching virtual image '" + imageName);
+	        logger.debug("Environment: " + env);
+            mainCore(imageName, env);
 	        logger.info("Service launcher terminated normally with image '" + imageName + "'");
 	        System.exit(0);
 	    } catch(Exception e) {
-            logger.info("Service launcher encountered an exception with image '" + imageName + "'");
+            logger.info("Service launcher encountered an exception with image '" + imageName + "'", e);
             System.exit(1);
 	    }	    
 	}
@@ -61,7 +66,9 @@ public class MainDockerServiceLauncher {
     	//DockerServiceFactory<?> dockerServiceFactory = null; //ComponentUtils.createVirtualComponentDockerServiceFactory();
 		
     	Map<String, DockerServiceBuilderFactory<?>> serviceFactoryMap = DockerServiceRegistryImpl.get().getServiceFactoryMap();
-    	DockerServiceBuilderFactory<?> dockerServiceBuilder = serviceFactoryMap.get(imageName);
+    	DockerServiceBuilderFactory<?> dockerServiceBuilder = Optional.ofNullable(serviceFactoryMap.get(imageName))
+    			.orElseThrow(() -> new NullPointerException("No registry entry for docker image " + imageName + "; Available: " + serviceFactoryMap));
+
     	DockerService dockerService = dockerServiceBuilder.get().setLocalEnvironment(env).get();
     	
 //		map = map.entrySet().stream()

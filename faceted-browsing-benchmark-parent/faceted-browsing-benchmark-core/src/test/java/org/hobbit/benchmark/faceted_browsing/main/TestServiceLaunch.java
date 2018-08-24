@@ -1,7 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
-import org.hobbit.benchmark.faceted_browsing.config.ServiceSpringApplicationBuilder;
 import org.hobbit.core.service.api.IdleServiceCapable;
+import org.hobbit.core.service.docker.ServiceSpringApplicationBuilder;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

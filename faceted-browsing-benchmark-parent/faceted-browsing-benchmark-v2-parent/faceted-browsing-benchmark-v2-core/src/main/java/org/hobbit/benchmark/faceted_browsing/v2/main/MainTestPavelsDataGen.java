@@ -6,22 +6,18 @@ import java.util.Collections;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
-import org.hobbit.benchmark.faceted_browsing.config.ServiceSpringApplicationBuilder;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.ServiceNoOp;
-import org.hobbit.core.component.TaskGeneratorFacetedBenchmarkMocha;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
-import org.hobbit.qpid.v7.config.ConfigQpidBroker;
+import org.hobbit.core.service.docker.ServiceSpringApplicationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Service;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 
 import io.reactivex.Flowable;
@@ -38,8 +34,8 @@ public class MainTestPavelsDataGen {
 		String sessionId = "testsession" + "." + RabbitMqFlows.idGenerator.get();
 
 		
-		DockerService amqpServer = 
-		
+		DockerService amqpService = dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/hobbit-sdk-qpid7",
+						ImmutableMap.<String, String>builder().build());
 //		Service amqpService = new ServiceSpringApplicationBuilder("qpid-server", new SpringApplicationBuilder()
 //				// Add the amqp broker
 //				.properties(new ImmutableMap.Builder<String, Object>()
@@ -58,8 +54,8 @@ public class MainTestPavelsDataGen {
 		
 		DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
 				dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
-						ImmutableMap.<String, String>builder().build()
-				), 8890);
+						ImmutableMap.<String, String>builder().build()),
+				8890);
 
 		dbService.startAsync().awaitRunning();
 		String sparqlEndpoint = "http://" + dbService.getContainerId() + ":8890/sparql";

@@ -1,10 +1,9 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,7 +25,7 @@ public class MainServiceLauncher {
 			
 	@Bean
 	public ApplicationRunner serviceLauncher(@Qualifier("MainService") Service activeService, ConfigurableApplicationContext ctx) {
-		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)getRoot(ctx, ApplicationContext::getParent);
+		ConfigurableApplicationContext rootCtx = (ConfigurableApplicationContext)TreeUtils.findRoot(ctx, ApplicationContext::getParent);
 //		ConfigurableApplicationContext rootCtx = ctx;
 
 		// Add a listener that closes the service's (root) context on service termination
@@ -73,27 +72,6 @@ public class MainServiceLauncher {
 			activeService.startAsync().awaitTerminated();
 			logger.info("MainServiceLauncher::ApplicationRunner service started... " + (activeService == null ? "(no active service)" : activeService.getClass()));
 		};
-	}
-
-    public static <T> T findAncestor(T node, Function<? super T, ? extends T> getParent, java.util.function.Predicate<T> predicate) {
-        Objects.requireNonNull(node);
-    	
-    	T current = node;
-        do {
-        	boolean isMatch = predicate.test(current);
-        	if(isMatch) {	        		
-        		break;
-        	}
-        	
-            current = getParent.apply(current);
-        } while(current != null);
-
-        return current;
-    }
-    
-	public static <T> T getRoot(T start, Function<? super T, ? extends T> getParent) {
-		T result = findAncestor(start, getParent, x -> getParent.apply(x) == null);
-		return result;
 	}
 }
 
