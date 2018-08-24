@@ -1,19 +1,21 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
+import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.ServiceNoOp;
 import org.hobbit.core.config.RabbitMqFlows;
-import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.ServiceSpringApplicationBuilder;
+import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +28,9 @@ public class MainTestPavelsDataGen {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestPavelsDataGen.class);
 
 	
-	public static void main(String[] args) throws DockerCertificateException {
+	public static void main(String[] args) throws DockerCertificateException, InterruptedException {
 		DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, Collections.emptyMap(), Collections.emptySet());
 		
-		String amqpHost = "localhost";
-		String amqpFromContainer = "10.128.128.128";
 		String sessionId = "testsession" + "." + RabbitMqFlows.idGenerator.get();
 
 		
@@ -50,7 +50,9 @@ public class MainTestPavelsDataGen {
 		logger.info("AMQP server starting ...");
 		amqpService.startAsync().awaitRunning();
 		
-		logger.info("AMQP server started");
+		String amqpHost = amqpService.getContainerId();
+		
+		logger.info("AMQP server started and online at " + amqpHost);
 		
 		DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
 				dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
@@ -64,9 +66,11 @@ public class MainTestPavelsDataGen {
 
 		
 		DockerService dgService = dsf.create("git.project-hobbit.eu:4567/smirnp/grow-smarter-benchmark/datagen", ImmutableMap.<String, String>builder()
-				.put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpFromContainer)
+				.put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpHost)
 				.put(Constants.HOBBIT_SESSION_ID_KEY, sessionId)
 				.put(Constants.DATA_QUEUE_NAME_KEY, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)
+				.put(Constants.GENERATOR_ID_KEY, "1")
+				.put(Constants.GENERATOR_COUNT_KEY, "1")
 				.put("HOUSES_COUNT", "1000")
 				.put("DEVICES_PER_HOUSEHOLD_MIN", "5")
 				.put("DEVICES_PER_HOUSEHOLD_MAX", "20")
@@ -88,19 +92,29 @@ public class MainTestPavelsDataGen {
 		logger.info("TG starting ...");
 		tgService.startAsync().awaitRunning();
 
+		
 		Flowable<ByteBuffer> flow = (Flowable<ByteBuffer>)tgService.getAppBuilder().context().getBean("dg2tgReceiver");	
-
+		System.out.println("Flow " + flow);
+//		flow.onne
+		
 		logger.info("TG started - obtained receiver " + flow);
-		flow.subscribe(msg -> System.out.println("Got message: " + RabbitMQUtils.readString(msg)));
+		flow.subscribe(msg -> System.out.println("Got message: " + new String(msg.array(), StandardCharsets.UTF_8)));//RabbitMQUtils.readModel(msg.duplicate())));
+		//flow.subscribe(msg -> System.out.println("Got message"));
 		
 		logger.info("DG starting ...");
 		dgService.startAsync().awaitRunning();
 		
 		
 		logger.info("DG started");
+
+		Thread.sleep(5000);
 		
+		Subscriber<ByteBuffer> commandSender = (Subscriber<ByteBuffer>)tgService.getAppBuilder().context().getBean("commandSender");	
+
+        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
+
 		
-		logger.info("TG termination awaited");
+		logger.info("DG termination awaited");
 		dgService.awaitTerminated();
 		
 		logger.info("Done");
