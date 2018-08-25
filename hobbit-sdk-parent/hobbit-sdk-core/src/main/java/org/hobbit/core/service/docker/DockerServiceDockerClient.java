@@ -1,22 +1,19 @@
 package org.hobbit.core.service.docker;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.DockerClient.RemoveContainerParam;
 import com.spotify.docker.client.exceptions.ContainerNotFoundException;
-import com.spotify.docker.client.messages.AttachedNetwork;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerInfo;
 import com.spotify.docker.client.messages.ContainerState;
-import com.spotify.docker.client.messages.Network;
 
 /**
  * A DockerService backed by spotify's docker client
@@ -164,12 +161,18 @@ public class DockerServiceDockerClient
 //        LogStream output = dockerClient.execStart(execCreation.id());
 //        execOutput = output.readFully();
     }
-
+    
     @Override
     protected void shutDown() throws Exception {
     	try {
     		dockerClient.killContainer(containerId);
-    		dockerClient.removeContainer(containerId);
+    		dockerClient.removeContainer(containerId, RemoveContainerParam.removeVolumes());
+
+//			ContainerInfo containerInfo = dockerClient.inspectContainer(containerId);
+//			for(ContainerMount mount : containerInfo.mounts()) {
+//				String volumeName = mount.name();
+//				dockerClient.removeVolume(volumeName);
+//			}
     	} catch(Exception e) {
 
     		boolean acceptableException = false;
@@ -211,6 +214,7 @@ public class DockerServiceDockerClient
         ContainerState containerState = containerInfo.state();
         if(!containerState.running()) {
         	stopAsync();
+        	//shutDown();
         }
 //        if(!containerState.running()) {
 //            throw new IllegalStateException("A docker container that should act as a service is no longer running. Container id = " + containerId);

@@ -1,19 +1,26 @@
 package org.hobbit.benchmark.faceted_browsing.v2.vocab;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.impl.DataQueryImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_BNode;
+import org.apache.jena.sparql.expr.E_Datatype;
 import org.apache.jena.sparql.expr.E_IsNumeric;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVar;
@@ -29,6 +36,39 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 public class ConceptAnalyser {
 	boolean includeNonNumeric;
 	
+	
+	/**
+	 *  DISTINCT ?p { ?s ?p ?o . FILTER(datatype(?o) = xsd:dateTime) }
+	 *  
+	 * @param model
+	 */
+	public UnaryRelation analyzeEventGraphs(Model model) {
+		Query query = null;
+		QueryExecutionFactory.create(query, model).execSelect();
+		
+		ResourceShapeBuilder rsp = new ResourceShapeBuilder();
+		List<Node> temporalPredicates = new ArrayList<>();
+
+		// TODO extract the shape pattern for the given temporal triple
+		// later check if 
+
+//		for(Node p : temporalPredicates) {
+//						
+//		}
+//		
+		return null;
+	}
+
+	public static UnaryRelation createConceptTemporalProperties() {
+
+		UnaryRelation result = new Concept(
+				ElementUtils.createElementGroup(
+					ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
+					new ElementFilter(new E_Datatype(new ExprVar(Vars.o)))),
+				Vars.o);
+		
+		return result;
+	}
 	
 	// Based on min/max value, we could create a simple histogram based on a given number of buckets
 	
