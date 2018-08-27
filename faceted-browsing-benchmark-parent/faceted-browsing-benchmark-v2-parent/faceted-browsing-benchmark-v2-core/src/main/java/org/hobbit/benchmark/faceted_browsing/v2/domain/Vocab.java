@@ -40,6 +40,11 @@ public class Vocab {
 	public static final Property last = property("last");
 	public static final Property prior = property("prior");
 
+
+	public static final Property query = property("query");
+//	public static final Property constraint = property("constraint");
+
+	
 	
 	public static Property property(String localName) {
 		return ResourceFactory.createProperty("http://aksw.org/adhoc/ontology/" + localName);

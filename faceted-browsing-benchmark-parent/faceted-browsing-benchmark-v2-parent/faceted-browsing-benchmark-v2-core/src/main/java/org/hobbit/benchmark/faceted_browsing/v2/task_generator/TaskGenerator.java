@@ -250,6 +250,7 @@ public class TaskGenerator {
 
 				Resource undoStack = ModelFactory.createDefaultModel().createResource();
 				
+				// Create a action for adding a constraint
 				
 				// Set up undo action
 				return () -> {

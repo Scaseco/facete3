@@ -4,7 +4,7 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.apache.jena.rdf.model.Resource;
 
 public interface FacetedQueryResource
-	extends FacetedQuery
+	extends FacetedQuery//, Resource
 {
 	Resource modelRoot();
 }

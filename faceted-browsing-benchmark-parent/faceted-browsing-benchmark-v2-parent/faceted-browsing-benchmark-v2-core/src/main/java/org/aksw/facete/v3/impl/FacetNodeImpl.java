@@ -60,7 +60,7 @@ public class FacetNodeImpl
 
 	@Override
 	public FacetNodeResource parent() {
-		Resource p = ResourceUtils.getPropertyValue(state, Vocab.parent, Resource.class).orElse(null);
+		Resource p = ResourceUtils.getPropertyValue(state, Vocab.parent, Resource.class);
 		
 		return p == null ? null : new FacetNodeImpl(query, p);
 	}

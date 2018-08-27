@@ -23,7 +23,7 @@ public class SPathImpl
 	
 	@Override
 	public SPath getParent() {
-		SPath result = ResourceUtils.getPropertyValue(this, RDF.first, SPath.class).orElse(null);
+		SPath result = ResourceUtils.getPropertyValue(this, RDF.first, SPath.class);
 
 		return result;
 	}
@@ -36,7 +36,7 @@ public class SPathImpl
 	@Override
 	//Property 
 	public String getPredicate() {
-		Property p = ResourceUtils.getPropertyValue(this, RDF.predicate, Property.class).orElse(null);
+		Property p = ResourceUtils.getPropertyValue(this, RDF.predicate, Property.class);
 		String result = p == null ? null : p.getURI();
 		return result;
 	}
