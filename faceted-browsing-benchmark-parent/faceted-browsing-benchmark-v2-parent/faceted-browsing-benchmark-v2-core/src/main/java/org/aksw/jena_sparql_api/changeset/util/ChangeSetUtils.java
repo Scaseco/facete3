@@ -146,7 +146,6 @@ public class ChangeSetUtils {
     	ChangeSetGroupManager manager = new ChangeSetGroupManager(csgModel, dataModel);
     	manager.clearRedo();
     	
-    	
 		Set<Node> ss = Sets.union(
 				GraphUtil.listSubjects(addGraph, Node.ANY, Node.ANY).toSet(),
 				GraphUtil.listSubjects(delGraph, Node.ANY, Node.ANY).toSet());
@@ -200,6 +199,7 @@ public class ChangeSetUtils {
 			Resource soc = ModelUtils.convertGraphNodeToRDFNode(s, csgModel).asResource();
 			cs.setSubjectOfChange(soc);
 
+			//System.out.println("Subject of change for " + cs + " is " + soc);
 			css.setLatestChangeSet(cs);
 			
 			List<Statement> addStmts = addGraph.find(s, Node.ANY, Node.ANY)

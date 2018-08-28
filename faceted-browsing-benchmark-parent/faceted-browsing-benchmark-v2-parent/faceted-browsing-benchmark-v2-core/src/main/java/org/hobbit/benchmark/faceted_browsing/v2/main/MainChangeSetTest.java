@@ -34,22 +34,29 @@ public class MainChangeSetTest {
 				b.inModel(m).addLiteral(RDFS.label, "b" + i);
 			}
 		});
-		
+
 		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, m -> m.removeAll(null, RDFS.label, null));
 
 		
 		ChangeSetGroupManager csgm = new ChangeSetGroupManager(changeModel, dataModel);
 		csgm.undo();
 		csgm.undo();
-		csgm.undo();
-		csgm.undo();
+//		csgm.undo();
+
+		csgm.clearRedo();
+//		csgm.redo();
+		
+//		csgm.undo();
+//		csgm.undo();
 		
 		
-		RDFDataMgr.write(System.out, dataModel, RDFFormat.TURTLE_PRETTY);
+		
+		System.out.println("Change set information");
+		RDFDataMgr.write(System.out, changeModel, RDFFormat.TURTLE_FLAT);
 		
 		System.out.println("Remaining data");
-		RDFDataMgr.write(System.out, ResourceUtils.reachableClosure(a), RDFFormat.TURTLE_PRETTY);
-		RDFDataMgr.write(System.out, ResourceUtils.reachableClosure(b), RDFFormat.TURTLE_PRETTY);
+		RDFDataMgr.write(System.out, ResourceUtils.reachableClosure(a), RDFFormat.TURTLE_FLAT);
+		RDFDataMgr.write(System.out, ResourceUtils.reachableClosure(b), RDFFormat.TURTLE_FLAT);
 	}
 
 

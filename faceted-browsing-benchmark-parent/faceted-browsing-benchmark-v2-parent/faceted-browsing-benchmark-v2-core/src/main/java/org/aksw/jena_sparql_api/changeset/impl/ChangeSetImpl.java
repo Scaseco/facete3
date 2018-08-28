@@ -71,5 +71,10 @@ public class ChangeSetImpl
 	public Collection<RdfStatement> removals() {
 		Collection<RdfStatement> result = new SetFromPropertyValues<>(this, CS.removal, RdfStatement.class);
 		return result;
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		return super.toString() + " [subjectOfChange=" + getSubjectOfChange() + "]";
+	}
 }

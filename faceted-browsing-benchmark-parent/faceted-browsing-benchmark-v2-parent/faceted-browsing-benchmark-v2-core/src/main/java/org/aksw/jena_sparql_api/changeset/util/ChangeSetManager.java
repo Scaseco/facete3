@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.changeset.util;
 
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
+import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
+import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ReifierStd;
 
 public class ChangeSetManager {
@@ -51,7 +54,7 @@ public class ChangeSetManager {
 			}
 			
 			if(cs != null) {
-				ChangeSetUtils.applyUndo(cs, dataModel);
+				ChangeSetUtils.applyRedo(cs, dataModel);
 				result = true;
 			}
 			
@@ -72,12 +75,42 @@ public class ChangeSetManager {
 	
 	
 	public void clearRedo() {
-//		ChangeSetGroup current = ChangeSetUtils.getLatestChangeSetGroup(changeModel);
-//		ChangeSetGroup succ;
-//
-//		while((succ = ChangeSetUtils.getSuccessor(current)) != null) {
-//			ChangeSetUtils.clearChangeSetGroup(succ);
-//			current = succ;
-//		}
+		// If the pointer is placed before the first csg, we now set it to null		
+		ChangeSet removeStart = subjectState.getLatestChangeSet();
+
+		if(removeStart != null) {
+			if(subjectState.isUndone()) {
+				subjectState.setLatestChangeSet(removeStart.getPrecedingChangeSet());
+				subjectState.setUndone(false);
+			} else {
+				removeStart = ChangeSetUtils.getSuccessor(removeStart);
+			}
+		}
+
+		clear(removeStart);
+	}
+
+	public void clear(ChangeSet cs) {
+		while(cs != null) {
+			ChangeSet next = ChangeSetUtils.getSuccessor(cs);
+			
+			clearImmediate(cs);
+			
+			cs = next;
+		};
+	}
+	
+	
+	public static void clearImmediate(ChangeSet cs) {
+		//System.out.println("Clearing properties of cs " + cs);
+		for(Resource r : cs.additions()) {
+			r.removeProperties();
+		}
+
+		for(Resource r : cs.removals()) {
+			r.removeProperties();
+		}
+		
+		cs.removeProperties();
 	}
 }
