@@ -13,7 +13,7 @@ public class FacetConstraintRemoveAction
 
 	public Resource createUndoAction() {
 		FacetConstraintAddAction result = new FacetConstraintAddAction(node, enhGraph);
-		result.setQuery(getQuery());
+		//result.setQuery(getQuery());
 		result.setConstraint(getConstraint());
 		return result;
 	}

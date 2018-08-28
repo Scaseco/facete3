@@ -27,11 +27,10 @@ public interface ChangeSet
 		RDFNode literal = this.getModel().createLiteral(creatorName);
 		setCreatorName(literal);
 	}
-	
 
 	Resource getSubjectOfChange();
-	void setSubjectOfChange(Resource resource);
-	
+	void setSubjectOfChange(Resource resource);	
+
 	Collection<RdfStatement> additions();
 	Collection<RdfStatement> removals();
 }

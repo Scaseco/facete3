@@ -63,11 +63,11 @@ class LinkedIterator<X, T>
 	
 }
 
-public class StackImpl
+public class RdfStackImpl
 	extends ResourceBase
-	implements Stack
+	implements RdfStack
 {
-	public StackImpl(Node n, EnhGraph m) {
+	public RdfStackImpl(Node n, EnhGraph m) {
 		super(n, m);
 	}
 
@@ -82,21 +82,21 @@ public class StackImpl
 
 	public Iterator<RDFNode> iterator() {
 		return new LinkedIterator<Resource, RDFNode>(
-				() -> ResourceUtils.getPropertyValue(this, Vocab.last, Resource.class).orElse(null),
-				n -> ResourceUtils.getPropertyValue(n, Vocab.prior, Resource.class).orElse(null),
-				n -> ResourceUtils.getPropertyValue(n, Vocab.value).orElse(null),
+				() -> ResourceUtils.getPropertyValue(this, Vocab.last, Resource.class),
+				n -> ResourceUtils.getPropertyValue(n, Vocab.prior, Resource.class),
+				n -> ResourceUtils.getPropertyValue(n, Vocab.value),
 				null);
 	}
 	
 	
 	public static RDFNode pop(Resource stack) {
-		Resource holder = ResourceUtils.getPropertyValue(stack, Vocab.last).map(RDFNode::asResource).orElse(null);
+		Resource holder = ResourceUtils.tryGetPropertyValue(stack, Vocab.last).map(RDFNode::asResource).orElse(null);
 
 		RDFNode result = null;
 		if(holder != null) {
-			result = ResourceUtils.getPropertyValue(holder, Vocab.value).orElse(null);
+			result = ResourceUtils.getPropertyValue(holder, Vocab.value);
 		
-			RDFNode prior = ResourceUtils.getPropertyValue(holder, Vocab.prior).orElse(null);
+			RDFNode prior = ResourceUtils.getPropertyValue(holder, Vocab.prior);
 
 			ResourceUtils.setProperty(stack, Vocab.last, prior);
 		} else {
@@ -118,7 +118,7 @@ public class StackImpl
 		Resource holder = m.createResource();
 		holder.addProperty(Vocab.value, item);
 		
-		RDFNode prior = ResourceUtils.getPropertyValue(stack, Vocab.last).orElse(null);
+		RDFNode prior = ResourceUtils.getPropertyValue(stack, Vocab.last);
 		ResourceUtils.setProperty(stack, Vocab.last, holder);
 		ResourceUtils.setProperty(holder, Vocab.prior, prior);		
 	}

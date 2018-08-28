@@ -43,7 +43,7 @@ public class SPathImpl
 
 	@Override
 	public boolean isReverse() {
-		boolean result = ResourceUtils.getLiteralPropertyValue(this, RDF.rest, Boolean.class).orElse(false);
+		boolean result = ResourceUtils.tryGetLiteralPropertyValue(this, RDF.rest, Boolean.class).orElse(false);
 		return result;
 	}
 

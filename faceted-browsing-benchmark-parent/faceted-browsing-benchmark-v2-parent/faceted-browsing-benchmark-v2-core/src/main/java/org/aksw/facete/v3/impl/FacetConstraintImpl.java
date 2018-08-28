@@ -22,7 +22,7 @@ public class FacetConstraintImpl
 
 	@Override
 	public boolean enabled() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.enabled, Boolean.class).orElse(true);
+		return ResourceUtils.tryGetLiteralPropertyValue(this, Vocab.enabled, Boolean.class).orElse(true);
 	}
 
 	@Override
@@ -39,7 +39,7 @@ public class FacetConstraintImpl
 
 	@Override
 	public Expr expr() {
-		String str = ResourceUtils.getLiteralPropertyValue(this, Vocab.expr, String.class).orElse(null);
+		String str = ResourceUtils.tryGetLiteralPropertyValue(this, Vocab.expr, String.class).orElse(null);
 		Expr result = ExprUtils.parse(str);
 		
 		result = result.applyNodeTransform(FacetConstraintImpl::varToBlankNode);

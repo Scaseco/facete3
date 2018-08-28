@@ -37,8 +37,7 @@ public class ViewportImpl
 
 	@Override
 	public BigDecimal getWidth() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.width, BigDecimal.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.width, BigDecimal.class);
 	}
 
 	@Override
@@ -48,8 +47,7 @@ public class ViewportImpl
 
 	@Override
 	public BigDecimal getHeight() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.height, BigDecimal.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.height, BigDecimal.class);
 	}
 
 	@Override
@@ -59,8 +57,7 @@ public class ViewportImpl
 
 	@Override
 	public String getDataCrs() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.dataCrs, String.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.dataCrs, String.class);
 	}
 
 	@Override
@@ -70,8 +67,7 @@ public class ViewportImpl
 
 	@Override
 	public String getDisplayCrs() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.displayCrs, String.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.displayCrs, String.class);
 	}
 
 	@Override
@@ -81,8 +77,7 @@ public class ViewportImpl
 
 	@Override
 	public BigDecimal getCenterX() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.lon, BigDecimal.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.lon, BigDecimal.class);
 	}
 
 	@Override
@@ -92,8 +87,7 @@ public class ViewportImpl
 
 	@Override
 	public BigDecimal getCenterY() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.lat, BigDecimal.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.lat, BigDecimal.class);
 	}
 
 	@Override
@@ -103,8 +97,7 @@ public class ViewportImpl
 
 	@Override
 	public BigDecimal getZoom() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.zoom, BigDecimal.class)
-				.orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.zoom, BigDecimal.class);
 	}
 
 	@Override

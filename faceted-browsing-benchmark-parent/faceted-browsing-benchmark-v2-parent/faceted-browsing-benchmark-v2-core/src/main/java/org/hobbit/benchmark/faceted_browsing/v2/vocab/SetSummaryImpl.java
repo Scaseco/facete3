@@ -17,20 +17,20 @@ public class SetSummaryImpl
 	}
 
 	public Long getTotalValueCount() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.totalValueCount, Long.class).orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.totalValueCount, Long.class);
 	}
 	
 	public Long getDistinctValueCount() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.distinctValueCount, Long.class).orElse(null);		
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.distinctValueCount, Long.class);		
 	}
 	
 	public Number getMin() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.min, BigDecimal.class).orElse(null);				
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.min, BigDecimal.class);				
 	}
 	
 	
 	public Number getMax() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.max, BigDecimal.class).orElse(null);				
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.max, BigDecimal.class);				
 	}
 
 	@Override

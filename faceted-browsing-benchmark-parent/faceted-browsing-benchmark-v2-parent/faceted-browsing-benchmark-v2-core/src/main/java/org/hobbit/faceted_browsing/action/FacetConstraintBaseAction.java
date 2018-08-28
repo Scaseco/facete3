@@ -21,11 +21,12 @@ public class FacetConstraintBaseAction
 	}
 
 	public FacetedQueryResource getQuery() {
-		return ResourceUtils.getPropertyValue(this, Vocab.query, FacetedQueryResource.class).orElse(null);
+		return null;
+		//return ResourceUtils.getPropertyValue(this, Vocab.query, FacetedQueryResource.class);
 	}
 	
 	public FacetConstraint getConstraint() {
-		return ResourceUtils.getPropertyValue(this, Vocab.constraint, FacetConstraint.class).orElse(null);
+		return ResourceUtils.getPropertyValue(this, Vocab.constraint, FacetConstraint.class);
 	}
 
 	public void setConstraint(Resource constraint) {

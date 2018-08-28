@@ -8,7 +8,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.Stack;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStack;
 import org.junit.Test;
 
 public class TestRdfStack {
@@ -16,7 +16,7 @@ public class TestRdfStack {
 	@Test(expected=EmptyStackException.class)
 	public void testStack() {
 		Model m = ModelFactory.createDefaultModel();
-		Stack s = m.createResource().as(Stack.class);
+		RdfStack s = m.createResource().as(RdfStack.class);
 
 		List<String> ops = Arrays.asList("a", "b", "c", null, "d", null, null, null, null);
 

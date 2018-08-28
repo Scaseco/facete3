@@ -175,7 +175,7 @@ public class FacetNodeImpl
 	
 	@Override
 	public Var alias() {
-		return ResourceUtils.getLiteralPropertyValue(state, Vocab.alias, String.class)
+		return ResourceUtils.tryGetLiteralPropertyValue(state, Vocab.alias, String.class)
 			.map(Var::alloc).orElse(null);
 	}
 

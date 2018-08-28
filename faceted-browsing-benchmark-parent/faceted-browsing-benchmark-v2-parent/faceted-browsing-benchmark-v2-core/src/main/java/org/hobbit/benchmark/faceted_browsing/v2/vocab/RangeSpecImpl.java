@@ -17,7 +17,7 @@ public class RangeSpecImpl
 
 	@Override
 	public RDFNode getMin() {
-		return ResourceUtils.getPropertyValue(this, Vocab.min, RDFNode.class).orElse(null);
+		return ResourceUtils.getPropertyValue(this, Vocab.min, RDFNode.class);
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class RangeSpecImpl
 
 	@Override
 	public boolean isMinInclusive() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.minInclusive, Boolean.class).orElse(true);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.minInclusive, Boolean.class);
 	}
 
 	@Override
@@ -37,7 +37,7 @@ public class RangeSpecImpl
 
 	@Override
 	public RDFNode getMax() {
-		return ResourceUtils.getPropertyValue(this, Vocab.max, RDFNode.class).orElse(null);
+		return ResourceUtils.getPropertyValue(this, Vocab.max, RDFNode.class);
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class RangeSpecImpl
 
 	@Override
 	public boolean isMaxInclusive() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.maxInclusive, Boolean.class).orElse(true);
+		return ResourceUtils.getLiteralPropertyValue(this, Vocab.maxInclusive, Boolean.class);
 	}
 
 	@Override
