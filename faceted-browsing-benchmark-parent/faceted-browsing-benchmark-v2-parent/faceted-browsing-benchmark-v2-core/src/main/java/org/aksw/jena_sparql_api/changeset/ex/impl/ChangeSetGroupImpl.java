@@ -4,7 +4,7 @@ import java.util.Set;
 
 import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
-import org.aksw.jena_sparql_api.changeset.ex.api.CSEX;
+import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
@@ -22,12 +22,12 @@ public class ChangeSetGroupImpl
 
 	@Override
 	public ChangeSetGroup getPrecedingChangeSetGroup() {
-		return ResourceUtils.getPropertyValue(this, CSEX.precedingChangeSetGroup, ChangeSetGroup.class);
+		return ResourceUtils.getPropertyValue(this, CSX.precedingChangeSetGroup, ChangeSetGroup.class);
 	}
 
 	@Override
 	public void setPrecedingChangeSetGroup(ChangeSetGroup precedingChangeSetGroup) {
-		ResourceUtils.setProperty(this, CSEX.precedingChangeSetGroup, precedingChangeSetGroup);
+		ResourceUtils.setProperty(this, CSX.precedingChangeSetGroup, precedingChangeSetGroup);
 	}
 
 	@Override

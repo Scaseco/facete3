@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.changeset.api;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 public interface RdfStatement
 	extends Resource
@@ -14,4 +15,6 @@ public interface RdfStatement
 	void setSubject(Resource subject);
 	void setPredicate(Property predicate);
 	void setObject(RDFNode object);
+
+	Statement getStatement();
 }

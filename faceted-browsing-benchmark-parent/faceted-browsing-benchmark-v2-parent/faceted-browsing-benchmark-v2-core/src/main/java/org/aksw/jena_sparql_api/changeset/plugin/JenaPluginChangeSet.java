@@ -3,7 +3,11 @@ package org.aksw.jena_sparql_api.changeset.plugin;
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
 import org.aksw.jena_sparql_api.changeset.api.RdfStatement;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
+import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
+import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
 import org.aksw.jena_sparql_api.changeset.ex.impl.ChangeSetGroupImpl;
+import org.aksw.jena_sparql_api.changeset.ex.impl.ChangeSetGroupStateImpl;
+import org.aksw.jena_sparql_api.changeset.ex.impl.ChangeSetStateImpl;
 import org.aksw.jena_sparql_api.changeset.impl.ChangeSetImpl;
 import org.aksw.jena_sparql_api.changeset.impl.RdfStatementImpl;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
@@ -30,7 +34,10 @@ public class JenaPluginChangeSet
 	public static void init(Personality<RDFNode> p) {
 		p.add(ChangeSet.class, new SimpleImplementation(ChangeSetImpl::new));
 		p.add(RdfStatement.class, new SimpleImplementation(RdfStatementImpl::new));
-		
+
+		// Extensions
 		p.add(ChangeSetGroup.class, new SimpleImplementation(ChangeSetGroupImpl::new));
+		p.add(ChangeSetState.class, new SimpleImplementation(ChangeSetStateImpl::new));
+		p.add(ChangeSetGroupState.class, new SimpleImplementation(ChangeSetGroupStateImpl::new));
 	}
 }

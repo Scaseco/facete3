@@ -25,6 +25,8 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	
 	@Override
 	public Collection<FacetConstraint> list() {
+		// TODO Only list the constraints for the parent facet node
+		
 		Resource modelRoot = parent.query().modelRoot();
 		Set<FacetConstraint> set = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
 

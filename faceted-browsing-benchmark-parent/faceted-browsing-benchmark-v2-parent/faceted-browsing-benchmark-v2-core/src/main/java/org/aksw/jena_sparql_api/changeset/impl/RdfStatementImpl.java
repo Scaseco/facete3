@@ -6,12 +6,22 @@ import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ReifiedStatement;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.impl.ReifierStd;
 import org.apache.jena.vocabulary.RDF;
 
+/**
+ * A read/write view for reified statements
+ * 
+ * @author raven
+ *
+ */
 public class RdfStatementImpl
 	extends ResourceBase
 	implements RdfStatement
@@ -55,4 +65,19 @@ public class RdfStatementImpl
 		ResourceUtils.setProperty(this, RDF.object, object);
 	}
 
+	/**
+	 * Using shortcut via jena's ReifiedStatement because it requires 
+	 * 
+	 * Note: requires presence of the type 'rdf:Statement' to work
+	 * 
+	 * 
+	 */
+	public Statement getStatement() {
+		return as(ReifiedStatement.class).getStatement();
+	}
+		
+	@Override
+	public String toString() {
+		return super.toString() + "[" + getSubject() + ", " + getPredicate() + ", " + getObject() + "]";
+	}
 }
