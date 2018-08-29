@@ -3,6 +3,10 @@ package org.hobbit.faceted_browsing.action;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.bgp.api.BgpMultiNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.bgp.impl.BgpMultiNodeImpl;
+import org.aksw.facete.v3.bgp.impl.BgpNodeImpl;
 import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetCountImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl;
@@ -16,10 +20,10 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpecImpl;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummaryImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStack;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStackImpl;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummaryImpl;
 
 public class JenaPluginFacetedBrowsing {
 	public static void init() {
@@ -27,6 +31,9 @@ public class JenaPluginFacetedBrowsing {
 	}
 	
 	public static void init(Personality<RDFNode> p) {
+		p.add(BgpNode.class, new SimpleImplementation(BgpNodeImpl::new));
+		p.add(BgpMultiNode.class, new SimpleImplementation(BgpMultiNodeImpl::new));
+		
 		
 		p.add(FacetConstraint.class, new SimpleImplementation(FacetConstraintImpl::new));
 		

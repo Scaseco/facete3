@@ -23,32 +23,26 @@ public class MainChangeSetTest {
 		Resource a = dataModel.createResource("http://www.example.org/a");
 		Resource b = dataModel.createResource("http://www.example.org/b");
 
+		ChangeSetGroupManager csgm = new ChangeSetGroupManager(changeModel, dataModel);
+
 		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, m -> {
 			for(int i = 0; i < 2; ++i) {
 				a.inModel(m).addLiteral(RDFS.label, "a" + i);
 			}
 		});
 
+		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, m -> m.removeAll(null, RDFS.label, null));
+		csgm.undo(); // undo removals
+
+		// the next change should clear the redo action
 		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, m -> {
 			for(int i = 0; i < 2; ++i) {
 				b.inModel(m).addLiteral(RDFS.label, "b" + i);
 			}
 		});
-
-		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, m -> m.removeAll(null, RDFS.label, null));
-
 		
-		ChangeSetGroupManager csgm = new ChangeSetGroupManager(changeModel, dataModel);
-		csgm.undo();
-		csgm.undo();
-//		csgm.undo();
-
-		csgm.clearRedo();
-//		csgm.redo();
 		
-//		csgm.undo();
-//		csgm.undo();
-		
+		csgm.canRedo(); // should be false
 		
 		
 		System.out.println("Change set information");

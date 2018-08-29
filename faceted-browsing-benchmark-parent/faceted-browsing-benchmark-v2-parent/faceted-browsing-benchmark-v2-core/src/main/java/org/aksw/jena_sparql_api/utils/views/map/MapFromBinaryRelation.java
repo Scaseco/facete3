@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -16,7 +15,6 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
-import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 
 import io.reactivex.Flowable;

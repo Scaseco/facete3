@@ -22,12 +22,8 @@ public interface ConstraintFacade<B> {
 	
 	/** Add an anonymous equal constraint */
 	ConstraintFacade<B> eq(Node node);
-
 	ConstraintFacade<B> exists();
-	
 	ConstraintFacade<B> gt(Node node);
-	
-	
 	ConstraintFacade<B> neq(Node node);
 	
 	/** End constraint building and return the parent object */

@@ -5,6 +5,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 public class Vocab {
+	public static final Property fwd = property("fwd");
+	public static final Property bwd = property("bwd");
+	public static final Property property = property("property");
+	public static final Property one = property("one");
+
+	
 	public static final Property root = property("root");
 	public static final Property parent = property("parent");
 	public static final Property alias = property("alias");
