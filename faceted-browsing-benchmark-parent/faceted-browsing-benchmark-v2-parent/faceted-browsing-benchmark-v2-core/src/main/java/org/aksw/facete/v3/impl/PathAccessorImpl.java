@@ -3,6 +3,8 @@ package org.aksw.facete.v3.impl;
 import java.util.Objects;
 
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Node;
@@ -10,38 +12,35 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.util.ExprUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 public class PathAccessorImpl
-	implements PathAccessor<FacetNode>
+	implements PathAccessor<BgpNode>
 {
-	protected FacetedQueryResource query;
+	protected BgpNode query;
 	
-	public PathAccessorImpl(FacetedQueryResource query) {
+	public PathAccessorImpl(BgpNode query) {
 		this.query = query;
 	}
 	
 	@Override
-	public Class<FacetNode> getPathClass() {
-		return FacetNode.class;
+	public Class<BgpNode> getPathClass() {
+		return BgpNode.class;
 	}
 
 	@Override
-	public FacetNode getParent(FacetNode path) {
+	public BgpNode getParent(BgpNode path) {
 		return path.parent();
 	}
 
 	@Override
-	public BinaryRelation getReachingRelation(FacetNode path) {
+	public BinaryRelation getReachingRelation(BgpNode path) {
 		return path.getReachingRelation();
 	}
 
 	@Override
-	public boolean isReverse(FacetNode path) {
+	public boolean isReverse(BgpNode path) {
 		BinaryRelation br = getReachingRelation(path);
 		Triple t = Objects.requireNonNull(ElementUtils.extractTriple(br.getElement()));
 
@@ -51,7 +50,7 @@ public class PathAccessorImpl
 	}
 
 	@Override
-	public String getPredicate(FacetNode path) {
+	public String getPredicate(BgpNode path) {
 		BinaryRelation br = getReachingRelation(path);
 		Triple t = ElementUtils.extractTriple(br.getElement());
 
@@ -61,7 +60,7 @@ public class PathAccessorImpl
 	}
 
 	@Override
-	public Var getAlias(FacetNode path) {
+	public Var getAlias(BgpNode path) {
 		return path.alias();
 	}
 
@@ -88,13 +87,14 @@ public class PathAccessorImpl
 //	}
 
 	@Override
-	public FacetNode tryMapToPath(Node node) {
+	public BgpNode tryMapToPath(Node node) {
 		FacetNode result = null;
 	
 	 	if(node.isBlank()) {
 		
-		 	Model model = query.modelRoot().getModel();
-		 	
+		 	//Model model = query.modelRoot().getModel();
+		 	Model model = query.getModel();
+	 		
 		 	//ModelUtils.convertGraphNodeToRDFNode(node, model);
 		 	Resource state = model.wrapAsResource(node);
 		 	

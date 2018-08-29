@@ -2,24 +2,20 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
-import java.util.function.Function;
 
-import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -161,17 +157,17 @@ public class MainFacetedQueryApi {
 //		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
 //		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());
 		
-		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().fwd(RDF.type).one()));
-		System.out.println("Test: " + new PathAccessorImpl(fq).isReverse(fq.root().bwd(RDF.type).one()));
+		System.out.println("Test: " + new PathAccessorImpl(fq.modelRoot().getBgpRoot()).isReverse(fq.root().fwd(RDF.type).one().model()));
+		System.out.println("Test: " + new PathAccessorImpl(fq.modelRoot().getBgpRoot()).isReverse(fq.root().bwd(RDF.type).one().model()));
 		
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(fq));
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(fq.modelRoot().getBgpRoot()));
 		
 		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 //		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 		//qgen.getConstraints()
 		
-		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), false, false));
-		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one(), true, false));
+		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().state(), false, false));
+		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().state(), true, false));
 		
 		//fq.root().fwd(RDF.type).one().constraints().eq("foo").addEq("bar").end()
 

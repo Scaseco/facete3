@@ -5,8 +5,10 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.bgp.impl.BgpMultiNodeImpl;
 import org.aksw.facete.v3.bgp.impl.BgpNodeImpl;
+import org.aksw.facete.v3.bgp.impl.XFacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetCountImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl;
@@ -33,6 +35,7 @@ public class JenaPluginFacetedBrowsing {
 	public static void init(Personality<RDFNode> p) {
 		p.add(BgpNode.class, new SimpleImplementation(BgpNodeImpl::new));
 		p.add(BgpMultiNode.class, new SimpleImplementation(BgpMultiNodeImpl::new));
+		p.add(XFacetedQuery.class, new SimpleImplementation(XFacetedQueryImpl::new));
 		
 		
 		p.add(FacetConstraint.class, new SimpleImplementation(FacetConstraintImpl::new));

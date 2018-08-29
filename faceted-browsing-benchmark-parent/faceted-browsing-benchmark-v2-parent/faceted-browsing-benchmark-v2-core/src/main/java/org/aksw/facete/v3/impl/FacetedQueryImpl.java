@@ -6,13 +6,11 @@ import java.util.function.Supplier;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
 public class FacetedQueryImpl
@@ -22,36 +20,38 @@ public class FacetedQueryImpl
 	protected SparqlQueryConnection conn;
 	protected Supplier<? extends UnaryRelation> conceptSupplier;
 	
-	protected Resource modelRoot;
-	protected FacetNode root;
-	protected FacetNode focus;
+//	protected Function<? super Resource, ? extends UnaryRelation> conceptParser;
+	
+	protected XFacetedQuery modelRoot;
+	protected FacetNodeResource root;
+	protected FacetNodeResource focus;
+
 	
 	
 	public FacetedQueryImpl() {
-		this.modelRoot = ModelFactory.createDefaultModel().createResource();
+		this.modelRoot = ModelFactory.createDefaultModel().createResource().as(XFacetedQuery.class);
 		
-		Resource rootSubject = modelRoot.getModel().createResource();
+		//Resource rootSubject = modelRoot.getModel().createResource();
+
 		
-		this.modelRoot.addProperty(Vocab.root, rootSubject);
+		//this.modelRoot.addProperty(Vocab.root, rootSubject);
 		
-		this.root = new FacetNodeImpl(this, rootSubject);
-		
-		
+		this.root = new FacetNodeImpl(this, modelRoot.getBgpRoot());
 		this.focus = this.root;
 	}
 	
 	@Override
-	public Resource modelRoot() {
+	public XFacetedQuery modelRoot() {
 		return modelRoot;
 	}
 	
 	@Override
-	public FacetNode root() {
+	public FacetNodeResource root() {
 		return root;
 	}
 
 	@Override
-	public FacetNode focus() {
+	public FacetNodeResource focus() {
 		return focus;
 	}
 
@@ -92,8 +92,9 @@ public class FacetedQueryImpl
 	
 	@Override
 	public Collection<FacetConstraint> constraints() {
-		Collection<FacetConstraint> result = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
-		return result;
+		return modelRoot.constraints();
+//		Collection<FacetConstraint> result = new SetFromPropertyValues<>(modelRoot, Vocab.constraint, FacetConstraint.class);
+//		return result;
 	}
 
 //	@Override

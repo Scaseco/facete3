@@ -6,9 +6,10 @@ import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetMultiNode;
-import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.bgp.api.BgpDirNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
@@ -19,7 +20,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.BasicPattern;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Template;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
@@ -36,12 +36,16 @@ public class FacetDirNodeImpl
 //	}
 
 	protected FacetNodeResource parent;
-	protected boolean isFwd;
-	protected Var alias;
+
+	protected BgpDirNode state;
 	
-	public FacetDirNodeImpl(FacetNodeResource parent, boolean isFwd) {
+	//protected boolean isFwd;
+	//protected Var alias;
+	
+	public FacetDirNodeImpl(FacetNodeResource parent, BgpDirNode state) {//boolean isFwd) {
 		this.parent = parent;
-		this.isFwd = isFwd;
+		//this.isFwd = isFwd;
+		this.state = state;
 	}
 	
 	@Override
@@ -61,19 +65,21 @@ public class FacetDirNodeImpl
 	
 	@Override
 	public FacetMultiNode via(Property property) {
-		return new FacetMultiNodeImpl(parent, property, isFwd);
-		
+		return new FacetMultiNodeImpl(parent, state.via(property));		
+		//return new FacetMultiNodeImpl(parent, property, isFwd);
 	}
 	
 	@Override
 	public DataQuery<?> facets() {
 		FacetedQueryResource facetedQuery = this.parent().query();
+		
+		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
-		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
+		facetedQuery.modelRoot().constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
-		UnaryRelation concept = qgen.createConceptFacets(parent, !this.isFwd, false, null);
+		UnaryRelation concept = qgen.createConceptFacets(parent.state(), !this.state.isFwd(), false, null);
 		
 //		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint)(relations, null);
 //
@@ -90,12 +96,13 @@ public class FacetDirNodeImpl
 	@Override
 	public DataQuery<FacetCount> facetCounts() {
 		FacetedQueryResource facetedQuery = this.parent().query();
-
+		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
+		
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
 		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
-		Map<String, BinaryRelation> relations = qgen.getFacets(parent, !this.isFwd, false);
+		Map<String, BinaryRelation> relations = qgen.getFacets(parent.state(), !this.state.isFwd(), false);
 		
 		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null);
 
@@ -114,10 +121,10 @@ public class FacetDirNodeImpl
 		FacetedQueryResource facetedQuery = this.parent().query();
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
-		TernaryRelation tr = qgen.getFacetValues(this.parent().query().focus(), this.parent(), !this.isFwd, null, null);
+		TernaryRelation tr = qgen.getFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
 		
 		
 		BasicPattern bgp = new BasicPattern();
@@ -141,10 +148,10 @@ public class FacetDirNodeImpl
 	public BinaryRelation facetValueRelation() {
 		FacetedQueryResource facetedQuery = this.parent().query();
 
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(facetedQuery));
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
-		TernaryRelation tr = qgen.getFacetValueRelation(this.parent().query().focus(), this.parent(), !this.isFwd, null, null);
+		TernaryRelation tr = qgen.getFacetValueRelation(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
 
 		BinaryRelation result = new BinaryRelationImpl(tr.getElement(), tr.getP(), tr.getO());
 		return result;

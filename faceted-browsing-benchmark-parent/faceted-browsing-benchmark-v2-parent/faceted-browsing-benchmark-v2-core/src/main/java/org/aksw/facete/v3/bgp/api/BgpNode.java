@@ -100,6 +100,4 @@ public interface BgpNode
 	 * Simple constraints are expressions making use of only a single variable.
 	 * The set of constraints is treated as a disjunction */
 	//Set<Expr> getConstraints();
-
-
 }

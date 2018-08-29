@@ -1,39 +1,36 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.Set;
-
 import org.aksw.facete.v3.api.FacetMultiNode;
 import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
-import org.aksw.jena_sparql_api.utils.model.SetFromResourceAndInverseProperty;
-import org.apache.jena.rdf.model.Property;
+import org.aksw.facete.v3.bgp.api.BgpMultiNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
 public class FacetMultiNodeImpl
 	implements FacetMultiNode
 {
 	protected FacetNodeResource parent;
-	protected Property property;
-	protected boolean isFwd;
+//	protected Property property;
+//	protected boolean isFwd;
 
+	protected BgpMultiNode state;
 	
-	public FacetMultiNodeImpl(FacetNodeResource parent, Property property, boolean isFwd) {
+	public FacetMultiNodeImpl(FacetNodeResource parent, BgpMultiNode state) {//Property property, boolean isFwd) {
 		super();
 		this.parent = parent;
-		this.property = property;
-		this.isFwd = isFwd;
+		this.state = state;
+//		this.property = property;
+//		this.isFwd = isFwd;
 	}
 
-	public Set<Resource> liveBackingSet() {
-		Set<Resource> result = isFwd
-				? new SetFromPropertyValues<>(parent.state(), property, Resource.class)
-				: new SetFromResourceAndInverseProperty<>(parent.state(), property, Resource.class);
-				
-		return result;
-	}
+//	public Set<Resource> liveBackingSet() {
+//		Set<Resource> result = isFwd
+//				? new SetFromPropertyValues<>(parent.state(), property, Resource.class)
+//				: new SetFromResourceAndInverseProperty<>(parent.state(), property, Resource.class);
+//				
+//		return result;
+//	}
 	
 //	@Override
 //	public Set<FacetNode> children() {
@@ -55,25 +52,29 @@ public class FacetMultiNodeImpl
 	 */
 	@Override
 	public FacetNode one() {
-		// TODO We could use .children as well
-		Set<Resource> set = liveBackingSet();
+		//state.one();
 		
-		FacetNode result;
-		Resource r;
-		if(set.isEmpty()) {
-			r = parent.state().getModel().createResource();
-			set.add(r);
-
-			r.addProperty(Vocab.parent, parent.state());
-		}
+		return new FacetNodeImpl(parent.query(), state.one());
 		
-		if(set.size() == 1) {
-			result = new FacetNodeImpl(parent.query(), set.iterator().next());
-		} else {
-			throw new RuntimeException("Multiple aliases defined");
-		}
-
-		return result;
+//		// TODO We could use .children as well
+//		Set<Resource> set = liveBackingSet();
+//		
+//		FacetNode result;
+//		Resource r;
+//		if(set.isEmpty()) {
+//			r = parent.state().getModel().createResource();
+//			set.add(r);
+//
+//			r.addProperty(Vocab.parent, parent.state());
+//		}
+//		
+//		if(set.size() == 1) {
+//			result = new FacetNodeImpl(parent.query(), set.iterator().next());
+//		} else {
+//			throw new RuntimeException("Multiple aliases defined");
+//		}
+//
+//		return result;
 	}
 
 	@Override
@@ -100,9 +101,11 @@ public class FacetMultiNodeImpl
 		} else {
 			FacetNodeResource tmp = (FacetNodeResource)facetNode;
 			Resource r = tmp.state();
+
+			result = state.contains(r.as(BgpNode.class));
 			
-			Set<Resource> set = liveBackingSet();
-			result = set.contains(r);			
+//			Set<Resource> set = liveBackingSet();
+//			result = set.contains(r);			
 		}
 		return result;
 	}

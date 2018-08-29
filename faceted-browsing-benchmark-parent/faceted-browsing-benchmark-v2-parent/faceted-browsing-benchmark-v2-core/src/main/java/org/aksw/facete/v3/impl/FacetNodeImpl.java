@@ -7,25 +7,20 @@ import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.syntax.Template;
-import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
@@ -35,7 +30,8 @@ public class FacetNodeImpl
 {
 	protected FacetedQueryResource query;
 //	protected FacetNodeResource parent;
-	protected Resource state;
+	//protected Resource state;
+	protected BgpNode state;
 
 //	public FacetNodeImpl(FacetedQueryResource query, Resource state) {
 //		this(query, state);
@@ -52,7 +48,7 @@ public class FacetNodeImpl
 	 * @param parent
 	 * @param state
 	 */
-	public FacetNodeImpl(FacetedQueryResource query, Resource state) {
+	public FacetNodeImpl(FacetedQueryResource query, BgpNode state) {
 		this.query = query;
 //		this.parent = parent;
 		this.state = Objects.requireNonNull(state); 
@@ -60,7 +56,7 @@ public class FacetNodeImpl
 
 	@Override
 	public FacetNodeResource parent() {
-		Resource p = ResourceUtils.getPropertyValue(state, Vocab.parent, Resource.class);
+		BgpNode p = state.parent();
 		
 		return p == null ? null : new FacetNodeImpl(query, p);
 	}
@@ -71,18 +67,18 @@ public class FacetNodeImpl
 	}
 	
 	@Override
-	public Resource state() {
+	public BgpNode state() {
 		return state;
 	}
 	
 	@Override
 	public FacetDirNode fwd() {
-		return new FacetDirNodeImpl(this, true);
+		return new FacetDirNodeImpl(this, state.fwd());
 	}
 
 	@Override
 	public FacetDirNode bwd() {
-		return new FacetDirNodeImpl(this, false);
+		return new FacetDirNodeImpl(this, state.bwd());
 	}
 
 	@Override
@@ -135,12 +131,14 @@ public class FacetNodeImpl
 
 
 	public DataQuery<?> createValueQuery(boolean excludeConstraints) {
-		FacetedQueryGenerator<FacetNode> qgen = new FacetedQueryGenerator<FacetNode>(new PathAccessorImpl(query));
+		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
+		
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
 		query.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 
-		FacetNode focus = query().focus();
+		BgpNode focus = query().focus().state();
 
-		UnaryRelation c = qgen.getConceptForAtPath(focus, this, excludeConstraints);
+		UnaryRelation c = qgen.getConceptForAtPath(focus, this.state, excludeConstraints);
 		
 		//System.out.println("Available values: " + c);
 		

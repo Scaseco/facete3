@@ -1,10 +1,13 @@
 package org.aksw.facete.v3.impl;
 
 import org.aksw.facete.v3.api.FacetedQuery;
-import org.apache.jena.rdf.model.Resource;
+import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 
 public interface FacetedQueryResource
 	extends FacetedQuery//, Resource
 {
-	Resource modelRoot();
+	FacetNodeResource root();
+	FacetNodeResource focus();
+
+	XFacetedQuery modelRoot();
 }

@@ -2,6 +2,7 @@ package org.aksw.facete.v3.api;
 
 import java.util.Optional;
 
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
@@ -21,11 +22,13 @@ import org.apache.jena.sparql.path.Path;
  *
  */
 public interface FacetNode {
+
 	FacetedQuery query();
 	
 	FacetDirNode fwd();
 	FacetDirNode bwd();
 
+	//BgpNode model();
 	
 	// Convenience shortcuts
 	default FacetMultiNode fwd(Property property) {

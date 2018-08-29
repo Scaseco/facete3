@@ -14,11 +14,16 @@ public class BgpDirNodeImpl
 	implements BgpDirNode
 {
 	protected BgpNode node;
-	protected boolean isReverse;
+	protected boolean isFwd;
 	
-	public BgpDirNodeImpl(BgpNode node, boolean isReverse) {
+	public BgpDirNodeImpl(BgpNode node, boolean isFwd) {
 		this.node = node;
-		this.isReverse = isReverse;
+		this.isFwd = isFwd;
+	}
+	
+	@Override
+	public boolean isFwd() {
+		return isFwd;
 	}
 	
 	@Override
@@ -33,7 +38,7 @@ public class BgpDirNodeImpl
 
 	@Override
 	public BgpMultiNode via(Property property) {
-		Map<Resource, BgpMultiNode> map = isReverse ? node.bwdMultiNodes() : node.fwdMultiNodes();
+		Map<Resource, BgpMultiNode> map = isFwd ? node.fwdMultiNodes() : node.bwdMultiNodes() ;
 		
 		BgpMultiNode result = node.bwdMultiNodes().get(property);
 		if(result == null) {

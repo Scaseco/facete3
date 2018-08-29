@@ -10,5 +10,5 @@ public interface BgpMultiNode
 	 * for this multi node. Raises an exception if multiple default aliases exist
 	 */
 	BgpNode one();
-	boolean contains(BgpNode facetNode);
+	boolean contains(BgpNode bgpNode);
 }
