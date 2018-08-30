@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.TreeMap;
 
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
@@ -157,8 +158,8 @@ public class MainFacetedQueryApi {
 //		System.out.println("Available values: " + facetNode.availableValues().exec().toList().blockingGet());
 //		System.out.println("Remaining values: " + facetNode.remainingValues().exec().toList().blockingGet());
 		
-		System.out.println("Test: " + new PathAccessorImpl(fq.modelRoot().getBgpRoot()).isReverse(fq.root().fwd(RDF.type).one().model()));
-		System.out.println("Test: " + new PathAccessorImpl(fq.modelRoot().getBgpRoot()).isReverse(fq.root().bwd(RDF.type).one().model()));
+		System.out.println("Test: " + new PathAccessorImpl(fq.modelRoot().getBgpRoot()).isReverse(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state()));
+		System.out.println("Test: " + new PathAccessorImpl(fq.modelRoot().getBgpRoot()).isReverse(fq.root().bwd(RDF.type).one().as(FacetNodeResource.class).state()));
 		
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(fq.modelRoot().getBgpRoot()));
 		
@@ -166,8 +167,8 @@ public class MainFacetedQueryApi {
 //		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 		//qgen.getConstraints()
 		
-		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().state(), false, false));
-		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().state(), true, false));
+		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state(), false, false));
+		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state(), true, false));
 		
 		//fq.root().fwd(RDF.type).one().constraints().eq("foo").addEq("bar").end()
 

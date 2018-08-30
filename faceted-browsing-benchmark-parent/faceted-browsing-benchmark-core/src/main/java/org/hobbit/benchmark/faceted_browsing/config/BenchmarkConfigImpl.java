@@ -15,22 +15,22 @@ public class BenchmarkConfigImpl
 
 	@Override
 	public String getBenchmarkControllerImageName() {
-		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.benchmarkController, String.class).orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.benchmarkController, String.class);
 	}
 
 	@Override
 	public String getDataGeneratorImageName() {
-		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.dataGenerator, String.class).orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.dataGenerator, String.class);
 	}
 
 	@Override
 	public String getTaskGeneratorImageName() {
-		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.taskGenerator, String.class).orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.taskGenerator, String.class);
 	}
 
 	@Override
 	public String getEvaluationModuleImageName() {
-		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.evaluationModule, String.class).orElse(null);
+		return ResourceUtils.getLiteralPropertyValue(this, BenchmarkConfigVocab.evaluationModule, String.class);
 	}
 
 	@Override

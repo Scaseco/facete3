@@ -2,7 +2,6 @@ package org.aksw.facete.v3.api;
 
 import java.util.Optional;
 
-import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
@@ -21,7 +20,9 @@ import org.apache.jena.sparql.path.Path;
  * @author Claus Stadler, Jul 23, 2018
  *
  */
-public interface FacetNode {
+public interface FacetNode
+	extends Castable
+{
 
 	FacetedQuery query();
 	
@@ -121,6 +122,6 @@ public interface FacetNode {
 	
 	// TODO Some API to get the values of this node by excluding all constraints
 	DataQuery<?> availableValues();
-	DataQuery<?> remainingValues();
+	DataQuery<?> remainingValues();	
 }
 

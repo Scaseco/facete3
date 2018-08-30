@@ -80,32 +80,42 @@ public class FacetNodeImpl
 	public FacetDirNode bwd() {
 		return new FacetDirNodeImpl(this, state.bwd());
 	}
-
+	
+	
 	@Override
 	public BinaryRelation getReachingRelation() {
-		BinaryRelation result;
-
-		FacetNodeResource parent = parent();
-		if(parent == null) {
-			result = null;
-		} else {
-			
-			boolean isReverse = false;
-			Set<Statement> set = ResourceUtils.listProperties(parent().state(), null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
-			
-			if(set.isEmpty()) {
-				isReverse = true;
-				set = ResourceUtils.listReverseProperties(parent().state(), null).filterKeep(stmt -> stmt.getSubject().equals(state)).toSet();
-			}
-			
-			// TODO Should never fail - but ensure that
-			Property p = set.iterator().next().getPredicate();
-			
-			result = create(p.asNode(), isReverse);
-		}
-
+		BinaryRelation result = BgpNode.getReachingRelation(state);
 		return result;
 	}
+
+//	@Override
+//	public BinaryRelation getReachingRelation() {
+//		BinaryRelation result;
+//
+//		FacetNodeResource parent = parent();
+//		if(parent == null) {
+//			result = null;
+//		} else {
+//			
+//			boolean isReverse = false;
+//			Set<Statement> set = ResourceUtils.listProperties(parent().state(), null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
+//			
+//			if(set.isEmpty()) {
+//				isReverse = true;
+//				set = ResourceUtils.listReverseProperties(parent().state(), null).filterKeep(stmt -> stmt.getSubject().equals(state)).toSet();
+//			}
+//			
+//			// TODO Should never fail - but ensure that
+//			Property p = set.iterator().next().getPredicate();
+//			
+//			result = create(p.asNode(), isReverse);
+//		}
+//
+//		return result;
+//	}
+//
+
+	
 	
 	public boolean isReverse() {
 		boolean isReverse = false;
@@ -119,16 +129,6 @@ public class FacetNodeImpl
 		return isReverse;
 	}
 	
-	public static BinaryRelation create(Node node, boolean isReverse) {
-		//ElementUtils.createElement(triple)
-		Triple t = isReverse
-				? new Triple(Vars.o, node, Vars.s)
-				: new Triple(Vars.s, node, Vars.o);
-
-		BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElement(t), Vars.s, Vars.o);
-		return result;
-	}
-
 
 	public DataQuery<?> createValueQuery(boolean excludeConstraints) {
 		BgpNode bgpRoot = query.modelRoot().getBgpRoot();

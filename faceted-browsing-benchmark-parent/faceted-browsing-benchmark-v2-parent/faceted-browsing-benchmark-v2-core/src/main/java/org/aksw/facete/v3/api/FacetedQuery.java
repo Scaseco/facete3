@@ -7,7 +7,8 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
-public interface FacetedQuery {
+public interface FacetedQuery
+{
 	FacetNode root();
 	
 //	SPath getFocus();

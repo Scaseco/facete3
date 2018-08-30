@@ -2,11 +2,20 @@ package org.aksw.facete.v3.bgp.api;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import org.aksw.facete.v3.impl.FacetNodeResource;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_ReverseLink;
@@ -100,4 +109,42 @@ public interface BgpNode
 	 * Simple constraints are expressions making use of only a single variable.
 	 * The set of constraints is treated as a disjunction */
 	//Set<Expr> getConstraints();
+	
+	
+	
+	public static BinaryRelation getReachingRelation(BgpNode state) {
+		BinaryRelation result;
+
+		BgpNode parent = state.parent();
+		if(parent == null) {
+			result = null;
+		} else {
+			
+			boolean isReverse = false;
+			Set<Statement> set = ResourceUtils.listProperties(parent, null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
+			
+			if(set.isEmpty()) {
+				isReverse = true;
+				set = ResourceUtils.listReverseProperties(parent, null).filterKeep(stmt -> stmt.getSubject().equals(state)).toSet();
+			}
+
+			// TODO Should never fail - but ensure that
+			Property p = set.iterator().next().getPredicate();
+
+			result = create(p.asNode(), isReverse);
+		}
+
+		return result;		
+	}
+	
+	public static BinaryRelation create(Node node, boolean isReverse) {
+		//ElementUtils.createElement(triple)
+		Triple t = isReverse
+				? new Triple(Vars.o, node, Vars.s)
+				: new Triple(Vars.s, node, Vars.o);
+
+		BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElement(t), Vars.s, Vars.o);
+		return result;
+	}
+
 }
