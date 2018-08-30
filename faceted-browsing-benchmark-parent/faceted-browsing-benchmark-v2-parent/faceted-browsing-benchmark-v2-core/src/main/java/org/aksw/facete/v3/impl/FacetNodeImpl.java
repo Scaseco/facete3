@@ -1,22 +1,19 @@
 package org.aksw.facete.v3.impl;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -56,7 +53,7 @@ public class FacetNodeImpl
 
 	@Override
 	public FacetNodeResource parent() {
-		BgpNode p = state.parent();
+		BgpNode p = Optional.ofNullable(state.parent()).map(BgpMultiNode::parent).orElse(null);
 		
 		return p == null ? null : new FacetNodeImpl(query, p);
 	}
@@ -134,7 +131,7 @@ public class FacetNodeImpl
 		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 		
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
-		query.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		BgpNode focus = query().focus().state();
 
@@ -184,7 +181,7 @@ public class FacetNodeImpl
 
 	@Override
 	public FacetNode root() {
-		FacetNode result = FacetedQueryGenerator.getRoot(this, FacetNode::parent);
+		FacetNode result = TreeUtils.findRoot(this, FacetNode::parent);
 		return result;
 	}
 

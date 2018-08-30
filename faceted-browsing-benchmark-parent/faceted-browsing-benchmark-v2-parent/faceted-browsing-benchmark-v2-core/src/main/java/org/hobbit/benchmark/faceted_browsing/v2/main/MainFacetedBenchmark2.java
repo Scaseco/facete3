@@ -215,7 +215,7 @@ public class MainFacetedBenchmark2 {
 //		Expr resolved = ExprTransformer.transform(exprTransform, tmp);
 
 
-		g.getConstraints().add(tmp);
+		g.addConstraint(tmp);
 
 		
 		//g.getFacets(path, isReverse)

@@ -77,7 +77,7 @@ public class FacetDirNodeImpl
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
-		facetedQuery.modelRoot().constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		facetedQuery.modelRoot().constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		UnaryRelation concept = qgen.createConceptFacets(parent.state(), !this.state.isFwd(), false, null);
 		
@@ -100,7 +100,7 @@ public class FacetDirNodeImpl
 		
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
-		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		Map<String, BinaryRelation> relations = qgen.getFacets(parent.state(), !this.state.isFwd(), false);
 		
@@ -122,7 +122,7 @@ public class FacetDirNodeImpl
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
-		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		TernaryRelation tr = qgen.getFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
 		
@@ -149,7 +149,7 @@ public class FacetDirNodeImpl
 		FacetedQueryResource facetedQuery = this.parent().query();
 
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
-		facetedQuery.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		TernaryRelation tr = qgen.getFacetValueRelation(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
 

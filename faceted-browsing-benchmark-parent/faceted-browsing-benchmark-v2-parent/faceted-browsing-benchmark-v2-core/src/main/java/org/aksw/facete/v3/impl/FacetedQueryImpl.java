@@ -6,11 +6,14 @@ import java.util.function.Supplier;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.vocabulary.RDF;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
 public class FacetedQueryImpl
@@ -31,10 +34,11 @@ public class FacetedQueryImpl
 	public FacetedQueryImpl() {
 		this.modelRoot = ModelFactory.createDefaultModel().createResource().as(XFacetedQuery.class);
 		
-		//Resource rootSubject = modelRoot.getModel().createResource();
-
 		
-		//this.modelRoot.addProperty(Vocab.root, rootSubject);
+		this.modelRoot.setBgpRoot(modelRoot.getModel().createResource()
+				.addProperty(RDF.type, Vocab.BgpNode)
+				.as(BgpNode.class)
+		);
 		
 		this.root = new FacetNodeImpl(this, modelRoot.getBgpRoot());
 		this.focus = this.root;

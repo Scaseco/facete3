@@ -27,7 +27,7 @@ public class RangeSpecImpl
 
 	@Override
 	public boolean isMinInclusive() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.minInclusive, Boolean.class);
+		return ResourceUtils.tryGetLiteralPropertyValue(this, Vocab.minInclusive, Boolean.class).orElse(true);
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class RangeSpecImpl
 
 	@Override
 	public boolean isMaxInclusive() {
-		return ResourceUtils.getLiteralPropertyValue(this, Vocab.maxInclusive, Boolean.class);
+		return ResourceUtils.tryGetLiteralPropertyValue(this, Vocab.maxInclusive, Boolean.class).orElse(true);
 	}
 
 	@Override

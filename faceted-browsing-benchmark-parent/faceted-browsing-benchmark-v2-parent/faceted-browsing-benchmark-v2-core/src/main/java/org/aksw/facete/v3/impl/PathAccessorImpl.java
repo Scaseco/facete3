@@ -1,7 +1,9 @@
 package org.aksw.facete.v3.impl;
 
 import java.util.Objects;
+import java.util.Optional;
 
+import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -9,6 +11,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
@@ -28,7 +31,9 @@ public class PathAccessorImpl
 
 	@Override
 	public BgpNode getParent(BgpNode path) {
-		return path.parent();
+		BgpNode result = Optional.ofNullable(path.parent()).map(BgpMultiNode::parent).orElse(null);
+		return result;
+		//return path.parent();
 	}
 
 	@Override
@@ -98,10 +103,11 @@ public class PathAccessorImpl
 		 	//ModelUtils.convertGraphNodeToRDFNode(node, model);
 		 	BgpNode state = model.wrapAsResource(node).as(BgpNode.class);
 
+		 	boolean isBgpNode = state.hasProperty(RDF.type, Vocab.BgpNode);
 		 	
-		 	boolean isFacetNode = state.hasProperty(Vocab.parent) || state.getModel().contains(null, Vocab.root, state);
+		 	//boolean isFacetNode = state.hasProperty(Vocab.parent) || state.getModel().contains(null, Vocab.root, state);
 		 	//result = isFacetNode ? new FacetNodeImpl(query, state) : null;
-		 	result = isFacetNode ? state : null;
+		 	result = isBgpNode ? state : null;
 	 	}
 
 	 	return result;

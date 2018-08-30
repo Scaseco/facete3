@@ -163,7 +163,7 @@ public class MainFacetedQueryApi {
 		
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(fq.modelRoot().getBgpRoot()));
 		
-		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
+		fq.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 //		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 		//qgen.getConstraints()
 		

@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -99,7 +98,8 @@ public interface BgpNode
 	Var alias();
 
 
-	BgpNode parent();
+	BgpMultiNode parent();
+	//BgpNode parent(BgpMultiNode parent);
 
 	//BinaryRelation getReachingRelation();
 	
@@ -115,7 +115,7 @@ public interface BgpNode
 	public static BinaryRelation getReachingRelation(BgpNode state) {
 		BinaryRelation result;
 
-		BgpNode parent = state.parent();
+		BgpMultiNode parent = state.parent();
 		if(parent == null) {
 			result = null;
 		} else {

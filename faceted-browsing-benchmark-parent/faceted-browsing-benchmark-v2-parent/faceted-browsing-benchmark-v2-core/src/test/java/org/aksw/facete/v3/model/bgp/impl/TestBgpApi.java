@@ -9,16 +9,22 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Test;
 
+import org.junit.Assert;
+
 public class TestBgpApi {
 	@Test
 	public void testBgpApi() {
 		Model model = ModelFactory.createDefaultModel();
 		
 		BgpNode root = model.createResource().as(BgpNode.class);
-		BgpNode target = root.fwd(RDF.type).one();
+		BgpNode node1 = root.fwd(RDF.type).one();
+		BgpNode node2 = node1.bwd(RDF.type).one();
+		
+		Assert.assertEquals(node1.parent().parent(), root);
+		Assert.assertEquals(node2.parent().parent(), node1);
 
+		
 		BgpNode target2 = root.bwd(RDFS.label).one();
-
 	
 		RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
 	}

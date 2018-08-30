@@ -10,6 +10,8 @@ public class Vocab {
 	public static final Property property = property("property");
 	public static final Property one = property("one");
 
+	public static final Property BgpNode = property("bgpNode");
+
 
 	public static final Property baseConcept = property("baseConcept");
 	public static final Property focus = property("focus");

@@ -1,13 +1,14 @@
 package org.aksw.facete.v3.bgp.impl;
 
 import java.util.Map;
+import java.util.Optional;
 
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
-import org.aksw.jena_sparql_api.utils.views.map.FluentRdfMap;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromProperty;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
@@ -84,18 +85,36 @@ public class BgpNodeImpl
 
 	@Override
 	public BgpNode root() {
-		return null;
+		BgpNode result = TreeUtils.<BgpNode>findRoot(this, n -> Optional.ofNullable(n.parent()).map(BgpMultiNode::parent).orElse(null));
+		return result;
 	}
 
 	@Override
 	public BgpNode as(Var var) {
-		// TODO Auto-generated method stub
-		return null;
+		return as(var == null ? null : var.getName());
 	}
 
 	@Override
-	public BgpNode parent() {
-		// TODO Auto-generated method stub
-		return null;
+	public BgpMultiNode parent() {
+		//BgpMultiNode result = ResourceUtils.getPropertyValue(this, Vocab.parent, BgpMultiNode.class);
+		
+		BgpMultiNode result = ResourceUtils.getReversePropertyValue(this, Vocab.one, BgpMultiNode.class);
+		return result;
 	}
+
+	@Override
+	public String toString() {
+		return "BgpNodeImpl [root()=" + root() + ", parent()=" + parent() + "]";
+	}
+//
+//	@Override
+//	public BgpNode parent(BgpMultiNode parent) {
+//		ResourceUtils.getReverseProperty(s, p)
+//		
+//		Vocab.fwd
+//		
+//		//ResourceUtils.setProperty(this, Vocab.parent, parent);
+//		
+//		return this;
+//	}
 }

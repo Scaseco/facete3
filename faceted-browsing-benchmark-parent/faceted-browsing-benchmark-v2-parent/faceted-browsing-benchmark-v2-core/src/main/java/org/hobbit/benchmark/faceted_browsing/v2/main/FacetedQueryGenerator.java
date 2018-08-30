@@ -94,14 +94,17 @@ public class FacetedQueryGenerator<P> {
 		this.constraints = new LinkedHashSet<>();
 	}
 
-	public Collection<Expr> getConstraints() {
-		return constraints;
-	}
+//	public Collection<Expr> getConstraints() {
+//		return constraints;
+//	}
 	
 //	public void addConstraint(Expr expr) {
 //		Expr rewritten = expr.applyNodeTransform(createNodeTransformSubstitutePathReferences());
 //		constraints.add(rewritten);
 //	}
+	public void addConstraint(Expr expr) {
+		constraints.add(expr);
+	}
 
 //	public TernaryRelation createQueryFacetValues(SPath focus, SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
 //		

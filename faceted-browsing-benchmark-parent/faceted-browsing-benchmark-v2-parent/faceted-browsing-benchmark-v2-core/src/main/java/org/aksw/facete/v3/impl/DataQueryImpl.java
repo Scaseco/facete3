@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import org.aksw.facete.v3.api.DataMultiNode;
@@ -168,6 +169,8 @@ public class DataQueryImpl<T extends RDFNode>
 
 	@Override
 	public Flowable<T> exec() {
+		Objects.requireNonNull(conn);
+		
 		
 		Set<Var> vars = new LinkedHashSet<>();
 		Node rootVar = baseRelation.getVars().get(0);
@@ -229,7 +232,7 @@ public class DataQueryImpl<T extends RDFNode>
 			QueryUtils.applySlice(query, offset, limit, false);
 		}
 		
-		//System.out.println(query);
+		System.out.println("Generated query: " + query);
 
 		
 		Flowable<T> result = ReactiveSparqlUtils
