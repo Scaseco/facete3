@@ -72,10 +72,11 @@ public class MainFacetedQueryApi {
 			System.out.println(xx);
 		}
 
-		FacetedQueryResource fq = new FacetedQueryImpl();
-		
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
+
+		FacetedQueryResource fq = FacetedQueryImpl.create(conn);
+		
 
 
 		

@@ -52,6 +52,8 @@ public class ChangeSetGroupManager {
 					Resource subjectOfChange = cs.getSubjectOfChange();
 					//System.out.println("Undo of " + subjectOfChange);
 					
+					//ChangeSetState subjectState = state.resourceStates().get(subjectOfChange);
+					
 					ChangeSetState subjectState = subjectOfChange.as(ChangeSetState.class);
 					
 					// Sanity check - the member of the change set group must be equal to the latest

@@ -180,8 +180,8 @@ public class TaskGenerator {
 		
 		int scenarioLength = 10; // TODO Obtain value from config
 		
-		FacetedQuery fq = new FacetedQueryImpl();
-		fq.connection(conn);
+		FacetedQuery fq = FacetedQueryImpl.create(conn);
+		//fq.connection(conn);
 
 		for(int i = 0; i < scenarioLength; ++i) {
 			double w = rand.nextDouble();
