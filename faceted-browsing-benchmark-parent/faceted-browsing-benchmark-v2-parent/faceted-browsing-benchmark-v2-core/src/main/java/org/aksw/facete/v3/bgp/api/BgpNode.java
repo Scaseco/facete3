@@ -2,7 +2,6 @@ package org.aksw.facete.v3.bgp.api;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -14,12 +13,12 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 public interface BgpNode
 	extends Resource
@@ -120,17 +119,25 @@ public interface BgpNode
 			result = null;
 		} else {
 			
-			boolean isReverse = false;
-			Set<Statement> set = ResourceUtils.listProperties(parent, null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
+//			boolean isReverse = false;
+//			Resource entry = ResourceUtils.tryGetReversePropertyValue(parent, Vocab.fwd)
+//				.orElseGet(() -> ResourceUtils.getReversePropertyValue(parent, Vocab.bwd));
+//
+//			Resource p = ResourceUtils.getPropertyValue(entry, Vocab.property, Resource.class);
+
+			Resource p = parent.reachingProperty();
+			boolean isReverse = parent.isReverse();
 			
-			if(set.isEmpty()) {
-				isReverse = true;
-				set = ResourceUtils.listReverseProperties(parent, null).filterKeep(stmt -> stmt.getSubject().equals(state)).toSet();
-			}
-
-			// TODO Should never fail - but ensure that
-			Property p = set.iterator().next().getPredicate();
-
+			//Set<Statement> set = ResourceUtils.listProperties(parent, null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
+//			
+//			if(set.isEmpty()) {
+//				isReverse = true;
+//				set = ResourceUtils.listReverseProperties(parent, null).filterKeep(stmt -> stmt.getSubject().equals(state)).toSet();
+//			}
+//
+//			// TODO Should never fail - but ensure that
+//			Property p = set.iterator().next().getPredicate();
+//
 			result = create(p.asNode(), isReverse);
 		}
 

@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
@@ -70,4 +71,28 @@ public class BgpMultiNodeImpl
 		return result;
 	}
 
+	
+	@Override
+	public Property reachingProperty() {
+		Property result = ResourceUtils.getPropertyValue(this, Vocab.property, Property.class);
+		return result;
+	}
+
+	@Override
+	public boolean isReverse() {
+//		boolean isReverse = false;
+//		Resource entry = ResourceUtils.tryGetReversePropertyValue(parent, Vocab.fwd)
+//			.orElseGet(() -> ResourceUtils.getReversePropertyValue(parent, Vocab.bwd));
+
+		boolean result =
+				Optional.ofNullable(
+					ResourceUtils.getReversePropertyValue(this, Vocab.fwd, BgpNode.class))
+					.map(x -> true)
+				
+				.orElseGet(() -> ResourceUtils.tryGetReversePropertyValue(this, Vocab.bwd, BgpNode.class)
+						.map(x -> false)
+						.orElseThrow(() -> new IllegalStateException()));
+		return result;
+
+	}
 }
