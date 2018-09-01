@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.changeset.util;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
-import org.aksw.jena_sparql_api.changeset.api.RdfStatement;
 import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
@@ -12,10 +12,11 @@ import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ReifiedStatement;
 import org.apache.jena.rdf.model.Resource;
 
-public class ChangeSetGroupManager {
+public class ChangeSetGroupManager
+	implements RdfChangeTracker
+{
 	protected Model changeModel;
 	protected Model dataModel;
 
@@ -31,13 +32,24 @@ public class ChangeSetGroupManager {
 		this.dataModel = dataModel;
 	}
 
+	@Override
+	public Model getDataModel() {
+		return dataModel;
+	}
+	
+	@Override
+	public Model getChangeModel() {
+		return changeModel;
+	}
+
 	public ChangeSetGroupState getState() {
 		ChangeSetGroupState result = CSX.redoPointer.inModel(changeModel).as(ChangeSetGroupState.class);
 		return result;
 	}
 	
-	public boolean undo() {
-		boolean result = false;
+	@Override
+	public void undo() {
+		//boolean result = false;
 		
 		ChangeSetGroupState state = getState();
 		
@@ -78,10 +90,10 @@ public class ChangeSetGroupManager {
 			state.setUndone(true);
 		}
 		
-		return result;
+		//return result;
 	}
 	
-	
+	@Override
 	public void redo() {
 		ChangeSetGroupState state = getState();
 		
@@ -125,6 +137,7 @@ public class ChangeSetGroupManager {
 		}
 	}
 	
+	@Override
 	public boolean canRedo() {
 		ChangeSetGroupState state = getState();
 		
@@ -141,6 +154,7 @@ public class ChangeSetGroupManager {
 		return result;
 	}
 	
+	@Override
 	public boolean canUndo() {
 		ChangeSetGroupState state = getState();
 		
@@ -156,6 +170,7 @@ public class ChangeSetGroupManager {
 	}
 	
 	
+	@Override
 	public void clearRedo() {
 		// If the pointer is placed before the first csg, we now set it to null
 		ChangeSetGroupState state = getState();
@@ -202,5 +217,10 @@ public class ChangeSetGroupManager {
 		}
 		
 		csg.removeProperties();
+	}
+	
+	@Override
+	public void trackChanges(Consumer<Model> action) {
+		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, action);
 	}
 }

@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.utils.views.map;
 
 import java.util.AbstractMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -20,7 +22,9 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
+import com.github.jsonldjava.shaded.com.google.common.base.Stopwatch;
 import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 
@@ -48,10 +52,31 @@ public class MapFromProperty
 	}
 
 	public Resource get(RDFNode key) {
+//		Stopwatch sw = Stopwatch.createStarted();
+		Resource result = getViaModel(key);
+//		System.out.println("Elapsed (s): " + sw.stop().elapsed(TimeUnit.NANOSECONDS) / 1000000000.0);
+
+		return result;
+	}
+	
+	
+	public Resource getViaModel(RDFNode key) {
+		Model model = subject.getModel();
+		Resource result = model.listStatements(null, keyProperty, key)
+			.mapWith(Statement::getSubject)
+			.filterKeep(e -> model.contains(subject, entryProperty, e))
+			.nextOptional()
+			.orElse(null);
+		
+		return result;
+	}
+
+	public Resource getViaSparql(RDFNode key) {
+
 		UnaryRelation e = new Concept(
 				ElementUtils.createElementTriple(
-						new Triple(subject.asNode(), entryProperty.asNode(), Vars.e),
-						new Triple(Vars.e, keyProperty.asNode(), key.asNode()))
+						new Triple(Vars.e, keyProperty.asNode(), key.asNode()),
+						new Triple(subject.asNode(), entryProperty.asNode(), Vars.e))
 				, Vars.e);
 			
 			Query query = RelationUtils.createQuery(e);
@@ -79,10 +104,12 @@ public class MapFromProperty
 		
 		Resource e = entry.inModel(subject.getModel());
 		
-		if(existing != null && !Objects.equals(existing, entry)) {
-			subject.getModel().remove(subject, entryProperty, existing);
+		if(!Objects.equals(existing, entry)) {
+			if(existing != null) {
+				subject.getModel().remove(subject, entryProperty, existing);
+			}
 		}
-		
+
 		subject.addProperty(entryProperty, e);
 		
 		ResourceUtils.setProperty(e, keyProperty, key);

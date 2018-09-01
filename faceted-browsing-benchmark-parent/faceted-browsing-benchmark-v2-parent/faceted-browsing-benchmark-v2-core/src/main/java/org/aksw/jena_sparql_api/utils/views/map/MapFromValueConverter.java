@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.utils.views.map;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
@@ -20,7 +21,19 @@ public class MapFromValueConverter<K, U, V>
 		this.map = map;
 		this.converter = converter;
 	}
+	
+	@Override
+	public V get(Object key) {
+		V result = Optional.ofNullable(map.get(key)).map(converter::convert).orElse(null);
+		return result;
+	}
 
+	@Override
+	public boolean containsKey(Object key) {
+		boolean result = map.containsKey(key);
+		return result;
+	}
+	
 	@Override
 	public V put(K key, V value) {
 		U val = converter.reverse().convert(value);
