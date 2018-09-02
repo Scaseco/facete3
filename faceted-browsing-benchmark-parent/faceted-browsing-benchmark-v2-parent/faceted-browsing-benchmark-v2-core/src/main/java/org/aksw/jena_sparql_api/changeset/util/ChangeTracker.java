@@ -5,5 +5,5 @@ import java.util.function.Consumer;
 public interface ChangeTracker<T>
 	extends ChangeApi
 {
-	void trackChanges(Consumer<T> action);
+//	void trackChanges(Consumer<T> action);
 }

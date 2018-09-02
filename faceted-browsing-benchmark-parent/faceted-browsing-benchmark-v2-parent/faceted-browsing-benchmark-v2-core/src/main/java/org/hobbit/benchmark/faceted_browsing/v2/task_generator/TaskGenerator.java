@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeSetTrackerImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTracker;
+import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
@@ -39,6 +41,7 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -76,16 +79,25 @@ public class TaskGenerator {
 	
 	protected Random rand;
 
-	protected RdfChangeTracker state;
-	
+	//protected RdfChangeTracker state;
 
+	protected RdfChangeTrackerWrapper changeTracker;
+
+
+	protected FacetedQuery currentQuery;
+
+	
 	
 	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties) {
 		this.conn = conn;
 		this.numericProperties = numericProperties;
 		this.rand = new Random(1000);
-		
-		generateScenario();
+
+		try {
+			generateScenario();
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	
@@ -109,10 +121,30 @@ public class TaskGenerator {
 	 * @param fn
 	 * @return
 	 */
-	public static <X> Function<? super FacetedQuery, X> wrap(Function<? super FacetNode, X> fn) {
+	public static <X> Function<? super FacetedQuery, X> facetedQueryToFocusNode(Function<? super FacetNode, X> fn) {
 		return fq -> fn.apply(fq.focus());
 	}
 
+	
+	public <X> Callable<X> bindActionToActiveFacetedQuery(Function<? super FacetedQuery, X> fn) {
+		return () -> fn.apply(currentQuery);
+	}
+
+	public <X> Callable<X> bindActionToFocusNode(Function<? super FacetNode, X> fn) {
+		return bindActionToActiveFacetedQuery(facetedQueryToFocusNode(fn));
+	}
+	
+	
+	public <X> Callable<X> wrapWithCommitChanges(Callable<X> supplier) {
+		return () -> {
+			X r = supplier.call();
+			changeTracker.commitChanges();				
+			return r;
+		};
+	}
+
+	
+	
 
 	public static Map<RDFNode, RDFNode> viewResourceAsMap(Resource s) {
 		Map<RDFNode, Collection<RDFNode>> multimap = new MapFromBinaryRelation(s.getModel(), new BinaryRelationImpl(
@@ -127,28 +159,38 @@ public class TaskGenerator {
 		return result;
 	}
 	
-	public void generateScenario() {
+	public void generateScenario() throws Exception {
 		
 		
 		// Maps a chokepoint id to a function that given a faceted query
 		// yields a supplier. Invoking the supplier applies the action and yields a runnable for undo.
 		// if an action is not applicable, the supplier is null
-		Map<String, Function<? super FacetedQuery, Boolean>> cpToAction = new HashMap<>();
+		Map<String, Callable<Boolean>> cpToAction = new HashMap<>();
 		
-		Model dataModel = ModelFactory.createDefaultModel();
-		
+		Model baseModel = ModelFactory.createDefaultModel();
 		Model changeModel = ModelFactory.createDefaultModel();
+
+		//RdfChangeTrackerWrapper
+		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);		
+		
+		Model dataModel = changeTracker.getDataModel();
 		
 		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
 		FacetedQueryImpl.initResource(facetedQuery);
+		
+		changeTracker.commitChangesWithoutTracking();
+		
 		
 		RdfChangeTracker rdfChangeTracker = new RdfChangeSetTrackerImpl(dataModel);
 		
 		// How to wrap the actions such that changes go into the change Model?
 		
-		cpToAction.put("cp1", wrap(this::applyCp1));
-		cpToAction.put("cp2", wrap(this::applyCp2));
+		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
+		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
 
+
+		cpToAction.put("cp10", this::applyCp10);
+		
 //		cpToAction.put("cp3", wrap(this::applyCp3));
 //		cpToAction.put("cp4", wrap(this::applyCp4));
 //		cpToAction.put("cp5", wrap(this::applyCp5));
@@ -206,14 +248,15 @@ public class TaskGenerator {
 			String step = s.sample(w);
 			System.out.println("Step: " + step);
 			
-			Function<? super FacetedQuery, Boolean> actionFactory = cpToAction.get(step);
+			Callable<Boolean> actionFactory = cpToAction.get(step);
 			if(actionFactory == null) {
 				// TODO Prevent encountering this case using prior check
 				logger.warn(step + " not associated with an implementation");
 			}
 			
 			if(actionFactory != null) {
-				boolean success = actionFactory.apply(fq);
+				
+				boolean success = actionFactory.call();
 
 				if(!success) {
 					// TODO deal with that case ; pick another action instead or even backtrack
@@ -253,10 +296,28 @@ public class TaskGenerator {
 		return null;
 	}
 	
+	
+	/**
+	 * Undoing former restrictions to previous state\\
+	 * (Go back to instances of a previous step)
+	 * @param fn
+	 */
+	public boolean applyCp10() {
+		boolean result;
+
+		if((result = changeTracker.canUndo())) {
+			changeTracker.undo();
+		}
+		
+		return result;
+	}
+
+	
+	
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
 	 */
-	public boolean applyCp1(FacetNode fn) {
+	public static boolean applyCp1(FacetNode fn) {
 
 		FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if(fc != null) {
@@ -275,7 +336,7 @@ public class TaskGenerator {
 	/**
 	 * Find all instances which additionally realize this property path with any property value
 	 */
-	public boolean applyCp2(FacetNode fn) {
+	public static boolean applyCp2(FacetNode fn) {
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 		
 		Node node = fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
@@ -485,15 +546,6 @@ public class TaskGenerator {
      * (Choke points 7,8,9 when intervals are unbounded and only an upper or lower bound is chosen)
 	 */
 	public static void applyCp9(FacetNode fn) {
-		
-	}
-
-	/**
-	 * Undoing former restrictions to previous state\\
-	 * (Go back to instances of a previous step)
-	 * @param fn
-	 */
-	public static void applyCp10(FacetNode fn) {
 		
 	}
 

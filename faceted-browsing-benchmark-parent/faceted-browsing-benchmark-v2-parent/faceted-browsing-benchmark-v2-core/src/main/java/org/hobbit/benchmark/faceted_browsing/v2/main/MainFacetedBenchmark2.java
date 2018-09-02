@@ -161,7 +161,7 @@ public class MainFacetedBenchmark2 {
 		//RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
 		
 		{
-			RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(RDFDataMgr.loadModel("path-data.ttl")));
+			RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(RDFDataMgr.loadModel("path-data.ttl")));
 
 			
 			System.out.println("Paths: " + ConceptPathFinder.findPaths(
@@ -184,7 +184,7 @@ public class MainFacetedBenchmark2 {
 	
 		}
 
-		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(m));
+		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));
 		
 				
 		FacetedBrowsingSessionImpl session = new FacetedBrowsingSessionImpl(conn);
