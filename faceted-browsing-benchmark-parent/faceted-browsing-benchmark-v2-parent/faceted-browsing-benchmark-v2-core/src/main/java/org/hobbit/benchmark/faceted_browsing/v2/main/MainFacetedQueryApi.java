@@ -148,7 +148,7 @@ public class MainFacetedQueryApi {
 		//TaskGenerator.applyCp4(fq.root());
 
 		TaskGenerator taskGenerator = TaskGenerator.configure(conn);
-		taskGenerator.applyCp6(fq.root());
+		//taskGenerator.applyCp6(fq.root());
 
 		
 		//ConceptPathFinder.

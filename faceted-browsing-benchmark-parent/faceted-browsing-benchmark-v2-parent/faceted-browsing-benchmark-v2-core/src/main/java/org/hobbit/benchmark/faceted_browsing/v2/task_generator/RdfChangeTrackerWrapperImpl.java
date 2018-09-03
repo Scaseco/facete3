@@ -30,6 +30,7 @@ public class RdfChangeTrackerWrapperImpl
 		this.baseModel = baseModel;
 		this.deltaGraph = deltaGraph;
 		this.dataModel = dataModel;
+		this.changeTracker = changeTracker;
 	}
 
 	public Model getBaseModel() {

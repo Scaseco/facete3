@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,7 +12,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.FacetConstraint;
@@ -20,8 +20,6 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
-import org.aksw.jena_sparql_api.changeset.util.RdfChangeSetTrackerImpl;
-import org.aksw.jena_sparql_api.changeset.util.RdfChangeTracker;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -41,7 +39,6 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -242,6 +239,7 @@ public class TaskGenerator {
 		FacetedQuery fq = FacetedQueryImpl.create(conn);
 		//fq.connection(conn);
 
+		List<String> chosenActions = new ArrayList<>();
 		for(int i = 0; i < scenarioLength; ++i) {
 
 			// Simplest recovery strategy: If an action could not be applied
@@ -250,7 +248,7 @@ public class TaskGenerator {
 			for(int j = 0; j < maxRandomRetries; ++j) {
 				double w = rand.nextDouble();			
 				String step = s.sample(w);
-				System.out.println("Step: " + step);
+				logger.info("Next randonmly selected action: " + step);
 				
 				Callable<Boolean> actionFactory = cpToAction.get(step);
 				if(actionFactory == null) {
@@ -265,7 +263,11 @@ public class TaskGenerator {
 					if(!success) {
 						// TODO deal with that case ; pick another action instead or even backtrack
 						logger.info("Skipping " + step + "; application failed");
+						changeTracker.undo();
+						changeTracker.clearRedo();
 						continue;
+					} else {
+						chosenActions.add(step);
 					}
 				} else {
 					logger.info("Skipping " + step + "; no implementation provided");
@@ -274,6 +276,8 @@ public class TaskGenerator {
 			}			
 			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
 		}
+		
+		System.out.println("Chosen actions: " + chosenActions);
 	}
 	
 	public Flowable<Query> generate() {
@@ -485,18 +489,21 @@ public class TaskGenerator {
 			
 			Node p = target.fwd().facets().filter(numProps).sample(true).exec().map(n -> n.asNode()).firstElement().blockingGet();
 			
-			System.out.println("Chose numeric property " + p);
-			//System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
-
-			// Sample the set of values and create a range constraint from it
+			if(p != null) {
 			
-			FacetNode v = target.fwd(p).one();
-			Map<Node, Long> distribution = target.fwd().facetValueCounts().filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)")).exec().toMap(FacetValueCount::getPredicate, x -> x.getFocusCount().getCount()).blockingGet();
-			//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
-
-			System.out.println("Values: " + distribution);
-		
-			result = Maps.immutableEntry(v, distribution);
+				System.out.println("Chose numeric property " + p);
+				//System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
+	
+				// Sample the set of values and create a range constraint from it
+				
+				FacetNode v = target.fwd(p).one();
+				Map<Node, Long> distribution = target.fwd().facetValueCounts().filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)")).exec().toMap(FacetValueCount::getPredicate, x -> x.getFocusCount().getCount()).blockingGet();
+				//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
+	
+				System.out.println("Values: " + distribution);
+			
+				result = Maps.immutableEntry(v, distribution);
+			}
 		}
 		
 		return result;
