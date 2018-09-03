@@ -178,11 +178,10 @@ public class TaskGenerator {
 		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
 		FacetedQueryImpl.initResource(facetedQuery);
 		
+		currentQuery = new FacetedQueryImpl(facetedQuery, null, conn);
+		
 		changeTracker.commitChangesWithoutTracking();
-		
-		
-		RdfChangeTracker rdfChangeTracker = new RdfChangeSetTrackerImpl(dataModel);
-		
+				
 		// How to wrap the actions such that changes go into the change Model?
 		
 		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
@@ -244,27 +243,35 @@ public class TaskGenerator {
 		//fq.connection(conn);
 
 		for(int i = 0; i < scenarioLength; ++i) {
-			double w = rand.nextDouble();
-			String step = s.sample(w);
-			System.out.println("Step: " + step);
-			
-			Callable<Boolean> actionFactory = cpToAction.get(step);
-			if(actionFactory == null) {
-				// TODO Prevent encountering this case using prior check
-				logger.warn(step + " not associated with an implementation");
-			}
-			
-			if(actionFactory != null) {
-				
-				boolean success = actionFactory.call();
 
-				if(!success) {
-					// TODO deal with that case ; pick another action instead or even backtrack
+			// Simplest recovery strategy: If an action could not be applied
+			// repeat the process and hope that due to randomness we can advance
+			int maxRandomRetries = 10;
+			for(int j = 0; j < maxRandomRetries; ++j) {
+				double w = rand.nextDouble();			
+				String step = s.sample(w);
+				System.out.println("Step: " + step);
+				
+				Callable<Boolean> actionFactory = cpToAction.get(step);
+				if(actionFactory == null) {
+					// TODO Prevent encountering this case using prior check
+					logger.warn(step + " not associated with an implementation");
 				}
-			} else {
-				logger.info("Skipping " + step + "; not applicable");
-			}
-			
+				
+				if(actionFactory != null) {
+					
+					boolean success = actionFactory.call();
+	
+					if(!success) {
+						// TODO deal with that case ; pick another action instead or even backtrack
+						logger.info("Skipping " + step + "; application failed");
+						continue;
+					}
+				} else {
+					logger.info("Skipping " + step + "; no implementation provided");
+					continue;
+				}
+			}			
 			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
 		}
 	}
