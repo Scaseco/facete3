@@ -102,10 +102,10 @@ public class BgpNodeImpl
 		return result;
 	}
 
-	@Override
-	public String toString() {
-		return "BgpNodeImpl [root()=" + root() + ", parent()=" + parent() + "]";
-	}
+//	@Override
+//	public String toString() {
+//		return "BgpNodeImpl " + super.toString() + "[root()=" + root() + ", parent()=" + parent() + "]";
+//	}
 //
 //	@Override
 //	public BgpNode parent(BgpMultiNode parent) {

@@ -18,12 +18,18 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
+import jersey.repackaged.com.google.common.collect.Iterables;
+
 public class BgpMultiNodeImpl
 	extends ResourceBase
 	implements BgpMultiNode
 {
 	public BgpMultiNodeImpl(Node n, EnhGraph m) {
 		super(n, m);
+//		System.out.println("CREATED " + n);
+//		Thread.dumpStack();
+//		Thread.currentThread().getStackTrace()
+//		new RuntimeException().printStackTrace();
 	}
 
 	public static <T> Optional<T> toOptional(Iterable<T> i) {
@@ -32,7 +38,7 @@ public class BgpMultiNodeImpl
 		T first = it.hasNext() ? it.next() : null;
 		
 		if(it.hasNext()) {
-			throw new RuntimeException("More than 1 item found");
+			throw new RuntimeException("More than 1 item found: " + Iterables.toString(i));
 		}
 		
 		Optional<T> result = Optional.ofNullable(first);
@@ -48,7 +54,7 @@ public class BgpMultiNodeImpl
 	public BgpNode one() {
 		Set<BgpNode> set = new SetFromPropertyValues<>(this, Vocab.one, BgpNode.class);
 
-		BgpNode result = toOptional(set).orElse(chainAdd(set, getModel().createResource()
+		BgpNode result = toOptional(set).orElseGet(() -> chainAdd(set, getModel().createResource()
 				.addProperty(RDF.type, Vocab.BgpNode)
 				.as(BgpNode.class)));
 		
@@ -89,7 +95,7 @@ public class BgpMultiNodeImpl
 		System.out.println("THIS: " + this.getId().getLabelString());
 		RDFDataMgr.write(System.out, this.getModel(), RDFFormat.NTRIPLES_UTF8);
 		
-		this.getModel().getGraph().find().forEachRemaining(x -> System.out.println("[" + x.hashCode()+ "] " + x));
+		//this.getModel().getGraph().find().forEachRemaining(x -> System.out.println("[" + x.hashCode()+ "] " + x));
 		
 		boolean result =
 				Optional.ofNullable(

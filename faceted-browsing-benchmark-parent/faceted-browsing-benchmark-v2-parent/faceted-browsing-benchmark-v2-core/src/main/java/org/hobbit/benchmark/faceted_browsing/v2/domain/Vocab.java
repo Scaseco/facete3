@@ -21,7 +21,7 @@ public class Vocab {
 	public static final Property parent = property("parent");
 	public static final Property alias = property("alias");
 
-	public static final Property expr = property("alias");
+	public static final Property expr = property("expr");
 	public static final Property constraint = property("constraint");
 	public static final Property enabled = property("enabled");
 

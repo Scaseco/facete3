@@ -17,12 +17,16 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.server.utils.FactoryBeanSparqlServer;
+import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.path.PathFactory;
+import org.apache.jena.sparql.resultset.RDFOutput;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.eclipse.jetty.server.Server;
@@ -78,7 +82,29 @@ public class MainFacetedQueryApi {
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
 
-		FacetedQueryResource fq = FacetedQueryImpl.create(conn);
+		Delta delta = new Delta(m.getGraph());
+		Model model = ModelFactory.createModelForGraph(delta);
+		FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
+
+		if(false) {
+
+		BgpNode test = model.createResource().as(BgpNode.class);
+		
+		for(int i = 0; i < 20; ++i) {
+			System.out.println("Loop: " + i);
+			
+			test.fwd(RDF.type).one();
+			
+			//TaskGenerator.applyCp1(fq.root());
+
+			System.out.println("Additions");
+			RDFDataMgr.write(System.out, delta.getAdditions(), RDFFormat.NTRIPLES);
+
+			System.out.println("Removals");
+			RDFDataMgr.write(System.out, delta.getDeletions(), RDFFormat.NTRIPLES);
+		}
+		}
+		
 		
 
 		Server server = FactoryBeanSparqlServer.newInstance()

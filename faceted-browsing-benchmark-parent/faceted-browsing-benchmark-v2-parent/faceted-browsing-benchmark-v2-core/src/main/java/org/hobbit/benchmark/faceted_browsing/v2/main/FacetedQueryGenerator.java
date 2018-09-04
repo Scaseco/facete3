@@ -356,6 +356,9 @@ public class FacetedQueryGenerator<P> {
 			boolean skipExpr = false;
 			for(P candPath : paths) {
 				P parentPath = pathAccessor.getParent(candPath);
+//				if(parentPath != null) {
+//					System.out.println(parentPath.toString());
+//				}
 				boolean candIsReverse = pathAccessor.isReverse(candPath);
 				
 				// We need to exclude this constraint for the given path

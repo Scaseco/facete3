@@ -40,7 +40,7 @@ public class BgpDirNodeImpl
 	public BgpMultiNode via(Property property) {
 		Map<Resource, BgpMultiNode> map = isFwd ? node.fwdMultiNodes() : node.bwdMultiNodes() ;
 		
-		BgpMultiNode result = node.bwdMultiNodes().get(property);
+		BgpMultiNode result = map.get(property);
 		if(result == null) {
 			result = node.getModel().createResource().as(BgpMultiNode.class);
 			map.put(property, result);

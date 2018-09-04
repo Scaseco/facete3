@@ -48,6 +48,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_IsBlank;
@@ -138,7 +139,17 @@ public class TaskGenerator {
 	public <X> Callable<X> wrapWithCommitChanges(Callable<X> supplier) {
 		return () -> {
 			X r = supplier.call();
-			changeTracker.commitChanges();				
+
+			System.out.println("BEFORE CHANGES");
+			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
+
+			
+			
+			changeTracker.commitChanges();
+
+			System.out.println("AFTER CHANGES");
+			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
+			
 			return r;
 		};
 	}
@@ -337,7 +348,7 @@ public class TaskGenerator {
 		//.filter("!isBlank(?x)").
 		FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if(fc != null) {
-			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
 			
 			// Pick one of the facet values
 			logger.info("Applying cp1: " + fn.root().availableValues().exec().toList().blockingGet());
