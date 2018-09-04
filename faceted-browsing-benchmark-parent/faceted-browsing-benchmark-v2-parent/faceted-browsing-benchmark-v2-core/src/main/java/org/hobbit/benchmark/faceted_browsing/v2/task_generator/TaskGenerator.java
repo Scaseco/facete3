@@ -19,6 +19,7 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -45,6 +46,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -181,24 +183,25 @@ public class TaskGenerator {
 				
 		// How to wrap the actions such that changes go into the change Model?
 		
-		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
-		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
-
-
-		cpToAction.put("cp10", this::applyCp10);
+//		addAction(cpToAction, "cp1", TaskGenerator::applyCp1);
 		
-//		cpToAction.put("cp3", wrap(this::applyCp3));
-//		cpToAction.put("cp4", wrap(this::applyCp4));
-//		cpToAction.put("cp5", wrap(this::applyCp5));
-//		cpToAction.put("cp6", wrap(this::applyCp6));
-//		cpToAction.put("cp7", wrap(this::applyCp7));
-//		cpToAction.put("cp8", wrap(this::applyCp8));
-//		cpToAction.put("cp9", wrap(this::applyCp9));
-//		cpToAction.put("cp10", wrap(this::applyCp10));
-//		cpToAction.put("cp11", wrap(this::applyCp11));
-//		cpToAction.put("cp12", wrap(this::applyCp12));
-//		cpToAction.put("cp13", wrap(this::applyCp13));
-//		cpToAction.put("cp14", wrap(this::applyCp14));
+		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
+//		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
+//		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
+//		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
+//		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
+//		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
+//		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
+//		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
+//		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
+//		
+//		cpToAction.put("cp10", this::applyCp10);
+//
+//		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
+//		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
+//		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp13)));
+//		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp14)));
+
 
 		Model weightModel = RDFDataMgr.loadModel("task-generator-config.ttl");
 		Set<Resource> configs = weightModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
@@ -367,7 +370,7 @@ public class TaskGenerator {
      * This is CP1 with a property path instead of a property.
 	 * @param fn
 	 */
-	public static void applyCp3(FacetNode fn) {
+	public static boolean applyCp3(FacetNode fn) {
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 
 // TODO We need a session state object to hold information about virtual predicates....
@@ -383,6 +386,9 @@ public class TaskGenerator {
 //			// Pick one of the facet values
 //			logger.info("Applying cp3) " + fn.root().availableValues().exec().toList().blockingGet());
 //		}
+		
+		boolean result = false;
+		return result;
 	}
 
 	
@@ -390,7 +396,7 @@ public class TaskGenerator {
 	 * Property class value based transition
      * (Find all instances which additionally have a property value lying in a certain class)
 	 */
-	public static void applyCp4(FacetNode fn) {
+	public static boolean applyCp4(FacetNode fn) {
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 		
 		// TODO Exclude values that denote meta vocabulary, such as 'owl:Class', 'rdf:Property' etc
@@ -402,6 +408,9 @@ public class TaskGenerator {
 			// Pick one of the facet values
 			logger.info("Applying cp4) " + fn.root().remainingValues().exec().toList().blockingGet());
 		}
+		
+		boolean result = false;
+		return result;
 	}
 
 
@@ -409,7 +418,7 @@ public class TaskGenerator {
      * Transition of a selected property value class to one of its subclasses
      * (For a selected class that a property value should belong to, select a subclass) 
 	 */
-	public static void applyCp5(FacetNode fn) {
+	public static boolean applyCp5(FacetNode fn) {
 		// Applicability check: There must be at least constraint on the type facet
 		List<Node> typeConstraints = fn.root().fwd(RDF.type).one().constraints().stream()
 				.map(FacetConstraint::expr)
@@ -438,6 +447,8 @@ public class TaskGenerator {
 		// Probably we need some wrapper object with the two straight forward implementations:
 		// fetch relations on demand, and fetch the whole hierarchy once and answer queries from cache
 
+		boolean result = false;
+		return result;
 	}
 
 	
@@ -449,8 +460,10 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public List<Path> findPathsToResourcesWithNumericProperties(FacetNode fn) {
+	public static List<Path> findPathsToResourcesWithNumericProperties(FacetNode fn, List<SetSummary> numericProperties) {
 
+		SparqlQueryConnection conn = fn.query().connection();
+		
 		// The source concept denotes the set of resources matching the facet constraints
 		UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
 
@@ -471,10 +484,10 @@ public class TaskGenerator {
 		return paths;
 	}
 	
-	public Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength) {
+	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength, Random rand, List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 		
-		List<Path> paths = findPathsToResourcesWithNumericProperties(fn);
+		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, numericProperties);
 		
 		FacetNode target = null;
 		if(!paths.isEmpty()) {
@@ -515,9 +528,9 @@ public class TaskGenerator {
     * 
     * @param fn
     */
-	public void applyCp6(FacetNode fn) {
+	public boolean applyCp6(FacetNode fn) {
 
-		Entry<FacetNode, Map<Node, Long>> cand = selectNumericFacet(fn, 1);
+		Entry<FacetNode, Map<Node, Long>> cand = selectNumericFacet(fn, 1, rand, numericProperties);
 		
 		
 		// TODO If fewer than 2 values remain, indicate n/a 
@@ -530,6 +543,8 @@ public class TaskGenerator {
 //		.connection(fn.query().connection()).exec().blockingFirst();
 //		
 //		System.out.println("CP6 Summary: " + summary);
+		boolean result = false;
+		return result;
 	}
 	
 
@@ -539,8 +554,10 @@ public class TaskGenerator {
 	 * 
 	 * @param fn
 	 */
-	public static void applyCp7(FacetNode fn) {
+	public static boolean applyCp7(FacetNode fn) {
 		
+		boolean result = false;
+		return result;
 	}
 
 	
@@ -551,16 +568,20 @@ public class TaskGenerator {
 	 * 
 	 * @param fn
 	 */
-	public static void applyCp8(FacetNode fn) {
+	public static boolean applyCp8(FacetNode fn) {
 		
+		boolean result = false;
+		return result;
 	}
 
 	/**
 	 * Unbounded intervals involved in numerical data
      * (Choke points 7,8,9 when intervals are unbounded and only an upper or lower bound is chosen)
 	 */
-	public static void applyCp9(FacetNode fn) {
+	public static boolean applyCp9(FacetNode fn) {
 		
+		boolean result = false;
+		return result;
 	}
 
 	/**
@@ -568,7 +589,7 @@ public class TaskGenerator {
 	 * (Change of the solution space while keeping the current filter selections)
 	 * @param fn
 	 */
-	public static void applyCp11(FacetNode fn) {
+	public static boolean applyCp11(FacetNode fn) {
 		
 		// TODO Start at root or focus?
 		// Check which entity types are available from the current root
@@ -577,6 +598,8 @@ public class TaskGenerator {
 		// Iterate the available types until we find one for whose corresponding
 		// concept there is a path from the current concept
 		
+		boolean result = false;
+		return result;
 	}
 
 	/**
@@ -585,8 +608,10 @@ public class TaskGenerator {
 	 * 
 	 * @param fn
 	 */
-	public static void applyCp12(FacetNode fn) {
+	public static boolean applyCp12(FacetNode fn) {
 		// n/a
+		boolean result = false;
+		return result;
 	}
 
 	/**
@@ -594,8 +619,10 @@ public class TaskGenerator {
 	 * (Property path value and property value based transitions where the property path involves traversing edges in the inverse direction)
 	 * @param fn
 	 */
-	public static void applyCp13(FacetNode fn) {
+	public static boolean applyCp13(FacetNode fn) {
 		
+		boolean result = false;
+		return result;
 	}
 
 	/**
@@ -603,8 +630,10 @@ public class TaskGenerator {
 	 * (Additional numerical data restrictions at the end of a property path where the property path involves traversing edges in the inverse direction)
 	 * @param fn
 	 */
-	public static void applyCp14(FacetNode fn) {
+	public static boolean applyCp14(FacetNode fn) {
 		
+		boolean result = false;
+		return result;
 	}
 
 	
