@@ -14,7 +14,9 @@ import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.server.utils.FactoryBeanSparqlServer;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -23,6 +25,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.eclipse.jetty.server.Server;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelector;
@@ -30,11 +33,11 @@ import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelector;
 public class MainFacetedQueryApi {
 
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		new MainFacetedQueryApi().testSimpleFacetedQuery();
 	}
 	
-	public void testSimpleFacetedQuery() {
+	public void testSimpleFacetedQuery() throws Exception {
 
 		// Test of the selector - works
 		{
@@ -78,8 +81,11 @@ public class MainFacetedQueryApi {
 		FacetedQueryResource fq = FacetedQueryImpl.create(conn);
 		
 
+		Server server = FactoryBeanSparqlServer.newInstance()
+			.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(conn))	
+			.setPort(7531)
+			.create();
 
-		
 		ReactiveSparqlUtils.execSelect(() -> 
 			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
 			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));

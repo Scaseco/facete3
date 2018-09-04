@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -24,6 +26,7 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.Lang;
@@ -43,7 +46,6 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.FactoryWithModel;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.ConceptAnalyser;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.ExprUtilsGeo;
 
 import com.google.common.collect.HashBasedTable;
@@ -118,6 +120,13 @@ public class MainFacetedBenchmark2 {
 	
 	// gremlin uses 'is' for inequality comparison: count().is(gte(2))
 	public static void main(String[] args) throws IOException {		
+		
+		{
+			Model m = ModelFactory.createDefaultModel();
+			RDFNode a = m.wrapAsResource(NodeFactory.createBlankNode("test"));
+			RDFNode b = m.wrapAsResource(NodeFactory.createBlankNode("test"));
+			System.out.println("equals? " + Objects.equals(a, b));
+		}		
 		
 //		Concept c = Concept.create("?s a <http://example.org/Person>", "s");
 //		Query q = ConceptAnalyser.checkDatatypes(c);

@@ -13,6 +13,8 @@ import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
@@ -84,13 +86,18 @@ public class BgpMultiNodeImpl
 //		Resource entry = ResourceUtils.tryGetReversePropertyValue(parent, Vocab.fwd)
 //			.orElseGet(() -> ResourceUtils.getReversePropertyValue(parent, Vocab.bwd));
 
+		System.out.println("THIS: " + this.getId().getLabelString());
+		RDFDataMgr.write(System.out, this.getModel(), RDFFormat.NTRIPLES_UTF8);
+		
+		this.getModel().getGraph().find().forEachRemaining(x -> System.out.println("[" + x.hashCode()+ "] " + x));
+		
 		boolean result =
 				Optional.ofNullable(
 					ResourceUtils.getReversePropertyValue(this, Vocab.fwd, BgpNode.class))
-					.map(x -> true)
+					.map(x -> false)
 				
 				.orElseGet(() -> ResourceUtils.tryGetReversePropertyValue(this, Vocab.bwd, BgpNode.class)
-						.map(x -> false)
+						.map(x -> true)
 						.orElseThrow(() -> new IllegalStateException()));
 		return result;
 

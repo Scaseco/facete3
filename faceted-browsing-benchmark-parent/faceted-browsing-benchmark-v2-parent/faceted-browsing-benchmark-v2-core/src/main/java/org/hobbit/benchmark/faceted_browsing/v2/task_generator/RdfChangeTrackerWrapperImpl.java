@@ -67,19 +67,18 @@ public class RdfChangeTrackerWrapperImpl
 	 */
 	@Override
 	public void commitChanges() {
-		ChangeSetUtils.trackAndApplyChanges(
-				changeModel,
-				baseModel,
-				deltaGraph.getAdditions(),
-				deltaGraph.getDeletions());
+		ChangeSetUtils.trackAndApplyChanges(changeModel, baseModel, deltaGraph);
+//		ChangeSetUtils.trackAndApplyChanges(
+//				changeModel,
+//				baseModel,
+//				deltaGraph.getAdditions(),
+//				deltaGraph.getDeletions());
 	}
 	
 	@Override
 	public void commitChangesWithoutTracking() {
-		Graph baseGraph = Objects.requireNonNull(baseModel.getGraph());
-		
-		GraphUtil.addInto(baseGraph, deltaGraph.getAdditions());
-		GraphUtil.deleteFrom(baseGraph, deltaGraph.getDeletions());
+//		Graph baseGraph = Objects.requireNonNull(baseModel.getGraph());
+		ChangeSetUtils.applyDelta(deltaGraph);
 	}
 
 	

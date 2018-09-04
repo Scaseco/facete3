@@ -50,6 +50,7 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -333,6 +334,7 @@ public class TaskGenerator {
 	 */
 	public static boolean applyCp1(FacetNode fn) {
 
+		//.filter("!isBlank(?x)").
 		FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if(fc != null) {
 			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());

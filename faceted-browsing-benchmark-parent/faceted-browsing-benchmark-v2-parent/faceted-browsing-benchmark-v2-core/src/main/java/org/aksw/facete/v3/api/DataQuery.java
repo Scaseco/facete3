@@ -2,6 +2,7 @@ package org.aksw.facete.v3.api;
 
 import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -19,11 +20,14 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeUtils;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import jersey.repackaged.com.google.common.collect.Iterables;
 
 
 interface MultiNode {
@@ -60,6 +64,27 @@ public interface DataQuery<T extends RDFNode> {
 	// Return the same data query with intersection on the given concept
 	DataQuery<T> filter(UnaryRelation concept);
 
+	default DataQuery<T> filter(String exprStr) {
+		Expr expr = ExprUtils.parse(exprStr);
+		return filter(expr);
+	}
+
+	public static UnaryRelation toUnaryFiler(Expr expr) {
+		Set<Var> vars = ExprVars.getVarsMentioned(expr);
+		if(vars.size() != 1) {
+			throw new IllegalArgumentException("Provided expression must contain exactly 1 variable");
+		}
+		
+		Var var = Iterables.getFirst(vars, null);
+		UnaryRelation result = new Concept(new ElementFilter(expr), var);		
+		return result;
+	}
+	
+	default DataQuery<T> filter(Expr expr) {
+		UnaryRelation ur = toUnaryFiler(expr);
+		
+		return filter(ur);
+	}
 	
 	DataQuery<T> connection(SparqlQueryConnection connection);
 	SparqlQueryConnection connection();

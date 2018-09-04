@@ -54,12 +54,12 @@ public class BgpNodeImpl
 	
 	@Override
 	public BgpDirNode fwd() {
-		return new BgpDirNodeImpl(this, false);
+		return new BgpDirNodeImpl(this, true);
 	}
 
 	@Override
 	public BgpDirNode bwd() {
-		return new BgpDirNodeImpl(this, true);
+		return new BgpDirNodeImpl(this, false);
 	}
 
 	@Override

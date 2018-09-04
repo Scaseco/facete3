@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.changeset.util;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -132,13 +133,52 @@ public class ChangeSetUtils {
     
     
 
+    public static void applyDelta(Delta delta) {
+    	Graph base;
+    	try {
+	    	Field field = Delta.class.getDeclaredField("base");
+	    	field.setAccessible(true);
+	    	base = (Graph)field.get(delta);
+			//Graph base = 
+    	} catch(Exception e) {
+    		throw new RuntimeException(e);
+    	}
+
+		Graph addGraph = delta.getAdditions();
+		Graph delGraph = delta.getDeletions();
+		
+		GraphUtil.addInto(base, addGraph);
+		GraphUtil.deleteFrom(base, delGraph);
+		
+		addGraph.clear();
+		delGraph.clear();
+    }
+    
+    /**
+     * Applies a delta and clears it afterwards
+     * 
+     * @param csgModel
+     * @param dataModel
+     * @param delta
+     */
     public static void trackAndApplyChanges(Model csgModel, Model dataModel, Delta delta) {
 		Graph addGraph = delta.getAdditions();
 		Graph delGraph = delta.getDeletions();
 		
 		trackAndApplyChanges(csgModel, dataModel, addGraph, delGraph);
+		
+		addGraph.clear();
+		delGraph.clear();
     }
     
+    /**
+     * Applying the delta does NOT clear addGraph / delGraph
+     * 
+     * @param csgModel
+     * @param dataModel
+     * @param addGraph
+     * @param delGraph
+     */
     public static void trackAndApplyChanges(Model csgModel, Model dataModel, Graph addGraph, Graph delGraph) {
 
     	// Clear any redo information

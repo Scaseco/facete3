@@ -13,16 +13,25 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.expr.E_IsBlank;
+import org.apache.jena.sparql.expr.E_LogicalNot;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
+
+import com.google.common.collect.ImmutableList;
 
 public class FacetDirNodeImpl
 	implements FacetDirNode
@@ -105,7 +114,7 @@ public class FacetDirNodeImpl
 		Map<String, BinaryRelation> relations = qgen.getFacets(parent.state(), !this.state.isFwd(), false);
 		
 		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null);
-
+		
 		
 		BasicPattern bgp = new BasicPattern();
 		bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
@@ -125,6 +134,19 @@ public class FacetDirNodeImpl
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		TernaryRelation tr = qgen.getFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
+		
+		// Inject that the object must not be a blank node
+		// TODO There should be a better place to do this - but where?		
+		tr = new TernaryRelationImpl(ElementUtils.createElementGroup(ImmutableList.<Element>builder()
+				.addAll(tr.getElements())
+				.add(new ElementFilter(new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP())))))
+				.build()),
+				tr.getS(),
+				tr.getP(),
+				tr.getO());
+		
+
+		
 		
 		
 		BasicPattern bgp = new BasicPattern();
