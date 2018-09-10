@@ -131,8 +131,8 @@ public class MainTestPavelsDataGen {
 			
 					// Create a dummy task generator image
 					// Note: ServiceNoOp is a service that does nothing by itself - however
-					// the life cycle of the spring context is bound to it - hence
-					// stopping the service tears down the context and consequently
+					// the life cycle of the spring context is bound to that of the service
+					// Hence, stopping the service tears down the context and consequently
 					// frees all associated resources, such as AMQP connections
 					ServiceSpringApplicationBuilder tgService = new ServiceSpringApplicationBuilder("tg", ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
 							.properties(ImmutableMap.<String, Object>builder()
@@ -204,15 +204,3 @@ public class MainTestPavelsDataGen {
 		logger.info("Done");
 	}
 }
-
-// FIXME Consider deletion of  comments below
-//		HOUSES_COUNT=1
-//				DEVICES_PER_HOUSEHOLD_MIN=1
-//				DEVICES_PER_HOUSEHOLD_MAX=10
-//				SENSORS_PER_DEVICE=10
-//				ITERATIONS_LIMIT=10
-//				DATA_SENDING_PERIOD_MS=1000
-//				OUTPUT_FORMAT=RDF
-//				SPARQL_ENDPOINT_URL=http://10.67.1.30:8890/sparql
-
-		
