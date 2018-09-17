@@ -111,7 +111,7 @@ public class FacetDirNodeImpl
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		Map<String, BinaryRelation> relations = qgen.getFacets(parent.state(), !this.state.isFwd(), false);
+		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(parent.state(), !this.state.isFwd(), false);
 		
 		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null);
 		
@@ -127,13 +127,75 @@ public class FacetDirNodeImpl
 
 	@Override
 	public DataQuery<FacetValueCount> facetValueCounts() {
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false);
+		return result;
+//		FacetedQueryResource facetedQuery = this.parent().query();
+//
+////		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+//		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
+//		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+//
+//		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null);
+//		
+//		// Inject that the object must not be a blank node
+//		// TODO There should be a better place to do this - but where?		
+//		tr = new TernaryRelationImpl(ElementUtils.createElementGroup(ImmutableList.<Element>builder()
+//				.addAll(tr.getElements())
+//				.add(new ElementFilter(new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP())))))
+//				.build()),
+//				tr.getS(),
+//				tr.getP(),
+//				tr.getO());
+//		
+//
+//		
+//		
+//		
+//		BasicPattern bgp = new BasicPattern();
+//		bgp.add(new Triple(tr.getS(), Vocab.value.asNode(), tr.getP()));
+//		bgp.add(new Triple(tr.getS(), Vocab.facetCount.asNode(), tr.getO()));
+//		Template template = new Template(bgp);
+//		
+//		DataQuery<FacetValueCount> result = new DataQueryImpl<>(parent.query().connection(), tr.getS(), tr.getElement(), template, FacetValueCount.class);
+//
+//		return result;
+	}
+
+
+	@Override
+	public FacetedQuery getQuery() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BinaryRelation facetValueRelation() {
+		FacetedQueryResource facetedQuery = this.parent().query();
+
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
+		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+
+		TernaryRelation tr = qgen.createRelationFacetValue(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
+
+		BinaryRelation result = new BinaryRelationImpl(tr.getElement(), tr.getP(), tr.getO());
+		return result;
+	}
+
+
+	/**
+	 * Common method for (non-)negated facet value counts
+	 * 
+	 * @param negated
+	 * @return
+	 */
+	public DataQuery<FacetValueCount> createQueryFacetValueCounts(boolean negated) {
 		FacetedQueryResource facetedQuery = this.parent().query();
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		TernaryRelation tr = qgen.getFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
+		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), true, null, null);
 		
 		// Inject that the object must not be a blank node
 		// TODO There should be a better place to do this - but where?		
@@ -159,24 +221,23 @@ public class FacetDirNodeImpl
 		return result;
 	}
 
-
 	@Override
-	public FacetedQuery getQuery() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public BinaryRelation facetValueRelation() {
-		FacetedQueryResource facetedQuery = this.parent().query();
-
-		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
-		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
-
-		TernaryRelation tr = qgen.getFacetValueRelation(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
-
-		BinaryRelation result = new BinaryRelationImpl(tr.getElement(), tr.getP(), tr.getO());
+	public DataQuery<FacetValueCount> nonConstrainedFacetValueCounts() {
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(true);
 		return result;
 	}
+
+//	@Override
+//	public ExprFragment2 constraintExpr() {
+//		FacetedQueryResource facetedQuery = this.parent().query();
+//
+//		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
+//		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+//	
+//		// TODO Get the constraint expression on that path
+//		qgen.getConceptForAtPath(focusPath, facetPath, applySelfConstraints);
+//
+//		xxx;
+//	}
 	
 }

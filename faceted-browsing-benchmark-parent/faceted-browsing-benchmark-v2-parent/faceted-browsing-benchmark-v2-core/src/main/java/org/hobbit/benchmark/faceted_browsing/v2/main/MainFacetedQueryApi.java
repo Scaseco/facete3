@@ -200,8 +200,8 @@ public class MainFacetedQueryApi {
 //		fq.constraints().forEach(c -> qgen.getConstraints().add(c.expr()));
 		//qgen.getConstraints()
 		
-		System.out.println("Query Fwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state(), false, false));
-		System.out.println("Query Bwd: " + qgen.getFacets(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state(), true, false));
+		System.out.println("Query Fwd: " + qgen.createMapFacetsAndValues(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state(), false, false));
+		System.out.println("Query Bwd: " + qgen.createMapFacetsAndValues(fq.root().fwd(RDF.type).one().as(FacetNodeResource.class).state(), true, false));
 		
 		//fq.root().fwd(RDF.type).one().constraints().eq("foo").addEq("bar").end()
 

@@ -25,12 +25,14 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_Random;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
@@ -68,9 +70,12 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	protected UnaryRelation filter;
 	
+	protected boolean randomOrder;
 	protected boolean sample;
 	protected Class<T> resultClass;
 
+	protected List<SortCondition> sortConditions;
+	
 	public DataQueryImpl(SparqlQueryConnection conn, Node rootNode, Element baseQueryPattern, Template template, Class<T> resultClass) {
 		this(conn, new Concept(baseQueryPattern, (Var)rootNode), template, resultClass);
 	}
@@ -119,10 +124,21 @@ public class DataQueryImpl<T extends RDFNode>
 	}
 	
 	@Override
-	public boolean sample() {
+	public boolean isSampled() {
 		return sample;
 	}
 	
+	@Override
+	public boolean isRandomOrder() {
+		return randomOrder;
+	}
+
+	@Override
+	public DataQuery<T> randomOrder(boolean onOrOff) {
+		this.randomOrder = onOrOff;
+		return this;
+//		return this;
+	}
 
 	//protected void setOffset(10);
 
@@ -232,6 +248,10 @@ public class DataQueryImpl<T extends RDFNode>
 			QueryUtils.applySlice(query, offset, limit, false);
 		}
 		
+		if(randomOrder) {
+			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
+		}
+		
 		System.out.println("Generated query: " + query);
 
 		
@@ -291,7 +311,6 @@ public class DataQueryImpl<T extends RDFNode>
 			}
 			return r;
 		});
-	}
-	
+	}	
 	
 }

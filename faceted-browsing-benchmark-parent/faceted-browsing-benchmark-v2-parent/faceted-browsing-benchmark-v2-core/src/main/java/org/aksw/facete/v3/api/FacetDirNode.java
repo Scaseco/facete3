@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.api;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.ExprFragment2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 
@@ -38,6 +39,11 @@ public interface FacetDirNode {
 	// Get the facets of this set of values with the counts referring the the query's focus
 	DataQuery<FacetValueCount> facetValueCounts();
 	
+	/** Yield all facet value counts NOT affected by filters -
+	 *  So each item can be used as a fresh filter */
+	DataQuery<FacetValueCount> nonConstrainedFacetValueCounts();
+	
+	//ExprFragment2 constraintExpr();
 	//FacetMultiNode out(Path propertyPath);
 	
 	

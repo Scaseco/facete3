@@ -58,27 +58,30 @@ public interface FacetNode
 		return bwd().via(ResourceFactory.createProperty(node.getURI()));
 	}
 
+	default FacetDirNode walk(boolean reverse) {
+		return reverse ? bwd() : fwd();
+	}
 	
-	default FacetMultiNode nav(String p, boolean reverse) {
+	default FacetMultiNode walk(String p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
-	default FacetMultiNode nav(Node p, boolean reverse) {
+	default FacetMultiNode walk(Node p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
-	default FacetMultiNode nav(Property p, boolean reverse) {
+	default FacetMultiNode walk(Property p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
 	
-	default FacetNode nav(Path path) {
+	default FacetNode walk(Path path) {
 		FacetNode result;
 		if(path == null) {
 			result = this;
 		} else if(path instanceof P_Seq) {
 			P_Seq seq = (P_Seq)path;
-			result = nav(seq.getLeft()).nav(seq.getRight());
+			result = walk(seq.getLeft()).walk(seq.getRight());
 		} else if(path instanceof P_Link) {
 			P_Link link = (P_Link)path;
 			result = fwd(link.getNode()).one();

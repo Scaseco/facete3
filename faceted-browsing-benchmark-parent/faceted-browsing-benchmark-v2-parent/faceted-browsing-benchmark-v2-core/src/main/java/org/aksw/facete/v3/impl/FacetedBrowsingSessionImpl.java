@@ -76,7 +76,7 @@ public class FacetedBrowsingSessionImpl {
 		
 		this.focus = root;
 		
-		queryGenerator.getFacets(root, false, false);
+		queryGenerator.createMapFacetsAndValues(root, false, false);
 	}
 	
 	public SPath getRoot() {
@@ -107,7 +107,7 @@ public class FacetedBrowsingSessionImpl {
 	}
 	
 	public BinaryRelation createQueryFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = queryGenerator.getFacets(path, isReverse, false);
+		Map<String, BinaryRelation> relations = queryGenerator.createMapFacetsAndValues(path, isReverse, false);
 
 		// Align the relations
 		//Relation aligned = FacetedBrowsingSession.align(relations.values(), Arrays.asList(Vars.p, Vars.o));
@@ -227,7 +227,7 @@ public class FacetedBrowsingSessionImpl {
 	
 	public TernaryRelation createQueryFacetValues(SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
 	
-		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
+		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()

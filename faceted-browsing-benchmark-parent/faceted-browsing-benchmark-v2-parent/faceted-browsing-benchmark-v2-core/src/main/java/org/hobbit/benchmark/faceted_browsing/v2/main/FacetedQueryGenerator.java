@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.ExprFragment;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
@@ -34,6 +35,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
@@ -48,7 +50,6 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -140,10 +141,17 @@ public class FacetedQueryGenerator<P> {
 //		
 //	}
 	
-	public BinaryRelation getFacets(P childPath, SetMultimap<P, Expr> childPathToExprs, Set<Expr> constraints) {
-		Set<Expr> excludes = childPathToExprs.get(childPath);
+	public BinaryRelation createRelationFacets(P childPath, SetMultimap<P, Expr> childPathToExprs, Set<Expr> constraints, boolean negated) {
+		
+		Set<Expr> effectiveConstraints;
+		
+//		if(!negated) {
+			Set<Expr> excludes = childPathToExprs.get(childPath);
 
-		Set<Expr> effectiveConstraints = Sets.difference(constraints, excludes);
+			effectiveConstraints = Sets.difference(constraints, excludes);
+//		} else {
+//			effectiveConstraints = constraints;
+//		}
 		
 		BinaryRelation rel = pathAccessor.getReachingRelation(childPath);
 		
@@ -154,7 +162,7 @@ public class FacetedQueryGenerator<P> {
 		
 		rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
 		
-		BinaryRelation result = getFacets(pathAccessor.getParent(childPath), rel, Vars.p, effectiveConstraints);
+		BinaryRelation result = createRelationFacetCount(pathAccessor.getParent(childPath), rel, Vars.p, effectiveConstraints, negated);
 		return result;
 	}
 
@@ -162,7 +170,7 @@ public class FacetedQueryGenerator<P> {
 		BinaryRelation br = new BinaryRelationImpl(
 				ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o)), Vars.s, Vars.o);
 		
-		BinaryRelation result = getFacets(basePath, br, Vars.p, effectiveConstraints);
+		BinaryRelation result = createRelationFacetCount(basePath, br, Vars.p, effectiveConstraints, false);
 
 		return result;
 	}
@@ -170,13 +178,15 @@ public class FacetedQueryGenerator<P> {
 	/**
 	 * Returns a binary relation with facet - facet value columns.
 	 * 
+	 * 
 	 * @param basePath
 	 * @param facetRelation
 	 * @param pVar
 	 * @param effectiveConstraints
+	 * @param negate Negate the constraints - this yields all facet+values unaffected by the effectiveConstraints do NOT apply
 	 * @return
 	 */
-	public BinaryRelation getFacets(P basePath, BinaryRelation facetRelation, Var pVar, Set<Expr> effectiveConstraints) {
+	public BinaryRelation createRelationFacetCount(P basePath, BinaryRelation facetRelation, Var pVar, Set<Expr> effectiveConstraints, boolean negate) {
 		//ExprTransform exprTransform = new ExprTransformViaPathMapper<>(mapper);
 		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences();
 
@@ -200,6 +210,11 @@ public class FacetedQueryGenerator<P> {
 			
 		for(Expr expr : effectiveConstraints) {
 			Expr resolved = expr.applyNodeTransform(nodeTransform); //ExprTransformer.transform(exprTransform, expr);
+
+			if(negate) {
+				resolved = new E_LogicalNot(resolved);
+			}
+			
 			elements.add(new ElementFilter(resolved));
 		}
 		
@@ -247,7 +262,7 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	public UnaryRelation createConceptFacets(P path, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = getFacets(path, isReverse, false);
+		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false);
 	
 		UnaryRelation result = createConceptFacets(relations, pConstraint);
 		return result;
@@ -287,7 +302,7 @@ public class FacetedQueryGenerator<P> {
 
 
 	public BinaryRelation createQueryFacetsAndCounts(P path, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = getFacets(path, isReverse, false);
+		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false);
 		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
 		
 		return result;
@@ -339,7 +354,11 @@ public class FacetedQueryGenerator<P> {
 	 * @param isReverse
 	 * @return
 	 */
-	public Map<String, BinaryRelation> getFacets(P path, boolean isReverse, boolean applySelfConstraints) {
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P path, boolean isReverse, boolean applySelfConstraints) {
+		return createMapFacetsAndValues(path, isReverse, applySelfConstraints, false);
+	}
+	
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P path, boolean isReverse, boolean applySelfConstraints, boolean negated) {
 		
 		// Find all constraints on successor paths
 		SetMultimap<P, Expr> childPathToExprs = HashMultimap.create();
@@ -380,7 +399,7 @@ public class FacetedQueryGenerator<P> {
 		Set<Expr> constraintSet = new HashSet<>(constraints);
 		Set<P> constrainedChildPaths = childPathToExprs.keySet();
 		for(P childPath : constrainedChildPaths) {
-			BinaryRelation br = getFacets(childPath, childPathToExprs, constraintSet);
+			BinaryRelation br = createRelationFacets(childPath, childPathToExprs, constraintSet, negated);
 			
 			String pStr = pathAccessor.getPredicate(childPath);
 			result.put(pStr, br);			
@@ -432,8 +451,8 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
-	public TernaryRelation getFacetValueRelation(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
+	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false);
 
 		List<Element> elements = facetValues.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
@@ -448,9 +467,9 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public TernaryRelation getFacetValues(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
+	public TernaryRelation createRelationFacetValues(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter) {
 		
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse);
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, negated);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
@@ -465,8 +484,6 @@ public class FacetedQueryGenerator<P> {
 		Element e = ElementUtils.union(elements);
 
 		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
-
-		
 		
 		return result;
 	}
@@ -480,6 +497,23 @@ public class FacetedQueryGenerator<P> {
 		}
 
 		return result;
+	}
+	
+	
+	/**
+	 * Yields a filter expression that excludes all (facet, facetValue) pairs
+	 * which are affected by filters.
+	 * Conversely, filtering facetAndValues by this expression yields only
+	 * those items from which new constraints can be created.
+	 * 
+	 * 
+	 * 
+	 * @param facetPath
+	 * @param isReverse
+	 * @return
+	 */
+	public ExprFragment getConstraintExpr(P facetPath, boolean isReverse) {
+		return null;
 	}
 
 	public UnaryRelation getConceptForAtPath(P focusPath, P facetPath, boolean applySelfConstraints) {
@@ -594,11 +628,13 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	// [focus, facet, facetValue]
-	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse) {
+	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
-		Map<String, BinaryRelation> facets = getFacets(facetPath, isReverse, false);
+		
+		boolean applySelfConstraints = true;
+		Map<String, BinaryRelation> facets = createMapFacetsAndValues(facetPath, isReverse, applySelfConstraints, negated);
 
 		// Get the focus element
 		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
@@ -623,7 +659,15 @@ public class FacetedQueryGenerator<P> {
 	
 	//public TernaryRelation get
 	
-	public static Concept getFacets(TernaryRelation tr) {
+	/**
+	 * Simply create a concept from the predicate column of the ternary relation.
+	 * TODO Possibly supersede by using a TernaryRelation.getConceptP() method.
+	 * 
+	 * 
+	 * @param tr
+	 * @return
+	 */
+	public static Concept createConceptFacets(TernaryRelation tr) {
 		Concept result = new Concept(tr.getElement(), tr.getP());
 		return result;
 	}

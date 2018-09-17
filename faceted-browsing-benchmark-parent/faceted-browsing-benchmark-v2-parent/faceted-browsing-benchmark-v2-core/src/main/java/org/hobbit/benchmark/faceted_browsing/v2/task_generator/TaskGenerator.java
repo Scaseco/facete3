@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -346,12 +347,35 @@ public class TaskGenerator {
 	public static boolean applyCp1(FacetNode fn) {
 
 		//.filter("!isBlank(?x)").
-		FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
+		boolean isFwd = true;
+		
+		// Exclude all facet-values for which there are constraints
+		// This is a constraint over a binary relation
+		FacetValueCount fc = fn
+				.walk(isFwd)
+				.nonConstrainedFacetValueCounts()
+				//.sample() TODO We should try whether using sample() in addition makes the process faster
+				.randomOrder()
+				.limit(1)
+				.exec()
+				.firstElement()
+				.timeout(10, TimeUnit.SECONDS)
+				.blockingGet();
+
+		// FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if(fc != null) {
-			//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			// Find a facet value for which the filter does not yet exist
 			
+			
+			//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			Node p = fc.getPredicate();
+			Node o = fc.getValue();
+			
+			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+
 			// Pick one of the facet values
-			logger.info("Applying cp1: " + fn.root().availableValues().exec().toList().blockingGet());
+			
+			//logger.info("Applying cp1: " + fn.root().availableValues().exclude(nodes).exec().toList().blockingGet());
 
 			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
 		}
@@ -507,7 +531,7 @@ public class TaskGenerator {
 			int index = rand.nextInt(paths.size());
 			Path path = paths.get(index);
 		
-			target = fn.nav(Path.toJena(path));
+			target = fn.walk(Path.toJena(path));
 		}
 
 		if(target != null) {
