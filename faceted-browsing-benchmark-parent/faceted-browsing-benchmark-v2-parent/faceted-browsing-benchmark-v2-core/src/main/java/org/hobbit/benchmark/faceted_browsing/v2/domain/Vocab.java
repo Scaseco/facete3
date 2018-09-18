@@ -10,7 +10,7 @@ public class Vocab {
 	public static final Property property = property("property");
 	public static final Property one = property("one");
 
-	public static final Property BgpNode = property("bgpNode");
+	public static final Property BgpNode = property("BgpNode");
 
 
 	public static final Property baseConcept = property("baseConcept");
@@ -47,6 +47,7 @@ public class Vocab {
 
 	
 	public static final Resource ScenarioConfig = resource("ScenarioConfig");
+	public static final Property scenarioLength = property("scenarioLength");
 	public static final Property randomSeed = property("randomSeed");
 
 	public static final Property last = property("last");

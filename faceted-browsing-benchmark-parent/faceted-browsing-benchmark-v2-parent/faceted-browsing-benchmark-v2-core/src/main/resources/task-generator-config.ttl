@@ -8,7 +8,7 @@
 :defaultScenarioConfig
   a o:ScenarioConfig ;
   o:randomSeed 1000 ;
-  o:scenarioLength [ o:min 10; o:max 10] ;
+  o:scenarioLength [ o:min 10; o:max 1000] ;
   o:weights [
      rdfs:member [ o:key "cp1"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp2"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;

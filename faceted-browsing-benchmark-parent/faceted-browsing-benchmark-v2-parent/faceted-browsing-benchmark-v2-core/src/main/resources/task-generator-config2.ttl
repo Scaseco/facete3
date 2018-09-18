@@ -1,0 +1,37 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+#@prefix o: <http://project-hobbit.eu/ontology/>
+@prefix o: <http://aksw.org/adhoc/ontology/> .
+@prefix : <http://project-hobbit.eu/resource/> .
+
+:defaultScenarioConfig
+  a o:ScenarioConfig ;
+  o:randomSeed 1000 ;
+  o:scenarioLength [ o:min 10; o:max 10] ;
+  o:automaton [
+    o:startingState :state1 ;
+  ] ;
+  .
+
+
+:state1
+  a o:State ;
+  # o:defaultSuccessor :state1 ;
+  o:transition
+    [ o:symbol "cp1"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ], 
+    [ o:symbol "cp2"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp3"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp4"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp5"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp6"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp7"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp8"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp9"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp10" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp11" ; o:value [ o:min 0.1 ; o:max 0.2 ] ],
+    [ o:symbol "cp12" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp13" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+    [ o:symbol "cp14" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+  ] ;
+

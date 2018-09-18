@@ -7,7 +7,6 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
@@ -18,7 +17,7 @@ import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.apache.jena.sparql.syntax.ElementGroup;
 
 public interface BgpNode
 	extends Resource
@@ -116,7 +115,7 @@ public interface BgpNode
 
 		BgpMultiNode parent = state.parent();
 		if(parent == null) {
-			result = null;
+			result = new BinaryRelationImpl(new ElementGroup(), Vars.s, Vars.o);
 		} else {
 			
 //			boolean isReverse = false;

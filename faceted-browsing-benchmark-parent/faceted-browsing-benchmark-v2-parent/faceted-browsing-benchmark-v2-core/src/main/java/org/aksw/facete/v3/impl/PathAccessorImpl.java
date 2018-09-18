@@ -59,7 +59,7 @@ public class PathAccessorImpl
 		Triple t = ElementUtils.extractTriple(br.getElement());
 
 		Node node = t == null ? null : t.getPredicate();
-		String result = node.getURI();
+		String result = node == null ? null : node.getURI();
 		return result;
 	}
 

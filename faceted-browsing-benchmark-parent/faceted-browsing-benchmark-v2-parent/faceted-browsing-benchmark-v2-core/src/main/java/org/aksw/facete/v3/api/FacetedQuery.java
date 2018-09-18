@@ -7,6 +7,18 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
+/**
+ * 
+ * A note on constraints:
+ * Constraints can be distinguished by what they affect:
+ * - NodeConstraint - a constraint on a BgpNode; disjunctive
+ * - MultiNodeConstraint - a constraint on a BgpMultiNode; conjunctive
+ * - GlobalConstraint - An arbitrary constraint, possibly affecting multiple paths
+ * 
+ * 
+ * @author Claus Stadler, Sep 17, 2018
+ *
+ */
 public interface FacetedQuery
 {
 	FacetNode root();

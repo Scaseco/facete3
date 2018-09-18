@@ -32,6 +32,7 @@ import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
@@ -250,13 +251,17 @@ public class TaskGenerator {
 		
 		WeightedSelector<String> s = WeightedSelector.create(concreteWeights);
 		
-		int scenarioLength = 10; // TODO Obtain value from config
+		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
+		int scenarioLength = (int)RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
+		scenarioLength = 100;
+		System.out.println("Scenario length: " + scenarioLength);
 		
 		FacetedQuery fq = FacetedQueryImpl.create(conn);
 		//fq.connection(conn);
 
 		List<String> chosenActions = new ArrayList<>();
 		for(int i = 0; i < scenarioLength; ++i) {
+			
 
 			// Simplest recovery strategy: If an action could not be applied
 			// repeat the process and hope that due to randomness we can advance
@@ -291,6 +296,7 @@ public class TaskGenerator {
 				}
 			}			
 			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
+			
 		}
 		
 		System.out.println("Chosen actions: " + chosenActions);
@@ -346,13 +352,16 @@ public class TaskGenerator {
 	 */
 	public static boolean applyCp1(FacetNode fn) {
 
+		// Initially assume failure
+		boolean result = false;
+		
 		//.filter("!isBlank(?x)").
-		boolean isFwd = true;
+		boolean isBwd = false;
 		
 		// Exclude all facet-values for which there are constraints
 		// This is a constraint over a binary relation
 		FacetValueCount fc = fn
-				.walk(isFwd)
+				.walk(isBwd)
 				.nonConstrainedFacetValueCounts()
 				//.sample() TODO We should try whether using sample() in addition makes the process faster
 				.randomOrder()
@@ -371,16 +380,17 @@ public class TaskGenerator {
 			Node p = fc.getPredicate();
 			Node o = fc.getValue();
 			
-			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			fn.walk(p, isBwd).one().constraints().eq(o);
 
 			// Pick one of the facet values
 			
-			//logger.info("Applying cp1: " + fn.root().availableValues().exclude(nodes).exec().toList().blockingGet());
+			logger.info("Applying cp1: " + fn.root().availableValues().exec().toList().blockingGet());
 
-			fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			result = true;
 		}
 		
-		return true;
+		return result;
 	}
 
 	

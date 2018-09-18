@@ -12,7 +12,8 @@ public interface RangeSpec
 {
 	RDFNode getMin();
 	void setMin(RDFNode min);
-boolean isMinInclusive();
+
+	boolean isMinInclusive();
 	void setMinInclusive(boolean onOrOff);
 
 	RDFNode getMax();

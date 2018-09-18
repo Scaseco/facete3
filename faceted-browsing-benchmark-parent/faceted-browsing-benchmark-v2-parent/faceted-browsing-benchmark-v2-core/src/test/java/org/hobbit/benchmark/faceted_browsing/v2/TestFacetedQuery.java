@@ -35,6 +35,19 @@ public class TestFacetedQuery {
 
 		//FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
 	}
+
+	/**
+	 * Test to ensure that constraints on the same path are combined using OR (rather than AND)
+	 * 
+	 */
+	@Test
+	public void testConstraintDisjunction() {
+		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
+		fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class);
+
+		System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
+		
+	}
 	
 	@Test
 	public void testNegatedFacetValues() {
