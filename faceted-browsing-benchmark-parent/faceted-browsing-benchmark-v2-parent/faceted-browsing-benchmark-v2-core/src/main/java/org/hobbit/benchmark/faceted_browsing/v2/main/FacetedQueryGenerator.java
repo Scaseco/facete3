@@ -547,8 +547,8 @@ public class FacetedQueryGenerator<P> {
 		for(P cand : candidates) {
 			P candParent = pathAccessor.getParent(cand);
 			// candParent must neither be null nor the root, otherwise isReverse will throw an exception
-			if(candParent != null && pathAccessor.getParent(candParent) != null) {
-				boolean isCandBwd = pathAccessor.isReverse(candParent);
+			if(candParent != null) {
+				boolean isCandBwd = pathAccessor.isReverse(cand);
 				
 				if(isReverse == isCandBwd && Objects.equals(basePath, candParent)) {
 					result.add(cand);
