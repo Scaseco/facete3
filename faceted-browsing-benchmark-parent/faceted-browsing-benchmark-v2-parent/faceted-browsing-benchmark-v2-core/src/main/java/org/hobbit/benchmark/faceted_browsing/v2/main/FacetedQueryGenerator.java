@@ -174,10 +174,18 @@ public class FacetedQueryGenerator<P> {
 		BinaryRelation result;
 
 		if(!rel.isEmpty()) {
-			
+			List<Element> elts = new ArrayList<>();
 			// TODO If the relation is of form ?s <p> ?o, then rewrite as ?s ?p ?o . FILTER(?p = <p>)
+
+			// FIXME This still breaks - because of conflict between the relation generated for the constraint and for the path
 			
-			List<Element> elts = ElementUtils.toElementList(rel.getElement());
+			
+			// If the path exists as a constraint DO NOT add it 
+			// as it will be added by the constraint
+			if(!constraintIndex.containsKey(childPath)) {
+				elts.addAll(rel.getElements());
+			}
+
 			elts.add(new ElementBind(Vars.p, NodeValue.makeNode(NodeFactory.createURI(pathAccessor.getPredicate(childPath)))));
 			
 			rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
@@ -297,7 +305,7 @@ public class FacetedQueryGenerator<P> {
 		// Rename all instances of 'p' and 'o' variables 
 		Set<Var> vars = facetRelation.getVarsMentioned();//new HashSet<>(Arrays.asList(Vars.p, Vars.o));
 		vars.remove(facetRelation.getSourceVar());
-//		vars.remove(facetRelation.getTargetVar());
+		vars.remove(facetRelation.getTargetVar());
 		
 		Map<Var, Var> rename = VarUtils.createDistinctVarMap(vars, forbiddenVars, true, VarGeneratorBlacklist.create(forbiddenVars));
 //		rename.put(facetRelation.getSourceVar(), s);
@@ -322,7 +330,7 @@ public class FacetedQueryGenerator<P> {
 		es.add(facetRelation.getElement());//ElementUtils.createElement(t));
 		
 		//BinaryRelation result = new BinaryRelation(ElementUtils.groupIfNeeded(es), Vars.p, Vars.o);
-		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(es), pVar, facetRelation.getTargetVar());
+		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(es), pVar, rename.getOrDefault(facetRelation.getTargetVar(), facetRelation.getTargetVar()));
 		
 		return result;
 	}
