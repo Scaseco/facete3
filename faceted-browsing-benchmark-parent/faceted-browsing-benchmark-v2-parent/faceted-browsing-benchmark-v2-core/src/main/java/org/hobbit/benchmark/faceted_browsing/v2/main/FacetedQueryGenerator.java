@@ -53,6 +53,7 @@ import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -198,8 +199,20 @@ public class FacetedQueryGenerator<P> {
 		BinaryRelation br = new BinaryRelationImpl(
 				ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o)), Vars.s, Vars.o);
 		
-		BinaryRelation result = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, negated);
+		// TODO Combine rel with the constraints
+		BinaryRelation rel = mapper.getOverallRelation(basePath);
 
+		BinaryRelation tmp = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, negated);
+
+		
+		List<Element> elts = new ArrayList<>();
+		elts.addAll(rel.getElements());
+		elts.addAll(tmp.getElements());
+
+		BinaryRelation result = new BinaryRelationImpl(
+				ElementUtils.groupIfNeeded(elts), tmp.getSourceVar(), tmp.getTargetVar()
+		);
+		
 		return result;
 	}
 
@@ -263,7 +276,6 @@ public class FacetedQueryGenerator<P> {
 		
 		//Collection<Element> elts = createElementsForExprs(effectiveConstraints, negate);
 		//BinaryRelation tmp = createRelationForPath(facetRelation, effectiveConstraints, negate);
-
 		//List<Element> elts = tmp.getElements();
 
 		

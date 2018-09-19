@@ -90,7 +90,6 @@ public class TaskGenerator {
 	protected FacetedQuery currentQuery;
 
 	
-	
 	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties) {
 		this.conn = conn;
 		this.numericProperties = numericProperties;
@@ -204,12 +203,12 @@ public class TaskGenerator {
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
-//		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
+		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 //		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
 //		
-//		cpToAction.put("cp10", this::applyCp10);
+		cpToAction.put("cp10", this::applyCp10);
 //
 //		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
@@ -253,7 +252,7 @@ public class TaskGenerator {
 		
 		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
 		int scenarioLength = (int)RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
-		scenarioLength = 100;
+		//scenarioLength = 100;
 		System.out.println("Scenario length: " + scenarioLength);
 		
 		FacetedQuery fq = FacetedQueryImpl.create(conn);
@@ -331,7 +330,7 @@ public class TaskGenerator {
 	
 	
 	/**
-	 * Undoing former restrictions to previous state\\
+	 * Undoing former restrictions to previous state
 	 * (Go back to instances of a previous step)
 	 * @param fn
 	 */
@@ -344,8 +343,10 @@ public class TaskGenerator {
 		
 		return result;
 	}
-
 	
+	
+
+
 	
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
@@ -578,7 +579,8 @@ public class TaskGenerator {
 	public boolean applyCp6(FacetNode fn) {
 
 		Entry<FacetNode, Map<Node, Long>> cand = selectNumericFacet(fn, 1, rand, numericProperties);
-		
+
+		System.out.println("cp6 cand: " + cand);
 		
 		// TODO If fewer than 2 values remain, indicate n/a 
 		
@@ -637,6 +639,24 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public static boolean applyCp11(FacetNode fn) {
+		
+		// first, pick a type among the types of resources related to the given node
+		// then, navigate along the property
+		// [s] [predicate] [value] [type]
+		
+		// Issue: how to move from a faceted query to a relational query?
+		// Possible answer: Maybe similar to how tinkerpop does it:
+		// fn.fwd().query().{some tinkerpop like api}
+		// fn.query().outAs("p").as("s").out(RDF.type).as("type");
+		//
+		// So basically the api would have to allow for constructing graph patterns...
+		// gremlin has .valueMap("predicate1", ... "predicateN") which corresponds to an SQL selection
+		// for a set of resources (SELECT  p1 ... pn FROM ...)
+		//
+		// actually, don't we already have the API - based on fn.availableValues()?
+		// fn.availableValues().
+		
+		
 		
 		// TODO Start at root or focus?
 		// Check which entity types are available from the current root

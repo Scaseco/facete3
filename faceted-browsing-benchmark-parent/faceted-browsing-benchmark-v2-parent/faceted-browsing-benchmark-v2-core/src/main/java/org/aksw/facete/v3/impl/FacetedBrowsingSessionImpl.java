@@ -138,6 +138,8 @@ public class FacetedBrowsingSessionImpl {
 	}
 
 	public static Relation rename(Relation r, List<Var> targetVars) {
+		
+		
 		Set<Var> relationVars = new LinkedHashSet<>(r.getVars());
 		Set<Var> vs = new LinkedHashSet<>(targetVars);
 		if(vs.size() != relationVars.size()) {
@@ -158,6 +160,12 @@ public class FacetedBrowsingSessionImpl {
 		map.putAll(rename);
 		
 		Relation result = r.applyNodeTransform(new NodeTransformSubst(map));
+		
+//		System.out.println("RENAMED");
+//		System.out.println(r);
+//		System.out.println("TO");
+//		System.out.println(result);
+		
 		return result;
 	}
 	
