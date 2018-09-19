@@ -92,8 +92,8 @@ public class BgpMultiNodeImpl
 //		Resource entry = ResourceUtils.tryGetReversePropertyValue(parent, Vocab.fwd)
 //			.orElseGet(() -> ResourceUtils.getReversePropertyValue(parent, Vocab.bwd));
 
-		System.out.println("THIS: " + this.getId().getLabelString());
-		RDFDataMgr.write(System.out, this.getModel(), RDFFormat.NTRIPLES_UTF8);
+//		System.out.println("THIS: " + this.getId().getLabelString());
+//		RDFDataMgr.write(System.out, this.getModel(), RDFFormat.NTRIPLES_UTF8);
 		
 		//this.getModel().getGraph().find().forEachRemaining(x -> System.out.println("[" + x.hashCode()+ "] " + x));
 		

@@ -202,7 +202,7 @@ public class FacetedQueryGenerator<P> {
 		// TODO Combine rel with the constraints
 		BinaryRelation rel = mapper.getOverallRelation(basePath);
 
-		BinaryRelation tmp = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, negated);
+		BinaryRelation tmp = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, false);
 
 		
 		List<Element> elts = new ArrayList<>();
@@ -271,9 +271,14 @@ public class FacetedQueryGenerator<P> {
 	 */
 	public BinaryRelation createConstraintRelationForPath(P basePath, P childPath, BinaryRelation facetRelation, Var pVar, Multimap<P, Expr> constraintIndex, boolean negate) {
 
+//		Collection<Element> elts = createElementsFromConstraintIndex(constraintIndex,
+//				p -> !negate ? false : (childPath == null ? true : Objects.equals(p, childPath)));
+
 		Collection<Element> elts = createElementsFromConstraintIndex(constraintIndex,
+				//p -> Objects.equals(childPath, p),
 				p -> !negate ? false : (childPath == null ? true : Objects.equals(p, childPath)));
-		
+
+
 		//Collection<Element> elts = createElementsForExprs(effectiveConstraints, negate);
 		//BinaryRelation tmp = createRelationForPath(facetRelation, effectiveConstraints, negate);
 		//List<Element> elts = tmp.getElements();
@@ -599,14 +604,22 @@ public class FacetedQueryGenerator<P> {
 	 * @param constraintIndex
 	 * @return
 	 */
-	public Set<Element> createElementsFromConstraintIndex(Multimap<P, Expr> constraintIndex, Predicate<? super P> negatePath) {
+	public Set<Element> createElementsFromConstraintIndex(Multimap<P, Expr> constraintIndex,
+			//Predicate<? super P> skip,
+			Predicate<? super P> negatePath) {
 
 		Set<Element> result = new LinkedHashSet<>();
 		for(Entry<P, Collection<Expr>> e : constraintIndex.asMap().entrySet()) {
 			P path = e.getKey();
+
+//			boolean skipped = skip == null ? false : skip.test(path);
+//			if(skipped) {
+//				continue;
+//			}
+			
+			boolean negated = negatePath == null ? false : negatePath.test(path);
 			Collection<Expr> exprs = e.getValue();
 
-			boolean negated = negatePath == null ? false : negatePath.test(path);
 			
 			// The essence of calling createElementsForExprs is combining the exprs with logical or.
 			Collection<Element> eltContribs = createElementsForExprs(exprs, negated);

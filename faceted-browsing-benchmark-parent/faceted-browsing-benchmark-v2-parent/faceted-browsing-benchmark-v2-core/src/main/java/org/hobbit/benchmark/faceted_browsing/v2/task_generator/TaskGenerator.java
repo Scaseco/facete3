@@ -141,15 +141,15 @@ public class TaskGenerator {
 		return () -> {
 			X r = supplier.call();
 
-			System.out.println("BEFORE CHANGES");
-			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
+//			System.out.println("BEFORE CHANGES");
+//			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
 
 			
 			
 			changeTracker.commitChanges();
 
-			System.out.println("AFTER CHANGES");
-			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
+//			System.out.println("AFTER CHANGES");
+//			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
 			
 			return r;
 		};
@@ -203,12 +203,12 @@ public class TaskGenerator {
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
-		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
+		//cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 //		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
 //		
-		cpToAction.put("cp10", this::applyCp10);
+		//cpToAction.put("cp10", this::applyCp10);
 //
 //		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
@@ -264,11 +264,12 @@ public class TaskGenerator {
 
 			// Simplest recovery strategy: If an action could not be applied
 			// repeat the process and hope that due to randomness we can advance
-			int maxRandomRetries = 10;
-			for(int j = 0; j < maxRandomRetries; ++j) {
+			int maxRandomRetries = 1000;
+			int j;
+			for(j = 0; j < maxRandomRetries; ++j) {
 				double w = rand.nextDouble();			
 				String step = s.sample(w);
-				logger.info("Next randonmly selected action: " + step);
+				logger.info("Next randomly selected action: " + step);
 				
 				Callable<Boolean> actionFactory = cpToAction.get(step);
 				if(actionFactory == null) {
@@ -287,13 +288,21 @@ public class TaskGenerator {
 						changeTracker.clearRedo();
 						continue;
 					} else {
+						logger.info("Successfully applied " + step + "");
 						chosenActions.add(step);
+						break;
 					}
 				} else {
 					logger.info("Skipping " + step + "; no implementation provided");
 					continue;
 				}
-			}			
+			}	
+
+			if(j >= maxRandomRetries) {
+				System.out.println("Early abort of benchmark due to no applicable action found");
+				break;
+			}
+
 			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
 			
 		}
