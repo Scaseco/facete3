@@ -21,7 +21,7 @@
      rdfs:member [ o:key "cp9"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp10" ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp11" ; o:value [ o:min 0.1 ; o:max 0.2 ] ] ;
-     rdfs:member [ o:key "cp12" ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
+#     rdfs:member [ o:key "cp12" ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp13" ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp14" ; o:value [ o:min 1.0 ; o:max 1.0 ] ] ;
   ] ;

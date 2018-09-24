@@ -30,7 +30,7 @@
     [ o:symbol "cp9"  ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
     [ o:symbol "cp10" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
     [ o:symbol "cp11" ; o:value [ o:min 0.1 ; o:max 0.2 ] ],
-    [ o:symbol "cp12" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
+#    [ o:symbol "cp12" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
     [ o:symbol "cp13" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
     [ o:symbol "cp14" ; o:value [ o:min 1.0 ; o:max 1.0 ] ],
   ] ;

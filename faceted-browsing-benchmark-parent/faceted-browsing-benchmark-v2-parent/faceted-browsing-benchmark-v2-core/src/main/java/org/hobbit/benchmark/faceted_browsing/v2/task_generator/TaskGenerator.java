@@ -20,7 +20,6 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
-import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -43,6 +42,7 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -50,10 +50,8 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -367,11 +365,11 @@ public class TaskGenerator {
 		
 		//.filter("!isBlank(?x)").
 		boolean isBwd = false;
-		
+
 		// Exclude all facet-values for which there are constraints
 		// This is a constraint over a binary relation
 		FacetValueCount fc = fn
-				.walk(isBwd)
+				.step(isBwd)
 				.nonConstrainedFacetValueCounts()
 				//.sample() TODO We should try whether using sample() in addition makes the process faster
 				.randomOrder()
@@ -649,46 +647,23 @@ public class TaskGenerator {
 	 */
 	public static boolean applyCp11(FacetNode fn) {
 		
-		// first, pick a type among the types of resources related to the given node
-		// then, navigate along the property
-		// [s] [predicate] [value] [type]
-		
-		// Issue: how to move from a faceted query to a relational query?
-		// Possible answer: Maybe similar to how tinkerpop does it:
-		// fn.fwd().query().{some tinkerpop like api}
-		// fn.query().outAs("p").as("s").out(RDF.type).as("type");
-		//
-		// So basically the api would have to allow for constructing graph patterns...
-		// gremlin has .valueMap("predicate1", ... "predicateN") which corresponds to an SQL selection
-		// for a set of resources (SELECT  p1 ... pn FROM ...)
-		//
-		// actually, don't we already have the API - based on fn.availableValues()?
-		// fn.availableValues().
-		
-		
-		
-		// TODO Start at root or focus?
-		// Check which entity types are available from the current root
-		
-		
-		// Iterate the available types until we find one for whose corresponding
-		// concept there is a path from the current concept
+		//fn.avai
 		
 		boolean result = false;
 		return result;
 	}
 
-	/**
-	 * Complicated property paths or circles
-	 * (Choke points 3 and 4 with advanced property paths involved)
-	 * 
-	 * @param fn
-	 */
-	public static boolean applyCp12(FacetNode fn) {
-		// n/a
-		boolean result = false;
-		return result;
-	}
+//	/**
+//	 * Complicated property paths or circles
+//	 * (Choke points 3 and 4 with advanced property paths involved)
+//	 * 
+//	 * @param fn
+//	 */
+//	public static boolean applyCp12(FacetNode fn) {
+//		// n/a
+//		boolean result = false;
+//		return result;
+//	}
 
 	/**
 	 * Inverse direction of an edge involved in property path based transition

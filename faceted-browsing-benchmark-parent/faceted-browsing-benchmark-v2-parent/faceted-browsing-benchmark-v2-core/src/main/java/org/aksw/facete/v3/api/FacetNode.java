@@ -58,7 +58,7 @@ public interface FacetNode
 		return bwd().via(ResourceFactory.createProperty(node.getURI()));
 	}
 
-	default FacetDirNode walk(boolean reverse) {
+	default FacetDirNode step(boolean reverse) {
 		return reverse ? bwd() : fwd();
 	}
 	

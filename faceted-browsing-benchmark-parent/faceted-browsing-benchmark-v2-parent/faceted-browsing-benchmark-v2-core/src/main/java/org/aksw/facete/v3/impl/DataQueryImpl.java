@@ -57,6 +57,9 @@ public class DataQueryImpl<T extends RDFNode>
 //	protected Node rootVar;
 //	protected Element baseQueryPattern;
 
+	
+	// FIXME for generalization, probably this attribute has to be replaced by
+	// a something similar to a list of roots; ege DataNode
 	protected Relation baseRelation;
 	
 	protected Template template;
