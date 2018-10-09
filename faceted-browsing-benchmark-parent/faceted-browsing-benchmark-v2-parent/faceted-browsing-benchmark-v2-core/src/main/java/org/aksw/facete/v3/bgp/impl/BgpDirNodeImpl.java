@@ -6,7 +6,6 @@ import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
@@ -37,7 +36,7 @@ public class BgpDirNodeImpl
 	}
 
 	@Override
-	public BgpMultiNode via(Property property) {
+	public BgpMultiNode via(Resource property) {
 		Map<Resource, BgpMultiNode> map = isFwd ? node.fwdMultiNodes() : node.bwdMultiNodes() ;
 		
 		BgpMultiNode result = map.get(property);

@@ -57,26 +57,26 @@ public interface BgpNode
 	}
 
 	
-	default BgpMultiNode nav(String p, boolean reverse) {
+	default BgpMultiNode step(String p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
-	default BgpMultiNode nav(Node p, boolean reverse) {
+	default BgpMultiNode step(Node p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
-	default BgpMultiNode nav(Property p, boolean reverse) {
+	default BgpMultiNode step(Property p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
 	
-	default BgpNode nav(Path path) {
+	default BgpNode step(Path path) {
 		BgpNode result;
 		if(path == null) {
 			result = this;
 		} else if(path instanceof P_Seq) {
 			P_Seq seq = (P_Seq)path;
-			result = nav(seq.getLeft()).nav(seq.getRight());
+			result = step(seq.getLeft()).step(seq.getRight());
 		} else if(path instanceof P_Link) {
 			P_Link link = (P_Link)path;
 			result = fwd(link.getNode()).one();

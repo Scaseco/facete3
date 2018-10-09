@@ -277,6 +277,11 @@ public class QueryFragment {
 		Var result = accessor.getAlias(path);
 		
 		if(result == null) {
+			P parent = accessor.getParent(path);
+//			if(parent == null) {
+//				path = null;
+//			}
+			
 			BinaryRelation br = pathToNode.get(path);
 			result = br != null ? br.getTargetVar() : varGen.next();
 		}

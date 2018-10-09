@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
@@ -15,7 +12,6 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -50,10 +46,8 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.ExprUtilsGeo;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Range;
-import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
-import com.google.common.graph.Traverser;
 import com.vividsolutions.jts.geom.Envelope;
 
 import io.reactivex.Flowable;
@@ -73,19 +67,6 @@ public class MainFacetedBenchmark2 {
 //		return result;
 //	}
 
-	public static <P> Set<P> getPathsMentioned(Expr expr, Function<? super Node, ? extends P> tryMapPath) {
-		Set<P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
-			.filter(Expr::isConstant)
-			.map(org.apache.jena.sparql.util.ExprUtils::eval)
-			.map(NodeValue::asNode)
-			.map(tryMapPath)
-			.filter(p -> p != null)
-			.collect(Collectors.toSet());
-		
-		return result;
-	}
-
-	
 	public static <R, C, V> Single<Table<R, C, V>> toTable(Flowable<Cell<R, C, V>> cell) {
 		return cell.toList().map(list -> {
 			Table<R, C, V> r = HashBasedTable.create();

@@ -6,7 +6,12 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 
-eg:a a eg:ThingA .
+eg:a
+  a eg:ThingA ;
+  rdfs:label "a" ;
+  eg:value 10 ;
+  .
+
 eg:a eg:p1 eg:x1 .
 eg:x1 eg:p2 eg:x2 .
 eg:x2 eg:p3 eg:x3 .
@@ -14,26 +19,41 @@ eg:x3 eg:p4 eg:x4 .
 eg:x4 geo:geometry eg:ag .
 eg:ag geo:asWKT "POINT (1 2)"^^geo:wktLiteral .
 
-eg:b a eg:ThingB ; eg:q1 [ eg:q2 [ eg:q3 [ eg:q4 eg:bg ] ] ] .
+eg:b
+  a eg:ThingB ;
+  rdfs:label "b" ;
+  eg:value 20 ;
+  .
+
+eg:b eg:q1 [ eg:q2 [ eg:q3 [ eg:q4 eg:bg ] ] ] .
 eg:bg wgs:lat 10 ; wgs:long 20 .
 
+eg:c
+  a eg:ThingC ;
+  rdfs:label "c" ;
+  eg:value 30 ;
+  .
 
 eg:ThingA
   a owl:Class ;
-  rdfs:label "ThingA" .
+  rdfs:label "ThingA" ;
+  .
   
 
 eg:ThingB
   a owl:Class ;
-  rdfs:label "ThingB" .
+  rdfs:label "ThingB" ;
+  .
 
 eg:ThingC
   a owl:Class ;
-  rdfs:label "ThingC" .
+  rdfs:label "ThingC" ;
+  .
   
 eg:ThingD
   a owl:Class ;
-  rdfs:label "ThingC" .
+  rdfs:label "ThingD" ;
+  .
 
 
 eg:ThingB rdfs:subClassOf eg:ThingA .

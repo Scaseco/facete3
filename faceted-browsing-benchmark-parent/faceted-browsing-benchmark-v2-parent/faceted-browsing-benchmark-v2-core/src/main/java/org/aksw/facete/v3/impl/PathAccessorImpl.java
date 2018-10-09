@@ -2,18 +2,27 @@ package org.aksw.facete.v3.impl;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
 
 public class PathAccessorImpl
 	implements PathAccessor<BgpNode>
@@ -111,6 +120,18 @@ public class PathAccessorImpl
 	 	}
 
 	 	return result;
+	}
+
+	public static <P> Set<P> getPathsMentioned(Expr expr, Function<? super Node, ? extends P> tryMapPath) {
+		Set<P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
+			.filter(Expr::isConstant)
+			.map(org.apache.jena.sparql.util.ExprUtils::eval)
+			.map(NodeValue::asNode)
+			.map(tryMapPath)
+			.filter(p -> p != null)
+			.collect(Collectors.toSet());
+		
+		return result;
 	}
 
 }

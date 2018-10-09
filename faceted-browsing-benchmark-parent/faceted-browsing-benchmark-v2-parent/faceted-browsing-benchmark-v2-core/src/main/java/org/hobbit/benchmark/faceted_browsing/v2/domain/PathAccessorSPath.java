@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
+import org.aksw.facete.v3.impl.NodePath;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
@@ -39,6 +40,8 @@ public class PathAccessorSPath
 
 	@Override
 	public SPath tryMapToPath(Node node) {
-		return null;
+		SPath result = node instanceof NodePath ? ((NodePath)node).getPath() : null;
+
+		return result;
 	}
 }

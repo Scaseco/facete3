@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -16,6 +17,7 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
@@ -47,13 +49,42 @@ public class PathToRelationMapper<P> {
 	protected Generator<Var> varGen;
 	
 	
-	public PathToRelationMapper(PathAccessor<P> pathAccessor) {
-		// Note: We cannot use an identity hash map if we use RDF-backed resources,
-		// as multiple of these stateless vies may created for the same backing node
-		this(pathAccessor,  new HashMap<>(), new LinkedHashSet<>(), VarGeneratorImpl2.create());
+	public static <P> NodeTransform createNodeTransformSubstitutePathReferences(
+			Function<? super Node, ? extends P> tryMapToPath,
+			Function<? super P, ? extends Node> mapToNode) {
+		return n -> Optional.ofNullable(
+				tryMapToPath.apply(n))
+				.map(x -> (Node)mapToNode.apply(x))
+				.orElse(n);
 	}
 	
+//	public void setRootVar(Var var) {
+//		
+//	}
 	
+//	public static <P> NodeTransform createNodeTransformSubstitutePathReferences(PathAccessor<P> pathAccessor) {
+//		PathToRelationMapper<P> mapper = new PathToRelationMapper<>(pathAccessor);
+//		
+//		NodeTransform result = createNodeTransformSubstitutePathReferences(
+//				pathAccessor::tryMapToPath,
+//				mapper::getNode);
+//
+//		return result;
+//	}
+
+	public PathToRelationMapper(PathAccessor<P> pathAccessor) {
+		this(pathAccessor, null);
+	}
+	
+	public PathToRelationMapper(PathAccessor<P> pathAccessor, String baseName) {
+		// Note: We cannot use an identity hash map if we use RDF-backed resources,
+		// as multiple of these stateless vies may created for the same backing node
+		this(pathAccessor,  new HashMap<>(), new LinkedHashSet<>(), VarGeneratorImpl2.create(baseName));
+	}
+	
+	public PathAccessor<P> getPathAccessor() {
+		return pathAccessor;
+	}
 	
 //	public Expr getExpr(P path) {
 //		BinaryRelation br = getOrCreate(path);

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,6 +21,7 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -42,7 +44,6 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -54,7 +55,9 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.util.NodeComparator;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -196,12 +199,12 @@ public class TaskGenerator {
 		
 //		addAction(cpToAction, "cp1", TaskGenerator::applyCp1);
 		
-		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
+//		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
 //		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
-		//cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
+		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 //		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
@@ -246,7 +249,7 @@ public class TaskGenerator {
 		
 		System.out.println("Concrete weights " + concreteWeights);
 		
-		WeightedSelector<String> s = WeightedSelector.create(concreteWeights);
+		WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
 		
 		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
 		int scenarioLength = (int)RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
@@ -456,7 +459,7 @@ public class TaskGenerator {
 		
 		// TODO Exclude values that denote meta vocabulary, such as 'owl:Class', 'rdf:Property' etc
 		FacetNode typeFacetNode = fn.fwd(RDF.type).one();
-		Node node = typeFacetNode.remainingValues().exclude(OWL.Class).sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+		Node node = typeFacetNode.remainingValues().exclude(OWL.Class, RDFS.Class).sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
 		if(node != null) {
 			typeFacetNode.constraints().eq(node);
 			
@@ -538,7 +541,54 @@ public class TaskGenerator {
 	
 		return paths;
 	}
-	
+
+	/**
+	 * This method yields ALL reachable numeric facets together with ALL value distributions.
+	 * 
+	 * @param fn
+	 * @param pathLength
+	 * @param numericProperties
+	 * @return
+	 */
+	public static Map<FacetNode, Map<Node, Long>> selectNumericFacets(FacetNode fn, int pathLength, List<SetSummary> numericProperties) {
+		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
+		
+		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, numericProperties);
+
+		for(Path path : paths) {
+			FacetNode target = fn.walk(Path.toJena(path));
+
+			if(target != null) {
+				UnaryRelation numProps = createConcept(numericProperties);
+				
+				List<Node> ps = target.fwd().facets().filter(numProps).exec().map(n -> n.asNode()).toList().blockingGet();
+
+				for(Node p : ps) {
+				
+					System.out.println("Chose numeric property " + p);
+					//System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
+		
+					// Sample the set of values and create a range constraint from it
+					
+					FacetNode v = target.fwd(p).one();
+					Map<Node, Long> distribution = target.fwd().facetValueCounts()
+							.filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)"))
+							.exec()
+							.toMap(FacetValueCount::getValue, x -> x.getFocusCount().getCount())
+							.blockingGet();
+					//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
+		
+					System.out.println("Values: " + distribution);
+				
+//					result = Maps.immutableEntry(v, distribution);
+					result.put(v, distribution);
+				}
+			}
+			
+		}
+		return result;
+	}
+
 	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength, Random rand, List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 		
@@ -585,14 +635,43 @@ public class TaskGenerator {
     */
 	public boolean applyCp6(FacetNode fn) {
 
-		Entry<FacetNode, Map<Node, Long>> cand = selectNumericFacet(fn, 1, rand, numericProperties);
-
-		System.out.println("cp6 cand: " + cand);
+		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(fn, 1, numericProperties);
+		
+		
+		System.out.println("cp6 cand: " + cands);
+		
+		// Select candidates, thereby using the sum of the value counts as weights
+		Map<FacetNode, Long> candToWeight = 
+				cands.entrySet().stream()
+				.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().values().stream().mapToLong(x -> x).sum()));
+	
+		// TODO Discard entries with a too small range
+		
+		// Select a random sub range
+		WeightedSelector<FacetNode> selector = WeightedSelectorMutable.create(candToWeight);
+		FacetNode cand = selector.sample(rand.nextDouble());
+		
+		Map<Node, Long> range = cands.get(cand);
+		
+		// Pick a range
+		WeightedSelector<Node> rangeSelector = WeightedSelectorMutable.create(range);
+		double ia = rand.nextDouble();
+		double ib = rand.nextDouble();
+		Node a = rangeSelector.sample(ia);
+		Node b = rangeSelector.sample(ib);
+		NodeValue nvA = NodeValue.makeNode(a);
+		NodeValue nvB = NodeValue.makeNode(b);
+		int d = NodeValue.compareAlways(nvA, nvB);
+		if(d > 0) {
+			NodeValue tmp = nvA;
+			nvA = nvB;
+			nvB = tmp;
+		}
 		
 		// TODO If fewer than 2 values remain, indicate n/a 
 		
 		// 0: lower bound, 1 upper bound
-		rand.nextInt(2);
+		//rand.nextInt(2);
 		
 		
 //		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
@@ -646,10 +725,32 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public static boolean applyCp11(FacetNode fn) {
-		
-		//fn.avai
-		
 		boolean result = false;
+		
+		FacetValueCount fwc = fn.fwd().facetValueCounts()
+			.peek(dq -> dq.filter(ExprUtils.oneOf(dq.get(FacetValueCountImpl_.VALUE).fwd(RDF.type), OWL.Class.asNode(), RDFS.Class.asNode())))
+			.exclude(RDFS.subClassOf)
+			.exec()
+			.firstElement()
+			.blockingGet();
+
+		if(fwc != null) {
+			Node p = fwc.getPredicate();
+			System.out.println("cp11 got predicate " + p);
+			
+			FacetNode newFocus = fn.fwd(p).one();
+			fn.query().focus(newFocus);
+			
+			result = true;
+		}
+		
+		// Note: The approach above way does not support fetching the class
+		// It would have to look something like
+		// ...facetValueCounts().extend((dq, cb) -> dq.get(FacetValueCountImpl_.VALUE)
+		//   .fwd(RDF.type)
+		//   .constraints().eq(OWL.Class.asNode()).parent() // Add the filter to the path
+		//   .project() // Indicate to project the path
+		
 		return result;
 	}
 

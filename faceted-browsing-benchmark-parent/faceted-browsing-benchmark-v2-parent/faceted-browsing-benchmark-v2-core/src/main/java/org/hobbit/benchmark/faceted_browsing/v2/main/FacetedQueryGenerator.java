@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
+import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -32,7 +32,6 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -53,7 +52,6 @@ import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -69,21 +67,20 @@ public class FacetedQueryGenerator<P> {
 	//protected Class<P> pathClass;
 	protected PathAccessor<P> pathAccessor;
 	
-	public static <P> NodeTransform createNodeTransformSubstitutePathReferences(
-			Function<? super Node, ? extends P> tryMapToPath,
-			Function<? super P, ? extends Node> mapToNode) {
-		return n -> Optional.ofNullable(
-				tryMapToPath.apply(n))
-				.map(x -> (Node)mapToNode.apply(x))
-				.orElse(n);
-	}
 
-	public NodeTransform createNodeTransformSubstitutePathReferences() {
-		NodeTransform result = createNodeTransformSubstitutePathReferences(
+	public static <P> NodeTransform createNodeTransformSubstitutePathReferences(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor) {
+		NodeTransform result = PathToRelationMapper.createNodeTransformSubstitutePathReferences(
 				pathAccessor::tryMapToPath,
 				mapper::getNode);
-		return result;
-	}
+	return result;
+}
+
+//	public NodeTransform createNodeTransformSubstitutePathReferences() {
+//		NodeTransform result = PathToRelationMapper.createNodeTransformSubstitutePathReferences(
+//				pathAccessor::tryMapToPath,
+//				mapper::getNode);
+//		return result;
+//	}
 
 //	public Expr substitutePathReferences(Expr expr) {
 //		//Set<P> tmpPaths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
@@ -225,15 +222,15 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	
-	public Collection<Element> createElementsForExprs(Collection<Expr> exprs, boolean negate) {
-		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences();
+	public static <P> Collection<Element> createElementsForExprs(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, Collection<Expr> exprs, boolean negate) {
+		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences(mapper, pathAccessor);
 		
 		Set<Element> result = new LinkedHashSet<>();
 		Set<Expr> resolvedExprs = new LinkedHashSet<>();
 
 		// Collect all mentioned paths so we can getOrCreate their elements
 		for(Expr expr : exprs) {
-			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+			Set<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 
 			for(P path : paths) {
 				BinaryRelation br = mapper.getOverallRelation(path);
@@ -391,7 +388,7 @@ public class FacetedQueryGenerator<P> {
 		boolean result = false;
 
 		// Find all constraints on successor paths
-		Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+		Set<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 
 		// Check if any parent of the path is the given path
 		for(P candPath : paths) {
@@ -596,7 +593,7 @@ public class FacetedQueryGenerator<P> {
 		
 		SetMultimap<P, Expr> result = LinkedHashMultimap.create();
 		for(Expr expr : constraints) {
-			Set<P> paths = MainFacetedBenchmark2.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+			Set<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
 			for(P path : paths) {
 				result.put(path, expr);
 			}
@@ -630,7 +627,7 @@ public class FacetedQueryGenerator<P> {
 
 			
 			// The essence of calling createElementsForExprs is combining the exprs with logical or.
-			Collection<Element> eltContribs = createElementsForExprs(exprs, negated);
+			Collection<Element> eltContribs = createElementsForExprs(mapper, pathAccessor, exprs, negated);
 			result.addAll(eltContribs);
 		}
 		

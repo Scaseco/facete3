@@ -5,6 +5,21 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 public class Vocab {
+
+	public static final String ns = "http://aksw.org/adhoc/ontology/";
+	public static Property property(String localName) {
+		return ResourceFactory.createProperty(ns + localName);
+	}
+
+	public static Resource resource(String localName) {
+		return ResourceFactory.createResource(ns + localName);
+	}
+
+//	public static class Str {
+//		public static final String value = ns + "value";
+//		public static final String facetValueCount = ns + "value";		
+//	}
+	
 	public static final Property fwd = property("fwd");
 	public static final Property bwd = property("bwd");
 	public static final Property property = property("property");
@@ -57,14 +72,5 @@ public class Vocab {
 	public static final Property query = property("query");
 //	public static final Property constraint = property("constraint");
 
-	
-	
-	public static Property property(String localName) {
-		return ResourceFactory.createProperty("http://aksw.org/adhoc/ontology/" + localName);
-	}
-
-	public static Resource resource(String localName) {
-		return ResourceFactory.createResource("http://aksw.org/adhoc/ontology/" + localName);
-	}
 
 }

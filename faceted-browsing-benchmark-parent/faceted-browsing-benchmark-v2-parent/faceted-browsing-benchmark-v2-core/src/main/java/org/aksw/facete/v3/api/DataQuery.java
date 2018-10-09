@@ -3,8 +3,10 @@ package org.aksw.facete.v3.api;
 import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.impl.NodePath;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -21,6 +23,7 @@ import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeUtils;
@@ -52,6 +55,10 @@ public interface DataQuery<T extends RDFNode> {
 	// For every predicate, list how many root root resources there are having this predicate
 	//getPredicatesAndRootCount();
 	
+	DataQuery<T> peek(Consumer<? super DataQuery<T>> consumer);
+	NodePath get(String attrName);
+	
+	
 	Single<Model> execConstruct();
 	
 	UnaryRelation fetchPredicates();
@@ -80,12 +87,17 @@ public interface DataQuery<T extends RDFNode> {
 		return result;
 	}
 	
-	default DataQuery<T> filter(Expr expr) {
-		UnaryRelation ur = toUnaryFiler(expr);
-		
-		return filter(ur);
-	}
-	
+//	default DataQuery<T> filter(Expr expr) {
+//		UnaryRelation ur = toUnaryFiler(expr);
+//		
+//		return filter(ur);
+//	}
+
+	DataQuery<T> filter(Expr expr);
+
+	// Filter injection without renaming variables
+	DataQuery<T> filterDirect(Element element);
+
 	DataQuery<T> connection(SparqlQueryConnection connection);
 	SparqlQueryConnection connection();
 	

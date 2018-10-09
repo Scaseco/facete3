@@ -1,26 +1,36 @@
 package org.aksw.facete.v3.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.jena_sparql_api.beans.model.EntityModel;
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -43,8 +53,15 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
+import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
+import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
 
 import com.google.common.collect.Iterators;
+import com.sleepycat.je.rep.MemberNotFoundException;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -73,6 +90,8 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	protected UnaryRelation filter;
 	
+	protected List<Element> directFilters = new ArrayList<>();
+	
 	protected boolean randomOrder;
 	protected boolean sample;
 	protected Class<T> resultClass;
@@ -82,7 +101,7 @@ public class DataQueryImpl<T extends RDFNode>
 	public DataQueryImpl(SparqlQueryConnection conn, Node rootNode, Element baseQueryPattern, Template template, Class<T> resultClass) {
 		this(conn, new Concept(baseQueryPattern, (Var)rootNode), template, resultClass);
 	}
-		
+
 	public DataQueryImpl(SparqlQueryConnection conn, Relation baseRelation, Template template, Class<T> resultClass) {
 		super();
 		this.conn = conn;
@@ -178,7 +197,108 @@ public class DataQueryImpl<T extends RDFNode>
 		return this;
 	}
 
+	@Override
+	public DataQuery<T> filterDirect(Element element) {
+		directFilters.add(element);
+		
+		return this;
+	}
 
+	
+	
+	@Override
+	public DataQuery<T> peek(Consumer<? super DataQuery<T>> consumer) {
+		consumer.accept(this);
+		return this;
+	}
+	
+	@Override
+	public NodePath get(String attr) {
+		
+		EntityOps entityOps = EntityModel.createDefaultModel(resultClass, null);
+		
+		PropertyOps pops = entityOps.getProperty(attr);
+		String iri = RdfTypeFactoryImpl.createDefault().getIri(entityOps, pops);
+
+		// FIXME HACK We need to start from the root node instead of iterating the flat list of triple patterns
+		Triple match = template.getBGP().getList().stream()
+			.filter(t -> t.getPredicate().getURI().equals(iri))
+			.findFirst()
+			.orElse(null);
+
+		Node node = Optional.ofNullable(match.getObject())
+				.orElseThrow(() -> new MemberNotFoundException("No member with name " + attr + " in " + resultClass));
+
+//		Node node = Optional.ofNullable(iri)
+//				.map(NodeFactory::createURI)				
+//				.orElseThrow(() -> new MemberNotFoundException("No member with name " + attr + " in " + resultClass));
+
+//		
+//		
+//		Node node = Optional.ofNullable(pops)
+//			.map(p -> p.findAnnotation(Iri.class))
+//			.map(Iri::value)
+//			.map(NodeFactory::createURI)
+//			.orElseThrow(() -> new MemberNotFoundException("No member with name " + attr + " in " + resultClass));
+		
+//		System.out.println("Found: " + node);
+		
+		Model m = ModelFactory.createDefaultModel();
+		SPath tmp = new SPathImpl(m.createResource().asNode(), (EnhGraph)m);
+		tmp.setAlias((Var)node);
+		
+//		tmp = tmp.get(node.getURI(), false);
+		
+		
+		//tmp.setAlias(alias);
+
+		NodePath result = new NodePath(tmp);
+		
+		return result;
+	}
+	
+	
+	@Override
+	public DataQuery<T> filter(Expr expr) {
+		PathAccessor<SPath> pathAccessor = new PathAccessorSPath();
+		PathToRelationMapper<SPath> mapper = new PathToRelationMapper<>(pathAccessor, "w");
+
+		Collection<Element> elts = FacetedQueryGenerator.createElementsForExprs(mapper, pathAccessor, Collections.singleton(expr), false);
+
+		// FIXME Hack to obtain a zero-length path; equals on SPath is broken
+		SPath root = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).stream()
+			.map(p -> TreeUtils.findRoot(p, pathAccessor::getParent))
+			.findFirst()
+			.orElseThrow(() -> new RuntimeException("Should not happen: Expr without path - " + expr));
+		
+		
+		//SPath root = ModelFactory.createDefaultModel().createResource().as(SPath.class);
+		//Var rootVar = (Var)pathAccessor.(root);
+		
+		if(false) {
+		Var rootVar = (Var)mapper.getNode(root);
+		
+		UnaryRelation tmp = new Concept(ElementUtils.groupIfNeeded(elts), rootVar);
+		filter(tmp);
+		} else {
+			filterDirect(ElementUtils.groupIfNeeded(elts));
+		}
+		//TreeUtils.getRoot(item, predecessor)
+		
+		//NodeTransform xform = PathToRelationMapper.createNodeTransformSubstitutePathReferences(new PathAccessorSPath());
+
+		//Expr e = expr.applyNodeTransform(xform);
+		// Transformation has to be done using NodeTransformExpr as
+		// it correctly substitutes NodeValues with ExprVars
+//		Expr e = ExprTransformer.transform(new NodeTransformExpr(xform), expr);
+//		
+//		UnaryRelation f = DataQuery.toUnaryFiler(e);
+//		filter(f);
+		
+		return this;
+	}
+
+	
 	@Override
 	public Entry<Var, Query> toConstructQuery() {
 		// TODO Auto-generated method stub
@@ -216,6 +336,10 @@ public class DataQueryImpl<T extends RDFNode>
 				: new RelationImpl(baseQueryPattern, new ArrayList<>(PatternVars.vars(baseQueryPattern))).joinOn((Var)rootVar).with(filter).getElement()
 				;
 
+		if(!directFilters.isEmpty()) {
+			effectivePattern = ElementUtils.groupIfNeeded(Iterables.concat(Collections.singleton(effectivePattern), directFilters));
+		}
+		
 		if(sample) {
 			Set<Var> allVars = new LinkedHashSet<>();
 			allVars.addAll(vars);

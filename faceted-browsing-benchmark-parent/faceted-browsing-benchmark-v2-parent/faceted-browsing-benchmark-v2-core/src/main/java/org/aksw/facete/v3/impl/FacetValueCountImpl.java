@@ -2,18 +2,19 @@ package org.aksw.facete.v3.impl;
 
 import java.util.Optional;
 
+import javax.persistence.Entity;
+
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.vocabulary.OWL;
-import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.engine.CountUtils;
 
 import com.google.common.collect.Range;
 
+@Entity // The Entity annotation causes a metamodel class for type-safe property access to become generated during build.
 public class FacetValueCountImpl
 	extends ResourceBase
 	implements FacetValueCount
