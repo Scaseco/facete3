@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
@@ -55,9 +56,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.util.NodeComparator;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -627,15 +626,25 @@ public class TaskGenerator {
 		return result;
 	}
 	
-   /**
-    * Change of bounds of directly related numerical data\\
-    * (Find all instances that additionally have numerical data lying within a certain interval behind a directly related property)
-    * 
-    * @param fn
-    */
-	public boolean applyCp6(FacetNode fn) {
+	
+	/**
+	 * Picks a facet node and a range of values in accordance with the specification 
+	 * 
+	 * pickConstant: Select only a specific value; ignores upper / lower bound
+	 * 
+	 */
+	//public Cell<FacetNode, Node, Node>
 
-		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(fn, 1, numericProperties);
+	
+	public Entry<FacetNode, Range<NodeHolder>> pickRange(
+			FacetNode facetNode,
+			int maxPathLength,
+			boolean pickConstant,
+			boolean pickLowerBound,
+			boolean pickUpperBound) {
+
+
+		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(facetNode, 1, numericProperties);
 		
 		
 		System.out.println("cp6 cand: " + cands);
@@ -644,7 +653,7 @@ public class TaskGenerator {
 		Map<FacetNode, Long> candToWeight = 
 				cands.entrySet().stream()
 				.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().values().stream().mapToLong(x -> x).sum()));
-	
+
 		// TODO Discard entries with a too small range
 		
 		// Select a random sub range
@@ -655,18 +664,63 @@ public class TaskGenerator {
 		
 		// Pick a range
 		WeightedSelector<Node> rangeSelector = WeightedSelectorMutable.create(range);
-		double ia = rand.nextDouble();
-		double ib = rand.nextDouble();
-		Node a = rangeSelector.sample(ia);
-		Node b = rangeSelector.sample(ib);
-		NodeValue nvA = NodeValue.makeNode(a);
-		NodeValue nvB = NodeValue.makeNode(b);
-		int d = NodeValue.compareAlways(nvA, nvB);
-		if(d > 0) {
-			NodeValue tmp = nvA;
-			nvA = nvB;
-			nvB = tmp;
+		NodeHolder nvA = null;
+		if(pickLowerBound || pickConstant) {
+			double ia = rand.nextDouble();			
+			Node a = rangeSelector.sample(ia);
+			nvA = new NodeHolder(a);
 		}
+		
+		NodeHolder nvB = null;
+		if(pickUpperBound && !pickConstant) {
+			double ib = rand.nextDouble();
+			Node b = rangeSelector.sample(ib);
+			nvB = new NodeHolder(b);			
+		}
+
+		if(pickLowerBound && pickUpperBound) {
+			int d = nvA.compareTo(nvB);
+			if(d > 0) {
+				NodeHolder tmp = nvA;
+				nvA = nvB;
+				nvB = tmp;
+			}
+		}
+		
+		Range<NodeHolder> resultRange;
+		
+		if(pickConstant) {
+			resultRange = Range.singleton(nvA);
+		} else if(pickLowerBound) {
+			if(pickUpperBound) {
+				resultRange = Range.closed(nvA, nvB);
+			} else {
+				resultRange = Range.atLeast(nvA);
+			}
+		} else if(pickUpperBound) {
+			resultRange = Range.atMost(nvB);
+		} else {
+			resultRange = null;
+		}
+		
+		System.out.println("Range: " + resultRange);
+
+		
+		Entry<FacetNode, Range<NodeHolder>> result = Maps.immutableEntry(cand, resultRange);
+		
+		return result;
+	}
+	
+   /**
+    * Change of bounds of directly related numerical data\\
+    * (Find all instances that additionally have numerical data lying within a certain interval behind a directly related property)
+    * 
+    * @param fn
+    */
+	public boolean applyCp6(FacetNode fn) {
+		Entry<FacetNode, Range<NodeHolder>> r = pickRange(fn, 5, false, true, true);
+		
+		System.out.println("Pick: " + r);
 		
 		// TODO If fewer than 2 values remain, indicate n/a 
 		

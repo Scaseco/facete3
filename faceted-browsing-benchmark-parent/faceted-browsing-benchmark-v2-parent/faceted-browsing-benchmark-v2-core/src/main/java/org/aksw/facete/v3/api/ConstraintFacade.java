@@ -3,9 +3,12 @@ package org.aksw.facete.v3.api;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
+
+import com.google.common.collect.Range;
 
 /**
  * In general, there are anonymous and named constraints.
@@ -17,7 +20,7 @@ import org.apache.jena.rdf.model.RDFNode;
  */
 public interface ConstraintFacade<B> {
 	Collection<FacetConstraint> list();
-	
+
 	default Stream<FacetConstraint> stream() {
 		return list().stream();
 	}
@@ -28,6 +31,8 @@ public interface ConstraintFacade<B> {
 	ConstraintFacade<B> gt(Node node);
 	ConstraintFacade<B> neq(Node node);
 
+	
+	ConstraintFacade<B> range(Range<NodeHolder> range);
 	
 	default ConstraintFacade<B> eq(String stringLiteral) {
 		return eq(NodeFactory.createLiteral(stringLiteral));
