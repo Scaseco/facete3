@@ -581,7 +581,11 @@ public class TaskGenerator {
 					System.out.println("Values: " + distribution);
 				
 //					result = Maps.immutableEntry(v, distribution);
-					result.put(v, distribution);
+
+					// Only yield non-empty distributions
+					if(!distribution.isEmpty()) {
+						result.put(v, distribution);
+					}
 				}
 			}
 			
