@@ -553,7 +553,8 @@ public class TaskGenerator {
 		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
 		
 		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, numericProperties);
-
+		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
+		
 		for(Path path : paths) {
 			FacetNode target = fn.walk(Path.toJena(path));
 
@@ -643,70 +644,72 @@ public class TaskGenerator {
 			boolean pickLowerBound,
 			boolean pickUpperBound) {
 
+		Entry<FacetNode, Range<NodeHolder>> result = null;
 
 		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(facetNode, 1, numericProperties);
-		
-		
-		System.out.println("cp6 cand: " + cands);
-		
-		// Select candidates, thereby using the sum of the value counts as weights
-		Map<FacetNode, Long> candToWeight = 
-				cands.entrySet().stream()
-				.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().values().stream().mapToLong(x -> x).sum()));
-
-		// TODO Discard entries with a too small range
-		
-		// Select a random sub range
-		WeightedSelector<FacetNode> selector = WeightedSelectorMutable.create(candToWeight);
-		FacetNode cand = selector.sample(rand.nextDouble());
-		
-		Map<Node, Long> range = cands.get(cand);
-		
-		// Pick a range
-		WeightedSelector<Node> rangeSelector = WeightedSelectorMutable.create(range);
-		NodeHolder nvA = null;
-		if(pickLowerBound || pickConstant) {
-			double ia = rand.nextDouble();			
-			Node a = rangeSelector.sample(ia);
-			nvA = new NodeHolder(a);
-		}
-		
-		NodeHolder nvB = null;
-		if(pickUpperBound && !pickConstant) {
-			double ib = rand.nextDouble();
-			Node b = rangeSelector.sample(ib);
-			nvB = new NodeHolder(b);			
-		}
-
-		if(pickLowerBound && pickUpperBound) {
-			int d = nvA.compareTo(nvB);
-			if(d > 0) {
-				NodeHolder tmp = nvA;
-				nvA = nvB;
-				nvB = tmp;
+		if(!cands.isEmpty()) {
+			
+			System.out.println("cp6 cand: " + cands);
+			
+			// Select candidates, thereby using the sum of the value counts as weights
+			Map<FacetNode, Long> candToWeight = 
+					cands.entrySet().stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().values().stream().mapToLong(x -> x).sum()));
+	
+			// TODO Discard entries with a too small range
+			
+			// Select a random sub range
+			WeightedSelector<FacetNode> selector = WeightedSelectorMutable.create(candToWeight);
+			FacetNode cand = selector.sample(rand.nextDouble());
+			System.out.println("Picked cand: "  + cand);
+			Map<Node, Long> range = cands.get(cand);
+			
+			// Pick a range
+			WeightedSelector<Node> rangeSelector = WeightedSelectorMutable.create(range);
+			NodeHolder nvA = null;
+			if(pickLowerBound || pickConstant) {
+				double ia = rand.nextDouble();			
+				Node a = rangeSelector.sample(ia);
+				nvA = new NodeHolder(a);
 			}
-		}
-		
-		Range<NodeHolder> resultRange;
-		
-		if(pickConstant) {
-			resultRange = Range.singleton(nvA);
-		} else if(pickLowerBound) {
-			if(pickUpperBound) {
-				resultRange = Range.closed(nvA, nvB);
+			
+			NodeHolder nvB = null;
+			if(pickUpperBound && !pickConstant) {
+				double ib = rand.nextDouble();
+				Node b = rangeSelector.sample(ib);
+				nvB = new NodeHolder(b);			
+			}
+	
+			if(pickLowerBound && pickUpperBound) {
+				int d = nvA.compareTo(nvB);
+				if(d > 0) {
+					NodeHolder tmp = nvA;
+					nvA = nvB;
+					nvB = tmp;
+				}
+			}
+			
+			Range<NodeHolder> resultRange;
+			
+			if(pickConstant) {
+				resultRange = Range.singleton(nvA);
+			} else if(pickLowerBound) {
+				if(pickUpperBound) {
+					resultRange = Range.closed(nvA, nvB);
+				} else {
+					resultRange = Range.atLeast(nvA);
+				}
+			} else if(pickUpperBound) {
+				resultRange = Range.atMost(nvB);
 			} else {
-				resultRange = Range.atLeast(nvA);
+				resultRange = null;
 			}
-		} else if(pickUpperBound) {
-			resultRange = Range.atMost(nvB);
-		} else {
-			resultRange = null;
+			
+			System.out.println("Range: " + resultRange);
+	
+			
+			result = Maps.immutableEntry(cand, resultRange);
 		}
-		
-		System.out.println("Range: " + resultRange);
-
-		
-		Entry<FacetNode, Range<NodeHolder>> result = Maps.immutableEntry(cand, resultRange);
 		
 		return result;
 	}
@@ -718,9 +721,16 @@ public class TaskGenerator {
     * @param fn
     */
 	public boolean applyCp6(FacetNode fn) {
+		boolean result = false;
+
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(fn, 5, false, true, true);
 		
 		System.out.println("Pick: " + r);
+		
+		if(r != null) {
+			r.getKey().constraints().range(r.getValue());
+			result = true;
+		}
 		
 		// TODO If fewer than 2 values remain, indicate n/a 
 		
@@ -732,7 +742,6 @@ public class TaskGenerator {
 //		.connection(fn.query().connection()).exec().blockingFirst();
 //		
 //		System.out.println("CP6 Summary: " + summary);
-		boolean result = false;
 		return result;
 	}
 	

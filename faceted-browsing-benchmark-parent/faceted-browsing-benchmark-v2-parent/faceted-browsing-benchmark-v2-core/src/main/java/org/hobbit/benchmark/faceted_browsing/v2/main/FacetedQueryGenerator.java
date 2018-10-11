@@ -40,10 +40,12 @@ import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -243,7 +245,10 @@ public class FacetedQueryGenerator<P> {
 		for(Expr expr : exprs) {
 			
 			// TODO We need to add the elements of the paths
-			Expr resolved = expr.applyNodeTransform(nodeTransform); //ExprTransformer.transform(exprTransform, expr);
+			//ExprTransformer.transform(new ExprTransform, expr)
+			//Expr resolved = expr.applyNodeTransform(nodeTransform); //ExprTransformer.transform(exprTransform, expr);
+			Expr resolved = ExprTransformer.transform(new NodeTransformExpr(nodeTransform), expr);
+
 			resolvedExprs.add(resolved);
 		}
 
