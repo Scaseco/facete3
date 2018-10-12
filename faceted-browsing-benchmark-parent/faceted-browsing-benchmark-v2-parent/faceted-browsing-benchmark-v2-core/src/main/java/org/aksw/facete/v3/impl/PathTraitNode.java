@@ -4,7 +4,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;
 
-interface PathTraitNode<T extends PathTrait<T>>
+interface PathTraitNode<T>
 	extends PathTrait<T>
 {
 	// The following commented-out method must be implemented:

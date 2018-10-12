@@ -92,7 +92,7 @@ class ProbabilisticAutomaton {
  * @author Claus Stadler, Sep 19, 2018
  *
  */
-class PathSpecSimple
+class PathSpecSimpleX
 	extends ResourceImpl
 {
 

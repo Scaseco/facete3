@@ -3,7 +3,7 @@ package org.aksw.facete.v3.impl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 
-interface PathTraitString<T extends PathTrait<T>>
+interface PathTraitString<T>
 	extends PathTrait<T>
 {
 	// The following commented-out method must be implemented:

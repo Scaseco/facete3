@@ -32,7 +32,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.eclipse.jetty.server.Server;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutable;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
 
 public class MainFacetedQueryApi {
 
@@ -58,7 +58,7 @@ public class MainFacetedQueryApi {
 			map2.put("c", 5);
 	
 			Map<String, Integer> xx = new TreeMap<>();
-			WeightedSelectorMutable<String> fn = WeightedSelectorMutable.create(map2.entrySet(), Entry::getKey, Entry::getValue);
+			WeightedSelectorMutableOld<String> fn = WeightedSelectorMutableOld.create(map2.entrySet(), Entry::getKey, Entry::getValue);
 			Random rand = new Random();
 			for(int i = 0; i < 100000; ++i) {
 				double x = rand.nextDouble();

@@ -14,9 +14,11 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
@@ -52,10 +54,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
@@ -71,6 +75,98 @@ import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
 
+
+
+class PathSpecSimple {
+	protected int minLength;
+	protected int maxLength;
+	
+	// true -> forward, false -> backwards
+	// The draw with replacement pmf is consumed first. Afterwards, the fallback pmf kicks in.
+	protected List<Entry<Boolean, Double>> drawWithReplacementPmf;
+	protected List<Entry<Boolean, Double>> fallbackPmf;
+
+	public int getMinLength() {
+		return minLength;
+	}
+
+	public PathSpecSimple setMinLength(int minLength) {
+		this.minLength = minLength;
+		return this;
+	}
+
+	public int getMaxLength() {
+		return maxLength;
+	}
+
+	public PathSpecSimple setMaxLength(int maxLength) {
+		this.maxLength = maxLength;
+		return this;
+	}
+
+	public List<Entry<Boolean, Double>> getDrawWithReplacementPmf() {
+		return drawWithReplacementPmf;
+	}
+
+	public PathSpecSimple setDrawWithReplacementPmf(List<Entry<Boolean, Double>> drawWithReplacementPmf) {
+		this.drawWithReplacementPmf = drawWithReplacementPmf;
+		return this;
+	}
+
+	public List<Entry<Boolean, Double>> getFallbackPmf() {
+		return fallbackPmf;
+	}
+
+	public PathSpecSimple setFallbackPmf(List<Entry<Boolean, Double>> fallbackPmf) {
+		this.fallbackPmf = fallbackPmf;
+		return this;
+	}
+
+	public PathSpecSimple create(int minPathLength, int maxPathLength, int numRequireReverse, double bwdChance, double fwdChance) {
+		if(numRequireReverse > maxPathLength) {
+			throw new RuntimeException("Cannot require more reverse traversals than maximum path length");
+		}
+		
+		List<Entry<Boolean, Double>> consumingPmf = new ArrayList<>();
+		for(int i = 0; i < numRequireReverse; ++i) {
+			consumingPmf.add(Maps.immutableEntry(false, 1.0));
+		}
+		
+		for(int i = numRequireReverse; i < maxPathLength; ++i) {
+			consumingPmf.add(Maps.immutableEntry(true, 1.0));			
+		}
+		
+		List<Entry<Boolean, Double>> fallbackPmf = new ArrayList<>();
+		fallbackPmf.add(Maps.immutableEntry(false, bwdChance));
+		fallbackPmf.add(Maps.immutableEntry(true, fwdChance));
+	
+		PathSpecSimple result = new PathSpecSimple();
+		result
+			.setMinLength(minPathLength)
+			.setMaxLength(maxPathLength)
+			.setDrawWithReplacementPmf(consumingPmf)
+			.setFallbackPmf(fallbackPmf);
+	
+		return result;
+	}
+	
+	public static WeightedSelector<Boolean> createSelector(PathSpecSimple pathSpec) {
+		WeightedSelector<Boolean> result = null;
+		if(pathSpec.getDrawWithReplacementPmf() != null) {
+			result = WeigthedSelectorDrawWithReplacement.create(pathSpec.getDrawWithReplacementPmf());
+		}
+
+		if(pathSpec.getFallbackPmf() != null) {
+			WeightedSelector<Boolean> tmp = WeightedSelectorImmutable.create(pathSpec.getFallbackPmf());
+
+			if(result != null) {
+				result = new WeigthedSelectorFailover<>(result, tmp);
+			}
+		}
+		
+		return result;
+	}
+}
 
 public class TaskGenerator {
 
@@ -115,6 +211,38 @@ public class TaskGenerator {
 		return result;
 	}
 	
+	
+//	public static <T> WeightedSelector<T> createSelector(List<Entry<T, Double>> pmf, boolean drawWithReplacement) {
+//		WeightedSelectorMutable<T> result = drawWithReplacement
+//				? new WeigthedSelectorDrawWithReplacement<>()
+//				: new WeightedSelectorMutable<>();
+//				
+//		result.putAll(pmf);
+//		
+//		return result;
+//	}
+	
+	public static void generatePath(FacetNode fn, PathSpecSimple pathSpec, Supplier<Double> rand) {
+		WeightedSelector<Boolean> dirSelector = PathSpecSimple.createSelector(pathSpec);		
+		
+		// While we have not reached the maximum path length
+		while() {
+			double r = rand.get();
+			boolean isFwd = dirSelector.sample(r);
+		
+			List<FacetCount> facetCounts = fn.step(!isFwd).facetCounts().exec().toList().blockingGet();
+			
+			WeightedSelector<FacetCount> selector = WeightedSelectorImmutable.create(facetCounts, fc -> fc.getDistinctValueCount().getCount());
+		
+			FacetCount fc = selector.sample(rand.get());
+			if(fc != null) {
+				Node p = fc.getPredicate();
+				
+				
+				FacetNode next = fn.fwd(p).one();
+			}
+		}
+	}
 	
 	/**
 	 * Wrap any function accepting a {@link FacetNode} argument such that
@@ -359,6 +487,8 @@ public class TaskGenerator {
 	
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
+	 * 
+	 * [done]
 	 */
 	public static boolean applyCp1(FacetNode fn) {
 
@@ -390,7 +520,8 @@ public class TaskGenerator {
 			Node p = fc.getPredicate();
 			Node o = fc.getValue();
 			
-			fn.walk(p, isBwd).one().constraints().eq(o);
+			//fn.walk(p, isBwd).one().constraints().eq(o);
+			fn.walk(p, isBwd).one().constraints().range(Range.singleton(new NodeHolder(o)));
 
 			// Pick one of the facet values
 			
@@ -406,8 +537,11 @@ public class TaskGenerator {
 	
 	/**
 	 * Find all instances which additionally realize this property path with any property value
+	 * 
+	 * [todo verify]
 	 */
 	public static boolean applyCp2(FacetNode fn) {
+		boolean result = false;
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 		
 		Node node = fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
@@ -416,9 +550,11 @@ public class TaskGenerator {
 			
 			// Pick one of the facet values
 			logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
+		
+			result = true;
 		}
 		
-		return true;
+		return result;
 	}
 
 
@@ -517,7 +653,7 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static List<Path> findPathsToResourcesWithNumericProperties(FacetNode fn, List<SetSummary> numericProperties) {
+	public static List<Path> findPathsToResourcesWithNumericProperties(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, List<SetSummary> numericProperties) {
 
 		SparqlQueryConnection conn = fn.query().connection();
 		
@@ -531,6 +667,7 @@ public class TaskGenerator {
 				createConcept(numericProperties).getElement()),
 			Vars.s);
 
+		// TODO We need to wire up pathPattern with the path finder
 		List<Path> paths = ConceptPathFinder.findPaths(
 				new QueryExecutionFactorySparqlQueryConnection(conn),
 				valuesConcept,
@@ -549,10 +686,16 @@ public class TaskGenerator {
 	 * @param numericProperties
 	 * @return
 	 */
-	public static Map<FacetNode, Map<Node, Long>> selectNumericFacets(FacetNode fn, int pathLength, List<SetSummary> numericProperties) {
+	public static Map<FacetNode, Map<Node, Long>> selectNumericFacets(
+			FacetNode fn,
+			int pathLength,
+			org.apache.jena.sparql.path.Path pathPattern,
+			/* TODO Add an argument for the path generation model */
+			List<SetSummary> numericProperties)
+	{
 		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
 		
-		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, numericProperties);
+		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
 		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
 		
 		for(Path path : paths) {
@@ -593,10 +736,10 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength, Random rand, List<SetSummary> numericProperties) {
+	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength, org.apache.jena.sparql.path.Path pathPattern, Random rand, List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 		
-		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, numericProperties);
+		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
 		
 		FacetNode target = null;
 		if(!paths.isEmpty()) {
@@ -641,16 +784,20 @@ public class TaskGenerator {
 	//public Cell<FacetNode, Node, Node>
 
 	
-	public Entry<FacetNode, Range<NodeHolder>> pickRange(
+	public static Entry<FacetNode, Range<NodeHolder>> pickRange(
+			Random rand,
+			List<SetSummary> numericProperties,
+			
 			FacetNode facetNode,
 			int maxPathLength,
+			org.apache.jena.sparql.path.Path pathPattern,
 			boolean pickConstant,
 			boolean pickLowerBound,
 			boolean pickUpperBound) {
 
 		Entry<FacetNode, Range<NodeHolder>> result = null;
 
-		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(facetNode, 1, numericProperties);
+		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(facetNode, 1, pathPattern, numericProperties);
 		if(!cands.isEmpty()) {
 			
 			System.out.println("cp6 cand: " + cands);
@@ -718,16 +865,11 @@ public class TaskGenerator {
 		return result;
 	}
 	
-   /**
-    * Change of bounds of directly related numerical data\\
-    * (Find all instances that additionally have numerical data lying within a certain interval behind a directly related property)
-    * 
-    * @param fn
-    */
-	public boolean applyCp6(FacetNode fn) {
+	
+	public boolean applyNumericCp(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
 		boolean result = false;
 
-		Entry<FacetNode, Range<NodeHolder>> r = pickRange(fn, 5, false, true, true);
+		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties, fn, 5, pathPattern, pickConstant, pickLowerBound, pickUpperBound);
 		
 		System.out.println("Pick: " + r);
 		
@@ -736,19 +878,21 @@ public class TaskGenerator {
 			result = true;
 		}
 		
-		// TODO If fewer than 2 values remain, indicate n/a 
-		
-		// 0: lower bound, 1 upper bound
-		//rand.nextInt(2);
-		
-		
-//		SetSummary summary = ConceptAnalyser.checkDatatypes(fn.fwd().facetValueRelation())
-//		.connection(fn.query().connection()).exec().blockingFirst();
-//		
-//		System.out.println("CP6 Summary: " + summary);
 		return result;
 	}
 	
+   /**
+    * Change of bounds of directly related numerical data\\
+    * (Find all instances that additionally have numerical data lying within a certain interval behind a directly related property)
+    * 
+    * @param fn
+    */
+	public boolean applyCp6(FacetNode fn) {
+		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
+		boolean result = applyNumericCp(fn, pathPattern, false, true, true);
+		return result;
+	}
+
 
 	/**
      * Change of numerical data related via a property path of length strictly greater than one edge\\
@@ -756,33 +900,37 @@ public class TaskGenerator {
 	 * 
 	 * @param fn
 	 */
-	public static boolean applyCp7(FacetNode fn) {
-		
-		boolean result = false;
+	public boolean applyCp7(FacetNode fn) {
+		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
+		boolean result = applyNumericCp(fn, pathPattern, false, true, true);
 		return result;
 	}
 
 	
-	/**
-	 * Restrictions of numerical data where multiple dimensions are involved\\
-     * (Choke points 7 and 8 under the assumption that bounds have been chosen for more than one dimension of numerical data,
-     * here, we count latitude and longitude numerical values together as one dimension)
-	 * 
-	 * @param fn
-	 */
-	public static boolean applyCp8(FacetNode fn) {
-		
-		boolean result = false;
-		return result;
-	}
+// NOTE FIXME TODO I don't really get cp8; it looks like repeatedy application of most other cps - so we don't really need it
+//	/**
+//	 * Restrictions of numerical data where multiple dimensions are involved\\
+//     * (Choke points 7 and 8 under the assumption that bounds have been chosen for more than one dimension of numerical data,
+//     * here, we count latitude and longitude numerical values together as one dimension)
+//	 * 
+//	 * @param fn
+//	 */
+//	public static boolean applyCp8(FacetNode fn) {
+//		
+//		boolean result = false;
+//		return result;
+//	}
 
 	/**
 	 * Unbounded intervals involved in numerical data
      * (Choke points 7,8,9 when intervals are unbounded and only an upper or lower bound is chosen)
 	 */
-	public static boolean applyCp9(FacetNode fn) {
-		
-		boolean result = false;
+	public boolean applyCp9(FacetNode fn) {
+		boolean pickLowerBound = rand.nextBoolean();
+		boolean pickUpperBound = !pickLowerBound;
+	
+		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
+		boolean result = applyNumericCp(fn, pathPattern, false, pickLowerBound, pickUpperBound);
 		return result;
 	}
 
@@ -840,6 +988,8 @@ public class TaskGenerator {
 	 */
 	public static boolean applyCp13(FacetNode fn) {
 		
+		
+		
 		boolean result = false;
 		return result;
 	}
@@ -849,9 +999,22 @@ public class TaskGenerator {
 	 * (Additional numerical data restrictions at the end of a property path where the property path involves traversing edges in the inverse direction)
 	 * @param fn
 	 */
-	public static boolean applyCp14(FacetNode fn) {
-		
+	public boolean applyCp14(FacetNode fn) {
+
 		boolean result = false;
+
+
+		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
+		
+		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties, fn, 5, pathPattern, false, true, true);
+		
+		System.out.println("Pick: " + r);
+		
+		if(r != null) {
+			r.getKey().constraints().range(r.getValue());
+			result = true;
+		}
+
 		return result;
 	}
 

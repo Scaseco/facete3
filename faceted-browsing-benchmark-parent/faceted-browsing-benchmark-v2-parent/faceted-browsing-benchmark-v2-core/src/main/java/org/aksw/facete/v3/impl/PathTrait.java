@@ -13,7 +13,7 @@ import org.apache.jena.rdf.model.Resource;
  *
  * @param <T>
  */
-public interface PathTrait<T extends PathTrait<T>> {
+public interface PathTrait<T> {
 	T fwd(Resource p);
 	T fwd(Node p);
 	T fwd(String p);
