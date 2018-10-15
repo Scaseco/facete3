@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -22,7 +23,9 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
@@ -59,6 +62,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.vocabulary.OWL;
@@ -78,7 +82,21 @@ import io.reactivex.Flowable;
 
 
 class PathSpecSimple {
+	// Validation attributes - paths must meet these constraints for acceptance
 	protected int minLength;
+	protected int numRequiredReverseSteps;
+	
+	
+	
+	public int getNumRequiredReverseSteps() {
+		return numRequiredReverseSteps;
+	}
+
+	public void setNumRequiredReverseSteps(int numRequiredReverseSteps) {
+		this.numRequiredReverseSteps = numRequiredReverseSteps;
+	}
+
+	// TODO Rename into desired path length
 	protected int maxLength;
 	
 	// true -> forward, false -> backwards
@@ -122,17 +140,28 @@ class PathSpecSimple {
 		return this;
 	}
 
-	public PathSpecSimple create(int minPathLength, int maxPathLength, int numRequireReverse, double bwdChance, double fwdChance) {
-		if(numRequireReverse > maxPathLength) {
+	
+	/**
+	 * numReversePool: The number of reverse traversals (must be <= the desired path length)
+	 * 
+	 * @param minPathLength
+	 * @param desiredPathLength
+	 * @param numRequiredReverseSteps
+	 * @param bwdChance
+	 * @param fwdChance
+	 * @return
+	 */
+	public static PathSpecSimple create(int minPathLength, int desiredPathLength, int numRequiredReverseSteps, double bwdChance, double fwdChance) {
+		if(numRequiredReverseSteps > desiredPathLength) {
 			throw new RuntimeException("Cannot require more reverse traversals than maximum path length");
 		}
 		
 		List<Entry<Boolean, Double>> consumingPmf = new ArrayList<>();
-		for(int i = 0; i < numRequireReverse; ++i) {
+		for(int i = 0; i < numRequiredReverseSteps; ++i) {
 			consumingPmf.add(Maps.immutableEntry(false, 1.0));
 		}
 		
-		for(int i = numRequireReverse; i < maxPathLength; ++i) {
+		for(int i = numRequiredReverseSteps; i < desiredPathLength; ++i) {
 			consumingPmf.add(Maps.immutableEntry(true, 1.0));			
 		}
 		
@@ -143,11 +172,22 @@ class PathSpecSimple {
 		PathSpecSimple result = new PathSpecSimple();
 		result
 			.setMinLength(minPathLength)
-			.setMaxLength(maxPathLength)
+			.setMaxLength(desiredPathLength)
 			.setDrawWithReplacementPmf(consumingPmf)
 			.setFallbackPmf(fallbackPmf);
 	
 		return result;
+	}
+	
+	
+	
+	public static Predicate<org.apache.jena.sparql.path.Path> createValidator(PathSpecSimple pathSpec) {
+		return path -> {
+			List<P_Path0> steps = PathVisitorToList.toList(path);
+			boolean result = steps.size() >= pathSpec.getMinLength() &&
+					PathVisitorToList.countReverseLinks(steps) >= pathSpec.getNumRequiredReverseSteps();
+			return result;
+		};
 	}
 	
 	public static WeightedSelector<Boolean> createSelector(PathSpecSimple pathSpec) {
@@ -221,28 +261,75 @@ public class TaskGenerator {
 //		
 //		return result;
 //	}
-	
-	public static void generatePath(FacetNode fn, PathSpecSimple pathSpec, Supplier<Double> rand) {
-		WeightedSelector<Boolean> dirSelector = PathSpecSimple.createSelector(pathSpec);		
+
+	public static FacetNode generatePath(FacetNode fn, PathSpecSimple pathSpec, Supplier<Double> rand) {
+		WeightedSelector<Boolean> dirSelector = PathSpecSimple.createSelector(pathSpec);
+		Predicate<org.apache.jena.sparql.path.Path> pathValidator = PathSpecSimple.createValidator(pathSpec);
 		
-		// While we have not reached the maximum path length
-		while() {
+		FacetNode result = generatePathRec(fn, pathSpec, dirSelector, pathValidator, rand, 0);
+		return result;
+	}
+	
+	public static FacetNode generatePathRec(
+			FacetNode fn,
+			PathSpecSimple pathSpec,
+			WeightedSelector<Boolean> dirSelector,
+			Predicate<org.apache.jena.sparql.path.Path> pathValidator,
+			Supplier<Double> rand, int depth) {
+		FacetNode result = null;
+		
+
+		org.apache.jena.sparql.path.Path path = BgpNode.toSparqlPath(fn.as(FacetNodeResource.class).state());
+		// If the path is too short, try to make more steps
+		if(depth < pathSpec.getMaxLength()) {
+			// If we have exceeded the minimum path length but
+			// have met a dead end before reaching the preferred length, we accept it anyway
+			
 			double r = rand.get();
 			boolean isFwd = dirSelector.sample(r);
 		
 			List<FacetCount> facetCounts = fn.step(!isFwd).facetCounts().exec().toList().blockingGet();
 			
-			WeightedSelector<FacetCount> selector = WeightedSelectorImmutable.create(facetCounts, fc -> fc.getDistinctValueCount().getCount());
-		
-			FacetCount fc = selector.sample(rand.get());
-			if(fc != null) {
-				Node p = fc.getPredicate();
-				
-				
-				FacetNode next = fn.fwd(p).one();
+			WeightedSelector<FacetCount> baseSelector = WeightedSelectorImmutable.create(facetCounts, fc -> fc.getDistinctValueCount().getCount());
+
+			// Try 
+			int numRetries = 10;
+			WeightedSelector<FacetCount> selector = baseSelector.clone();		
+			for(int i = 0; i < numRetries; ++i) {
+				FacetCount fc = selector.sample(rand.get());
+				if(fc != null) {
+					Node p = fc.getPredicate();	
+					
+					FacetNode next = fn.fwd(p).one();
+					
+					result = generatePathRec(next, pathSpec, dirSelector, pathValidator, rand, depth);
+					
+					// If we have a result and reached the preferred length
+					// return it
+					if(result != null && depth >= pathSpec.getMaxLength()) {
+						break;
+					}
+				}
+			}
+			
+			// If we have exhausted the retries but have a path longer than min length
+			// yield it
+			if(result == null && depth > pathSpec.getMinLength()) {
+				result = fn;
 			}
 		}
+		
+		// If we have a non-null result, validate it
+		if(result != null) {
+			boolean accepted = pathValidator.test(path);
+			if(!accepted) {
+				result = null;
+			}
+		}
+		
+		return result;
 	}
+	
 	
 	/**
 	 * Wrap any function accepting a {@link FacetNode} argument such that
@@ -331,7 +418,7 @@ public class TaskGenerator {
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
-		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
+//		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 //		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
@@ -340,7 +427,7 @@ public class TaskGenerator {
 //
 //		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
-//		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp13)));
+		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
 //		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp14)));
 
 
@@ -986,9 +1073,12 @@ public class TaskGenerator {
 	 * (Property path value and property value based transitions where the property path involves traversing edges in the inverse direction)
 	 * @param fn
 	 */
-	public static boolean applyCp13(FacetNode fn) {
+	public boolean applyCp13(FacetNode fn) {
 		
+		// Choose a random desired path length
+		int desiredPathLength = rand.nextInt(3);
 		
+		generatePath(fn, PathSpecSimple.create(1, desiredPathLength, 1, 0.5, 0.5), rand::nextDouble);
 		
 		boolean result = false;
 		return result;

@@ -1,5 +1,8 @@
 package org.aksw.facete.v3.bgp.api;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -14,10 +17,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.PathVisitorToList;
 
 public interface BgpNode
 	extends Resource
@@ -89,8 +94,42 @@ public interface BgpNode
 		
 		return result;
 	}
-	
 
+//	default List<P_Path0> toSparqlPath() {
+//		
+//		parent().isReverse()
+//		parent().reachingProperty();
+//	}
+
+	public static P_Path0 toStep(BgpMultiNode node) {
+		P_Path0 result = node.isForward()
+				? new P_Link(node.reachingProperty().asNode())
+				: new P_ReverseLink(node.reachingProperty().asNode());
+		return result;
+	}
+
+	public static P_Path0 toStep(BgpNode node) {
+		return Optional.ofNullable(node.parent()).map(BgpNode::toStep).orElse(null);
+	}
+
+	public static Path toSparqlPath(BgpNode node) {
+		List<P_Path0> steps = toSparqlSteps(node);
+		Path result = PathVisitorToList.toPath(steps);
+		return result;
+	}
+	
+	public static List<P_Path0> toSparqlSteps(BgpNode node) {
+		List<P_Path0> result = new ArrayList<>();
+		P_Path0 tmp;
+		while(node != null && (tmp = toStep(node)) != null) {
+			result.add(tmp);
+			node = node.parent().parent();
+		}
+		
+		Collections.reverse(result);
+		return result;
+	}
+	
 	BgpNode as(String varName);
 	BgpNode as(Var var);
 	Var alias();

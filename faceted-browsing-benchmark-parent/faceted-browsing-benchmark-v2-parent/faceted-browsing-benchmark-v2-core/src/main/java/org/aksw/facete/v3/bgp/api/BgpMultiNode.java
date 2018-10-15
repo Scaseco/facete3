@@ -9,7 +9,13 @@ public interface BgpMultiNode
 	BgpNode parent();
 	
 	Property reachingProperty();
+	
+	@Deprecated // use isForard only
 	boolean isReverse();
+
+	default boolean isForward() {
+		return !isReverse();
+	}
 	
 	/**
 	 * getOrCreate the one single alias - and marks it as the default -
