@@ -181,9 +181,9 @@ class PathSpecSimple {
 	
 	
 	
-	public static Predicate<org.apache.jena.sparql.path.Path> createValidator(PathSpecSimple pathSpec) {
-		return path -> {
-			List<P_Path0> steps = PathVisitorToList.toList(path);
+	public static Predicate<List<P_Path0>> createValidator(PathSpecSimple pathSpec) {
+		return steps -> {
+			//List<P_Path0> steps = PathVisitorToList.toList(path);
 			boolean result = steps.size() >= pathSpec.getMinLength() &&
 					PathVisitorToList.countReverseLinks(steps) >= pathSpec.getNumRequiredReverseSteps();
 			return result;
@@ -264,7 +264,7 @@ public class TaskGenerator {
 
 	public static FacetNode generatePath(FacetNode fn, PathSpecSimple pathSpec, Supplier<Double> rand) {
 		WeightedSelector<Boolean> dirSelector = PathSpecSimple.createSelector(pathSpec);
-		Predicate<org.apache.jena.sparql.path.Path> pathValidator = PathSpecSimple.createValidator(pathSpec);
+		Predicate<List<P_Path0>> pathValidator = PathSpecSimple.createValidator(pathSpec);
 		
 		FacetNode result = generatePathRec(fn, pathSpec, dirSelector, pathValidator, rand, 0);
 		return result;
@@ -273,55 +273,79 @@ public class TaskGenerator {
 	public static FacetNode generatePathRec(
 			FacetNode fn,
 			PathSpecSimple pathSpec,
-			WeightedSelector<Boolean> dirSelector,
-			Predicate<org.apache.jena.sparql.path.Path> pathValidator,
+			WeightedSelector<Boolean> baseDirSelector,
+			Predicate<List<P_Path0>> pathValidator,
 			Supplier<Double> rand, int depth) {
 		FacetNode result = null;
 		
+		boolean doValidate = false;
 
-		org.apache.jena.sparql.path.Path path = BgpNode.toSparqlPath(fn.as(FacetNodeResource.class).state());
 		// If the path is too short, try to make more steps
 		if(depth < pathSpec.getMaxLength()) {
 			// If we have exceeded the minimum path length but
 			// have met a dead end before reaching the preferred length, we accept it anyway
 			
+			// Allow backtracking on the direction: If choosing a direction does not lead to a result
+			// use the other direction instead
+			WeightedSelector<Boolean> dirSelector = baseDirSelector.clone();
+
 			double r = rand.get();
 			boolean isFwd = dirSelector.sample(r);
-		
-			List<FacetCount> facetCounts = fn.step(!isFwd).facetCounts().exec().toList().blockingGet();
 			
-			WeightedSelector<FacetCount> baseSelector = WeightedSelectorImmutable.create(facetCounts, fc -> fc.getDistinctValueCount().getCount());
-
-			// Try 
-			int numRetries = 10;
-			WeightedSelector<FacetCount> selector = baseSelector.clone();		
-			for(int i = 0; i < numRetries; ++i) {
-				FacetCount fc = selector.sample(rand.get());
-				if(fc != null) {
-					Node p = fc.getPredicate();	
-					
-					FacetNode next = fn.fwd(p).one();
-					
-					result = generatePathRec(next, pathSpec, dirSelector, pathValidator, rand, depth);
-					
-					// If we have a result and reached the preferred length
-					// return it
-					if(result != null && depth >= pathSpec.getMaxLength()) {
-						break;
+			boolean dirRetry = false;
+			do {
+				
+			
+				List<FacetCount> facetCounts = fn.step(!isFwd).facetCounts().exec().toList().blockingGet();
+				
+				WeightedSelector<FacetCount> selector = WeigthedSelectorDrawWithReplacement.create(facetCounts, fc -> fc.getDistinctValueCount().getCount());
+	
+				// Retry until the base selector is empty or the max retry count is reached
+				int numFacetRetries = 10;
+				//WeightedSelector<FacetCount> selector = baseSelector.clone();		
+				for(int i = 0; i < numFacetRetries && !selector.isEmpty(); ++i) {
+					FacetCount fc = selector.sample(rand.get());
+					if(fc != null) {
+						Node p = fc.getPredicate();	
+						
+						FacetNode next = fn.fwd(p).one();
+						
+						result = generatePathRec(next, pathSpec, dirSelector, pathValidator, rand, depth + 1);
+						
+						// If we have a result and reached the preferred length
+						// return it
+						if(result != null) {// && depth >= pathSpec.getMaxLength()) {
+							break;
+						}
 					}
 				}
-			}
+				
+				// If we have exhausted the retries but have a path longer than min length
+				// yield it
+				if(result == null && depth > pathSpec.getMinLength()) {
+					result = fn;
+					doValidate = true;
+				}
+
+				// If the direction did not lead to a result, try the other one
+				if(result == null) {
+					isFwd = !isFwd;
+					dirRetry = true;
+				} else {
+					break;
+				}
 			
-			// If we have exhausted the retries but have a path longer than min length
-			// yield it
-			if(result == null && depth > pathSpec.getMinLength()) {
-				result = fn;
-			}
+			} while(!dirRetry);
+		} else {
+			result = fn;
+			doValidate = true;
 		}
 		
-		// If we have a non-null result, validate it
-		if(result != null) {
-			boolean accepted = pathValidator.test(path);
+		// If we generated (in contrast to just passing on) a non-null result, validate it
+		if(doValidate) {
+			List<P_Path0> steps = BgpNode.toSparqlSteps(result.as(FacetNodeResource.class).state());
+
+			boolean accepted = pathValidator.test(steps);
 			if(!accepted) {
 				result = null;
 			}
@@ -1078,7 +1102,8 @@ public class TaskGenerator {
 		// Choose a random desired path length
 		int desiredPathLength = rand.nextInt(3);
 		
-		generatePath(fn, PathSpecSimple.create(1, desiredPathLength, 1, 0.5, 0.5), rand::nextDouble);
+		PathSpecSimple pathSpec = PathSpecSimple.create(1, desiredPathLength, 1, 0.5, 0.5);
+		generatePath(fn, pathSpec, rand::nextDouble);
 		
 		boolean result = false;
 		return result;
