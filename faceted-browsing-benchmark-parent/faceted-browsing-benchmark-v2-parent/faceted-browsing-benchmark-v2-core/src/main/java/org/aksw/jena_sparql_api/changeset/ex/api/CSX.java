@@ -23,9 +23,9 @@ public class CSX {
     public static final Property value = property("value");
 
     public static final Property latestChangeSet = property("latestChangeSet"); //ResourceFactory.createResource("http://aksw.org/ontology/ex/changeset/redoPointer");
-    public static final Property isLatestChangeSetUndone = property("latestChangeSetUndone");
+    public static final Property isLatestChangeSetUndone = property("isLatestChangeSetUndone");
     
-    public static final Property latestChangeSetGroup = property("isLatestChangeSetGroup"); //ResourceFactory.createResource("http://aksw.org/ontology/ex/changeset/redoPointer");
+    public static final Property latestChangeSetGroup = property("latestChangeSetGroup"); //ResourceFactory.createResource("http://aksw.org/ontology/ex/changeset/redoPointer");
     public static final Property isLatestChangeSetGroupUndone = property("isLatestChangeSetGroupUndone");
     
 }

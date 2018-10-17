@@ -378,16 +378,26 @@ public class TaskGenerator {
 	}
 	
 	
-	public <X> Callable<X> wrapWithCommitChanges(Callable<X> supplier) {
+	public Callable<Boolean> wrapWithCommitChanges(Callable<Boolean> supplier) {
 		return () -> {
-			X r = supplier.call();
+			boolean r;
+			try {
+				r = supplier.call();
+				if(r) {
+					changeTracker.commitChanges();
+				} else {
+					changeTracker.discardChanges();
+				}
+			} catch(Exception e) {
+				changeTracker.discardChanges();
+				throw new RuntimeException(e);
+			}
 
 //			System.out.println("BEFORE CHANGES");
 //			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
 
 			
 			
-			changeTracker.commitChanges();
 
 //			System.out.println("AFTER CHANGES");
 //			RDFDataMgr.write(System.out, changeTracker.getDataModel(), RDFFormat.TURTLE_PRETTY);
@@ -395,8 +405,8 @@ public class TaskGenerator {
 			return r;
 		};
 	}
-
-	
+//
+//	
 	
 
 	public static Map<RDFNode, RDFNode> viewResourceAsMap(Resource s) {
@@ -449,7 +459,7 @@ public class TaskGenerator {
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
 //		
-		//cpToAction.put("cp10", this::applyCp10);
+		cpToAction.put("cp10", this::applyCp10);
 //
 //		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
@@ -489,7 +499,9 @@ public class TaskGenerator {
 		
 		System.out.println("Concrete weights " + concreteWeights);
 		
-		WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
+		//WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
+		
+		WeightedSelector<String> actionSelector = WeigthedSelectorDrawWithReplacement.create(concreteWeights);
 		
 		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
 		int scenarioLength = (int)RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
@@ -500,14 +512,16 @@ public class TaskGenerator {
 		//fq.connection(conn);
 
 		List<String> chosenActions = new ArrayList<>();
+		boolean applicableActionFound = false;
 		for(int i = 0; i < scenarioLength; ++i) {
-			
+			// Reset the available actions after each iteration
+			WeightedSelector<String> s = actionSelector.clone();
 
 			// Simplest recovery strategy: If an action could not be applied
 			// repeat the process and hope that due to randomness we can advance
 			int maxRandomRetries = 1000;
-			int j;
-			for(j = 0; j < maxRandomRetries; ++j) {
+			for(int j = 0; j < maxRandomRetries && !s.isEmpty(); ++j) {
+			//while(!s.isEmpty()) {
 				double w = rand.nextDouble();			
 				String step = s.sample(w);
 				logger.info("Next randomly selected action: " + step);
@@ -522,16 +536,25 @@ public class TaskGenerator {
 					
 					boolean success = actionFactory.call();
 	
-					if(!success) {
+					if(success) {
+//						// Commit any changes introduced by the action
+//						changeTracker.commitChanges();
+						logger.info("Successfully applied " + step + "");
+						
+//						System.out.println("CAN UNDO: " + changeTracker.canUndo());
+						chosenActions.add(step);
+						applicableActionFound = true;
+						break;
+					} else {
 						// TODO deal with that case ; pick another action instead or even backtrack
 						logger.info("Skipping " + step + "; application failed");
-						changeTracker.undo();
-						changeTracker.clearRedo();
+						
+						// Discard any changes introduced by the action
+//						changeTracker.discardChanges();
+//						System.out.println("CAN UNDO: " + changeTracker.canUndo());
+//						changeTracker.undo();
+//						changeTracker.clearRedo();
 						continue;
-					} else {
-						logger.info("Successfully applied " + step + "");
-						chosenActions.add(step);
-						break;
 					}
 				} else {
 					logger.info("Skipping " + step + "; no implementation provided");
@@ -539,7 +562,7 @@ public class TaskGenerator {
 				}
 			}	
 
-			if(j >= maxRandomRetries) {
+			if(!applicableActionFound) {
 				System.out.println("Early abort of benchmark due to no applicable action found");
 				break;
 			}

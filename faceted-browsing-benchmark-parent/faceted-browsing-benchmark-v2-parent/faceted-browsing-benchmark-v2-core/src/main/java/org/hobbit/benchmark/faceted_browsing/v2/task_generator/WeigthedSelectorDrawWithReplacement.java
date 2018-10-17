@@ -16,6 +16,10 @@ public class WeigthedSelectorDrawWithReplacement<T>
 		super(entries);
 	}
 
+	public WeightedSelectorMutable<T> clone() {
+		return new WeigthedSelectorDrawWithReplacement<T>(new ArrayList<>(entries));
+	}
+
 	@Override
 	public Entry<T, Double> sampleEntry(Double t) {
 		Entry<Integer, Entry<T, Double>> e = sampleEntryWithIndex(t);

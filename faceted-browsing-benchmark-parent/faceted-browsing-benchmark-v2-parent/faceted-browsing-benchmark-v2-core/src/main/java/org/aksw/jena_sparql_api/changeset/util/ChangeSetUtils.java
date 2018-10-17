@@ -154,6 +154,16 @@ public class ChangeSetUtils {
 		delGraph.clear();
     }
     
+    public static boolean hasEmptyChanges(Delta deltaGraph) {
+    	boolean result = deltaGraph.getAdditions().isEmpty() && deltaGraph.getDeletions().isEmpty();
+    	return result;
+    }
+    
+    public static void clearChanges(Delta deltaGraph) {
+		deltaGraph.getAdditions().clear();
+		deltaGraph.getDeletions().clear();
+    }
+    
     /**
      * Applies a delta and clears it afterwards
      * 

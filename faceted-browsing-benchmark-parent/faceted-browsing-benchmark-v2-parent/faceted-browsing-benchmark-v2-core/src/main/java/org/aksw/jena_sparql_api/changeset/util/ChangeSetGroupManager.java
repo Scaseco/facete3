@@ -13,6 +13,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 
 public class ChangeSetGroupManager
 	implements RdfChangeTracker
@@ -217,6 +219,10 @@ public class ChangeSetGroupManager
 		}
 		
 		csg.removeProperties();
+		
+//		System.out.println("START");
+//		RDFDataMgr.write(System.out, csg.getModel(), RDFFormat.TURTLE_PRETTY);
+//		System.out.println("END");
 	}
 	
 //	@Override

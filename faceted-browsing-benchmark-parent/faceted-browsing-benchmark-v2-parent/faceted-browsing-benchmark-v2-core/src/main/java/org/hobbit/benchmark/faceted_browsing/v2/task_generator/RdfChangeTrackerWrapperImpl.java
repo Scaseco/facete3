@@ -7,10 +7,11 @@ import org.aksw.jena_sparql_api.changeset.util.ChangeSetGroupManager;
 import org.aksw.jena_sparql_api.changeset.util.ChangeSetUtils;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 
 public class RdfChangeTrackerWrapperImpl
 	implements RdfChangeTrackerWrapper
@@ -59,6 +60,11 @@ public class RdfChangeTrackerWrapperImpl
 		return result;
 	}
 	
+	@Override
+	public void discardChanges() {
+		ChangeSetUtils.clearChanges(deltaGraph);
+	}
+	
 	/**
 	 * Commit pending changes - will create an 'empty' entry if there are no changes.
 	 * 
@@ -67,6 +73,10 @@ public class RdfChangeTrackerWrapperImpl
 	 */
 	@Override
 	public void commitChanges() {
+		System.out.println("COMMITING DELTAS - " + changeModel.size() + " - " + baseModel.size() + " - "  + deltaGraph.size());
+		
+		RDFDataMgr.write(System.out, changeModel, RDFFormat.TURTLE_PRETTY);
+		
 		ChangeSetUtils.trackAndApplyChanges(changeModel, baseModel, deltaGraph);
 //		ChangeSetUtils.trackAndApplyChanges(
 //				changeModel,
@@ -84,11 +94,19 @@ public class RdfChangeTrackerWrapperImpl
 	
 	@Override
 	public void undo() {
+		if(!ChangeSetUtils.hasEmptyChanges(deltaGraph)) {
+			throw new RuntimeException("Cannot undo while there are pending changes; commit or discard them first");
+		}
+
 		changeTracker.undo();
 	}
 
 	@Override
 	public void redo() {
+		if(!ChangeSetUtils.hasEmptyChanges(deltaGraph)) {
+			throw new RuntimeException("Cannot undo while there are pending changes");
+		}
+
 		changeTracker.redo();
 	}
 
