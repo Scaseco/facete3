@@ -23,6 +23,7 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeResource;
@@ -62,6 +63,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -591,11 +593,8 @@ public class TaskGenerator {
 		
 		return result;
 	}
-	
-	
 
 
-	
 	/**
 	 * Cp1: Select a facet + value and add it as constraint
 	 * 
@@ -1045,6 +1044,8 @@ public class TaskGenerator {
 		return result;
 	}
 
+	
+	
 	/**
 	 * Entity-type switch changing the solution space
 	 * (Change of the solution space while keeping the current filter selections)
@@ -1097,15 +1098,56 @@ public class TaskGenerator {
 	 * (Property path value and property value based transitions where the property path involves traversing edges in the inverse direction)
 	 * @param fn
 	 */
-	public boolean applyCp13(FacetNode fn) {
-		
+	public boolean applyCp13(FacetNode fn) {		
+		boolean result = false;
+
 		// Choose a random desired path length
 		int desiredPathLength = rand.nextInt(3);
 		
 		PathSpecSimple pathSpec = PathSpecSimple.create(1, desiredPathLength, 1, 0.5, 0.5);
-		generatePath(fn, pathSpec, rand::nextDouble);
+		FacetNode targetFn = generatePath(fn, pathSpec, rand::nextDouble);
+
+		// TODO Hide this parent part in a .nonConstrainedFacetValueCounts() on the FacetNode object itself
+		BgpMultiNode parent = targetFn.as(FacetNodeResource.class).state().parent();
+
 		
-		boolean result = false;
+		boolean isReverse = !parent.isForward();
+		
+		FacetValueCount fc = targetFn
+			.parent()
+			.step(isReverse)
+			.nonConstrainedFacetValueCounts()
+			.only(parent.reachingProperty())
+			//.filter(new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(parent.reachingProperty().asNode())))
+			.randomOrder()
+			.limit(1)
+			.exec()
+			.firstElement()
+			.timeout(10, TimeUnit.SECONDS)
+			.blockingGet();
+
+		// FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
+		if(fc != null) {
+			// Find a facet value for which the filter does not yet exist
+			
+			
+			//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			Node p = fc.getPredicate();
+			Node o = fc.getValue();
+			
+			//fn.walk(p, isBwd).one().constraints().eq(o);
+			targetFn.constraints().range(Range.singleton(new NodeHolder(o)));
+
+			// Pick one of the facet values
+			
+			logger.info("Applying cp13: " + fn.root().availableValues().exec().toList().blockingGet());
+
+			//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			result = true;
+		}
+		
+		// Now choose a value and set it as constraint
+		
 		return result;
 	}
 

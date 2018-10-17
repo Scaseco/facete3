@@ -20,6 +20,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_NotOneOf;
+import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
@@ -100,6 +101,25 @@ public interface DataQuery<T extends RDFNode> {
 
 	DataQuery<T> connection(SparqlQueryConnection connection);
 	SparqlQueryConnection connection();
+	
+	
+	default DataQuery<T> only(Iterable<Node> nodes) {
+		Expr e = new E_OneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes));
+		return filter(new Concept(new ElementFilter(e), Vars.s));				
+	}
+
+	default DataQuery<T> only(Node ... nodes) {
+		return only(Arrays.asList(nodes));
+	}
+
+	default DataQuery<T> only(RDFNode ... rdfNodes) {
+		return only(Arrays.asList(rdfNodes).stream().map(RDFNode::asNode).collect(Collectors.toList()));
+	}
+
+	default DataQuery<T> only(String ... iris) {
+		return only(NodeUtils.convertToNodes(Arrays.asList(iris)));
+	}
+
 	
 	
 	default DataQuery<T> exclude(Iterable<Node> nodes) {
