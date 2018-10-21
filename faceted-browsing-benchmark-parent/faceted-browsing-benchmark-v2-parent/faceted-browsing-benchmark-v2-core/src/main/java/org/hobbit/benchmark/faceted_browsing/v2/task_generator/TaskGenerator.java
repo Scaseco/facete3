@@ -508,7 +508,7 @@ public class TaskGenerator {
 		//scenarioLength = 100;
 		System.out.println("Scenario length: " + scenarioLength);
 		
-		FacetedQuery fq = FacetedQueryImpl.create(conn);
+//		FacetedQuery fq = FacetedQueryImpl.create(conn);
 		//fq.connection(conn);
 
 		List<String> chosenActions = new ArrayList<>();
@@ -563,11 +563,21 @@ public class TaskGenerator {
 			}	
 
 			if(!applicableActionFound) {
-				System.out.println("Early abort of benchmark due to no applicable action found");
+				logger.error("Early abort of benchmark due to no applicable action found");
+				// TODO Probably raise an exception
 				break;
+			} else {
+
+				//System.out.println("GENERATED QUERY:" + currentQuery.root().availableValues().exec().toList().blockingGet());
+				System.out.println("GENERATED QUERY: " + currentQuery.root().availableValues().toConstructQuery());
+				// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
+				
+				// Now generate the faceted browsing query from the state
+
 			}
 
-			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
+			
+			
 			
 		}
 		

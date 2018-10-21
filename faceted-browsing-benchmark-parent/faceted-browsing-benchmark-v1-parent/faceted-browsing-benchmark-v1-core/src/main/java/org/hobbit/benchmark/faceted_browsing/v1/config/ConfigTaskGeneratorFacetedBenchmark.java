@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.v1.trash;
+package org.hobbit.benchmark.faceted_browsing.v1.config;
 
 import java.io.IOException;
 import java.util.function.BiFunction;

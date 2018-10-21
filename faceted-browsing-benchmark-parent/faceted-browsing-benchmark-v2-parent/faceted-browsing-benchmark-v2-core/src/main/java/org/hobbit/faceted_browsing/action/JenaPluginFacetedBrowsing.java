@@ -12,6 +12,8 @@ import org.aksw.facete.v3.bgp.impl.XFacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetCountImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.mapper.proxy.ProxyImplementation;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
@@ -20,6 +22,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.Dimension;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.DimensionImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
+import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpecImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStack;
@@ -31,7 +34,7 @@ public class JenaPluginFacetedBrowsing {
 	public static void init() {
 		init(BuiltinPersonalities.model);		
 	}
-	
+
 	public static void init(Personality<RDFNode> p) {
 		p.add(BgpNode.class, new SimpleImplementation(BgpNodeImpl::new));
 		p.add(BgpMultiNode.class, new SimpleImplementation(BgpMultiNodeImpl::new));
@@ -58,5 +61,7 @@ public class JenaPluginFacetedBrowsing {
 		p.add(RangeSpec.class, new SimpleImplementation(RangeSpecImpl::new));
 		
 		p.add(RdfStack.class, new SimpleImplementation(RdfStackImpl::new));
+
+		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(SparqlTaskResource.class.getPackage().getName());	
 	}
 }

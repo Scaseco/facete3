@@ -4,8 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
 import org.hobbit.benchmark.faceted_browsing.config.BenchmarkConfig;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
@@ -18,7 +16,6 @@ import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigDataGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnection;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.trash.ConfigTaskGeneratorFacetedBenchmark;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerComponentImpl;
 import org.hobbit.core.component.DataGeneratorComponentImpl;
@@ -34,9 +31,10 @@ import org.hobbit.rdf.component.SystemAdapterRDFConnectionMocha;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 
-public class ConfigVirtualDockerServiceFactory {
+public class ConfigVirtualDockerServiceFactoryV1 {
 
-	public static DockerServiceFactory<?> getDockerServiceFactoryOverrides() { 
+
+	public static DockerServiceFactory<?> getDockerServiceFactoryOverrides(BenchmarkConfig config) { 
 		//Function<String, SpringApplicationBuilder> baseConfigFactory = ConfigVirtualDockerServiceFactory::createComponentBaseConfig;
 
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
@@ -76,7 +74,7 @@ public class ConfigVirtualDockerServiceFactory {
 		
 		Map<String, Supplier<SpringApplicationBuilder>> map = new LinkedHashMap<>();
         
-		BenchmarkConfig config = FacetedBrowsingBenchmarkV1Constants.config;
+//		BenchmarkConfig config = FacetedBrowsingBenchmarkV1Constants.config;
 
 		map.put(config.getBenchmarkControllerImageName(), bcAppBuilder);
 		map.put(config.getDataGeneratorImageName(), dgAppBuilder);
@@ -115,11 +113,11 @@ public class ConfigVirtualDockerServiceFactory {
 		
 		return result;	
 	}
-	
+
 	@Bean
 	//public Map<String, Supplier<SpringApplicationBuilder>> dockerServiceFactoryOverrides() {
 	public DockerServiceFactory<?> dockerServiceFactoryOverrides() {
-		DockerServiceFactory<?> result = getDockerServiceFactoryOverrides();
+		DockerServiceFactory<?> result = ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config);
 		return result;
 	}
 	

@@ -40,7 +40,8 @@ import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigDataGeneratorFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigVirtualDockerServiceFactory;
+import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigVirtualDockerServiceFactoryV1;
+import org.hobbit.benchmark.faceted_browsing.v1.config.FacetedBrowsingBenchmarkV1Constants;
 import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
 import org.hobbit.core.component.DataGeneratorComponentBase;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
@@ -57,7 +58,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 	private static final Logger logger = LoggerFactory.getLogger(MainHobbitFacetedBrowsingBenchmarkStandalone.class);
 
 	
-	@SuppressWarnings("resource")
+	//@SuppressWarnings("resource")
 	public static void main(String[] args) throws Exception {
 		
         String graphName = DataGeneratorComponentBase.GRAPH_IRI;
@@ -66,7 +67,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(
 				true,
 				ImmutableMap.<String, String>builder().build(),
-				ConfigVirtualDockerServiceFactory.getDockerServiceFactoryOverrides()
+				ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config)
 		);
 		
 		DockerServiceBuilderFactory<?> dsbf = () -> DockerServiceBuilderJsonDelegate.create(dsf::create);

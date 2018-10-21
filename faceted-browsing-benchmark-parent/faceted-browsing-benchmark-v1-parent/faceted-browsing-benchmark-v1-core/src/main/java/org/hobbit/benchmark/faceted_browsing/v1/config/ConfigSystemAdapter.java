@@ -23,6 +23,7 @@ import com.rabbitmq.client.Connection;
 
 import io.reactivex.Flowable;
 
+// TODO Shouldn't the channel setup go to core?
 public class ConfigSystemAdapter {
 
 	    @Inject
