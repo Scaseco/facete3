@@ -17,6 +17,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -63,7 +65,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -71,6 +72,7 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
@@ -422,7 +424,7 @@ public class TaskGenerator {
 		return result;
 	}
 	
-	public void generateScenario() throws Exception {
+	public Stream<SparqlTaskResource> generateScenario() throws Exception {
 		
 		
 		// Maps a chokepoint id to a function that given a faceted query
@@ -498,6 +500,15 @@ public class TaskGenerator {
 				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		
 		System.out.println("Concrete weights " + concreteWeights);
+
+		// Remove references to unavailable actions
+		for(String k : new ArrayList<>(concreteWeights.keySet())) {
+			if(!cpToAction.containsKey(k)) {
+				logger.warn("Ignoring reference to action " + k + " as no implementation was registered");
+				concreteWeights.remove(k);
+			}
+		}
+		
 		
 		//WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
 		
@@ -512,76 +523,104 @@ public class TaskGenerator {
 		//fq.connection(conn);
 
 		List<String> chosenActions = new ArrayList<>();
-		boolean applicableActionFound = false;
+		Stream<SparqlTaskResource> result = IntStream.range(0, scenarioLength)
+				//.mapToObj(i -> )
+				.peek(i -> nextAction(cpToAction, actionSelector))
+				.mapToObj(i -> generateQuery())
+				;
+		
 		for(int i = 0; i < scenarioLength; ++i) {
-			// Reset the available actions after each iteration
-			WeightedSelector<String> s = actionSelector.clone();
-
-			// Simplest recovery strategy: If an action could not be applied
-			// repeat the process and hope that due to randomness we can advance
-			int maxRandomRetries = 1000;
-			for(int j = 0; j < maxRandomRetries && !s.isEmpty(); ++j) {
-			//while(!s.isEmpty()) {
-				double w = rand.nextDouble();			
-				String step = s.sample(w);
-				logger.info("Next randomly selected action: " + step);
-				
-				Callable<Boolean> actionFactory = cpToAction.get(step);
-				if(actionFactory == null) {
-					// TODO Prevent encountering this case using prior check
-					logger.warn(step + " not associated with an implementation");
-				}
-				
-				if(actionFactory != null) {
-					
-					boolean success = actionFactory.call();
-	
-					if(success) {
-//						// Commit any changes introduced by the action
-//						changeTracker.commitChanges();
-						logger.info("Successfully applied " + step + "");
-						
-//						System.out.println("CAN UNDO: " + changeTracker.canUndo());
-						chosenActions.add(step);
-						applicableActionFound = true;
-						break;
-					} else {
-						// TODO deal with that case ; pick another action instead or even backtrack
-						logger.info("Skipping " + step + "; application failed");
-						
-						// Discard any changes introduced by the action
-//						changeTracker.discardChanges();
-//						System.out.println("CAN UNDO: " + changeTracker.canUndo());
-//						changeTracker.undo();
-//						changeTracker.clearRedo();
-						continue;
-					}
-				} else {
-					logger.info("Skipping " + step + "; no implementation provided");
-					continue;
-				}
-			}	
-
-			if(!applicableActionFound) {
-				logger.error("Early abort of benchmark due to no applicable action found");
-				// TODO Probably raise an exception
-				break;
-			} else {
-
-				//System.out.println("GENERATED QUERY:" + currentQuery.root().availableValues().exec().toList().blockingGet());
-				System.out.println("GENERATED QUERY: " + currentQuery.root().availableValues().toConstructQuery());
-				// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
-				
-				// Now generate the faceted browsing query from the state
-
-			}
-
-			
-			
-			
+			nextAction(cpToAction, actionSelector);
 		}
 		
 		System.out.println("Chosen actions: " + chosenActions);
+		
+		return result;
+	}
+	
+	
+	public SparqlTaskResource generateQuery() {
+		Entry<Var, Query> e = currentQuery.focus().availableValues().toConstructQuery();
+		Query q = e.getValue();
+		
+		SparqlTaskResource result = ModelFactory.createDefaultModel()
+				.createResource()
+				.as(SparqlTaskResource.class);
+		
+		return result;
+	}
+	
+	public String nextAction(Map<String, Callable<Boolean>> cpToAction, WeightedSelector<String> actionSelector) {
+		String result = null; // the chosen action
+		
+		// Reset the available actions after each iteration
+		WeightedSelector<String> s = actionSelector.clone();
+
+		// Simplest recovery strategy: If an action could not be applied
+		// repeat the process and hope that due to randomness we can advance
+		int maxRandomRetries = 1000;
+		for(int j = 0; j < maxRandomRetries && !s.isEmpty(); ++j) {
+		//while(!s.isEmpty()) {
+			double w = rand.nextDouble();			
+			String step = s.sample(w);
+			logger.info("Next randomly selected action: " + step);
+			
+			Callable<Boolean> actionFactory = cpToAction.get(step);
+			if(actionFactory == null) {
+				// TODO Prevent encountering this case using prior check
+				logger.warn(step + " not associated with an implementation");
+			}
+			
+			if(actionFactory != null) {
+				
+				boolean success;
+				try {
+					success = actionFactory.call();
+				} catch(Exception e) {
+					throw new RuntimeException(e);
+				}
+
+				if(success) {
+//					// Commit any changes introduced by the action
+//					changeTracker.commitChanges();
+					logger.info("Successfully applied " + step + "");
+					
+//					System.out.println("CAN UNDO: " + changeTracker.canUndo());
+					//chosenActions.add(step);
+					result = step;
+					break;
+				} else {
+					// TODO deal with that case ; pick another action instead or even backtrack
+					logger.info("Skipping " + step + "; application failed");
+					
+					// Discard any changes introduced by the action
+//					changeTracker.discardChanges();
+//					System.out.println("CAN UNDO: " + changeTracker.canUndo());
+//					changeTracker.undo();
+//					changeTracker.clearRedo();
+					continue;
+				}
+			} else {
+				logger.info("Skipping " + step + "; no implementation provided");
+				continue;
+			}
+		}	
+
+//		if(result == null) {
+//			logger.error("Early abort of benchmark due to no applicable action found");
+//			// TODO Probably raise an exception
+////		} else {
+//
+//			//System.out.println("GENERATED QUERY:" + currentQuery.root().availableValues().exec().toList().blockingGet());
+//			System.out.println("GENERATED QUERY: " + currentQuery.root().availableValues().toConstructQuery());
+//			// TODO Check whether the step is applicable - if not, retry with that step removed. Bail out if no applicable step.
+//			
+//			// Now generate the faceted browsing query from the state
+//
+//		}
+//
+
+		return result;
 	}
 	
 	public Flowable<Query> generate() {
