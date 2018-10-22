@@ -60,6 +60,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
 
+import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 import com.google.common.collect.Iterators;
 import com.sleepycat.je.rep.MemberNotFoundException;
 
@@ -300,17 +301,7 @@ public class DataQueryImpl<T extends RDFNode>
 
 	
 	@Override
-	public Entry<Var, Query> toConstructQuery() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public Flowable<T> exec() {
-		Objects.requireNonNull(conn);
-		
-		
+	public Entry<Node, Query> toConstructQuery() {
 		Set<Var> vars = new LinkedHashSet<>();
 		Node rootVar = baseRelation.getVars().get(0);
 		if(rootVar.isVariable()) {
@@ -381,9 +372,21 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		System.out.println("Generated query: " + query);
 
+		return Maps.immutableEntry((Var)rootVar, query);
+	}
+
+
+	@Override
+	public Flowable<T> exec() {
+		Objects.requireNonNull(conn);
+
+		Entry<Node, Query> e = toConstructQuery();
+		Node rootVar = e.getKey();
+		Query query = e.getValue();
+		
 		
 		Flowable<T> result = ReactiveSparqlUtils
-			// FIXME WHY DO WE GET AN EMPTY RESULT SET WHEN WE USE THE QUERY OBJECT???
+			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
 			.execSelect(() -> conn.query("" + query))
 			.map(b -> {
 				Graph graph = GraphFactory.createDefaultGraph();

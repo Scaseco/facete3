@@ -174,9 +174,10 @@ public interface DataQuery<T extends RDFNode> {
 	/**
 	 * Return a SPARQL construct query together with the designated root variable
 	 * 
+	 * TODO Do we need to revise the return value to allow multiple root variables? Maybe yield a Relation instance?
 	 * @return
 	 */
-	Entry<Var, Query> toConstructQuery();
+	Entry<Node, Query> toConstructQuery();
 
 	
 	Relation baseRelation();

@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeResource;
@@ -26,10 +27,11 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.path.PathFactory;
-import org.apache.jena.sparql.resultset.RDFOutput;
+import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.eclipse.jetty.server.Server;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
@@ -106,17 +108,65 @@ public class MainFacetedQueryApi {
 		}
 		
 		
-
-		Server server = FactoryBeanSparqlServer.newInstance()
-			.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(conn))	
-			.setPort(7531)
-			.create();
+		boolean runServer = false;
+		if(runServer) {
+			Server server = FactoryBeanSparqlServer.newInstance()
+				.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(conn))	
+				.setPort(7531)
+				.create();
+		}
 
 		ReactiveSparqlUtils.execSelect(() -> 
 			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
 			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
 		
+		System.out.println("Done listing roots");
+		fq
+			.connection(conn)
+			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
+		
+		// One time auto config based on available data
+		TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
+		
+		int scenarioIdxCounter[] = {0};
+		Supplier<Supplier<SparqlTaskResource>> scenarioSupplier = () -> {
+
+			int scenarioIdx = scenarioIdxCounter[0]++;
+			Supplier<SparqlTaskResource> core = taskGenerator.generateScenario();
+			
+			
+			Supplier<SparqlTaskResource> taskSupplier = () -> {
+				SparqlTaskResource s = core.get();
+				if(s != null) {
+					// add scenario id
+		            s.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioIdx);
+	
+					String queryId = s.getProperty(FacetedBrowsingVocab.queryId).getString();
+		            String scenarioName = "scenario" + scenarioIdx;
+					
+		            s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
+		            		.as(SparqlTaskResource.class);
+				}
+				return s;
+
+			};
+
+//            logger.info("Generated task:\n" + toString(r.getModel(), RDFFormat.TURTLE_PRETTY));
+
+            return taskSupplier;
+		};
+		
+		
+		Supplier<SparqlTaskResource> taskSupplier = scenarioSupplier.get();
+		
+		SparqlTaskResource tmp = null;
+		for(int i = 0; (tmp = taskSupplier.get()) != null; ++i) {
+			System.out.println(i + ": " + SparqlTaskResource.parse(tmp));
+		}
+		
+		System.out.println("DONE");
+
 		
 		
 //		ReactiveSparqlUtils.execSelect(() -> 
@@ -131,11 +181,6 @@ public class MainFacetedQueryApi {
 //				"    FILTER(NOT EXISTS { ?root (<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?ancestor . ?ancestor <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent . FILTER(?root = ?ancestor) . })\n" + 
 //				"}")).toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
-		System.out.println("Done listing roots");
-		fq
-			.connection(conn)
-			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
-		
 		
 		
 //		ReactiveSparqlUtils.execSelect(() -> 
@@ -179,7 +224,26 @@ public class MainFacetedQueryApi {
 		
 		//TaskGenerator.applyCp4(fq.root());
 
-		TaskGenerator taskGenerator = TaskGenerator.configure(conn);
+		//Stream<SparqlTaskResource> scenario = Stream.generate(taskSupplier);
+//		
+//		Supplier<Iterator<SparqlTaskResource>> it = () -> new AbstractIterator<SparqlTaskResource>() {
+//			@Override
+//			protected SparqlTaskResource computeNext() {
+//				SparqlTaskResource result = taskSupplier.get();
+//				result = result == null ? endOfData() : result;
+//				return result;
+//			}
+//		};
+
+
+//		Flowable<SparqlTaskResource> flow = Flowable.fromIterable(() -> it.get());
+//		flow
+//			.zipWith(() -> Stream.iterate(0, i -> i + 1).iterator(), (a, b) -> Maps.immutableEntry(a, b))
+//			.forEach(t -> {
+//				System.out.println("Got query: " + t);
+//			});
+//		
+		
 		//taskGenerator.applyCp6(fq.root());
 
 		

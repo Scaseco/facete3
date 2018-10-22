@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -60,6 +61,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -68,9 +70,11 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
@@ -235,15 +239,15 @@ public class TaskGenerator {
 		this.numericProperties = numericProperties;
 		this.rand = new Random(1000);
 
-		try {
-			generateScenario();
-		} catch(Exception e) {
-			throw new RuntimeException(e);
-		}
+//		try {
+//			generateScenario();
+//		} catch(Exception e) {
+//			throw new RuntimeException(e);
+//		}
 	}
 
 	
-	public static TaskGenerator configure(RDFConnection conn) {
+	public static TaskGenerator autoConfigure(RDFConnection conn) {
 		
 		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
 
@@ -424,7 +428,7 @@ public class TaskGenerator {
 		return result;
 	}
 	
-	public Stream<SparqlTaskResource> generateScenario() throws Exception {
+	public Supplier<SparqlTaskResource> generateScenario() {
 		
 		
 		// Maps a chokepoint id to a function that given a faceted query
@@ -522,30 +526,47 @@ public class TaskGenerator {
 //		FacetedQuery fq = FacetedQueryImpl.create(conn);
 		//fq.connection(conn);
 
-		List<String> chosenActions = new ArrayList<>();
-		Stream<SparqlTaskResource> result = IntStream.range(0, scenarioLength)
-				//.mapToObj(i -> )
-				.peek(i -> nextAction(cpToAction, actionSelector))
-				.mapToObj(i -> generateQuery())
-				;
+//		List<String> chosenActions = new ArrayList<>();
+//		Stream<SparqlTaskResource> result = IntStream.range(0, scenarioLength)
+//				//.mapToObj(i -> )
+//				.peek(i -> nextAction(cpToAction, actionSelector))
+//				.mapToObj(i -> generateQuery())
+//				;
+//		
+//		for(int i = 0; i < scenarioLength; ++i) {
+//			nextAction(cpToAction, actionSelector);
+//		}
+//		
+//		System.out.println("Chosen actions: " + chosenActions);
+//		
+//		return result;
 		
-		for(int i = 0; i < scenarioLength; ++i) {
+		int queryIdx[] = {0};
+		Supplier<SparqlTaskResource> result = () -> {
+			if(queryIdx[0]++ > scenarioLength) {
+				return null;
+			}
+
 			nextAction(cpToAction, actionSelector);
-		}
-		
-		System.out.println("Chosen actions: " + chosenActions);
+			SparqlTaskResource r = generateQuery();
+			r.addLiteral(FacetedBrowsingVocab.queryId,"" + queryIdx[0]);
+
+            //RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
+			return r;
+		};
 		
 		return result;
 	}
 	
 	
 	public SparqlTaskResource generateQuery() {
-		Entry<Var, Query> e = currentQuery.focus().availableValues().toConstructQuery();
+		Entry<Node, Query> e = currentQuery.focus().availableValues().toConstructQuery();
 		Query q = e.getValue();
 		
 		SparqlTaskResource result = ModelFactory.createDefaultModel()
 				.createResource()
-				.as(SparqlTaskResource.class);
+				.as(SparqlTaskResource.class)
+				.setSparqlStmtString(Objects.toString(q));
 		
 		return result;
 	}
