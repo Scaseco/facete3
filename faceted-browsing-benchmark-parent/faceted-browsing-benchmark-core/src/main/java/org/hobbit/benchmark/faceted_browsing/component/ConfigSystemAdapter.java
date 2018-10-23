@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.v1.config;
+package org.hobbit.benchmark.faceted_browsing.component;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,7 +23,7 @@ import com.rabbitmq.client.Connection;
 
 import io.reactivex.Flowable;
 
-// TODO Shouldn't the channel setup go to core?
+// TODO The channel setup go to hobbit core
 public class ConfigSystemAdapter {
 
 	    @Inject

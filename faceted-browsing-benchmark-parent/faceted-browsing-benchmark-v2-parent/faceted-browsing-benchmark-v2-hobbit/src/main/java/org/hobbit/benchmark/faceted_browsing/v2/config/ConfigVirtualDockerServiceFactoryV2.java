@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.hobbit.benchmark.faceted_browsing.component.ConfigSystemAdapter;
 import org.hobbit.benchmark.faceted_browsing.config.BenchmarkConfig;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
@@ -16,11 +17,7 @@ import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigDataGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnection;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigBenchmarkControllerFacetedBrowsingServices;
 import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigDataGeneratorFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigEvaluationModuleFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigSystemAdapter;
-import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigTaskGeneratorFacetedBenchmark;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerComponentImpl;
 import org.hobbit.core.component.DataGeneratorComponentImpl;
@@ -45,7 +42,7 @@ public class ConfigVirtualDockerServiceFactoryV2 {
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
 		// channels are only closed once the components have shut down and sent their final messages
 		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> ComponentUtils.createComponentBaseConfig("bc", Constants.CONTAINER_TYPE_BENCHMARK)
-				.child(ConfigBenchmarkControllerFacetedBrowsingServices.class)
+				.child(ConfigBenchmarkControllerFacetedBrowsingServicesV2.class)
 					.child(BenchmarkControllerComponentImpl.class);
 		
 		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("dg", Constants.CONTAINER_TYPE_BENCHMARK)

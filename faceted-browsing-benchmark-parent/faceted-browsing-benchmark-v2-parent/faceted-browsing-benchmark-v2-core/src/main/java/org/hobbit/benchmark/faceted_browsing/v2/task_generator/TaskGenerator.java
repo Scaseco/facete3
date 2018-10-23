@@ -430,7 +430,6 @@ public class TaskGenerator {
 	
 	public Supplier<SparqlTaskResource> generateScenario() {
 		
-		
 		// Maps a chokepoint id to a function that given a faceted query
 		// yields a supplier. Invoking the supplier applies the action and yields a runnable for undo.
 		// if an action is not applicable, the supplier is null
@@ -543,15 +542,29 @@ public class TaskGenerator {
 		
 		int queryIdx[] = {0};
 		Supplier<SparqlTaskResource> result = () -> {
-			if(queryIdx[0]++ > scenarioLength) {
-				return null;
+			SparqlTaskResource r = null;
+
+			int i = queryIdx[0]++;
+			if(i < scenarioLength) {
+	
+				String cpName = nextAction(cpToAction, actionSelector);
+				
+				
+				// HACK to parse out the integer id of a cp
+				// Needed for compatibility with the old evaluation module
+				// TODO Get rid of making assumptions about cp ids
+				String cpSuffix = cpName.substring(2);
+				int cpId = Integer.parseInt(cpSuffix);
+				
+				if(cpName != null) {
+					r = generateQuery();
+					r
+						.addLiteral(FacetedBrowsingVocab.queryId,"" + queryIdx[0])
+						.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
+				}
+	
+	            //RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
 			}
-
-			nextAction(cpToAction, actionSelector);
-			SparqlTaskResource r = generateQuery();
-			r.addLiteral(FacetedBrowsingVocab.queryId,"" + queryIdx[0]);
-
-            //RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
 			return r;
 		};
 		

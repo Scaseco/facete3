@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.hobbit.benchmark.faceted_browsing.component.ConfigSystemAdapter;
 import org.hobbit.benchmark.faceted_browsing.config.BenchmarkConfig;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;

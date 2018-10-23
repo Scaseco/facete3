@@ -1,15 +1,12 @@
 package org.hobbit.benchmark.faceted_browsing.v2.config;
 
-import java.io.IOException;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.springframework.context.annotation.Bean;
@@ -35,11 +32,13 @@ import io.reactivex.Flowable;
 	    public TaskGeneratorModule taskGeneratorModule() {
 	    	BiFunction<SparqlQueryConnection, SparqlQueryConnection, Flowable<Resource>> fn = (conn, refConn) ->
 	    		{
-					try {
-						return Flowable.fromIterable(FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList()));
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
+//					try {
+						// FIXME Return some flow of tasks
+						return null;
+						//return Flowable.fromIterable(FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList()));
+//					} catch (IOException e) {
+//						throw new RuntimeException(e);
+//					}
 				};
 	    	
 	    	//List<Resource> tasks = FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList());
