@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.v1.evaluation;
+package org.hobbit.benchmark.faceted_browsing.component;
 
 /**
  * Created by hpetzka on 14.12.2016.

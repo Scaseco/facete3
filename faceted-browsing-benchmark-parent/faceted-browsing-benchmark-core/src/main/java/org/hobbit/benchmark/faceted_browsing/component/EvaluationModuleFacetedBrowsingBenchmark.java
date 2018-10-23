@@ -1,16 +1,19 @@
-package org.hobbit.benchmark.faceted_browsing.v1.evaluation;
+package org.hobbit.benchmark.faceted_browsing.component;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +41,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
     private int number_of_queries;
     private InstancesEvalHelper evalOverall;
     private HashMap<QueryID, InstancesEvalHelper> evalCPTs;
-    private ArrayList<QueryID> queriesWithTimeout;
+    private Set<QueryID> queriesWithTimeout;
 
     private int tp;
     private int fn;
@@ -52,6 +55,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
     private int timeOut;
 
+    private Function<? super QueryID, ? extends Collection<Integer>> queryIdToChokePoints; 
 
     @Override
     public void init() throws Exception {
@@ -66,7 +70,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         count_error_ratio =0;
         sum_of_correct_count_results =0L;
         count_time_needed = 0;
-        queriesWithTimeout = new ArrayList<>();
+        queriesWithTimeout = new LinkedHashSet<>();
 
         timeOut = 60000; // max time to answer a query in ms
     }
@@ -299,8 +303,17 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         HashMap<Integer, Double> chokePT_recall = new HashMap<>();
         HashMap<Integer, Double> chokePT_f1 = new HashMap<>();
 
-        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = ChokePoints.getTable();
+        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = new HashMap<>();//ChokePoints.getTable();
 
+        // Build the cp table
+        Set<QueryID> qids = Sets.union(evalCPTs.keySet(), queriesWithTimeout);
+        for(QueryID qid : qids) {
+        	Set<Integer> cps = new HashSet<>(queryIdToChokePoints.apply(qid));
+        	for(Integer cp : cps) {
+        		chokePointsTable.computeIfAbsent(cp.intValue(), k -> new ArrayList<QueryID>()).add(qid);
+        	}
+        }
+        
         // ______________________________________
         // 1.b.i) Time score in queries per second
         // ______________________________________
@@ -383,7 +396,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         // create a rdf model which will hold the results
 
 
-        return ReturnModelBuilder.build(experimentUri,
+        //qid -> ChokePoints.getTable().entrySet().stream().filter(e -> e.getValue().contains(qid)).map(Entry::getKey).collect(Collectors.toSet())
+        return ReturnModelBuilder.<QueryID>build(experimentUri,
                 overall_query_per_second_score,
                 overall_precision,
                 overall_recall,
@@ -397,7 +411,10 @@ public class EvaluationModuleFacetedBrowsingBenchmark
                 overall_error_ratio,
                 average_error_ratio,
                 count_per_second_score,
-                queriesWithTimeout);
+                queriesWithTimeout,
+                QueryID::getScenario,
+                queryIdToChokePoints
+        		);
 
     }
 

@@ -1,24 +1,21 @@
-package org.hobbit.benchmark.faceted_browsing.v1.evaluation;
+package org.hobbit.benchmark.faceted_browsing.component;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+
+import java.io.ByteArrayInputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.out.NodeFormatter;
-import org.apache.jena.riot.out.NodeFormatterNT;
-import org.apache.jena.riot.writer.NTriplesWriter;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Constants;
 import org.hobbit.vocab.HOBBIT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 
 
 /**
@@ -29,7 +26,7 @@ public class ReturnModelBuilder {
     public ReturnModelBuilder() {
     }
 
-    public static Model build(String experimentUri,
+    public static <Q> Model build(String experimentUri,
                               double overall_query_per_second_score,
                               double overall_precision,
                               double overall_recall,
@@ -43,7 +40,9 @@ public class ReturnModelBuilder {
                               double overall_error_ratio,
                               double average_error_ratio,
                               double count_per_second_score,
-                              ArrayList<QueryID> queriesWithTimeout){
+                              Collection<? extends Q> queriesWithTimeout,
+                              Function<? super Q, Byte> queryToScenario,
+                              Function<? super Q, ? extends Collection<Integer>> queryToChokepoints){
         Model rdfModel = createDefaultModel();
 
         Resource experimentResource = experimentUri == null ? rdfModel.createResource(Constants.NEW_EXPERIMENT_URI) : rdfModel.createResource(experimentUri);
@@ -113,9 +112,10 @@ public class ReturnModelBuilder {
             incompleteScenariosStr = incompleteScenariosStr.concat("none");
         }
         else {
-            for (QueryID x : queriesWithTimeout) {
+            for (Q x : queriesWithTimeout) {
                 timeoutResultsSet.add(x.toString());
-                byte i = x.getScenario();
+                //byte i = x.getScenario();
+                byte i = queryToScenario.apply(x);
                 incompleteScenarios[i]=true ;
             }
 
@@ -141,17 +141,21 @@ public class ReturnModelBuilder {
         String ChokePtsWithTimeOut = " ; \n \t bench:ProblemsOnChokePoints \"";
         HashSet ChokePtsWithTimeOutSet = new HashSet(){};
 
-        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = ChokePoints.getTable();
+//        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = ChokePoints.getTable();
 
-
-
-        for (Map.Entry<Integer, ArrayList<QueryID>> entry : chokePointsTable.entrySet()) {
-            for (QueryID x : entry.getValue()){
-                if(queriesWithTimeout.contains(x)) {
-                    ChokePtsWithTimeOutSet.add(entry.getKey());
-                }
-            }
+        for(Q q : queriesWithTimeout) {
+        	Collection<Integer> chokePoints = queryToChokepoints.apply(q);
+        	ChokePtsWithTimeOutSet.addAll(chokePoints);
         }
+
+//
+//        for (Map.Entry<Integer, ArrayList<QueryID>> entry : chokePointsTable.entrySet()) {
+//            for (QueryID x : entry.getValue()){
+//                if(queriesWithTimeout.contains(x)) {
+//                    ChokePtsWithTimeOutSet.add(entry.getKey());
+//                }
+//            }
+//        }
 
         ChokePtsWithTimeOut = ChokePtsWithTimeOut.concat(ChokePtsWithTimeOutSet.toString()+"\"^^xsd:string");
 

@@ -3,6 +3,8 @@ package org.hobbit.benchmark.faceted_browsing.v1.evaluation;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.hobbit.benchmark.faceted_browsing.component.QueryID;
+
 /**
  * Created by hpetzka on 14.12.2016.
  */
