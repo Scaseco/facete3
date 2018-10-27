@@ -8,7 +8,6 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
-import org.aksw.commons.accessors.SingleValuedAccessorDirect;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -16,107 +15,27 @@ import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
-import org.aksw.jena_sparql_api.server.utils.FactoryBeanSparqlServer;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.WebContent;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.path.PathFactory;
-import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.eclipse.jetty.server.Server;
-import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
-
-class SupplierUtils {
-	// Interleave in items of b between each pair of items of a
-	// If there is 0 or 1 items in a, b will not be called
-	// [a1] [b1] ... [an-1] [bn-1] [an]
-	public static <T> Supplier<T> interleave(Supplier<T> a, Supplier<T> b) {
-		int toggle[] = {0}; // 0: a-then-b, 1: b-then-a, 2: only-a, 3: only-null
-		
-		return () -> {
-			T r;
-			for(;;) {
-				if(toggle[0] == 0 || toggle[0] == 2) {
-					r = a.get();
-					
-					toggle[0] = r == null ? 3 : 1;
-				} else if(toggle[0] == 1) {
-					r = b.get();
-					if(r == null) {
-						toggle[0] = 2;
-						continue;
-					} else {
-						toggle[0] = 0;
-					}
-				} else {
-					r = null;
-				}
-				break;
-			}
-
-			return r;
-		};
-	}
-	
-	public static <T> Supplier<T> limit(int n, Supplier<T> supplier) {
-		int i[] = {0};
-		return () -> {
-			T r = i[0]++ < n ? supplier.get() : null;
-			return r;
-		};
-	}
-	
-	/**
-	 * Flat maps a supplier of suppliers by assuming an inner supplier is finished upon returning null
-	 * 
-	 * @param supplier
-	 * @return
-	 */
-	public static <T> Supplier<T> flatMap(Supplier<? extends Supplier<? extends T>> supplier) {
-		
-		// When done, ref's value will be set to null
-		// On init, ref's value is a *reference* (to null)
-		SingleValuedAccessorDirect<SingleValuedAccessorDirect<Supplier<? extends T>>> ref =
-				new SingleValuedAccessorDirect<>(new SingleValuedAccessorDirect<>(null));
-				
-		return () -> {
-			SingleValuedAccessorDirect<Supplier<? extends T>> held = ref.get();
-			T r = null;
-			if(held != null) {
-				while(r == null) {
-					Supplier<? extends T> current = held.get();
-					
-					if(current == null) {
-						Supplier<? extends T> next = supplier.get();
-						// If we get null for the next supplier, we assume we are done
-						if(next == null) {
-							ref.set(null);
-							break;
-						} else {
-							held.set(next);
-						}
-						continue;
-					}
-
-					r = current.get();
-				}
-			}
-			return r;
-		};
-	}
-
-}
 
 public class MainFacetedQueryApi {
 
@@ -165,7 +84,17 @@ public class MainFacetedQueryApi {
 		}
 
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
-		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
+		RDFConnection coreConn = RDFConnectionFactory.connect(DatasetFactory.create(m));
+		
+		RDFConnection conn =
+			new RDFConnectionModular(new SparqlQueryConnectionJsa(
+					FluentQueryExecutionFactory
+						.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
+						.config()
+						.withPostProcessor(qe -> ((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML))
+						.end()
+						.create()
+						), null, null);
 
 		Delta delta = new Delta(m.getGraph());
 		Model model = ModelFactory.createModelForGraph(delta);
@@ -193,10 +122,10 @@ public class MainFacetedQueryApi {
 		
 		boolean runServer = false;
 		if(runServer) {
-			Server server = FactoryBeanSparqlServer.newInstance()
-				.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(conn))	
-				.setPort(7531)
-				.create();
+//			Server server = FactoryBeanSparqlServer.newInstance()
+//				.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(conn))	
+//				.setPort(7531)
+//				.create();
 		}
 
 		ReactiveSparqlUtils.execSelect(() -> 
@@ -212,38 +141,9 @@ public class MainFacetedQueryApi {
 		// One time auto config based on available data
 		TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
 		
-		int scenarioIdxCounter[] = {0};
-		Supplier<Supplier<SparqlTaskResource>> scenarioSupplier = () -> {
-
-			int scenarioIdx = scenarioIdxCounter[0]++;
-			Supplier<SparqlTaskResource> core = taskGenerator.generateScenario();
-			
-			
-			Supplier<SparqlTaskResource> taskSupplier = () -> {
-				SparqlTaskResource s = core.get();
-				if(s != null) {
-					// add scenario id
-		            s.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioIdx);
-	
-					String queryId = s.getProperty(FacetedBrowsingVocab.queryId).getString();
-		            String scenarioName = "scenario" + scenarioIdx;
-					
-		            s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
-		            		.as(SparqlTaskResource.class);
-				}
-				return s;
-
-			};
-
-//            logger.info("Generated task:\n" + toString(r.getModel(), RDFFormat.TURTLE_PRETTY));
-
-            return taskSupplier;
-		};
-		
-		Supplier<SparqlTaskResource> querySupplier = SupplierUtils.flatMap(scenarioSupplier);
-		
 		// Now wrap the scenario supplier with the injection of sparql update statements
 		
+		Supplier<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
 		Supplier<SparqlTaskResource> updateSupplier = () -> null;
 		
 		

@@ -143,14 +143,14 @@ public class DatasetAnalyzerRegistry {
 
 		model.add(RDFDataMgr.loadModel("xsd-facets.ttl"));
 		
-		String inferPropertiesQueryStr = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> CONSTRUCT { ?p a rdf:Property} { ?s ?p ?o }";
+		String inferPropertiesQueryStr = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> CONSTRUCT { ?p a rdf:Property} { SELECT DISTINCT ?p { ?s ?p ?o } }";
 		model.add(conn.query(inferPropertiesQueryStr).execConstruct());
 		
 		// xsd uses a 'numeric'-facet to annotate types
 		// converting this to rdf would be the proper way to do this
 		
 		// PREFIX schema: <http://schema.org/>
-		String propertyLiteralRangeQueryStr = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> CONSTRUCT { ?p rdfs:range ?r } { ?s ?p ?o . FILTER(isLiteral(?o)) . BIND(datatype(?o) AS ?r) }";
+		String propertyLiteralRangeQueryStr = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> CONSTRUCT { ?p rdfs:range ?r } { SELECT DISTINCT ?p ?r { ?s ?p ?o . FILTER(isLiteral(?o)) . BIND(datatype(?o) AS ?r) } }";
 		model.add(conn.query(propertyLiteralRangeQueryStr).execConstruct());
 
 
@@ -158,7 +158,7 @@ public class DatasetAnalyzerRegistry {
 		model.add(ConceptAnalyser.checkDatatypes(r).connection(conn).execConstruct().blockingGet());
 		
 		
-		String numericRangeQueryStr = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?p { ?p rdfs:range [ rdfs:subClassOf* xsd:numeric ] }";
+		String numericRangeQueryStr = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT DISTINCT  ?p { ?p rdfs:range [ rdfs:subClassOf* xsd:numeric ] }";
 		Flowable<SetSummary> result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
 			.map(b -> b.getResource("p").as(SetSummary.class));
 

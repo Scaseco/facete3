@@ -18,8 +18,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -61,7 +59,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -77,6 +74,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
+import org.hobbit.benchmark.faceted_browsing.v2.main.SupplierUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
@@ -246,6 +244,41 @@ public class TaskGenerator {
 //		}
 	}
 
+	
+	public Supplier<SparqlTaskResource> createScenarioQuerySupplier() {
+		
+		int scenarioIdxCounter[] = {0};
+		Supplier<Supplier<SparqlTaskResource>> scenarioSupplier = () -> {
+
+			int scenarioIdx = scenarioIdxCounter[0]++;
+			Supplier<SparqlTaskResource> core = this.generateScenario();
+			
+			
+			Supplier<SparqlTaskResource> taskSupplier = () -> {
+				SparqlTaskResource s = core.get();
+				if(s != null) {
+					// add scenario id
+		            s.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioIdx);
+	
+					String queryId = s.getProperty(FacetedBrowsingVocab.queryId).getString();
+		            String scenarioName = "scenario" + scenarioIdx;
+					
+		            s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
+		            		.as(SparqlTaskResource.class);
+				}
+				return s;
+
+			};
+
+//            logger.info("Generated task:\n" + toString(r.getModel(), RDFFormat.TURTLE_PRETTY));
+
+            return taskSupplier;
+		};
+		
+		Supplier<SparqlTaskResource> querySupplier = SupplierUtils.flatMap(scenarioSupplier);
+
+		return querySupplier;
+	}
 	
 	public static TaskGenerator autoConfigure(RDFConnection conn) {
 		

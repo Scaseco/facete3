@@ -6,20 +6,32 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.update.FluentRDFConnectionFn;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.ServiceNoOp;
@@ -47,8 +59,8 @@ import io.reactivex.processors.PublishProcessor;
  * @param args
  * @throws Exception
  */
-public class MainTestPavelsDataGen {
-	private static final Logger logger = LoggerFactory.getLogger(MainTestPavelsDataGen.class);
+public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
+	private static final Logger logger = LoggerFactory.getLogger(MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.class);
 
 	
 	public static void main(String[] args) throws Exception {
@@ -78,6 +90,9 @@ public class MainTestPavelsDataGen {
 						dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
 								ImmutableMap.<String, String>builder()
 								.put("SPARQL_UPDATE", "true")
+								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000")
+								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "")
+								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
 								.build()),
 						8890);
 		
@@ -90,8 +105,20 @@ public class MainTestPavelsDataGen {
 					logger.info("Sparql endpoint online at " + sparqlEndpoint);
 			
 					// Configure a connection to the SPARQL endpoint
-					RDFConnection conn = RDFConnectionFactory.connect(sparqlEndpoint);
+					RDFConnection coreConn = RDFConnectionFactory.connect(sparqlEndpoint);
 
+					
+					RDFConnection conn =
+							new RDFConnectionModular(new SparqlQueryConnectionJsa(
+									FluentQueryExecutionFactory
+										.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
+										.config()
+										.withPostProcessor(qe -> ((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML))
+										.end()
+										.create()
+										), coreConn, coreConn);
+
+					
 					// Set up a flow that transforms SPARQL insert requests of a collection
 					// of quads into corresponding update requests
 					PublishProcessor<Collection<Quad>> quadsInserter = PublishProcessor.create();
@@ -167,12 +194,17 @@ public class MainTestPavelsDataGen {
 							
 						});
 
+						
+						
 						// Start the data generator
 						logger.info("DG starting ...");
 						try {
 							dgService.startAsync().awaitRunning(10, TimeUnit.SECONDS);
 							
+							// We need to wait for the DG service to be ready
+							// TODO Wait for the event on the command channel
 							
+							Thread.sleep(60000);
 							logger.info("DG started");
 										
 							// Obtain the command sender from the spring context ...
@@ -182,8 +214,24 @@ public class MainTestPavelsDataGen {
 					        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 												        
 							logger.info("DG termination awaited");
-							dgService.awaitTerminated(30, TimeUnit.SECONDS);
+							dgService.awaitTerminated(5, TimeUnit.MINUTES);
 
+							
+
+							TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
+							Supplier<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
+
+							for(int i = 0; i < 10; ++i) {
+								SparqlTaskResource task = querySupplier.get();
+								if(task != null) {
+									Query query = SparqlTaskResource.parse(task).getAsQueryStmt().getQuery();
+									try(QueryExecution qe = conn.query(query)) {
+										System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+									}
+								}
+							}
+							
+							
 							// Done - tear down everything in order
 							// E.g. the amqp server has to shut down last, so that components
 							// can inform each other about them shutting down
