@@ -43,6 +43,7 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -62,8 +63,27 @@ import io.reactivex.processors.PublishProcessor;
 public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.class);
 
-	
 	public static void main(String[] args) throws Exception {
+		
+//		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
+//				"PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" + 
+//				"PREFIX geom: <http://geovocab.org/geometry#>\n" + 
+//				"CONSTRUCT WHERE {\n" + 
+//				"  ?s a lgdo:BuildingResidential ; geom:geometry ?g .\n" + 
+//				"  ?g ogc:asWKT ?w .\n" + 
+//				"}";
+
+		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
+				"PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" + 
+				"PREFIX geom: <http://geovocab.org/geometry#>\n" + 
+				"SELECT * {\n" + 
+				"  ?s a lgdo:BuildingResidential ; geom:geometry ?g .\n" + 
+				"  ?g ogc:asWKT ?w .\n" + 
+				"}";
+
+		
+		System.out.println(excerptQuery);
+
 		try (DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, Collections.emptyMap(), Collections.emptySet())) {
 			// Create a session id (used in naming of the amqp communication
 			// channels to avoid conflicts between different sessions)
@@ -86,13 +106,16 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 				// Set up the container for the preloaded SPARQL enpdoint
 				// Also, add a health check to ensure that the 'runnig' state means that
 				// the SPARQL enppoint is up - rather than only the container
+				
+				// https://github.com/openlink/virtuoso-opensource/issues/119
 				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
 						dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
 								ImmutableMap.<String, String>builder()
 								.put("SPARQL_UPDATE", "true")
-								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000")
-								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "")
+								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
+								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
 								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
+								.put("VIRT_Parameters_MaxVectorSize", "1000000000")
 								.build()),
 						8890);
 		
@@ -106,7 +129,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 			
 					// Configure a connection to the SPARQL endpoint
 					RDFConnection coreConn = RDFConnectionFactory.connect(sparqlEndpoint);
-
+					
 					
 					RDFConnection conn =
 							new RDFConnectionModular(new SparqlQueryConnectionJsa(
@@ -118,6 +141,11 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 										.create()
 										), coreConn, coreConn);
 
+					Stopwatch sw = Stopwatch.createStarted();
+					//Model ex = conn.query(excerptQuery).execConstruct();
+					int size = ResultSetFormatter.consume(conn.query(excerptQuery).execSelect());
+					sw.stop();
+					System.out.println("Excerpt with " + size + " triples created in " + sw.elapsed(TimeUnit.SECONDS) + "s");
 					
 					// Set up a flow that transforms SPARQL insert requests of a collection
 					// of quads into corresponding update requests
