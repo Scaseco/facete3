@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,9 +10,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
-import org.aksw.jena_sparql_api.update.FluentRDFConnectionFn;
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -20,10 +24,10 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
@@ -43,8 +47,8 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.jsonldjava.shaded.com.google.common.collect.ImmutableMap;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
@@ -65,21 +69,28 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 	public static void main(String[] args) throws Exception {
 		
+		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
+				"PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" + 
+				"PREFIX geom: <http://geovocab.org/geometry#>\n" +
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+				"CONSTRUCT {\n" + 
+				"  ?s a lgdo:BuildingResidential ; geom:geometry ?g .\n" +
+				"  ?g ogc:asWKT ?w .\n" + 
+				"  ?s rdfs:label ?l .\n" +
+				"}\n" +
+				"{\n" + 
+				"  ?s a lgdo:BuildingResidential ; geom:geometry ?g .\n" +
+				"  ?g ogc:asWKT ?w .\n" + 
+				"  OPTIONAL { ?s rdfs:label ?l }\n" +
+				"}";
+
 //		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
 //				"PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" + 
 //				"PREFIX geom: <http://geovocab.org/geometry#>\n" + 
-//				"CONSTRUCT WHERE {\n" + 
+//				"SELECT * {\n" + 
 //				"  ?s a lgdo:BuildingResidential ; geom:geometry ?g .\n" + 
 //				"  ?g ogc:asWKT ?w .\n" + 
 //				"}";
-
-		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
-				"PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" + 
-				"PREFIX geom: <http://geovocab.org/geometry#>\n" + 
-				"SELECT * {\n" + 
-				"  ?s a lgdo:BuildingResidential ; geom:geometry ?g .\n" + 
-				"  ?g ogc:asWKT ?w .\n" + 
-				"}";
 
 		
 		System.out.println(excerptQuery);
@@ -119,36 +130,53 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 								.build()),
 						8890);
 		
+//				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
+//						dsf.create("tenforce/virtuoso",
+//								ImmutableMap.<String, String>builder()
+//								.put("SPARQL_UPDATE", "true")
+//								.put("VIRT_Parameters_NumberOfBuffers", "170000")
+//								.put("VIRT_Parameters_MaxDirtyBuffers", "130000")
+//								.put("VIRT_Parameters_MaxVectorSize", "1000000000")
+//								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
+//								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
+//								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
+//								.build()),
+//						8890);
+				
 				try {
 					// Start up the SPARQL endpoint
 					dbService.startAsync().awaitRunning(60, TimeUnit.SECONDS);
-					String sparqlApiBase = "http://" + dbService.getContainerId() + ":8890/";
+					String host = dbService.getContainerId();
+					String sparqlApiBase = "http://" + host + ":8890/";
 					String sparqlEndpoint = sparqlApiBase + "sparql";
 					
 					logger.info("Sparql endpoint online at " + sparqlEndpoint);
 			
 					// Configure a connection to the SPARQL endpoint
-					RDFConnection coreConn = RDFConnectionFactory.connect(sparqlEndpoint);
+					//RDFConnection coreConn = RDFConnectionFactory.connect(sparqlEndpoint);
 					
 					
-					RDFConnection conn =
-							new RDFConnectionModular(new SparqlQueryConnectionJsa(
-									FluentQueryExecutionFactory
-										.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
-										.config()
-										.withPostProcessor(qe -> ((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML))
-										.end()
-										.create()
-										), coreConn, coreConn);
+					RDFConnection coreConn = VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);
+					System.out.println("Sparql service online");
+					System.in.read();
 
-					Stopwatch sw = Stopwatch.createStarted();
-					//Model ex = conn.query(excerptQuery).execConstruct();
-					int size = ResultSetFormatter.consume(conn.query(excerptQuery).execSelect());
-					sw.stop();
-					System.out.println("Excerpt with " + size + " triples created in " + sw.elapsed(TimeUnit.SECONDS) + "s");
-					
-					// Set up a flow that transforms SPARQL insert requests of a collection
-					// of quads into corresponding update requests
+					RDFConnection conn =
+						new RDFConnectionModular(new SparqlQueryConnectionJsa(
+								FluentQueryExecutionFactory
+									.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
+									.config()
+										.withPostProcessor(x -> {
+											QueryExecution qe = ((QueryExecutionDecorator)x).getDecoratee();
+											((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
+										})
+										.withClientSideConstruct()
+										.withDatasetDescription(DatasetDescriptionUtils.createDefaultGraph("http://linkedgeodata.org"))
+									.end()
+									.create()
+									), coreConn, coreConn);
+
+					// Set up a flow that transforms SPARQL inseCollection<E>s of a collection
+					// of quads into correspondingQuadate requests
 					PublishProcessor<Collection<Quad>> quadsInserter = PublishProcessor.create();
 			
 					// ... thereby remove old records once the data grows too large
@@ -159,7 +187,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 					Disposable disposable = quadsInserter
 						.map(insertHandler::createUpdateRequest)
 						.subscribe(ur -> {
-							System.out.println("Request: " + ur);
+							//System.out.println("Request: " + ur);
 							try {
 								conn.update(ur);
 							} catch(Exception e) {
@@ -167,7 +195,36 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							}
 						}, t -> logger.warn("Failed update: " + t));
 			
+
+					boolean loadData = false;
+					if(loadData) {
+						Model src = RDFDataMgr.loadModel("/tmp/hobbit-lgd-residential-buildings-20180719-core.nt");
+						Dataset d = DatasetFactory.create();
+						d.addNamedModel("http://linkedgeodata.org", src);
+						
+						List<Quad> qs = Lists.newArrayList(d.asDatasetGraph().find());
+						List<List<Quad>> partitions = Lists.partition(qs, 1000);
+						for(List<Quad> part : partitions) {
+							//System.out.println("INSERTING:\n" + part);
+							//quadsInserter.onNext(part);
+							conn.update(UpdateRequestUtils.createUpdateRequest(part, null));
+						}
+					}						
+					//conn.load("http://linkedgeodata.org", "/tmp/hobbit-lgd-residential-buildings-20180719-core.nt");
 					
+					
+					Stopwatch sw = Stopwatch.createStarted();
+					Model ex = conn.query(excerptQuery).execConstruct();
+					long size = ex.size();
+					//int size = ResultSetFormatter.consume(conn.query(excerptQuery).execSelect());
+					sw.stop();
+					System.out.println("Excerpt with " + size + " triples created in " + sw.elapsed(TimeUnit.SECONDS) + "s");
+					
+					RDFDataMgr.write(new FileOutputStream("/tmp/lgd-hobbit.nt"), ex, RDFFormat.NTRIPLES);
+					
+					
+					if(true) { throw new RuntimeException("Aborting"); }
+
 					// Configure the data generator container
 					DockerService dgService = dsf.create("git.project-hobbit.eu:4567/smirnp/grow-smarter-benchmark/datagen", ImmutableMap.<String, String>builder()
 							.put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpHost)
@@ -259,6 +316,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 								}
 							}
 							
+							System.out.println("Done - press a key to stop services");
+							System.in.read();
 							
 							// Done - tear down everything in order
 							// E.g. the amqp server has to shut down last, so that components

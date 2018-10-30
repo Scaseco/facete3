@@ -1,0 +1,6 @@
+@prefix eg: <http://www.example.org/> .
+
+# A simple path a -p1> b <p2- c -p3> 1
+eg:a eg:p1 eg:b .
+eg:c eg:p2 eg:b .
+eg:c eg:p3 1 .

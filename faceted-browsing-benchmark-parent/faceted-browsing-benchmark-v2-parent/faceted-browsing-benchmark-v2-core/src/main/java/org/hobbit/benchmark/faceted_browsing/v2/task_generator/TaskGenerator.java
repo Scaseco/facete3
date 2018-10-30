@@ -585,11 +585,11 @@ public class TaskGenerator {
 				
 				// HACK to parse out the integer id of a cp
 				// Needed for compatibility with the old evaluation module
-				// TODO Get rid of making assumptions about cp ids
-				String cpSuffix = cpName.substring(2);
-				int cpId = Integer.parseInt(cpSuffix);
-				
+				// TODO Get rid of making assumptions about cp ids				
 				if(cpName != null) {
+					String cpSuffix = cpName.substring(2);
+					int cpId = Integer.parseInt(cpSuffix);
+
 					r = generateQuery();
 					r
 						.addLiteral(FacetedBrowsingVocab.queryId,"" + queryIdx[0])
@@ -733,6 +733,8 @@ public class TaskGenerator {
 		return result;
 	}
 
+	
+	
 
 	/**
 	 * Cp1: Select a facet + value and add it as constraint

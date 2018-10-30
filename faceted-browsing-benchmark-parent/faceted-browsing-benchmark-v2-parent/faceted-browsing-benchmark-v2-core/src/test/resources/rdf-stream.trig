@@ -1,0 +1,13 @@
+@prefix eg: <http://www.example.org/> .
+
+eg:event1 {
+  eg:a eg:b eg:c .
+}
+
+eg:event2 {
+  eg:a eg:b eg:c .
+}
+
+eg:event3 {
+  eg:a eg:b eg:c .
+}
