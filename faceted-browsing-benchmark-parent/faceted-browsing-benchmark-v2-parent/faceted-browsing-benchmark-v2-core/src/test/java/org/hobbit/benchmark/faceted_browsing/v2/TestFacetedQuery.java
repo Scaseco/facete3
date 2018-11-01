@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
@@ -9,6 +10,7 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -58,6 +60,49 @@ public class TestFacetedQuery {
 		System.out.println("Label Available values: " + fq.root().fwd(RDFS.label).one().availableValues().exec().toList().blockingGet());
 	}
 	
+	@Test
+	public void testComplexQuery() {
+		System.out.println("Complex Query");
+		FacetValueCount fc =
+				// -- Faceted Browsing API
+				fq.root()
+				.fwd(RDF.type).one()
+					.constraints()
+						.eq(OWL.Class)
+					.end()
+				.parent()
+				.fwd()
+				.facetValueCounts()	
+				// --- DataQuery API
+				.sample()
+				.randomOrder()
+				.limit(1)
+				.exec()
+				// --- RxJava API
+				.firstElement()
+				.timeout(10, TimeUnit.SECONDS)
+				.blockingGet();
+		System.out.println("FacetValueCount: " + fc);
+		
+	}
+
+	@Test
+	public void testSimpleQuery() {
+		System.out.println("Simple Query");
+		RDFNode fc =
+				// -- Faceted Browsing API
+				fq.focus().availableValues()
+				// --- DataQuery API
+				.sample().randomOrder()
+				.limit(1).exec()
+				// --- RxJava API
+				.firstElement()
+				.timeout(10, TimeUnit.SECONDS)
+				.blockingGet();
+		System.out.println("FacetValueCount: " + fc);
+		
+	}
+
 	@Test
 	public void testNegatedFacetValues() {
 		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);

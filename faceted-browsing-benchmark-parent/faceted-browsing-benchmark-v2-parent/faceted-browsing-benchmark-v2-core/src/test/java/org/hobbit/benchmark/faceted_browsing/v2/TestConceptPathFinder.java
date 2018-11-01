@@ -1,20 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.io.ByteArrayInputStream;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.connection.TransactionalTmp;
+import org.aksw.jena_sparql_api.core.utils.DatasetGraphQuadsImpl;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -22,12 +16,12 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.core.DatasetGraphQuads;
-import org.apache.jena.sparql.core.GraphView;
 import org.apache.jena.sparql.core.Quad;
+import org.hobbit.benchmark.faceted_browsing.v2.main.MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator;
 import org.junit.Test;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
+import com.google.common.collect.Streams;
 
 import io.reactivex.Flowable;
 //
@@ -90,95 +84,46 @@ import io.reactivex.Flowable;
 //	}
 //}
 
-class DatasetGraphFromCollection
-	extends DatasetGraphQuads
-	implements TransactionalTmp
-{
-	protected Collection<Quad> quads;
-	
-	public DatasetGraphFromCollection() {
-		this(new ArrayList<Quad>());
-	}	
-	
-	public DatasetGraphFromCollection(Collection<Quad> quads) {
-		super();
-		this.quads = quads;
-	}
-
-	@Override
-	public boolean supportsTransactions() {
-		return false;
-	}
-
-	public Stream<Quad> findStream(Node g, Node s, Node p, Node o) {
-		Node gm = g == null ? Node.ANY : g;
-		Triple t = Triple.createMatch(s, p, o);
-		
-		Stream<Quad> result = quads.stream()
-					.filter(q -> gm.matches(q.getGraph()) && t.matches(q.asTriple()));
-		
-		return result;
-	}
-
-	@Override
-	public Iterator<Quad> find(Node g, Node s, Node p, Node o) {
-		Iterator<Quad> result = findStream(g, s, p, o).iterator();
-		return result;
-	}
-
-	@Override
-	public Iterator<Quad> findNG(Node g, Node s, Node p, Node o) {
-		Iterator<Quad> result = findStream(g, s, p, o)
-			.filter(q -> !Quad.isDefaultGraph(q.getGraph()))
-			.iterator();
-		return result;
-	}
-
-	@Override
-	public void add(Quad quad) {
-		quads.add(quad);
-	}
-
-	@Override
-	public void delete(Quad quad) {
-		quads.remove(quad);
-	}
-
-	@Override
-	public Graph getDefaultGraph() {
-		return GraphView.createDefaultGraph(this);
-	}
-
-	@Override
-	public Graph getGraph(Node graphNode) {
-		return GraphView.createNamedGraph(this, graphNode);
-	}
-
-	@Override
-	public void addGraph(Node graphName, Graph graph) {
-		graph.find().forEachRemaining(t -> add(new Quad(graphName, t)));
-	}
-}
-
 public class TestConceptPathFinder {
+	
+	//@Test
+	public void testTrigDateFormat()
+	{
+		String data = "<http://www.example.org/> { <http://www.agtinternational.com/resources/livedData#House39274.device6_SmartMeter_Power.Observation_0> <http://www.w3.org/ns/ssn/#observationResultTime> \"2018-10-30 09:41:53\"^^<http://www.w3.org/2001/XMLSchema#dateTime> . }\n";
+		data += data;
+		data = MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.substituteSpaceWithTInTimestamps(data);
+		System.out.println("Data:\n" + data);
+//		{
+//			Model m = ModelFactory.createDefaultModel();
+//			RDFDataMgr.read(m, new ByteArrayInputStream("<http://www.agtinternational.com/resources/livedData#House39274.device6_SmartMeter_Power.Observation_0> <http://www.w3.org/ns/ssn/#observationResultTime> \"2018-10-30T09:41:53\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .".getBytes()), Lang.NTRIPLES);
+//		}
+		Dataset d = DatasetFactory.create();
+		RDFDataMgr.read(d, new ByteArrayInputStream(data.getBytes()), Lang.TRIG);
+		System.out.println("Data in model:");
+		RDFDataMgr.write(System.out, d, RDFFormat.TRIG);
+	}
 	
 	@Test
 	public void testTrigStream() {
-		Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(TestConceptPathFinder.class.getClassLoader().getResourceAsStream("rdf-stream.trig"), Lang.TRIG, "http://www.example.org/");
+		Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(TestConceptPathFinder.class.getClassLoader()
+				.getResourceAsStream("rdf-stream.trig"), Lang.TRIG, "http://www.example.org/");
 
 		Flowable<Dataset> eventStream = Flowable.fromIterable(i)
 				.compose(Transformers.<Quad>toListWhile(
 			            (list, t) -> list.isEmpty() 
 			                         || list.get(0).getGraph().equals(t.getGraph())))
-				.map(DatasetGraphFromCollection::new)
+				.map(DatasetGraphQuadsImpl::create)
 				.map(DatasetFactory::wrap);
-		
+
+		Dataset dg = DatasetFactory.wrap(new DatasetGraphQuadsImpl());//DatasetFactory.create();
+
 		eventStream.forEach(d -> {
 			System.out.println("Got event");
 			RDFDataMgr.write(System.out, d, RDFFormat.TRIG);
+
+			Streams.stream(d.asDatasetGraph().find()).forEach(dg.asDatasetGraph()::add);
 		});
 		
-		Dataset dg = DatasetFactory.wrap(new DatasetGraphFromCollection());//DatasetFactory.create();
 
 //		while(it.hasNext()) {
 //			Quad quad = it.next();
@@ -187,9 +132,9 @@ public class TestConceptPathFinder {
 //			System.out.println(quad);
 //		}
 		
-		
+		System.out.println("Roundtrip result");
+		RDFDataMgr.write(System.out, dg, RDFFormat.TRIG);
 		//DatasetFactory.cr
-		//RDFDataMgr.createDatasetWriter(Lang.TRIG).write(out, datasetGraph, prefixMap, baseURI, context);
 	}
 	
 	

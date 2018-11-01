@@ -2,17 +2,20 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.utils.DatasetGraphQuadsImpl;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
@@ -47,6 +50,7 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.davidmoten.rx2.flowable.Transformers;
 import com.github.jsonldjava.shaded.com.google.common.collect.ImmutableMap;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
@@ -67,6 +71,13 @@ import io.reactivex.processors.PublishProcessor;
 public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.class);
 
+	// Substitute a space in e.g. 2018-10-30 09:41:53 with T - i.e. 2018-10-30T09:41:53
+	public static String substituteSpaceWithTInTimestamps(String str) {
+		Pattern p = Pattern.compile("(\\d+-\\d{1,2}-\\d{1,2}) (\\d{1,2}:\\d{1,2}:\\d{1,2})");
+		String result = p.matcher(str).replaceAll("$1T$2");
+		return result;
+	}
+	
 	public static void main(String[] args) throws Exception {
 		
 		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
@@ -119,29 +130,29 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 				// the SPARQL enppoint is up - rather than only the container
 				
 				// https://github.com/openlink/virtuoso-opensource/issues/119
-				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
-						dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
-								ImmutableMap.<String, String>builder()
-								.put("SPARQL_UPDATE", "true")
-								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
-								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
-								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
-								.put("VIRT_Parameters_MaxVectorSize", "1000000000")
-								.build()),
-						8890);
-		
 //				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
-//						dsf.create("tenforce/virtuoso",
+//						dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
 //								ImmutableMap.<String, String>builder()
 //								.put("SPARQL_UPDATE", "true")
-//								.put("VIRT_Parameters_NumberOfBuffers", "170000")
-//								.put("VIRT_Parameters_MaxDirtyBuffers", "130000")
-//								.put("VIRT_Parameters_MaxVectorSize", "1000000000")
 //								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
 //								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
 //								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
+//								.put("VIRT_Parameters_MaxVectorSize", "1000000000")
 //								.build()),
 //						8890);
+		
+				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
+						dsf.create("tenforce/virtuoso",
+								ImmutableMap.<String, String>builder()
+								.put("SPARQL_UPDATE", "true")
+								.put("VIRT_Parameters_NumberOfBuffers", "170000")
+								.put("VIRT_Parameters_MaxDirtyBuffers", "130000")
+								.put("VIRT_Parameters_MaxVectorSize", "1000000000")
+								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
+								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
+								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
+								.build()),
+						8890);
 				
 				try {
 					// Start up the SPARQL endpoint
@@ -157,8 +168,6 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 					
 					
 					RDFConnection coreConn = VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);
-					System.out.println("Sparql service online");
-					System.in.read();
 
 					RDFConnection conn =
 						new RDFConnectionModular(new SparqlQueryConnectionJsa(
@@ -196,9 +205,9 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 						}, t -> logger.warn("Failed update: " + t));
 			
 
-					boolean loadData = false;
+					boolean loadData = true;
 					if(loadData) {
-						Model src = RDFDataMgr.loadModel("/tmp/hobbit-lgd-residential-buildings-20180719-core.nt");
+						Model src = RDFDataMgr.loadModel("/tmp/hobbit-lgd-residential-buildings-20180719-core-with-labels.nt");
 						Dataset d = DatasetFactory.create();
 						d.addNamedModel("http://linkedgeodata.org", src);
 						
@@ -220,10 +229,9 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 					sw.stop();
 					System.out.println("Excerpt with " + size + " triples created in " + sw.elapsed(TimeUnit.SECONDS) + "s");
 					
-					RDFDataMgr.write(new FileOutputStream("/tmp/lgd-hobbit.nt"), ex, RDFFormat.NTRIPLES);
 					
 					
-					if(true) { throw new RuntimeException("Aborting"); }
+//					if(true) { throw new RuntimeException("Aborting"); }
 
 					// Configure the data generator container
 					DockerService dgService = dsf.create("git.project-hobbit.eu:4567/smirnp/grow-smarter-benchmark/datagen", ImmutableMap.<String, String>builder()
@@ -232,10 +240,10 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							.put(Constants.DATA_QUEUE_NAME_KEY, Constants.DATA_GEN_2_TASK_GEN_QUEUE_NAME)
 							.put(Constants.GENERATOR_ID_KEY, "1")
 							.put(Constants.GENERATOR_COUNT_KEY, "1")
-							.put("HOUSES_COUNT", "1")
+							.put("HOUSES_COUNT", "150000")
 							.put("DEVICES_PER_HOUSEHOLD_MIN", "1")
 							.put("DEVICES_PER_HOUSEHOLD_MAX", "10")
-							.put("SENSORS_PER_DEVICE", "10")
+							.put("SENSORS_PER_DEVICE", "4")
 							.put("ITERATIONS_LIMIT", "10")
 							.put("DATA_SENDING_PERIOD_MS", "1000")
 							.put("OUTPUT_FORMAT", "RDF")
@@ -263,9 +271,37 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 						System.out.println("Flow " + flow);
 				
 						logger.info("TG started - obtained receiver " + flow);
+						
+						
+						OutputStream eventOutStream = new FileOutputStream("/tmp/lgd-hobbit-out.trig");
+
+						int[] nextEventId = {1};
+						
 						flow.subscribe(msg -> {
 							// Parse messages as RDF models and pass them to the inserter
+
+							String str = new String(msg.array());
+							str = MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.substituteSpaceWithTInTimestamps(str);
 							
+							String wrappedMsg = "<http://www.example.org/event" + nextEventId[0]++ + "> {\n" + str + "\n}\n\n";
+							
+							System.out.println(wrappedMsg);
+							Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(new ByteArrayInputStream(wrappedMsg.getBytes()) , Lang.TRIG, "http://www.example.org/");
+
+							Flowable<Dataset> eventStream = Flowable.fromIterable(i)
+									.compose(Transformers.<Quad>toListWhile(
+								            (list, t) -> list.isEmpty() 
+								                         || list.get(0).getGraph().equals(t.getGraph())))
+									.map(DatasetGraphQuadsImpl::create)
+									.map(DatasetFactory::wrap);
+							
+							eventStream.forEach(d -> {
+//								System.out.println("Got event");
+								RDFDataMgr.write(eventOutStream, d, RDFFormat.TRIG);
+							});
+
+							
+							if(false) {
 							Model m = ModelFactory.createDefaultModel();
 							RDFDataMgr.read(m, new ByteArrayInputStream(msg.array()), null, Lang.NTRIPLES);
 							System.out.println("Got model with " + m.size() + " triples");
@@ -276,7 +312,13 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							
 							List<Quad> quads = Lists.newArrayList(ds.asDatasetGraph().find());
 							quadsInserter.onNext(quads);
-							
+							}
+
+						}, e -> {
+							throw new RuntimeException(e);
+						}, () -> {
+							eventOutStream.flush();
+							eventOutStream.close();
 						});
 
 						
@@ -303,6 +345,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 							
 
+							if(false) {
 							TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
 							Supplier<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
 
@@ -314,6 +357,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 										System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 									}
 								}
+							}
 							}
 							
 							System.out.println("Done - press a key to stop services");
