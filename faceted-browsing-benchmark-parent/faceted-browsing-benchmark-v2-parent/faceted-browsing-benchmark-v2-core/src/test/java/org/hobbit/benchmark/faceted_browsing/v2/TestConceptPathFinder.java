@@ -4,11 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.DatasetGraphQuadsImpl;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -149,7 +149,7 @@ public class TestConceptPathFinder {
 		// The target concept denotes the set of resources carrying numeric properties
 
 		// TODO We need to wire up pathPattern with the path finder
-		List<Path> paths = ConceptPathFinder.findPaths(
+		List<SimplePath> paths = ConceptPathFinder.findPaths(
 				FluentQueryExecutionFactory.from(model).create(),
 				src,
 				target,

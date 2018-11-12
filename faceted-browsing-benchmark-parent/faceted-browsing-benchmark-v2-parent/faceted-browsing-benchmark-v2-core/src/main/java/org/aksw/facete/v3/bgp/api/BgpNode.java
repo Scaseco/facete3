@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -22,7 +23,6 @@ import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.PathVisitorToList;
 
 public interface BgpNode
 	extends Resource
@@ -114,7 +114,7 @@ public interface BgpNode
 
 	public static Path toSparqlPath(BgpNode node) {
 		List<P_Path0> steps = toSparqlSteps(node);
-		Path result = PathVisitorToList.toPath(steps);
+		Path result = PathUtils.toSparqlPath(steps);
 		return result;
 	}
 	

@@ -33,10 +33,11 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -191,7 +192,7 @@ class PathSpecSimple {
 		return steps -> {
 			//List<P_Path0> steps = PathVisitorToList.toList(path);
 			boolean result = steps.size() >= pathSpec.getMinLength() &&
-					PathVisitorToList.countReverseLinks(steps) >= pathSpec.getNumRequiredReverseSteps();
+					PathUtils.countReverseLinks(steps) >= pathSpec.getNumRequiredReverseSteps();
 			return result;
 		};
 	}
@@ -904,7 +905,7 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static List<Path> findPathsToResourcesWithNumericProperties(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, List<SetSummary> numericProperties) {
+	public static List<SimplePath> findPathsToResourcesWithNumericProperties(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, List<SetSummary> numericProperties) {
 
 		SparqlQueryConnection conn = fn.query().connection();
 		
@@ -919,7 +920,7 @@ public class TaskGenerator {
 			Vars.s);
 
 		// TODO We need to wire up pathPattern with the path finder
-		List<Path> paths = ConceptPathFinder.findPaths(
+		List<SimplePath> paths = ConceptPathFinder.findPaths(
 				new QueryExecutionFactorySparqlQueryConnection(conn),
 				valuesConcept,
 				numericValuesConcept,
@@ -946,11 +947,11 @@ public class TaskGenerator {
 	{
 		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
 		
-		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
+		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
 		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
 		
-		for(Path path : paths) {
-			FacetNode target = fn.walk(Path.toJena(path));
+		for(SimplePath path : paths) {
+			FacetNode target = fn.walk(SimplePath.toPropertyPath(path));
 
 			if(target != null) {
 				UnaryRelation numProps = createConcept(numericProperties);
@@ -990,14 +991,14 @@ public class TaskGenerator {
 	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength, org.apache.jena.sparql.path.Path pathPattern, Random rand, List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 		
-		List<Path> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
+		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
 		
 		FacetNode target = null;
 		if(!paths.isEmpty()) {
 			int index = rand.nextInt(paths.size());
-			Path path = paths.get(index);
+			SimplePath path = paths.get(index);
 		
-			target = fn.walk(Path.toJena(path));
+			target = fn.walk(SimplePath.toPropertyPath(path));
 		}
 
 		if(target != null) {

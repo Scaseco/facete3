@@ -1,16 +1,23 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -18,7 +25,13 @@ import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.DatasetGraphQuadsImpl;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
+import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
+import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
+import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
+import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -27,13 +40,16 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import org.apache.jena.util.iterator.ClosableIterator;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
@@ -54,6 +70,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 import com.github.jsonldjava.shaded.com.google.common.collect.ImmutableMap;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -71,6 +88,54 @@ import io.reactivex.processors.PublishProcessor;
 public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.class);
 
+	
+	public static Flowable<Quad> createQuadFlow(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
+		Flowable<Quad> result = Flowable.generate(
+				() -> {
+					InputStream in = inSupplier.call();
+					Iterator<Quad> it = RDFDataMgr.createIteratorQuads(in, lang, baseIRI);
+					return new IteratorClosable<Quad>(it, new Closeable() {
+						@Override
+						public void close() throws IOException {
+							// Try to close the iterator 'it'
+							// Otherwise, forcefully close the stream
+							// (may cause a (usually/hopefully) harmless exception)
+							try {
+								if(it instanceof Closeable) {
+						            ((Closeable)it).close();
+								} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
+						            ((org.apache.jena.atlas.lib.Closeable)it).close();								
+								}
+							} finally {
+								// Close the backing input stream in any case
+								in.close();
+							}
+						}
+					});
+				},
+				(reader, emitter) -> {
+					if(reader.hasNext()) {
+						Quad item = reader.next();
+						emitter.onNext(item);
+					} else {
+						emitter.onComplete();
+					}
+				},
+				ClosableIterator::close);
+		return result;
+	}
+	
+	public static Flowable<Dataset> readRdfStream(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
+		Flowable<Dataset> result = createQuadFlow(inSupplier, lang, baseIRI)		
+			.compose(Transformers.<Quad>toListWhile(
+		            (list, t) -> list.isEmpty() 
+		                         || list.get(0).getGraph().equals(t.getGraph())))
+			.map(DatasetGraphQuadsImpl::create)
+			.map(DatasetFactory::wrap);
+
+		return result;
+	}
+	
 	// Substitute a space in e.g. 2018-10-30 09:41:53 with T - i.e. 2018-10-30T09:41:53
 	public static String substituteSpaceWithTInTimestamps(String str) {
 		Pattern p = Pattern.compile("(\\d+-\\d{1,2}-\\d{1,2}) (\\d{1,2}:\\d{1,2}:\\d{1,2})");
@@ -79,7 +144,65 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	}
 	
 	public static void main(String[] args) throws Exception {
+		testPathFinder();
+	}
+	
+	public static void testPathFinder() {
+		Dataset raw = DatasetFactory.create();
+		readRdfStream(
+			() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
+			Lang.TRIG,
+			"http://www.example.org/")
+		.limit(10)
+		.forEach(d -> Streams.stream(d.asDatasetGraph().find()).forEach(raw.asDatasetGraph()::add));
+			
+		Dataset ds = DatasetFactory.wrap(raw.getUnionModel());
 		
+		
+		RDFConnection dataConnection = RDFConnectionFactory.connect(ds);
+		
+		// Set up a path finding system
+		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
+		
+			
+
+		// Use the system to compute a data summary
+		// Note, that the summary could be loaded from any place, such as a file used for caching
+		Model dataSummary = system.computeDataSummary(dataConnection).blockingGet();
+		
+		RDFDataMgr.write(System.out, dataSummary, RDFFormat.TURTLE_PRETTY);
+		
+		// Build a path finder; for this, first obtain a factory from the system
+		// set its attributes and eventually build the path finder.
+		ConceptPathFinder pathFinder = system.newPathFinderBuilder()
+			.setDataSummary(dataSummary)
+			.setDataConnection(dataConnection)
+			.setShortestPathsOnly(false)
+			.build();
+				
+		
+		//Concept.parse("?s | ?s ?p [ a eg:D ]", PrefixMapping.Extended),
+		
+		// Create search for paths between two given sparql concepts
+		PathSearch<SimplePath> pathSearch = pathFinder.createSearch(
+			Concept.parse("?s | ?s a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", PrefixMapping.Extended),
+			Concept.parse("?s | ?s <http://www.w3.org/ns/ssn/#hasValue> ?o", PrefixMapping.Extended)
+		);
+			//Concept.parse("?s | ?s a eg:A", PrefixMapping.Extended));
+		
+		// Set parameters on the search, such as max path length and the max number of results
+		// Invocation of .exec() executes the search and yields the flow of results
+		List<SimplePath> actual = pathSearch
+				.setMaxLength(7)
+				//.setMaxResults(100)
+				.exec()
+				.toList().blockingGet();
+
+		System.out.println("Paths");
+		actual.forEach(System.out::println);
+	}
+	
+	public static void performTestRun() throws Exception {
 		String excerptQuery = "PREFIX lgdo: <http://linkedgeodata.org/ontology/>\n" + 
 				"PREFIX ogc: <http://www.opengis.net/ont/geosparql#>\n" + 
 				"PREFIX geom: <http://geovocab.org/geometry#>\n" +
