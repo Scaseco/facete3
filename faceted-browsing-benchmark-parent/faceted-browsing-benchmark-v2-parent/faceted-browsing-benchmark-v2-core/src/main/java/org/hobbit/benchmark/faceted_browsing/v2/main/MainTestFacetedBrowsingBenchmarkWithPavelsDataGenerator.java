@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -23,6 +24,7 @@ import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.DatasetGraphQuadsImpl;
+import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoSystemService;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -32,6 +34,7 @@ import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinder
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -89,53 +92,6 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.class);
 
 	
-	public static Flowable<Quad> createQuadFlow(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		Flowable<Quad> result = Flowable.generate(
-				() -> {
-					InputStream in = inSupplier.call();
-					Iterator<Quad> it = RDFDataMgr.createIteratorQuads(in, lang, baseIRI);
-					return new IteratorClosable<Quad>(it, new Closeable() {
-						@Override
-						public void close() throws IOException {
-							// Try to close the iterator 'it'
-							// Otherwise, forcefully close the stream
-							// (may cause a (usually/hopefully) harmless exception)
-							try {
-								if(it instanceof Closeable) {
-						            ((Closeable)it).close();
-								} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
-						            ((org.apache.jena.atlas.lib.Closeable)it).close();								
-								}
-							} finally {
-								// Close the backing input stream in any case
-								in.close();
-							}
-						}
-					});
-				},
-				(reader, emitter) -> {
-					if(reader.hasNext()) {
-						Quad item = reader.next();
-						emitter.onNext(item);
-					} else {
-						emitter.onComplete();
-					}
-				},
-				ClosableIterator::close);
-		return result;
-	}
-	
-	public static Flowable<Dataset> readRdfStream(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		Flowable<Dataset> result = createQuadFlow(inSupplier, lang, baseIRI)		
-			.compose(Transformers.<Quad>toListWhile(
-		            (list, t) -> list.isEmpty() 
-		                         || list.get(0).getGraph().equals(t.getGraph())))
-			.map(DatasetGraphQuadsImpl::create)
-			.map(DatasetFactory::wrap);
-
-		return result;
-	}
-	
 	// Substitute a space in e.g. 2018-10-30 09:41:53 with T - i.e. 2018-10-30T09:41:53
 	public static String substituteSpaceWithTInTimestamps(String str) {
 		Pattern p = Pattern.compile("(\\d+-\\d{1,2}-\\d{1,2}) (\\d{1,2}:\\d{1,2}:\\d{1,2})");
@@ -149,7 +105,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	
 	public static void testPathFinder() {
 		Dataset raw = DatasetFactory.create();
-		readRdfStream(
+		RDFDataMgrRx.createFlowableDatasets(
 			() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
 			Lang.TRIG,
 			"http://www.example.org/")

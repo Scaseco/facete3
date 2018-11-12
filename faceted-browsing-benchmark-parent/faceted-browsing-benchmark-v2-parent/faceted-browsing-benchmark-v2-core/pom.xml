@@ -19,11 +19,6 @@
 			<artifactId>faceted-browsing-benchmark-core</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>com.github.davidmoten</groupId>
-			<artifactId>rxjava2-extras</artifactId>
-			<version>0.1.28</version>
-		</dependency>
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
