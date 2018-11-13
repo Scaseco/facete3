@@ -100,7 +100,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		testPathFinder();
+		//testPathFinder();
 	}
 	
 	public static void testPathFinder() {
@@ -141,10 +141,15 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		
 		// Create search for paths between two given sparql concepts
 		PathSearch<SimplePath> pathSearch = pathFinder.createSearch(
-			Concept.parse("?s | ?s a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", PrefixMapping.Extended),
-			Concept.parse("?s | ?s <http://www.w3.org/ns/ssn/#hasValue> ?o", PrefixMapping.Extended)
+			Concept.parse("?s | ?s <http://www.w3.org/ns/ssn/#hasValue> ?o", PrefixMapping.Extended),
+			Concept.parse("?s | ?s a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", PrefixMapping.Extended)
 		);
-			//Concept.parse("?s | ?s a eg:A", PrefixMapping.Extended));
+
+//		PathSearch<SimplePath> pathSearch = pathFinder.createSearch(
+//			Concept.parse("?s | ?s a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", PrefixMapping.Extended),
+//			Concept.parse("?s | ?s <http://www.w3.org/ns/ssn/#hasValue> ?o", PrefixMapping.Extended)
+//		);
+
 		
 		// Set parameters on the search, such as max path length and the max number of results
 		// Invocation of .exec() executes the search and yields the flow of results
@@ -286,7 +291,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 					boolean loadData = true;
 					if(loadData) {
-						Model src = RDFDataMgr.loadModel("/tmp/hobbit-lgd-residential-buildings-20180719-core-with-labels.nt");
+						Model src = RDFDataMgr.loadModel("/home/raven/Projects/Data/Hobbit/hobbit-lgd-residential-buildings-20180719-core-with-labels.nt");
 						Dataset d = DatasetFactory.create();
 						d.addNamedModel("http://linkedgeodata.org", src);
 						
@@ -426,10 +431,10 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 							if(false) {
 							TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
-							Supplier<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
+							Callable<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
 
 							for(int i = 0; i < 10; ++i) {
-								SparqlTaskResource task = querySupplier.get();
+								SparqlTaskResource task = querySupplier.call();
 								if(task != null) {
 									Query query = SparqlTaskResource.parse(task).getAsQueryStmt().getQuery();
 									try(QueryExecution qe = conn.query(query)) {

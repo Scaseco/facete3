@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeResource;
@@ -91,7 +91,11 @@ public class MainFacetedQueryApi {
 					FluentQueryExecutionFactory
 						.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
 						.config()
-						.withPostProcessor(qe -> ((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML))
+						.withPostProcessor(qe -> {
+							if(qe instanceof QueryEngineHTTP) {
+								((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
+							}
+						})
 						.end()
 						.create()
 						), null, null);
@@ -143,16 +147,16 @@ public class MainFacetedQueryApi {
 		
 		// Now wrap the scenario supplier with the injection of sparql update statements
 		
-		Supplier<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
-		Supplier<SparqlTaskResource> updateSupplier = () -> null;
+		Callable<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
+		Callable<SparqlTaskResource> updateSupplier = () -> null;
 		
 		
-		Supplier<SparqlTaskResource> taskSupplier = SupplierUtils.interleave(querySupplier, updateSupplier);
+		Callable<SparqlTaskResource> taskSupplier = SupplierUtils.interleave(querySupplier, updateSupplier);
 
 		
 		
 		SparqlTaskResource tmp = null;
-		for(int i = 0; (tmp = taskSupplier.get()) != null; ++i) {
+		for(int i = 0; (tmp = taskSupplier.call()) != null; ++i) {
 			System.out.println(i + ": " + SparqlTaskResource.parse(tmp));
 		}
 		

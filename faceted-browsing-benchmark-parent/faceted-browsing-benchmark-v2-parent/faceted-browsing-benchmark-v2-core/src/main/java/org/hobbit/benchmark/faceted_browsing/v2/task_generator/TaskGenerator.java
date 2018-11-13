@@ -35,8 +35,9 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
+import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
+import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
@@ -60,6 +61,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -88,133 +90,6 @@ import io.reactivex.Flowable;
 
 
 
-class PathSpecSimple {
-	// Validation attributes - paths must meet these constraints for acceptance
-	protected int minLength;
-	protected int numRequiredReverseSteps;
-	
-	
-	
-	public int getNumRequiredReverseSteps() {
-		return numRequiredReverseSteps;
-	}
-
-	public void setNumRequiredReverseSteps(int numRequiredReverseSteps) {
-		this.numRequiredReverseSteps = numRequiredReverseSteps;
-	}
-
-	// TODO Rename into desired path length
-	protected int maxLength;
-	
-	// true -> forward, false -> backwards
-	// The draw with replacement pmf is consumed first. Afterwards, the fallback pmf kicks in.
-	protected List<Entry<Boolean, Double>> drawWithReplacementPmf;
-	protected List<Entry<Boolean, Double>> fallbackPmf;
-
-	public int getMinLength() {
-		return minLength;
-	}
-
-	public PathSpecSimple setMinLength(int minLength) {
-		this.minLength = minLength;
-		return this;
-	}
-
-	public int getMaxLength() {
-		return maxLength;
-	}
-
-	public PathSpecSimple setMaxLength(int maxLength) {
-		this.maxLength = maxLength;
-		return this;
-	}
-
-	public List<Entry<Boolean, Double>> getDrawWithReplacementPmf() {
-		return drawWithReplacementPmf;
-	}
-
-	public PathSpecSimple setDrawWithReplacementPmf(List<Entry<Boolean, Double>> drawWithReplacementPmf) {
-		this.drawWithReplacementPmf = drawWithReplacementPmf;
-		return this;
-	}
-
-	public List<Entry<Boolean, Double>> getFallbackPmf() {
-		return fallbackPmf;
-	}
-
-	public PathSpecSimple setFallbackPmf(List<Entry<Boolean, Double>> fallbackPmf) {
-		this.fallbackPmf = fallbackPmf;
-		return this;
-	}
-
-	
-	/**
-	 * numReversePool: The number of reverse traversals (must be <= the desired path length)
-	 * 
-	 * @param minPathLength
-	 * @param desiredPathLength
-	 * @param numRequiredReverseSteps
-	 * @param bwdChance
-	 * @param fwdChance
-	 * @return
-	 */
-	public static PathSpecSimple create(int minPathLength, int desiredPathLength, int numRequiredReverseSteps, double bwdChance, double fwdChance) {
-		if(numRequiredReverseSteps > desiredPathLength) {
-			throw new RuntimeException("Cannot require more reverse traversals than maximum path length");
-		}
-		
-		List<Entry<Boolean, Double>> consumingPmf = new ArrayList<>();
-		for(int i = 0; i < numRequiredReverseSteps; ++i) {
-			consumingPmf.add(Maps.immutableEntry(false, 1.0));
-		}
-		
-		for(int i = numRequiredReverseSteps; i < desiredPathLength; ++i) {
-			consumingPmf.add(Maps.immutableEntry(true, 1.0));			
-		}
-		
-		List<Entry<Boolean, Double>> fallbackPmf = new ArrayList<>();
-		fallbackPmf.add(Maps.immutableEntry(false, bwdChance));
-		fallbackPmf.add(Maps.immutableEntry(true, fwdChance));
-	
-		PathSpecSimple result = new PathSpecSimple();
-		result
-			.setMinLength(minPathLength)
-			.setMaxLength(desiredPathLength)
-			.setDrawWithReplacementPmf(consumingPmf)
-			.setFallbackPmf(fallbackPmf);
-	
-		return result;
-	}
-	
-	
-	
-	public static Predicate<List<P_Path0>> createValidator(PathSpecSimple pathSpec) {
-		return steps -> {
-			//List<P_Path0> steps = PathVisitorToList.toList(path);
-			boolean result = steps.size() >= pathSpec.getMinLength() &&
-					PathUtils.countReverseLinks(steps) >= pathSpec.getNumRequiredReverseSteps();
-			return result;
-		};
-	}
-	
-	public static WeightedSelector<Boolean> createSelector(PathSpecSimple pathSpec) {
-		WeightedSelector<Boolean> result = null;
-		if(pathSpec.getDrawWithReplacementPmf() != null) {
-			result = WeigthedSelectorDrawWithReplacement.create(pathSpec.getDrawWithReplacementPmf());
-		}
-
-		if(pathSpec.getFallbackPmf() != null) {
-			WeightedSelector<Boolean> tmp = WeightedSelectorImmutable.create(pathSpec.getFallbackPmf());
-
-			if(result != null) {
-				result = new WeigthedSelectorFailover<>(result, tmp);
-			}
-		}
-		
-		return result;
-	}
-}
-
 public class TaskGenerator {
 
 	private static final Logger logger = LoggerFactory.getLogger(TaskGenerator.class);
@@ -222,7 +97,7 @@ public class TaskGenerator {
 	protected List<SetSummary> numericProperties;
 	
 	protected RDFConnection conn;
-	
+	protected ConceptPathFinder conceptPathFinder;
 	protected Random rand;
 
 	//protected RdfChangeTracker state;
@@ -246,16 +121,16 @@ public class TaskGenerator {
 	}
 
 	
-	public Supplier<SparqlTaskResource> createScenarioQuerySupplier() {
+	public Callable<SparqlTaskResource> createScenarioQuerySupplier() {
 		
 		int scenarioIdxCounter[] = {0};
-		Supplier<Supplier<SparqlTaskResource>> scenarioSupplier = () -> {
+		Callable<Callable<SparqlTaskResource>> scenarioSupplier = () -> {
 
 			int scenarioIdx = scenarioIdxCounter[0]++;
 			Supplier<SparqlTaskResource> core = this.generateScenario();
 			
 			
-			Supplier<SparqlTaskResource> taskSupplier = () -> {
+			Callable<SparqlTaskResource> taskSupplier = () -> {
 				SparqlTaskResource s = core.get();
 				if(s != null) {
 					// add scenario id
@@ -276,7 +151,7 @@ public class TaskGenerator {
             return taskSupplier;
 		};
 		
-		Supplier<SparqlTaskResource> querySupplier = SupplierUtils.flatMap(scenarioSupplier);
+		Callable<SparqlTaskResource> querySupplier = SupplierUtils.flatMap(scenarioSupplier);
 
 		return querySupplier;
 	}
@@ -284,6 +159,24 @@ public class TaskGenerator {
 	public static TaskGenerator autoConfigure(RDFConnection conn) {
 		
 		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
+
+		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
+		
+		
+
+		// Use the system to compute a data summary
+		// Note, that the summary could be loaded from any place, such as a file used for caching
+		Model dataSummary = system.computeDataSummary(conn).blockingGet();
+		
+		RDFDataMgr.write(System.out, dataSummary, RDFFormat.TURTLE_PRETTY);
+		
+		// Build a path finder; for this, first obtain a factory from the system
+		// set its attributes and eventually build the path finder.
+		ConceptPathFinder pathFinder = system.newPathFinderBuilder()
+			.setDataSummary(dataSummary)
+			.setDataConnection(conn)
+			.setShortestPathsOnly(false)
+			.build();
 
 		
 		
@@ -905,9 +798,14 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static List<SimplePath> findPathsToResourcesWithNumericProperties(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, List<SetSummary> numericProperties) {
+	public static List<SimplePath> findPathsToResourcesWithNumericProperties(
+			ConceptPathFinder conceptPathFinder,
+			FacetNode fn,
+			org.apache.jena.sparql.path.Path pathPattern,
+			List<SetSummary> numericProperties)
+	{
 
-		SparqlQueryConnection conn = fn.query().connection();
+		//SparqlQueryConnection conn = fn.query().connection();
 		
 		// The source concept denotes the set of resources matching the facet constraints
 		UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
@@ -920,13 +818,16 @@ public class TaskGenerator {
 			Vars.s);
 
 		// TODO We need to wire up pathPattern with the path finder
-		List<SimplePath> paths = ConceptPathFinder.findPaths(
-				new QueryExecutionFactorySparqlQueryConnection(conn),
-				valuesConcept,
-				numericValuesConcept,
-				100,
-				100);
+//		List<SimplePath> paths = ConceptPathFinder.findPaths(
+//				new QueryExecutionFactorySparqlQueryConnection(conn),
+//				valuesConcept,
+//				numericValuesConcept,
+//				100,
+//				100);
 	
+		List<SimplePath> paths = conceptPathFinder.createSearch(valuesConcept, numericValuesConcept)
+				.exec().toList().blockingGet();
+		
 		return paths;
 	}
 
@@ -939,6 +840,7 @@ public class TaskGenerator {
 	 * @return
 	 */
 	public static Map<FacetNode, Map<Node, Long>> selectNumericFacets(
+			ConceptPathFinder conceptPathFinder,
 			FacetNode fn,
 			int pathLength,
 			org.apache.jena.sparql.path.Path pathPattern,
@@ -947,7 +849,11 @@ public class TaskGenerator {
 	{
 		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
 		
-		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
+		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(
+				conceptPathFinder,
+				fn,
+				pathPattern,
+				numericProperties);
 		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
 		
 		for(SimplePath path : paths) {
@@ -988,10 +894,20 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(FacetNode fn, int pathLength, org.apache.jena.sparql.path.Path pathPattern, Random rand, List<SetSummary> numericProperties) {
+	public static Entry<FacetNode, Map<Node, Long>> selectNumericFacet(
+			ConceptPathFinder conceptPathFinder,
+			FacetNode fn,
+			int pathLength,
+			org.apache.jena.sparql.path.Path pathPattern,
+			Random rand,
+			List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 		
-		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(fn, pathPattern, numericProperties);
+		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(
+				conceptPathFinder,
+				fn,
+				pathPattern,
+				numericProperties);
 		
 		FacetNode target = null;
 		if(!paths.isEmpty()) {
@@ -1039,6 +955,7 @@ public class TaskGenerator {
 	public static Entry<FacetNode, Range<NodeHolder>> pickRange(
 			Random rand,
 			List<SetSummary> numericProperties,
+			ConceptPathFinder conceptPathFinder,
 			
 			FacetNode facetNode,
 			int maxPathLength,
@@ -1049,7 +966,12 @@ public class TaskGenerator {
 
 		Entry<FacetNode, Range<NodeHolder>> result = null;
 
-		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(facetNode, 1, pathPattern, numericProperties);
+		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(
+				conceptPathFinder,
+				facetNode,
+				1,
+				pathPattern,
+				numericProperties);
 		if(!cands.isEmpty()) {
 			
 			System.out.println("cp6 cand: " + cands);
@@ -1121,7 +1043,16 @@ public class TaskGenerator {
 	public boolean applyNumericCp(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
 		boolean result = false;
 
-		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties, fn, 5, pathPattern, pickConstant, pickLowerBound, pickUpperBound);
+		Entry<FacetNode, Range<NodeHolder>> r = pickRange(
+				rand,
+				numericProperties,
+				conceptPathFinder,
+				fn,
+				5,
+				pathPattern,
+				pickConstant,
+				pickLowerBound,
+				pickUpperBound);
 		
 		System.out.println("Pick: " + r);
 		
@@ -1310,7 +1241,8 @@ public class TaskGenerator {
 
 		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
 		
-		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties, fn, 5, pathPattern, false, true, true);
+		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties, 
+				conceptPathFinder, fn, 5, pathPattern, false, true, true);
 		
 		System.out.println("Pick: " + r);
 		
