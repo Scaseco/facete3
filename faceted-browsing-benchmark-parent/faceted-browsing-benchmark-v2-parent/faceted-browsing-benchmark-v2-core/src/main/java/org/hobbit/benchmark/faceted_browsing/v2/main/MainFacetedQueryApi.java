@@ -19,6 +19,7 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -33,6 +34,7 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
@@ -156,7 +158,15 @@ public class MainFacetedQueryApi {
 		
 		
 		SparqlTaskResource tmp = null;
-		for(int i = 0; (tmp = taskSupplier.call()) != null; ++i) {
+		for(int i = 0; (tmp = taskSupplier.call()) != null; ++i) {			
+			int scenarioId = ResourceUtils.tryGetLiteralPropertyValue(tmp, FacetedBrowsingVocab.scenarioId, Integer.class)
+				.orElseThrow(() -> new RuntimeException("no scenario id"));
+			
+			System.out.println("GENERATED TASK: " + tmp.getURI());
+			if(scenarioId >= 10) {
+				break;
+			}
+			
 			System.out.println(i + ": " + SparqlTaskResource.parse(tmp));
 		}
 		

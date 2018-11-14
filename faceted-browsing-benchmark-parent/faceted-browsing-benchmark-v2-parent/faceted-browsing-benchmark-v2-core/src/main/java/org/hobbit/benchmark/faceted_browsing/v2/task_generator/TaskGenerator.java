@@ -486,7 +486,7 @@ public class TaskGenerator {
 
 					r = generateQuery();
 					r
-						.addLiteral(FacetedBrowsingVocab.queryId,"" + queryIdx[0])
+						.addLiteral(FacetedBrowsingVocab.queryId, Integer.toString(i))
 						.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
 				}
 	

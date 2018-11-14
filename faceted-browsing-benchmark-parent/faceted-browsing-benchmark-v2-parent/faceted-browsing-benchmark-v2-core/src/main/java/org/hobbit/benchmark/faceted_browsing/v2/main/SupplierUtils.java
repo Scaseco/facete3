@@ -126,6 +126,9 @@ public class SupplierUtils {
 					}
 
 					r = current.call();
+					if(r == null) {
+						held.set(null);
+					}
 				}
 			}
 			return r;
