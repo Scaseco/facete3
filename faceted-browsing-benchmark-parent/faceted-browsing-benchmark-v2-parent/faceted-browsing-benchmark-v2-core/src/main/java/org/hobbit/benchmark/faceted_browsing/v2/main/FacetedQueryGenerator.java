@@ -177,7 +177,8 @@ public class FacetedQueryGenerator<P> {
 			// TODO If the relation is of form ?s <p> ?o, then rewrite as ?s ?p ?o . FILTER(?p = <p>)
 
 			// FIXME This still breaks - because of conflict between the relation generated for the constraint and for the path
-			
+
+
 			
 			// If the path exists as a constraint DO NOT add it 
 			// as it will be added by the constraint
@@ -185,7 +186,10 @@ public class FacetedQueryGenerator<P> {
 				elts.addAll(rel.getElements());
 			}
 
+			// NOTE The BIND blocks naive BGP / filter optimization; but a
+			// filter placement transform (pushing filters under bind) fixes this
 			elts.add(new ElementBind(Vars.p, NodeValue.makeNode(NodeFactory.createURI(pathAccessor.getPredicate(childPath)))));
+
 			
 			rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
 			

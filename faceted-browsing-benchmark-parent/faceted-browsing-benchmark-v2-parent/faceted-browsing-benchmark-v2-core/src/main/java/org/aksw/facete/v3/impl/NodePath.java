@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import org.apache.jena.graph.NodeVisitor;
 import org.apache.jena.graph.Node_Fluid;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 
 public class NodePath
@@ -37,5 +39,9 @@ public class NodePath
 	public NodePath step(String p, boolean isFwd) {
 		SPath tmp = path.get(p, !isFwd);
 		return new NodePath(tmp);
+	}
+	
+	public Expr asExpr() {
+		return NodeValue.makeNode(this);
 	}
 }

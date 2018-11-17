@@ -1,21 +1,15 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -33,8 +27,7 @@ import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
-import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -52,7 +45,7 @@ import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
-import org.apache.jena.util.iterator.ClosableIterator;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
@@ -100,7 +93,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		//testPathFinder();
+		testPathFinder();
 	}
 	
 	public static void testPathFinder() {
@@ -112,6 +105,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		.limit(10)
 		.forEach(d -> Streams.stream(d.asDatasetGraph().find()).forEach(raw.asDatasetGraph()::add));
 			
+		//raw.asDatasetGraph().deleteAny(Node.ANY, Node.ANY, RDF.type.asNode(), Node.ANY);
 		Dataset ds = DatasetFactory.wrap(raw.getUnionModel());
 		
 		
@@ -126,14 +120,14 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		// Note, that the summary could be loaded from any place, such as a file used for caching
 		Model dataSummary = system.computeDataSummary(dataConnection).blockingGet();
 		
-		RDFDataMgr.write(System.out, dataSummary, RDFFormat.TURTLE_PRETTY);
+		RDFDataMgr.write(System.err, dataSummary, RDFFormat.TURTLE_PRETTY);
 		
 		// Build a path finder; for this, first obtain a factory from the system
 		// set its attributes and eventually build the path finder.
 		ConceptPathFinder pathFinder = system.newPathFinderBuilder()
 			.setDataSummary(dataSummary)
 			.setDataConnection(dataConnection)
-			.setShortestPathsOnly(false)
+			.setShortestPathsOnly(true)
 			.build();
 				
 		
@@ -145,6 +139,19 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 			Concept.parse("?s | ?s a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", PrefixMapping.Extended)
 		);
 
+		PrefixMapping prefixes = PrefixMapping.Extended;
+
+		
+		List<SimplePath> paths  = pathFinder.createSearch(
+				Concept.create("?src ssn:hasValue ?o", "src", prefixes),
+				Concept.create("?tgt a lived:CurrentObservation", "tgt", prefixes))
+				.setMaxPathLength(7)
+				.exec()
+				.timeout(10, TimeUnit.SECONDS)
+				.toList().blockingGet();
+
+		
+		System.out.println(paths);
 //		PathSearch<SimplePath> pathSearch = pathFinder.createSearch(
 //			Concept.parse("?s | ?s a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", PrefixMapping.Extended),
 //			Concept.parse("?s | ?s <http://www.w3.org/ns/ssn/#hasValue> ?o", PrefixMapping.Extended)
@@ -154,7 +161,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		// Set parameters on the search, such as max path length and the max number of results
 		// Invocation of .exec() executes the search and yields the flow of results
 		List<SimplePath> actual = pathSearch
-				.setMaxLength(7)
+				.setMaxPathLength(7)
 				//.setMaxResults(100)
 				.exec()
 				.toList().blockingGet();

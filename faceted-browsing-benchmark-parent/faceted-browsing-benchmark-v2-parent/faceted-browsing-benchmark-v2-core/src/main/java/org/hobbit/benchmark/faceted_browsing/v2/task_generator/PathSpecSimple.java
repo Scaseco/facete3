@@ -21,8 +21,9 @@ public class PathSpecSimple {
 		return numRequiredReverseSteps;
 	}
 
-	public void setNumRequiredReverseSteps(int numRequiredReverseSteps) {
+	public PathSpecSimple setNumRequiredReverseSteps(int numRequiredReverseSteps) {
 		this.numRequiredReverseSteps = numRequiredReverseSteps;
+		return this;
 	}
 
 	// TODO Rename into desired path length
@@ -102,6 +103,7 @@ public class PathSpecSimple {
 		result
 			.setMinLength(minPathLength)
 			.setMaxLength(desiredPathLength)
+			.setNumRequiredReverseSteps(numRequiredReverseSteps)
 			.setDrawWithReplacementPmf(consumingPmf)
 			.setFallbackPmf(fallbackPmf);
 	

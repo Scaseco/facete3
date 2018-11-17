@@ -41,5 +41,18 @@ All you need to provide is an integer value for a seed which allows for the rand
  
  
 
+### Pitfalls for developers
+
+Expression transformation (issue last encountered: jena 3.8.0)
+```
+// NEVER directly apply node transform when variables may be involved; they get wrongly wrapped
+// and warnings will be logged
+// The resulting expression will not evaluate correctly despite its syntactic (string) representation being correct
+never = expr.applyNodeTransform(FacetConstraintImpl::blankNodeToVar);
+
+CORRECT This handles variables correctly
+correct = ExprTransformer.transform(new NodeTransformExpr(FacetConstraintImpl::blankNodeToVar), expr);
+
+```
 
 

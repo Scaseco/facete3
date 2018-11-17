@@ -195,7 +195,7 @@ public class FacetDirNodeImpl
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), true, null, null);
+		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null);
 		
 		// Inject that the object must not be a blank node
 		// TODO There should be a better place to do this - but where?		

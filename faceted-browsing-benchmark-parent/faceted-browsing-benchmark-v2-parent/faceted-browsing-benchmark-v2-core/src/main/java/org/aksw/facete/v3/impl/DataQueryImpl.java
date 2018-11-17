@@ -11,11 +11,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -34,6 +37,7 @@ import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
@@ -41,7 +45,14 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.optimize.Optimize;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
+import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.Rename;
 import org.apache.jena.sparql.expr.E_Random;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -53,12 +64,15 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.sparql.util.Context;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 import com.google.common.collect.Iterators;
@@ -70,6 +84,11 @@ import io.reactivex.Single;
 public class DataQueryImpl<T extends RDFNode>
 	implements DataQuery<T>
 {
+	// TODO Actually, there should be no logger here - instead there
+	// should be some peekQuery(Consumer<Query>) if one wants to know the query
+	private static final Logger logger = LoggerFactory.getLogger(DataQueryImpl.class);
+
+	
 	protected SparqlQueryConnection conn;
 	
 //	protected Node rootVar;
@@ -370,8 +389,14 @@ public class DataQueryImpl<T extends RDFNode>
 			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
 		}
 		
-		System.out.println("Generated query: " + query);
+		
+		//logger.info("Generated query: " + query);
 
+		Rewrite rewrite = createDefaultRewriter();
+		query = rewrite(query, rewrite);
+
+		
+		logger.info("After rewrite: " + query);
 		return Maps.immutableEntry((Var)rootVar, query);
 	}
 
@@ -442,5 +467,85 @@ public class DataQueryImpl<T extends RDFNode>
 			return r;
 		});
 	}	
+
+	
+	// TODO Move to Query Utils
+	public static Query rewrite(Query query, Rewrite rewrite) {
+		Query result = rewrite(query, (Function<? super Op, ? extends Op>)rewrite::rewrite);
+		return result;
+	}
+
+	// TODO Move to Query Utils
+	public static Query rewrite(Query query, Function<? super Op, ? extends Op> rewriter) {
+		Op op = Algebra.compile(query);
+
+		op = rewriter.apply(op);
+		
+		Query result = OpAsQuery.asQuery(op);
+		return result;
+	}
+
+	public static Rewrite createDefaultRewriter() {
+
+        Context context = new Context();
+        context.put(ARQ.optMergeBGPs, true);
+        context.put(ARQ.optMergeExtends, true);
+
+        // false; OpAsQuery throws Not implemented: OpTopN (jena 3.8.0)
+        context.put(ARQ.optTopNSorting, false);
+
+        context.put(ARQ.optFilterPlacement, true);
+
+//        context.put(ARQ.optFilterPlacement, true);
+        context.put(ARQ.optImplicitLeftJoin, false);
+        context.put(ARQ.optFilterPlacementBGP, false);
+        context.put(ARQ.optFilterPlacementConservative, false); // with false the result looks better
+
+        context.put(ARQ.optFilterExpandOneOf, false);
+
+//        
+//
+//        // optIndexJoinStrategy mut be off ; it introduces OpConditional nodes which
+//        // cannot be transformed back into syntax
+        context.put(ARQ.optIndexJoinStrategy, false);
+//        
+        // It is important to keep optFilterEquality turned off!
+        // Otherwise it may push constants back into the quads
+        context.put(ARQ.optFilterEquality, false);
+        context.put(ARQ.optFilterInequality, false);
+        context.put(ARQ.optDistinctToReduced, false);
+        context.put(ARQ.optInlineAssignments, false);
+        context.put(ARQ.optInlineAssignmentsAggressive, false);
+        
+        // false; OpAsQuery throws Not implemented: OpDisjunction (jena 3.8.0)
+        context.put(ARQ.optFilterDisjunction, false);
+        context.put(ARQ.optFilterConjunction, true);
+        
+        context.put(ARQ.optExprConstantFolding, true);
+
+//        Rewrite rewriter = Optimize.stdOptimizationFactory.create(context);
+        RewriteFactory factory = Optimize.getFactory();
+        Rewrite core = factory.create(context);
+        
+        
+        // Wrap jena's rewriter with additional transforms
+        Rewrite  result = op -> {
+
+        		op = core.rewrite(op);
+        		// Issue with Jena 3.8.0 (possibly other versions too)
+        		// Jena's rewriter returned by Optimize.getFactory() renames variables (due to scoping)
+        		// but does not reverse the renaming - so we need to do it explicitly here
+        		// (also, without reversing, variable syntax is invalid, such as "?/0")
+        		op = Rename.reverseVarRename(op, true);
+        		op = TransformPushFiltersIntoBGP.transform(op);
+        		
+        		op = TransformDeduplicatePatterns.transform(op);
+        		
+        		return op;
+        };
+        
+        return result;
+	}
 	
 }
+

@@ -73,9 +73,9 @@ public class RdfChangeTrackerWrapperImpl
 	 */
 	@Override
 	public void commitChanges() {
-		System.out.println("COMMITING DELTAS - " + changeModel.size() + " - " + baseModel.size() + " - "  + deltaGraph.size());
+		//System.out.println("COMMITING DELTAS - " + changeModel.size() + " - " + baseModel.size() + " - "  + deltaGraph.size());
 		
-		RDFDataMgr.write(System.out, changeModel, RDFFormat.TURTLE_PRETTY);
+		//RDFDataMgr.write(System.out, changeModel, RDFFormat.TURTLE_PRETTY);
 		
 		ChangeSetUtils.trackAndApplyChanges(changeModel, baseModel, deltaGraph);
 //		ChangeSetUtils.trackAndApplyChanges(

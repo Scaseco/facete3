@@ -34,6 +34,7 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.eclipse.jetty.server.Server;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
@@ -58,34 +59,37 @@ public class MainFacetedQueryApi {
 //			Map<String, Integer> map = new MapFromBinaryRelation(distModel, BinaryRelationImpl.create("?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> ?k ; <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> ?v", "k", "v"));
 			
 			
-			Map<String, Integer> map2 = new HashMap<>();
-			map2.put("a", 80);
-			map2.put("b", 15);
-			map2.put("c", 5);
+			boolean testSelector = false;
+			if(testSelector) {
+				Map<String, Integer> map2 = new HashMap<>();
+				map2.put("a", 80);
+				map2.put("b", 15);
+				map2.put("c", 5);
+		
+				Map<String, Integer> xx = new TreeMap<>();
+				WeightedSelectorMutableOld<String> fn = WeightedSelectorMutableOld.create(map2.entrySet(), Entry::getKey, Entry::getValue);
+				Random rand = new Random();
+				for(int i = 0; i < 100000; ++i) {
+					double x = rand.nextDouble();
+					String v = fn.sample(x);
+					if(v == null) {
+						break;
+					}
 	
-			Map<String, Integer> xx = new TreeMap<>();
-			WeightedSelectorMutableOld<String> fn = WeightedSelectorMutableOld.create(map2.entrySet(), Entry::getKey, Entry::getValue);
-			Random rand = new Random();
-			for(int i = 0; i < 100000; ++i) {
-				double x = rand.nextDouble();
-				String v = fn.sample(x);
-				if(v == null) {
-					break;
+					Double weight = fn.getWeight(v);
+					System.out.println("Sampled " + v + " [" + weight + "]");
+					
+					fn.setWeight(v, Optional.ofNullable(weight).map(w -> w.doubleValue() - 1.0).orElse(0.0));
+					
+					xx.compute(v, (kk, vv) -> vv == null ? 1 : vv + 1);
+					//System.out.println();
 				}
-
-				Double weight = fn.getWeight(v);
-				System.out.println("Sampled " + v + " [" + weight + "]");
 				
-				fn.setWeight(v, Optional.ofNullable(weight).map(w -> w.doubleValue() - 1.0).orElse(0.0));
-				
-				xx.compute(v, (kk, vv) -> vv == null ? 1 : vv + 1);
-				//System.out.println();
+				System.out.println(xx);
 			}
-			
-			System.out.println(xx);
 		}
 
-		Model m = RDFDataMgr.loadModel("path-data.ttl");
+		Model m = RDFDataMgr.loadModel("path-data-simple.ttl");
 		RDFConnection coreConn = RDFConnectionFactory.connect(DatasetFactory.create(m));
 		
 		RDFConnection conn =
@@ -126,7 +130,7 @@ public class MainFacetedQueryApi {
 		}
 		
 		
-		boolean runServer = false;
+		boolean runServer = true;
 		if(runServer) {
 //			Server server = FactoryBeanSparqlServer.newInstance()
 //				.setSparqlServiceFactory(new QueryExecutionFactorySparqlQueryConnection(conn))	
@@ -158,11 +162,14 @@ public class MainFacetedQueryApi {
 		
 		
 		SparqlTaskResource tmp = null;
+		
+		//List<String> 
 		for(int i = 0; (tmp = taskSupplier.call()) != null; ++i) {			
 			int scenarioId = ResourceUtils.tryGetLiteralPropertyValue(tmp, FacetedBrowsingVocab.scenarioId, Integer.class)
 				.orElseThrow(() -> new RuntimeException("no scenario id"));
 			
 			System.out.println("GENERATED TASK: " + tmp.getURI());
+			RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
 			if(scenarioId >= 10) {
 				break;
 			}

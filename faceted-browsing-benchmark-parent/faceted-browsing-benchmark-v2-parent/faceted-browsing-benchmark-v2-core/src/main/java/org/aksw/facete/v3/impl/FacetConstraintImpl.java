@@ -9,6 +9,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprTransformer;
+import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
@@ -65,7 +67,8 @@ public class FacetConstraintImpl
 	
 	@Override
 	public FacetConstraint expr(Expr expr) {
-		expr = expr.applyNodeTransform(FacetConstraintImpl::blankNodeToVar);
+		//expr = expr.applyNodeTransform(FacetConstraintImpl::blankNodeToVar);
+		expr = ExprTransformer.transform(new NodeTransformExpr(FacetConstraintImpl::blankNodeToVar), expr);
 		
 		String str = ExprUtils.fmtSPARQL(expr);
 		ResourceUtils.setLiteralProperty(this, Vocab.expr, str);

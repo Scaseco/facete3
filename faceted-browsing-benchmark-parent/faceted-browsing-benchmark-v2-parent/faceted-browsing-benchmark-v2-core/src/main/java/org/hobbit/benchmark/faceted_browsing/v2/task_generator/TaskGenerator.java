@@ -34,7 +34,6 @@ import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
@@ -59,11 +58,11 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -381,7 +380,7 @@ public class TaskGenerator {
 		
 //		addAction(cpToAction, "cp1", TaskGenerator::applyCp1);
 		
-//		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
+		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
 //		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
@@ -391,11 +390,11 @@ public class TaskGenerator {
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
 //		
-		cpToAction.put("cp10", this::applyCp10);
+//		cpToAction.put("cp10", this::applyCp10);
 //
-//		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
+		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
-		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
+//		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
 //		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp14)));
 
 
@@ -1125,11 +1124,13 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public static boolean applyCp11(FacetNode fn) {
-		boolean result = false;
+		boolean result;
 		
+		// Pick a facet value, where the value has a type (and don't take the schematic subClassOf relation)
 		FacetValueCount fwc = fn.fwd().facetValueCounts()
-			.peek(dq -> dq.filter(ExprUtils.oneOf(dq.get(FacetValueCountImpl_.VALUE).fwd(RDF.type), OWL.Class.asNode(), RDFS.Class.asNode())))
-			.exclude(RDFS.subClassOf)
+			//.peek(dq -> dq.filter(ExprUtils.oneOf(dq.get(FacetValueCountImpl_.VALUE).fwd(RDF.type), OWL.Class.asNode(), RDFS.Class.asNode())))
+			.peek(dq -> dq.filter(new E_Bound(dq.get(FacetValueCountImpl_.VALUE).fwd(RDF.type).asExpr())))
+			.exclude(RDFS.subClassOf, RDF.type)
 			.exec()
 			.firstElement()
 			.blockingGet();
@@ -1142,6 +1143,8 @@ public class TaskGenerator {
 			fn.query().focus(newFocus);
 			
 			result = true;
+		} else {
+			result = false;
 		}
 		
 		// Note: The approach above way does not support fetching the class

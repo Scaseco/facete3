@@ -65,3 +65,4 @@ eg:ThingD rdfs:subClassOf eg:ThingC .
 eg:ThingX rdfs:subClassOf eg:ThingY .
 
 eg:ThingZ rdfs:subClassOf eg:ThingZ .
+  
