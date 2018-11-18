@@ -179,10 +179,13 @@ public class FacetedQueryGenerator<P> {
 			// FIXME This still breaks - because of conflict between the relation generated for the constraint and for the path
 
 
+			Multimap<P, Expr> effectiveCi = applySelfConstraints
+					? constraintIndex
+					: hideConstraintsForPath(constraintIndex, childPath);
 			
 			// If the path exists as a constraint DO NOT add it 
 			// as it will be added by the constraint
-			if(!constraintIndex.containsKey(childPath)) {
+			if(!effectiveCi.containsKey(childPath)) {
 				elts.addAll(rel.getElements());
 			}
 
@@ -193,9 +196,6 @@ public class FacetedQueryGenerator<P> {
 			
 			rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
 			
-			Multimap<P, Expr> effectiveCi = applySelfConstraints
-					? constraintIndex
-					: hideConstraintsForPath(constraintIndex, childPath);
 			
 			P basePath = pathAccessor.getParent(childPath);
 

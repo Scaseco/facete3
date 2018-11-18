@@ -17,7 +17,6 @@ import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigDataGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnection;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigDataGeneratorFacetedBrowsing;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerComponentImpl;
 import org.hobbit.core.component.DataGeneratorComponentImpl;
@@ -46,7 +45,7 @@ public class ConfigVirtualDockerServiceFactoryV2 {
 					.child(BenchmarkControllerComponentImpl.class);
 		
 		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("dg", Constants.CONTAINER_TYPE_BENCHMARK)
-				.child(ConfigDataGeneratorFacetedBrowsing.class, ConfigDataGenerator.class)
+				.child(ConfigDataGeneratorFacetedBrowsingV2.class, ConfigDataGenerator.class)
 						.child(DataGeneratorComponentImpl.class);
 		
 		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)

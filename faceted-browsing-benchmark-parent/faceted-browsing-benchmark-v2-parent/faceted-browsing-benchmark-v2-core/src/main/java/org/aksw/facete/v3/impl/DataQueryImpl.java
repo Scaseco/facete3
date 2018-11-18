@@ -76,7 +76,6 @@ import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 import com.google.common.collect.Iterators;
-import com.sleepycat.je.rep.MemberNotFoundException;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -260,7 +259,7 @@ public class DataQueryImpl<T extends RDFNode>
 			.orElse(null);
 
 		Node node = Optional.ofNullable(match.getObject())
-				.orElseThrow(() -> new MemberNotFoundException("No member with name " + attr + " in " + resultClass));
+				.orElseThrow(() -> new RuntimeException("No member with name " + attr + " in " + resultClass));
 
 //		Node node = Optional.ofNullable(iri)
 //				.map(NodeFactory::createURI)				
