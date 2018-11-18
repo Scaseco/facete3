@@ -160,6 +160,14 @@ public interface DataQuery<T extends RDFNode> {
 	boolean isSampled();
 	
 	
+	DataQuery<T> ordered(boolean onOrOff);
+	
+	default DataQuery<T> ordered() {
+		return ordered(true);
+	}
+	
+	boolean isOrdered();
+
 
 	DataQuery<T> randomOrder(boolean onOrOff);
 	

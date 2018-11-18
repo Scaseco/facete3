@@ -42,7 +42,7 @@ public class ReturnModelBuilder {
                               double count_per_second_score,
                               Collection<? extends Q> queriesWithTimeout,
                               Function<? super Q, Byte> queryToScenario,
-                              Function<? super Q, ? extends Collection<Integer>> queryToChokepoints){
+                              Function<? super Q, ? extends Collection<? extends Number>> queryToChokepoints){
         Model rdfModel = createDefaultModel();
 
         Resource experimentResource = experimentUri == null ? rdfModel.createResource(Constants.NEW_EXPERIMENT_URI) : rdfModel.createResource(experimentUri);
@@ -144,7 +144,7 @@ public class ReturnModelBuilder {
 //        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = ChokePoints.getTable();
 
         for(Q q : queriesWithTimeout) {
-        	Collection<Integer> chokePoints = queryToChokepoints.apply(q);
+        	Collection<? extends Number> chokePoints = queryToChokepoints.apply(q);
         	ChokePtsWithTimeOutSet.addAll(chokePoints);
         }
 

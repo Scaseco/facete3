@@ -112,6 +112,7 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	protected List<Element> directFilters = new ArrayList<>();
 	
+	protected boolean ordered;
 	protected boolean randomOrder;
 	protected boolean sample;
 	protected Class<T> resultClass;
@@ -169,7 +170,19 @@ public class DataQueryImpl<T extends RDFNode>
 	public boolean isSampled() {
 		return sample;
 	}
+
 	
+	@Override
+	public DataQuery<T> ordered(boolean onOrOff) {
+		this.ordered = onOrOff;
+		return this;
+	}
+	
+	@Override
+	public boolean isOrdered() {
+		return ordered;
+	}
+
 	@Override
 	public boolean isRandomOrder() {
 		return randomOrder;
@@ -384,7 +397,11 @@ public class DataQueryImpl<T extends RDFNode>
 			query.setQueryPattern(effectivePattern);
 			QueryUtils.applySlice(query, offset, limit, false);
 		}
-		
+
+		if(ordered) {
+			query.addOrderBy(new ExprVar(rootVar), Query.ORDER_ASCENDING);
+		}		
+
 		if(randomOrder) {
 			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
 		}

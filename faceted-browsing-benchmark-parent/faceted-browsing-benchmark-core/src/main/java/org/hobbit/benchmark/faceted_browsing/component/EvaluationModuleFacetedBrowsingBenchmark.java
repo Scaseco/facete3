@@ -55,8 +55,12 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
     private int timeOut;
 
-    private Function<? super QueryID, ? extends Collection<Integer>> queryIdToChokePoints; 
+    private Function<? super QueryID, ? extends Collection<? extends Number>> queryIdToChokePoints; 
 
+    public EvaluationModuleFacetedBrowsingBenchmark(Function<? super QueryID, ? extends Collection<? extends Number>> queryIdToChokePoints) {
+    	this.queryIdToChokePoints = queryIdToChokePoints;
+    }
+    
     @Override
     public void init() throws Exception {
 
@@ -308,8 +312,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         // Build the cp table
         Set<QueryID> qids = Sets.union(evalCPTs.keySet(), queriesWithTimeout);
         for(QueryID qid : qids) {
-        	Set<Integer> cps = new HashSet<>(queryIdToChokePoints.apply(qid));
-        	for(Integer cp : cps) {
+        	Set<? extends Number> cps = new HashSet<>(queryIdToChokePoints.apply(qid));
+        	for(Number cp : cps) {
         		chokePointsTable.computeIfAbsent(cp.intValue(), k -> new ArrayList<QueryID>()).add(qid);
         	}
         }
