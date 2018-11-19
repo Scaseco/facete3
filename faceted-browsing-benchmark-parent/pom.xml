@@ -171,6 +171,14 @@
 						<source>${maven.compiler.source}</source>
 						<target>${maven.compiler.target}</target>
 						<compilerArgument>-proc:none</compilerArgument>
+						<!-- https://discourse.hibernate.org/t/metamodel-usage-with-maven-and-intellij/487 -->
+						<annotationProcessorPaths>
+							<path>
+								<groupId>org.hibernate</groupId>
+								<artifactId>hibernate-jpamodelgen</artifactId>
+								<version>5.3.6.Final</version>
+							</path>
+						</annotationProcessorPaths>
 					</configuration>
 				</plugin>
 
