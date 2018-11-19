@@ -368,7 +368,8 @@ public class TaskGenerator {
 		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);		
 		
 		Model dataModel = changeTracker.getDataModel();
-		
+
+		// RDF Resource with state
 		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
 		FacetedQueryImpl.initResource(facetedQuery);
 		
@@ -518,7 +519,7 @@ public class TaskGenerator {
 
 		// Simplest recovery strategy: If an action could not be applied
 		// repeat the process and hope that due to randomness we can advance
-		int maxRandomRetries = 1000;
+		int maxRandomRetries = 3;
 		for(int j = 0; j < maxRandomRetries && !s.isEmpty(); ++j) {
 		//while(!s.isEmpty()) {
 			double w = rand.nextDouble();			
