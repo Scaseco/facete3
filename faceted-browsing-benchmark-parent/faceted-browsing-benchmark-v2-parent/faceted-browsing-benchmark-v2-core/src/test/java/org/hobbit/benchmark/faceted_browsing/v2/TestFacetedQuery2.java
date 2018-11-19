@@ -37,7 +37,9 @@ public class TestFacetedQuery2 {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
-		System.out.println(facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet());
+		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
+		assert facetCounts.size() == 1;
+		assert facetCounts.get(0).getDistinctValueCount().getCount() == 1;
 	}
 	
 }
