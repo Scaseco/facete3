@@ -1,19 +1,9 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
+import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.Iterators;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
@@ -59,11 +49,7 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.modify.TemplateLib;
-import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementSubQuery;
-import org.apache.jena.sparql.syntax.ElementTriplesBlock;
-import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.sparql.syntax.*;
 import org.apache.jena.sparql.util.Context;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
@@ -75,11 +61,10 @@ import org.hobbit.benchmark.faceted_browsing.v2.task_generator.E_RandomPseudo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
-import com.google.common.collect.Iterators;
-
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DataQueryImpl<T extends RDFNode>
 	implements DataQuery<T>
