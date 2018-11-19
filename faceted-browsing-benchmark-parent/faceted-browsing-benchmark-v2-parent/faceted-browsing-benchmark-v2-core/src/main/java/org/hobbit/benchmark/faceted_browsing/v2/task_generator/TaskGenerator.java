@@ -52,6 +52,7 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -355,7 +356,6 @@ public class TaskGenerator {
 	}
 	
 	public Supplier<SparqlTaskResource> generateScenario() {
-		
 		// Maps a chokepoint id to a function that given a faceted query
 		// yields a supplier. Invoking the supplier applies the action and yields a runnable for undo.
 		// if an action is not applicable, the supplier is null

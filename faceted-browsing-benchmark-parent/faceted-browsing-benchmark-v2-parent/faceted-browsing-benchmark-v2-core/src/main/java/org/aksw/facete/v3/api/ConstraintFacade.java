@@ -33,7 +33,11 @@ public interface ConstraintFacade<B> {
 
 	
 	ConstraintFacade<B> range(Range<NodeHolder> range);
-	
+
+	default ConstraintFacade<B> eqIri(String iriStr) {
+		return eq(NodeFactory.createURI(iriStr));
+	}
+
 	default ConstraintFacade<B> eq(String stringLiteral) {
 		return eq(NodeFactory.createLiteral(stringLiteral));
 	}

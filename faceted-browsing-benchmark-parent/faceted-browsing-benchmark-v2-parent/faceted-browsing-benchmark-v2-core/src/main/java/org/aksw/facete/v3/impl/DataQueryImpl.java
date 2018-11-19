@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -53,7 +54,6 @@ import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.Rename;
-import org.apache.jena.sparql.expr.E_Random;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
@@ -71,6 +71,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.E_RandomPseudo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +115,11 @@ public class DataQueryImpl<T extends RDFNode>
 	protected boolean ordered;
 	protected boolean randomOrder;
 	protected boolean sample;
+	
+	
+//	protected Random pseudoRandom;
+
+	
 	protected Class<T> resultClass;
 
 	protected List<SortCondition> sortConditions;
@@ -402,7 +408,8 @@ public class DataQueryImpl<T extends RDFNode>
 		}		
 
 		if(randomOrder) {
-			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
+//			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
+			query.addOrderBy(new E_RandomPseudo(), Query.ORDER_ASCENDING);
 		}
 		
 		
