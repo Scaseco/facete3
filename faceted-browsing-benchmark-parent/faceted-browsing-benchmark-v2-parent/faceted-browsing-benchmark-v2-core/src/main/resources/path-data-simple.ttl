@@ -9,11 +9,11 @@
 #eg:City a owl:Class .
 #eg:Germany a owl:Class .
 
-eg:Leizpig
+eg:Leipzig
   a eg:City ;
   rdfs:label "Leipzig" ;
   eg:mayor eg:BurkhardJung ;
-  eg:popluation 500000 ;
+  eg:population 500000 ;
   eg:locatedIn eg:Germany ;
   .
 
