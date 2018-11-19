@@ -6,6 +6,37 @@ realistic browsing scenarios through a dataset that comprises of different struc
 system, we aim to test its performance with respect to several choke points in a real world scenario.
 
 
+# Prerequisites
+
+For building, you need to have a working docker environment. Concretely, it is needed for the tests and for the integrated docker packaging of generated Java artifacts.
+
+
+Make sure your user has access to the docker daemon (requires root).
+
+```bash
+sudo usermode -aG docker YOURUSERNAME
+```
+
+## Install docker images
+At present, the benchmark will not mess around with your docker setup. This means it will also not pull images (and possibly cause unwanted updates).
+
+```bash
+docker pull tenforce/virtuoso
+```
+
+Install the images under (auxiliary-docker-resources)[auxiliary-docker-resources].
+At present, you only need;
+
+* podigg-lc-via-web-server
+
+
+Now you should be good to perform your build with
+
+```bash
+mvn clean install
+```
+
+
 # Uploading a System to the HOBBIT platform
 
 Guidelines on how to upload a benchmark can be found here: https://github.com/hobbit-project/platform/wiki/Benchmark-your-system
