@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.hobbit.benchmark.faceted_browsing.config.HobbitSdkConstants;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractSystemAdapter;
@@ -25,6 +26,7 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
@@ -38,132 +40,17 @@ import com.google.common.util.concurrent.ServiceManager.Listener;
 
 
 public class ConfigsFacetedBrowsingBenchmark {
-	
-//	
-//	class ConfigDockerServiceManagerServiceComponent {
-//		@Bean
-//		public DockerServiceManagerServerComponent dockerServiceManagerServer() {
-//			
-//		}
-//	}
-//
-//	class ConfigRabbitMqConnection {
-//		
-//	}
-//	
-//	class ConfigChannelRabbitMq {
-//		
-//	}
-//		
-//	public class ConfigDockerServiceManagerClientComponent {
-//		@Bean
-//		public DockerServiceManagerServerComponent dockerServiceManagerClient() {
-//			
-//		}
-//	}
-//	
-	
-//	public class ConfigCommandReceivingComponentRabbitMq {
-//		@Bean
-//		public Connection connectionFactory(ConnectionFactory connectionFactory) throws IOException, TimeoutException {
-//			return connectionFactory.newConnection();
-//		}
-//	}
 
-	
-//	public static class ConfigHobbitReplyableCommandWrappers
-//		extends ConfigCommunicationWrapper
-//	{
-//		
-//		@Bean
-//		public Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver(@Qualifier("replyableCommandReceiver") Flowable<SimpleReplyableMessage<ByteBuffer>> replyableCommandReceiver) throws IOException {
-//			return replyableCommandReceiver
-//				.flatMap(msg -> Flowable.fromIterable(wrap(msg)));
-//		}
-//		
-//		@Bean
-//		public Subscriber<ByteBuffer> replyableCommandSender(
-//				@Qualifier("replyableCommandReceiver") Subscriber<ByteBuffer> replyableCommandSender) throws IOException {
-//			return wrapSender(replyableCommandSender);
-//		}
-//	
-//	}
-	
-//	public static class ConfigHobbitChannelWrappers
-//		extends ConfigCommunicationWrapper
-//	{		
-//		@Bean
-//		public Subscriber<ByteBuffer> commandSender(@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender) {
-//			return wrapSender(commandSender);
-//		}
-//		
-//		@Bean
-//		public Flowable<ByteBuffer> commandReceiver(@Qualifier("commandReceiver") Flowable<ByteBuffer> commandReceiver) {
-//			return wrapReceiver(commandReceiver);
-//		}
-//		
-//		
-//	}
-	
-	
-	
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-//	public static class ConfigDockerServiceManagerServerConnection {
-//		@Bean
-//		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(Channel channel) throws IOException, TimeoutException {
-//			return RabbitMqFlows.createReplyableFanoutReceiver(channel, Constants.HOBBIT_COMMAND_EXCHANGE_NAME, "dockerServiceManagerServerComponent");
-//					//.doOnNext(x -> System.out.println("[STATUS] Received request; " + Arrays.toString(x.getValue().array()) + " replier: " + x.getReplyConsumer()));
-//		}		
-//	}
-	
-//	public static class ConfigDockerServiceManagerServerConnectionWrapper
-//		extends ConfigHobbitChannelWrappers
-//	{
-//		@Bean
-//		public Flowable<SimpleReplyableMessage<ByteBuffer>> dockerServiceManagerConnectionServer(@Qualifier("dockerServiceManagerConnectionServer") Flowable<SimpleReplyableMessage<ByteBuffer>> delegate) {
-//			return wrap(delegate);
-//		}
-//	}
-	
-	
-	
-
-
-//	public static class ConfigBenchmarkController {
-//		
-//		@Bean
-//		public BenchmarkControllerFacetedBrowsing bc() {
-//			return new BenchmarkControllerFacetedBrowsing();
-//		}
-//	
-//		@Bean
-//		public ApplicationRunner applicationRunner(BenchmarkControllerFacetedBrowsing controller) throws Exception {
-//			return (args) -> {
-//				controller.startUp();
-//				controller.run();
-//				controller.shutDown();
-//			};
-//		}
-//	}
-
-
+	/***
+	 * The BenchmarkLauncher is the entry point for launching benchmarks locally.
+	 * (For those familiar with the Hobbit platform: This launcher does, what the platform does when launching a platform)
+	 * 
+	 * It takes a configuration of a registry of docker image names plus
+	 * the image names of the benchmark controller and system adapter which to start from the registry
+	 * 
+	 * @author Claus Stadler, Nov 18, 2018
+	 *
+	 */
 	public static class BenchmarkLauncher
 		implements EnvironmentAware
 	{
@@ -238,7 +125,7 @@ public class ConfigsFacetedBrowsingBenchmark {
 		
 
 		/**
-		 * TODO requires BC and SA configuration
+		 * FIXME Make SA configurable (hard coded to jena)
 		 * 
 		 * @param dockerServiceBuilderFactory
 		 * @param commandSender
@@ -246,21 +133,30 @@ public class ConfigsFacetedBrowsingBenchmark {
 		 */
 		@Bean
 		public ApplicationRunner benchmarkLauncher(
+				@Value("${" + HobbitSdkConstants.BC_IMAGE_NAME_KEY + "}") String bcImageName,
+				@Value("${" + HobbitSdkConstants.SA_IMAGE_NAME_KEY + "}") String saImageName,
+				//BenchmarkConfig benchmarkConfig,
 				DockerServiceBuilderFactory<?> dockerServiceBuilderFactory,
 				@Qualifier("commandSender") Subscriber<ByteBuffer> commandSender		
 		) {
 			return args -> {
 				try {
 					logger.info("BenchmarkLauncher starting");
-					
+					logger.info("  BC Image: " + bcImageName);
+					logger.info("  SA Image: " + saImageName);
+				
 					// The service builder factory is pre-configured to set Constants.HOBBIT_SESSION_ID_KEY
 					
 					Map<String, String> serviceEnv = new HashMap<>();
 					serviceEnv.put(Constants.HOBBIT_SESSION_ID_KEY, env.getRequiredProperty(Constants.HOBBIT_SESSION_ID_KEY));
-					
-					String bcImageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-benchmark-controller";
-					String saImageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/system-adapter-mocha-jena-in-memory";
 
+//					String bcImageName = benchmarkConfig.getBenchmarkControllerImageName();
+
+//					String bcImageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-benchmark-controller";
+//					String saImageName = "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/system-adapter-mocha-jena-in-memory";
+
+					//String saImageName = benchmarkConfig.get
+					
 					// "git.project-hobbit.eu:4567/gkatsibras/facetedsystem/image"
 					// git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image
 					

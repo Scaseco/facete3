@@ -79,7 +79,7 @@ public class ConfigDockerServiceFactory {
 		
 		@Bean
 		public DockerServiceFactory<?> dockerServiceFactory(
-				@Value("${hostMode:false}") boolean hostMode,
+				@Value("${" + HobbitSdkConstants.HOSTMODE_KEY + ":false}") boolean hostMode,
 				@Value("${HOBBIT_RABBIT_HOST:localhost}") String envStr,
 				@Qualifier("dockerServiceFactoryOverrides") DockerServiceFactory<?> dockerServiceFactoryOverrides
 				) throws DockerCertificateException {

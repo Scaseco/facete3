@@ -1,15 +1,13 @@
-package org.hobbit.benchmark.faceted_browsing.v1.config;
+package org.hobbit.benchmark.faceted_browsing.v2.config;
 
-import java.io.IOException;
+import java.util.Collections;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +15,7 @@ import org.springframework.context.annotation.Bean;
 import io.reactivex.Flowable;
 
 // Configuration for the worker task generator fo the faceted browsing benchmark
-	public class ConfigTaskGeneratorFacetedBenchmark {
+	public class ConfigTaskGeneratorFacetedBenchmarkV2 {
 	    @Bean
 	    public SparqlBasedService taskGeneratorSparqlService(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory) {
 	    	SparqlBasedService result = ConfigsFacetedBrowsingBenchmark.createVirtuosoSparqlService("tenforce/virtuoso", dockerServiceBuilderFactory);
@@ -34,17 +32,13 @@ import io.reactivex.Flowable;
 	    @Bean
 	    public TaskGeneratorModule taskGeneratorModule() {
 	    	BiFunction<SparqlQueryConnection, SparqlQueryConnection, Flowable<Resource>> fn = (conn, refConn) ->
-	    		{
-					try {
-						return Flowable.fromIterable(FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList()));
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-				};
-	    	
-	    	//List<Resource> tasks = FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList());
-	    	//Flowable<Resource> t2 = Flowable.fromIterable(tasks);
-	    	
-	    	return new TaskGeneratorModuleFacetedBrowsing(fn);
+    		{
+				return Flowable.fromIterable(Collections.emptySet());
+			};
+    	
+    	//List<Resource> tasks = FacetedTaskGeneratorOld.runTaskGenerationCore(conn, refConn).collect(Collectors.toList());
+    	//Flowable<Resource> t2 = Flowable.fromIterable(tasks);
+    	
+    	return new TaskGeneratorModuleFacetedBrowsing(fn);
 	    }
 	}

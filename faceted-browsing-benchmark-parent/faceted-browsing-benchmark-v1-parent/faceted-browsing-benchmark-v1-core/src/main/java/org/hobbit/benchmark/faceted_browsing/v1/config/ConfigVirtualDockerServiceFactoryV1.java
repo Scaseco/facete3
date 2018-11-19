@@ -49,7 +49,7 @@ public class ConfigVirtualDockerServiceFactoryV1 {
 						.child(DataGeneratorComponentImpl.class);
 		
 		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
-				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
+				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmarkV1.class)
 					.child(TaskGeneratorFacetedBenchmarkMocha.class);
 
 		Supplier<SpringApplicationBuilder> saAppBuilder = () -> ComponentUtils.createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM)
@@ -61,7 +61,7 @@ public class ConfigVirtualDockerServiceFactoryV1 {
 					.child(DefaultEvaluationStorage.class);
 		
 		Supplier<SpringApplicationBuilder> emAppBuilder = () -> ComponentUtils.createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
-				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationModule.class, ConfigEvaluationModuleFacetedBrowsing.class)
+				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationModule.class, ConfigEvaluationModuleFacetedBrowsingV1.class)
 					.child(EvaluationModuleComponent.class);
 		
 		

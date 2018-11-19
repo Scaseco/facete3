@@ -195,8 +195,13 @@ public class SystemAdapterRDFConnectionMocha
     
     @Override
     public void triggerShutdown() {
-    	taskGenerationFinishedFuture.cancel(true);
     	try {
+    		try {
+    			taskGenerationFinishedFuture.cancel(true);
+    		} catch(Exception e){
+    			logger.error("Unexpected exception", e);
+    		}
+
 	    	logger.info("SystemAdapter::shutDown() [begin]");    
 	    	unsubscribe.dispose();
 	    	

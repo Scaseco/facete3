@@ -16,7 +16,6 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigDataGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnection;
-import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.BenchmarkControllerComponentImpl;
 import org.hobbit.core.component.DataGeneratorComponentImpl;
@@ -49,19 +48,19 @@ public class ConfigVirtualDockerServiceFactoryV2 {
 						.child(DataGeneratorComponentImpl.class);
 		
 		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
-				.child(ConfigEncodersFacetedBrowsing.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmark.class)
+				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmarkV2.class)
 					.child(TaskGeneratorFacetedBenchmarkMocha.class);
 
 		Supplier<SpringApplicationBuilder> saAppBuilder = () -> ComponentUtils.createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM)
-				.child(ConfigEncodersFacetedBrowsing.class, ConfigSystemAdapter.class)
+				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigSystemAdapter.class)
 					.child(SystemAdapterRDFConnectionMocha.class);
 			
 		Supplier<SpringApplicationBuilder> esAppBuilder = () -> ComponentUtils.createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE)
-				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
+				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
 					.child(DefaultEvaluationStorage.class);
 		
 		Supplier<SpringApplicationBuilder> emAppBuilder = () -> ComponentUtils.createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
-				.child(ConfigEncodersFacetedBrowsing.class, ConfigEvaluationModule.class, ConfigEvaluationModuleFacetedBrowsing.class)
+				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigEvaluationModule.class, ConfigEvaluationModuleFacetedBrowsingV2.class)
 					.child(EvaluationModuleComponent.class);
 		
 		
@@ -115,6 +114,11 @@ public class ConfigVirtualDockerServiceFactoryV2 {
 		return result;	
 	}
 
+//	@Bean
+//	public BenchmarkConfig benchmarkConfig() {
+//		return FacetedBrowsingBenchmarkV2Constants.config;
+//	}
+	
 	@Bean
 	//public Map<String, Supplier<SpringApplicationBuilder>> dockerServiceFactoryOverrides() {
 	public DockerServiceFactory<?> dockerServiceFactoryOverrides() {

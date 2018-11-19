@@ -14,6 +14,7 @@ import org.hobbit.benchmark.faceted_browsing.config.ConfigCommunicationWrapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerClient;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerServer;
+import org.hobbit.benchmark.faceted_browsing.config.HobbitSdkConstants;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigCommandChannel;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnection;
 import org.hobbit.core.Constants;
@@ -50,7 +51,7 @@ public class HobbitBenchmarkUtils {
 	 * @throws IOException
 	 */
 	//@Test
-	public static void testBenchmarkTwoAppContexts(Class<?> dockerServiceFactoryOverridesClass) throws MalformedURLException, IOException {		
+	public static void testBenchmarkTwoAppContexts(String bcImageName, String saImageName, Class<?> dockerServiceFactoryOverridesClass) throws MalformedURLException, IOException {		
 		
 		
 		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
@@ -62,7 +63,9 @@ public class HobbitBenchmarkUtils {
 			new SpringApplicationBuilder()
 			// Add the amqp broker
 			.properties(new ImmutableMap.Builder<String, Object>()
-					.put("hostMode", true)
+					.put(HobbitSdkConstants.HOSTMODE_KEY, true)
+					.put(HobbitSdkConstants.BC_IMAGE_NAME_KEY, bcImageName)
+					.put(HobbitSdkConstants.SA_IMAGE_NAME_KEY, saImageName)
 					.put(Constants.HOBBIT_SESSION_ID_KEY, "testsession" + "." + sessionId)
 					//.put(ConfigRabbitMqConnectionFactory.AMQP_VHOST, "default")
 					.build());
@@ -73,12 +76,27 @@ public class HobbitBenchmarkUtils {
 			// (1) Register any pseudo docker images - i.e. launchers of local components
 			// (2) Configure a docker service factory - which creates service instances that can be launched
 			// (3) configure the docker service manager server component which listens on the amqp infrastructure
-			.child(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, dockerServiceFactoryOverridesClass, ConfigDockerServiceFactory.class, ConfigDockerServiceManagerServer.class)
+			.child(
+					ConfigGson.class,
+					ConfigRabbitMqConnectionFactory.class,
+					ConfigRabbitMqConnection.class,
+					ConfigCommunicationWrapper.class,
+					ConfigCommandChannel.class,
+					dockerServiceFactoryOverridesClass,
+					ConfigDockerServiceFactory.class,
+					ConfigDockerServiceManagerServer.class)
 			;
 
 			
 		SpringApplicationBuilder launcherBuilder = builderFactory.get()
-				.sources(ConfigGson.class, ConfigRabbitMqConnectionFactory.class, ConfigRabbitMqConnection.class, ConfigCommunicationWrapper.class, ConfigCommandChannel.class, ConfigDockerServiceManagerClient.class, BenchmarkLauncher.class);
+				.sources(
+						ConfigGson.class,
+						ConfigRabbitMqConnectionFactory.class,
+						ConfigRabbitMqConnection.class,
+						ConfigCommunicationWrapper.class,
+						ConfigCommandChannel.class,
+						ConfigDockerServiceManagerClient.class,
+						BenchmarkLauncher.class);
 
 		try(ConfigurableApplicationContext envCtx = infrastructureBuilder.run()) {
 			try(ConfigurableApplicationContext launcherCtx = launcherBuilder.run()) {

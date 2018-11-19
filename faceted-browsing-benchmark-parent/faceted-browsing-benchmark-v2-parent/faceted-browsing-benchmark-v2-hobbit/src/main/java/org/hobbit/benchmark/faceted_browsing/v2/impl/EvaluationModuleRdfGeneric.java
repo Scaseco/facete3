@@ -1,7 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v2.impl;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.hobbit.core.component.EvaluationModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RDF-based evaluation module (based on vocabulary)
@@ -13,7 +16,9 @@ import org.hobbit.core.component.EvaluationModule;
  */
 public class EvaluationModuleRdfGeneric
 	implements EvaluationModule
-{
+{	
+	private static final Logger logger = LoggerFactory.getLogger(EvaluationModuleRdfGeneric.class);
+
 
 	@Override
 	public void init() throws Exception {
@@ -30,8 +35,11 @@ public class EvaluationModuleRdfGeneric
 
 	@Override
 	public Model summarizeEvaluation() {
-		// TODO Auto-generated method stub
-		return null;
+		Model result = ModelFactory.createDefaultModel();
+
+		logger.warn("EVALUATION IS JUST A STUB!!!");
+		
+		return result;
 	}
 }
 

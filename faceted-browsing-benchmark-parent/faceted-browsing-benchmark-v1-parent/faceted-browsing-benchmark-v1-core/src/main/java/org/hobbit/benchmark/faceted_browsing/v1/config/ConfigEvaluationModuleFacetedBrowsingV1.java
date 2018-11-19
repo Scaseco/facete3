@@ -8,7 +8,7 @@ import org.hobbit.benchmark.faceted_browsing.v1.evaluation.ChokePoints;
 import org.hobbit.core.component.EvaluationModule;
 import org.springframework.context.annotation.Bean;
 
-public class ConfigEvaluationModuleFacetedBrowsing {
+public class ConfigEvaluationModuleFacetedBrowsingV1 {
     @Bean
     public EvaluationModule evaluationModule() {
     	return new EvaluationModuleFacetedBrowsingBenchmark(
