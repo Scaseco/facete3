@@ -32,6 +32,7 @@ import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.ResourceComparator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Graph;
@@ -53,8 +54,10 @@ import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.Rename;
+import org.apache.jena.sparql.expr.E_Random;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.modify.TemplateLib;
@@ -64,13 +67,14 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sparql.util.NodeUtils;
+import org.apache.jena.util.ResourceUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.E_RandomPseudo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -442,8 +446,8 @@ public class DataQueryImpl<T extends RDFNode>
 		}		
 
 		if(randomOrder && !deterministic) {
-//			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
-			query.addOrderBy(new E_RandomPseudo(), Query.ORDER_ASCENDING);
+			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
+//			query.addOrderBy(new E_RandomPseudo(), Query.ORDER_ASCENDING);
 		}
 		
 		
@@ -504,6 +508,11 @@ public class DataQueryImpl<T extends RDFNode>
 
 		if(deterministic && randomOrder) {
 			result = result.toList().map(l -> {
+				// Always sort the collection, so that subsequent shuffle will give the same result
+				// regardless of initial order
+				Collections.sort(l, (a, b) ->
+					NodeValue.compareAlways(NodeValue.makeNode(a.asNode()), NodeValue.makeNode(b.asNode())));
+
 				Collections.shuffle(l, pseudoRandom);
 				
 				Range<Long> available = Range.closed(0l, (long)l.size());
