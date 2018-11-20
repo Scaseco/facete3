@@ -1,7 +1,5 @@
 package org.aksw.facete.v3.api;
 
-import java.util.Optional;
-
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
@@ -11,6 +9,8 @@ import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
+
+import java.util.Optional;
 
 
 /**
@@ -62,15 +62,15 @@ public interface FacetNode
 		return reverse ? bwd() : fwd();
 	}
 	
-	default FacetMultiNode walk(String p, boolean reverse) {
+	default FacetMultiNode step(String p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
-	default FacetMultiNode walk(Node p, boolean reverse) {
+	default FacetMultiNode step(Node p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 
-	default FacetMultiNode walk(Property p, boolean reverse) {
+	default FacetMultiNode step(Property p, boolean reverse) {
 		return reverse ? bwd(p) : fwd(p);
 	}
 

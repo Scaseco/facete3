@@ -52,7 +52,6 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -665,8 +664,8 @@ public class TaskGenerator {
 			Node p = fc.getPredicate();
 			Node o = fc.getValue();
 			
-			//fn.walk(p, isBwd).one().constraints().eq(o);
-			fn.walk(p, isBwd).one().constraints().range(Range.singleton(new NodeHolder(o)));
+			//fn.step(p, isBwd).one().constraints().eq(o);
+			fn.step(p, isBwd).one().constraints().range(Range.singleton(new NodeHolder(o)));
 
 			// Pick one of the facet values
 			
@@ -1216,7 +1215,7 @@ public class TaskGenerator {
 				Node p = fc.getPredicate();
 				Node o = fc.getValue();
 				
-				//fn.walk(p, isBwd).one().constraints().eq(o);
+				//fn.step(p, isBwd).one().constraints().eq(o);
 				targetFn.constraints().range(Range.singleton(new NodeHolder(o)));
 	
 				// Pick one of the facet values
