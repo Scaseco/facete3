@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.api;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -55,6 +56,9 @@ interface MultiNode {
 public interface DataQuery<T extends RDFNode> {
 	// For every predicate, list how many root root resources there are having this predicate
 	//getPredicatesAndRootCount();
+	
+	DataQuery<T> pseudoRandom(Random pseudoRandom);
+
 	
 	DataQuery<T> peek(Consumer<? super DataQuery<T>> consumer);
 	NodePath get(String attrName);

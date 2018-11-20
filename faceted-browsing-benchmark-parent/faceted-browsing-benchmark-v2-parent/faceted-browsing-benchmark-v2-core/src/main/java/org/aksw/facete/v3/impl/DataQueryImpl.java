@@ -34,7 +34,6 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.enhanced.EnhGraph;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -76,7 +75,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -117,7 +118,7 @@ public class DataQueryImpl<T extends RDFNode>
 	protected boolean sample;
 	
 	
-//	protected Random pseudoRandom;
+	protected Random pseudoRandom = null;
 
 	
 	protected Class<T> resultClass;
@@ -203,6 +204,28 @@ public class DataQueryImpl<T extends RDFNode>
 	//protected void setOffset(10);
 
 
+	/**
+	 * Setting a random number generator (rng) makes query execution deterministic:
+	 * Random effects on result sets will be processed in the client:
+	 * Randomly ordered result sets will be fully loaded into the client and shuffeled in respect
+	 * to the given rng.
+	 * 
+	 * TODO We may need extra an extra 'deterministic' attribute to indicate
+	 * whether to sort result sets - the problem is, that the same query on data loaded at different
+	 * times may yield different results. For practical purposes it rarely happens that the same query
+	 * yields different results if there were no changes in the data. But maybe it could happen
+	 * if a DB did something similar to postgres' vacuum process?
+	 * 
+	 * @param pseudoRandom
+	 * @return
+	 */
+	@Override
+	public DataQuery<T> pseudoRandom(Random pseudoRandom) {
+		this.pseudoRandom = pseudoRandom;
+		return this;
+	}
+	
+	
 	@Override
 	public Concept fetchPredicates() {
 		// TODO Auto-generated method stub
@@ -368,6 +391,9 @@ public class DataQueryImpl<T extends RDFNode>
 			effectivePattern = ElementUtils.groupIfNeeded(Iterables.concat(Collections.singleton(effectivePattern), directFilters));
 		}
 		
+		
+		boolean deterministic = pseudoRandom != null;
+
 		if(sample) {
 			Set<Var> allVars = new LinkedHashSet<>();
 			allVars.addAll(vars);
@@ -389,7 +415,10 @@ public class DataQueryImpl<T extends RDFNode>
 			inner.setQueryPattern(innerE);
 			Expr agg = inner.allocAggregate(new AggSample(new ExprVar(innerRootVar)));
 			inner.getProject().add((Var)rootVar, agg);
-			QueryUtils.applySlice(inner, offset, limit, false);
+			
+			if(!(randomOrder && deterministic)) {
+				QueryUtils.applySlice(inner, offset, limit, false);
+			}
 
 			Element e = ElementUtils.groupIfNeeded(new ElementSubQuery(inner), effectivePattern);
 						
@@ -400,14 +429,19 @@ public class DataQueryImpl<T extends RDFNode>
 			query.setDistinct(true);
 	
 			query.setQueryPattern(effectivePattern);
-			QueryUtils.applySlice(query, offset, limit, false);
+			
+			if(!(randomOrder && deterministic)) {
+				QueryUtils.applySlice(query, offset, limit, false);
+			}
 		}
 
+		
+		
 		if(ordered) {
 			query.addOrderBy(new ExprVar(rootVar), Query.ORDER_ASCENDING);
 		}		
 
-		if(randomOrder) {
+		if(randomOrder && !deterministic) {
 //			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
 			query.addOrderBy(new E_RandomPseudo(), Query.ORDER_ASCENDING);
 		}
@@ -432,6 +466,8 @@ public class DataQueryImpl<T extends RDFNode>
 		Node rootVar = e.getKey();
 		Query query = e.getValue();
 		
+		// PseudoRandomness affects:
+		// limit, offset, orderByRandom, ... what else?
 		
 		Flowable<T> result = ReactiveSparqlUtils
 			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
@@ -462,6 +498,25 @@ public class DataQueryImpl<T extends RDFNode>
 				return r;
 			})
 			.map(r -> r.as(resultClass));
+		
+		
+		boolean deterministic = pseudoRandom != null;
+
+		if(deterministic && randomOrder) {
+			result = result.toList().map(l -> {
+				Collections.shuffle(l, pseudoRandom);
+				
+				Range<Long> available = Range.closed(0l, (long)l.size());
+				Range<Long> requested = QueryUtils.toRange(offset, limit);
+				Range<Long> effective = available.intersection(requested);
+				long o = effective.lowerEndpoint();
+				long size = effective.upperEndpoint() - o;
+				
+				List<T> subList = l.subList((int)o, (int)size);
+				
+				return subList;
+			}).toFlowable().flatMap(Flowable::fromIterable);
+		}
 		
 		return result;
 	}

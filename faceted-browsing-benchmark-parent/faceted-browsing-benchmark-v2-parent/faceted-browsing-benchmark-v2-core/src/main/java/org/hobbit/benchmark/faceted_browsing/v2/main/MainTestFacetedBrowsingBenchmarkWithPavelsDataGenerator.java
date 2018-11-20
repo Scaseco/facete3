@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -27,7 +28,6 @@ import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -45,7 +45,6 @@ import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
-import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
@@ -58,6 +57,8 @@ import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.service.docker.DockerService;
 import org.hobbit.core.service.docker.DockerServiceFactory;
 import org.hobbit.core.service.docker.ServiceSpringApplicationBuilder;
+import org.hobbit.core.utils.ByteChannelUtils;
+import org.hobbit.core.utils.PublisherUtils;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +94,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		testPathFinder();
+		//testPathFinder();
+		performTestRun();
 	}
 	
 	public static void testPathFinder() {
@@ -143,8 +145,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 		
 		List<SimplePath> paths  = pathFinder.createSearch(
-				Concept.create("?src ssn:hasValue ?o", "src", prefixes),
-				Concept.create("?tgt a lived:CurrentObservation", "tgt", prefixes))
+				Concept.create("?src <http://www.w3.org/ns/ssn/#hasValue> ?o", "src", prefixes),
+				Concept.create("?tgt a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", "tgt", prefixes))
 				.setMaxPathLength(7)
 				.exec()
 				.timeout(10, TimeUnit.SECONDS)
@@ -233,6 +235,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 //						8890);
 		
 				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
+//						dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
 						dsf.create("tenforce/virtuoso",
 								ImmutableMap.<String, String>builder()
 								.put("SPARQL_UPDATE", "true")
@@ -248,6 +251,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 				try {
 					// Start up the SPARQL endpoint
 					dbService.startAsync().awaitRunning(60, TimeUnit.SECONDS);
+
 					String host = dbService.getContainerId();
 					String sparqlApiBase = "http://" + host + ":8890/";
 					String sparqlEndpoint = sparqlApiBase + "sparql";
@@ -309,7 +313,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							//quadsInserter.onNext(part);
 							conn.update(UpdateRequestUtils.createUpdateRequest(part, null));
 						}
-					}						
+					}		
+					
 					//conn.load("http://linkedgeodata.org", "/tmp/hobbit-lgd-residential-buildings-20180719-core.nt");
 					
 					
@@ -417,13 +422,22 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 						// Start the data generator
 						logger.info("DG starting ...");
 						try {
+							
+
+							Flowable<ByteBuffer> commandReceiver = (Flowable<ByteBuffer>)tgService.getAppBuilder().context().getBean("commandReceiver");	
+
+							CompletableFuture<?> dataGeneratorReadyFuture = PublisherUtils.triggerOnMessage(commandReceiver,
+					                ByteChannelUtils.firstByteEquals(Commands.DATA_GENERATOR_READY_SIGNAL));
+							
+							
+							// Wait for container to start
 							dgService.startAsync().awaitRunning(10, TimeUnit.SECONDS);
+							logger.info("DG container started; waiting for service to indicate readiness");
 							
-							// We need to wait for the DG service to be ready
-							// TODO Wait for the event on the command channel
+							// Wait for DG ready signal
+							dataGeneratorReadyFuture.get(3, TimeUnit.MINUTES);
+							logger.info("DG service started");
 							
-							Thread.sleep(60000);
-							logger.info("DG started");
 										
 							// Obtain the command sender from the spring context ...
 							Subscriber<ByteBuffer> commandSender = (Subscriber<ByteBuffer>)tgService.getAppBuilder().context().getBean("commandSender");	
@@ -432,7 +446,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 					        commandSender.onNext(ByteBuffer.wrap(new byte[]{Commands.DATA_GENERATOR_START_SIGNAL}));
 												        
 							logger.info("DG termination awaited");
-							dgService.awaitTerminated(5, TimeUnit.MINUTES);
+							dgService.awaitTerminated(20, TimeUnit.MINUTES);
 
 							
 
