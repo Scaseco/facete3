@@ -1,18 +1,30 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
+import com.google.common.collect.Range;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.jena_sparql_api.utils.NodeHolder;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestFacetedQuery2 {
 	
@@ -32,14 +44,63 @@ public class TestFacetedQuery2 {
 		//FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
 	}
 
+
+	@Test
+	public void testRangeConstraint() {
+		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
+		//
+		final FacetNode facetCountDataQuery = fq.root()
+				.fwd("http://www.example.org/population")
+				.one()
+				.constraints()
+//				.gt(NodeValue.makeInteger(50000).asNode())
+				    .range(Range.closed(
+						new NodeHolder(NodeValue.makeInteger(50000).asNode()),
+						new NodeHolder(NodeValue.makeInteger(80000000).asNode())))
+				.end()
+				.parent()
+				;
+
+		final DataQuery<?> valueQuery = ((FacetNodeImpl) facetCountDataQuery).createValueQuery(false);
+		final Map.Entry<Node, Query> x = valueQuery.toConstructQuery();
+
+		assertEquals(x.getValue().toString() , "SELECT DISTINCT  ?v_1\n" +
+				"WHERE\n" +
+				"  { { ?v_1  <http://www.example.org/population>  ?v_2\n" +
+				"      FILTER ( ?v_2 <= 80000000 )\n" +
+				"      FILTER ( ?v_2 >= 50000 )\n" +
+				"    }\n" +
+				"    ?v_1  ?p  ?o\n" +
+				"  }\n");
+	}
+
+	@Test
+	public void testConstraints() {
+		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
+		//
+		final DataQuery<FacetCount> facetCountDataQuery = fq.root()
+				.constraints()
+				    .eqIri("http://www.example.org/Leipzig")
+				    .eqIri("http://www.example.org/Germany")
+				.end()
+
+				//.fwd("http://www.example.org/contains")
+				//.one()
+				.fwd().facetCounts();
+		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
+
+		assertEquals( facetCounts.get(0).getDistinctValueCount().getCount() ,  2 );
+	}
+
 	@Test
 	public void testFacetCounts() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
 		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
-		assert facetCounts.size() == 1;
-		assert facetCounts.get(0).getDistinctValueCount().getCount() == 1;
+
+		assertEquals( facetCounts.size() , 1 );
+		assertEquals( facetCounts.get(0).getDistinctValueCount().getCount() , 1 );
 	}
 	
 }
