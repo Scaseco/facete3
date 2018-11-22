@@ -1,30 +1,22 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
+import com.google.common.collect.Range;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_GreaterThan;
-import org.apache.jena.sparql.expr.E_GreaterThanOrEqual;
-import org.apache.jena.sparql.expr.E_LessThan;
-import org.apache.jena.sparql.expr.E_LessThanOrEqual;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
+import java.util.Collection;
+import java.util.Set;
 
 public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	implements ConstraintFacade<B>
@@ -80,13 +72,13 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	@Override
 	public ConstraintFacade<B> gt(Node node) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public ConstraintFacade<B> neq(Node node) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
