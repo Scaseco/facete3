@@ -98,8 +98,9 @@ public class TaskGenerator {
 	protected RDFConnection conn;
 	protected ConceptPathFinder conceptPathFinder;
 	protected Random rand;
+	protected Random pseudoRandom;
 
-	//protected RdfChangeTracker state;
+//protected RdfChangeTracker state;
 
 	protected RdfChangeTrackerWrapper changeTracker;
 
@@ -380,7 +381,7 @@ public class TaskGenerator {
 		
 //		addAction(cpToAction, "cp1", TaskGenerator::applyCp1);
 		
-		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp1)));
+		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp1)));
 //		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
@@ -634,7 +635,7 @@ public class TaskGenerator {
 	 * 
 	 * [done]
 	 */
-	public static boolean applyCp1(FacetNode fn) {
+	public boolean applyCp1(FacetNode fn) {
 
 		// Initially assume failure
 		boolean result = false;
@@ -649,6 +650,7 @@ public class TaskGenerator {
 				.nonConstrainedFacetValueCounts()
 				//.sample() TODO We should try whether using sample() in addition makes the process faster
 				.randomOrder()
+				.pseudoRandom(pseudoRandom)
 				.limit(1)
 				.exec()
 				.firstElement()
@@ -1200,6 +1202,7 @@ public class TaskGenerator {
 				.only(parent.reachingProperty())
 				//.filter(new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(parent.reachingProperty().asNode())))
 				.randomOrder()
+				.pseudoRandom(pseudoRandom)
 				.limit(1)
 				.exec()
 				.firstElement()
@@ -1274,16 +1277,19 @@ public class TaskGenerator {
 //		}
 		
 		//fq.root().out(property).constraints().eq(value).end().availableValues().exec()	
-	
-	
+
+	public TaskGenerator setPseudoRandom(Random pseudoRandom) {
+		this.pseudoRandom = pseudoRandom;
+		return this;
+	}
+
+	public Random getPseudoRandom() {
+		return pseudoRandom;
+	}
+
 	public void simulateNavigation() {
 		// perform an entity type switch
 		// -> 
-		
-		
-		
-		
-		
 	}
 	
 }
