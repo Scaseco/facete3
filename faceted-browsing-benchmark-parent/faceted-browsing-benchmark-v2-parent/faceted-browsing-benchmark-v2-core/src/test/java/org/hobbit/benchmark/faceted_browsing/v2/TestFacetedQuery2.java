@@ -18,11 +18,13 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,6 +44,34 @@ public class TestFacetedQuery2 {
 		fq = new FacetedQueryImpl(facetedQuery, null, conn);
 
 		//FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
+	}
+
+	@Test
+	public void testCp1() {
+		final TaskGenerator taskGenerator = new TaskGenerator(null, null);
+		taskGenerator.setPseudoRandom(new Random(1234l));
+		final FacetNode node = fq.root();
+		final Query v1 = ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue();
+		assertEquals( "{ ?v_1  ?p  ?o }" , v1.getQueryPattern().toString() );
+
+		//System.out.println("---");
+		taskGenerator.applyCp1(node);
+
+		assertEquals( "{ ?v_1  <http://www.example.org/population>  500000\n" +
+						"  { ?v_1  ?p  ?o }\n" +
+						"}" ,
+				((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString()
+		);
+
+		//System.out.println("---");
+		taskGenerator.applyCp1(node);
+		assertEquals( "{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  \"Leipzig\" ;\n" +
+						"        <http://www.example.org/population>  500000\n" +
+						"  { ?v_1  ?p  ?o }\n" +
+						"}" ,
+				((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString()
+		);
+
 	}
 
 
@@ -64,14 +94,15 @@ public class TestFacetedQuery2 {
 		final DataQuery<?> valueQuery = ((FacetNodeImpl) facetCountDataQuery).createValueQuery(false);
 		final Map.Entry<Node, Query> x = valueQuery.toConstructQuery();
 
-		assertEquals(x.getValue().toString() , "SELECT DISTINCT  ?v_1\n" +
+		assertEquals( "SELECT DISTINCT  ?v_1\n" +
 				"WHERE\n" +
 				"  { { ?v_1  <http://www.example.org/population>  ?v_2\n" +
 				"      FILTER ( ?v_2 <= 80000000 )\n" +
 				"      FILTER ( ?v_2 >= 50000 )\n" +
 				"    }\n" +
 				"    ?v_1  ?p  ?o\n" +
-				"  }\n");
+				"  }\n" ,
+				x.getValue().toString() );
 	}
 
 	@Test
@@ -89,7 +120,7 @@ public class TestFacetedQuery2 {
 				.fwd().facetCounts();
 		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
 
-		assertEquals( facetCounts.get(0).getDistinctValueCount().getCount() ,  2 );
+		assertEquals( 2 , facetCounts.get(0).getDistinctValueCount().getCount() );
 	}
 
 	@Test
@@ -99,8 +130,8 @@ public class TestFacetedQuery2 {
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
 		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
 
-		assertEquals( facetCounts.size() , 1 );
-		assertEquals( facetCounts.get(0).getDistinctValueCount().getCount() , 1 );
+		assertEquals( 1 , facetCounts.size() );
+		assertEquals( 1 , facetCounts.get(0).getDistinctValueCount().getCount() );
 	}
 	
 }
