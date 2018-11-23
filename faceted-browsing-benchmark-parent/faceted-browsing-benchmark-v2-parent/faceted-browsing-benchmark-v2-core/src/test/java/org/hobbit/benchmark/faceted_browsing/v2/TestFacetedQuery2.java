@@ -12,7 +12,9 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
@@ -58,8 +60,9 @@ public class TestFacetedQuery2 {
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
 		//new Concept()
-		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), Concept.TOP);
-		pathSearch.setMaxPathLength(5);
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+		pathSearch.setMaxPathLength(10);
 		final List<SimplePath> paths = pathSearch.exec().toList().blockingGet();
 
 		final int[] i = {1};
