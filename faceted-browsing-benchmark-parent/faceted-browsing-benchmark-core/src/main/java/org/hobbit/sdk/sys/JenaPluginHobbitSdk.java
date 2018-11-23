@@ -23,7 +23,7 @@ public class JenaPluginHobbitSdk
 		init(BuiltinPersonalities.model);		
 	}
 	
-	public static void init(Personality<RDFNode> p) {
+	public static void init(Personality<RDFNode> p) {		
     	p.add(BenchmarkConfig.class, new SimpleImplementation(BenchmarkConfigImpl::new));
     }
 }

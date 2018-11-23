@@ -43,22 +43,25 @@ public class TestDockerSpringBootAbstraction {
 
         {
 	        DockerService service = serviceFactory.create("myFirstImage", Collections.singletonMap("MSG", "World1"));
-	        service.startAsync().awaitRunning();
-	        service.stopAsync().awaitTerminated();        
+//	        service.startAsync().awaitRunning();
+//	        service.stopAsync().awaitTerminated();        
+	        service.startAsync().awaitTerminated();
 	        System.out.println("Service had id: " + service.getContainerId());
         }
 
         {
 	        DockerService service = serviceFactory.create("myFirstImage", Collections.singletonMap("MSG", "World2"));
-	        service.startAsync().awaitRunning();
-	        service.stopAsync().awaitTerminated();        
+//	        service.startAsync().awaitRunning();
+//	        service.stopAsync().awaitTerminated();        
+	        service.startAsync().awaitTerminated();
 	        System.out.println("Service had id: " + service.getContainerId());
         }
 
         {
 	        DockerService service = serviceFactory.create("mySecondImage", Collections.singletonMap("MSG", "World3"));
-	        service.startAsync().awaitRunning();
-	        service.stopAsync().awaitTerminated();        
+//	        service.startAsync().awaitRunning();
+//	        service.stopAsync().awaitTerminated();        
+	        service.startAsync().awaitTerminated();
 	        System.out.println("Service had id: " + service.getContainerId());
         }
 	}
