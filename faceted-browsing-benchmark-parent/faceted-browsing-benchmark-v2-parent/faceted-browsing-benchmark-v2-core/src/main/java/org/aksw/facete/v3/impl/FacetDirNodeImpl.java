@@ -1,21 +1,12 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.Map;
-
-import org.aksw.facete.v3.api.DataQuery;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetDirNode;
-import org.aksw.facete.v3.api.FacetMultiNode;
-import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.FacetedQuery;
+import com.google.common.collect.ImmutableList;
+import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
-import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.concepts.*;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
@@ -31,7 +22,7 @@ import org.apache.jena.sparql.syntax.Template;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Map;
 
 public class FacetDirNodeImpl
 	implements FacetDirNode
@@ -165,7 +156,7 @@ public class FacetDirNodeImpl
 	@Override
 	public FacetedQuery getQuery() {
 		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
