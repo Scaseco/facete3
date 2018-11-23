@@ -8,6 +8,10 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
+import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -25,6 +29,7 @@ import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class TestFacetedQuery2 {
 	
@@ -49,8 +54,41 @@ public class TestFacetedQuery2 {
 	}
 
 	@Test
+	public void testPathFinder() {
+		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
+		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
+		//new Concept()
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), Concept.TOP);
+		pathSearch.setMaxPathLength(5);
+		final List<SimplePath> paths = pathSearch.exec().toList().blockingGet();
+
+		final int[] i = {1};
+		paths.forEach(path -> {
+			System.out.println("Path " + i[0] + ": " + path.toPathString());
+			i[0]++;
+		});
+		System.out.println(paths);
+	}
+
+	@Test
+	public void testCp3() {
+		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
+		taskGenerator.setPseudoRandom(new Random(1234l));
+		final FacetNode node = fq.root();
+
+		assertEquals( "{ ?v_1  ?p  ?o }" ,
+				getQueryPattern(node) );
+
+		taskGenerator.applyCp3(node);
+
+		assertNotEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+		System.out.println(getQueryPattern(node));
+
+	}
+
+	@Test
 	public void testCp2() {
-		final TaskGenerator taskGenerator = new TaskGenerator(null, null);
+		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -78,7 +116,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp1() {
-		final TaskGenerator taskGenerator = new TaskGenerator(null, null);
+		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 		final Query v1 = ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue();
