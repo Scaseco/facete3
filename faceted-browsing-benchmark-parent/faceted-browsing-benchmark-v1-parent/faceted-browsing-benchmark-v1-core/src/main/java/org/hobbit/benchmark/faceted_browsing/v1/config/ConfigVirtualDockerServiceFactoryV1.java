@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Bean;
 public class ConfigVirtualDockerServiceFactoryV1 {
 
 
-	public static DockerServiceFactory<?> getDockerServiceFactoryOverrides(BenchmarkConfig config) { 
+	public static Map<String, Supplier<SpringApplicationBuilder>> getDockerServiceFactoryOverrides(BenchmarkConfig config) { 
 		//Function<String, SpringApplicationBuilder> baseConfigFactory = ConfigVirtualDockerServiceFactory::createComponentBaseConfig;
 
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
@@ -110,15 +110,18 @@ public class ConfigVirtualDockerServiceFactoryV1 {
 
         // NOTE The sa is started by the platform
 		
-		DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
+        return map;
+		//DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
 		
-		return result;	
+		//return result;	
 	}
 
 	@Bean
 	//public Map<String, Supplier<SpringApplicationBuilder>> dockerServiceFactoryOverrides() {
 	public DockerServiceFactory<?> dockerServiceFactoryOverrides() {
-		DockerServiceFactory<?> result = ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config);
+		Map<String, Supplier<SpringApplicationBuilder>> map = ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config);
+
+		DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
 		return result;
 	}
 	

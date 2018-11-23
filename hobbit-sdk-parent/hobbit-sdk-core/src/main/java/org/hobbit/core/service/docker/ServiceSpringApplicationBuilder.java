@@ -1,5 +1,10 @@
 package org.hobbit.core.service.docker;
 
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,4 +119,17 @@ public class ServiceSpringApplicationBuilder
 //		//ctx = appBuilder.run(args);
 //		logger.info("ServiceSpringApplicationBuilder::startUp [end] " + appName + ", builderHash: " + appBuilder.hashCode());
 //	}
+	
+	
+	public static Map<String, DockerServiceBuilderFactory<?>> convert(Map<String, Supplier<SpringApplicationBuilder>> imageToAppBuilderSupplier) {
+
+		Map<String, DockerServiceBuilderFactory<?>> result = imageToAppBuilderSupplier.entrySet().stream()
+				.collect(Collectors.toMap(
+						Entry::getKey,
+						e -> () -> DockerServiceBuilderJsonDelegate.create(
+								new DockerServiceFactorySpringApplicationBuilder(imageToAppBuilderSupplier)::create).setImageName(e.getKey())));
+	
+		return result;
+	}
+
 }

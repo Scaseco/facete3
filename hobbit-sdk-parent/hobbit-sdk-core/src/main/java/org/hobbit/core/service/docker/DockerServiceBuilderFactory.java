@@ -1,6 +1,9 @@
 package org.hobbit.core.service.docker;
 
+import java.util.Map;
 import java.util.function.Supplier;
+
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
  * A convenience interface which can be used e.g. in dependency injection.
@@ -31,5 +34,4 @@ public interface DockerServiceBuilderFactory<B extends DockerServiceBuilder<? ex
 
 		return result;
 	}
-
 }

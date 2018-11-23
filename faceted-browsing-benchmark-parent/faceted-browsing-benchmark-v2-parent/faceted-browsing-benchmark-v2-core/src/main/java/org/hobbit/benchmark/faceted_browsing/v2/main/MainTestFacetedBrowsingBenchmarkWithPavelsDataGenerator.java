@@ -199,7 +199,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		
 		System.out.println(excerptQuery);
 
-		try (DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, Collections.emptyMap(), Collections.emptySet())) {
+		boolean hostMode = true;
+		try (DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(hostMode, Collections.emptyMap(), Collections.emptySet())) {
 			// Create a session id (used in naming of the amqp communication
 			// channels to avoid conflicts between different sessions)
 			String sessionId = "testsession" + "." + RabbitMqFlows.idGenerator.get();
@@ -234,7 +235,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 //								.build()),
 //						8890);
 		
-				DockerService dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(
+				DockerService dbService =
 //						dsf.create("git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/linkedgeodata-20180719-germany-building",
 						dsf.create("tenforce/virtuoso",
 								ImmutableMap.<String, String>builder()
@@ -245,15 +246,17 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 								.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
 								.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
 								.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
-								.build()),
-						8890);
-				
+								.build());
+
+				dbService = ComponentUtils.wrapSparqlServiceWithHealthCheck(dbService, 8890);
+
 				try {
+					int port = 8890;
 					// Start up the SPARQL endpoint
 					dbService.startAsync().awaitRunning(60, TimeUnit.SECONDS);
 
 					String host = dbService.getContainerId();
-					String sparqlApiBase = "http://" + host + ":8890/";
+					String sparqlApiBase = "http://" + host + ":" + port + "/";
 					String sparqlEndpoint = sparqlApiBase + "sparql";
 					
 					logger.info("Sparql endpoint online at " + sparqlEndpoint);
@@ -261,24 +264,24 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 					// Configure a connection to the SPARQL endpoint
 					//RDFConnection coreConn = RDFConnectionFactory.connect(sparqlEndpoint);
 					
-					
-					RDFConnection coreConn = VirtuosoSystemService.connectVirtuoso(host, 8890, 1111);
-
-					RDFConnection conn =
-						new RDFConnectionModular(new SparqlQueryConnectionJsa(
-								FluentQueryExecutionFactory
-									.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
-									.config()
-										.withPostProcessor(x -> {
-											QueryExecution qe = ((QueryExecutionDecorator)x).getDecoratee();
-											((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-										})
-										.withClientSideConstruct()
-										.withDatasetDescription(DatasetDescriptionUtils.createDefaultGraph("http://linkedgeodata.org"))
-									.end()
-									.create()
-									), coreConn, coreConn);
-
+					//if(hostMode) {
+						
+						RDFConnection coreConn = VirtuosoSystemService.connectVirtuoso(host, port, 1111);
+	
+						RDFConnection conn =
+							new RDFConnectionModular(new SparqlQueryConnectionJsa(
+									FluentQueryExecutionFactory
+										.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
+										.config()
+											.withPostProcessor(x -> {
+												QueryExecution qe = ((QueryExecutionDecorator)x).getDecoratee();
+												((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
+											})
+											.withClientSideConstruct()
+											.withDatasetDescription(DatasetDescriptionUtils.createDefaultGraph("http://linkedgeodata.org"))
+										.end()
+										.create()
+										), coreConn, coreConn);
 					// Set up a flow that transforms SPARQL inseCollection<E>s of a collection
 					// of quads into correspondingQuadate requests
 					PublishProcessor<Collection<Quad>> quadsInserter = PublishProcessor.create();
@@ -298,8 +301,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 								 logger.warn("Failed request", e);
 							}
 						}, t -> logger.warn("Failed update: " + t));
-			
 
+//					boolean loadData = false;
 					boolean loadData = true;
 					if(loadData) {
 						Model src = RDFDataMgr.loadModel("/home/raven/Projects/Data/Hobbit/hobbit-lgd-residential-buildings-20180719-core-with-labels.nt");
@@ -308,24 +311,29 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 						
 						List<Quad> qs = Lists.newArrayList(d.asDatasetGraph().find());
 						List<List<Quad>> partitions = Lists.partition(qs, 1000);
+						System.out.println("Loading data");
 						for(List<Quad> part : partitions) {
+							//System.out.println("Partition...");
 							//System.out.println("INSERTING:\n" + part);
 							//quadsInserter.onNext(part);
 							conn.update(UpdateRequestUtils.createUpdateRequest(part, null));
 						}
+						System.out.println("Data loading finished");
 					}		
 					
 					//conn.load("http://linkedgeodata.org", "/tmp/hobbit-lgd-residential-buildings-20180719-core.nt");
 					
-					
+
+					if(false) {
 					Stopwatch sw = Stopwatch.createStarted();
 					Model ex = conn.query(excerptQuery).execConstruct();
 					long size = ex.size();
 					//int size = ResultSetFormatter.consume(conn.query(excerptQuery).execSelect());
 					sw.stop();
 					System.out.println("Excerpt with " + size + " triples created in " + sw.elapsed(TimeUnit.SECONDS) + "s");
-					
-					
+					}
+					//}
+
 					
 //					if(true) { throw new RuntimeException("Aborting"); }
 
@@ -397,18 +405,18 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							});
 
 							
-							if(false) {
-							Model m = ModelFactory.createDefaultModel();
-							RDFDataMgr.read(m, new ByteArrayInputStream(msg.array()), null, Lang.NTRIPLES);
-							System.out.println("Got model with " + m.size() + " triples");
-				
-							// Convert the model to quads
-							Dataset ds = DatasetFactory.createGeneral();
-							ds.addNamedModel("http://www.example.org/", m);
-							
-							List<Quad> quads = Lists.newArrayList(ds.asDatasetGraph().find());
-							quadsInserter.onNext(quads);
-							}
+//							if(false) {
+//							Model m = ModelFactory.createDefaultModel();
+//							RDFDataMgr.read(m, new ByteArrayInputStream(msg.array()), null, Lang.NTRIPLES);
+//							System.out.println("Got model with " + m.size() + " triples");
+//				
+//							// Convert the model to quads
+//							Dataset ds = DatasetFactory.createGeneral();
+//							ds.addNamedModel("http://www.example.org/", m);
+//							
+//							List<Quad> quads = Lists.newArrayList(ds.asDatasetGraph().find());
+//							quadsInserter.onNext(quads);
+//							}
 
 						}, e -> {
 							throw new RuntimeException(e);
@@ -435,7 +443,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							logger.info("DG container started; waiting for service to indicate readiness");
 							
 							// Wait for DG ready signal
-							dataGeneratorReadyFuture.get(3, TimeUnit.MINUTES);
+							dataGeneratorReadyFuture.get(10, TimeUnit.MINUTES);
 							logger.info("DG service started");
 							
 										
@@ -450,20 +458,20 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 							
 
-							if(false) {
-							TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
-							Callable<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
-
-							for(int i = 0; i < 10; ++i) {
-								SparqlTaskResource task = querySupplier.call();
-								if(task != null) {
-									Query query = SparqlTaskResource.parse(task).getAsQueryStmt().getQuery();
-									try(QueryExecution qe = conn.query(query)) {
-										System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-									}
-								}
-							}
-							}
+//							if(false) {
+//							TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
+//							Callable<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
+//
+//							for(int i = 0; i < 10; ++i) {
+//								SparqlTaskResource task = querySupplier.call();
+//								if(task != null) {
+//									Query query = SparqlTaskResource.parse(task).getAsQueryStmt().getQuery();
+//									try(QueryExecution qe = conn.query(query)) {
+//										System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+//									}
+//								}
+//							}
+//							}
 							
 							System.out.println("Done - press a key to stop services");
 							System.in.read();

@@ -47,6 +47,7 @@ import org.hobbit.core.component.DataGeneratorComponentBase;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.DockerServiceFactorySpringApplicationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +68,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(
 				true,
 				ImmutableMap.<String, String>builder().build(),
-				ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config)
+				new DockerServiceFactorySpringApplicationBuilder(ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config))
 		);
 		
 		DockerServiceBuilderFactory<?> dsbf = () -> DockerServiceBuilderJsonDelegate.create(dsf::create);
