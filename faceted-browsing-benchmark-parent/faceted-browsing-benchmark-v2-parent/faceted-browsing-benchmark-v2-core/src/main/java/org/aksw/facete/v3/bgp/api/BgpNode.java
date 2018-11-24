@@ -1,11 +1,5 @@
 package org.aksw.facete.v3.bgp.api;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
@@ -17,12 +11,10 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.path.P_Link;
-import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.sparql.path.P_ReverseLink;
-import org.apache.jena.sparql.path.P_Seq;
-import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.*;
 import org.apache.jena.sparql.syntax.ElementGroup;
+
+import java.util.*;
 
 public interface BgpNode
 	extends Resource
@@ -86,7 +78,7 @@ public interface BgpNode
 			P_Link link = (P_Link)path;
 			result = fwd(link.getNode()).one();
 		} else if(path instanceof P_ReverseLink) {
-			P_Link reverseLink = (P_Link)path;
+			P_ReverseLink reverseLink = (P_ReverseLink)path;
 			result = bwd(reverseLink.getNode()).one();
 		} else {
 			throw new IllegalArgumentException("Unsupported path type " + path + " " + Optional.ofNullable(path).map(Object::getClass).orElse(null));

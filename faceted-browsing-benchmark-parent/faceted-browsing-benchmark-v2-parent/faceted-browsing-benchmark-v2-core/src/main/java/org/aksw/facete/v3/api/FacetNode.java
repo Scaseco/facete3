@@ -86,7 +86,7 @@ public interface FacetNode
 			P_Link link = (P_Link)path;
 			result = fwd(link.getNode()).one();
 		} else if(path instanceof P_ReverseLink) {
-			P_Link reverseLink = (P_Link)path;
+			P_ReverseLink reverseLink = (P_ReverseLink)path;
 			result = bwd(reverseLink.getNode()).one();
 		} else {
 			throw new IllegalArgumentException("Unsupported path type " + path + " " + Optional.ofNullable(path).map(Object::getClass).orElse(null));
