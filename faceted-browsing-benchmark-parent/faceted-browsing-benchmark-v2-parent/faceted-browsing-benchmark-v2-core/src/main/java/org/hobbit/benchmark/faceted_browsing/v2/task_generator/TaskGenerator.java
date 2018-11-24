@@ -67,6 +67,7 @@ import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.util.ResourceUtils;
@@ -679,11 +680,11 @@ public class TaskGenerator {
 	 * <p>
 	 * [todo verify]
 	 */
-	public static boolean applyCp2(FacetNode fn) {
+	public boolean applyCp2(FacetNode fn) {
 		boolean result = false;
 		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 
-		Node node = fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom).sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
 		if (node != null) {
 			fn.fwd(node).one().constraints().exists();
 
@@ -795,8 +796,8 @@ public class TaskGenerator {
 	public static List<SimplePath> findPathsToResourcesWithNumericProperties(
 			ConceptPathFinder conceptPathFinder,
 			FacetNode fn,
-			org.apache.jena.sparql.path.Path pathPattern,
-			List<SetSummary> numericProperties) {
+			Path pathPattern,
+			int pathLength, List<SetSummary> numericProperties) {
 
 		//SparqlQueryConnection conn = fn.query().connection();
 
@@ -819,6 +820,7 @@ public class TaskGenerator {
 //				100);
 
 		List<SimplePath> paths = conceptPathFinder.createSearch(valuesConcept, numericValuesConcept)
+				.setMaxPathLength(pathLength)
 				.exec().toList().blockingGet();
 
 		return paths;
@@ -845,6 +847,7 @@ public class TaskGenerator {
 				conceptPathFinder,
 				fn,
 				pathPattern,
+				pathLength,
 				numericProperties);
 		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
 
@@ -899,7 +902,7 @@ public class TaskGenerator {
 				conceptPathFinder,
 				fn,
 				pathPattern,
-				numericProperties);
+				pathLength, numericProperties);
 
 		FacetNode target = null;
 		if (!paths.isEmpty()) {
@@ -958,7 +961,7 @@ public class TaskGenerator {
 		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(
 				conceptPathFinder,
 				facetNode,
-				1,
+				maxPathLength,
 				pathPattern,
 				numericProperties);
 		if (!cands.isEmpty()) {
