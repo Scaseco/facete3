@@ -62,7 +62,8 @@ public class TestFacetedQuery2 {
 		//new Concept()
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), targetConcept);
-		pathSearch.setMaxPathLength(10);
+
+		pathSearch.setMaxPathLength(7);
 		final List<SimplePath> paths = pathSearch.exec().toList().blockingGet();
 
 		final int[] i = {1};
@@ -71,6 +72,22 @@ public class TestFacetedQuery2 {
 			i[0]++;
 		});
 		System.out.println(paths);
+	}
+
+	@Test
+	public void testCp14() {
+		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
+		taskGenerator.setPseudoRandom(new Random(1234l));
+		final FacetNode node = fq.root();
+
+		assertEquals( "{ ?v_1  ?p  ?o }" ,
+				getQueryPattern(node) );
+
+		final boolean b = taskGenerator.applyCp14(node);
+		System.out.println("<<<|"+getQueryPattern(node)+"|>>>" + b);
+
+		final boolean c = taskGenerator.applyCp14(node);
+		System.out.println("<<<|"+getQueryPattern(node)+"|>>>" + c);
 	}
 
 	@Test
