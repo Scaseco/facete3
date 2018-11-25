@@ -133,41 +133,20 @@ public class TestFacetedQuery2 {
 
 		long i;
 		final String[] solutions = {
-				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-						"    ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-						"          <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
-						"    FILTER ( ( ?v_4 = 33 ) || ( ?v_4 = 10 ) )\n" +
-						"  }\n" +
-						"  ?v_1  ?p  ?o\n" +
-						"}",
-
-				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-						"    ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-						"          <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
-						"    FILTER ( ( ?v_4 = 10 ) || ( ?v_4 <= 60 ) )\n" +
-						"    FILTER ( ( ?v_4 >= 33 ) || ( ?v_4 = 10 ) )\n" +
-						"  }\n" +
-						"  ?v_1  ?p  ?o\n" +
-						"}",
-
-				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-						"    ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-						"          <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
-						"    FILTER ( ( ?v_4 = 10 ) || ( ?v_4 = 60 ) )\n" +
-						"  }\n" +
-						"  ?v_1  ?p  ?o\n" +
+				"{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+						"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+						"        <http://xmlns.com/foaf/0.1/age>  10 .\n" +
+						"  ?v_5  <http://www.example.org/mayor>  ?v_1 ;\n" +
+						"        <http://www.example.org/population>  500000\n" +
+						"  { ?v_1  ?p  ?o }\n" +
 						"}",
 		};
-		for (i = 0; i < 123; ++i) {
-			taskGenerator.setRandom(new Random(i));
-			final boolean c = taskGenerator.applyCp14(node);
-			System.out.println(i);
-			final String qp = getQueryPattern(node);
-			final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));
-			assertEquals( ok ? qp : ""  , qp );
-			System.out.println("r=" + c);
-			changeTracker.discardChanges();
-		}
+		taskGenerator.setRandom(new Random(6399312698163894396L));
+		final boolean c = taskGenerator.applyCp14(node);
+		final String qp = getQueryPattern(node);
+		final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));
+		assertEquals( ok ? qp : ""  , qp );
+		changeTracker.discardChanges();
 	}
 
 	@Test
