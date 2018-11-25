@@ -985,7 +985,11 @@ public class TaskGenerator {
 			// Select candidates, thereby using the sum of the value counts as weights
 			Map<FacetNode, Long> candToWeight =
 					cands.entrySet().stream()
-							.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().values().stream().mapToLong(x -> x).sum()));
+							.collect(Collectors.toMap(
+									Entry::getKey,
+									e -> e.getValue().values().stream().mapToLong(x -> x).sum(),
+									(k1, k2) -> k1,
+									LinkedHashMap::new));
 
 			// TODO Discard entries with a too small range
 
