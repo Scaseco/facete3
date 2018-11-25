@@ -872,7 +872,7 @@ public class TaskGenerator {
 					// Sample the set of values and create a range constraint from it
 
 					FacetNode v = target.fwd(p).one();
-					Map<Node, Long> distribution = target.fwd().facetValueCounts()
+					Map<Node, Long> distribution = target.fwd().nonConstrainedFacetValueCounts()//.facetValueCounts()
 							.filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)"))
 							.pseudoRandom(pseudoRandom)
 							.exec()
