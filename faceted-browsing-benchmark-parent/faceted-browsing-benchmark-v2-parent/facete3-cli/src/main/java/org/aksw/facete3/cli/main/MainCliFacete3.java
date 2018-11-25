@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.v2.main;
+package org.aksw.facete3.cli.main;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -202,7 +202,7 @@ public class MainCliFacete3 {
 				//keyStroke.getCharacter()
 				
 				// TODO Auto-generated method stub
-				System.out.println("Test " + basePane);
+				//System.out.println("Test " + basePane);
 			}
 			
 			@Override

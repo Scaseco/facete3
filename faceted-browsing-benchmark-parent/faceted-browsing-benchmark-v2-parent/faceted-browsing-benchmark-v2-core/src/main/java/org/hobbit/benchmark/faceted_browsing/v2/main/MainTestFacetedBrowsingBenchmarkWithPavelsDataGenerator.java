@@ -387,7 +387,8 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							String str = new String(msg.array());
 							str = MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.substituteSpaceWithTInTimestamps(str);
 							
-							String wrappedMsg = "<http://www.example.org/event" + nextEventId[0]++ + "> {\n" + str + "\n}\n\n";
+							String wrappedMsg = str;
+							//String wrappedMsg = "<http://www.example.org/event" + nextEventId[0]++ + "> {\n" + str + "\n}\n\n";
 							
 							System.out.println(wrappedMsg);
 							Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(new ByteArrayInputStream(wrappedMsg.getBytes()) , Lang.TRIG, "http://www.example.org/");

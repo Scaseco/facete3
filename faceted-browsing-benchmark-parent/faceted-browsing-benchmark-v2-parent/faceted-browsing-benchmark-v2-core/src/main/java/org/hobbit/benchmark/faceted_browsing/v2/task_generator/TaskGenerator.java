@@ -1241,7 +1241,7 @@ public class TaskGenerator {
 		org.apache.jena.sparql.path.Path pathPattern = null ; // not implemented yet. // PathParser.parse("((eg:p|!eg:p)|(^eg:p|!^eg:p))*", PrefixMapping.Extended);
 
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties,
-				conceptPathFinder, fn, 7, pathPattern, false, true, true);
+				conceptPathFinder, fn, 3, pathPattern, false, true, true);
 
 		System.out.println("Pick: " + r);
 

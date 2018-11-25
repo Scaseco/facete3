@@ -63,7 +63,7 @@ public class TestFacetedQuery2 {
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), targetConcept);
 
-		pathSearch.setMaxPathLength(7);
+		pathSearch.setMaxPathLength(2);
 		final List<SimplePath> paths = pathSearch.exec().toList().blockingGet();
 
 		final int[] i = {1};
