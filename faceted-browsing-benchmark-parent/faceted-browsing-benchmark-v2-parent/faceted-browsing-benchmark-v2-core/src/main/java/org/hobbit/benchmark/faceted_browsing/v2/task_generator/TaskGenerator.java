@@ -836,6 +836,7 @@ public class TaskGenerator {
 	 */
 	public static Map<FacetNode, Map<Node, Long>> selectNumericFacets(
 			ConceptPathFinder conceptPathFinder,
+			Random pseudoRandom,
 			FacetNode fn,
 			int pathLength,
 			org.apache.jena.sparql.path.Path pathPattern,
@@ -857,7 +858,11 @@ public class TaskGenerator {
 			if (target != null) {
 				UnaryRelation numProps = createConcept(numericProperties);
 
-				List<Node> ps = target.fwd().facets().filter(numProps).exec().map(n -> n.asNode()).toList().blockingGet();
+				List<Node> ps = target
+						.fwd().facets()
+						.filter(numProps)
+						.pseudoRandom(pseudoRandom)
+						.exec().map(n -> n.asNode()).toList().blockingGet();
 
 				for (Node p : ps) {
 
@@ -869,8 +874,9 @@ public class TaskGenerator {
 					FacetNode v = target.fwd(p).one();
 					Map<Node, Long> distribution = target.fwd().facetValueCounts()
 							.filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)"))
+							.pseudoRandom(pseudoRandom)
 							.exec()
-							.toMap(FacetValueCount::getValue, x -> x.getFocusCount().getCount())
+							.toMap(FacetValueCount::getValue, x -> x.getFocusCount().getCount(), LinkedHashMap::new)
 							.blockingGet();
 					//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
@@ -895,6 +901,7 @@ public class TaskGenerator {
 			int pathLength,
 			org.apache.jena.sparql.path.Path pathPattern,
 			Random rand,
+			Random pseudoRandom,
 			List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 
@@ -925,7 +932,12 @@ public class TaskGenerator {
 				// Sample the set of values and create a range constraint from it
 
 				FacetNode v = target.fwd(p).one();
-				Map<Node, Long> distribution = target.fwd().facetValueCounts().filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)")).exec().toMap(FacetValueCount::getPredicate, x -> x.getFocusCount().getCount()).blockingGet();
+				Map<Node, Long> distribution = target.fwd()
+						.facetValueCounts()
+						.filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)"))
+						.pseudoRandom(pseudoRandom)
+						.exec()
+						.toMap(FacetValueCount::getPredicate, x -> x.getFocusCount().getCount(), LinkedHashMap::new).blockingGet();
 				//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
 				System.out.println("Values: " + distribution);
@@ -946,6 +958,7 @@ public class TaskGenerator {
 	//public Cell<FacetNode, Node, Node>
 	public static Entry<FacetNode, Range<NodeHolder>> pickRange(
 			Random rand,
+			Random pseudoRandom,
 			List<SetSummary> numericProperties,
 			ConceptPathFinder conceptPathFinder,
 
@@ -960,6 +973,7 @@ public class TaskGenerator {
 
 		Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(
 				conceptPathFinder,
+				pseudoRandom,
 				facetNode,
 				maxPathLength,
 				pathPattern,
@@ -1037,6 +1051,7 @@ public class TaskGenerator {
 
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(
 				rand,
+				pseudoRandom,
 				numericProperties,
 				conceptPathFinder,
 				fn,
@@ -1240,7 +1255,7 @@ public class TaskGenerator {
 
 		org.apache.jena.sparql.path.Path pathPattern = null ; // not implemented yet. // PathParser.parse("((eg:p|!eg:p)|(^eg:p|!^eg:p))*", PrefixMapping.Extended);
 
-		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, numericProperties,
+		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, pseudoRandom, numericProperties,
 				conceptPathFinder, fn, 3, pathPattern, false, true, true);
 
 		System.out.println("Pick: " + r);
@@ -1268,6 +1283,17 @@ public class TaskGenerator {
 
 	//fq.root().out(property).constraints().eq(value).end().availableValues().exec()
 
+	// Pseudo number generator for things that need to randomized from java anyway
+	public TaskGenerator setRandom(Random random) {
+		this.rand = random;
+		return this;
+	}
+	
+	public Random getRandom() {
+		return this.rand;
+	}
+
+	// Pseudo random number generator for things that should actually be randomized by external reasons (such as database random)
 	public TaskGenerator setPseudoRandom(Random pseudoRandom) {
 		this.pseudoRandom = pseudoRandom;
 		return this;

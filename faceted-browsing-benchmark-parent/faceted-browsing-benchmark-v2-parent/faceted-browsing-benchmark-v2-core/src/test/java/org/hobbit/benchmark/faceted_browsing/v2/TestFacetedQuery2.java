@@ -77,15 +77,18 @@ public class TestFacetedQuery2 {
 	@Test
 	public void testCp14() {
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
+
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
 		assertEquals( "{ ?v_1  ?p  ?o }" ,
 				getQueryPattern(node) );
 
+		taskGenerator.setRandom(new Random(1234l));
 		final boolean b = taskGenerator.applyCp14(node);
 		System.out.println("<<<|"+getQueryPattern(node)+"|>>>" + b);
 
+		taskGenerator.setRandom(new Random(1234l));
 		final boolean c = taskGenerator.applyCp14(node);
 		System.out.println("<<<|"+getQueryPattern(node)+"|>>>" + c);
 	}
