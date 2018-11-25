@@ -24,3 +24,27 @@ eg:Germany
   eg:population 80000000 ;
   eg:contains eg:Leipzig ;
   .
+
+eg:BurkhardJung
+  a foaf:Person ;
+  foaf:age 60 ;
+  rdfs:label "Burkhard Jung" ;
+  foaf:gender "male"@en ;
+  foaf:based_near eg:Leipzig ;
+  .
+
+eg:MarieSchmidt
+  a foaf:Person ;
+  foaf:age 10 ;
+  rdfs:label "Marie Schmidt" ;
+  foaf:gender "female"@en ;
+  foaf:based_near eg:Leipzig ;
+  .
+
+eg:LorenzStadler
+  a foaf:Person ;
+  foaf:age 33 ;
+  rdfs:label "Lorenz Stadler" ;
+  foaf:gender "male"@en ;
+  foaf:based_near eg:Leipzig ;
+  .

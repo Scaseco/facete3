@@ -8,6 +8,7 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -23,10 +24,12 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.RdfChangeTrackerWrapperImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -35,20 +38,36 @@ import static org.junit.Assert.assertNotEquals;
 
 public class TestFacetedQuery2 {
 	
+	//protected FacetedQuery fq;
+	final String DS_SIMPLE = "path-data-simple.ttl";
+	final String DS_SIMPLE_1 = "path-data-simple-1.ttl";
+	final String DS_SIMPLE_2 = "path-data-simple-2.ttl";
+	protected RdfChangeTrackerWrapper changeTracker;
 	protected FacetedQuery fq;
-	
+
 	@Before
 	public void beforeTest() {
-		Model model = RDFDataMgr.loadModel("path-data-simple.ttl");
-		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));		
+		fq = null;
+		changeTracker = null;
+	}
 
-		Model dataModel = ModelFactory.createDefaultModel();
+	protected void load(String uri) {
+ 		Model baseModel = ModelFactory.createDefaultModel();
+		Model changeModel = ModelFactory.createDefaultModel();
+		//RdfChangeTrackerWrapper
+		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);
+		Model dataModel = changeTracker.getDataModel();
+
+		Model model = RDFDataMgr.loadModel(uri);
+		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));
+
+		// RDF Resource with state
 		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
 		FacetedQueryImpl.initResource(facetedQuery);
-		
+
 		fq = new FacetedQueryImpl(facetedQuery, null, conn);
 
-		//FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
+		changeTracker.commitChangesWithoutTracking();
 	}
 
 	static String getQueryPattern(FacetNode node) {
@@ -57,25 +76,43 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testPathFinder() {
+		load(DS_SIMPLE_1);
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
 		//new Concept()
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), targetConcept);
 
-		pathSearch.setMaxPathLength(2);
-		final List<SimplePath> paths = pathSearch.exec().toList().blockingGet();
+		pathSearch.setMaxPathLength(3);
+		final List<SimplePath> paths = pathSearch.exec().filter(x -> x.getSteps().stream().noneMatch(p ->
+			!p.isForward()
+		) ).toList().blockingGet();
 
 		final int[] i = {1};
 		paths.forEach(path -> {
 			System.out.println("Path " + i[0] + ": " + path.toPathString());
 			i[0]++;
 		});
-		System.out.println(paths);
+		final String[] result = {
+				"",
+				"<http://www.example.org/contains>",
+				"<http://www.example.org/locatedIn>",
+				"<http://www.example.org/mayor>",
+				"<http://xmlns.com/foaf/0.1/based_near>",
+				"<http://www.example.org/contains> <http://www.example.org/locatedIn>",
+				"<http://www.example.org/contains> <http://www.example.org/mayor>",
+				"<http://www.example.org/locatedIn> <http://www.example.org/contains>",
+				"<http://www.example.org/mayor> <http://xmlns.com/foaf/0.1/based_near>",
+				"<http://xmlns.com/foaf/0.1/based_near> <http://www.example.org/locatedIn>",
+				"<http://xmlns.com/foaf/0.1/based_near> <http://www.example.org/mayor>",
+		};
+		assertEquals( result , paths.stream().map(SimplePath::toPathString).toArray() );
+		//System.out.println(paths);
 	}
 
 	@Test
 	public void testCp14() {
+		load(DS_SIMPLE_2);
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 
 		taskGenerator.setPseudoRandom(new Random(1234l));
@@ -86,15 +123,56 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.setRandom(new Random(1234l));
 		final boolean b = taskGenerator.applyCp14(node);
-		System.out.println("<<<|"+getQueryPattern(node)+"|>>>" + b);
+		assertEquals( "{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+				"        <http://xmlns.com/foaf/0.1/age>  10\n" +
+				"  { ?v_1  ?p  ?o }\n" +
+				"}" , getQueryPattern(node) );
 
-		taskGenerator.setRandom(new Random(1234l));
-		final boolean c = taskGenerator.applyCp14(node);
-		System.out.println("<<<|"+getQueryPattern(node)+"|>>>" + c);
+		changeTracker.commitChanges();
+
+		long i;
+		final String[] solutions = {
+				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+						"    ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+						"          <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
+						"    FILTER ( ( ?v_4 = 33 ) || ( ?v_4 = 10 ) )\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
+						"}",
+
+				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+						"    ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+						"          <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
+						"    FILTER ( ( ?v_4 = 10 ) || ( ?v_4 <= 60 ) )\n" +
+						"    FILTER ( ( ?v_4 >= 33 ) || ( ?v_4 = 10 ) )\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
+						"}",
+
+				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+						"    ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+						"          <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
+						"    FILTER ( ( ?v_4 = 10 ) || ( ?v_4 = 60 ) )\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
+						"}",
+		};
+		for (i = 0; i < 123; ++i) {
+			taskGenerator.setRandom(new Random(i));
+			final boolean c = taskGenerator.applyCp14(node);
+			System.out.println(i);
+			final String qp = getQueryPattern(node);
+			final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));
+			assertEquals( ok ? qp : ""  , qp );
+			System.out.println("r=" + c);
+			changeTracker.discardChanges();
+		}
 	}
 
 	@Test
 	public void testCp3() {
+		load(DS_SIMPLE_1);
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
@@ -111,6 +189,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp2() {
+		load(DS_SIMPLE);
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
@@ -139,6 +218,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp1() {
+		load(DS_SIMPLE);
 		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
@@ -170,6 +250,7 @@ public class TestFacetedQuery2 {
 	public void testRangeConstraint() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
+		load(DS_SIMPLE);
 		final FacetNode node = fq.root()
 				.fwd("http://www.example.org/population")
 				.one()
@@ -195,6 +276,7 @@ public class TestFacetedQuery2 {
 	public void testConstraints() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
+		load(DS_SIMPLE);
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root()
 				.constraints()
 				    .eqIri("http://www.example.org/Leipzig")
@@ -213,6 +295,7 @@ public class TestFacetedQuery2 {
 	public void testFacetCounts() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
+		load(DS_SIMPLE);
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
 		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
 
