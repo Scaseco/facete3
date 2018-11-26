@@ -174,12 +174,17 @@ public class TestFacetedQuery2 {
 		final String[] solutions = {
 				"{ ?v_1  a                     <http://www.example.org/Country>\n" +
 				"  { ?v_1  ?p  ?o }\n" +
-				"}"
+				"}",
+
+				"{ ?v_1  a                     <http://www.example.org/City>\n" +
+						"  { ?v_1  ?p  ?o }\n" +
+						"}",
 		};
 		long i;
-		for (i = 12345678L; i < 12345678L + 1234L; i++) {
-			taskGenerator.setRandom(new Random(i));
-			taskGenerator.setPseudoRandom(new Random(~i));
+		for (i = 0L; i < 2L; i++) {
+			System.out.println(i);
+			//taskGenerator.setRandom(new Random(i));
+			//taskGenerator.setPseudoRandom(new Random(~i));
 			taskGenerator.applyCp4(node);
 			final String qp = getQueryPattern(node);
 			final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));

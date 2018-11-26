@@ -1,29 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import org.aksw.facete.v3.api.FacetConstraint;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.FacetedQuery;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
+import io.reactivex.Flowable;
+import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
@@ -36,14 +17,10 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
+import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.NodeHolder;
-import org.aksw.jena_sparql_api.utils.RangeUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.*;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
@@ -83,10 +60,14 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Range;
-
-import io.reactivex.Flowable;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 
@@ -681,11 +662,23 @@ public class TaskGenerator {
 	public boolean applyCp2(FacetNode fn) {
 		boolean result = false;
 
-		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
-				.randomOrder()
-				.limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
-		if (node != null) {
-			fn.fwd(node).one().constraints().exists();
+		final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
+		//new Concept()
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+
+		pathSearch.setMaxPathLength(3);
+		final List<SimplePath> paths = pathSearch.exec().filter(x -> x.getSteps().stream().noneMatch(p ->
+				!p.isForward()
+		)  && x.getSteps().size() >= 2 ).toList().doAfterSuccess(x -> Collections.shuffle(x, rand)).blockingGet();
+
+
+//		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
+//				.randomOrder()
+//				.limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+		if (!paths.isEmpty()) {
+			fn.walk(SimplePath.toPropertyPath(paths.get(0))).constraints().exists();
+			//fn.fwd(node).one().constraints().exists();
 
 			// Pick one of the facet values
 			logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
