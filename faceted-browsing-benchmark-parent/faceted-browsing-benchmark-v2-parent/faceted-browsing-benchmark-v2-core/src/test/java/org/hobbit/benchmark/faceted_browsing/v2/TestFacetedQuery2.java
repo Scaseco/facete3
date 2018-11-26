@@ -1,10 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
 import com.google.common.collect.Range;
-import org.aksw.facete.v3.api.DataQuery;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -33,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -42,13 +40,17 @@ public class TestFacetedQuery2 {
 	final String DS_SIMPLE = "path-data-simple.ttl";
 	final String DS_SIMPLE_1 = "path-data-simple-1.ttl";
 	final String DS_SIMPLE_2 = "path-data-simple-2.ttl";
+	final String DS_SIMPLE_4 = "path-data-simple-4.ttl";
+
 	protected RdfChangeTrackerWrapper changeTracker;
 	protected FacetedQuery fq;
+	private TaskGenerator taskGenerator;
 
 	@Before
 	public void beforeTest() {
 		fq = null;
 		changeTracker = null;
+		taskGenerator = null;
 	}
 
 	protected void load(String uri) {
@@ -68,6 +70,8 @@ public class TestFacetedQuery2 {
 		fq = new FacetedQueryImpl(facetedQuery, null, conn);
 
 		changeTracker.commitChangesWithoutTracking();
+
+		taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 	}
 
 	static String getQueryPattern(FacetNode node) {
@@ -77,7 +81,6 @@ public class TestFacetedQuery2 {
 	@Test
 	public void testPathFinder() {
 		load(DS_SIMPLE_1);
-		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
 		//new Concept()
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
@@ -106,15 +109,13 @@ public class TestFacetedQuery2 {
 				"<http://xmlns.com/foaf/0.1/based_near> <http://www.example.org/locatedIn>",
 				"<http://xmlns.com/foaf/0.1/based_near> <http://www.example.org/mayor>",
 		};
-		assertEquals( result , paths.stream().map(SimplePath::toPathString).toArray() );
+		assertArrayEquals( result , paths.stream().map(SimplePath::toPathString).toArray() );
 		//System.out.println(paths);
 	}
 
 	@Test
 	public void testCp14() {
 		load(DS_SIMPLE_2);
-		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
-
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -150,9 +151,47 @@ public class TestFacetedQuery2 {
 	}
 
 	@Test
+	public void testCp4Part() {
+		load(DS_SIMPLE_4);
+		final FacetNode root = fq.root();
+		final FacetMultiNode fwd = root.fwd("http://www.example.org/mayor");
+		final FacetNode one = fwd.one();
+		System.out.println(getQueryPattern(fwd.one()));
+
+	}
+
+	@Test
+	public void testCp4() {
+		load(DS_SIMPLE_4);
+
+
+		final FacetNode node = fq.root();
+
+		assertEquals( "{ ?v_1  ?p  ?o }" ,
+				getQueryPattern(node) );
+
+		changeTracker.commitChanges();
+		final String[] solutions = {
+				"{ ?v_1  a                     <http://www.example.org/Country>\n" +
+				"  { ?v_1  ?p  ?o }\n" +
+				"}"
+		};
+		long i;
+		for (i = 12345678L; i < 12345678L + 1234L; i++) {
+			taskGenerator.setRandom(new Random(i));
+			taskGenerator.setPseudoRandom(new Random(~i));
+			taskGenerator.applyCp4(node);
+			final String qp = getQueryPattern(node);
+			final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));
+			assertEquals( ok ? qp : ""  , qp );
+			changeTracker.discardChanges();
+		}
+		//assertEquals("" , getQueryPattern(node) );
+	}
+
+	@Test
 	public void testCp3() {
 		load(DS_SIMPLE_1);
-		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -169,7 +208,6 @@ public class TestFacetedQuery2 {
 	@Test
 	public void testCp2() {
 		load(DS_SIMPLE);
-		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -198,7 +236,6 @@ public class TestFacetedQuery2 {
 	@Test
 	public void testCp1() {
 		load(DS_SIMPLE);
-		final TaskGenerator taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 		final Query v1 = ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue();
