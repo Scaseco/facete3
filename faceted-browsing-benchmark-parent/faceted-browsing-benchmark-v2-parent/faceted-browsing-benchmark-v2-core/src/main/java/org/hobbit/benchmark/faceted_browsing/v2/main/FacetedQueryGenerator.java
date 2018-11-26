@@ -440,6 +440,8 @@ public class FacetedQueryGenerator<P> {
 			String pStr = pathAccessor.getPredicate(childPath);
 			
 			// Substitute the empty predicate by the empty string
+			// The empty string predicate (zero length path) is different from
+			// the set of remaining predicates indicated by a null entry in the result map
 			pStr = pStr == null ? "" : pStr;
 			
 			
@@ -648,6 +650,20 @@ public class FacetedQueryGenerator<P> {
 		SetMultimap<P, Expr> childPathToExprs = indexConstraints(constraints);
 		Collection<Element> elts = createElementsFromConstraintIndex(childPathToExprs, null);
 
+//		xxx
+//		BinaryRelation br = createRelationForPath(childPath, constraintIndex, applySelfConstraints, negated);
+		{
+			BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
+			//Set<Element> tmp = new LinkedHashSet<>();
+			elts.addAll(ElementUtils.toElementList(focusRelation.getElement()));
+			
+			BinaryRelation facetRelation = mapper.getOverallRelation(facetPath);
+			//Set<Element> tmp = new LinkedHashSet<>();
+			elts.addAll(ElementUtils.toElementList(facetRelation.getElement()));
+		}
+		
+		
+		
 		Var resultVar = (Var)mapper.getNode(facetPath);
 
 		P rootPath = getRoot(facetPath, pathAccessor::getParent);

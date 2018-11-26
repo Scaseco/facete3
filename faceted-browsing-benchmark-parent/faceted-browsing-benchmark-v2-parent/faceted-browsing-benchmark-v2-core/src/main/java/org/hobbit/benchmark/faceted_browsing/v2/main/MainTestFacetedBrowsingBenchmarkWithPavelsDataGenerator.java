@@ -387,23 +387,25 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 							String str = new String(msg.array());
 							str = MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.substituteSpaceWithTInTimestamps(str);
 							
-							String wrappedMsg = str;
+							String wrappedMsg = str + "\n";
 							//String wrappedMsg = "<http://www.example.org/event" + nextEventId[0]++ + "> {\n" + str + "\n}\n\n";
 							
-							System.out.println(wrappedMsg);
-							Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(new ByteArrayInputStream(wrappedMsg.getBytes()) , Lang.TRIG, "http://www.example.org/");
-
-							Flowable<Dataset> eventStream = Flowable.fromIterable(i)
-									.compose(Transformers.<Quad>toListWhile(
-								            (list, t) -> list.isEmpty() 
-								                         || list.get(0).getGraph().equals(t.getGraph())))
-									.map(DatasetGraphQuadsImpl::create)
-									.map(DatasetFactory::wrap);
+							eventOutStream.write(wrappedMsg.getBytes());
 							
-							eventStream.forEach(d -> {
-//								System.out.println("Got event");
-								RDFDataMgr.write(eventOutStream, d, RDFFormat.TRIG);
-							});
+//							System.out.println(wrappedMsg);
+//							Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(new ByteArrayInputStream(wrappedMsg.getBytes()) , Lang.TRIG, "http://www.example.org/");
+//
+//							Flowable<Dataset> eventStream = Flowable.fromIterable(i)
+//									.compose(Transformers.<Quad>toListWhile(
+//								            (list, t) -> list.isEmpty() 
+//								                         || list.get(0).getGraph().equals(t.getGraph())))
+//									.map(DatasetGraphQuadsImpl::create)
+//									.map(DatasetFactory::wrap);
+//							
+//							eventStream.forEach(d -> {
+////								System.out.println("Got event");
+//								RDFDataMgr.write(eventOutStream, d, RDFFormat.TRIG);
+//							});
 
 							
 //							if(false) {

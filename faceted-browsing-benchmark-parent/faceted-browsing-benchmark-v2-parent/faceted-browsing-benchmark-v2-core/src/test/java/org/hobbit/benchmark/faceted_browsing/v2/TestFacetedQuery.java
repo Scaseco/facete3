@@ -8,6 +8,7 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -50,6 +51,15 @@ public class TestFacetedQuery {
 		System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 		
 	}
+	
+	@Test
+	public void testSimpleQuery2() {
+		Query q = fq.root().fwd(RDF.type).one().availableValues().toConstructQuery().getValue();
+
+		System.out.println("Query: " + q);
+		
+	}
+
 	
 	@Test
 	public void testHeteroDimensionalConstraints() {
