@@ -653,6 +653,8 @@ public class FacetedQueryGenerator<P> {
 //		xxx
 //		BinaryRelation br = createRelationForPath(childPath, constraintIndex, applySelfConstraints, negated);
 		{
+			// FIXME Not sure whether this is the right place to add focus / facet-path elements;
+			// can't we 
 			BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
 			//Set<Element> tmp = new LinkedHashSet<>();
 			elts.addAll(ElementUtils.toElementList(focusRelation.getElement()));

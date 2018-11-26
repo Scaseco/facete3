@@ -86,6 +86,12 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.class);
 
 	
+	public static String fixOnValue(String str) {
+		Pattern p = Pattern.compile("ON\\s*\\.");
+		String result = p.matcher(str).replaceAll("\"ON\" .");
+		return result;
+	}
+	
 	// Substitute a space in e.g. 2018-10-30 09:41:53 with T - i.e. 2018-10-30T09:41:53
 	public static String substituteSpaceWithTInTimestamps(String str) {
 		Pattern p = Pattern.compile("(\\d+-\\d{1,2}-\\d{1,2}) (\\d{1,2}:\\d{1,2}:\\d{1,2})");
@@ -95,7 +101,24 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	
 	public static void main(String[] args) throws Exception {
 		//testPathFinder();
-		performTestRun();
+		//performTestRun();
+		//testPavelsData();
+		
+		//System.out.println(fixOnValue("<http://www.agtinternational.com/resources/livedData#house_3_device_4_sensor_2_observation_0_SensorOutput> <http://www.w3.org/ns/ssn#hasValue> ON ."));
+	}
+	
+	public static void testPavelsData() {
+		//Dataset raw = DatasetFactory.create();
+		RDFDataMgrRx.createFlowableDatasets(
+			() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/pavel-12gb.trig"),
+			Lang.TRIG,
+			"http://www.example.org/")
+		.count().doOnSuccess(c -> System.out.println("Count: " + c)).blockingGet();
+		//.forEach(d -> RDFDataMgr.write(System.out, d, RDFFormat.TRIG_PRETTY));
+		//.limit(10)
+		//.forEach(d -> Streams.stream(d.asDatasetGraph().find()).forEach(raw.asDatasetGraph()::add));
+
+		System.out.println("Done");
 	}
 	
 	public static void testPathFinder() {
@@ -386,26 +409,26 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 
 							String str = new String(msg.array());
 							str = MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator.substituteSpaceWithTInTimestamps(str);
-							
+							str = fixOnValue(str);
 							String wrappedMsg = str + "\n";
 							//String wrappedMsg = "<http://www.example.org/event" + nextEventId[0]++ + "> {\n" + str + "\n}\n\n";
 							
-							eventOutStream.write(wrappedMsg.getBytes());
+							//eventOutStream.write(wrappedMsg.getBytes());
 							
-//							System.out.println(wrappedMsg);
-//							Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(new ByteArrayInputStream(wrappedMsg.getBytes()) , Lang.TRIG, "http://www.example.org/");
-//
-//							Flowable<Dataset> eventStream = Flowable.fromIterable(i)
-//									.compose(Transformers.<Quad>toListWhile(
-//								            (list, t) -> list.isEmpty() 
-//								                         || list.get(0).getGraph().equals(t.getGraph())))
-//									.map(DatasetGraphQuadsImpl::create)
-//									.map(DatasetFactory::wrap);
-//							
-//							eventStream.forEach(d -> {
-////								System.out.println("Got event");
-//								RDFDataMgr.write(eventOutStream, d, RDFFormat.TRIG);
-//							});
+							System.out.println(wrappedMsg);
+							Iterable<Quad> i = () -> RDFDataMgr.createIteratorQuads(new ByteArrayInputStream(wrappedMsg.getBytes()) , Lang.TRIG, "http://www.example.org/");
+
+							Flowable<Dataset> eventStream = Flowable.fromIterable(i)
+									.compose(Transformers.<Quad>toListWhile(
+								            (list, t) -> list.isEmpty() 
+								                         || list.get(0).getGraph().equals(t.getGraph())))
+									.map(DatasetGraphQuadsImpl::create)
+									.map(DatasetFactory::wrap);
+							
+							eventStream.forEach(d -> {
+//								System.out.println("Got event");
+								RDFDataMgr.write(eventOutStream, d, RDFFormat.TRIG);
+							});
 
 							
 //							if(false) {
