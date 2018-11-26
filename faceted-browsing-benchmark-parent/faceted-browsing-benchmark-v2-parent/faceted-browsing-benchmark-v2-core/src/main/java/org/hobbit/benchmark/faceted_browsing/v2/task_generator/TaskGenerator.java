@@ -642,7 +642,6 @@ public class TaskGenerator {
 		FacetValueCount fc = fn
 				.step(isBwd)
 				.nonConstrainedFacetValueCounts()
-				//.sample() TODO We should try whether using sample() in addition makes the process faster
 				.randomOrder()
 				.pseudoRandom(pseudoRandom)
 				.limit(1)
@@ -651,7 +650,6 @@ public class TaskGenerator {
 				.timeout(10, TimeUnit.SECONDS)
 				.blockingGet();
 
-		// FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
 		if (fc != null) {
 			// Find a facet value for which the filter does not yet exist
 
@@ -682,9 +680,10 @@ public class TaskGenerator {
 	 */
 	public boolean applyCp2(FacetNode fn) {
 		boolean result = false;
-		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 
-		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom).sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
+				.randomOrder()
+				.limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
 		if (node != null) {
 			fn.fwd(node).one().constraints().exists();
 
@@ -705,7 +704,9 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public static boolean applyCp3(FacetNode fn) {
-		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
+		//System.out.println("cp2 item: " + fn.fwd().facets().randomOrder()
+		//				.pseudoRandom(pseudoRandom)
+		//				.limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
 
 // TODO We need a session state object to hold information about virtual predicates....
 // The old question that needs answering is: On which level(s) to allow virtual predicates - level are:
@@ -713,7 +714,9 @@ public class TaskGenerator {
 		// FacetDirNode: At this level, the predicate will only be part when retrieving facets of the given FacetDirNode
 		// Containment based (more general than type-based) - use the query containment system to inject facets
 
-//		Node node = fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+//		Node node = fn.fwd().facets().randomOrder()
+//				.pseudoRandom(pseudoRandom)
+//				.limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
 //		if(node != null) {
 //			fn.fwd(node).one().constraints().exists();
 //			
@@ -730,17 +733,22 @@ public class TaskGenerator {
 	 * Property class value based transition
 	 * (Find all instances which additionally have a property value lying in a certain class)
 	 */
-	public static boolean applyCp4(FacetNode fn) {
-		//System.out.println("cp2 item: " + fn.fwd().facets().sample(true).limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
+	public boolean applyCp4(FacetNode fn) {
 
 		// TODO Exclude values that denote meta vocabulary, such as 'owl:Class', 'rdf:Property' etc
 		FacetNode typeFacetNode = fn.fwd(RDF.type).one();
-		Node node = typeFacetNode.remainingValues().exclude(OWL.Class, RDFS.Class).sample(true).limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
+		final List<?> objects = typeFacetNode.remainingValues().exclude(OWL.Class, RDFS.Class).pseudoRandom(pseudoRandom).randomOrder()
+				//.limit(1)
+				.exec().toList().blockingGet();
+		System.out.println(objects);
+		Node node = typeFacetNode.remainingValues().exclude(OWL.Class, RDFS.Class).pseudoRandom(pseudoRandom).randomOrder()
+				.limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
 		if (node != null) {
 			typeFacetNode.constraints().eq(node);
 
 			// Pick one of the facet values
-			logger.info("Applying cp4) " + fn.root().remainingValues().exec().toList().blockingGet());
+			final List<?> facetValues = fn.root().remainingValues().exec().toList().blockingGet();
+			logger.info("Applying cp4) " + facetValues);
 		}
 
 		boolean result = false;
@@ -878,7 +886,9 @@ public class TaskGenerator {
 							.exec()
 							.toMap(FacetValueCount::getValue, x -> x.getFocusCount().getCount(), LinkedHashMap::new)
 							.blockingGet();
-					//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
+					//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).randomOrder()
+					//				.pseudoRandom(pseudoRandom)
+					//				.limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
 					System.out.println("Values: " + distribution);
 
@@ -922,7 +932,9 @@ public class TaskGenerator {
 		if (target != null) {
 			UnaryRelation numProps = createConcept(numericProperties);
 
-			Node p = target.fwd().facets().filter(numProps).sample(true).exec().map(n -> n.asNode()).firstElement().blockingGet();
+			Node p = target.fwd().facets().filter(numProps).randomOrder()
+					.pseudoRandom(pseudoRandom)
+					.exec().map(n -> n.asNode()).firstElement().blockingGet();
 
 			if (p != null) {
 
@@ -938,7 +950,9 @@ public class TaskGenerator {
 						.pseudoRandom(pseudoRandom)
 						.exec()
 						.toMap(FacetValueCount::getPredicate, x -> x.getFocusCount().getCount(), LinkedHashMap::new).blockingGet();
-				//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).sample(true).limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
+				//List<Double> vals = v.availableValues().filter(Concept.parse("?s | FILTER(isNumeric(?s))")).randomOrder()
+				//				.pseudoRandom(pseudoRandom)
+				//				.limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
 				System.out.println("Values: " + distribution);
 
@@ -1220,7 +1234,9 @@ public class TaskGenerator {
 					.timeout(10, TimeUnit.SECONDS)
 					.blockingGet();
 
-			// FacetValueCount fc = fn.fwd().facetValueCounts().sample(true).limit(1).exec().firstElement().blockingGet();
+			// FacetValueCount fc = fn.fwd().facetValueCounts().randomOrder()
+			//				.pseudoRandom(pseudoRandom)
+			//				.limit(1).exec().firstElement().blockingGet();
 			if (fc != null) {
 				// Find a facet value for which the filter does not yet exist
 
@@ -1276,7 +1292,9 @@ public class TaskGenerator {
 //		System.out.println("Facets and counts: " + fn.fwd().facetValueCounts().exec().toList().blockingGet());
 
 
-	//List<? extends RDFNode> available = fn.availableValues().sample(true).limit(1).exec().toList().blockingGet();
+	//List<? extends RDFNode> available = fn.availableValues().randomOrder()
+	//				.pseudoRandom(pseudoRandom)
+	//				.limit(1).exec().toList().blockingGet();
 
 	//System.out.println("CP1 Available: " + available);
 
