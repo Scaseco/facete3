@@ -21,6 +21,8 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.RdfChangeTrackerWrapperImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
@@ -34,11 +36,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class TestFacetedQuery2 {
-	
+
 	//protected FacetedQuery fq;
 	final String DS_SIMPLE = "path-data-simple.ttl";
 	final String DS_SIMPLE_1 = "path-data-simple-1.ttl";
 	final String DS_SIMPLE_2 = "path-data-simple-2.ttl";
+	final String DS_SIMPLE_3 = "path-data-simple-3.ttl";
 	final String DS_SIMPLE_4 = "path-data-simple-4.ttl";
 
 	protected RdfChangeTrackerWrapper changeTracker;
@@ -80,6 +83,16 @@ public class TestFacetedQuery2 {
 	@Test
 	public void testFocusNode() {
 		// TODO: focus tests
+		load(DS_SIMPLE_3);
+
+		//final FacetNode one = fq.root().bwd("http://xmlns.com/foaf/0.1/based_near").one();
+		final FacetNode one = fq.root().fwd("http://www.example.org/inhabitants").one();
+		fq.focus(one);
+
+		fq.root().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
+
+		final List<FacetValueCount> facetValueCounts = fq.root().fwd().facetValueCounts().only(RDFS.label).exec().toList().blockingGet();
+		System.out.println(facetValueCounts);
 	}
 
 	@Test
