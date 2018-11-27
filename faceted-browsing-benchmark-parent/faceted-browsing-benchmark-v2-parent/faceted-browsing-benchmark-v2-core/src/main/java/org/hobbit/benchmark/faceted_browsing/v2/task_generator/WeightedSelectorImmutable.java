@@ -1,16 +1,11 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Objects;
-import java.util.TreeMap;
-import java.util.function.Function;
-
 import com.google.common.base.Functions;
-
 import jersey.repackaged.com.google.common.collect.Maps;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Function;
 
 /**
  * Immutable selector over a collection of (item, weight[double]) pairs.
@@ -36,6 +31,7 @@ public class WeightedSelectorImmutable<T>
 	public WeightedSelectorImmutable(NavigableMap<Double, Entry<T, Double>> offsetToEntry, double nextOffset) {
 		super();
 		this.nextOffset = 0.0;
+		this.offsetToEntry = offsetToEntry;
 	}
 
 	@Override
