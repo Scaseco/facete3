@@ -11,6 +11,8 @@ import org.apache.jena.sparql.path.Path;
 
 import java.util.Optional;
 
+import static org.aksw.facete.v3.api.Direction.BACKWARD;
+
 
 /**
  * Mixin for Node Navigation methods
@@ -48,22 +50,21 @@ public interface NodeNavigation<N extends NodeNavigation, D extends DirNodeNavig
 		return bwd().via(ResourceFactory.createProperty(node.getURI()));
 	}
 
-	default D step(boolean reverse) {
-		return reverse ? bwd() : fwd();
+	default D step(Direction direction) {
+		return BACKWARD.equals(direction) ? bwd() : fwd();
 	}
 
-	default M step(String p, boolean reverse) {
-		return reverse ? bwd(p) : fwd(p);
+	default M step(String p, Direction direction) {
+		return BACKWARD.equals(direction) ? bwd(p) : fwd(p);
 	}
 
-	default M step(Node p, boolean reverse) {
-		return reverse ? bwd(p) : fwd(p);
+	default M step(Node p, Direction direction) {
+		return BACKWARD.equals(direction) ? bwd(p) : fwd(p);
 	}
 
-	default M step(Property p, boolean reverse) {
-		return reverse ? bwd(p) : fwd(p);
+	default M step(Property p, Direction direction) {
+		return BACKWARD.equals(direction) ? bwd(p) : fwd(p);
 	}
-
 
 	default N walk(Path path) {
 		NodeNavigation<N, D, M> result;

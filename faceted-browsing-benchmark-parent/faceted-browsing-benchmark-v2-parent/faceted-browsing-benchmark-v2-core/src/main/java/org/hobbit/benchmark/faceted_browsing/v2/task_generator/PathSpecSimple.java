@@ -1,14 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
+import com.google.common.collect.Maps;
+import org.aksw.facete.v3.api.Direction;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.apache.jena.sparql.path.P_Path0;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
-
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
-import org.apache.jena.sparql.path.P_Path0;
-
-import com.google.common.collect.Maps;
 
 public class PathSpecSimple {
 	// Validation attributes - paths must meet these constraints for acceptance
@@ -31,8 +31,8 @@ public class PathSpecSimple {
 	
 	// true -> forward, false -> backwards
 	// The draw with replacement pmf is consumed first. Afterwards, the fallback pmf kicks in.
-	protected List<Entry<Boolean, Double>> drawWithReplacementPmf;
-	protected List<Entry<Boolean, Double>> fallbackPmf;
+	protected List<Entry<Direction, Double>> drawWithReplacementPmf;
+	protected List<Entry<Direction, Double>> fallbackPmf;
 
 	public int getMinLength() {
 		return minLength;
@@ -52,20 +52,20 @@ public class PathSpecSimple {
 		return this;
 	}
 
-	public List<Entry<Boolean, Double>> getDrawWithReplacementPmf() {
+	public List<Entry<Direction, Double>> getDrawWithReplacementPmf() {
 		return drawWithReplacementPmf;
 	}
 
-	public PathSpecSimple setDrawWithReplacementPmf(List<Entry<Boolean, Double>> drawWithReplacementPmf) {
+	public PathSpecSimple setDrawWithReplacementPmf(List<Entry<Direction, Double>> drawWithReplacementPmf) {
 		this.drawWithReplacementPmf = drawWithReplacementPmf;
 		return this;
 	}
 
-	public List<Entry<Boolean, Double>> getFallbackPmf() {
+	public List<Entry<Direction, Double>> getFallbackPmf() {
 		return fallbackPmf;
 	}
 
-	public PathSpecSimple setFallbackPmf(List<Entry<Boolean, Double>> fallbackPmf) {
+	public PathSpecSimple setFallbackPmf(List<Entry<Direction, Double>> fallbackPmf) {
 		this.fallbackPmf = fallbackPmf;
 		return this;
 	}
@@ -86,18 +86,18 @@ public class PathSpecSimple {
 			throw new RuntimeException("Cannot require more reverse traversals than maximum path length");
 		}
 		
-		List<Entry<Boolean, Double>> consumingPmf = new ArrayList<>();
+		List<Entry<Direction, Double>> consumingPmf = new ArrayList<>();
 		for(int i = 0; i < numRequiredReverseSteps; ++i) {
-			consumingPmf.add(Maps.immutableEntry(false, 1.0));
+			consumingPmf.add(Maps.immutableEntry(Direction.BACKWARD, 1.0));
 		}
 		
 		for(int i = numRequiredReverseSteps; i < desiredPathLength; ++i) {
-			consumingPmf.add(Maps.immutableEntry(true, 1.0));			
+			consumingPmf.add(Maps.immutableEntry(Direction.FORWARD, 1.0));
 		}
 		
-		List<Entry<Boolean, Double>> fallbackPmf = new ArrayList<>();
-		fallbackPmf.add(Maps.immutableEntry(false, bwdChance));
-		fallbackPmf.add(Maps.immutableEntry(true, fwdChance));
+		List<Entry<Direction, Double>> fallbackPmf = new ArrayList<>();
+		fallbackPmf.add(Maps.immutableEntry(Direction.BACKWARD, bwdChance));
+		fallbackPmf.add(Maps.immutableEntry(Direction.FORWARD, fwdChance));
 	
 		PathSpecSimple result = new PathSpecSimple();
 		result
@@ -121,14 +121,14 @@ public class PathSpecSimple {
 		};
 	}
 	
-	public static WeightedSelector<Boolean> createSelector(PathSpecSimple pathSpec) {
-		WeightedSelector<Boolean> result = null;
+	public static WeightedSelector<Direction> createSelector(PathSpecSimple pathSpec) {
+		WeightedSelector<Direction> result = null;
 		if(pathSpec.getDrawWithReplacementPmf() != null) {
 			result = WeigthedSelectorDrawWithReplacement.create(pathSpec.getDrawWithReplacementPmf());
 		}
 
 		if(pathSpec.getFallbackPmf() != null) {
-			WeightedSelector<Boolean> tmp = WeightedSelectorImmutable.create(pathSpec.getFallbackPmf());
+			WeightedSelector<Direction> tmp = WeightedSelectorImmutable.create(pathSpec.getFallbackPmf());
 
 			if(result != null) {
 				result = new WeigthedSelectorFailover<>(result, tmp);

@@ -1,10 +1,7 @@
 package org.aksw.facete.v3.bgp.impl;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Set;
-
+import jersey.repackaged.com.google.common.collect.Iterables;
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.ResourceBase;
@@ -13,12 +10,16 @@ import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
-import jersey.repackaged.com.google.common.collect.Iterables;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.aksw.facete.v3.api.Direction.BACKWARD;
+import static org.aksw.facete.v3.api.Direction.FORWARD;
 
 public class BgpMultiNodeImpl
 	extends ResourceBase
@@ -87,7 +88,7 @@ public class BgpMultiNodeImpl
 	}
 
 	@Override
-	public boolean isReverse() {
+	public Direction getDirection() {
 //		boolean isReverse = false;
 //		Resource entry = ResourceUtils.tryGetReversePropertyValue(parent, Vocab.fwd)
 //			.orElseGet(() -> ResourceUtils.getReversePropertyValue(parent, Vocab.bwd));
@@ -97,13 +98,13 @@ public class BgpMultiNodeImpl
 		
 		//this.getModel().getGraph().find().forEachRemaining(x -> System.out.println("[" + x.hashCode()+ "] " + x));
 		
-		boolean result =
+		Direction result =
 				Optional.ofNullable(
 					ResourceUtils.getReversePropertyValue(this, Vocab.fwd, BgpNode.class))
-					.map(x -> false)
+					.map(x -> FORWARD)
 				
 				.orElseGet(() -> ResourceUtils.tryGetReversePropertyValue(this, Vocab.bwd, BgpNode.class)
-						.map(x -> true)
+						.map(x -> BACKWARD)
 						.orElseThrow(() -> new IllegalStateException()));
 		return result;
 

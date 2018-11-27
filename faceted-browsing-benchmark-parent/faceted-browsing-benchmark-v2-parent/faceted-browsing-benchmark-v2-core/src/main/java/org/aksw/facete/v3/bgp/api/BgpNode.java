@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.bgp.api;
 
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.NodeNavigation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -18,6 +19,9 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 
 import java.util.*;
 
+import static org.aksw.facete.v3.api.Direction.BACKWARD;
+import static org.aksw.facete.v3.api.Direction.FORWARD;
+
 public interface BgpNode
 	extends NodeNavigation<BgpNode, BgpDirNode, BgpMultiNode>, Resource
 {	
@@ -34,7 +38,7 @@ public interface BgpNode
 //	}
 
 	public static P_Path0 toStep(BgpMultiNode node) {
-		P_Path0 result = node.isForward()
+		P_Path0 result = FORWARD.equals(node.getDirection())
 				? new P_Link(node.reachingProperty().asNode())
 				: new P_ReverseLink(node.reachingProperty().asNode());
 		return result;
@@ -96,7 +100,7 @@ public interface BgpNode
 //			Resource p = ResourceUtils.getPropertyValue(entry, Vocab.property, Resource.class);
 
 			Resource p = parent.reachingProperty();
-			boolean isReverse = parent.isReverse();
+			Direction dir = parent.getDirection();
 			
 			//Set<Statement> set = ResourceUtils.listProperties(parent, null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
 //			
@@ -108,15 +112,15 @@ public interface BgpNode
 //			// TODO Should never fail - but ensure that
 //			Property p = set.iterator().next().getPredicate();
 //
-			result = create(p.asNode(), isReverse);
+			result = create(p.asNode(), dir);
 		}
 
 		return result;		
 	}
 	
-	public static BinaryRelation create(Node node, boolean isReverse) {
+	public static BinaryRelation create(Node node, Direction dir) {
 		//ElementUtils.createElement(triple)
-		Triple t = isReverse
+		Triple t = BACKWARD.equals(dir)
 				? new Triple(Vars.o, node, Vars.s)
 				: new Triple(Vars.s, node, Vars.o);
 

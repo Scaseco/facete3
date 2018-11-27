@@ -179,7 +179,7 @@ public class TaskGenerator {
 //	}
 
 	public static FacetNode generatePath(FacetNode fn, PathSpecSimple pathSpec, Supplier<Double> rand) {
-		WeightedSelector<Boolean> dirSelector = PathSpecSimple.createSelector(pathSpec);
+		WeightedSelector<Direction> dirSelector = PathSpecSimple.createSelector(pathSpec);
 		Predicate<List<P_Path0>> pathValidator = PathSpecSimple.createValidator(pathSpec);
 
 		FacetNode result = generatePathRec(fn, pathSpec, dirSelector, pathValidator, rand, 0);
@@ -189,7 +189,7 @@ public class TaskGenerator {
 	public static FacetNode generatePathRec(
 			FacetNode fn,
 			PathSpecSimple pathSpec,
-			WeightedSelector<Boolean> baseDirSelector,
+			WeightedSelector<Direction> baseDirSelector,
 			Predicate<List<P_Path0>> pathValidator,
 			Supplier<Double> rand, int depth) {
 		FacetNode result = null;
@@ -203,16 +203,16 @@ public class TaskGenerator {
 
 			// Allow backtracking on the direction: If choosing a direction does not lead to a result
 			// use the other direction instead
-			WeightedSelector<Boolean> dirSelector = baseDirSelector.clone();
+			WeightedSelector<Direction> dirSelector = baseDirSelector.clone();
 
 			double r = rand.get();
-			boolean isFwd = dirSelector.sample(r);
+			Direction dir = dirSelector.sample(r);
 
 			boolean dirRetry = false;
 			do {
 
 
-				List<FacetCount> facetCounts = fn.step(!isFwd).facetCounts().exec().toList().blockingGet();
+				List<FacetCount> facetCounts = fn.step(dir).facetCounts().exec().toList().blockingGet();
 
 				WeightedSelector<FacetCount> selector = WeigthedSelectorDrawWithReplacement.create(facetCounts, fc -> fc.getDistinctValueCount().getCount());
 
@@ -245,7 +245,7 @@ public class TaskGenerator {
 
 				// If the direction did not lead to a result, try the other one
 				if (result == null) {
-					isFwd = !isFwd;
+					dir = Direction.BACKWARD.equals(dir) ? Direction.FORWARD : Direction.BACKWARD;
 					dirRetry = true;
 				} else {
 					break;
@@ -361,7 +361,7 @@ public class TaskGenerator {
 //		addAction(cpToAction, "cp1", TaskGenerator::applyCp1);
 
 		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp1)));
-//		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp2)));
+		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp2)));
 //		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
 //		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
@@ -616,12 +616,12 @@ public class TaskGenerator {
 		boolean result = false;
 
 		//.filter("!isBlank(?x)").
-		boolean isBwd = false;
+		Direction dir = Direction.FORWARD;
 
 		// Exclude all facet-values for which there are constraints
 		// This is a constraint over a binary relation
 		FacetValueCount fc = fn
-				.step(isBwd)
+				.step(dir)
 				.nonConstrainedFacetValueCounts()
 				.randomOrder()
 				.pseudoRandom(pseudoRandom)
@@ -640,7 +640,7 @@ public class TaskGenerator {
 			Node o = fc.getValue();
 
 			//fn.step(p, isBwd).one().constraints().eq(o);
-			fn.step(p, isBwd).one().constraints().range(Range.singleton(new NodeHolder(o)));
+			fn.step(p, dir).one().constraints().range(Range.singleton(new NodeHolder(o)));
 
 			// Pick one of the facet values
 
@@ -668,10 +668,12 @@ public class TaskGenerator {
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
 
 		pathSearch.setMaxPathLength(3);
-		final List<SimplePath> paths = pathSearch.exec().filter(x -> x.getSteps().stream().noneMatch(p ->
-				!p.isForward()
-		)  && x.getSteps().size() >= 2 ).toList().doAfterSuccess(x -> Collections.shuffle(x, rand)).blockingGet();
-
+		final List<SimplePath> paths =
+				pathSearch.exec().filter(sp  -> sp.getSteps().stream().noneMatch(p ->
+						!p.isForward()
+				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
+		Collections.shuffle(paths,
+				rand);
 
 //		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
 //				.randomOrder()
@@ -696,7 +698,55 @@ public class TaskGenerator {
 	 *
 	 * @param fn
 	 */
-	public static boolean applyCp3(FacetNode fn) {
+	public boolean applyCp3(FacetNode fn) {
+		boolean result = false;
+
+		final Direction dir = Direction.FORWARD;
+
+		final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
+
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+
+		pathSearch.setMaxPathLength(3);
+		final List<SimplePath> paths =
+				pathSearch.exec().filter(sp  -> sp.getSteps().stream().noneMatch(p ->
+						!p.isForward()
+				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
+		Collections.shuffle(paths,
+				rand);
+
+		if (!paths.isEmpty()) {
+			final FacetValueCount fc = fn.walk(SimplePath.toPropertyPath(paths.get(0)))//.constraints().exists();
+					.step(dir)
+					.nonConstrainedFacetValueCounts()
+					.randomOrder()
+					.pseudoRandom(pseudoRandom)
+					.limit(1)
+					.exec()
+					.firstElement()
+					.timeout(10, TimeUnit.SECONDS)
+					.blockingGet();
+
+			System.out.println(fc);
+
+			if (fc != null) {
+				Node p = fc.getPredicate();
+				Node o = fc.getValue();
+
+				//fn.step(p, isBwd).one().constraints().eq(o);
+				fn.step(p, dir).one().constraints().range(Range.singleton(new NodeHolder(o)));
+
+				// Pick one of the facet values
+
+				//logger.info("Applying cp3: " + fn.root().availableValues().exec().toList().blockingGet());
+
+				//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+				result = true;
+			}
+
+		}
+
 		//System.out.println("cp2 item: " + fn.fwd().facets().randomOrder()
 		//				.pseudoRandom(pseudoRandom)
 		//				.limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
@@ -716,8 +766,6 @@ public class TaskGenerator {
 //			// Pick one of the facet values
 //			logger.info("Applying cp3) " + fn.root().availableValues().exec().toList().blockingGet());
 //		}
-
-		boolean result = false;
 		return result;
 	}
 
@@ -1211,11 +1259,11 @@ public class TaskGenerator {
 			BgpMultiNode parent = targetFn.as(FacetNodeResource.class).state().parent();
 
 
-			boolean isReverse = !parent.isForward();
+			Direction dir = parent.getDirection(); // boolean isReverse = !parent.isForward();
 
 			FacetValueCount fc = targetFn
 					.parent()
-					.step(isReverse)
+					.step(dir)
 					.nonConstrainedFacetValueCounts()
 					.only(parent.reachingProperty())
 					//.filter(new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(parent.reachingProperty().asNode())))

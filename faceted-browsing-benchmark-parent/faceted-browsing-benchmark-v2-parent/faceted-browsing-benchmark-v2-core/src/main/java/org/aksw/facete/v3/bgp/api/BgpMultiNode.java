@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.bgp.api;
 
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.MultiNodeNavigation;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -10,12 +11,7 @@ public interface BgpMultiNode
 	
 	Property reachingProperty();
 	
-	@Deprecated // use isForard only
-	boolean isReverse();
-
-	default boolean isForward() {
-		return !isReverse();
-	}
+	Direction getDirection();
 	
 	/**
 	 * getOrCreate the one single alias - and marks it as the default -
