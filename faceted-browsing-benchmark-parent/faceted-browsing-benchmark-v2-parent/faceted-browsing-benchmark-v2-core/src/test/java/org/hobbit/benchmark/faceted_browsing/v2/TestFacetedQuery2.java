@@ -32,7 +32,6 @@ import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class TestFacetedQuery2 {
 	
@@ -203,11 +202,31 @@ public class TestFacetedQuery2 {
 		assertEquals( "{ ?v_1  ?p  ?o }" ,
 				getQueryPattern(node) );
 
+		changeTracker.commitChanges();
+
 		taskGenerator.applyCp3(node);
 
-		assertNotEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+		assertEquals( "{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/locatedIn>  <http://www.example.org/Germany>\n" +
+				"  { ?v_1  ?p  ?o }\n" +
+				"}" , getQueryPattern(node) );
 		System.out.println(getQueryPattern(node));
 
+		changeTracker.discardChanges();
+
+		taskGenerator.getRandom().nextLong();
+		taskGenerator.getRandom().nextLong();
+		taskGenerator.getRandom().nextLong();
+
+		taskGenerator.applyCp3(node);
+
+		assertEquals( "{ ?v_1  <http://www.example.org/mayor>  ?v_2 .\n" +
+				"  ?v_2  <http://xmlns.com/foaf/0.1/based_near>  <http://www.example.org/Leipzig>\n" +
+				"  { ?v_1  ?p  ?o }\n" +
+				"}" , getQueryPattern(node) );
+		//System.out.println(getQueryPattern(node));
+
+		changeTracker.discardChanges();
 	}
 
 	@Test

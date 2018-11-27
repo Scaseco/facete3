@@ -717,36 +717,21 @@ public class TaskGenerator {
 				rand);
 
 		if (!paths.isEmpty()) {
-			final FacetValueCount fc = fn.walk(SimplePath.toPropertyPath(paths.get(0)))//.constraints().exists();
-					.step(dir)
-					.nonConstrainedFacetValueCounts()
-					.randomOrder()
-					.pseudoRandom(pseudoRandom)
-					.limit(1)
+			final FacetNode walk = fn.walk(paths.get(0));
+			final List<RDFNode> objects = walk
+					.remainingValues()
+					.randomOrder().pseudoRandom(pseudoRandom)
 					.exec()
-					.firstElement()
-					.timeout(10, TimeUnit.SECONDS)
+					.toList()
 					.blockingGet();
-
-			System.out.println(fc);
-
-			if (fc != null) {
-				Node p = fc.getPredicate();
-				Node o = fc.getValue();
-
-				//fn.step(p, isBwd).one().constraints().eq(o);
-				fn.step(p, dir).one().constraints().range(Range.singleton(new NodeHolder(o)));
-
-				// Pick one of the facet values
-
-				//logger.info("Applying cp3: " + fn.root().availableValues().exec().toList().blockingGet());
-
-				//fn.fwd(fc.getPredicate()).one().constraints().eq(fc.getValue());
+			//System.out.println(objects);
+			if (!objects.isEmpty()) {
+				walk.constraints().eq(objects.get(0));
 				result = true;
 			}
-
 		}
 
+		return result;
 		//System.out.println("cp2 item: " + fn.fwd().facets().randomOrder()
 		//				.pseudoRandom(pseudoRandom)
 		//				.limit(1).exec().firstElement().map(RDFNode::asNode).blockingGet().getClass());
@@ -766,7 +751,6 @@ public class TaskGenerator {
 //			// Pick one of the facet values
 //			logger.info("Applying cp3) " + fn.root().availableValues().exec().toList().blockingGet());
 //		}
-		return result;
 	}
 
 
