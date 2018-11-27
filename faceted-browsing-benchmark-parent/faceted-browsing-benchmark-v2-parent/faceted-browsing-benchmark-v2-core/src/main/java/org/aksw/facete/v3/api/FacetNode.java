@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.api;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 
 
@@ -45,7 +46,7 @@ public interface FacetNode
 	//Concept toConcept();
 	
 	// TODO Some API to get the values of this node by excluding all constraints
-	DataQuery<?> availableValues();
-	DataQuery<?> remainingValues();	
+	DataQuery<RDFNode> availableValues();
+	DataQuery<RDFNode> remainingValues();
 }
 

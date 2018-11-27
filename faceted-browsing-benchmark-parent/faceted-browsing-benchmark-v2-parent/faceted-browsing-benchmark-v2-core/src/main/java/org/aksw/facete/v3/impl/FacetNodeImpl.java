@@ -127,7 +127,7 @@ public class FacetNodeImpl
 	}
 	
 
-	public DataQuery<?> createValueQuery(boolean excludeConstraints) {
+	public DataQuery<RDFNode> createValueQuery(boolean excludeConstraints) {
 		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 		
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
@@ -140,21 +140,21 @@ public class FacetNodeImpl
 		//System.out.println("Available values: " + c);
 		
 		SparqlQueryConnection conn = query.connection();
-		DataQuery<?> result = new DataQueryImpl<>(conn, c.getVar(), c.getElement(), null, RDFNode.class);
+		DataQuery<RDFNode> result = new DataQueryImpl<>(conn, c.getVar(), c.getElement(), null, RDFNode.class);
 
 		return result;
 
 	}
 
 	@Override
-	public DataQuery<?> availableValues() {
-		DataQuery<?> result = createValueQuery(true);
+	public DataQuery<RDFNode> availableValues() {
+		DataQuery<RDFNode> result = createValueQuery(true);
 		return result;		
 	}
 
 	@Override
-	public DataQuery<?> remainingValues() {
-		DataQuery<?> result = createValueQuery(false);
+	public DataQuery<RDFNode> remainingValues() {
+		DataQuery<RDFNode> result = createValueQuery(false);
 		return result;
 	}
 
