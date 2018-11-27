@@ -817,7 +817,7 @@ public class TaskGenerator {
 				.map(FacetConstraint::expr)
 				.filter(e -> e instanceof E_Equals)
 				// HACK To get rid of blank nodes in exprs
-				.map(e -> e.applyNodeTransform(n -> n.isBlank() ? Var.alloc("hack") : n))
+				.map(e -> ExprTransformer.transform(new NodeTransformExpr(node -> !node.isBlank() ? node : Var.alloc("hack")), e))
 //				.peek(x -> System.out.println("Peek: " + x))
 //				.map(e -> new E_Equals(new ExprVar("hack"), ))
 				.map(ExprUtils::tryGetVarConst)
