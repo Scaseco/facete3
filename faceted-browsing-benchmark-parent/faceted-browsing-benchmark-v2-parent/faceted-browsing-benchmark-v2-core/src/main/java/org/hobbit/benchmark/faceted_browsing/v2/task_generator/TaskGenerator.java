@@ -7,6 +7,7 @@ import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -38,16 +39,13 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Bound;
-import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_OneOf;
-import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.*;
+import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.util.ResourceUtils;
-import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
@@ -362,20 +360,20 @@ public class TaskGenerator {
 
 		cpToAction.put("cp1", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp1)));
 		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp2)));
-//		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp3)));
-//		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp4)));
+		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp3)));
+		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
 //		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 //		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
 //		
-//		cpToAction.put("cp10", this::applyCp10);
+		cpToAction.put("cp10", this::applyCp10);
 //
 		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
 //		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
-//		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp14)));
+		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
 
 		Model weightModel = RDFDataMgr.loadModel("task-generator-config.ttl");
@@ -831,7 +829,8 @@ public class TaskGenerator {
 		Collections.shuffle(typeConstraints, rand);
 
 
-		//HierarchyCoreOnDemand.
+		//new HierarchyCoreOnDemand()
+		//HierarchyCoreOnDemand.createConceptForRoots(typeConstraints.)
 
 
 		// TODO What is the best way to deal with hierarchical data?
@@ -880,6 +879,7 @@ public class TaskGenerator {
 		List<SimplePath> paths = conceptPathFinder.createSearch(valuesConcept, numericValuesConcept)
 				.setMaxPathLength(pathLength)
 				.exec().toList().blockingGet();
+		//paths.stream().f
 
 		return paths;
 	}
