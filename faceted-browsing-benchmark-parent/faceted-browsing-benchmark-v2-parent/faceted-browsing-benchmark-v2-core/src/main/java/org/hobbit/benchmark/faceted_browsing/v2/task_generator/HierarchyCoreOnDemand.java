@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
@@ -93,26 +94,21 @@ public class HierarchyCoreOnDemand
 	 */
 	@Override
 	public UnaryRelation children(UnaryRelation nodes) {
-		
-		
-		return null;	
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public UnaryRelation parents(UnaryRelation nodes) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public UnaryRelation descendents() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public UnaryRelation ancestors() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}	
 }
