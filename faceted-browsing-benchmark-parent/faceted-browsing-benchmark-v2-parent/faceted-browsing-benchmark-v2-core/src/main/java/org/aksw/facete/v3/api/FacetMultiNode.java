@@ -1,13 +1,10 @@
 package org.aksw.facete.v3.api;
 
-public interface FacetMultiNode {
+public interface FacetMultiNode extends MultiNodeNavigation<FacetNode> {
 	
 	
 	/** True iff multiple aliases are referenced in constraints */
 	boolean hasMultipleReferencedAliases();
-	
-	/** getOrCreate the one single alias for this multi node. Raises an exception if there are already multiple aliases */
-	FacetNode one();
 	
 	boolean contains(FacetNode facetNode);
 	

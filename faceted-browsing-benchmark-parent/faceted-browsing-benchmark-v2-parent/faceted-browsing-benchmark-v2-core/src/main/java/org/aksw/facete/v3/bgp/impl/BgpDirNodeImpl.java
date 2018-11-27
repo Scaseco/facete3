@@ -1,13 +1,11 @@
 package org.aksw.facete.v3.bgp.impl;
 
-import java.util.Map;
-
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
-import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+
+import java.util.Map;
 
 public class BgpDirNodeImpl
 	implements BgpDirNode
@@ -25,16 +23,6 @@ public class BgpDirNodeImpl
 		return isFwd;
 	}
 	
-	@Override
-	public BgpMultiNode via(String propertyIRI) {
-		return via(ResourceFactory.createProperty(propertyIRI));
-	}
-
-	@Override
-	public BgpMultiNode via(Node node) {
-		return via(node.getURI());
-	}
-
 	@Override
 	public BgpMultiNode via(Resource property) {
 		Map<Resource, BgpMultiNode> map = isFwd ? node.fwdMultiNodes() : node.bwdMultiNodes() ;

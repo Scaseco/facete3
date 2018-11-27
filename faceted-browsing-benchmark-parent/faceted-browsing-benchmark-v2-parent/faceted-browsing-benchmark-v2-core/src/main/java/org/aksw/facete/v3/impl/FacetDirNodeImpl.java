@@ -7,11 +7,9 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.*;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_LogicalNot;
@@ -54,17 +52,7 @@ public class FacetDirNodeImpl
 	}
 
 	@Override
-	public FacetMultiNode via(Node node) {
-		return via(node.getURI());
-	}
-
-	@Override
-	public FacetMultiNode via(String propertyIRI) {
-		return via(ResourceFactory.createProperty(propertyIRI));
-	}
-	
-	@Override
-	public FacetMultiNode via(Property property) {
+	public FacetMultiNode via(Resource property) {
 		return new FacetMultiNodeImpl(parent, state.via(property));		
 		//return new FacetMultiNodeImpl(parent, property, isFwd);
 	}

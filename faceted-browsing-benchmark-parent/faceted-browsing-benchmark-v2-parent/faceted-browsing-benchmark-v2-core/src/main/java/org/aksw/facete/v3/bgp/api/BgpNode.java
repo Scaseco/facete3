@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.bgp.api;
 
+import org.aksw.facete.v3.api.NodeNavigation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
@@ -7,85 +8,24 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.path.*;
+import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.path.P_ReverseLink;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
 import java.util.*;
 
 public interface BgpNode
-	extends Resource
+	extends NodeNavigation<BgpNode, BgpDirNode, BgpMultiNode>, Resource
 {	
 	BgpDirNode fwd();
 	BgpDirNode bwd();
 
 	Map<Resource, BgpMultiNode> fwdMultiNodes();
 	Map<Resource, BgpMultiNode> bwdMultiNodes();
-	
-	
-	// Convenience shortcuts
-	default BgpMultiNode fwd(Property property) {
-		return fwd().via(property);
-	}
-	
-	default BgpMultiNode bwd(Property property) {
-		return bwd().via(property);
-	}
-
-	default BgpMultiNode fwd(String p) {
-		Property property = ResourceFactory.createProperty(p);
-		return fwd().via(property);
-	}
-
-	default BgpMultiNode bwd(String p) {
-		Property property = ResourceFactory.createProperty(p);
-		return bwd().via(property);
-	}
-	
-	default BgpMultiNode fwd(Node node) {
-		return fwd().via(ResourceFactory.createProperty(node.getURI()));
-	}
-
-	default BgpMultiNode bwd(Node node) {
-		return bwd().via(ResourceFactory.createProperty(node.getURI()));
-	}
-
-	
-	default BgpMultiNode step(String p, boolean reverse) {
-		return reverse ? bwd(p) : fwd(p);
-	}
-
-	default BgpMultiNode step(Node p, boolean reverse) {
-		return reverse ? bwd(p) : fwd(p);
-	}
-
-	default BgpMultiNode step(Property p, boolean reverse) {
-		return reverse ? bwd(p) : fwd(p);
-	}
-
-	
-	default BgpNode step(Path path) {
-		BgpNode result;
-		if(path == null) {
-			result = this;
-		} else if(path instanceof P_Seq) {
-			P_Seq seq = (P_Seq)path;
-			result = step(seq.getLeft()).step(seq.getRight());
-		} else if(path instanceof P_Link) {
-			P_Link link = (P_Link)path;
-			result = fwd(link.getNode()).one();
-		} else if(path instanceof P_ReverseLink) {
-			P_ReverseLink reverseLink = (P_ReverseLink)path;
-			result = bwd(reverseLink.getNode()).one();
-		} else {
-			throw new IllegalArgumentException("Unsupported path type " + path + " " + Optional.ofNullable(path).map(Object::getClass).orElse(null));
-		}
-		
-		return result;
-	}
 
 //	default List<P_Path0> toSparqlPath() {
 //		

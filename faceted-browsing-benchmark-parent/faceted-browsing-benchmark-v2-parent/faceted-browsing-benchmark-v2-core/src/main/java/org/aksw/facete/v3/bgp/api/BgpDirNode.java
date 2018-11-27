@@ -1,17 +1,12 @@
 package org.aksw.facete.v3.bgp.api;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Resource;
+import org.aksw.facete.v3.api.DirNodeNavigation;
 
 /**
  * 
  * @author raven
  *
  */
-public interface BgpDirNode {
+public interface BgpDirNode extends DirNodeNavigation<BgpMultiNode> {
 	boolean isFwd();
-	
-	BgpMultiNode via(String propertyIRI);
-	BgpMultiNode via(Node node);
-	BgpMultiNode via(Resource property);
 }

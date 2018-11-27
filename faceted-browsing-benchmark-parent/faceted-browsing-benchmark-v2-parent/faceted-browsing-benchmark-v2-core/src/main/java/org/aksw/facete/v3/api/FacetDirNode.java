@@ -1,11 +1,8 @@
 package org.aksw.facete.v3.api;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.concepts.ExprFragment2;
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Property;
 
-public interface FacetDirNode {
+public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	/** The parent of this node, may be null */
 	FacetNode parent();
 
@@ -18,11 +15,7 @@ public interface FacetDirNode {
 //	void as(Var var);
 //	Var getAlias();
 	
-	FacetMultiNode via(String propertyIRI);
-	FacetMultiNode via(Node node);
-	FacetMultiNode via(Property property);
-	
-	
+
 	/** The relation of facet and facet value */
 	// TODO We may want to make this a default method that derives the relation from\
 	// a ternary focus, facet, value relation

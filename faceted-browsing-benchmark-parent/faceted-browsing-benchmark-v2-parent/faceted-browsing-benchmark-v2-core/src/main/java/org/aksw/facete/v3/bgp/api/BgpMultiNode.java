@@ -1,11 +1,11 @@
 package org.aksw.facete.v3.bgp.api;
 
+import org.aksw.facete.v3.api.MultiNodeNavigation;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 
 public interface BgpMultiNode
-	extends Resource
-{
+	extends Resource, MultiNodeNavigation<BgpNode> {
 	BgpNode parent();
 	
 	Property reachingProperty();
