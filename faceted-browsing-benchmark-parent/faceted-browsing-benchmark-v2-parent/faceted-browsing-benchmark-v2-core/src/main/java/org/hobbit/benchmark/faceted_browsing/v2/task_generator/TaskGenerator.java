@@ -1,6 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 import io.reactivex.Flowable;
@@ -69,6 +68,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.log;
 
 
 public class TaskGenerator {
@@ -759,9 +759,39 @@ public class TaskGenerator {
 	 * (Find all instances which additionally have a property value lying in a certain class)
 	 */
 	public boolean applyCp4(FacetNode fn) {
+		boolean result = false;
 
 		// TODO Exclude values that denote meta vocabulary, such as 'owl:Class', 'rdf:Property' etc
-		FacetNode typeFacetNode = fn.fwd(RDF.type).one();
+		//FacetNode typeFacetNode = fn.fwd(RDF.type).one();
+		/*final List<FacetValueCount> facetValueCounts = */
+		final Map<Node, Double> nodeDoubleMap = fn.fwd()
+				.facetValueCounts()
+				.only(RDF.type)
+				.exec()
+				.toMap(xk -> xk.getValue(), xv -> 1 + log(xv.getFocusCount().getCount()), LinkedHashMap::new)
+				.blockingGet();
+
+		//})
+				//.exec().toList().blockingGet();
+		if (!nodeDoubleMap.isEmpty()) {
+			System.out.println(nodeDoubleMap);
+			final WeightedSelector<Node> selector = WeightedSelectorImmutable.create(nodeDoubleMap);
+			final Node clazz = selector.sample(rand.nextDouble());
+			System.out.println(clazz);
+			fn.fwd(RDF.type).one().constraints().eq(clazz);
+
+			// Pick one of the facet values
+			final List<RDFNode> facets = fn.fwd().facets().exclude(RDF.type).randomOrder().pseudoRandom(pseudoRandom).exec().toList().blockingGet();
+			if (!facets.isEmpty()) {
+				logger.info("Applying cp4) " + facets.get(0));
+				fn.fwd(facets.get(0).asNode()).one().constraints().exists();
+
+				result = true;
+			}
+		}
+
+		return result;
+/*
 		final List<?> objects = typeFacetNode.remainingValues().exclude(OWL.Class, RDFS.Class).pseudoRandom(pseudoRandom).randomOrder()
 				//.limit(1)
 				.exec().toList().blockingGet();
@@ -771,13 +801,9 @@ public class TaskGenerator {
 		if (node != null) {
 			typeFacetNode.constraints().eq(node);
 
-			// Pick one of the facet values
-			final List<?> facetValues = fn.root().remainingValues().exec().toList().blockingGet();
-			logger.info("Applying cp4) " + facetValues);
-		}
 
-		boolean result = false;
-		return result;
+		}
+*/
 	}
 
 
@@ -785,7 +811,7 @@ public class TaskGenerator {
 	 * Transition of a selected property value class to one of its subclasses
 	 * (For a selected class that a property value should belong to, select a subclass)
 	 */
-	public static boolean applyCp5(FacetNode fn) {
+	public boolean applyCp5(FacetNode fn) {
 		// Applicability check: There must be at least constraint on the type facet
 		List<Node> typeConstraints = fn.root().fwd(RDF.type).one().constraints().stream()
 				.map(FacetConstraint::expr)
@@ -801,9 +827,8 @@ public class TaskGenerator {
 
 		//boolean isApplicable = !typeConstraints.isEmpty();
 
-		// TODO Use deterministic random function here
 		// Pick a random type for which there is a subclass
-		Collections.shuffle(typeConstraints);
+		Collections.shuffle(typeConstraints, rand);
 
 
 		//HierarchyCoreOnDemand.

@@ -78,6 +78,11 @@ public class TestFacetedQuery2 {
 	}
 
 	@Test
+	public void testFocusNode() {
+		// TODO: focus tests
+	}
+
+	@Test
 	public void testPathFinder() {
 		load(DS_SIMPLE_1);
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
@@ -161,7 +166,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp4() {
-		load(DS_SIMPLE_4);
+		load(DS_SIMPLE_2);
 
 
 		final FacetNode node = fq.root();
@@ -193,7 +198,7 @@ public class TestFacetedQuery2 {
 		//assertEquals("" , getQueryPattern(node) );
 	}
 
-	@Test
+	@Test//done
 	public void testCp3() {
 		load(DS_SIMPLE_1);
 		taskGenerator.setPseudoRandom(new Random(1234l));
@@ -229,7 +234,7 @@ public class TestFacetedQuery2 {
 		changeTracker.discardChanges();
 	}
 
-	@Test
+	@Test//done
 	public void testCp2() {
 		load(DS_SIMPLE);
 		taskGenerator.setPseudoRandom(new Random(1234l));
@@ -273,7 +278,7 @@ public class TestFacetedQuery2 {
 
 	}
 
-	@Test
+	@Test//done
 	public void testCp1() {
 		load(DS_SIMPLE);
 		taskGenerator.setPseudoRandom(new Random(1234l));
@@ -302,7 +307,7 @@ public class TestFacetedQuery2 {
 	}
 
 
-	@Test
+	@Test//done
 	public void testRangeConstraint() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
@@ -328,7 +333,7 @@ public class TestFacetedQuery2 {
 				getQueryPattern(node) );
 	}
 
-	@Test
+	@Test//done
 	public void testConstraints() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
@@ -347,16 +352,19 @@ public class TestFacetedQuery2 {
 		assertEquals( 2 , facetCounts.get(0).getDistinctValueCount().getCount() );
 	}
 
-	@Test
+	@Test//done
 	public void testFacetCounts() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
-		load(DS_SIMPLE);
-		final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
-		final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
+		{
+			load(DS_SIMPLE);
+			final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
+			final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
 
-		assertEquals( 1 , facetCounts.size() );
-		assertEquals( 1 , facetCounts.get(0).getDistinctValueCount().getCount() );
+			assertEquals(1, facetCounts.size());
+			assertEquals(1, facetCounts.get(0).getDistinctValueCount().getCount());
+		}
+
 	}
 	
 }
