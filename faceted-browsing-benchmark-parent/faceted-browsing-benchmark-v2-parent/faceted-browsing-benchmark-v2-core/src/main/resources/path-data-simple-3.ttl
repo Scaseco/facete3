@@ -14,9 +14,18 @@ eg:Leipzig
   a eg:City ;
   rdfs:label "Leipzig" ;
   eg:mayor eg:BurkhardJung ;
-  eg:population 500000 ;
+  eg:population 560472 ;
   eg:locatedIn eg:Germany ;
   eg:inhabitants eg:BurkhardJung , eg:MarieSchmidt , eg:LorenzStadler
+  .
+
+eg:Dresden
+  a eg:City ;
+  rdfs:label "Dresden" ;
+  eg:mayor eg:DirkHilbert ;
+  eg:population 543825 ;
+  eg:locatedIn eg:Germany ;
+  eg:inhabitants eg:DirkHilbert
   .
 
 eg:Germany
@@ -48,4 +57,12 @@ eg:LorenzStadler
   rdfs:label "Lorenz Stadler" ;
   foaf:gender "male"@en ;
   foaf:based_near eg:Leipzig ;
+  .
+
+eg:DirkHilbert
+  a foaf:Person ;
+  foaf:age 47 ;
+  rdfs:label "Dirk Hilbert" ;
+  foaf:gender "male"@en ;
+  foaf:based_near eg:Dresden ;
   .
