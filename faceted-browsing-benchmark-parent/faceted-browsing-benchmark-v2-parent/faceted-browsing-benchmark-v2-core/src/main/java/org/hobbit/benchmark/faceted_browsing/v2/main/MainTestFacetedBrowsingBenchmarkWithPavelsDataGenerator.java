@@ -102,7 +102,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	public static void main(String[] args) throws Exception {
 		//testPathFinder();
 		//performTestRun();
-		//testPavelsData();
+		testPavelsData();
 		
 		//System.out.println(fixOnValue("<http://www.agtinternational.com/resources/livedData#house_3_device_4_sensor_2_observation_0_SensorOutput> <http://www.w3.org/ns/ssn#hasValue> ON ."));
 	}
@@ -110,7 +110,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 	public static void testPavelsData() {
 		//Dataset raw = DatasetFactory.create();
 		RDFDataMgrRx.createFlowableDatasets(
-			() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/pavel-12gb.trig"),
+			() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/pavel.fixed.trig"),
 			Lang.TRIG,
 			"http://www.example.org/")
 		.count().doOnSuccess(c -> System.out.println("Count: " + c)).blockingGet();
