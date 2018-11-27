@@ -7,7 +7,6 @@ import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
-import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -37,13 +36,11 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.*;
 import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
@@ -590,7 +587,7 @@ public class TaskGenerator {
 	 * Undoing former restrictions to previous state
 	 * (Go back to instances of a previous step)
 	 *
-	 * @param fn
+	 * @return true on success
 	 */
 	public boolean applyCp10() {
 		boolean result;
@@ -667,8 +664,8 @@ public class TaskGenerator {
 
 		pathSearch.setMaxPathLength(3);
 		final List<SimplePath> paths =
-				pathSearch.exec().filter(sp  -> sp.getSteps().stream().noneMatch(p ->
-						!p.isForward()
+				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
+						p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
 		Collections.shuffle(paths,
 				rand);
@@ -854,7 +851,7 @@ public class TaskGenerator {
 			ConceptPathFinder conceptPathFinder,
 			FacetNode fn,
 			Path pathPattern,
-			int pathLength, List<SetSummary> numericProperties) {
+			int minPathLength, int pathLength, List<SetSummary> numericProperties) {
 
 		//SparqlQueryConnection conn = fn.query().connection();
 
@@ -878,7 +875,9 @@ public class TaskGenerator {
 
 		List<SimplePath> paths = conceptPathFinder.createSearch(valuesConcept, numericValuesConcept)
 				.setMaxPathLength(pathLength)
-				.exec().toList().blockingGet();
+				.exec()
+				.filter(sp -> sp.getSteps().size() >= minPathLength)
+				.toList().blockingGet();
 		//paths.stream().f
 
 		return paths;
@@ -888,6 +887,7 @@ public class TaskGenerator {
 	 * This method yields ALL reachable numeric facets together with ALL value distributions.
 	 *
 	 * @param fn
+	 * @param minPathLength
 	 * @param pathLength
 	 * @param numericProperties
 	 * @return
@@ -896,8 +896,8 @@ public class TaskGenerator {
 			ConceptPathFinder conceptPathFinder,
 			Random pseudoRandom,
 			FacetNode fn,
-			int pathLength,
-			org.apache.jena.sparql.path.Path pathPattern,
+			int minPathLength, int pathLength,
+			Path pathPattern,
 			/* TODO Add an argument for the path generation model */
 			List<SetSummary> numericProperties) {
 		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
@@ -906,7 +906,7 @@ public class TaskGenerator {
 				conceptPathFinder,
 				fn,
 				pathPattern,
-				pathLength,
+				minPathLength, pathLength,
 				numericProperties);
 		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
 
@@ -959,7 +959,7 @@ public class TaskGenerator {
 			ConceptPathFinder conceptPathFinder,
 			FacetNode fn,
 			int pathLength,
-			org.apache.jena.sparql.path.Path pathPattern,
+			int minPathLength, Path pathPattern,
 			Random rand,
 			Random pseudoRandom,
 			List<SetSummary> numericProperties) {
@@ -969,7 +969,7 @@ public class TaskGenerator {
 				conceptPathFinder,
 				fn,
 				pathPattern,
-				pathLength, numericProperties);
+				minPathLength, pathLength, numericProperties);
 
 		FacetNode target = null;
 		if (!paths.isEmpty()) {
@@ -1027,8 +1027,7 @@ public class TaskGenerator {
 			ConceptPathFinder conceptPathFinder,
 
 			FacetNode facetNode,
-			int maxPathLength,
-			org.apache.jena.sparql.path.Path pathPattern,
+			Path pathPattern, int minPathLength, int maxPathLength,
 			boolean pickConstant,
 			boolean pickLowerBound,
 			boolean pickUpperBound) {
@@ -1039,7 +1038,7 @@ public class TaskGenerator {
 				conceptPathFinder,
 				pseudoRandom,
 				facetNode,
-				maxPathLength,
+				minPathLength, maxPathLength,
 				pathPattern,
 				numericProperties);
 		if (!cands.isEmpty()) {
@@ -1114,7 +1113,7 @@ public class TaskGenerator {
 	}
 
 
-	public boolean applyNumericCp(FacetNode fn, org.apache.jena.sparql.path.Path pathPattern, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
+	public boolean applyNumericCp(FacetNode fn, Path pathPattern, int minPathLength, int maxPathLength, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
 		boolean result = false;
 
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(
@@ -1123,8 +1122,7 @@ public class TaskGenerator {
 				numericProperties,
 				conceptPathFinder,
 				fn,
-				5,
-				pathPattern,
+				pathPattern, minPathLength, maxPathLength,
 				pickConstant,
 				pickLowerBound,
 				pickUpperBound);
@@ -1146,8 +1144,8 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public boolean applyCp6(FacetNode fn) {
-		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
-		boolean result = applyNumericCp(fn, pathPattern, false, true, true);
+		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented: // PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
+		boolean result = applyNumericCp(fn, pathPattern, 1, 1, false, true, true);
 		return result;
 	}
 
@@ -1159,8 +1157,8 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public boolean applyCp7(FacetNode fn) {
-		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
-		boolean result = applyNumericCp(fn, pathPattern, false, true, true);
+		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented // PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
+		boolean result = applyNumericCp(fn, pathPattern, 2, 5, false, true, true);
 		return result;
 	}
 
@@ -1187,8 +1185,8 @@ public class TaskGenerator {
 		boolean pickLowerBound = rand.nextBoolean();
 		boolean pickUpperBound = !pickLowerBound;
 
-		org.apache.jena.sparql.path.Path pathPattern = PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
-		boolean result = applyNumericCp(fn, pathPattern, false, pickLowerBound, pickUpperBound);
+		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented // PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
+		boolean result = applyNumericCp(fn, pathPattern, 1, 5, false, pickLowerBound, pickUpperBound);
 		return result;
 	}
 
@@ -1326,7 +1324,7 @@ public class TaskGenerator {
 		org.apache.jena.sparql.path.Path pathPattern = null ; // not implemented yet. // PathParser.parse("((eg:p|!eg:p)|(^eg:p|!^eg:p))*", PrefixMapping.Extended);
 
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, pseudoRandom, numericProperties,
-				conceptPathFinder, fn, 3, pathPattern, false, true, true);
+				conceptPathFinder, fn, pathPattern, 1, 3, false, true, true);
 
 		System.out.println("Pick: " + r);
 
