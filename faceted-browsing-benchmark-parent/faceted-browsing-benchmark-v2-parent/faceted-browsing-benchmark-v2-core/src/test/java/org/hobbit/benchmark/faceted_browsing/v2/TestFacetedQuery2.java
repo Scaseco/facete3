@@ -167,17 +167,7 @@ public class TestFacetedQuery2 {
 		changeTracker.discardChanges();
 	}
 
-	@Test
-	public void testCp4Part() {
-		load(DS_SIMPLE_4);
-		final FacetNode root = fq.root();
-		final FacetMultiNode fwd = root.fwd("http://www.example.org/mayor");
-		final FacetNode one = fwd.one();
-		System.out.println(getQueryPattern(fwd.one()));
-
-	}
-
-	@Test
+	@Test//done
 	public void testCp4() {
 		load(DS_SIMPLE_2);
 
@@ -189,12 +179,18 @@ public class TestFacetedQuery2 {
 
 		changeTracker.commitChanges();
 		final String[] solutions = {
-				"{ ?v_1  a                     <http://www.example.org/Country>\n" +
-				"  { ?v_1  ?p  ?o }\n" +
-				"}",
+				"{ { ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  ?v_2 ;\n" +
+						"          a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+						"    FILTER bound(?v_2)\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
+						"}",
 
-				"{ ?v_1  a                     <http://www.example.org/City>\n" +
-						"  { ?v_1  ?p  ?o }\n" +
+				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+						"          a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+						"    FILTER bound(?v_2)\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
 						"}",
 		};
 		long i;
