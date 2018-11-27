@@ -218,10 +218,11 @@ public class TestFacetedQuery2 {
 
 		assertEquals( "{ ?v_1  ?p  ?o }" ,
 				getQueryPattern(node) );
+		changeTracker.commitChanges();
 
 		taskGenerator.applyCp2(node);
 
-		assertEquals( "{ { ?v_1  <http://www.example.org/locatedIn>  ?v_2\n" +
+		assertEquals( "{ { ?v_1  <http://www.example.org/contains>  ?v_2\n" +
 				"    FILTER bound(?v_2)\n" +
 				"  }\n" +
 				"  ?v_1  ?p  ?o\n" +
@@ -229,13 +230,28 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp2(node);
 
-		assertEquals( "{ { ?v_1  <http://www.example.org/population>  ?v_2 ;\n" +
-				"          <http://www.example.org/locatedIn>  ?v_3\n" +
+		assertEquals( "{ { ?v_1  <http://www.example.org/contains>  ?v_2 .\n" +
+				"    ?v_2  <http://www.example.org/locatedIn>  ?v_3\n" +
 				"    FILTER bound(?v_3)\n" +
 				"    FILTER bound(?v_2)\n" +
 				"  }\n" +
 				"  ?v_1  ?p  ?o\n" +
 				"}" , getQueryPattern(node) );
+
+		changeTracker.discardChanges();
+
+		taskGenerator.getRandom().nextLong();
+		taskGenerator.getRandom().nextLong();
+
+		taskGenerator.applyCp2(node);
+		final String queryPattern = getQueryPattern(node);
+		assertEquals("{ { ?v_1  <http://www.example.org/locatedIn>  ?v_2 .\n" +
+				"    ?v_2  <http://www.example.org/contains>  ?v_3\n" +
+				"    FILTER bound(?v_3)\n" +
+				"  }\n" +
+				"  ?v_1  ?p  ?o\n" +
+				"}", queryPattern);
+
 	}
 
 	@Test
