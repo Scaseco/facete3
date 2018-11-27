@@ -58,7 +58,7 @@ public class FacetDirNodeImpl
 	}
 	
 	@Override
-	public DataQuery<?> facets() {
+	public DataQuery<RDFNode> facets() {
 		FacetedQueryResource facetedQuery = this.parent().query();
 		
 		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
@@ -76,7 +76,7 @@ public class FacetDirNodeImpl
 //		bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
 //		Template template = new Template(bgp);
 //		
-		DataQuery<?> result = new DataQueryImpl<>(parent.query().connection(), concept.getVar(), concept.getElement(), null, RDFNode.class);
+		DataQuery<RDFNode> result = new DataQueryImpl<>(parent.query().connection(), concept.getVar(), concept.getElement(), null, RDFNode.class);
 //
 		return result;
 	}

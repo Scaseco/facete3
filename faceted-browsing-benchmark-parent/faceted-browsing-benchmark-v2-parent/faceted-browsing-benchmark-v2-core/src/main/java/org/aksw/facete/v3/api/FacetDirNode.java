@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.api;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.apache.jena.rdf.model.RDFNode;
 
 public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	/** The parent of this node, may be null */
@@ -22,7 +23,7 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	BinaryRelation facetValueRelation();
 		
 	/** Facets without counts, i.e. just the available predicates */
-	DataQuery<?> facets();
+	DataQuery<RDFNode> facets();
 	
 	// Get the facets of this set of values with count of their distinct values
 	//Collection<FacetCount> getFacetsAndCounts();
