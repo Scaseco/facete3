@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
 import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
@@ -13,10 +14,12 @@ import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -27,9 +30,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -91,8 +92,19 @@ public class TestFacetedQuery2 {
 		fq.root().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
 
 		//final List<FacetValueCount> facetValueCounts = fq.root().fwd().facetValueCounts().only(RDFS.label).exec().toList().blockingGet();
-		final List<FacetValueCount> facetValueCounts = fq.root().fwd().facetValueCounts().only("http://www.example.org/inhabitants").exec().toList().blockingGet();
-		System.out.println(facetValueCounts);
+		final Map<Node, Long> facetValueCounts = fq.root().fwd().facetValueCounts().only("http://www.example.org/inhabitants")
+				.exec()
+				.toMap(xk -> xk.getValue(), xv -> xv.getFocusCount().getCount(), LinkedHashMap::new)
+				.blockingGet();
+
+		final Map<Node, Long> solution = ImmutableMap.<Node, Long>builder()
+				.put(ResourceFactory.createResource("http://www.example.org/LorenzStadler").asNode(), 3L)
+				.put(ResourceFactory.createResource("http://www.example.org/BurkhardJung").asNode(),  2L)
+				.put(ResourceFactory.createResource("http://www.example.org/MarieSchmidt").asNode(),  3L)
+				.put(ResourceFactory.createResource("http://www.example.org/DirkHilbert").asNode(),   1L)
+				.build();
+
+		assertEquals(solution, facetValueCounts);
 	}
 
 	@Test
