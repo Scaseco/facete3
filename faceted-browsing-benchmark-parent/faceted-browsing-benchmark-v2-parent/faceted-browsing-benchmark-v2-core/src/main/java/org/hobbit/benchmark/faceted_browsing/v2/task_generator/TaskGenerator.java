@@ -1013,6 +1013,13 @@ public class TaskGenerator {
 		return result;
 	}
 
+	static int nodeDepth(FacetNode node) {
+		int result = 0;
+		while ((node = node.parent()) != null) {
+			result += 1;
+		}
+		return result;
+	}
 
 	/**
 	 * Picks a facet node and a range of values in accordance with the specification
@@ -1045,12 +1052,16 @@ public class TaskGenerator {
 
 			System.out.println("cp6 cand: " + cands);
 
-			// Select candidates, thereby using the sum of the value counts as weights
+			// Select candidates, thereby using the sum of the value counts as weights divided by the path length
 			Map<FacetNode, Long> candToWeight =
 					cands.entrySet().stream()
 							.collect(Collectors.toMap(
 									Entry::getKey,
-									e -> e.getValue().values().stream().mapToLong(x -> x).sum(),
+									e -> e
+											.getValue()
+											.values().stream().mapToLong(x -> x).sum()
+									/
+									nodeDepth(e.getKey()),
 									(k1, k2) -> k1,
 									LinkedHashMap::new));
 

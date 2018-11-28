@@ -2,7 +2,10 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
-import org.aksw.facete.v3.api.*;
+import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -99,12 +102,12 @@ public class TestFacetedQuery2 {
 
 		final Map<Node, Long> solution = ImmutableMap.<Node, Long>builder()
 				.put(ResourceFactory.createResource("http://www.example.org/LorenzStadler").asNode(), 3L)
-				.put(ResourceFactory.createResource("http://www.example.org/BurkhardJung").asNode(),  2L)
+				.put(ResourceFactory.createResource("http://www.example.org/BurkhardJung").asNode(),  3L)
 				.put(ResourceFactory.createResource("http://www.example.org/MarieSchmidt").asNode(),  3L)
 				.put(ResourceFactory.createResource("http://www.example.org/DirkHilbert").asNode(),   1L)
 				.build();
 
-		assertEquals(solution, facetValueCounts);
+		assertArrayEquals(((ImmutableMap<Node, Long>) solution).asMultimap().entries().toArray(), facetValueCounts.entrySet().toArray());
 	}
 
 	@Test
@@ -144,6 +147,58 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp14() {
+		load(DS_SIMPLE_3);
+		taskGenerator.setPseudoRandom(new Random(1l));
+		final FacetNode node = fq.root();
+
+		assertEquals( "{ ?v_1  ?p  ?o }" ,
+				getQueryPattern(node) );
+
+
+		taskGenerator.setRandom(new Random(6128191552201113548L));
+		final boolean b = taskGenerator.applyCp14(node);
+		assertEquals( "{ ?v_2  <http://www.example.org/inhabitants>  ?v_1 ;\n" +
+				"        <http://www.example.org/population>  560472\n" +
+				"  { ?v_1  ?p  ?o }\n" +
+				"}" , getQueryPattern(node) );
+
+		changeTracker.commitChanges();
+
+
+		long i;
+		final SolutionTracker solutions = new SolutionTracker(
+				"{ { ?v_2  <http://www.example.org/inhabitants>  ?v_1 ;\n" +
+						"          <http://www.example.org/population>  560472 .\n" +
+						"    ?v_4  <http://www.example.org/mayor>  ?v_1 ;\n" +
+						"          <http://www.example.org/inhabitants>  ?v_5 .\n" +
+						"    ?v_5  <http://xmlns.com/foaf/0.1/age>  ?v_6\n" +
+						"    FILTER ( ?v_6 <= 60 )\n" +
+						"    FILTER ( ?v_6 >= 10 )\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
+						"}",
+
+				"{ { ?v_2  <http://www.example.org/inhabitants>  ?v_1 ;\n" +
+						"          <http://www.example.org/population>  560472 ;\n" +
+						"          <http://www.example.org/inhabitants>  ?v_4 .\n" +
+						"    ?v_4  <http://xmlns.com/foaf/0.1/age>  ?v_5\n" +
+						"    FILTER ( ?v_5 >= 10 )\n" +
+						"    FILTER ( ?v_5 <= 60 )\n" +
+						"  }\n" +
+						"  ?v_1  ?p  ?o\n" +
+						"}"
+		);
+		for (i = 0; i < 2l; i++) {
+			final boolean c = taskGenerator.applyCp14(node);
+			final String qp = getQueryPattern(node);
+			solutions.assertSolution(qp);
+			changeTracker.discardChanges();
+		}
+		solutions.assertAllSeen();
+	}
+
+	@Test
+	public void testCp13() {
 		load(DS_SIMPLE_2);
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
@@ -151,37 +206,30 @@ public class TestFacetedQuery2 {
 		assertEquals( "{ ?v_1  ?p  ?o }" ,
 				getQueryPattern(node) );
 
-		taskGenerator.setRandom(new Random(1234l));
-		final boolean b = taskGenerator.applyCp14(node);
-		assertEquals( "{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-				"        <http://xmlns.com/foaf/0.1/age>  10\n" +
-				"  { ?v_1  ?p  ?o }\n" +
-				"}" , getQueryPattern(node) );
+		taskGenerator.applyCp13(node);
 
-		changeTracker.commitChanges();
+		assertEquals("", getQueryPattern(node));
+	}
 
-		long i;
-		final String[] solutions = {
-				"{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-						"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-						"        <http://xmlns.com/foaf/0.1/age>  10 .\n" +
-						"  ?v_5  <http://www.example.org/mayor>  ?v_1 ;\n" +
-						"        <http://www.example.org/population>  500000\n" +
-						"  { ?v_1  ?p  ?o }\n" +
-						"}",
-		};
-		taskGenerator.setRandom(new Random(6399312698163894396L));
-		final boolean c = taskGenerator.applyCp14(node);
-		final String qp = getQueryPattern(node);
-		final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));
-		assertEquals( ok ? qp : ""  , qp );
-		changeTracker.discardChanges();
+	@Test
+	public void testCp6() {
+		load(DS_SIMPLE_3);
+
+
+
+		final FacetNode node = fq.root();
+
+		System.out.println(getQueryPattern(node));
+
+		taskGenerator.applyCp6(node);
+
+		assertEquals("", getQueryPattern(node));
 	}
 
 	@Test//done
 	public void testCp4() {
 		load(DS_SIMPLE_2);
+		taskGenerator.setPseudoRandom(new Random(1234L));
 
 
 		final FacetNode node = fq.root();
@@ -190,21 +238,17 @@ public class TestFacetedQuery2 {
 				getQueryPattern(node) );
 
 		changeTracker.commitChanges();
-		final String[] solutions = {
-				"{ { ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  ?v_2 ;\n" +
-						"          a                     <http://xmlns.com/foaf/0.1/Person>\n" +
-						"    FILTER bound(?v_2)\n" +
-						"  }\n" +
-						"  ?v_1  ?p  ?o\n" +
+		final SolutionTracker solutions = new SolutionTracker(
+				"{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2 ;\n" +
+						"        a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+						"  FILTER bound(?v_2)\n" +
 						"}",
 
-				"{ { ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-						"          a                     <http://xmlns.com/foaf/0.1/Person>\n" +
-						"    FILTER bound(?v_2)\n" +
-						"  }\n" +
-						"  ?v_1  ?p  ?o\n" +
-						"}",
-		};
+				"{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  ?v_2 ;\n" +
+						"        a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+						"  FILTER bound(?v_2)\n" +
+						"}"
+				);
 		long i;
 		for (i = 0L; i < 2L; i++) {
 			System.out.println(i);
@@ -212,10 +256,10 @@ public class TestFacetedQuery2 {
 			//taskGenerator.setPseudoRandom(new Random(~i));
 			taskGenerator.applyCp4(node);
 			final String qp = getQueryPattern(node);
-			final boolean ok = Arrays.stream(solutions).anyMatch(s -> s.equals(qp));
-			assertEquals( ok ? qp : ""  , qp );
+			solutions.assertSolution(qp);
 			changeTracker.discardChanges();
 		}
+		solutions.assertAllSeen();
 		//assertEquals("" , getQueryPattern(node) );
 	}
 
@@ -232,9 +276,8 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp3(node);
 
-		assertEquals( "{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-				"  ?v_2  <http://www.example.org/locatedIn>  <http://www.example.org/Germany>\n" +
-				"  { ?v_1  ?p  ?o }\n" +
+		assertEquals( "{ ?v_1  <http://www.example.org/contains>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  <http://www.example.org/BurkhardJung>\n" +
 				"}" , getQueryPattern(node) );
 		System.out.println(getQueryPattern(node));
 
@@ -246,9 +289,8 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp3(node);
 
-		assertEquals( "{ ?v_1  <http://www.example.org/mayor>  ?v_2 .\n" +
-				"  ?v_2  <http://xmlns.com/foaf/0.1/based_near>  <http://www.example.org/Leipzig>\n" +
-				"  { ?v_1  ?p  ?o }\n" +
+		assertEquals( "{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/contains>  <http://www.example.org/Leipzig>\n" +
 				"}" , getQueryPattern(node) );
 		//System.out.println(getQueryPattern(node));
 
@@ -267,20 +309,10 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp2(node);
 
-		assertEquals( "{ { ?v_1  <http://www.example.org/contains>  ?v_2\n" +
-				"    FILTER bound(?v_2)\n" +
-				"  }\n" +
-				"  ?v_1  ?p  ?o\n" +
-				"}" , getQueryPattern(node) );
-
-		taskGenerator.applyCp2(node);
-
-		assertEquals( "{ { ?v_1  <http://www.example.org/contains>  ?v_2 .\n" +
-				"    ?v_2  <http://www.example.org/locatedIn>  ?v_3\n" +
-				"    FILTER bound(?v_3)\n" +
-				"    FILTER bound(?v_2)\n" +
-				"  }\n" +
-				"  ?v_1  ?p  ?o\n" +
+		assertEquals( "{ ?v_1  <http://www.example.org/contains>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/locatedIn>  ?v_3 .\n" +
+				"  ?v_3  <http://www.example.org/contains>  ?v_4\n" +
+				"  FILTER bound(?v_4)\n" +
 				"}" , getQueryPattern(node) );
 
 		changeTracker.discardChanges();
@@ -290,11 +322,9 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp2(node);
 		final String queryPattern = getQueryPattern(node);
-		assertEquals("{ { ?v_1  <http://www.example.org/locatedIn>  ?v_2 .\n" +
-				"    ?v_2  <http://www.example.org/contains>  ?v_3\n" +
-				"    FILTER bound(?v_3)\n" +
-				"  }\n" +
-				"  ?v_1  ?p  ?o\n" +
+		assertEquals("{ ?v_1  <http://www.example.org/contains>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/locatedIn>  ?v_3\n" +
+				"  FILTER bound(?v_3)\n" +
 				"}", queryPattern);
 
 	}
@@ -310,9 +340,7 @@ public class TestFacetedQuery2 {
 		//System.out.println("---");
 		taskGenerator.applyCp1(node);
 
-		assertEquals( "{ ?v_1  <http://www.example.org/population>  500000\n" +
-						"  { ?v_1  ?p  ?o }\n" +
-						"}" ,
+		assertEquals( "{ ?v_1  <http://www.example.org/population>  500000 }" ,
 				getQueryPattern(node)
 		);
 
@@ -320,7 +348,6 @@ public class TestFacetedQuery2 {
 		taskGenerator.applyCp1(node);
 		assertEquals( "{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  \"Leipzig\" ;\n" +
 						"        <http://www.example.org/population>  500000\n" +
-						"  { ?v_1  ?p  ?o }\n" +
 						"}" ,
 				getQueryPattern(node)
 		);
@@ -345,11 +372,9 @@ public class TestFacetedQuery2 {
 				.parent()
 				;
 
-		assertEquals( "{ { ?v_1  <http://www.example.org/population>  ?v_2\n" +
-						"    FILTER ( ?v_2 <= 80000000 )\n" +
-						"    FILTER ( ?v_2 >= 50000 )\n" +
-						"  }\n" +
-						"  ?v_1  ?p  ?o\n" +
+		assertEquals( "{ ?v_1  <http://www.example.org/population>  ?v_2\n" +
+						"  FILTER ( ?v_2 <= 80000000 )\n" +
+						"  FILTER ( ?v_2 >= 50000 )\n" +
 						"}" ,
 				getQueryPattern(node) );
 	}
@@ -387,5 +412,33 @@ public class TestFacetedQuery2 {
 		}
 
 	}
-	
+
+	class Seen {
+		boolean f = false;
+		boolean seen() {
+			return this.f = true;
+		}
+	}
+
+	class SolutionTracker {
+		ImmutableMap<Object, Seen> solutions;
+		SolutionTracker(Object... solutions) {
+			final ImmutableMap.Builder<Object, Seen> builder = ImmutableMap.<Object, Seen>builder();
+			for (Object s : solutions) {
+				builder.put(s, new Seen());
+			}
+			this.solutions = builder.build();
+		}
+
+		void assertAllSeen() {
+			assertArrayEquals( solutions.entrySet().stream().map(es -> es.getKey()).toArray() ,
+					solutions.entrySet().stream().map( es -> es.getValue().f ? es.getKey() : "[]").toArray() );
+		}
+
+		public void assertSolution(Object o) {
+			final Seen seen = solutions.get(o);
+			final boolean ok = seen == null ? false : seen.seen();
+			assertEquals( ok ? o : ""  , o );
+		}
+	}
 }
