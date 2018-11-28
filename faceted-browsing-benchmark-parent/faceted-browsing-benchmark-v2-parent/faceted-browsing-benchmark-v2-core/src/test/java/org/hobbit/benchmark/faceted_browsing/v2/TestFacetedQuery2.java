@@ -6,9 +6,7 @@ import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
-import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
-import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -21,22 +19,22 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.RdfChangeTrackerWrapperImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class TestFacetedQuery2 {
 
@@ -59,33 +57,22 @@ public class TestFacetedQuery2 {
 	}
 
 	protected void load(String uri) {
- 		Model baseModel = ModelFactory.createDefaultModel();
-		Model changeModel = ModelFactory.createDefaultModel();
-		//RdfChangeTrackerWrapper
-		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);
-		Model dataModel = changeTracker.getDataModel();
-
 		Model model = RDFDataMgr.loadModel(uri);
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));
 
-		// RDF Resource with state
-		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
-		FacetedQueryImpl.initResource(facetedQuery);
-
-		fq = new FacetedQueryImpl(facetedQuery, null, conn);
-
+		taskGenerator = TaskGenerator.autoConfigure(conn);
+		changeTracker = taskGenerator.getChangeTracker();
+		fq = taskGenerator.getCurrentQuery();
 		changeTracker.commitChangesWithoutTracking();
-
-		taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 	}
 
 	static String getQueryPattern(FacetNode node) {
 		return ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString();
 	}
 
-	@Test
+	@Test//done
 	public void testFocusNode() {
-		// TODO: focus tests
+		// TODO: test case with films,characters,actors
 		load(DS_SIMPLE_3);
 
 		final FacetNode one = fq.root().bwd("http://xmlns.com/foaf/0.1/based_near").one();
@@ -110,7 +97,7 @@ public class TestFacetedQuery2 {
 		assertArrayEquals(((ImmutableMap<Node, Long>) solution).asMultimap().entries().toArray(), facetValueCounts.entrySet().toArray());
 	}
 
-	@Test
+	@Test//done
 	public void testPathFinder() {
 		load(DS_SIMPLE_1);
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
@@ -145,7 +132,7 @@ public class TestFacetedQuery2 {
 		//System.out.println(paths);
 	}
 
-	@Test
+	@Test//done
 	public void testCp14() {
 		load(DS_SIMPLE_3);
 		taskGenerator.setPseudoRandom(new Random(1l));
@@ -197,7 +184,7 @@ public class TestFacetedQuery2 {
 		solutions.assertAllSeen();
 	}
 
-	@Test
+	@Test//done
 	public void testCp13() {
 		load(DS_SIMPLE_2);
 		taskGenerator.setPseudoRandom(new Random(1234l));
@@ -217,7 +204,41 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals( "", getQueryPattern(node));
+		assertEquals( "{ ?v_1      <http://www.example.org/locatedIn>  ?v_2 .\n" +
+				"  <http://www.example.org/Leipzig>\n" +
+				"            <http://www.example.org/locatedIn>  ?v_2\n" +
+				"}", getQueryPattern(node));
+	}
+
+	@Test
+	public void testCp10() {
+		load(DS_SIMPLE);
+		final FacetNode node = fq.root();
+
+		changeTracker.commitChanges();
+		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+
+		taskGenerator.applyCp1(node);
+		changeTracker.commitChanges();
+
+		assertNotEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+
+		taskGenerator.applyCp10();
+
+		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+
+		fq.focus(fq.root().fwd("http://www.example.org/locatedIn").one());
+		changeTracker.commitChanges();
+/*
+		taskGenerator.applyCp3(node);
+		changeTracker.commitChanges();
+		assertNotEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
+
+		taskGenerator.applyCp10();
+		assertEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
+*/
+		taskGenerator.applyCp10();
+		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
 	}
 
 	@Test
@@ -423,9 +444,12 @@ public class TestFacetedQuery2 {
 	}
 
 	class Seen {
-		boolean f = false;
+		private boolean f = false;
 		boolean seen() {
 			return this.f = true;
+		}
+		boolean wasSeen() {
+			return this.f;
 		}
 	}
 
@@ -440,13 +464,13 @@ public class TestFacetedQuery2 {
 		}
 
 		void assertAllSeen() {
-			assertArrayEquals( solutions.entrySet().stream().map(es -> es.getKey()).toArray() ,
-					solutions.entrySet().stream().map( es -> es.getValue().f ? es.getKey() : "[]").toArray() );
+			assertArrayEquals( solutions.entrySet().stream().map(Map.Entry::getKey).toArray() ,
+					solutions.entrySet().stream().map( es -> es.getValue().wasSeen() ? es.getKey() : "[]").toArray() );
 		}
 
-		public void assertSolution(Object o) {
+		void assertSolution(Object o) {
 			final Seen seen = solutions.get(o);
-			final boolean ok = seen == null ? false : seen.seen();
+			final boolean ok = seen != null && seen.seen();
 			assertEquals( ok ? o : ""  , o );
 		}
 	}

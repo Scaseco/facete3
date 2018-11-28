@@ -1,9 +1,5 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
@@ -20,6 +16,10 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 
 public class FacetNodeImpl
@@ -42,7 +42,6 @@ public class FacetNodeImpl
 	 * Avoid using this ctor directly
 	 * 
 	 * @param query
-	 * @param parent
 	 * @param state
 	 */
 	public FacetNodeImpl(FacetedQueryResource query, BgpNode state) {
