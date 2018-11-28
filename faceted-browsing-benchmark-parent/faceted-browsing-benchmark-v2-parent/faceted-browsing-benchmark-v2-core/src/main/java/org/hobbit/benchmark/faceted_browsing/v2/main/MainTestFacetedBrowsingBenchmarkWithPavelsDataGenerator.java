@@ -1,18 +1,13 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
+import com.github.davidmoten.rx2.flowable.Transformers;
+import com.github.jsonldjava.shaded.com.google.common.collect.ImmutableMap;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.processors.PublishProcessor;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
@@ -30,11 +25,8 @@ import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
@@ -49,7 +41,6 @@ import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigTaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
 import org.hobbit.benchmark.faceted_browsing.encoder.ConfigEncodersFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.component.ServiceNoOp;
@@ -63,15 +54,17 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.davidmoten.rx2.flowable.Transformers;
-import com.github.jsonldjava.shaded.com.google.common.collect.ImmutableMap;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Streams;
-
-import io.reactivex.Flowable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.processors.PublishProcessor;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * This class eventually launches a data generator (DG) and processes the emitted messages.
@@ -79,7 +72,6 @@ import io.reactivex.processors.PublishProcessor;
  * launching an AMQP server, a SPARQL endpoint, and a task generator to receive the messages.
  * 
  * 
- * @param args
  * @throws Exception
  */
 public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
@@ -170,7 +162,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		List<SimplePath> paths  = pathFinder.createSearch(
 				Concept.create("?src <http://www.w3.org/ns/ssn/#hasValue> ?o", "src", prefixes),
 				Concept.create("?tgt a <http://www.agtinternational.com/ontologies/lived#CurrentObservation>", "tgt", prefixes))
-				.setMaxPathLength(7)
+				.setMaxPathLength(6)
 				.exec()
 				.timeout(10, TimeUnit.SECONDS)
 				.toList().blockingGet();
@@ -186,7 +178,7 @@ public class MainTestFacetedBrowsingBenchmarkWithPavelsDataGenerator {
 		// Set parameters on the search, such as max path length and the max number of results
 		// Invocation of .exec() executes the search and yields the flow of results
 		List<SimplePath> actual = pathSearch
-				.setMaxPathLength(7)
+				.setMaxPathLength(6)
 				//.setMaxResults(100)
 				.exec()
 				.toList().blockingGet();

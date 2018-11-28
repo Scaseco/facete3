@@ -4,7 +4,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 import io.reactivex.Flowable;
 import org.aksw.facete.v3.api.*;
-import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeResource;
@@ -705,25 +704,14 @@ public class TaskGenerator {
 
 		pathSearch.setMaxPathLength(3);
 		final List<SimplePath> paths =
-				pathSearch.exec().filter(sp  -> sp.getSteps().stream().noneMatch(p ->
-						!p.isForward()
+				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
+						p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
 		Collections.shuffle(paths,
 				rand);
 
-		if (!paths.isEmpty()) {
-			final FacetNode walk = fn.walk(paths.get(0));
-			final List<RDFNode> objects = walk
-					.remainingValues()
-					.randomOrder().pseudoRandom(pseudoRandom)
-					.exec()
-					.toList()
-					.blockingGet();
-			//System.out.println(objects);
-			if (!objects.isEmpty()) {
-				walk.constraints().eq(objects.get(0));
-				result = true;
-			}
+		if (!paths.isEmpty() && applyEqConstraintOnPath(fn, paths.get(0), pseudoRandom)) {
+			result = true;
 		}
 
 		return result;
@@ -1013,6 +1001,13 @@ public class TaskGenerator {
 		return result;
 	}
 
+	static int nodeDepth(FacetNode node) {
+		int result = 0;
+		while ((node = node.parent()) != null) {
+			result += 1;
+		}
+		return result;
+	}
 
 	/**
 	 * Picks a facet node and a range of values in accordance with the specification
@@ -1045,12 +1040,16 @@ public class TaskGenerator {
 
 			System.out.println("cp6 cand: " + cands);
 
-			// Select candidates, thereby using the sum of the value counts as weights
+			// Select candidates, thereby using the sum of the value counts as weights divided by the path length
 			Map<FacetNode, Long> candToWeight =
 					cands.entrySet().stream()
 							.collect(Collectors.toMap(
 									Entry::getKey,
-									e -> e.getValue().values().stream().mapToLong(x -> x).sum(),
+									e -> e
+											.getValue()
+											.values().stream().mapToLong(x -> x).sum()
+									/
+									nodeDepth(e.getKey()),
 									(k1, k2) -> k1,
 									LinkedHashMap::new));
 
@@ -1255,6 +1254,26 @@ public class TaskGenerator {
 		// Choose a random desired path length
 		int desiredPathLength = rand.nextInt(2) + 1;
 
+		final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
+
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+
+		pathSearch.setMaxPathLength(desiredPathLength);
+		final List<SimplePath> paths =
+				pathSearch.exec().filter(sp  -> sp.getSteps().stream().anyMatch(p ->
+						!p.isForward()
+				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
+		Collections.shuffle(paths,
+				rand);
+
+		if (!paths.isEmpty() && applyEqConstraintOnPath(fn, paths.get(0), pseudoRandom)) {
+			result = true;
+		}
+
+		return result;
+
+		/*
 		PathSpecSimple pathSpec = PathSpecSimple.create(1, desiredPathLength, 1, 0.5, 0.5);
 		FacetNode targetFn = generatePath(fn, pathSpec, rand::nextDouble);
 
@@ -1306,7 +1325,24 @@ public class TaskGenerator {
 
 			// Now choose a value and set it as constraint
 		}
+		return result;
+*/
+	}
 
+	public static boolean applyEqConstraintOnPath(FacetNode fn, SimplePath path, Random pseudoRandom) {
+		boolean result = false;
+		final FacetNode walk = fn.walk(path);
+		final List<RDFNode> objects = walk
+				.remainingValues()
+				.randomOrder().pseudoRandom(pseudoRandom)
+				.exec()
+				.toList()
+				.blockingGet();
+		//System.out.println(objects);
+		if (!objects.isEmpty()) {
+			walk.constraints().eq(objects.get(0));
+			result = true;
+		}
 		return result;
 	}
 
