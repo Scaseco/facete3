@@ -90,6 +90,19 @@ public class TaskGenerator {
 		this.rand = new Random(1000);
 		this.conceptPathFinder = conceptPathFinder;
 
+		Model baseModel = ModelFactory.createDefaultModel();
+		Model changeModel = ModelFactory.createDefaultModel();
+
+		//RdfChangeTrackerWrapper
+		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);
+
+		Model dataModel = changeTracker.getDataModel();
+
+		// RDF Resource with state
+		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
+		FacetedQueryImpl.initResource(facetedQuery);
+
+		currentQuery = new FacetedQueryImpl(facetedQuery, null, conn);
 //		try {
 //			generateScenario();
 //		} catch(Exception e) {
@@ -333,20 +346,6 @@ public class TaskGenerator {
 		// yields a supplier. Invoking the supplier applies the action and yields a runnable for undo.
 		// if an action is not applicable, the supplier is null
 		Map<String, Callable<Boolean>> cpToAction = new HashMap<>();
-
-		Model baseModel = ModelFactory.createDefaultModel();
-		Model changeModel = ModelFactory.createDefaultModel();
-
-		//RdfChangeTrackerWrapper
-		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);
-
-		Model dataModel = changeTracker.getDataModel();
-
-		// RDF Resource with state
-		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
-		FacetedQueryImpl.initResource(facetedQuery);
-
-		currentQuery = new FacetedQueryImpl(facetedQuery, null, conn);
 
 		changeTracker.commitChangesWithoutTracking();
 
@@ -1418,4 +1417,11 @@ public class TaskGenerator {
 		return conceptPathFinder;
 	}
 
+	public RdfChangeTrackerWrapper getChangeTracker() {
+		return changeTracker;
+	}
+
+	public FacetedQuery getCurrentQuery() {
+		return currentQuery;
+	}
 }

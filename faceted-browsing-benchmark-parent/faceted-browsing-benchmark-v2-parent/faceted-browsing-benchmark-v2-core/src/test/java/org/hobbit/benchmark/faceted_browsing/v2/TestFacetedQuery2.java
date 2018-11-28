@@ -6,9 +6,7 @@ import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
-import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
-import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -21,22 +19,22 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.RdfChangeTrackerWrapperImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class TestFacetedQuery2 {
 
@@ -59,24 +57,13 @@ public class TestFacetedQuery2 {
 	}
 
 	protected void load(String uri) {
- 		Model baseModel = ModelFactory.createDefaultModel();
-		Model changeModel = ModelFactory.createDefaultModel();
-		//RdfChangeTrackerWrapper
-		changeTracker = RdfChangeTrackerWrapperImpl.create(changeModel, baseModel);
-		Model dataModel = changeTracker.getDataModel();
-
 		Model model = RDFDataMgr.loadModel(uri);
 		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));
 
-		// RDF Resource with state
-		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
-		FacetedQueryImpl.initResource(facetedQuery);
-
-		fq = new FacetedQueryImpl(facetedQuery, null, conn);
-
+		taskGenerator = TaskGenerator.autoConfigure(conn);
+		changeTracker = taskGenerator.getChangeTracker();
+		fq = taskGenerator.getCurrentQuery();
 		changeTracker.commitChangesWithoutTracking();
-
-		taskGenerator = TaskGenerator.autoConfigure((RDFConnection) fq.connection());
 	}
 
 	static String getQueryPattern(FacetNode node) {
@@ -221,6 +208,37 @@ public class TestFacetedQuery2 {
 				"  <http://www.example.org/Leipzig>\n" +
 				"            <http://www.example.org/locatedIn>  ?v_2\n" +
 				"}", getQueryPattern(node));
+	}
+
+	@Test
+	public void testCp10() {
+		load(DS_SIMPLE);
+		final FacetNode node = fq.root();
+
+		changeTracker.commitChanges();
+		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+
+		taskGenerator.applyCp1(node);
+		changeTracker.commitChanges();
+
+		assertNotEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+
+		taskGenerator.applyCp10();
+
+		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+
+		fq.focus(fq.root().fwd("http://www.example.org/locatedIn").one());
+		changeTracker.commitChanges();
+/*
+		taskGenerator.applyCp3(node);
+		changeTracker.commitChanges();
+		assertNotEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
+
+		taskGenerator.applyCp10();
+		assertEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
+*/
+		taskGenerator.applyCp10();
+		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
 	}
 
 	@Test
