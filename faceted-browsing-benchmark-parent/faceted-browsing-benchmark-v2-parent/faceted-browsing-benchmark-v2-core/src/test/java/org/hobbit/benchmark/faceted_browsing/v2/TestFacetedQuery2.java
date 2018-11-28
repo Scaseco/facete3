@@ -208,7 +208,16 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals("", getQueryPattern(node));
+		assertEquals("{ <http://www.example.org/Leipzig>\n" +
+				"            <http://www.example.org/mayor>  ?v_1\n" +
+				"  { ?v_1  ?p  ?o }\n" +
+				"}", getQueryPattern(node));
+
+		changeTracker.discardChanges();
+
+		taskGenerator.applyCp13(node);
+
+		assertEquals( "", getQueryPattern(node));
 	}
 
 	@Test
