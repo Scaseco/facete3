@@ -83,9 +83,9 @@ public class TestFacetedQuery2 {
 		return ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString();
 	}
 
-	@Test
+	@Test//done
 	public void testFocusNode() {
-		// TODO: focus tests
+		// TODO: test case with films,characters,actors
 		load(DS_SIMPLE_3);
 
 		final FacetNode one = fq.root().bwd("http://xmlns.com/foaf/0.1/based_near").one();
@@ -110,7 +110,7 @@ public class TestFacetedQuery2 {
 		assertArrayEquals(((ImmutableMap<Node, Long>) solution).asMultimap().entries().toArray(), facetValueCounts.entrySet().toArray());
 	}
 
-	@Test
+	@Test//done
 	public void testPathFinder() {
 		load(DS_SIMPLE_1);
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
@@ -145,7 +145,7 @@ public class TestFacetedQuery2 {
 		//System.out.println(paths);
 	}
 
-	@Test
+	@Test//done
 	public void testCp14() {
 		load(DS_SIMPLE_3);
 		taskGenerator.setPseudoRandom(new Random(1l));
@@ -197,7 +197,7 @@ public class TestFacetedQuery2 {
 		solutions.assertAllSeen();
 	}
 
-	@Test
+	@Test//done
 	public void testCp13() {
 		load(DS_SIMPLE_2);
 		taskGenerator.setPseudoRandom(new Random(1234l));
@@ -217,7 +217,10 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals( "", getQueryPattern(node));
+		assertEquals( "{ ?v_1      <http://www.example.org/locatedIn>  ?v_2 .\n" +
+				"  <http://www.example.org/Leipzig>\n" +
+				"            <http://www.example.org/locatedIn>  ?v_2\n" +
+				"}", getQueryPattern(node));
 	}
 
 	@Test
@@ -423,9 +426,12 @@ public class TestFacetedQuery2 {
 	}
 
 	class Seen {
-		boolean f = false;
+		private boolean f = false;
 		boolean seen() {
 			return this.f = true;
+		}
+		boolean wasSeen() {
+			return this.f;
 		}
 	}
 
@@ -440,13 +446,13 @@ public class TestFacetedQuery2 {
 		}
 
 		void assertAllSeen() {
-			assertArrayEquals( solutions.entrySet().stream().map(es -> es.getKey()).toArray() ,
-					solutions.entrySet().stream().map( es -> es.getValue().f ? es.getKey() : "[]").toArray() );
+			assertArrayEquals( solutions.entrySet().stream().map(Map.Entry::getKey).toArray() ,
+					solutions.entrySet().stream().map( es -> es.getValue().wasSeen() ? es.getKey() : "[]").toArray() );
 		}
 
-		public void assertSolution(Object o) {
+		void assertSolution(Object o) {
 			final Seen seen = solutions.get(o);
-			final boolean ok = seen == null ? false : seen.seen();
+			final boolean ok = seen != null && seen.seen();
 			assertEquals( ok ? o : ""  , o );
 		}
 	}
