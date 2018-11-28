@@ -6,12 +6,11 @@ import org.aksw.jena_sparql_api.changeset.util.ChangeApi;
 import org.aksw.jena_sparql_api.changeset.util.ChangeSetGroupManager;
 import org.aksw.jena_sparql_api.changeset.util.ChangeSetUtils;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
+import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 
 public class RdfChangeTrackerWrapperImpl
 	implements RdfChangeTrackerWrapper
@@ -50,7 +49,7 @@ public class RdfChangeTrackerWrapperImpl
 
 	public static RdfChangeTrackerWrapperImpl create(Model changeModel, Model baseModel) {
 		Graph baseGraph = Objects.requireNonNull(baseModel.getGraph());
-		Delta deltaGraph = new Delta(baseGraph);
+		Delta deltaGraph = new DeltaWithFixedIterator(baseGraph);
 		Model dataModel = ModelFactory.createModelForGraph(deltaGraph);
 
 		ChangeApi changeTracker = new ChangeSetGroupManager(changeModel, baseModel);

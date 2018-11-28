@@ -13,6 +13,11 @@ SELECT * {
   }
 }
 
+
+LOAD <chart.ttl>
+
+CONSTRUCT WHERE { ?s ?p ?o }
+
 CONSTRUCT {
   ?exp ?p ?o
 } {

@@ -17,6 +17,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
+import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -131,19 +132,22 @@ public class ChangeSetUtils {
 		targetModel.remove(delStmts);
     }
     
-    
-
-    public static void applyDelta(Delta delta) {
-    	Graph base;
+    public static Graph getBase(Delta delta) {
+    	Graph result;
     	try {
 	    	Field field = Delta.class.getDeclaredField("base");
 	    	field.setAccessible(true);
-	    	base = (Graph)field.get(delta);
-			//Graph base = 
+	    	result = (Graph)field.get(delta);
     	} catch(Exception e) {
     		throw new RuntimeException(e);
     	}
 
+    	return result;
+    }
+
+    public static void applyDelta(Delta delta) {
+
+    	Graph base = getBase(delta);
 		Graph addGraph = delta.getAdditions();
 		Graph delGraph = delta.getDeletions();
 		
@@ -286,7 +290,7 @@ public class ChangeSetUtils {
 		
 		Runnable a = () -> {
 			Graph graph = dataModel.getGraph();
-			Delta delta = new Delta(graph);
+			Delta delta = new DeltaWithFixedIterator(graph);
 			Model deltaModel = ModelFactory.createModelForGraph(delta);
 
 			action.accept(deltaModel);

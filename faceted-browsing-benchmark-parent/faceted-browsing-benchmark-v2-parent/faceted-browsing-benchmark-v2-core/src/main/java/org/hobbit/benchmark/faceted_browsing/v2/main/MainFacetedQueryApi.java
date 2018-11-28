@@ -106,7 +106,7 @@ public class MainFacetedQueryApi {
 						.create()
 						), null, null);
 
-		Delta delta = new Delta(m.getGraph());
+		Delta delta = new DeltaWithFixedIterator(m.getGraph());
 		Model model = ModelFactory.createModelForGraph(delta);
 		FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
 
