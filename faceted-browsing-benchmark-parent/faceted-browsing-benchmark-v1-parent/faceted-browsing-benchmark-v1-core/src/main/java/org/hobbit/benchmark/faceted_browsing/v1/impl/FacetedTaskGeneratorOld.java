@@ -169,11 +169,16 @@ public class FacetedTaskGeneratorOld {
 
                 int queryid = 0;
                 for (Entry<String, Map<String, String>> query : queries.entrySet()) {
-                    String scenarioName = entry.getKey();
+                	
+                	String scenarioName = entry.getKey();
                     String scenarioClassifier = scenarioName;
+                    
+                    Integer scenarioId = Integer.parseInt(scenarioClassifier.replaceAll("[^0-9]", ""));
+                    
                 	//System.out.println("scenarioName: " + scenarioName + " query: " + query);                
                     if (query.getKey().contains("Count")){
-                    	scenarioClassifier = "Scenario_0";
+                    	//scenarioClassifier = "Scenario_0";
+                    	scenarioId = 0;
                     }
                     queryid += 1;
                     //String taskIdString = getNextTaskId();
@@ -195,7 +200,7 @@ public class FacetedTaskGeneratorOld {
                             // TODO use a different vocab to denote the task payload
                             .addLiteral(RDFS.label, replacedQuery)
                             //.addLiteral(FacetedBrowsingVocab.scenarioClassifier, scenarioClassifier)
-                            .addLiteral(FacetedBrowsingVocab.scenarioId, scenarioClassifier)
+                            .addLiteral(FacetedBrowsingVocab.scenarioId, scenarioId)
                             .addLiteral(FacetedBrowsingVocab.queryId,"" + queryid)
                             ;
 

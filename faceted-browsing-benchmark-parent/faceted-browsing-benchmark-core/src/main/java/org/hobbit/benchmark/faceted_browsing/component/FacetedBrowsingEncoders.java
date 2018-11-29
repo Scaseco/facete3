@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.primitives.Bytes;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
@@ -174,8 +174,8 @@ public class FacetedBrowsingEncoders {
         String taskId = r.getURI();
         //long timestamp = r.getProperty(DCTerms.created).getLong();
         //String replacedQuery = r.getProperty(RDFS.label).getString();
-        String queryId = r.getProperty(FacetedBrowsingVocab.queryId).getString();
-        String scenarioId = r.getProperty(FacetedBrowsingVocab.scenarioId).getString();
+        String queryId = "" + ResourceUtils.getLiteralPropertyValue(r, FacetedBrowsingVocab.queryId, Integer.class);
+        String scenarioId = "" + ResourceUtils.getLiteralPropertyValue(r, FacetedBrowsingVocab.scenarioId, Integer.class);
         String resultSetJsonStr = r.getProperty(RDFS.comment).getString();
 
         ResultSet resultSet = ResultSetFactory.fromJSON(new ByteArrayInputStream(resultSetJsonStr.getBytes(StandardCharsets.UTF_8)));

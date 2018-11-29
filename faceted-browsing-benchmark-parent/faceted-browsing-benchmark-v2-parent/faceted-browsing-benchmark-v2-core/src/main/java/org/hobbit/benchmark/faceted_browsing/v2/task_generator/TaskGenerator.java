@@ -1,9 +1,32 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Range;
-import io.reactivex.Flowable;
-import org.aksw.facete.v3.api.*;
+import static java.lang.Math.log;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import org.aksw.facete.v3.api.Direction;
+import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeResource;
@@ -18,7 +41,12 @@ import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.*;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprListUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.NodeHolder;
+import org.aksw.jena_sparql_api.utils.RangeUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
@@ -36,7 +64,11 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.*;
+import org.apache.jena.sparql.expr.E_Bound;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_OneOf;
+import org.apache.jena.sparql.expr.ExprTransformer;
+import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
@@ -53,16 +85,10 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
 
-import static java.lang.Math.log;
+import io.reactivex.Flowable;
 
 
 public class TaskGenerator {
@@ -126,7 +152,7 @@ public class TaskGenerator {
 					// add scenario id
 					s.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioIdx);
 
-					String queryId = s.getProperty(FacetedBrowsingVocab.queryId).getString();
+					Integer queryId = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(s, FacetedBrowsingVocab.queryId, Integer.class); //getString();
 					String scenarioName = "scenario" + scenarioIdx;
 
 					s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
@@ -458,7 +484,7 @@ public class TaskGenerator {
 
 					r = generateQuery();
 					r
-							.addLiteral(FacetedBrowsingVocab.queryId, Integer.toString(i))
+							.addLiteral(FacetedBrowsingVocab.queryId, i) //Integer.toString(i))
 							.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
 				}
 

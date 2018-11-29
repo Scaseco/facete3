@@ -21,16 +21,19 @@ public class FacetedBrowsingEncodersV1 {
     public static Resource decodeExpectedDataV1(ByteBuffer bufferExp) {
         String taskidGold = RabbitMQUtils.readString(bufferExp);
         logger.info("Eval_mod task Id: "+ taskidGold);
-        String scenario = RabbitMQUtils.readString(bufferExp);
-        logger.info("Scenario id: "+ scenario);
-        String query = RabbitMQUtils.readString(bufferExp);
-        logger.info("query: "+ query); // I think this is just the query id - not the string
+        String scenarioStr = RabbitMQUtils.readString(bufferExp);
+        logger.info("Scenario id: "+ scenarioStr);
+        String queryIdStr = RabbitMQUtils.readString(bufferExp);
+        logger.info("query: "+ queryIdStr); // I think this is just the query id - not the string
+        
+        int scenarioId = Integer.parseInt(scenarioStr);
+        int queryId = Integer.parseInt(queryIdStr);
         
         Resource result = ModelFactory.createDefaultModel().createResource(taskidGold)
-        		.addLiteral(FacetedBrowsingVocab.scenarioId, scenario)
-        		.addLiteral(FacetedBrowsingVocab.queryId, query);
+        		.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioId)
+        		.addLiteral(FacetedBrowsingVocab.queryId, queryId);
 
-        QueryID key = new QueryID(Integer.parseInt(scenario), Integer.parseInt(query));
+        QueryID key = new QueryID(scenarioId, queryId);
 
         Set<Integer> cps = ChokePoints.getChokpointsForQueryId(key);
 
