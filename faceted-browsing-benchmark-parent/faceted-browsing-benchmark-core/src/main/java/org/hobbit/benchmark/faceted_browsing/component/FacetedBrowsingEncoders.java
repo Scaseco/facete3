@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultSetMem;
-import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.components.test.InMemoryEvaluationStore.ResultImpl;
 import org.hobbit.core.data.Result;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -72,17 +72,17 @@ public class FacetedBrowsingEncoders {
      */
     public static void main(String[] args) {
     	Resource a = ModelFactory.createDefaultModel().createResource("http://example.org/task1")
-    			.addProperty(RDFS.label, "task specification string");
+    			.addProperty(BenchmarkVocab.taskPayload, "task specification string");
     	
     	Resource b = decodeTaskForSystemAdapter(encodeTaskForSystemAdapter(a));
-    	System.out.println(a.getProperty(RDFS.label).getString().equals(b.getProperty(RDFS.label).getString()));
+    	System.out.println(a.getProperty(BenchmarkVocab.taskPayload).getString().equals(b.getProperty(BenchmarkVocab.taskPayload).getString()));
     	System.out.println(a.getURI().equals(b.getURI()));
     }
     
     
     public static ByteBuffer encodeTaskForSystemAdapter(Resource r) {
     	String taskIdStr = r.getURI();
-    	String queryStr = r.getProperty(RDFS.label).getString();
+    	String queryStr = r.getProperty(BenchmarkVocab.taskPayload).getString();
 
 //        byte[] tmp = RabbitMQUtils.writeByteArrays(
 //                new byte[][] { RabbitMQUtils.writeString(taskIdStr), queryStr.getBytes(StandardCharsets.UTF_8) });
@@ -120,7 +120,7 @@ public class FacetedBrowsingEncoders {
         //String taskStr = new String(taskData, StandardCharsets.UTF_8);
         
         Resource result = ModelFactory.createDefaultModel().createResource(taskId)
-        		.addProperty(RDFS.label, taskStr);
+        		.addProperty(BenchmarkVocab.taskPayload, taskStr);
         
         return result;
     }
@@ -176,7 +176,7 @@ public class FacetedBrowsingEncoders {
         //String replacedQuery = r.getProperty(RDFS.label).getString();
         String queryId = "" + ResourceUtils.getLiteralPropertyValue(r, FacetedBrowsingVocab.queryId, Integer.class);
         String scenarioId = "" + ResourceUtils.getLiteralPropertyValue(r, FacetedBrowsingVocab.scenarioId, Integer.class);
-        String resultSetJsonStr = r.getProperty(RDFS.comment).getString();
+        String resultSetJsonStr = r.getProperty(BenchmarkVocab.expectedResult).getString();
 
         ResultSet resultSet = ResultSetFactory.fromJSON(new ByteArrayInputStream(resultSetJsonStr.getBytes(StandardCharsets.UTF_8)));
         

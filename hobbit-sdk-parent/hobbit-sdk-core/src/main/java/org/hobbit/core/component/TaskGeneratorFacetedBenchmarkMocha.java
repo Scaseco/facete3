@@ -297,7 +297,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
                 
                 // The SA only needs to see the URI and the label (the query string)
                 Resource subResource = task.inModel(ModelFactory.createDefaultModel());
-                subResource.addLiteral(RDFS.label, task.getProperty(RDFS.label).getString());
+                subResource.addLiteral(BenchmarkVocab.taskPayload, task.getProperty(BenchmarkVocab.taskPayload).getString());
                 
                 ByteBuffer buf2 = taskEncoderForSystemAdapter.apply(subResource);
                 

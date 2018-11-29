@@ -36,13 +36,13 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.ModelUtils;
-import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigDataGeneratorFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigVirtualDockerServiceFactoryV1;
 import org.hobbit.benchmark.faceted_browsing.v1.config.FacetedBrowsingBenchmarkV1Constants;
 import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.DataGeneratorComponentBase;
 import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
@@ -183,8 +183,8 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 			
 			System.out.println("Processing task " + i + ": " + task.getURI());
 			
-			String queryStr = task.getRequiredProperty(RDFS.label).getString();
-			String resultSetStr = task.getRequiredProperty(RDFS.comment).getString();
+			String queryStr = task.getRequiredProperty(BenchmarkVocab.taskPayload).getString();
+			String resultSetStr = task.getRequiredProperty(BenchmarkVocab.expectedResult).getString();
 
 			
 			try(QueryExecution qe = conn.query(queryStr)) {				

@@ -27,6 +27,7 @@ import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.Commands;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.ComponentBaseExecutionThread;
 import org.hobbit.core.component.DataProtocol;
 import org.hobbit.core.component.MochaConstants;
@@ -256,7 +257,7 @@ public class SystemAdapterRDFConnectionMocha
         
         
         String taskIdStr = r.getURI();
-        String sparqlStmtStr = r.getProperty(RDFS.label).getString();
+        String sparqlStmtStr = r.getProperty(BenchmarkVocab.taskPayload).getString();
 
         //logger.debug("R"
         //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_PRETTY);

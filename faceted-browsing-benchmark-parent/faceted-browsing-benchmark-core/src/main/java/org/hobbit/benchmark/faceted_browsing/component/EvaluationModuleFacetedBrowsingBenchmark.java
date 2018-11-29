@@ -23,7 +23,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
@@ -148,7 +148,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         String taskidGold = expected.getURI();
         Integer scenario = ResourceUtils.getLiteralPropertyValue(expected, FacetedBrowsingVocab.scenarioId, Integer.class);
         Integer query = ResourceUtils.getLiteralPropertyValue(expected, FacetedBrowsingVocab.queryId, Integer.class);
-        String goldsString = ResourceUtils.getLiteralPropertyValue(expected, RDFS.label, String.class);
+        String goldsString = ResourceUtils.getLiteralPropertyValue(expected, BenchmarkVocab.expectedResult, String.class);
         
         Set<Integer> cps = new SetFromLiteralPropertyValues<>(expected, FacetedBrowsingVocab.chokepointId, Integer.class);
         
@@ -161,8 +161,6 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         QueryID key = new QueryID(scenario.byteValue(), query);
         seenCps.putAll(key, cps);
 
-        //String goldsString = RabbitMQUtils.readString(bufferExp);
-        // LOGGER.info("goldsString: "+ goldsString);
 
         // WTF???? Why is there a sleep??? ~Claus
         //TimeUnit.MILLISECONDS.sleep(500);
@@ -220,7 +218,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 //        QueryID key = new QueryID(Integer.parseInt(scenario), Integer.parseInt(query));
 //
 //        if (!scenario.contains("0") || (scenario.contains("10"))) {
-        if(scenario == 0) {
+        if(scenario != 0) {
         	number_of_queries+=1;
             // Evaluate the given response pair.
 

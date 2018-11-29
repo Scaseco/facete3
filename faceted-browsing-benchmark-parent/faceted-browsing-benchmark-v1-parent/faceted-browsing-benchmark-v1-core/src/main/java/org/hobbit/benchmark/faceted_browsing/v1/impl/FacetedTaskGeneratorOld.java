@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -62,15 +63,14 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.util.ResourceUtils;
-import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,10 +198,10 @@ public class FacetedTaskGeneratorOld {
 
                     Resource task = ModelFactory.createDefaultModel().createResource()
                             // TODO use a different vocab to denote the task payload
-                            .addLiteral(RDFS.label, replacedQuery)
+                            .addLiteral(BenchmarkVocab.taskPayload, replacedQuery)
                             //.addLiteral(FacetedBrowsingVocab.scenarioClassifier, scenarioClassifier)
                             .addLiteral(FacetedBrowsingVocab.scenarioId, scenarioId)
-                            .addLiteral(FacetedBrowsingVocab.queryId,"" + queryid)
+                            .addLiteral(FacetedBrowsingVocab.queryId, queryid)
                             ;
 
                     task = ResourceUtils.renameResource(task, "http://example.org/" + scenarioName + "-" + queryid);
@@ -747,7 +747,7 @@ public class FacetedTaskGeneratorOld {
         	
         	// Inject the graph name into the FROM clause of the query
         	// TODO
-        	Statement stmt = task.getProperty(RDFS.label);
+        	Statement stmt = task.getProperty(BenchmarkVocab.taskPayload);
         	String str = stmt.getString();
         	Query query = parser.apply(str).getAsQueryStmt().getQuery();
         	//query.addGraphURI(DataGeneratorFacetedBrowsing.GRAPH_IRI);
@@ -768,7 +768,7 @@ public class FacetedTaskGeneratorOld {
 
         logger.info("Generated task: " + task);
         
-        String queryStr = task.getProperty(RDFS.label).getString();
+        String queryStr = task.getProperty(BenchmarkVocab.taskPayload).getString();
         
         // The task generation is not complete without the reference result
         // TODO Reference result should be computed against TDB
@@ -788,8 +788,13 @@ public class FacetedTaskGeneratorOld {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();
         	ResultSetFormatter.outputAsJSON(baos, rsMem); //resultSet);
         	//baos.flush();
-        	String resultSetStr = baos.toString();
-        	task.addLiteral(RDFS.comment, resultSetStr);
+        	String resultSetStr;
+        	try {
+        		resultSetStr = baos.toString(StandardCharsets.UTF_8.name());
+        	} catch(UnsupportedEncodingException e) {
+        		throw new RuntimeException(e);
+        	}
+        	task.addLiteral(BenchmarkVocab.expectedResult, resultSetStr);
         }
             	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);
         

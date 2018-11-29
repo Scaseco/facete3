@@ -8,6 +8,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.component.QueryID;
 import org.hobbit.benchmark.faceted_browsing.v1.evaluation.ChokePoints;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,21 +25,30 @@ public class FacetedBrowsingEncodersV1 {
         String scenarioStr = RabbitMQUtils.readString(bufferExp);
         logger.info("Scenario id: "+ scenarioStr);
         String queryIdStr = RabbitMQUtils.readString(bufferExp);
-        logger.info("query: "+ queryIdStr); // I think this is just the query id - not the string
-        
+        logger.info("query: "+ queryIdStr); // This is just the query id - not the string
+
+        String goldsString = RabbitMQUtils.readString(bufferExp);
+//         LOGGER.info("goldsString: "+ goldsString);
+
         int scenarioId = Integer.parseInt(scenarioStr);
         int queryId = Integer.parseInt(queryIdStr);
         
         Resource result = ModelFactory.createDefaultModel().createResource(taskidGold)
         		.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioId)
-        		.addLiteral(FacetedBrowsingVocab.queryId, queryId);
+        		.addLiteral(FacetedBrowsingVocab.queryId, queryId)
+        		.addLiteral(BenchmarkVocab.expectedResult, goldsString);
 
         QueryID key = new QueryID(scenarioId, queryId);
 
-        Set<Integer> cps = ChokePoints.getChokpointsForQueryId(key);
+        if(scenarioId != 0) {
+	        Set<Integer> cps = ChokePoints.getChokpointsForQueryId(key);
+	        if(cps == null) {
+	        	throw new RuntimeException("No chokepoint for query id: " + key);
+	        }
 
-        for(Integer cp : cps) {
-        	result.addLiteral(FacetedBrowsingVocab.chokepointId, cp);
+	        for(Integer cp : cps) {
+	        	result.addLiteral(FacetedBrowsingVocab.chokepointId, cp);
+	        }
         }
 
         return result;
