@@ -22,6 +22,7 @@ import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
@@ -38,8 +39,13 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,6 +87,15 @@ public class TestFacetedQuery2 {
 		return ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString();
 	}
 
+	
+	@Test
+	public void testHierarchy() {
+		Path path = new P_Link(RDFS.subClassOf.asNode());
+		UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(Concept.parse("?s | ?s a eg:Foobar", PrefixMapping.Extended), path);
+		
+		System.out.println(subClasses);
+	}
+	
 	@Test//done
 	public void testFocusNode() {
 		// TODO: test case with films,characters,actors

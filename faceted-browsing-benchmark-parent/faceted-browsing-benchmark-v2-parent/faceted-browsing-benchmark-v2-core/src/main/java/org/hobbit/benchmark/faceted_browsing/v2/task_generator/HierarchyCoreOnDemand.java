@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.TriplePath;
@@ -85,6 +86,17 @@ public class HierarchyCoreOnDemand
 	}
 
 	
+	public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path relation) {
+		UnaryRelation targets = new Concept(ElementUtils.createElement(new TriplePath(Vars.s, relation, Vars.o)), Vars.s);
+		
+		UnaryRelation result = targets
+				.joinOn(Vars.o)
+				.filterRelationFirst(true)
+				.with(baseConcept)
+				.toUnaryRelation();
+
+		return result;
+	}
 	
 	/**
 	 * If any child is part of a cycle, all members of the cycle become children
