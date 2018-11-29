@@ -261,11 +261,17 @@ public class TestFacetedQuery2 {
 		final FacetConstraint c1 = carr[0];
 		System.out.println(c1);
 
-		final StringWriter sw = new StringWriter();
-		RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
-		System.out.println(sw.toString());
+		{
+			final StringWriter sw = new StringWriter();
+			RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
+			System.out.println(sw.toString());
+		}
 		fq.constraints().clear();
-		System.out.println(sw.toString());
+		{
+			final StringWriter sw = new StringWriter();
+			RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
+			System.out.println(sw.toString());
+		}
 		//System.out.println(fq.constraints());
 
 	}
