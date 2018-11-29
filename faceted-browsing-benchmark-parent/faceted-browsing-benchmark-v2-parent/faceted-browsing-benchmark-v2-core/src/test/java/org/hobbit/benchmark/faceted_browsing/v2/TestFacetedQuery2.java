@@ -2,11 +2,9 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
-import org.aksw.facete.v3.api.DataQuery;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
+import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -23,16 +21,15 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.io.StringWriter;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -210,7 +207,7 @@ public class TestFacetedQuery2 {
 				"}", getQueryPattern(node));
 	}
 
-	@Test
+	@Test//done
 	public void testCp10() {
 		load(DS_SIMPLE);
 		final FacetNode node = fq.root();
@@ -229,16 +226,48 @@ public class TestFacetedQuery2 {
 
 		fq.focus(fq.root().fwd("http://www.example.org/locatedIn").one());
 		changeTracker.commitChanges();
-/*
+
 		taskGenerator.applyCp3(node);
 		changeTracker.commitChanges();
 		assertNotEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
 
 		taskGenerator.applyCp10();
 		assertEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
-*/
+
 		taskGenerator.applyCp10();
 		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+	}
+
+	@Test
+	public void testCp6part() {
+		load(DS_SIMPLE_3);
+		taskGenerator.setPseudoRandom(new Random(123L));
+
+		final FacetNode node = fq.root();
+
+		Map.Entry<FacetNode, Range<NodeHolder>> r = TaskGenerator.pickRange(taskGenerator.getRandom(), taskGenerator.getPseudoRandom(), taskGenerator.getNumericProperties(),
+				taskGenerator.getConceptPathFinder(), node, null, 0, 0, false, true, true);
+
+		System.out.println("Pick: " + r);
+
+		if (r != null) {
+			r.getKey().constraints().range(r.getValue());
+		}
+
+		System.out.println(node);
+
+		final Collection<FacetConstraint> constraints = fq.constraints();
+		final FacetConstraint[] carr = constraints.toArray((new FacetConstraint[]{}));
+		final FacetConstraint c1 = carr[0];
+		System.out.println(c1);
+
+		final StringWriter sw = new StringWriter();
+		RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
+		System.out.println(sw.toString());
+		fq.constraints().clear();
+		System.out.println(sw.toString());
+		//System.out.println(fq.constraints());
+
 	}
 
 	@Test

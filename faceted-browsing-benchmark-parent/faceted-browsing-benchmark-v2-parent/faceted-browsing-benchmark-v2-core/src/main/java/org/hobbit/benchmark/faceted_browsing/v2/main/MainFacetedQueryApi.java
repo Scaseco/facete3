@@ -1,13 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -39,6 +31,10 @@ import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 public class MainFacetedQueryApi {
 

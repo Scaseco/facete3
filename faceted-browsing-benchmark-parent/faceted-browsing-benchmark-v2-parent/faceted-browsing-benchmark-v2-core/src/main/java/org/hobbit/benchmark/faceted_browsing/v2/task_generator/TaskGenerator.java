@@ -367,7 +367,7 @@ public class TaskGenerator {
 //
 		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
 //		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
-//		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
+		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
 		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
 
@@ -1423,5 +1423,9 @@ public class TaskGenerator {
 
 	public FacetedQuery getCurrentQuery() {
 		return currentQuery;
+	}
+
+	public List<SetSummary> getNumericProperties() {
+		return numericProperties;
 	}
 }
