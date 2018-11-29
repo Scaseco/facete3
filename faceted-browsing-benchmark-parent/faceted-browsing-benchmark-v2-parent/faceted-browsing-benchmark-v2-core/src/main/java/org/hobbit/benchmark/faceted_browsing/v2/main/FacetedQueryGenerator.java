@@ -499,7 +499,7 @@ public class FacetedQueryGenerator<P> {
 	 */
 	
 	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false);
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, false);
 
 		List<Element> elements = facetValues.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
@@ -516,7 +516,7 @@ public class FacetedQueryGenerator<P> {
 
 	public TernaryRelation createRelationFacetValues(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter) {
 		
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, negated);
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, negated, false);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
@@ -682,12 +682,12 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	// [focus, facet, facetValue]
-	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated) {
+	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated, boolean applySelfConstraints) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
 		
-		boolean applySelfConstraints = true;
+		//boolean applySelfConstraints = false;
 		Map<String, BinaryRelation> facets = createMapFacetsAndValues(facetPath, isReverse, applySelfConstraints, negated);
 
 		// Get the focus element

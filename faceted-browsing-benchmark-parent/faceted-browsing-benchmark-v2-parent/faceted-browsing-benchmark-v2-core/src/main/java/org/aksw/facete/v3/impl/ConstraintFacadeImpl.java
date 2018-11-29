@@ -1,6 +1,9 @@
 package org.aksw.facete.v3.impl;
 
-import com.google.common.collect.Range;
+import java.util.Collection;
+import java.util.Set;
+
+import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.HLFacetConstraint;
@@ -16,8 +19,8 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
-import java.util.Collection;
-import java.util.Set;
+import com.google.common.base.Converter;
+import com.google.common.collect.Range;
 
 public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	implements ConstraintFacade<B>
@@ -109,8 +112,14 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 
 	@Override
 	public Collection<HLFacetConstraint> listHl() {
-		// TODO Auto-generated method stub
-		return null;
+		Collection<FacetConstraint> lowLevel = list();
+
+		CollectionFromConverter<HLFacetConstraint, FacetConstraint> result = new CollectionFromConverter<>(lowLevel, Converter.from(
+			hl -> hl.state(),
+			ll -> new HLFacetConstraintImpl(parent, ll)
+		));
+	
+		return result;
 	}
 
 }

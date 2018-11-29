@@ -10,12 +10,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
@@ -106,6 +108,23 @@ public class TestFacetedQuery2 {
 		assertArrayEquals(((ImmutableMap<Node, Long>) solution).asMultimap().entries().toArray(), facetValueCounts.entrySet().toArray());
 	}
 
+	@Test
+	public void testFacetConstraintAccess() {
+		load(DS_SIMPLE_3);
+		fq.root();
+		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
+		
+		System.out.println("FROM CONSTRAINT: " + fq.root().fwd().facetValueCounts().only(RDF.type).exec().toList().blockingGet());
+
+		for(HLFacetConstraint fc : fq.focus().fwd(RDF.type).one().constraints().listHl()) {
+			Set<FacetNode> fns = fc.mentionedFacetNodes();
+			System.out.println("GOT MENTIONED: " + fns.size());
+			for(FacetNode fn : fns) {
+				System.out.println("FROM CONSTRAINT: " + fn.availableValues().exec().toList().blockingGet());
+			}
+		}
+	}
+	
 	@Test//done
 	public void testPathFinder() {
 		load(DS_SIMPLE_1);

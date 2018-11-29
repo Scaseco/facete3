@@ -20,6 +20,7 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
  *
  */
 public interface FacetedQuery
+	extends Castable
 {
 	FacetNode root();
 	
