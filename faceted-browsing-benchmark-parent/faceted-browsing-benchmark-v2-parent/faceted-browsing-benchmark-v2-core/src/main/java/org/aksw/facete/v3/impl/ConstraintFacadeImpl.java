@@ -3,6 +3,7 @@ package org.aksw.facete.v3.impl;
 import com.google.common.collect.Range;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
@@ -103,6 +104,13 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 		set.add(c);
 		
 		return this;
+	}
+
+
+	@Override
+	public Collection<HLFacetConstraint> listHl() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

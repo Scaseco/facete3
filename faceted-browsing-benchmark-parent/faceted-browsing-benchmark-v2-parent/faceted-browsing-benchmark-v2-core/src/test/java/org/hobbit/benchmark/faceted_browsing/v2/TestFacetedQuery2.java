@@ -1,8 +1,21 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Range;
-import org.aksw.facete.v3.api.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import java.io.StringWriter;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
@@ -17,6 +30,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
@@ -28,10 +42,8 @@ import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.StringWriter;
-import java.util.*;
-
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Range;
 
 public class TestFacetedQuery2 {
 
@@ -266,6 +278,7 @@ public class TestFacetedQuery2 {
 			RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
 			System.out.println(sw.toString());
 		}
+		fq.constraints().forEach(Resource::removeProperties);
 		fq.constraints().clear();
 		{
 			final StringWriter sw = new StringWriter();
