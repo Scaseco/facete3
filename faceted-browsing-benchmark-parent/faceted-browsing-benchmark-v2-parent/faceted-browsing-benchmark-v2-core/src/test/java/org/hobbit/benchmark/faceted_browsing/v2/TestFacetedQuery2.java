@@ -349,7 +349,7 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp6(node);
 
-		assertEquals("", getQueryPattern(node));
+		//assertEquals("", getQueryPattern(node));
 	}
 
 	@Test//done
@@ -472,11 +472,17 @@ public class TestFacetedQuery2 {
 
 		//System.out.println("---");
 		taskGenerator.applyCp1(node);
-		assertEquals( "{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  \"Leipzig\" ;\n" +
+		assertEquals( "{ ?v_1  <http://www.example.org/mayor>  <http://www.example.org/BurkhardJung> ;\n" +
 						"        <http://www.example.org/population>  500000\n" +
 						"}" ,
 				getQueryPattern(node)
 		);
+
+//		assertEquals( "{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  \"Leipzig\" ;\n" +
+//		"        <http://www.example.org/population>  500000\n" +
+//		"}" ,
+//getQueryPattern(node)
+//);
 
 	}
 
