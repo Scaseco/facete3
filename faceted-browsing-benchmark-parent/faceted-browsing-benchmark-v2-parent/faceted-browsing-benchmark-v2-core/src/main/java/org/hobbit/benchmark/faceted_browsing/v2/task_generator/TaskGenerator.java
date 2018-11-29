@@ -948,12 +948,18 @@ public class TaskGenerator {
 			List<SetSummary> numericProperties) {
 		Map<FacetNode, Map<Node, Long>> result = new LinkedHashMap<>();
 
-		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(
-				conceptPathFinder,
-				fn,
-				pathPattern,
-				minPathLength, pathLength,
-				numericProperties);
+
+		List<SimplePath> paths;
+		if (minPathLength < 0) {
+			paths = Collections.singletonList(new SimplePath());
+		} else {
+			paths = findPathsToResourcesWithNumericProperties(
+					conceptPathFinder,
+					fn,
+					pathPattern,
+					minPathLength, pathLength,
+					numericProperties);
+		}
 		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
 
 		for (SimplePath path : paths) {
@@ -962,11 +968,22 @@ public class TaskGenerator {
 			if (target != null) {
 				UnaryRelation numProps = createConcept(numericProperties);
 
-				List<Node> ps = target
-						.fwd().facets()
-						.filter(numProps)
-						.pseudoRandom(pseudoRandom)
-						.exec().map(n -> n.asNode()).toList().blockingGet();
+				List<Node> ps;
+				if (minPathLength == -1){
+					final Node node = FacetNodeResource.reachingProperty(target).asNode();
+					if (numericProperties.stream().anyMatch(p -> p.asNode().equals(node))) {
+						ps = Collections.singletonList(node);
+						target = target.parent();
+					} else {
+						ps = Collections.emptyList();
+					}
+				} else {
+					ps = target
+							.fwd().facets()
+							.filter(numProps)
+							.pseudoRandom(pseudoRandom)
+							.exec().map(n -> n.asNode()).toList().blockingGet();
+				}
 
 				for (Node p : ps) {
 
@@ -1011,11 +1028,17 @@ public class TaskGenerator {
 			List<SetSummary> numericProperties) {
 		Entry<FacetNode, Map<Node, Long>> result = null;
 
-		List<SimplePath> paths = findPathsToResourcesWithNumericProperties(
-				conceptPathFinder,
-				fn,
-				pathPattern,
-				minPathLength, pathLength, numericProperties);
+		List<SimplePath> paths;
+		if (minPathLength < 0) {
+			paths = Collections.singletonList(new SimplePath());
+		} else {
+			paths = findPathsToResourcesWithNumericProperties(
+					conceptPathFinder,
+					fn,
+					pathPattern,
+					minPathLength, pathLength,
+					numericProperties);
+		}
 
 		FacetNode target = null;
 		if (!paths.isEmpty()) {
@@ -1028,9 +1051,23 @@ public class TaskGenerator {
 		if (target != null) {
 			UnaryRelation numProps = createConcept(numericProperties);
 
-			Node p = target.fwd().facets().filter(numProps).randomOrder()
-					.pseudoRandom(pseudoRandom)
-					.exec().map(n -> n.asNode()).firstElement().blockingGet();
+			Node p;
+			if (minPathLength == -1){
+				final Node node = FacetNodeResource.reachingProperty(target).asNode();
+				if (numericProperties.stream().anyMatch(q -> q.asNode().equals(node))) {
+					p = node;
+					target = target.parent();
+				} else {
+					p = null;
+				}
+			} else {
+				p = target
+						.fwd().facets()
+						.filter(numProps)
+						.randomOrder()
+						.pseudoRandom(pseudoRandom)
+						.exec().map(n -> n.asNode()).firstElement().blockingGet();
+			}
 
 			if (p != null) {
 

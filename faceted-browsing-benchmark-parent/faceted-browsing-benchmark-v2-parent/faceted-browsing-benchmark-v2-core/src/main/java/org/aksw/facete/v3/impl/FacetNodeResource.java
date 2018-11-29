@@ -3,6 +3,7 @@ package org.aksw.facete.v3.impl;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.apache.jena.rdf.model.Property;
 
 public interface FacetNodeResource
 	extends FacetNode
@@ -14,4 +15,9 @@ public interface FacetNodeResource
 	
 	@Override
 	ConstraintFacade<? extends FacetNodeResource> constraints();
+
+	static Property reachingProperty(FacetNode fn) {
+		final FacetNodeResource fnr = fn.as(FacetNodeResource.class);
+		return fnr == null ? null : fnr.state().parent().reachingProperty();
+	}
 }
