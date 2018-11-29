@@ -219,4 +219,15 @@ public class FacetNodeImpl
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
+		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+
+		UnaryRelation c = qgen.getConceptForAtPath(this.query.focus().state(), this.state, true);
+		return this.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this))
+				+ "{" + c + "}";
+	}
 }
