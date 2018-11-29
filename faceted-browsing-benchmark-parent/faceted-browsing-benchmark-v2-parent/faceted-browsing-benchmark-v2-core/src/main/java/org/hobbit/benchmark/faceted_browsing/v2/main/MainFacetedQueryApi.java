@@ -1,13 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -19,6 +11,7 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.DatasetFactory;
@@ -34,11 +27,14 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.eclipse.jetty.server.Server;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 public class MainFacetedQueryApi {
 
