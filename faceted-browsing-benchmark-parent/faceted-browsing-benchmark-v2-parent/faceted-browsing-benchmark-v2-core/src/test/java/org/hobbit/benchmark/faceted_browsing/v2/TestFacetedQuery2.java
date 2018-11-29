@@ -18,6 +18,7 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
@@ -90,8 +91,22 @@ public class TestFacetedQuery2 {
 	
 	@Test
 	public void testHierarchy() {
+		load(DS_SIMPLE_3);
+
 		Path path = new P_Link(RDFS.subClassOf.asNode());
-		UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(Concept.parse("?s | ?s a eg:Foobar", PrefixMapping.Extended), path);
+
+		UnaryRelation classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+		UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+				classes,
+				path);
+		
+		DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
+		System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
+		
+
+		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+				Concept.parse("?s | VALUES(?s) { (eg:Foobar) }", PrefixMapping.Extended),
+				path);
 		
 		System.out.println(subClasses);
 	}
@@ -106,7 +121,6 @@ public class TestFacetedQuery2 {
 		fq.focus(one);
 
 		fq.root().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
-
 		//final List<FacetValueCount> facetValueCounts = fq.root().fwd().facetValueCounts().only(RDFS.label).exec().toList().blockingGet();
 		final Map<Node, Long> facetValueCounts = fq.root().fwd().facetValueCounts().only("http://www.example.org/inhabitants")
 				.exec()
