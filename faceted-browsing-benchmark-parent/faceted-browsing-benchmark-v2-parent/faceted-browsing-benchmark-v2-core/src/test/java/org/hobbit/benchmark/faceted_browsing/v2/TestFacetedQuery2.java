@@ -229,14 +229,14 @@ public class TestFacetedQuery2 {
 
 		fq.focus(fq.root().fwd("http://www.example.org/locatedIn").one());
 		changeTracker.commitChanges();
-/*
+
 		taskGenerator.applyCp3(node);
 		changeTracker.commitChanges();
 		assertNotEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
 
 		taskGenerator.applyCp10();
 		assertEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
-*/
+
 		taskGenerator.applyCp10();
 		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
 	}
