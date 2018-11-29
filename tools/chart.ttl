@@ -8,6 +8,7 @@
 @prefix bsbm: <http://bsbm.org/> .
 @prefix eg: <http://example.org/> .
 
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 eg:exp1
   a cv:StatisticalBarChart ;
@@ -22,6 +23,8 @@ eg:exp1
     cv:yAxisTicksVisible true ;
     cv:xAxisLabelRotation 45 ;
     cv:yAxisDecimalPattern "###,###,###,###,###.#####" ;
+    cv:yAxisMin "0.0"^^xsd:double ;
+    cv:yAxisMax "1.0"^^xsd:double ;
   ] ;
   cv:series [
     a cv:ConceptBasedSeries ;

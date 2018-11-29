@@ -21,6 +21,8 @@ import com.google.common.collect.Range;
 public interface ConstraintFacade<B> {
 	Collection<FacetConstraint> list();
 
+	Collection<HLFacetConstraint> listHl(); 
+	
 	default Stream<FacetConstraint> stream() {
 		return list().stream();
 	}

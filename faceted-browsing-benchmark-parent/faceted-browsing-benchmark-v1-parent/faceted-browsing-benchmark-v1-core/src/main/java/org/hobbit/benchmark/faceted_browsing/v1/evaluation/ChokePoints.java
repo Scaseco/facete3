@@ -1,7 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v1.evaluation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.hobbit.benchmark.faceted_browsing.component.QueryID;
 
@@ -206,6 +209,16 @@ public class ChokePoints {
 
     public static HashMap<Integer, ArrayList<QueryID>> getTable() {
         return chokePointsTable;
+    }
+    
+    public static Set<Integer> getChokpointsForQueryId(QueryID queryId) {
+    	Set<Integer> result = ChokePoints.getTable().entrySet().stream()
+    			.filter(e -> e.getValue().contains(queryId))
+    			.map(Entry::getKey)
+    			.map(Collections::singleton)
+    			.findFirst().orElse(null);
+		
+    	return result;
     }
 }
 

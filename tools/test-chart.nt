@@ -1,20 +1,22 @@
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/legendPosition> "InsideNW" .
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/yAxisLogarithmic> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/yAxisTicksVisible> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/xAxisLabelRotation> "45"^^<http://www.w3.org/2001/XMLSchema#integer> .
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/yAxisDecimalPattern> "###,###,###,###,###.#####" .
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/yAxisMin> "0.0"^^<http://www.w3.org/2001/XMLSchema#double> .
+_:Bf4006db832b22c7333872081edad0843 <http://aksw.org/chart-vocab/yAxisMax> "1.0"^^<http://www.w3.org/2001/XMLSchema#double> .
 <http://example.org/exp1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://aksw.org/chart-vocab/StatisticalBarChart> .
 <http://example.org/exp1> <http://www.w3.org/2000/01/rdf-schema#label> "Performance Histogram" .
 <http://example.org/exp1> <http://aksw.org/chart-vocab/xAxisTitle> "Workload" .
 <http://example.org/exp1> <http://aksw.org/chart-vocab/yAxisTitle> "Time (s)" .
 <http://example.org/exp1> <http://aksw.org/chart-vocab/width> "1650"^^<http://www.w3.org/2001/XMLSchema#integer> .
 <http://example.org/exp1> <http://aksw.org/chart-vocab/height> "1050"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/exp1> <http://aksw.org/chart-vocab/style> _:B972037d6f5d05dc9b2d58287bbe1f905 .
-<http://example.org/exp1> <http://aksw.org/chart-vocab/series> _:B224e5e261567c8a11e12a549ebb1715c .
-_:B972037d6f5d05dc9b2d58287bbe1f905 <http://aksw.org/chart-vocab/legendPosition> "InsideNW" .
-_:B972037d6f5d05dc9b2d58287bbe1f905 <http://aksw.org/chart-vocab/yAxisLogarithmic> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
-_:B972037d6f5d05dc9b2d58287bbe1f905 <http://aksw.org/chart-vocab/yAxisTicksVisible> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
-_:B972037d6f5d05dc9b2d58287bbe1f905 <http://aksw.org/chart-vocab/xAxisLabelRotation> "45"^^<http://www.w3.org/2001/XMLSchema#integer> .
-_:B972037d6f5d05dc9b2d58287bbe1f905 <http://aksw.org/chart-vocab/yAxisDecimalPattern> "###,###,###,###,###.#####" .
-_:B224e5e261567c8a11e12a549ebb1715c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://aksw.org/chart-vocab/ConceptBasedSeries> .
-_:B224e5e261567c8a11e12a549ebb1715c <http://aksw.org/chart-vocab/seriesProperty> <http://w3id.org/hobbit/vocab#involvesSystemInstance> .
-_:B224e5e261567c8a11e12a549ebb1715c <http://aksw.org/chart-vocab/valueProperty> <http://w3id.org/bench#fmeasure_total> .
-_:B224e5e261567c8a11e12a549ebb1715c <http://aksw.org/chart-vocab/sliceType> <http://w3id.org/hobbit/vocab#Experiment> .
+<http://example.org/exp1> <http://aksw.org/chart-vocab/style> _:Bf4006db832b22c7333872081edad0843 .
+<http://example.org/exp1> <http://aksw.org/chart-vocab/series> _:Bdb489ae98c897cde463b9acd08f48b17 .
+_:Bdb489ae98c897cde463b9acd08f48b17 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://aksw.org/chart-vocab/ConceptBasedSeries> .
+_:Bdb489ae98c897cde463b9acd08f48b17 <http://aksw.org/chart-vocab/seriesProperty> <http://w3id.org/hobbit/vocab#involvesSystemInstance> .
+_:Bdb489ae98c897cde463b9acd08f48b17 <http://aksw.org/chart-vocab/valueProperty> <http://w3id.org/bench#fmeasure_total> .
+_:Bdb489ae98c897cde463b9acd08f48b17 <http://aksw.org/chart-vocab/sliceType> <http://w3id.org/hobbit/vocab#Experiment> .
 <http://w3id.org/hobbit/experiments#1540300168331> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://w3id.org/hobbit/vocab#Experiment> .
 <http://w3id.org/hobbit/experiments#1543080094768> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://w3id.org/hobbit/vocab#Experiment> .
 <http://w3id.org/hobbit/experiments#1540300168331> <http://w3id.org/hobbit/vocab#hobbitPlatformVersion> "2.0.6"@en .
@@ -93,7 +95,7 @@ _:B224e5e261567c8a11e12a549ebb1715c <http://aksw.org/chart-vocab/sliceType> <htt
 <http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#fmeasure_choke_point5> "0.0"^^<http://www.w3.org/2001/XMLSchema#float> .
 <http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#recall_choke_point14> "0.0"^^<http://www.w3.org/2001/XMLSchema#float> .
 <http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#recall_choke_point8> "0.0"^^<http://www.w3.org/2001/XMLSchema#float> .
-<http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#fmeasure_total> "0.0"^^<http://www.w3.org/2001/XMLSchema#float> .
+<http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#fmeasure_total> "0.5"^^<http://www.w3.org/2001/XMLSchema#float> .
 <http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#modelPrediction> "4168.58"^^<http://www.w3.org/2001/XMLSchema#double> .
 <http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#importantFeatures> "no result" .
 <http://w3id.org/hobbit/experiments#1543080094768> <http://w3id.org/bench#belongsToCluster> "none" .

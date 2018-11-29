@@ -13,12 +13,12 @@
 bench:facetedBrowsingBenchmarkV2 a    hobbit:Benchmark;
 	rdfs:label "Faceted Browsing Benchmark V2"@en;     
 	rdfs:comment    "The Faceted Browsing benchmark checks existing solutions for their capabilities of enabling faceted browsing through large-scale RDF datasets, that is, it analyses their efficiency in navigating through large datasets, where the navigation is driven by intelligent iterative restrictions"@en;     
-	hobbit:imageName "git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller/image";
-	hobbit:usesImage "git.project-hobbit.eu:4567/gkatsibras/faceteddatagenerator/image";
-	hobbit:usesImage "git.project-hobbit.eu:4567/gkatsibras/facetedtaskgenerator/image";
+	hobbit:imageName "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-benchmark-controller";
+	hobbit:usesImage "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-data-generator";
+	hobbit:usesImage "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-task-generator";
 	hobbit:usesImage "git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage";
-	hobbit:usesImage "git.project-hobbit.eu:4567/gkatsibras/facetedevaluationmodule/image";
-	hobbit:usesImage "git.project-hobbit.eu:4567/cstadler/podigg/image";
+	hobbit:usesImage "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-evaluation-module";
+	hobbit:usesImage "git.project-hobbit.eu:4567/smirnp/grow-smarter-benchmark/datagen";
 	hobbit:version "V1.1";     
 	hobbit:hasAPI <https://project-hobbit.eu/challenges/MOCHA2017-API>  ;
 	hobbit:hasParameter bench:paramPodiggSeed ;

@@ -1,0 +1,16 @@
+LOAD <test-chart.nt>
+
+CONSTRUCT 
+  { 
+    ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://aksw.org/chart-vocab/DataItem> .
+    ?s <http://aksw.org/chart-vocab/series> ?x .
+    ?s <http://aksw.org/chart-vocab/category> ?s .
+    ?s <http://aksw.org/chart-vocab/value> ?z .
+  }
+WHERE
+  { # Empty BGP
+    ?s  a                     <http://w3id.org/hobbit/vocab#Experiment> ;
+        <http://w3id.org/hobbit/vocab#involvesSystemInstance>  ?x ;
+        <http://w3id.org/bench#fmeasure_total>  ?z
+  }
+

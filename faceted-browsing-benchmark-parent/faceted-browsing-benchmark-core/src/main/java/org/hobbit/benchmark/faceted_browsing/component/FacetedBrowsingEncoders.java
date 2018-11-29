@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
@@ -12,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map.Entry;
-import java.util.Scanner;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.jena.ext.com.google.common.primitives.Bytes;
@@ -63,7 +62,7 @@ public class FacetedBrowsingEncoders {
     	
     	return result;
     }
-    
+
     
     
     // TODO Make a unit test
@@ -245,10 +244,11 @@ public class FacetedBrowsingEncoders {
     }
 
 
-    private String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
+    // HACK From stack overflow (TODO add link)
+//    private String convertStreamToString(InputStream is) {
+//        Scanner s = new Scanner(is).useDelimiter("\\A");
+//        return s.hasNext() ? s.next() : "";
+//    }
 
     
     

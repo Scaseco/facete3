@@ -3,23 +3,27 @@ package org.hobbit.benchmark.faceted_browsing.component;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.utils.model.SetFromLiteralPropertyValues;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.core.component.EvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;
@@ -55,10 +59,16 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
     private int timeOut;
 
-    private Function<? super QueryID, ? extends Collection<? extends Number>> queryIdToChokePoints; 
+    //protected Set<Integer> seenCps = new HashSet<>();
+    protected IBiSetMultimap<QueryID, Integer> seenCps = new BiHashMultimap<>();
+    
+//    private Function<? super QueryID, ? extends Collection<? extends Number>> queryIdToChokePoints; 
 
-    public EvaluationModuleFacetedBrowsingBenchmark(Function<? super QueryID, ? extends Collection<? extends Number>> queryIdToChokePoints) {
-    	this.queryIdToChokePoints = queryIdToChokePoints;
+    
+    protected Function<? super ByteBuffer, ? extends Resource> expectedDataDecoder;
+    
+    public EvaluationModuleFacetedBrowsingBenchmark(Function<? super ByteBuffer, ? extends Resource> expectedDataDecoder) {
+    	this.expectedDataDecoder = expectedDataDecoder;
     }
     
     @Override
@@ -79,7 +89,8 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         timeOut = 60000; // max time to answer a query in ms
     }
 
-    @Override
+    
+    //@Override
     public void evaluateResponse( byte[] expectedData, byte[] receivedData, long taskSentTimestamp,
                                     long responseReceivedTimestamp) throws Exception {
 
@@ -102,6 +113,9 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
         //System.out.println(IOUtils.toString(inReceived, StandardCharsets.UTF_8));
         
+        ByteBuffer buf = ByteBuffer.wrap(expectedData);
+        Resource expected = expectedDataDecoder.apply(buf);
+        
         String resultsString;
         try {
             ResultSet received = ResultSetFactory.fromJSON(inReceived);
@@ -123,15 +137,31 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         String goldsString = RabbitMQUtils.readString(bufferExp);
 
          */
-        ByteBuffer bufferExp = ByteBuffer.wrap(expectedData);
-        String taskidGold = RabbitMQUtils.readString(bufferExp);
-        LOGGER.info("Eval_mod task Id: "+ taskidGold);
-        String scenario = RabbitMQUtils.readString(bufferExp);
-        LOGGER.info("Scenario id: "+ scenario);
-        String query = RabbitMQUtils.readString(bufferExp);
-        LOGGER.info("query: "+ query);
+//        ByteBuffer bufferExp = ByteBuffer.wrap(expectedData);
+//        String taskidGold = RabbitMQUtils.readString(bufferExp);
+//        LOGGER.info("Eval_mod task Id: "+ taskidGold);
+//        String scenario = RabbitMQUtils.readString(bufferExp);
+//        LOGGER.info("Scenario id: "+ scenario);
+//        String query = RabbitMQUtils.readString(bufferExp);
+//        LOGGER.info("query: "+ query);
 
-        String goldsString = RabbitMQUtils.readString(bufferExp);
+        String taskidGold = expected.getURI();
+        Integer scenario = ResourceUtils.getLiteralPropertyValue(expected, FacetedBrowsingVocab.scenarioId, Integer.class);
+        Integer query = ResourceUtils.getLiteralPropertyValue(expected, FacetedBrowsingVocab.queryId, Integer.class);
+        String goldsString = ResourceUtils.getLiteralPropertyValue(expected, RDFS.label, String.class);
+        
+        Set<Integer> cps = new SetFromLiteralPropertyValues<>(expected, FacetedBrowsingVocab.chokepointId, Integer.class);
+        
+        //seenCps.addAll(cps);
+        LOGGER.info("Eval_mod task Id: "+ taskidGold);
+        LOGGER.info("Scenario id: "+ scenario);
+        LOGGER.info("query: "+ query);
+        LOGGER.info("Chokepoints: "+ cps);
+        
+        QueryID key = new QueryID(scenario.byteValue(), query);
+        seenCps.putAll(key, cps);
+
+        //String goldsString = RabbitMQUtils.readString(bufferExp);
         // LOGGER.info("goldsString: "+ goldsString);
 
         // WTF???? Why is there a sleep??? ~Claus
@@ -187,10 +217,11 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         }
 
         
-        QueryID key = new QueryID(Integer.parseInt(scenario), Integer.parseInt(query));
-
-        if (!scenario.contains("0") || (scenario.contains("10"))) {
-            number_of_queries+=1;
+//        QueryID key = new QueryID(Integer.parseInt(scenario), Integer.parseInt(query));
+//
+//        if (!scenario.contains("0") || (scenario.contains("10"))) {
+        if(scenario == 0) {
+        	number_of_queries+=1;
             // Evaluate the given response pair.
 
             tp = 0;
@@ -214,7 +245,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
                     (int) (responseReceivedTimestamp - taskSentTimestamp) : timeOut;
 
             if(responseReceivedTimestamp == 0L){
-                queriesWithTimeout.add(new QueryID(Integer.parseInt(scenario),Integer.parseInt(query)));
+                queriesWithTimeout.add(key);
             }
 
             if(responseReceivedTimestamp-taskSentTimestamp < 0L){
@@ -252,7 +283,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
                     (int) (responseReceivedTimestamp - taskSentTimestamp) : timeOut;
 
             if(responseReceivedTimestamp == 0L){
-                queriesWithTimeout.add(new QueryID(Integer.parseInt(scenario),Integer.parseInt(query)));
+                queriesWithTimeout.add(key);
             }
 
             int current_error = Math.abs(receivedCount - expectedCount);
@@ -307,16 +338,17 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         HashMap<Integer, Double> chokePT_recall = new HashMap<>();
         HashMap<Integer, Double> chokePT_f1 = new HashMap<>();
 
-        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = new HashMap<>();//ChokePoints.getTable();
-
-        // Build the cp table
-        Set<QueryID> qids = Sets.union(evalCPTs.keySet(), queriesWithTimeout);
-        for(QueryID qid : qids) {
-        	Set<? extends Number> cps = new HashSet<>(queryIdToChokePoints.apply(qid));
-        	for(Number cp : cps) {
-        		chokePointsTable.computeIfAbsent(cp.intValue(), k -> new ArrayList<QueryID>()).add(qid);
-        	}
-        }
+//        HashMap<Integer, ArrayList<QueryID>> chokePointsTable = new HashMap<>();//ChokePoints.getTable();
+//
+//        // Build the cp table
+//        Set<QueryID> qids = Sets.union(evalCPTs.keySet(), queriesWithTimeout);
+//        for(QueryID qid : qids) {
+//        	//Set<? extends Number> cps = new HashSet<>(queryIdToChokePoints.apply(qid));
+//        	for(Number cp : seenCps) {
+//        		chokePointsTable.computeIfAbsent(cp.intValue(), k -> new ArrayList<QueryID>()).add(qid);
+//        	}
+//        }
+        IBiSetMultimap<Integer, QueryID> chokePointsTable = seenCps.getInverse();
         
         // ______________________________________
         // 1.b.i) Time score in queries per second
@@ -327,11 +359,11 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         // Then for each choke point return the query-per-seconds score as in 1.a.i
 
         // loop over choke points
-        Set<Map.Entry<Integer, ArrayList<QueryID>>> chokePT_entries = chokePointsTable.entrySet();
+        Set<Map.Entry<Integer, Collection<QueryID>>> chokePT_entries = chokePointsTable.asMap().entrySet();
 
-        for (Map.Entry<Integer, ArrayList<QueryID>> chokePt_entry : chokePT_entries) {
+        for (Map.Entry<Integer, Collection<QueryID>> chokePt_entry : chokePT_entries) {
             Integer key = chokePt_entry.getKey();
-            List<QueryID> queryIds = chokePt_entry.getValue();
+            Collection<QueryID> queryIds = chokePt_entry.getValue();
 
             int current_chokePT_number_of_queries = 0;
             InstancesEvalHelper currentChokePT_eval = new InstancesEvalHelper(0,0,0,0);
@@ -417,7 +449,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
                 count_per_second_score,
                 queriesWithTimeout,
                 QueryID::getScenario,
-                queryIdToChokePoints
+                seenCps::get
         		);
 
     }
