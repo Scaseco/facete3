@@ -1,32 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import static java.lang.Math.log;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import org.aksw.facete.v3.api.Direction;
-import org.aksw.facete.v3.api.FacetConstraint;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.FacetedQuery;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
+import io.reactivex.Flowable;
+import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetNodeResource;
@@ -41,12 +19,7 @@ import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.NodeHolder;
-import org.aksw.jena_sparql_api.utils.RangeUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.*;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
@@ -64,11 +37,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Bound;
-import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_OneOf;
-import org.apache.jena.sparql.expr.ExprTransformer;
-import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.*;
 import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
@@ -85,10 +54,16 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Range;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import io.reactivex.Flowable;
+import static java.lang.Math.log;
 
 
 public class TaskGenerator {
@@ -134,6 +109,64 @@ public class TaskGenerator {
 //		} catch(Exception e) {
 //			throw new RuntimeException(e);
 //		}
+	}
+
+	public static Map<HLFacetConstraint, Map<Character, Comparable<? extends Number>>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
+		Map<HLFacetConstraint, Map<Character, Comparable<? extends Number>>> result = new LinkedHashMap<>();
+		for (HLFacetConstraint c : new ArrayList<>(constraintFacade.listHl())) {
+			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
+			final FacetNode fn = facetNodes.iterator().next();
+			//hlFacetConstraints.remove(c);
+			final Expr expr = c.expr();
+			final ImmutableSet<Class<? extends Expr>> rangeComparisonExprs =
+					ImmutableSet.<Class<? extends Expr>>builder()
+							.add(E_GreaterThan.class)
+							.add(E_GreaterThanOrEqual.class)
+							.add(E_LessThan.class)
+							.add(E_LessThanOrEqual.class)
+							.add(E_Equals.class)
+					.build();
+			final Map<Character, Comparable<? extends Number>> boundsMap = new LinkedHashMap<>();
+			if (expr instanceof E_LogicalAnd) {
+				final List<Expr> subExprs = ExprUtils.getSubExprs(expr);
+				boolean rangeCE = subExprs.stream().allMatch(p -> rangeComparisonExprs.contains(p.getClass()));
+				if (rangeCE) {
+					subExprs.stream().forEach(e -> {
+						storeNumericBoundFromExpr((ExprFunction2) e, boundsMap);
+					});
+
+				}
+				subExprs.forEach(x -> System.out.println("> "+x+x.getClass()));
+			} else if (rangeComparisonExprs.contains(expr.getClass())) {
+				storeNumericBoundFromExpr((ExprFunction2) expr, boundsMap);
+			}
+			System.out.println(boundsMap);
+			if (!boundsMap.isEmpty()) {
+				result.put(c, boundsMap);
+			}
+			//System.out.println(expr.getClass());
+			/*
+			{
+				// delete constraint
+				fn.constraints().list().remove(c.state());
+				c.state().removeProperties();
+			}
+			*/
+
+		}
+		return result;
+	}
+
+	public static void storeNumericBoundFromExpr(ExprFunction2 e, Map<Character, Comparable<? extends Number>> boundsMap) {
+		final List<Object> evc = e.getArgs().stream()
+				.filter(p -> p.isConstant() && p.getConstant().isLiteral())
+				.map(p -> p.getConstant().getNode().getLiteralValue())
+				.collect(Collectors.toList());
+
+		final Object bound = evc.get(0);
+		if (evc.size() == 1 && bound instanceof Number) {
+			boundsMap.put(e.getOpName().charAt(0), (Comparable<? extends Number>) bound);
+		}
 	}
 
 
