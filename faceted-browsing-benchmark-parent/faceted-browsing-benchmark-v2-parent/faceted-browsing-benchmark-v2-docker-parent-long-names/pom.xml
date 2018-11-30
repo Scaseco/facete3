@@ -15,12 +15,12 @@
 
 	<properties>
 <!--        <docker.repository>git.project-hobbit.eu:4567</docker.repository> -->
-		<prefix>git.project-hobbit.eu:4567/cstadler/fbb/fbb-v2-</prefix>
+		<prefix>git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-</prefix>
 
-		<docker.benchmark-controller.repository>${prefix}bc</docker.benchmark-controller.repository>
-		<docker.data-generator.repository>${prefix}dg</docker.data-generator.repository>
-		<docker.task-generator.repository>${prefix}tg</docker.task-generator.repository>
-		<docker.evaluation-module.repository>${prefix}em</docker.evaluation-module.repository>
+		<docker.benchmark-controller.repository>${prefix}benchmark-controller</docker.benchmark-controller.repository>
+		<docker.data-generator.repository>${prefix}data-generator</docker.data-generator.repository>
+		<docker.task-generator.repository>${prefix}task-generator</docker.task-generator.repository>
+		<docker.evaluation-module.repository>${prefix}evaluation-module</docker.evaluation-module.repository>
 
 <!--		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository> -->
 <!--		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/cstadler/evaluationstorage/image</docker.evaluation-storage.repository> -->

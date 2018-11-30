@@ -1,10 +1,17 @@
 @prefix r: <http://project-hobbit.eu/resource/> .
 @prefix o: <http://project-hobbit.eu/ontology/> .
 
+#r:faceted-browsing-benchmark-v2-config
+#  o:benchmarkController "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-benchmark-controller" ;
+#  o:dataGenerator "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-data-generator" ;
+#  o:taskGenerator "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-task-generator" ;
+#  o:evaluationModule "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-evaluation-module" ;
+#  .
+
 r:faceted-browsing-benchmark-v2-config
-  o:benchmarkController "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-benchmark-controller" ;
-  o:dataGenerator "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-data-generator" ;
-  o:taskGenerator "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-task-generator" ;
-  o:evaluationModule "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v2-evaluation-module" ;
+  o:benchmarkController "git.project-hobbit.eu:4567/cstadler/fbb/fbb-v2-bc" ;
+  o:dataGenerator "git.project-hobbit.eu:4567/cstadler/fbb/fbb-v2-dg" ;
+  o:taskGenerator "git.project-hobbit.eu:4567/cstadler/fbb/fbb-v2-tg" ;
+  o:evaluationModule "git.project-hobbit.eu:4567/cstadler/fbb/fbb-v2-em" ;
   .
 
