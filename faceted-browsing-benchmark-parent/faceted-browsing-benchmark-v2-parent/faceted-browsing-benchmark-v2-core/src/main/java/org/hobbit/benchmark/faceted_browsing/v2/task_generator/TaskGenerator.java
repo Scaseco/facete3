@@ -1312,7 +1312,7 @@ public class TaskGenerator {
 		boolean result = false;
 		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
-		if (numericConstraints.size() >= 2 && rand.nextInt(10) > 2) {
+		if (numericConstraints.size() >= 1 && rand.nextInt(10) >= 2) {
 			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, pickLowerBound, pickUpperBound);
 
