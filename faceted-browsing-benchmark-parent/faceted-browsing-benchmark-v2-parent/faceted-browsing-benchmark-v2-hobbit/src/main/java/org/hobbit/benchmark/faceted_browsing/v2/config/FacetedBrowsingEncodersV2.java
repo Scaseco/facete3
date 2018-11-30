@@ -104,39 +104,39 @@ public class FacetedBrowsingEncodersV2 {
     }
 
 
-	public static ByteBuffer encodeTaskForSystemAdapter(Resource r) {
-    	String queryStr = r.getProperty(BenchmarkVocab.taskPayload).getString();
-
-    	Resource s = copyTaskResourceWithoutPayload(r);
-    	// Create a copy of the input resource's model, and remove the task attribute from the resource
-//    	Model copy = ModelFactory.createDefaultModel();
-//    	copy.add(r.getModel());
-//    	Resource s = r.inModel(copy);
-//    	s.removeAll(BenchmarkVocab.taskPayload);
-
-    	String taskIdStr = FacetedBrowsingEncoders.resourceToJson(s).toString();
-
-//        byte[] tmp = RabbitMQUtils.writeByteArrays(
-//                new byte[][] { RabbitMQUtils.writeString(taskIdStr), queryStr.getBytes(StandardCharsets.UTF_8) });
-
-    	byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
-    	byte[] queryBytes = queryStr.getBytes(StandardCharsets.UTF_8);
-
-    	byte[] payloadBytes = Bytes.concat(Ints.toByteArray(queryBytes.length), queryBytes);
-    	 
-     	ByteBuffer result = ByteBuffer.wrap(Bytes.concat(
-     			Ints.toByteArray(taskIdBytes.length),
-     			taskIdBytes,
-    			Ints.toByteArray(payloadBytes.length),
-    			payloadBytes));
-//        ByteBuffer buffer = ByteBuffer.wrap(data);
-//        String taskId = RabbitMQUtils.readString(buffer);
-//        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
-
-        
-        return result;
-    }
-    
+//	public static ByteBuffer encodeTaskForSystemAdapter(Resource r) {
+//    	String queryStr = r.getProperty(BenchmarkVocab.taskPayload).getString();
+//
+//    	Resource s = copyTaskResourceWithoutPayload(r);
+//    	// Create a copy of the input resource's model, and remove the task attribute from the resource
+////    	Model copy = ModelFactory.createDefaultModel();
+////    	copy.add(r.getModel());
+////    	Resource s = r.inModel(copy);
+////    	s.removeAll(BenchmarkVocab.taskPayload);
+//
+//    	String taskIdStr = FacetedBrowsingEncoders.resourceToJson(s).toString();
+//
+////        byte[] tmp = RabbitMQUtils.writeByteArrays(
+////                new byte[][] { RabbitMQUtils.writeString(taskIdStr), queryStr.getBytes(StandardCharsets.UTF_8) });
+//
+//    	byte[] taskIdBytes = taskIdStr.getBytes(StandardCharsets.UTF_8);
+//    	byte[] queryBytes = queryStr.getBytes(StandardCharsets.UTF_8);
+//
+//    	byte[] payloadBytes = Bytes.concat(Ints.toByteArray(queryBytes.length), queryBytes);
+//    	 
+//     	ByteBuffer result = ByteBuffer.wrap(Bytes.concat(
+//     			Ints.toByteArray(taskIdBytes.length),
+//     			taskIdBytes,
+//    			Ints.toByteArray(payloadBytes.length),
+//    			payloadBytes));
+////        ByteBuffer buffer = ByteBuffer.wrap(data);
+////        String taskId = RabbitMQUtils.readString(buffer);
+////        byte[] taskData = RabbitMQUtils.readByteArray(buffer);
+//
+//        
+//        return result;
+//    }
+//    
     
     public static Resource decodeTaskForSystemAdapter(ByteBuffer buffer) {
     	

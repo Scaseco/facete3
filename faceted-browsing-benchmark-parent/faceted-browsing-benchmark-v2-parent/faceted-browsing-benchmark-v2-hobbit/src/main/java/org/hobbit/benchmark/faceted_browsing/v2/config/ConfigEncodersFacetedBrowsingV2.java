@@ -25,12 +25,12 @@ public class ConfigEncodersFacetedBrowsingV2 {
     
     @Bean
     public Function<Resource, ByteBuffer> taskEncoderForSystemAdapter() {
-    	return FacetedBrowsingEncodersV2::encodeTaskForSystemAdapter;
+    	return FacetedBrowsingEncoders::encodeTaskForSystemAdapter;
     }
     
     @Bean
     public Function<ByteBuffer, Resource> taskResourceDeserializer() {
-    	return FacetedBrowsingEncodersV2::decodeTaskForSystemAdapter;
+    	return FacetedBrowsingEncoders::decodeTaskForSystemAdapter;
     }
     
 
