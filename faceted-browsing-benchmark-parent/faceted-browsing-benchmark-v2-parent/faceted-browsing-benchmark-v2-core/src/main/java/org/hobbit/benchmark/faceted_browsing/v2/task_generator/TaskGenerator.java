@@ -420,8 +420,8 @@ public class TaskGenerator {
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
 		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp7)));
-//		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
-//		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
+		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp8)));
+		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp9)));
 //		
 		cpToAction.put("cp10", this::applyCp10);
 //
@@ -1312,7 +1312,7 @@ public class TaskGenerator {
 		boolean result = false;
 		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
-		if (numericConstraints.size() >= 2 && rand.nextInt(10) > 2) {
+		if (numericConstraints.size() >= 1 && rand.nextInt(10) >= 2) {
 			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, pickLowerBound, pickUpperBound);
 

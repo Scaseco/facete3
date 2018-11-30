@@ -283,6 +283,38 @@ public class TestFacetedQuery2 {
 		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
 	}
 
+	@Test
+	public void testCp9(){
+		load(DS_SIMPLE_3);
+		taskGenerator.setPseudoRandom(new Random(1234L));
+
+		final FacetNode node = fq.root();
+		taskGenerator.applyCp9(node);
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/inhabitants>  ?v_3 .\n" +
+				"  ?v_3  <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
+				"  FILTER ( ?v_4 >= 10 )\n" +
+				"}", getQueryPattern(node));
+/*
+		taskGenerator.getRandom().nextLong();
+		taskGenerator.getRandom().nextLong();
+		taskGenerator.getRandom().nextLong();
+*/
+		taskGenerator.applyCp9(node);
+		taskGenerator.applyCp9(node);
+
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/inhabitants>  ?v_3 .\n" +
+				"  ?v_3  <http://xmlns.com/foaf/0.1/age>  ?v_4 .\n" +
+				"  ?v_5  <http://www.example.org/inhabitants>  ?v_1 ;\n" +
+				"        <http://www.example.org/locatedIn>  ?v_6 .\n" +
+				"  ?v_7  <http://www.example.org/locatedIn>  ?v_6 ;\n" +
+				"        <http://www.example.org/population>  ?v_8\n" +
+				"  FILTER ( ?v_4 <= 33 )\n" +
+				"  FILTER ( ?v_8 <= 560472 )\n" +
+				"}", getQueryPattern(node));
+	}
 	@Test//done
 	public void testCp6part() {
 		load(DS_SIMPLE_3);
