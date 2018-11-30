@@ -325,7 +325,7 @@ public class TestFacetedQuery2 {
 
 		System.out.println(">>>"+numericConstraints);
 		if (!numericConstraints.isEmpty()) {
-			taskGenerator.modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
+			taskGenerator.modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
 		}
 		assertEquals("{ { ?v_2  <http://www.example.org/inhabitants>  ?v_1 ;\n" +
 				"          <http://www.example.org/inhabitants>  ?v_3 .\n" +
@@ -348,7 +348,7 @@ public class TestFacetedQuery2 {
 
 	}
 
-	@Test
+	@Test//done
 	public void testCp8() {
 		load(DS_SIMPLE_3);
 		taskGenerator.setPseudoRandom(new Random(1234L));
