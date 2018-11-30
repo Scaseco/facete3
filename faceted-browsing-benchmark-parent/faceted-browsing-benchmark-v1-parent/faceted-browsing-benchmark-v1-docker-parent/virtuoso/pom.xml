@@ -3,11 +3,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>faceted-benchmark-docker-task-generator-virtuoso</artifactId>
+	<artifactId>faceted-browsing-benchmark-docker-task-generator-virtuoso</artifactId>
 
 	<parent>
 		<groupId>org.hobbit</groupId>
-		<artifactId>faceted-benchmark-docker-parent</artifactId>
+		<artifactId>faceted-browsing-benchmark-docker-parent</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
@@ -15,7 +15,7 @@
 <!--
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>faceted-benchmark-core</artifactId>
+			<artifactId>faceted-browsing-benchmark-core</artifactId>
 		</dependency>
 -->
 	</dependencies>

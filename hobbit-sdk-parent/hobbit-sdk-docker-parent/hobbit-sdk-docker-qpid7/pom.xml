@@ -19,7 +19,7 @@
 <!--
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>faceted-benchmark-core</artifactId>
+			<artifactId>faceted-browsing-benchmark-core</artifactId>
 		</dependency>
 -->
 	</dependencies>

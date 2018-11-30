@@ -16,6 +16,7 @@
 		<prefix>git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/hobbit-sdk-</prefix>
 
 		<docker.qpid7.repository>${prefix}qpid7</docker.qpid7.repository>
+		<!-- <docker.docker-service-manager-server.repository>git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver</docker.docker-service-manager-server.repository> -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -27,6 +28,7 @@
 
 	<modules>
 		<module>hobbit-sdk-docker-qpid7</module>
+<!--		<module>hobbit-sdk-docker-service-manager-server</module> -->
 	</modules>
 
 	<dependencyManagement>
