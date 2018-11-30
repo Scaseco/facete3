@@ -12,11 +12,13 @@ import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.core.data.Result;
 import org.springframework.context.annotation.Bean;
 
+import com.google.gson.Gson;
+
 public class ConfigEncodersFacetedBrowsingV2 {
 
     @Bean
-	public BiFunction<Resource, Long, ByteBuffer> taskEncoderForEvalStorage() {
-    	return FacetedBrowsingEncoders::formatForEvalStorage;
+	public BiFunction<Resource, Long, ByteBuffer> taskEncoderForEvalStorage(Gson gson) {
+    	return (r, timestamp) -> FacetedBrowsingEncodersV2.formatForEvalStorage(r, timestamp, gson);
     }
     
     

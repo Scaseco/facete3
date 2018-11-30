@@ -4,7 +4,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -69,6 +68,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.util.ResourceUtils;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.slf4j.Logger;
@@ -763,7 +763,6 @@ public class FacetedTaskGeneratorOld {
     }
     
     
-    
 	public static Resource annotateTaskWithReferenceResult(Resource task, SparqlQueryConnection conn, SparqlQueryConnection refConn) {
 
         logger.info("Generated task: " + task);
@@ -784,16 +783,7 @@ public class FacetedTaskGeneratorOld {
         	rsMem.rewind();
             logger.info("Number of expected result set rows for task " + task + ": " + numRows + " query: " + queryStr);
 
-        	
-        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        	ResultSetFormatter.outputAsJSON(baos, rsMem); //resultSet);
-        	//baos.flush();
-        	String resultSetStr;
-        	try {
-        		resultSetStr = baos.toString(StandardCharsets.UTF_8.name());
-        	} catch(UnsupportedEncodingException e) {
-        		throw new RuntimeException(e);
-        	}
+        	String resultSetStr = FacetedBrowsingEncoders.resultSetToJsonStr(rsMem);
         	task.addLiteral(BenchmarkVocab.expectedResult, resultSetStr);
         }
             	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);

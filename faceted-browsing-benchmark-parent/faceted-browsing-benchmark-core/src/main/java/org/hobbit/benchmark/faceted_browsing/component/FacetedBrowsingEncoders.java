@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
@@ -35,6 +36,22 @@ import com.google.gson.JsonObject;
 import jersey.repackaged.com.google.common.primitives.Ints;
 
 public class FacetedBrowsingEncoders {
+	
+    public static String resultSetToJsonStr(ResultSet rs) {
+    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    	ResultSetFormatter.outputAsJSON(baos, rs); //resultSet);
+    	//baos.flush();
+    	String resultSetStr;
+    	try {
+    		resultSetStr = baos.toString(StandardCharsets.UTF_8.name());
+    	} catch(UnsupportedEncodingException e) {
+    		throw new RuntimeException(e);
+    	}
+
+    	return resultSetStr;
+    }
+    
+
 
     // Functions for the legacy protocol...
 
