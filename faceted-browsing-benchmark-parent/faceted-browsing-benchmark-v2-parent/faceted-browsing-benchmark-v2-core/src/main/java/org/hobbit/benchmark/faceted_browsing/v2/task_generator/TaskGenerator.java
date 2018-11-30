@@ -418,8 +418,8 @@ public class TaskGenerator {
 		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp3)));
 		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp4)));
 //		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
-//		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
-//		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp7)));
+		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
+		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp7)));
 //		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp8)));
 //		cpToAction.put("cp9", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp9)));
 //		
