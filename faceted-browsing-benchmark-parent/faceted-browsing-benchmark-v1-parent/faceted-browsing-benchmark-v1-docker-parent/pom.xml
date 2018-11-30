@@ -17,7 +17,7 @@
 <!--        <docker.repository>git.project-hobbit.eu:4567</docker.repository> -->
 		<prefix>git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-</prefix>
 
-                <docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass>
+<!--                <docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass> -->
 
 		<docker.benchmark-controller.repository>${prefix}benchmark-controller</docker.benchmark-controller.repository>
 		<docker.data-generator.repository>${prefix}data-generator</docker.data-generator.repository>
