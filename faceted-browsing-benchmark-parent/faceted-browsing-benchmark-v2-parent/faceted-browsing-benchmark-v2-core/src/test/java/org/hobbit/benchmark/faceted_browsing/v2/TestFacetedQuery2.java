@@ -374,21 +374,23 @@ public class TestFacetedQuery2 {
 				"  FILTER ( ?v_6 >= 543825 )\n" +
 				"  FILTER ( ?v_6 <= 560472 )\n" +
 				"}", getQueryPattern(node));
+		final boolean appliedCp8 = taskGenerator.applyCp8(node);
+
+		assertEquals(false, appliedCp8);
 		taskGenerator.applyCp8(node);
 
-		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2 ;\n" +
-				"        <http://xmlns.com/foaf/0.1/based_near>  ?v_3 .\n" +
-				"  ?v_3  <http://www.example.org/mayor>  ?v_4 .\n" +
-				"  ?v_4  <http://xmlns.com/foaf/0.1/based_near>  ?v_5 .\n" +
-				"  ?v_5  <http://www.example.org/population>  ?v_6\n" +
-				"  FILTER ( ?v_2 <= 33 )\n" +
-				"  FILTER ( ?v_2 >= 10 )\n" +
-				"  FILTER ( ?v_6 >= 543825 )\n" +
-				"  FILTER ( ?v_6 <= 560472 )\n" +
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
+				"        <http://xmlns.com/foaf/0.1/age>  ?v_4 .\n" +
+				"  ?v_1  <http://xmlns.com/foaf/0.1/age>  10 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  ?v_6 .\n" +
+				"  ?v_6  <http://xmlns.com/foaf/0.1/based_near>  ?v_7 .\n" +
+				"  ?v_7  <http://www.example.org/population>  ?v_8\n" +
+				"  FILTER ( ?v_8 >= 543825 )\n" +
+				"  FILTER ( ?v_4 >= 10 )\n" +
+				"  FILTER ( ?v_8 <= 560472 )\n" +
+				"  FILTER ( ?v_4 <= 60 )\n" +
 				"}", getQueryPattern(node));
-		taskGenerator.applyCp8(node);
-
-		assertEquals("", getQueryPattern(node));
 
 	}
 

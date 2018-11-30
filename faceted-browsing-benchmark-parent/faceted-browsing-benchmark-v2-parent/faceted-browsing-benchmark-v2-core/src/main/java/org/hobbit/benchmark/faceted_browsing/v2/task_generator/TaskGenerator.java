@@ -1208,7 +1208,7 @@ public class TaskGenerator {
 	}
 
 
-	public boolean applyNumericCp(FacetNode fn, Path pathPattern, int minPathLength, int maxPathLength, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
+	public boolean applyNumericCp(FacetNode fn, Path pathPattern, int minPathLength, int maxPathLength, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound, boolean allowExisting) {
 		boolean result = false;
 
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(
@@ -1225,8 +1225,11 @@ public class TaskGenerator {
 		System.out.println("Pick: " + r);
 
 		if (r != null) {
-			r.getKey().constraints().range(r.getValue());
-			result = true;
+			if (!r.getKey().root().constraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().contains(r.getKey()))
+				|| allowExisting ) {
+				r.getKey().constraints().range(r.getValue());
+				result = true;
+			}
 		}
 
 		return result;
@@ -1248,7 +1251,7 @@ public class TaskGenerator {
 			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
 		} else {
-			result = applyNumericCp(fn, pathPattern, 0, 0, false, true, true);
+			result = applyNumericCp(fn, pathPattern, 0, 0, false, true, true, true);
 		}
 		return result;
 	}
@@ -1270,7 +1273,7 @@ public class TaskGenerator {
 			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
 		} else {
-			result = applyNumericCp(fn, pathPattern, 1, 3, false, true, true);
+			result = applyNumericCp(fn, pathPattern, 1, 3, false, true, true, true);
 		}
 		return result;
 	}
@@ -1293,7 +1296,7 @@ public class TaskGenerator {
 			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
 		} else {
-			result = applyNumericCp(fn, null, 0, 3, false, true, true);
+			result = applyNumericCp(fn, null, 0, 3, false, true, true, false);
 		}
 		return result;
 	}
@@ -1307,7 +1310,7 @@ public class TaskGenerator {
 		boolean pickUpperBound = !pickLowerBound;
 
 		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented // PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
-		boolean result = applyNumericCp(fn, pathPattern, 1, 5, false, pickLowerBound, pickUpperBound);
+		boolean result = applyNumericCp(fn, pathPattern, 1, 5, false, pickLowerBound, pickUpperBound, true);
 		return result;
 	}
 
