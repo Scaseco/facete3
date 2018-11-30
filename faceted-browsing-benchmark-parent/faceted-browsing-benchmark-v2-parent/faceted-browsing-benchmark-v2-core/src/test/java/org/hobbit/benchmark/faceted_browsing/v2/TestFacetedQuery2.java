@@ -18,6 +18,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -250,6 +251,28 @@ public class TestFacetedQuery2 {
 				"  <http://www.example.org/Leipzig>\n" +
 				"            <http://www.example.org/locatedIn>  ?v_2\n" +
 				"}", getQueryPattern(node));
+	}
+
+	@Test
+	public void testCp12part() {
+		load(DS_SIMPLE_2);
+		taskGenerator.setPseudoRandom(new Random(1234L));
+
+
+		final FacetNode node = fq.root();
+
+		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
+		//new Concept()
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o), Vars.s);
+		final DataQuery<RDFNode> rdfNodeDataQuery = node.remainingValues();
+		System.out.println(rdfNodeDataQuery.exec().toList().blockingGet());
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
+				rdfNodeDataQuery
+						.baseRelation().toUnaryRelation(), targetConcept);
+
+		pathSearch.setMaxPathLength(3);
+		final List<SimplePath> simplePaths = pathSearch.exec().toList().blockingGet();
+		System.out.println(simplePaths);
 	}
 
 	@Test//done
