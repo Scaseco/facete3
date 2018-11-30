@@ -64,6 +64,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.log;
+import static java.util.Collections.shuffle;
 
 
 public class TaskGenerator {
@@ -111,8 +112,8 @@ public class TaskGenerator {
 //		}
 	}
 
-	public static Map<HLFacetConstraint, Map<Character, Comparable<? extends Number>>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
-		Map<HLFacetConstraint, Map<Character, Comparable<? extends Number>>> result = new LinkedHashMap<>();
+	public static Map<HLFacetConstraint, Map<Character, Node>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
+		Map<HLFacetConstraint, Map<Character, Node>> result = new LinkedHashMap<>();
 		for (HLFacetConstraint c : new ArrayList<>(constraintFacade.listHl())) {
 			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
 			final FacetNode fn = facetNodes.iterator().next();
@@ -126,7 +127,7 @@ public class TaskGenerator {
 							.add(E_LessThanOrEqual.class)
 							.add(E_Equals.class)
 					.build();
-			final Map<Character, Comparable<? extends Number>> boundsMap = new LinkedHashMap<>();
+			final Map<Character, Node> boundsMap = new LinkedHashMap<>();
 			if (expr instanceof E_LogicalAnd) {
 				final List<Expr> subExprs = ExprUtils.getSubExprs(expr);
 				boolean rangeCE = subExprs.stream().allMatch(p -> rangeComparisonExprs.contains(p.getClass()));
@@ -157,15 +158,15 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static void storeNumericBoundFromExpr(ExprFunction2 e, Map<Character, Comparable<? extends Number>> boundsMap) {
-		final List<Object> evc = e.getArgs().stream()
-				.filter(p -> p.isConstant() && p.getConstant().isLiteral())
-				.map(p -> p.getConstant().getNode().getLiteralValue())
+	public static void storeNumericBoundFromExpr(ExprFunction2 e, Map<Character, Node> boundsMap) {
+		final List<Node> evc = e.getArgs().stream()
+				.filter(p -> p.isConstant() && p.getConstant().isLiteral() && p.getConstant().getNode().getLiteralValue() instanceof Number)
+				.map(p -> p.getConstant().getNode())
 				.collect(Collectors.toList());
 
-		final Object bound = evc.get(0);
-		if (evc.size() == 1 && bound instanceof Number) {
-			boundsMap.put(e.getOpName().charAt(0), (Comparable<? extends Number>) bound);
+		final Node bound = evc.get(0);
+		if (evc.size() == 1) {
+			boundsMap.put(e.getOpName().charAt(0), bound);
 		}
 	}
 
@@ -1238,8 +1239,17 @@ public class TaskGenerator {
 	 * @param fn
 	 */
 	public boolean applyCp6(FacetNode fn) {
+		boolean result;
 		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented: // PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
-		boolean result = applyNumericCp(fn, pathPattern, 1, 1, false, true, true);
+
+		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+		if (!numericConstraints.isEmpty()) {
+			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
+			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
+		} else {
+			result = applyNumericCp(fn, pathPattern, 0, 0, false, true, true);
+		}
 		return result;
 	}
 
@@ -1252,7 +1262,16 @@ public class TaskGenerator {
 	 */
 	public boolean applyCp7(FacetNode fn) {
 		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented // PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
-		boolean result = applyNumericCp(fn, pathPattern, 2, 5, false, true, true);
+		boolean result;
+
+		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+		if (!numericConstraints.isEmpty()) {
+			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
+			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
+		} else {
+			result = applyNumericCp(fn, pathPattern, 1, 3, false, true, true);
+		}
 		return result;
 	}
 
@@ -1265,11 +1284,19 @@ public class TaskGenerator {
 //	 * 
 //	 * @param fn
 //	 */
-//	public static boolean applyCp8(FacetNode fn) {
+	public boolean applyCp8(FacetNode fn) {
 //		
-//		boolean result = false;
-//		return result;
-//	}
+		boolean result = false;
+		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+		if (numericConstraints.size() >= 2 && rand.nextInt(10) > 2) {
+			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
+			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
+		} else {
+			result = applyNumericCp(fn, null, 0, 3, false, true, true);
+		}
+		return result;
+	}
 
 	/**
 	 * Unbounded intervals involved in numerical data
@@ -1523,5 +1550,70 @@ public class TaskGenerator {
 
 	public List<SetSummary> getNumericProperties() {
 		return numericProperties;
+	}
+
+	public boolean modifyNumericConstraintRandomValue(Collection<HLFacetConstraint> hlFacetConstraints, Entry<HLFacetConstraint, Map<Character, Node>> constraintMode) {
+		boolean result = false;
+		final HLFacetConstraint constraint = constraintMode.getKey();
+		final Map<Character, Node> constraintModeValue = constraintMode.getValue();
+
+		hlFacetConstraints.remove(constraint);
+
+		final FacetNode facetNode = constraint.mentionedFacetNodes().iterator().next();
+
+		final Entry<FacetNode, Range<NodeHolder>> facetNodeRangeEntry = pickRange(getRandom(), getPseudoRandom(), getNumericProperties(), getConceptPathFinder(),
+				facetNode, null, -1, 0, false, true, true);
+		if (facetNodeRangeEntry != null) {
+			final Range<NodeHolder> range = facetNodeRangeEntry.getValue();
+			Node newLower = null;
+			Node newUpper = null;
+			final Node xLower = range.lowerEndpoint().getNode();
+			final Node xUpper = range.upperEndpoint().getNode();
+			final Node oldLower = constraintModeValue.getOrDefault('>', constraintModeValue.getOrDefault('=', null));
+			final Node oldUpper = constraintModeValue.getOrDefault('<', constraintModeValue.getOrDefault('=', null));
+			if (oldLower == null || NodeValue.compare(NodeValue.makeNode(xLower), NodeValue.makeNode(oldLower)) == Expr.CMP_GREATER) {
+				newLower = xLower;
+				newUpper = oldUpper;
+			} else if (oldUpper == null || NodeValue.compare(NodeValue.makeNode(xUpper), NodeValue.makeNode(oldUpper)) == Expr.CMP_LESS) {
+				newUpper = xUpper;
+				newLower = oldLower;
+			} else if (getRandom().nextBoolean()){
+				newLower = xLower;
+				newUpper = oldUpper;
+			} else {
+				newLower = oldLower;
+				newUpper = xUpper;
+			}
+			if (NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_GREATER) {
+				Node tmp = newLower;
+				newLower = newUpper;
+				newUpper = tmp;
+			}
+			if (NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_EQUAL) {
+				facetNode.constraints().eq(newLower);
+			} else {
+				facetNode.constraints().range(Range.closed(new NodeHolder(newLower), new NodeHolder(newUpper)));
+			}
+			result = true;
+		}
+		if (result) {
+			//System.out.println(">>>>"+facetNodeRangeEntry);
+			constraint.state().removeProperties();
+		} else {
+			hlFacetConstraints.add(constraint);
+		}
+		return result;
+	}
+
+	public boolean modifyNumericConstraintRandom(Collection<HLFacetConstraint> hlFacetConstraints, Map<HLFacetConstraint, Map<Character, Node>> numericConstraints) {
+		final List<Entry<HLFacetConstraint, Map<Character, Node>>> entryList = new ArrayList<>(numericConstraints.entrySet());
+		shuffle(entryList);
+		if (entryList.isEmpty()) {
+			return false;
+		}
+		final Entry<HLFacetConstraint, Map<Character, Node>> constraintMode = entryList.get(0);
+
+
+		return modifyNumericConstraintRandomValue(hlFacetConstraints, constraintMode);
 	}
 }
