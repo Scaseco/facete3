@@ -1,26 +1,10 @@
 package org.hobbit.benchmark.faceted_browsing.v2;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
-import java.io.StringWriter;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
-import org.aksw.facete.v3.api.DataQuery;
-import org.aksw.facete.v3.api.FacetConstraint;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetedQuery;
-import org.aksw.facete.v3.api.HLFacetConstraint;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Range;
+import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
-import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -39,7 +23,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Link;
@@ -51,8 +34,9 @@ import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Range;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class TestFacetedQuery2 {
 
@@ -236,6 +220,7 @@ public class TestFacetedQuery2 {
 			final boolean c = taskGenerator.applyCp14(node);
 			final String qp = getQueryPattern(node);
 			solutions.assertSolution(qp);
+			System.out.println(">>>"+ TaskGenerator.findExistingNumericConstraints(node.constraints()));
 			changeTracker.discardChanges();
 		}
 		solutions.assertAllSeen();
@@ -298,15 +283,19 @@ public class TestFacetedQuery2 {
 		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
 	}
 
-	@Test
+	@Test//done
 	public void testCp6part() {
 		load(DS_SIMPLE_3);
 		taskGenerator.setPseudoRandom(new Random(123L));
 
 		final FacetNode node = fq.root();
+		/*
+		taskGenerator.setRandom(new Random(6128191552201113548L));
+		final boolean b = taskGenerator.applyCp14(node);
+		*/
 
 		Map.Entry<FacetNode, Range<NodeHolder>> r = TaskGenerator.pickRange(taskGenerator.getRandom(), taskGenerator.getPseudoRandom(), taskGenerator.getNumericProperties(),
-				taskGenerator.getConceptPathFinder(), node, null, 0, 0, false, true, true);
+				taskGenerator.getConceptPathFinder(), node, null, 0, 2, false, true, false);
 
 		System.out.println("Pick: " + r);
 
@@ -316,31 +305,123 @@ public class TestFacetedQuery2 {
 
 		System.out.println(node);
 
-		final Collection<FacetConstraint> constraints = fq.constraints();
-		final FacetConstraint[] carr = constraints.toArray((new FacetConstraint[]{}));
-		final FacetConstraint c1 = carr[0];
-		System.out.println(c1);
+		final Collection<HLFacetConstraint> hlFacetConstraints = fq.root().constraints().listHl();
+		System.out.println(hlFacetConstraints);
+		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+				TaskGenerator.findExistingNumericConstraints(fq.root().constraints());
 
+	/*
+			taskGenerator.getRandom().nextLong();
+			taskGenerator.getPseudoRandom().nextLong();
+			taskGenerator.getRandom().nextLong();
+			taskGenerator.getPseudoRandom().nextLong();
+			taskGenerator.getRandom().nextLong();
+			taskGenerator.getPseudoRandom().nextLong();
+			taskGenerator.getRandom().nextLong();
+			taskGenerator.getPseudoRandom().nextLong();
+			taskGenerator.getRandom().nextLong();
+			taskGenerator.getPseudoRandom().nextLong();
+			*/
+
+		System.out.println(">>>"+numericConstraints);
+		if (!numericConstraints.isEmpty()) {
+			taskGenerator.modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints);
+		}
+		assertEquals("{ { ?v_2  <http://www.example.org/inhabitants>  ?v_1 ;\n" +
+				"          <http://www.example.org/inhabitants>  ?v_3 .\n" +
+				"    ?v_3  <http://xmlns.com/foaf/0.1/age>  ?v_4\n" +
+				"    FILTER ( ?v_4 <= 33 )\n" +
+				"    FILTER ( ?v_4 >= 10 )\n" +
+				"  }\n" +
+				"  ?v_1  ?p  ?o\n" +
+				"}", getQueryPattern(fq.root()));
+		//fq.constraints().forEach(Resource::removeProperties);
+		//fq.constraints().clear();
+/*
 		{
 			final StringWriter sw = new StringWriter();
 			RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
 			System.out.println(sw.toString());
 		}
-		fq.constraints().forEach(Resource::removeProperties);
-		fq.constraints().clear();
-		{
-			final StringWriter sw = new StringWriter();
-			RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
-			System.out.println(sw.toString());
-		}
+		*/
 		//System.out.println(fq.constraints());
 
 	}
 
 	@Test
+	public void testCp8() {
+		load(DS_SIMPLE_3);
+		taskGenerator.setPseudoRandom(new Random(1234L));
+
+		final FacetNode node = fq.root();
+
+		taskGenerator.applyCp8(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_4 .\n" +
+				"  ?v_4  <http://www.example.org/population>  ?v_5\n" +
+				"  FILTER ( ?v_5 >= 543825 )\n" +
+				"  FILTER ( ?v_5 <= 560472 )\n" +
+				"}", getQueryPattern(node));
+		taskGenerator.applyCp8(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  10 ;\n" +
+				"        <http://xmlns.com/foaf/0.1/based_near>  ?v_3 .\n" +
+				"  ?v_3  <http://www.example.org/mayor>  ?v_4 .\n" +
+				"  ?v_4  <http://xmlns.com/foaf/0.1/based_near>  ?v_5 .\n" +
+				"  ?v_5  <http://www.example.org/population>  ?v_6\n" +
+				"  FILTER ( ?v_6 >= 543825 )\n" +
+				"  FILTER ( ?v_6 <= 560472 )\n" +
+				"}", getQueryPattern(node));
+		taskGenerator.applyCp8(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2 ;\n" +
+				"        <http://xmlns.com/foaf/0.1/based_near>  ?v_3 .\n" +
+				"  ?v_3  <http://www.example.org/mayor>  ?v_4 .\n" +
+				"  ?v_4  <http://xmlns.com/foaf/0.1/based_near>  ?v_5 .\n" +
+				"  ?v_5  <http://www.example.org/population>  ?v_6\n" +
+				"  FILTER ( ?v_2 <= 33 )\n" +
+				"  FILTER ( ?v_2 >= 10 )\n" +
+				"  FILTER ( ?v_6 >= 543825 )\n" +
+				"  FILTER ( ?v_6 <= 560472 )\n" +
+				"}", getQueryPattern(node));
+		taskGenerator.applyCp8(node);
+
+		assertEquals("", getQueryPattern(node));
+
+	}
+
+	@Test//done
+	public void testCp7() {
+		load(DS_SIMPLE_3);
+		taskGenerator.setPseudoRandom(new Random(1234L));
+
+		final FacetNode node = fq.root();
+
+		taskGenerator.applyCp7(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+				"  ?v_4  <http://www.example.org/mayor>  ?v_3 ;\n" +
+				"        <http://www.example.org/population>  ?v_5\n" +
+				"  FILTER ( ?v_5 >= 543825 )\n" +
+				"  FILTER ( ?v_5 <= 560472 )\n" +
+				"}", getQueryPattern(node));
+		taskGenerator.applyCp7(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+				"  ?v_4  <http://www.example.org/mayor>  ?v_3 ;\n" +
+				"        <http://www.example.org/population>  560472\n" +
+				"}", getQueryPattern(node));
+
+	}
+
+	@Test//done
 	public void testCp6() {
 		load(DS_SIMPLE_3);
-
+		taskGenerator.setPseudoRandom(new Random(1234L));
 
 
 		final FacetNode node = fq.root();
@@ -349,7 +430,24 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp6(node);
 
-		//assertEquals("", getQueryPattern(node));
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2\n" +
+				"  FILTER ( ?v_2 >= 10 )\n" +
+				"  FILTER ( ?v_2 <= 47 )\n" +
+				"}", getQueryPattern(node));
+
+		taskGenerator.applyCp6(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2\n" +
+				"  FILTER ( ?v_2 >= 33 )\n" +
+				"  FILTER ( ?v_2 <= 47 )\n" +
+				"}", getQueryPattern(node));
+
+		taskGenerator.applyCp6(node);
+
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2\n" +
+				"  FILTER ( ?v_2 <= 33 )\n" +
+				"  FILTER ( ?v_2 >= 10 )\n" +
+				"}", getQueryPattern(node));
 	}
 
 	@Test//done
