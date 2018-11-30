@@ -71,7 +71,7 @@
 
 			<dependency>
 				<groupId>org.hobbit</groupId>
-				<artifactId>faceted-browsing-benchmark-core</artifactId>
+				<artifactId>faceted-browsing-benchmark-v2-hobbit</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
