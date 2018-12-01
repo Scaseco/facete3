@@ -21,8 +21,6 @@ public class ConfigEncodersFacetedBrowsingV2 {
     	return (r, timestamp) -> FacetedBrowsingEncodersV2.formatForEvalStorage(r, timestamp, gson);
     }
     
-    
-    
     @Bean
     public Function<Resource, ByteBuffer> taskEncoderForSystemAdapter() {
     	return FacetedBrowsingEncoders::encodeTaskForSystemAdapter;

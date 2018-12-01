@@ -266,13 +266,15 @@ public class TestFacetedQuery2 {
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o), Vars.s);
 		final DataQuery<RDFNode> rdfNodeDataQuery = node.remainingValues();
 		System.out.println(rdfNodeDataQuery.exec().toList().blockingGet());
+		
+		final UnaryRelation sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
-				rdfNodeDataQuery
-						.baseRelation().toUnaryRelation(), targetConcept);
+				sourceConcept, targetConcept);
 
 		pathSearch.setMaxPathLength(3);
 		final List<SimplePath> simplePaths = pathSearch.exec().toList().blockingGet();
-		System.out.println(simplePaths);
+		System.out.println("Found paths: " + simplePaths.size());
+		simplePaths.forEach(System.out::println);
 	}
 
 	@Test//done

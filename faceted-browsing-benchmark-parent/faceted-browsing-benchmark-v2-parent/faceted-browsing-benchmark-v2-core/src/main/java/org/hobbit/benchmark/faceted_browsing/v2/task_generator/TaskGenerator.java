@@ -225,12 +225,24 @@ public class TaskGenerator {
 				.setDataSummary(dataSummary)
 				.setDataConnection(conn)
 				.setShortestPathsOnly(false)
+				// Skip path with immediate forward / backward traversals (or vice versa) on the same node 
+				.addPathValidator(TaskGenerator::rejectZigZagPath)
 				.build();
 
 
 //		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
 
 		TaskGenerator result = new TaskGenerator(conn, numericProperties, pathFinder);
+		return result;
+	}
+	
+	public static boolean rejectZigZagPath(SimplePath path, P_Path0 contrib) {
+		P_Path0 ls = path.lastStep();
+
+		boolean result = ls == null
+				? true
+				: !(contrib.getNode().equals(ls.getNode()) && contrib.isForward() != ls.isForward());
+//		System.out.println("" + path + " + " + contrib + " = " + result);
 		return result;
 	}
 

@@ -657,7 +657,7 @@ public class RabbitMqFlows {
     public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Channel channel, String queueName, Channel responseChannel, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
     	PublishProcessor<SimpleReplyableMessage<ByteBuffer>> result = PublishProcessor.create();
 		
-    	ShutdownListener shutdownListener = (throwable) -> {
+    	ShutdownListener shutdownListener = throwable -> {
     		logger.debug("[STATUS] Channel is closing; completing flow");
     		if(throwable != null) {
     			result.onError(throwable);
