@@ -15,12 +15,10 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -42,11 +40,13 @@ import static org.junit.Assert.*;
 public class TestFacetedQuery2 {
 
 	//protected FacetedQuery fq;
-	final String DS_SIMPLE = "path-data-simple.ttl";
-	final String DS_SIMPLE_1 = "path-data-simple-1.ttl";
-	final String DS_SIMPLE_2 = "path-data-simple-2.ttl";
-	final String DS_SIMPLE_3 = "path-data-simple-3.ttl";
-	final String DS_SIMPLE_4 = "path-data-simple-4.ttl";
+	final String DS_S_L_IN_G = "path-data-simple.ttl";
+	final String DS_S_L_WITH_2P = "path-data-simple-1.ttl";
+	final String DS_S_L_WITH_3P = "path-data-simple-2.ttl";
+	final String DS_S_2CTY_4P = "path-data-simple-3.ttl";
+	final String DS_S_L_IN_G_SCM = "path-data-simple-4.ttl";
+	final String DS_S_2CTY_3M1F = "path-data-simple-5.ttl";
+	final String DS_PLACES = "places-inferred.ttl";
 
 	protected RdfChangeTrackerWrapper changeTracker;
 	protected FacetedQuery fq;
@@ -73,10 +73,31 @@ public class TestFacetedQuery2 {
 		return ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString();
 	}
 
-	
+	@Test
+	public void testHierarchy2() {
+		load(DS_PLACES );
+
+		Path path = new P_Link(NodeFactory.createURI("http://www.example.org/ontologies/places#narrowerThan"));
+
+		UnaryRelation classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+		UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+				classes,
+				path);
+
+		DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
+		System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
+
+
+		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+				Concept.parse("?s | VALUES(?s) { (eg:LorenzStadler) }", PrefixMapping.Extended),
+				path);
+
+		System.out.println(subClasses);
+	}
+
 	@Test
 	public void testHierarchy() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_3M1F);
 
 		Path path = new P_Link(RDFS.subClassOf.asNode());
 
@@ -90,7 +111,7 @@ public class TestFacetedQuery2 {
 		
 
 		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
-				Concept.parse("?s | VALUES(?s) { (eg:Foobar) }", PrefixMapping.Extended),
+				Concept.parse("?s | VALUES(?s) { (eg:LorenzStadler) }", PrefixMapping.Extended),
 				path);
 		
 		System.out.println(subClasses);
@@ -99,7 +120,7 @@ public class TestFacetedQuery2 {
 	@Test//done
 	public void testFocusNode() {
 		// TODO: test case with films,characters,actors
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 
 		final FacetNode one = fq.root().bwd("http://xmlns.com/foaf/0.1/based_near").one();
 		//final FacetNode one = fq.root().fwd("http://www.example.org/inhabitants").one();
@@ -124,7 +145,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testFacetConstraintAccess() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		fq.root();
 		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
 		
@@ -141,7 +162,7 @@ public class TestFacetedQuery2 {
 	
 	@Test//done
 	public void testPathFinder() {
-		load(DS_SIMPLE_1);
+		load(DS_S_L_WITH_2P);
 		final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
 		//new Concept()
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
@@ -176,7 +197,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp14() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(1l));
 		final FacetNode node = fq.root();
 
@@ -225,7 +246,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp13() {
-		load(DS_SIMPLE_2);
+		load(DS_S_L_WITH_3P);
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -253,7 +274,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp12() {
-		load(DS_SIMPLE_2);
+		load(DS_S_L_WITH_3P);
 		final FacetNode node = fq.root();
 		taskGenerator.setPseudoRandom(new Random(1234L));
 		taskGenerator.applyCp12(node);
@@ -273,7 +294,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp12part() {
-		load(DS_SIMPLE_2);
+		load(DS_S_L_WITH_3P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 
@@ -297,7 +318,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp10() {
-		load(DS_SIMPLE);
+		load(DS_S_L_IN_G);
 		final FacetNode node = fq.root();
 
 		changeTracker.commitChanges();
@@ -328,7 +349,7 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testCp9(){
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 		final FacetNode node = fq.root();
@@ -359,7 +380,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp6part() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(123L));
 
 		final FacetNode node = fq.root();
@@ -393,7 +414,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp8() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 		final FacetNode node = fq.root();
@@ -436,7 +457,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp7() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 		final FacetNode node = fq.root();
@@ -462,7 +483,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp6() {
-		load(DS_SIMPLE_3);
+		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 
@@ -492,9 +513,25 @@ public class TestFacetedQuery2 {
 				"}", getQueryPattern(node));
 	}
 
+	@Test
+	public void testCp5part() {
+		load(DS_PLACES);
+		final Property partOf = ResourceFactory.createProperty("http://www.example.org/ontologies/places#partOf");
+		taskGenerator.setPseudoRandom(new Random(1234L));
+
+		final FacetNode node = fq.root();
+		taskGenerator.applyPropertyEqConstraint(node, partOf, 1);
+		//taskGenerator.applyCp12(node);
+		System.out.println(getQueryPattern(node));
+
+		final Map<HLFacetConstraint, List<Node>> existingConstraints = TaskGenerator.findExistingEqConstraintsOfType(node.constraints(), partOf);
+
+		System.out.println(existingConstraints);
+	}
+
 	@Test//done
 	public void testCp4() {
-		load(DS_SIMPLE_2);
+		load(DS_S_L_WITH_3P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 
@@ -531,7 +568,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp3() {
-		load(DS_SIMPLE_1);
+		load(DS_S_L_WITH_2P);
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -565,7 +602,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp2() {
-		load(DS_SIMPLE);
+		load(DS_S_L_IN_G);
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
@@ -597,7 +634,7 @@ public class TestFacetedQuery2 {
 
 	@Test//done
 	public void testCp1() {
-		load(DS_SIMPLE);
+		load(DS_S_L_IN_G);
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 		final Query v1 = ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue();
@@ -631,7 +668,7 @@ public class TestFacetedQuery2 {
 	public void testRangeConstraint() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
-		load(DS_SIMPLE);
+		load(DS_S_L_IN_G);
 		final FacetNode node = fq.root()
 				.fwd("http://www.example.org/population")
 				.one()
@@ -655,7 +692,7 @@ public class TestFacetedQuery2 {
 	public void testConstraints() {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
-		load(DS_SIMPLE);
+		load(DS_S_L_IN_G);
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root()
 				.constraints()
 				    .eqIri("http://www.example.org/Leipzig")
@@ -675,7 +712,7 @@ public class TestFacetedQuery2 {
 		//final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd().facetCounts();
 		//
 		{
-			load(DS_SIMPLE);
+			load(DS_S_L_IN_G);
 			final DataQuery<FacetCount> facetCountDataQuery = fq.root().fwd("http://www.example.org/contains").one().fwd().facetCounts();
 			final List<FacetCount> facetCounts = facetCountDataQuery.only("http://www.example.org/population").exec().toList().blockingGet();
 
