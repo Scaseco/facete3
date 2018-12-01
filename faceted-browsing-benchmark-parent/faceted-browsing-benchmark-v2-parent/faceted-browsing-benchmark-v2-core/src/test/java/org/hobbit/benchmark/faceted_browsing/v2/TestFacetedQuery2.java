@@ -252,6 +252,15 @@ public class TestFacetedQuery2 {
 	}
 
 	@Test
+	public void testCp12() {
+		load(DS_SIMPLE_2);
+		taskGenerator.setPseudoRandom(new Random(1234L));
+		final FacetNode node = fq.root();
+		taskGenerator.applyCp12(node);
+
+	}
+
+	@Test
 	public void testCp12part() {
 		load(DS_SIMPLE_2);
 		taskGenerator.setPseudoRandom(new Random(1234L));
@@ -328,10 +337,11 @@ public class TestFacetedQuery2 {
 
 
 		assertEquals("{ ?v_2  <http://www.example.org/locatedIn>  ?v_1 ;\n" +
-				"        <http://www.example.org/population>  560472 .\n" +
+				"        <http://www.example.org/population>  ?v_3 .\n" +
 				"  ?v_4  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
 				"        <http://xmlns.com/foaf/0.1/age>  ?v_5 .\n" +
 				"  ?v_1  ?p                    ?o\n" +
+				"  FILTER ( ?v_3 <= 560472 )\n" +
 				"  FILTER ( ?v_5 <= 60 )\n" +
 				"}", getQueryPattern(node));
 	}

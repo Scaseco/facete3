@@ -737,8 +737,7 @@ public class TaskGenerator {
 				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
 						p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		Collections.shuffle(paths,
-				rand);
+		shuffle(paths, rand);
 
 //		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
 //				.randomOrder()
@@ -778,8 +777,7 @@ public class TaskGenerator {
 				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
 						p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		Collections.shuffle(paths,
-				rand);
+		shuffle(paths, rand);
 
 		if (!paths.isEmpty() && applyEqConstraintOnPath(fn, paths.get(0), pseudoRandom)) {
 			result = true;
@@ -882,7 +880,7 @@ public class TaskGenerator {
 		//boolean isApplicable = !typeConstraints.isEmpty();
 
 		// Pick a random type for which there is a subclass
-		Collections.shuffle(typeConstraints, rand);
+		shuffle(typeConstraints, rand);
 
 
 		//new HierarchyCoreOnDemand()
@@ -1375,17 +1373,37 @@ public class TaskGenerator {
 		return result;
 	}
 
-//	/**
-//	 * Complicated property paths or circles
-//	 * (Choke points 3 and 4 with advanced property paths involved)
-//	 * 
-//	 * @param fn
-//	 */
-//	public static boolean applyCp12(FacetNode fn) {
-//		// n/a
-//		boolean result = false;
-//		return result;
-//	}
+	/**
+	 * Complicated property paths or circles
+	 * (Choke points 3 and 4 with advanced property paths involved)
+	 *
+	 * @param fn
+	 */
+	public boolean applyCp12(FacetNode fn) {
+		// n/a
+		boolean result = false;
+		final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
+		//new Concept()
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o), Vars.s);
+		final DataQuery<RDFNode> rdfNodeDataQuery = fn.remainingValues();
+		System.out.println(rdfNodeDataQuery.exec().toList().blockingGet());
+
+		final UnaryRelation sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
+				sourceConcept, targetConcept);
+
+		pathSearch.setMaxPathLength(3);
+		final List<SimplePath> simplePathList = pathSearch.exec().toList().blockingGet();
+		shuffle(simplePathList, rand);
+		if (!simplePathList.isEmpty()) {
+			final FacetNode walk = fn.walk(simplePathList.get(0));
+			final DataQuery<RDFNode> availableTypes = walk.remainingValues().only(RDF.type);
+			final List<RDFNode> rdfNodes = availableTypes.exec().toList().blockingGet();
+			System.out.println("available types="+rdfNodes);
+		}
+
+		return result;
+	}
 
 	/**
 	 * Inverse direction of an edge involved in property path based transition
@@ -1409,8 +1427,7 @@ public class TaskGenerator {
 				pathSearch.exec().filter(sp  -> sp.getSteps().stream().anyMatch(p ->
 						!p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		Collections.shuffle(paths,
-				rand);
+		shuffle(paths, rand);
 
 		if (!paths.isEmpty() && applyEqConstraintOnPath(fn, paths.get(0), pseudoRandom)) {
 			result = true;
@@ -1676,7 +1693,7 @@ public class TaskGenerator {
 
 	public boolean modifyNumericConstraintRandom(Collection<HLFacetConstraint> hlFacetConstraints, Map<HLFacetConstraint, Map<Character, Node>> numericConstraints, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
 		final List<Entry<HLFacetConstraint, Map<Character, Node>>> entryList = new ArrayList<>(numericConstraints.entrySet());
-		shuffle(entryList);
+		shuffle(entryList, rand);
 		if (entryList.isEmpty()) {
 			return false;
 		}
