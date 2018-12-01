@@ -251,13 +251,24 @@ public class TestFacetedQuery2 {
 				"}", getQueryPattern(node));
 	}
 
-	@Test
+	@Test//done
 	public void testCp12() {
 		load(DS_SIMPLE_2);
-		taskGenerator.setPseudoRandom(new Random(1234L));
 		final FacetNode node = fq.root();
+		taskGenerator.setPseudoRandom(new Random(1234L));
 		taskGenerator.applyCp12(node);
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+				"  ?v_3  a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+				"}", getQueryPattern(node));
 
+		taskGenerator.applyCp12(node);
+		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_4 .\n" +
+				"  ?v_4  a                     <http://www.example.org/City> .\n" +
+				"  ?v_3  a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+				"}", getQueryPattern(node));
 	}
 
 	@Test
@@ -345,16 +356,13 @@ public class TestFacetedQuery2 {
 				"  FILTER ( ?v_5 <= 60 )\n" +
 				"}", getQueryPattern(node));
 	}
+
 	@Test//done
 	public void testCp6part() {
 		load(DS_SIMPLE_3);
 		taskGenerator.setPseudoRandom(new Random(123L));
 
 		final FacetNode node = fq.root();
-		/*
-		taskGenerator.setRandom(new Random(6128191552201113548L));
-		final boolean b = taskGenerator.applyCp14(node);
-		*/
 
 		Map.Entry<FacetNode, Range<NodeHolder>> r = TaskGenerator.pickRange(taskGenerator.getRandom(), taskGenerator.getPseudoRandom(), taskGenerator.getNumericProperties(),
 				taskGenerator.getConceptPathFinder(), node, null, 0, 2, false, true, false);
@@ -372,37 +380,14 @@ public class TestFacetedQuery2 {
 		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fq.root().constraints());
 
-	/*
-			taskGenerator.getRandom().nextLong();
-			taskGenerator.getPseudoRandom().nextLong();
-			taskGenerator.getRandom().nextLong();
-			taskGenerator.getPseudoRandom().nextLong();
-			taskGenerator.getRandom().nextLong();
-			taskGenerator.getPseudoRandom().nextLong();
-			taskGenerator.getRandom().nextLong();
-			taskGenerator.getPseudoRandom().nextLong();
-			taskGenerator.getRandom().nextLong();
-			taskGenerator.getPseudoRandom().nextLong();
-			*/
-
 		System.out.println(">>>"+numericConstraints);
 		if (!numericConstraints.isEmpty()) {
 			taskGenerator.modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
 		}
-		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-				"  ?v_3  <http://www.example.org/contains>  ?v_2 ;\n" +
-				"        <http://www.example.org/population>  80000000\n" +
+		assertEquals("{ ?v_1  <http://www.example.org/population>  ?v_2\n" +
+				"  FILTER ( ?v_2 >= 543825 )\n" +
+				"  FILTER ( ?v_2 <= 560472 )\n" +
 				"}", getQueryPattern(fq.root()));
-		//fq.constraints().forEach(Resource::removeProperties);
-		//fq.constraints().clear();
-/*
-		{
-			final StringWriter sw = new StringWriter();
-			RDFDataMgr.write(sw, ((FacetedQueryResource)fq).modelRoot().getModel(), RDFFormat.TURTLE_PRETTY);
-			System.out.println(sw.toString());
-		}
-		*/
-		//System.out.println(fq.constraints());
 
 	}
 
