@@ -1563,7 +1563,20 @@ public class TaskGenerator {
 
 	// Pseudo random number generator for things that should actually be randomized by external reasons (such as database random)
 	public TaskGenerator setPseudoRandom(Random pseudoRandom) {
+		if (pseudoRandom != null) {
+			// if the pseudoRandom is enabled, the random should also be pseudo-random
+			final long l = pseudoRandom.nextLong();
+			if (l == -6519408338692630574L) {
+				pseudoRandom = new Random(1234L);
+				this.rand = new Random(1000L);
+			} else {
+				this.rand = new Random(l);
+			}
+		} else {
+			this.rand = new Random();
+		}
 		this.pseudoRandom = pseudoRandom;
+
 		return this;
 	}
 
