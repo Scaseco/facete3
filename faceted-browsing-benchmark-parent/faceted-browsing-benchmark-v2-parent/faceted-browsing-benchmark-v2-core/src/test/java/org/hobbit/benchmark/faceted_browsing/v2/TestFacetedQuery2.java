@@ -7,6 +7,7 @@ import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -26,6 +27,7 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
@@ -34,7 +36,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static java.util.Collections.shuffle;
 import static org.junit.Assert.*;
 
 public class TestFacetedQuery2 {
@@ -47,6 +51,7 @@ public class TestFacetedQuery2 {
 	final String DS_S_L_IN_G_SCM = "path-data-simple-4.ttl";
 	final String DS_S_2CTY_3M1F = "path-data-simple-5.ttl";
 	final String DS_PLACES = "places-inferred.ttl";
+	final static String PLACES_NS = "http://www.example.org/ontologies/places#";
 
 	protected RdfChangeTrackerWrapper changeTracker;
 	protected FacetedQuery fq;
@@ -75,9 +80,9 @@ public class TestFacetedQuery2 {
 
 	@Test
 	public void testHierarchy2() {
-		load(DS_PLACES );
+		load(DS_PLACES);
 
-		Path path = new P_Link(NodeFactory.createURI("http://www.example.org/ontologies/places#narrowerThan"));
+		Path path = new P_Link(NodeFactory.createURI(PLACES_NS + "narrowerThan"));
 
 		UnaryRelation classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
 		UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
@@ -89,10 +94,13 @@ public class TestFacetedQuery2 {
 
 
 		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
-				Concept.parse("?s | VALUES(?s) { (eg:LorenzStadler) }", PrefixMapping.Extended),
+				Concept.parse("?s | VALUES(?s) { (<" + PLACES_NS + "FederalState>) }", PrefixMapping.Extended),
 				path);
 
-		System.out.println(subClasses);
+		System.out.println("subClasses rel=" + subClasses);
+		System.out.println("subClasses2 rel=" + subClasses2);
+		final DataQuery<Resource> resourceDataQuery = new DataQueryImpl<>(fq.connection(), subClasses2, null, Resource.class);
+		resourceDataQuery.exec().toList().blockingGet().forEach(System.out::println);
 	}
 
 	@Test
@@ -111,15 +119,15 @@ public class TestFacetedQuery2 {
 		
 		DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
 		System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
-		
+
 
 		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
 				Concept.parse("?s | VALUES(?s) { (eg:LorenzStadler) }", PrefixMapping.Extended),
 				path);
-		
+
 		System.out.println(subClasses);
 	}
-	
+
 	@Test//done
 	public void testFocusNode() {
 		// TODO: test case with films,characters,actors
@@ -138,9 +146,9 @@ public class TestFacetedQuery2 {
 
 		final Map<Node, Long> solution = ImmutableMap.<Node, Long>builder()
 				.put(ResourceFactory.createResource("http://www.example.org/LorenzStadler").asNode(), 3L)
-				.put(ResourceFactory.createResource("http://www.example.org/BurkhardJung").asNode(),  3L)
-				.put(ResourceFactory.createResource("http://www.example.org/MarieSchmidt").asNode(),  3L)
-				.put(ResourceFactory.createResource("http://www.example.org/DirkHilbert").asNode(),   1L)
+				.put(ResourceFactory.createResource("http://www.example.org/BurkhardJung").asNode(), 3L)
+				.put(ResourceFactory.createResource("http://www.example.org/MarieSchmidt").asNode(), 3L)
+				.put(ResourceFactory.createResource("http://www.example.org/DirkHilbert").asNode(), 1L)
 				.build();
 
 		assertArrayEquals(((ImmutableMap<Node, Long>) solution).asMultimap().entries().toArray(), facetValueCounts.entrySet().toArray());
@@ -151,18 +159,18 @@ public class TestFacetedQuery2 {
 		load(DS_S_2CTY_4P);
 		fq.root();
 		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
-		
+
 		System.out.println("FROM CONSTRAINT: " + fq.root().fwd().facetValueCounts().only(RDF.type).exec().toList().blockingGet());
 
-		for(HLFacetConstraint fc : fq.focus().fwd(RDF.type).one().constraints().listHl()) {
+		for (HLFacetConstraint fc : fq.focus().fwd(RDF.type).one().constraints().listHl()) {
 			Set<FacetNode> fns = fc.mentionedFacetNodes();
 			System.out.println("GOT MENTIONED: " + fns.size());
-			for(FacetNode fn : fns) {
+			for (FacetNode fn : fns) {
 				System.out.println("FROM CONSTRAINT: " + fn.availableValues().exec().toList().blockingGet());
 			}
 		}
 	}
-	
+
 	@Test//done
 	public void testPathFinder() {
 		load(DS_S_L_WITH_2P);
@@ -173,8 +181,8 @@ public class TestFacetedQuery2 {
 
 		pathSearch.setMaxPathLength(2);
 		final List<SimplePath> paths = pathSearch.exec().filter(x -> x.getSteps().stream().noneMatch(p ->
-			!p.isForward()
-		) ).toList().blockingGet();
+				!p.isForward()
+		)).toList().blockingGet();
 
 		final int[] i = {1};
 		paths.forEach(path -> {
@@ -194,7 +202,7 @@ public class TestFacetedQuery2 {
 				"<http://xmlns.com/foaf/0.1/based_near> <http://www.example.org/locatedIn>",
 				"<http://xmlns.com/foaf/0.1/based_near> <http://www.example.org/mayor>",
 		};
-		assertArrayEquals( result , paths.stream().map(SimplePath::toPathString).toArray() );
+		assertArrayEquals(result, paths.stream().map(SimplePath::toPathString).toArray());
 		//System.out.println(paths);
 	}
 
@@ -204,15 +212,15 @@ public class TestFacetedQuery2 {
 		taskGenerator.setPseudoRandom(new Random(1l));
 		final FacetNode node = fq.root();
 
-		assertEquals( "{ ?v_1  ?p  ?o }" ,
-				getQueryPattern(node) );
+		assertEquals("{ ?v_1  ?p  ?o }",
+				getQueryPattern(node));
 
 
 		taskGenerator.setRandom(new Random(6128191552201113548L));
 		final boolean b = taskGenerator.applyCp14(node);
-		assertEquals( "{ ?v_1  <http://www.example.org/mayor>  ?v_2 .\n" +
+		assertEquals("{ ?v_1  <http://www.example.org/mayor>  ?v_2 .\n" +
 				"  ?v_2  <http://xmlns.com/foaf/0.1/age>  60\n" +
-				"}" , getQueryPattern(node) );
+				"}", getQueryPattern(node));
 
 		changeTracker.commitChanges();
 
@@ -241,7 +249,7 @@ public class TestFacetedQuery2 {
 			final boolean c = taskGenerator.applyCp14(node);
 			final String qp = getQueryPattern(node);
 			solutions.assertSolution(qp);
-			System.out.println(">>>"+ TaskGenerator.findExistingNumericConstraints(node.constraints()));
+			System.out.println(">>>" + TaskGenerator.findExistingNumericConstraints(node.constraints()));
 			changeTracker.discardChanges();
 		}
 		solutions.assertAllSeen();
@@ -253,8 +261,8 @@ public class TestFacetedQuery2 {
 		taskGenerator.setPseudoRandom(new Random(1234l));
 		final FacetNode node = fq.root();
 
-		assertEquals( "{ ?v_1  ?p  ?o }" ,
-				getQueryPattern(node) );
+		assertEquals("{ ?v_1  ?p  ?o }",
+				getQueryPattern(node));
 
 		taskGenerator.applyCp13(node);
 
@@ -268,7 +276,7 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals( "{ ?v_2      <http://www.example.org/mayor>  ?v_1 .\n" +
+		assertEquals("{ ?v_2      <http://www.example.org/mayor>  ?v_1 .\n" +
 				"  <http://www.example.org/LorenzStadler>\n" +
 				"            <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
 				"  ?v_1      ?p                    ?o\n" +
@@ -308,7 +316,7 @@ public class TestFacetedQuery2 {
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o), Vars.s);
 		final DataQuery<RDFNode> rdfNodeDataQuery = node.remainingValues();
 		System.out.println(rdfNodeDataQuery.exec().toList().blockingGet());
-		
+
 		final UnaryRelation sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
 				sourceConcept, targetConcept);
@@ -325,16 +333,16 @@ public class TestFacetedQuery2 {
 		final FacetNode node = fq.root();
 
 		changeTracker.commitChanges();
-		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+		assertEquals("{ ?v_1  ?p  ?o }", getQueryPattern(node));
 
 		taskGenerator.applyCp1(node);
 		changeTracker.commitChanges();
 
-		assertNotEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+		assertNotEquals("{ ?v_1  ?p  ?o }", getQueryPattern(node));
 
 		taskGenerator.applyCp10();
 
-		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+		assertEquals("{ ?v_1  ?p  ?o }", getQueryPattern(node));
 
 		fq.focus(fq.root().fwd("http://www.example.org/locatedIn").one());
 		changeTracker.commitChanges();
@@ -347,11 +355,11 @@ public class TestFacetedQuery2 {
 		assertEquals("{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 }", getQueryPattern(node));
 
 		taskGenerator.applyCp10();
-		assertEquals( "{ ?v_1  ?p  ?o }" , getQueryPattern(node) );
+		assertEquals("{ ?v_1  ?p  ?o }", getQueryPattern(node));
 	}
 
 	@Test
-	public void testCp9(){
+	public void testCp9() {
 		load(DS_S_2CTY_4P);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
@@ -404,7 +412,7 @@ public class TestFacetedQuery2 {
 		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fq.root().constraints());
 
-		System.out.println(">>>"+numericConstraints);
+		System.out.println(">>>" + numericConstraints);
 		if (!numericConstraints.isEmpty()) {
 			taskGenerator.modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
 		}
@@ -516,10 +524,65 @@ public class TestFacetedQuery2 {
 				"}", getQueryPattern(node));
 	}
 
+	public UnaryRelation testCp5getTargets(Relation baseConcept) {
+		UnaryRelation targets = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
+
+		UnaryRelation result = targets
+				.joinOn(Vars.o)
+				.filterRelationFirst(true)
+				.with(baseConcept)
+				.toUnaryRelation();
+
+		return result;
+}
+
+	@Test
+	public void testCp5part2() {
+		load(DS_PLACES);
+		final Property partOf = ResourceFactory.createProperty(PLACES_NS+"partOf");
+		taskGenerator.setPseudoRandom(new Random(1234L));
+
+		final FacetNode node = fq.root();
+		final Resource world = ResourceFactory.createResource(PLACES_NS + "World");
+		final FacetNode fn = node.fwd(partOf).one().fwd(RDF.type).one().constraints().eq(world).end();
+
+		final Map<HLFacetConstraint, List<Node>> existingClassConstraints = TaskGenerator.findExistingClassConstraints(fq.root().constraints());
+		final List<Map.Entry<HLFacetConstraint, List<Node>>> classConstraintList = existingClassConstraints.entrySet().stream().collect(Collectors.toList());
+		shuffle(classConstraintList);
+		if (!classConstraintList.isEmpty()) {
+			final Map.Entry<HLFacetConstraint, List<Node>> constraintListEntry = classConstraintList.get(0);
+
+			fq.root().constraints().
+		}
+		final ArrayList<FacetConstraint> constraintsBackup = new ArrayList<>(fq.constraints());
+		fq.constraints().clear();
+*/
+		final UnaryRelation unaryRelation = node.fwd(partOf).one().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+		System.out.println(unaryRelation);
+		if (true == true) throw new RuntimeException("x");
+
+
+		final FacetNode partof_a = node.fwd(partOf).one().fwd(RDF.type).one();
+		System.out.println(partof_a);
+		if (true == true) throw new RuntimeException("x");
+
+		partof_a.fwd(NodeFactory.createBlankNode("narrowingRelation")).one().constraints().eq(world);
+		final DataQuery<FacetValueCount> to_narrow = partof_a.fwd().facetValueCounts().exclude(OWL.Class, RDF.type);
+		final List<FacetValueCount> facetValueCounts = to_narrow.exec().toList().blockingGet();
+		System.out.println(facetValueCounts);
+/*
+		node.remainingValues().exec().toList().blockingGet().forEach(System.out::println);
+		System.out.println("---");
+		node.fwd(partOf).one().fwd().nonConstrainedFacetValueCounts().exec().toList().blockingGet().forEach(System.out::println);
+		//node.remainingValues().exec().toList().blockingGet().forEach(System.out::println);
+		System.out.println(getQueryPattern(node));
+		*/
+	}
+
 	@Test
 	public void testCp5part() {
 		load(DS_PLACES);
-		final Property partOf = ResourceFactory.createProperty("http://www.example.org/ontologies/places#partOf");
+		final Property partOf = ResourceFactory.createProperty(PLACES_NS+"partOf");
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
 		final FacetNode node = fq.root();
