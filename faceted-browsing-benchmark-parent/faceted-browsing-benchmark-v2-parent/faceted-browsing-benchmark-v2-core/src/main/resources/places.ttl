@@ -1,0 +1,204 @@
+@prefix : <http://www.example.org/ontologies/places#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://www.example.org/ontologies/places> .
+
+<http://www.example.org/ontologies/places> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.example.org/ontologies/places#partOf
+:partOf rdf:type owl:ObjectProperty ,
+                 owl:TransitiveProperty .
+
+
+###  http://www.example.org/ontologies/places#narrowerThan
+:narrowerThan rdf:type owl:ObjectProperty ,
+                       owl:TransitiveProperty .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.example.org/ontologies/places#City
+:City rdf:type owl:Class ;
+      :narrowerThan :PoliticalCounty .
+
+
+###  http://www.example.org/ontologies/places#FederalState
+:FederalState rdf:type owl:Class ;
+              :narrowerThan :PoliticalCountry .
+
+
+###  http://www.example.org/ontologies/places#PoliticalCountry
+:PoliticalCountry rdf:type owl:Class ;
+                  :narrowerThan :PoliticalUnion .
+
+
+###  http://www.example.org/ontologies/places#PoliticalCounty
+:PoliticalCounty rdf:type owl:Class ;
+                 :narrowerThan :FederalState .
+
+
+###  http://www.example.org/ontologies/places#PoliticalUnion
+:PoliticalUnion rdf:type owl:Class ;
+                :narrowerThan :World .
+
+
+###  http://www.example.org/ontologies/places#Village
+:Village rdf:type owl:Class ;
+         :narrowerThan :PoliticalCounty .
+
+
+###  http://www.example.org/ontologies/places#World
+:World rdf:type owl:Class .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://www.example.org/ontologies/places#Arlington
+:Arlington rdf:type owl:NamedIndividual ,
+                    :City ;
+           :partOf :Tarrant .
+
+
+###  http://www.example.org/ontologies/places#Bedfordshire
+:Bedfordshire rdf:type owl:NamedIndividual ,
+                       :PoliticalCounty ;
+              :partOf :United_Kingdom .
+
+
+###  http://www.example.org/ontologies/places#Bristol
+:Bristol rdf:type owl:NamedIndividual ,
+                  :PoliticalCounty ;
+         :partOf :United_Kingdom .
+
+
+###  http://www.example.org/ontologies/places#Dallas
+:Dallas rdf:type owl:NamedIndividual ,
+                 :City ;
+        :partOf :Texas .
+
+
+###  http://www.example.org/ontologies/places#Dresden
+:Dresden rdf:type owl:NamedIndividual ,
+                  :City ;
+         :partOf :Saxony .
+
+
+###  http://www.example.org/ontologies/places#Earth
+:Earth rdf:type owl:NamedIndividual ,
+                :World .
+
+
+###  http://www.example.org/ontologies/places#Essex
+:Essex rdf:type owl:NamedIndividual ,
+                :PoliticalCounty ;
+       :partOf :United_Kingdom .
+
+
+###  http://www.example.org/ontologies/places#EuropeanUnion
+:EuropeanUnion rdf:type owl:NamedIndividual ,
+                        :PoliticalUnion ;
+               :partOf :Earth .
+
+
+###  http://www.example.org/ontologies/places#France
+:France rdf:type owl:NamedIndividual ,
+                 :PoliticalCountry ;
+        :partOf :EuropeanUnion .
+
+
+###  http://www.example.org/ontologies/places#Frankfurt
+:Frankfurt rdf:type owl:NamedIndividual ,
+                    :City ;
+           :partOf :Hessia .
+
+
+###  http://www.example.org/ontologies/places#Germany
+:Germany rdf:type owl:NamedIndividual ,
+                  :PoliticalCountry ;
+         :partOf :EuropeanUnion .
+
+
+###  http://www.example.org/ontologies/places#Hessia
+:Hessia rdf:type owl:NamedIndividual ,
+                 :FederalState ;
+        :partOf :Germany .
+
+
+###  http://www.example.org/ontologies/places#Italy
+:Italy rdf:type owl:NamedIndividual ,
+                :PoliticalCountry ;
+       :partOf :EuropeanUnion .
+
+
+###  http://www.example.org/ontologies/places#Kassel
+:Kassel rdf:type owl:NamedIndividual ,
+                 :City ;
+        :partOf :Hessia .
+
+
+###  http://www.example.org/ontologies/places#Leipzig
+:Leipzig rdf:type owl:NamedIndividual ,
+                  :City ;
+         :partOf :Saxony .
+
+
+###  http://www.example.org/ontologies/places#Maryland
+:Maryland rdf:type owl:NamedIndividual ,
+                   :FederalState ;
+          :partOf :United_States_of_America .
+
+
+###  http://www.example.org/ontologies/places#Montgomery
+:Montgomery rdf:type owl:NamedIndividual ,
+                     :PoliticalCounty ;
+            :partOf :United_States_of_America .
+
+
+###  http://www.example.org/ontologies/places#North_Potomac
+:North_Potomac rdf:type owl:NamedIndividual ,
+                        :City ;
+               :partOf :Montgomery .
+
+
+###  http://www.example.org/ontologies/places#Saxony
+:Saxony rdf:type owl:NamedIndividual ,
+                 :FederalState ;
+        :partOf :Germany .
+
+
+###  http://www.example.org/ontologies/places#Tarrant
+:Tarrant rdf:type owl:NamedIndividual ,
+                  :PoliticalCounty ;
+         :partOf :United_States_of_America .
+
+
+###  http://www.example.org/ontologies/places#Texas
+:Texas rdf:type owl:NamedIndividual ,
+                :FederalState ;
+       :partOf :United_States_of_America .
+
+
+###  http://www.example.org/ontologies/places#United_Kingdom
+:United_Kingdom rdf:type owl:NamedIndividual ,
+                         :PoliticalCountry ;
+                :partOf :Earth .
+
+
+###  http://www.example.org/ontologies/places#United_States_of_America
+:United_States_of_America rdf:type owl:NamedIndividual ,
+                                   :PoliticalCountry ;
+                          :partOf :Earth .
+
+
+###  Generated by the OWL API (version 4.2.5.20160517-0735) https://github.com/owlcs/owlapi

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
@@ -26,19 +27,15 @@ import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.*;
-import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -54,6 +51,8 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -89,7 +88,7 @@ public class TaskGenerator {
 	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
 		this.conn = conn;
 		this.numericProperties = numericProperties;
-		this.rand = new Random(1000);
+		this.rand = new Random();
 		this.conceptPathFinder = conceptPathFinder;
 
 		Model baseModel = ModelFactory.createDefaultModel();
@@ -112,21 +111,22 @@ public class TaskGenerator {
 //		}
 	}
 
+	final static ImmutableSet<Class<? extends Expr>> rangeComparisonExprs =
+			ImmutableSet.<Class<? extends Expr>>builder()
+					.add(E_GreaterThan.class)
+					.add(E_GreaterThanOrEqual.class)
+					.add(E_LessThan.class)
+					.add(E_LessThanOrEqual.class)
+					.add(E_Equals.class)
+					.build();
+
 	public static Map<HLFacetConstraint, Map<Character, Node>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
 		Map<HLFacetConstraint, Map<Character, Node>> result = new LinkedHashMap<>();
 		for (HLFacetConstraint c : new ArrayList<>(constraintFacade.listHl())) {
 			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
 			final FacetNode fn = facetNodes.iterator().next();
-			//hlFacetConstraints.remove(c);
+
 			final Expr expr = c.expr();
-			final ImmutableSet<Class<? extends Expr>> rangeComparisonExprs =
-					ImmutableSet.<Class<? extends Expr>>builder()
-							.add(E_GreaterThan.class)
-							.add(E_GreaterThanOrEqual.class)
-							.add(E_LessThan.class)
-							.add(E_LessThanOrEqual.class)
-							.add(E_Equals.class)
-					.build();
 			final Map<Character, Node> boundsMap = new LinkedHashMap<>();
 			if (expr instanceof E_LogicalAnd) {
 				final List<Expr> subExprs = ExprUtils.getSubExprs(expr);
@@ -137,24 +137,33 @@ public class TaskGenerator {
 					});
 
 				}
-				subExprs.forEach(x -> System.out.println("> "+x+x.getClass()));
 			} else if (rangeComparisonExprs.contains(expr.getClass())) {
 				storeNumericBoundFromExpr((ExprFunction2) expr, boundsMap);
 			}
-			System.out.println(boundsMap);
+
 			if (!boundsMap.isEmpty()) {
 				result.put(c, boundsMap);
 			}
-			//System.out.println(expr.getClass());
-			/*
-			{
-				// delete constraint
-				fn.constraints().list().remove(c.state());
-				c.state().removeProperties();
-			}
-			*/
-
 		}
+		return result;
+	}
+
+	public static Map<HLFacetConstraint, List<Node>> findExistingClassConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
+		return findExistingEqConstraintsOfType(constraintFacade, RDF.type);
+	}
+
+	public static Map<HLFacetConstraint, List<Node>> findExistingEqConstraintsOfType(ConstraintFacade<? extends FacetNode> constraintFacade, Resource type) {
+		Map<HLFacetConstraint, List<Node>> result = new LinkedHashMap<>();
+
+		for (HLFacetConstraint c : new ArrayList<>(constraintFacade.listHl())) {
+			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
+			final FacetNode fn = facetNodes.iterator().next();
+			final Expr expr = c.expr();
+			if (expr instanceof E_Equals && FacetNodeResource.reachingProperty(fn).equals(type)) {
+				System.out.println("found candidate: " + expr + " // " + fn);
+			}
+		}
+
 		return result;
 	}
 
@@ -217,7 +226,11 @@ public class TaskGenerator {
 		// Note, that the summary could be loaded from any place, such as a file used for caching
 		Model dataSummary = system.computeDataSummary(conn).blockingGet();
 
-		RDFDataMgr.write(System.out, dataSummary, RDFFormat.TURTLE_PRETTY);
+		if (logger.isDebugEnabled()) {
+			final StringWriter sw = new StringWriter();
+			RDFDataMgr.write(sw, dataSummary, RDFFormat.TURTLE_PRETTY);
+			logger.debug("Data Summary: {}", sw.toString());
+		}
 
 		// Build a path finder; for this, first obtain a factory from the system
 		// set its attributes and eventually build the path finder.
@@ -438,7 +451,7 @@ public class TaskGenerator {
 		cpToAction.put("cp10", this::applyCp10);
 //
 		cpToAction.put("cp11", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp11)));
-//		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp12)));
+		cpToAction.put("cp12", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp12)));
 		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
 		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
@@ -458,12 +471,6 @@ public class TaskGenerator {
 		//Map<String >
 		//RangeUtils.
 
-		System.out.println("Lookup: " + map.get(weightModel.createLiteral("cp1")));
-		System.out.println("Lookup2: " + mmm.get("cp1"));
-
-		System.out.println("Map content: " + xxx);
-
-
 		// Derive a concrete map
 		Map<String, Double> concreteWeights = xxx.entrySet().stream()
 				.map(x -> {
@@ -473,7 +480,7 @@ public class TaskGenerator {
 				})
 				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-		System.out.println("Concrete weights " + concreteWeights);
+		logger.debug("Concrete weights " + concreteWeights);
 
 		// Remove references to unavailable actions
 		for (String k : new ArrayList<>(concreteWeights.keySet())) {
@@ -491,7 +498,7 @@ public class TaskGenerator {
 		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
 		int scenarioLength = (int) RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
 		//scenarioLength = 100;
-		System.out.println("Scenario length: " + scenarioLength);
+		logger.debug("Scenario length: " + scenarioLength);
 
 //		FacetedQuery fq = FacetedQueryImpl.create(conn);
 		//fq.connection(conn);
@@ -737,8 +744,7 @@ public class TaskGenerator {
 				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
 						p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		Collections.shuffle(paths,
-				rand);
+		shuffle(paths, rand);
 
 //		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
 //				.randomOrder()
@@ -778,10 +784,9 @@ public class TaskGenerator {
 				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
 						p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		Collections.shuffle(paths,
-				rand);
+		shuffle(paths, rand);
 
-		if (!paths.isEmpty() && applyEqConstraintOnPath(fn, paths.get(0), pseudoRandom)) {
+		if (!paths.isEmpty() && applyEqConstraintOnPathRandom(fn, paths.get(0), pseudoRandom)) {
 			result = true;
 		}
 
@@ -828,10 +833,8 @@ public class TaskGenerator {
 		//})
 				//.exec().toList().blockingGet();
 		if (!nodeDoubleMap.isEmpty()) {
-			System.out.println(nodeDoubleMap);
 			final WeightedSelector<Node> selector = WeightedSelectorImmutable.create(nodeDoubleMap);
 			final Node clazz = selector.sample(rand.nextDouble());
-			System.out.println(clazz);
 			fn.fwd(RDF.type).one().constraints().eq(clazz);
 
 			// Pick one of the facet values
@@ -866,6 +869,15 @@ public class TaskGenerator {
 	 * (For a selected class that a property value should belong to, select a subclass)
 	 */
 	public boolean applyCp5(FacetNode fn) {
+		boolean result = false;
+
+		// TODO What is the best way to deal with hierarchical data?
+		// Probably we need some wrapper object with the two straight forward implementations:
+		// fetch relations on demand, and fetch the whole hierarchy once and answer queries from cache
+
+
+		return result;
+/*
 		// Applicability check: There must be at least constraint on the type facet
 		List<Node> typeConstraints = fn.root().fwd(RDF.type).one().constraints().stream()
 				.map(FacetConstraint::expr)
@@ -882,19 +894,13 @@ public class TaskGenerator {
 		//boolean isApplicable = !typeConstraints.isEmpty();
 
 		// Pick a random type for which there is a subclass
-		Collections.shuffle(typeConstraints, rand);
+		shuffle(typeConstraints, rand);
 
 
 		//new HierarchyCoreOnDemand()
 		//HierarchyCoreOnDemand.createConceptForRoots(typeConstraints.)
 
-
-		// TODO What is the best way to deal with hierarchical data?
-		// Probably we need some wrapper object with the two straight forward implementations:
-		// fetch relations on demand, and fetch the whole hierarchy once and answer queries from cache
-
-		boolean result = false;
-		return result;
+*/
 	}
 
 
@@ -1000,7 +1006,7 @@ public class TaskGenerator {
 
 				for (Node p : ps) {
 
-					System.out.println("Chose numeric property " + p);
+					logger.debug("Chose numeric property " + p);
 					//System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
 
 					// Sample the set of values and create a range constraint from it
@@ -1016,7 +1022,7 @@ public class TaskGenerator {
 					//				.pseudoRandom(pseudoRandom)
 					//				.limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
-					System.out.println("Values: " + distribution);
+					logger.debug("Values: " + distribution);
 
 //					result = Maps.immutableEntry(v, distribution);
 
@@ -1084,7 +1090,7 @@ public class TaskGenerator {
 
 			if (p != null) {
 
-				System.out.println("Chose numeric property " + p);
+				logger.debug("Chose numeric property " + p);
 				//System.out.println("Target: " + target.fwd().facetCounts().exec().toList().blockingGet());
 
 				// Sample the set of values and create a range constraint from it
@@ -1100,7 +1106,7 @@ public class TaskGenerator {
 				//				.pseudoRandom(pseudoRandom)
 				//				.limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
-				System.out.println("Values: " + distribution);
+				logger.debug("Values: " + distribution);
 
 				result = Maps.immutableEntry(v, distribution);
 			}
@@ -1146,7 +1152,7 @@ public class TaskGenerator {
 				numericProperties);
 		if (!cands.isEmpty()) {
 
-			System.out.println("cp6 cand: " + cands);
+			logger.debug("range candidates: " + cands);
 
 			// Select candidates, thereby using the sum of the value counts as weights divided by the path length
 			Map<FacetNode, Long> candToWeight =
@@ -1166,7 +1172,7 @@ public class TaskGenerator {
 			// Select a random sub range
 			WeightedSelector<FacetNode> selector = WeightedSelectorMutable.create(candToWeight);
 			FacetNode cand = selector.sample(rand.nextDouble());
-			System.out.println("Picked cand: " + cand);
+			logger.debug("Picked candidate: " + cand);
 			Map<Node, Long> range = cands.get(cand);
 
 			// Pick a range
@@ -1210,7 +1216,7 @@ public class TaskGenerator {
 				resultRange = null;
 			}
 
-			System.out.println("Range: " + resultRange);
+			logger.debug("Range: " + resultRange);
 
 
 			result = Maps.immutableEntry(cand, resultRange);
@@ -1234,7 +1240,7 @@ public class TaskGenerator {
 				pickLowerBound,
 				pickUpperBound);
 
-		System.out.println("Pick: " + r);
+		logger.debug("Pick: " + r);
 
 		if (r != null) {
 			if (!r.getKey().root().constraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().contains(r.getKey()))
@@ -1355,7 +1361,7 @@ public class TaskGenerator {
 
 		if (fwc != null) {
 			Node p = fwc.getPredicate();
-			System.out.println("cp11 got predicate " + p);
+			logger.debug("cp11 got predicate " + p);
 
 			FacetNode newFocus = fn.fwd(p).one();
 			fn.query().focus(newFocus);
@@ -1375,17 +1381,57 @@ public class TaskGenerator {
 		return result;
 	}
 
-//	/**
-//	 * Complicated property paths or circles
-//	 * (Choke points 3 and 4 with advanced property paths involved)
-//	 * 
-//	 * @param fn
-//	 */
-//	public static boolean applyCp12(FacetNode fn) {
-//		// n/a
-//		boolean result = false;
-//		return result;
-//	}
+	/**
+	 * Complicated property paths or circles
+	 * (Choke points 3 and 4 with advanced property paths involved)
+	 * Applies a class restriction onto a property path
+	 *
+	 * @param fn
+	 */
+	public boolean applyCp12(FacetNode fn) {
+		// n/a
+		boolean result = false;
+		result = applyClassEqConstraintRandom(fn, 3);
+		return result;
+	}
+
+	public boolean applyClassEqConstraintRandom(FacetNode fn, int maxPathLength) {
+		return applyPropertyEqConstraint(fn, RDF.type, maxPathLength);
+	}
+
+	public boolean applyPropertyEqConstraint(FacetNode fn, Property property, int maxPathLength) {
+		boolean result = false;
+		final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
+		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, property.asNode(), Vars.o), Vars.s);
+		final DataQuery<RDFNode> rdfNodeDataQuery = fn.remainingValues();
+
+		final UnaryRelation sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
+		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
+				sourceConcept, targetConcept);
+
+		pathSearch.setMaxPathLength(maxPathLength);
+		final List<SimplePath> simplePathList = pathSearch.exec().toList().blockingGet();
+		shuffle(simplePathList, rand);
+		if (!simplePathList.isEmpty()) {
+			final SimplePath simplePath = simplePathList.get(0);
+
+			result = applyPropertyEqConstraintOnPathRandom(fn, simplePath, property, pseudoRandom);
+		}
+		return result;
+	}
+
+	public static boolean applyPropertyEqConstraintOnPathRandom(FacetNode fn, SimplePath simplePath, Property property, Random pseudoRandom) {
+		boolean result = false;
+		final FacetNode walk = fn.walk(simplePath);
+		final FacetNode typeNode = walk.fwd(property).one();
+		final Maybe<RDFNode> someclazz = typeNode.remainingValues().randomOrder().pseudoRandom(pseudoRandom).exec().firstElement();
+		final RDFNode clazzNode = someclazz.blockingGet();
+		if (clazzNode != null) {
+			typeNode.constraints().eq(clazzNode);
+			result = true;
+		}
+		return result;
+	}
 
 	/**
 	 * Inverse direction of an edge involved in property path based transition
@@ -1409,10 +1455,9 @@ public class TaskGenerator {
 				pathSearch.exec().filter(sp  -> sp.getSteps().stream().anyMatch(p ->
 						!p.isForward()
 				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		Collections.shuffle(paths,
-				rand);
+		shuffle(paths, rand);
 
-		if (!paths.isEmpty() && applyEqConstraintOnPath(fn, paths.get(0), pseudoRandom)) {
+		if (!paths.isEmpty() && applyEqConstraintOnPathRandom(fn, paths.get(0), pseudoRandom)) {
 			result = true;
 		}
 
@@ -1474,7 +1519,7 @@ public class TaskGenerator {
 */
 	}
 
-	public static boolean applyEqConstraintOnPath(FacetNode fn, SimplePath path, Random pseudoRandom) {
+	public static boolean applyEqConstraintOnPathRandom(FacetNode fn, SimplePath path, Random pseudoRandom) {
 		boolean result = false;
 		final FacetNode walk = fn.walk(path);
 		final List<RDFNode> objects = walk
@@ -1507,7 +1552,7 @@ public class TaskGenerator {
 		Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, pseudoRandom, numericProperties,
 				conceptPathFinder, fn, pathPattern, 1, 3, false, true, true);
 
-		System.out.println("Pick: " + r);
+		logger.debug("Pick: " + r);
 
 		if (r != null) {
 			r.getKey().constraints().range(r.getValue());
@@ -1535,8 +1580,8 @@ public class TaskGenerator {
 	//fq.root().out(property).constraints().eq(value).end().availableValues().exec()
 
 	// Pseudo number generator for things that need to randomized from java anyway
-	public TaskGenerator setRandom(Random random) {
-		this.rand = random;
+	public TaskGenerator setRandom(@Nonnull Random random) {
+		this.rand = Objects.requireNonNull(random);
 		return this;
 	}
 	
@@ -1546,7 +1591,20 @@ public class TaskGenerator {
 
 	// Pseudo random number generator for things that should actually be randomized by external reasons (such as database random)
 	public TaskGenerator setPseudoRandom(Random pseudoRandom) {
+		if (pseudoRandom != null) {
+			// if the pseudoRandom is enabled, the random should also be pseudo-random
+			final long l = pseudoRandom.nextLong();
+			if (l == -6519408338692630574L) {
+				pseudoRandom = new Random(1234L);
+				this.rand = new Random(1000L);
+			} else {
+				this.rand = new Random(l);
+			}
+		} else {
+			this.rand = new Random();
+		}
 		this.pseudoRandom = pseudoRandom;
+
 		return this;
 	}
 
@@ -1676,7 +1734,7 @@ public class TaskGenerator {
 
 	public boolean modifyNumericConstraintRandom(Collection<HLFacetConstraint> hlFacetConstraints, Map<HLFacetConstraint, Map<Character, Node>> numericConstraints, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
 		final List<Entry<HLFacetConstraint, Map<Character, Node>>> entryList = new ArrayList<>(numericConstraints.entrySet());
-		shuffle(entryList);
+		shuffle(entryList, rand);
 		if (entryList.isEmpty()) {
 			return false;
 		}
@@ -1684,5 +1742,26 @@ public class TaskGenerator {
 
 
 		return modifyNumericConstraintRandomValue(hlFacetConstraints, constraintMode, pickConstant, pickLowerBound, pickUpperBound);
+	}
+
+	public static boolean modifyEqConstraintByHierarchy(Collection<HLFacetConstraint> hlFacetConstraints,HLFacetConstraint constraint, /* TODO: hierarchy , */ Property hierarchyRelation) {
+		boolean result = false;
+
+		throw new NotImplementedException();
+		/*
+		{
+			hlFacetConstraints.remove(constraint);
+		}
+
+
+
+
+		if (result) {
+			constraint.state().removeProperties();
+		} else {
+			hlFacetConstraints.add(constraint);
+		}
+		return result;
+*/
 	}
 }
