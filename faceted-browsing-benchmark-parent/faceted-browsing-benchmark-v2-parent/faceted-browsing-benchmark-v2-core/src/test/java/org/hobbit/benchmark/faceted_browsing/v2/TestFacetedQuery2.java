@@ -589,13 +589,13 @@ public class TestFacetedQuery2 {
 
 		changeTracker.commitChanges();
 		final SolutionTracker solutions = new SolutionTracker(
-				"{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2 ;\n" +
-						"        a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+				"{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 ;\n" +
+						"        a                     <http://www.example.org/City>\n" +
 						"  FILTER bound(?v_2)\n" +
 						"}",
 
-				"{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  ?v_2 ;\n" +
-						"        a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+				"{ ?v_1  <http://www.example.org/mayor>  ?v_2 ;\n" +
+						"        a                     <http://www.example.org/City>\n" +
 						"  FILTER bound(?v_2)\n" +
 						"}"
 				);
