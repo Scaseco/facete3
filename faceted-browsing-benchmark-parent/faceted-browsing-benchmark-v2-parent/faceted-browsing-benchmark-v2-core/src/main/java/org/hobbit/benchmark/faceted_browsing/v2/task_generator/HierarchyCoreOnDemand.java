@@ -104,7 +104,7 @@ public class HierarchyCoreOnDemand
 		BinaryRelation br = BinaryRelationImpl.create(path);
 
 		UnaryRelation result = br
-			.prependOn(br.getTargetVar())
+			.joinOn(br.getTargetVar())
 			.with(baseConcept)
 			.joinOn(br.getSourceVar())
 			.with(availableValues)
