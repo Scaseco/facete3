@@ -120,11 +120,6 @@ public class TestFacetedQuery2 {
 		DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
 		System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
 
-
-		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
-				Concept.parse("?s | VALUES(?s) { (eg:LorenzStadler) }", PrefixMapping.Extended),
-				path);
-
 		System.out.println(subClasses);
 	}
 
@@ -552,8 +547,9 @@ public class TestFacetedQuery2 {
 		if (!classConstraintList.isEmpty()) {
 			final Map.Entry<HLFacetConstraint, List<Node>> constraintListEntry = classConstraintList.get(0);
 
-			fq.root().constraints().
+			//fq.root().constraints().
 		}
+		/*
 		final ArrayList<FacetConstraint> constraintsBackup = new ArrayList<>(fq.constraints());
 		fq.constraints().clear();
 */
