@@ -498,8 +498,8 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
-	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter) {
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, false);
+	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter, boolean applySelfConstraints) {
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, applySelfConstraints);
 
 		List<Element> elements = facetValues.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
@@ -644,10 +644,22 @@ public class FacetedQueryGenerator<P> {
 		
 		return result;
 	}
-	
+
+//	public UnaryRelation getConceptForAtPath(P focusPath, P facetPath, boolean applySelfConstraints) {
+//		UnaryRelation result = createRelationFacetValue(focusPath, facetPath, false, null, null, applySelfConstraints)
+//			.project(Vars.o).toUnaryRelation();
+//		
+//		return result;
+//	}
+
 	public UnaryRelation getConceptForAtPath(P focusPath, P facetPath, boolean applySelfConstraints) {
 
-		SetMultimap<P, Expr> childPathToExprs = indexConstraints(constraints);
+		SetMultimap<P, Expr> rawIndex = indexConstraints(constraints);
+		
+		SetMultimap<P, Expr> childPathToExprs = applySelfConstraints
+				? rawIndex
+				: hideConstraintsForPath(rawIndex, facetPath);
+		
 		Collection<Element> elts = createElementsFromConstraintIndex(childPathToExprs, null);
 
 //		xxx

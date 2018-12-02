@@ -559,7 +559,7 @@ public class TestFacetedQuery2 {
 
 			final FacetNode fn2 = constraintListEntry.getKey().mentionedFacetNodes().iterator().next();
 			System.out.println("fn2="+fn2);
-			fq.root().constraints().listHl().remove(constraintListEntry.getKey());
+			//fq.root().constraints().listHl().remove(constraintListEntry.getKey());
 			UnaryRelation availableClasses = fn2.availableValues().baseRelation().toUnaryRelation();
 			System.out.println("availableClasses Concept="+availableClasses);
 

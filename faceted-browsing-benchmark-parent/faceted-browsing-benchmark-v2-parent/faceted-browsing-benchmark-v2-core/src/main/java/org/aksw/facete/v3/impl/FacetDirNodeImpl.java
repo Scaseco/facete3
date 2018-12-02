@@ -154,7 +154,7 @@ public class FacetDirNodeImpl
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		TernaryRelation tr = qgen.createRelationFacetValue(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null);
+		TernaryRelation tr = qgen.createRelationFacetValue(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null, false);
 
 		BinaryRelation result = new BinaryRelationImpl(tr.getElement(), tr.getP(), tr.getO());
 		return result;

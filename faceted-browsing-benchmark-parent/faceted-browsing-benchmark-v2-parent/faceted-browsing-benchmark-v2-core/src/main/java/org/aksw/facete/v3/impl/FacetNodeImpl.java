@@ -126,7 +126,7 @@ public class FacetNodeImpl
 	}
 	
 
-	public DataQuery<RDFNode> createValueQuery(boolean excludeConstraints) {
+	public DataQuery<RDFNode> createValueQuery(boolean applySelfConstraints) {
 		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 		
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
@@ -134,7 +134,7 @@ public class FacetNodeImpl
 
 		BgpNode focus = query().focus().state();
 
-		UnaryRelation c = qgen.getConceptForAtPath(focus, this.state, excludeConstraints);
+		UnaryRelation c = qgen.getConceptForAtPath(focus, this.state, applySelfConstraints);
 		
 		//System.out.println("Available values: " + c);
 		
@@ -147,13 +147,13 @@ public class FacetNodeImpl
 
 	@Override
 	public DataQuery<RDFNode> availableValues() {
-		DataQuery<RDFNode> result = createValueQuery(true);
+		DataQuery<RDFNode> result = createValueQuery(false);
 		return result;		
 	}
 
 	@Override
 	public DataQuery<RDFNode> remainingValues() {
-		DataQuery<RDFNode> result = createValueQuery(false);
+		DataQuery<RDFNode> result = createValueQuery(true);
 		return result;
 	}
 
@@ -226,7 +226,7 @@ public class FacetNodeImpl
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
 		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		UnaryRelation c = qgen.getConceptForAtPath(this.query.focus().state(), this.state, true);
+		UnaryRelation c = qgen.getConceptForAtPath(this.query.focus().state(), this.state, false);
 		return this.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this))
 				+ "{" + c + "}";
 	}
