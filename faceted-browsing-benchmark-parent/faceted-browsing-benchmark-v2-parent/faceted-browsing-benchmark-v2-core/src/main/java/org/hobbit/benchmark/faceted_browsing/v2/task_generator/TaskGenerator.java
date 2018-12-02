@@ -160,7 +160,20 @@ public class TaskGenerator {
 			final FacetNode fn = facetNodes.iterator().next();
 			final Expr expr = c.expr();
 			if (expr instanceof E_Equals && FacetNodeResource.reachingProperty(fn).equals(type)) {
-				System.out.println("found candidate: " + expr + " // " + fn);
+				logger.debug("found candidate: " + expr + " // " + fn);
+
+				final List<Node> consts = ((E_Equals) expr).getArgs().stream()
+						.filter(p -> p.isConstant() && p.getConstant().isIRI())
+						.map(p -> p.getConstant().getNode())
+						.collect(Collectors.toList());
+
+				if (consts.size() == 1) {
+					if (!result.containsKey(c)) {
+						result.put(c, new LinkedList<>());
+					}
+					result.get(c).add(consts.get(0));
+				}
+
 			}
 		}
 
