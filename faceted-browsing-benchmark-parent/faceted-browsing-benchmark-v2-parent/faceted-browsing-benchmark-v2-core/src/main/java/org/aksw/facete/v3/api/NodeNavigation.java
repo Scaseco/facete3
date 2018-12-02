@@ -17,7 +17,7 @@ import static org.aksw.facete.v3.api.Direction.BACKWARD;
 /**
  * Mixin for Node Navigation methods
  */
-public interface NodeNavigation<N extends NodeNavigation, D extends DirNodeNavigation<M>, M extends MultiNodeNavigation<N>> {
+public interface NodeNavigation<N extends NodeNavigation<N,D,M>, D extends DirNodeNavigation<M>, M extends MultiNodeNavigation<N>> {
 	D fwd();
 	D bwd();
 
