@@ -30,7 +30,7 @@ public class WeightedSelectorImmutable<T>
 	
 	public WeightedSelectorImmutable(NavigableMap<Double, Entry<T, Double>> offsetToEntry, double nextOffset) {
 		super();
-		this.nextOffset = 0.0;
+		this.nextOffset = nextOffset;
 		this.offsetToEntry = offsetToEntry;
 	}
 
