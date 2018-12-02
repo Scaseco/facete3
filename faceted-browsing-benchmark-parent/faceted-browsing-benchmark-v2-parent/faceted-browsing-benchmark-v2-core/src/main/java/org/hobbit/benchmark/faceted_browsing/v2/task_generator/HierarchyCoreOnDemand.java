@@ -5,16 +5,19 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_NotExists;
+import org.apache.jena.sparql.path.P_ZeroOrMore1;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementNotExists;
 
 public class HierarchyCoreOnDemand
 	implements HierarchyCore
@@ -100,8 +103,38 @@ public class HierarchyCoreOnDemand
 		return result;
 	}
 
+	/**
+	 * r: related
+	 * dr: directly related
+	 * 
+	 * dr(a, b) :- r(a, b) and not exists x with (a, x), (x, b) with x not in [a, b] 
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static BinaryRelation createRelationForStrictDirectRelation(Path path) {
+		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(
+				// Result is all ?s path ?o ...
+				ElementUtils.createElementPath(Vars.s, path, Vars.o),
+				// where there is no ?x in between
+				new ElementNotExists(ElementUtils.groupIfNeeded(
+						ElementUtils.createElementPath(Vars.s, path, Vars.x),
+						ElementUtils.createElementPath(Vars.x, path, Vars.o),
+						new ElementFilter(ExprUtils.notOneOf(Vars.x, Vars.s, Vars.o))
+				)),
+				// and the subclass is not a parent
+				new ElementNotExists(ElementUtils.groupIfNeeded(
+					ElementUtils.createElementPath(Vars.o, new P_ZeroOrMore1(path), Vars.s))
+				)),
+				Vars.s,
+				Vars.o);
+		return result;
+	}
+
 	public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path path, UnaryRelation availableValues) {
-		BinaryRelation br = BinaryRelationImpl.create(path);
+		BinaryRelation br = createRelationForStrictDirectRelation(path);
+				
+		//BinaryRelationImpl.create(path);
 
 		UnaryRelation result = br
 			.joinOn(br.getTargetVar())
@@ -110,7 +143,6 @@ public class HierarchyCoreOnDemand
 			.with(availableValues)
 			.project(br.getSourceVar())
 			.toUnaryRelation();
-		
 
 		return result;
 	}

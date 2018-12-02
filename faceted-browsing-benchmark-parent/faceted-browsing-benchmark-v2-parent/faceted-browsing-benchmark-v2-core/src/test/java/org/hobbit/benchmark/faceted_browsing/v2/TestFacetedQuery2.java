@@ -95,7 +95,9 @@ public class TestFacetedQuery2 {
 
 		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
 				Concept.parse("?s | VALUES(?s) { (<" + PLACES_NS + "FederalState>) }", PrefixMapping.Extended),
-				path);
+				path,
+				classes
+				);
 
 		System.out.println("subClasses rel=" + subClasses);
 		System.out.println("subClasses2 rel=" + subClasses2);
