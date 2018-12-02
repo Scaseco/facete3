@@ -33,10 +33,13 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelector;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorImmutable;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.shuffle;
 import static org.junit.Assert.*;
@@ -539,7 +542,7 @@ public class TestFacetedQuery2 {
 		load(DS_PLACES);
 		final Property partOf = ResourceFactory.createProperty(PLACES_NS+"partOf");
 		Path narrowingRelation = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
-		taskGenerator.setPseudoRandom(new Random(1234L));
+		taskGenerator.setPseudoRandom(new Random(12345678L));
 
 		{
 			final FacetNode node = fq.root();
@@ -550,7 +553,7 @@ public class TestFacetedQuery2 {
 
 		final Map<HLFacetConstraint, List<Node>> existingClassConstraints = TaskGenerator.findExistingClassConstraints(fq.root().constraints());
 		final List<Map.Entry<HLFacetConstraint, List<Node>>> classConstraintList = new ArrayList<>(existingClassConstraints.entrySet());
-		shuffle(classConstraintList);
+		shuffle(classConstraintList, taskGenerator.getRandom());
 
 		System.out.println("classConstraintList="+classConstraintList);
 		if (!classConstraintList.isEmpty()) {
@@ -564,13 +567,36 @@ public class TestFacetedQuery2 {
 			System.out.println("availableClasses Concept="+availableClasses);
 
 			//new ConceptBuilder().
-			final UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses);
+			final UnaryRelation subClassesRelation = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses, false
+			);
 
-			DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
-			System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
+			DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClassesRelation, null, Resource.class);
+
+
+			final List<Resource> subClasses = dq.exec().toList().blockingGet();
+
+
+			System.out.println("Subclasses: " + subClasses);
+			final List<NodeHolder> subClassNodes = subClasses.stream().map(c -> new NodeHolder(c.asNode())).collect(Collectors.toList());
+			final List<FacetValueCount> fn2_av = fn2.parent().fwd().facetValueCounts()
+					.only(RDF.type)
+
+					.exec()
+					.filter(p -> subClassNodes.contains(new NodeHolder(p.getValue())))
+					.toList()
+					.blockingGet();
+			System.out.println(fn2_av);
+			if (!fn2_av.isEmpty()) {
+				final WeightedSelector<Node> subClassSelector = WeightedSelectorImmutable.create(fn2_av, ge -> ge.getValue(), gw -> 1);
+				System.out.println(subClassSelector);
+				//shuffle(subClasses, taskGenerator.getRandom());
+				final Node sampleSubClass = subClassSelector.sample(taskGenerator.getRandom().nextDouble());
+				fn2.constraints().eq(sampleSubClass);
+			}
 
 
 		}
+		System.out.println(getQueryPattern(fq.root()));
 		/*
 		final ArrayList<FacetConstraint> constraintsBackup = new ArrayList<>(fq.constraints());
 		fq.constraints().clear();
