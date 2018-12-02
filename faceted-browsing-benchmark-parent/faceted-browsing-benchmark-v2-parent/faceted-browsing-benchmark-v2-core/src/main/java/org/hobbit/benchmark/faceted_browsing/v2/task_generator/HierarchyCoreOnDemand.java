@@ -1,9 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.concepts.*;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -132,9 +129,16 @@ public class HierarchyCoreOnDemand
 	}
 
 	public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path path, UnaryRelation availableValues) {
-		BinaryRelation br = createRelationForStrictDirectRelation(path);
-				
-		//BinaryRelationImpl.create(path);
+		return createConceptForDirectlyRelatedItems(baseConcept, path, availableValues, true);
+	}
+
+	public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path path, UnaryRelation availableValues, boolean directOnly) {
+		BinaryRelation br;
+		if (directOnly) {
+			br = createRelationForStrictDirectRelation(path);
+		} else {
+			br = BinaryRelationImpl.create(path);
+		}
 
 		UnaryRelation result = br
 			.joinOn(br.getTargetVar())

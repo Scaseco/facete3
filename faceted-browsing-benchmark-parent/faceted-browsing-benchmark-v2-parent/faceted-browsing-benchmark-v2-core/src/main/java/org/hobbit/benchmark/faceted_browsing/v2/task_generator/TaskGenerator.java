@@ -8,12 +8,14 @@ import io.reactivex.Maybe;
 import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
@@ -27,7 +29,6 @@ import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -35,11 +36,14 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.*;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
@@ -455,7 +459,7 @@ public class TaskGenerator {
 		cpToAction.put("cp2", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp2)));
 		cpToAction.put("cp3", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp3)));
 		cpToAction.put("cp4", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp4)));
-//		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(TaskGenerator::applyCp5)));
+		cpToAction.put("cp5", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp5)));
 		cpToAction.put("cp6", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp6)));
 		cpToAction.put("cp7", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp7)));
 		cpToAction.put("cp8", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp8)));
@@ -887,6 +891,11 @@ public class TaskGenerator {
 		// TODO What is the best way to deal with hierarchical data?
 		// Probably we need some wrapper object with the two straight forward implementations:
 		// fetch relations on demand, and fetch the whole hierarchy once and answer queries from cache
+
+		result = modifyClassConstraintSubClassRandom(fn);
+		if (!result) {
+			result = applyClassEqConstraintRandom(fn, 2);
+		}
 
 
 		return result;
@@ -1437,7 +1446,8 @@ public class TaskGenerator {
 		boolean result = false;
 		final FacetNode walk = fn.walk(simplePath);
 		final FacetNode typeNode = walk.fwd(property).one();
-		final Maybe<RDFNode> someclazz = typeNode.remainingValues().randomOrder().pseudoRandom(pseudoRandom).exec().firstElement();
+		final Maybe<RDFNode> someclazz = typeNode.remainingValues().exclude(OWL.NS + "NamedIndividual")
+				.randomOrder().pseudoRandom(pseudoRandom).exec().firstElement();
 		final RDFNode clazzNode = someclazz.blockingGet();
 		if (clazzNode != null) {
 			typeNode.constraints().eq(clazzNode);
@@ -1757,24 +1767,63 @@ public class TaskGenerator {
 		return modifyNumericConstraintRandomValue(hlFacetConstraints, constraintMode, pickConstant, pickLowerBound, pickUpperBound);
 	}
 
-	public static boolean modifyEqConstraintByHierarchy(Collection<HLFacetConstraint> hlFacetConstraints,HLFacetConstraint constraint, /* TODO: hierarchy , */ Property hierarchyRelation) {
+	public boolean modifyClassConstraintRandomSubClassValue(Collection<HLFacetConstraint> hlFacetConstraints, List<Node> constraintClasses, HLFacetConstraint hlFacetConstraint) {
+		final Path narrowingRelation = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
+		///Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
 		boolean result = false;
-
-		throw new NotImplementedException();
-		/*
+		final Concept broaderClasses = ConceptUtils.createConcept(constraintClasses);
+		final FacetNode fn = hlFacetConstraint.mentionedFacetNodes().iterator().next();
+		logger.debug("fn="+fn);
 		{
-			hlFacetConstraints.remove(constraint);
+			hlFacetConstraints.remove(hlFacetConstraint);
 		}
+		UnaryRelation availableClasses = fn.availableValues().baseRelation().toUnaryRelation();
+
+		final UnaryRelation subClassesRelation = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses, false);
+
+		DataQuery<Resource> dq = new DataQueryImpl<>(conn, subClassesRelation, null, Resource.class);
+
+		final List<Resource> subClasses = dq.exec().toList().blockingGet();
 
 
-
-
-		if (result) {
-			constraint.state().removeProperties();
-		} else {
-			hlFacetConstraints.add(constraint);
+		logger.debug("Subclasses: " + subClasses);
+		final List<NodeHolder> subClassNodes = subClasses.stream().map(c -> new NodeHolder(c.asNode())).collect(Collectors.toList());
+		final List<FacetValueCount> fn2_av = fn.parent().fwd().facetValueCounts()
+				.only(RDF.type)
+				.exec()
+				.filter(p -> subClassNodes.contains(new NodeHolder(p.getValue())))
+				.toList()
+				.blockingGet();
+		logger.debug("Facet Value Counts: {}", fn2_av);
+		if (!fn2_av.isEmpty()) {
+			final WeightedSelector<Node> subClassSelector = WeightedSelectorImmutable
+					.create(fn2_av, ge -> ge.getValue(), gw -> 1 + log(gw.getFocusCount().getCount()));
+			final Node sampleSubClass = subClassSelector.sample(getRandom().nextDouble());
+			fn.constraints().eq(sampleSubClass);
+			result = true;
+		}
+		if (!result) {
+			// add back the constraint
+			fn.root().constraints().listHl().add(hlFacetConstraint);
 		}
 		return result;
-*/
+	}
+
+	public boolean modifyClassConstraintSubClassRandom(FacetNode fn) {
+		boolean result = false;
+		final Map<HLFacetConstraint, List<Node>> existingClassConstraints = findExistingClassConstraints(fn.constraints());
+		final List<Entry<HLFacetConstraint, List<Node>>> classConstraintList = new ArrayList<>(existingClassConstraints.entrySet());
+		shuffle(classConstraintList, getRandom());
+
+		logger.debug("classConstraintList="+classConstraintList);
+		if (!classConstraintList.isEmpty()) {
+			final Entry<HLFacetConstraint, List<Node>> constraintListEntry = classConstraintList.get(0);
+			final List<Node> constraintClass = constraintListEntry.getValue();
+
+			final HLFacetConstraint hlFacetConstraint = constraintListEntry.getKey();
+			final Collection<HLFacetConstraint> hlFacetConstraints = fn.constraints().listHl();
+			result = modifyClassConstraintRandomSubClassValue(hlFacetConstraints, constraintClass, hlFacetConstraint);
+		}
+		return result;
 	}
 }

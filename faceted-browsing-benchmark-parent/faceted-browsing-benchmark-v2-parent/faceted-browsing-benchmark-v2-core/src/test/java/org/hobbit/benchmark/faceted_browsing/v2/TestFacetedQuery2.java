@@ -7,8 +7,6 @@ import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -28,7 +26,6 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
@@ -38,7 +35,6 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static java.util.Collections.shuffle;
 import static org.junit.Assert.*;
 
 public class TestFacetedQuery2 {
@@ -522,82 +518,46 @@ public class TestFacetedQuery2 {
 				"}", getQueryPattern(node));
 	}
 
-	public UnaryRelation testCp5getTargets(Relation baseConcept) {
-		UnaryRelation targets = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
+	@Test
+	public void testCp5() {
+		load(DS_PLACES);
+		taskGenerator.setPseudoRandom(new Random(1234L));
 
-		UnaryRelation result = targets
-				.joinOn(Vars.o)
-				.filterRelationFirst(true)
-				.with(baseConcept)
-				.toUnaryRelation();
-
-		return result;
+		final FacetNode node = fq.root();
+		taskGenerator.applyCp5(node);
+		assertEquals("{ ?v_1  <http://www.example.org/ontologies/places#partOf>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/ontologies/places#partOf>  ?v_3 .\n" +
+				"  ?v_3  a                     <http://www.example.org/ontologies/places#PoliticalUnion>\n" +
+				"}", getQueryPattern(node));
+		taskGenerator.applyCp5(node);
+		assertEquals("{ ?v_1  <http://www.example.org/ontologies/places#partOf>  ?v_2 .\n" +
+				"  ?v_2  <http://www.example.org/ontologies/places#partOf>  ?v_3 .\n" +
+				"  ?v_3  a                     <http://www.example.org/ontologies/places#PoliticalCountry>\n" +
+				"}", getQueryPattern(node));
+/*
+		taskGenerator.applyCp5(node);
+		assertEquals("", getQueryPattern(node));
+		*/
 }
 
-	@Test
+	@Test//done
 	public void testCp5part2() {
 		load(DS_PLACES);
 		final Property partOf = ResourceFactory.createProperty(PLACES_NS+"partOf");
-		Path narrowingRelation = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
 		taskGenerator.setPseudoRandom(new Random(1234L));
 
+		final FacetNode node = fq.root();
+
 		{
-			final FacetNode node = fq.root();
 			final Resource world = ResourceFactory.createResource(PLACES_NS + "World");
 			final FacetNode fn = node.fwd(partOf).one().fwd(RDF.type).one().constraints().eq(world).end();
 		}
 
 
-		final Map<HLFacetConstraint, List<Node>> existingClassConstraints = TaskGenerator.findExistingClassConstraints(fq.root().constraints());
-		final List<Map.Entry<HLFacetConstraint, List<Node>>> classConstraintList = new ArrayList<>(existingClassConstraints.entrySet());
-		shuffle(classConstraintList);
-
-		System.out.println("classConstraintList="+classConstraintList);
-		if (!classConstraintList.isEmpty()) {
-			final Map.Entry<HLFacetConstraint, List<Node>> constraintListEntry = classConstraintList.get(0);
-			final Concept broaderClasses = ConceptUtils.createConcept(constraintListEntry.getValue());
-
-			final FacetNode fn2 = constraintListEntry.getKey().mentionedFacetNodes().iterator().next();
-			System.out.println("fn2="+fn2);
-			//fq.root().constraints().listHl().remove(constraintListEntry.getKey());
-			UnaryRelation availableClasses = fn2.availableValues().baseRelation().toUnaryRelation();
-			System.out.println("availableClasses Concept="+availableClasses);
-
-			//new ConceptBuilder().
-			final UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses);
-
-			DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
-			System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
-
-
-		}
-		/*
-		final ArrayList<FacetConstraint> constraintsBackup = new ArrayList<>(fq.constraints());
-		fq.constraints().clear();
-
-		final UnaryRelation unaryRelation = node.fwd(partOf).one().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
-		System.out.println(unaryRelation);
-		*/
-		if (true == true) throw new RuntimeException("x");
-
-
-		//final FacetNode partof_a = node.fwd(partOf).one().fwd(RDF.type).one();
-		//System.out.println(partof_a);
-		if (true == true) throw new RuntimeException("x");
-
-		/*
-		partof_a.fwd(NodeFactory.createBlankNode("narrowingRelation")).one().constraints().eq(world);
-		final DataQuery<FacetValueCount> to_narrow = partof_a.fwd().facetValueCounts().exclude(OWL.Class, RDF.type);
-		final List<FacetValueCount> facetValueCounts = to_narrow.exec().toList().blockingGet();
-		System.out.println(facetValueCounts);
-		*/
-/*
-		node.remainingValues().exec().toList().blockingGet().forEach(System.out::println);
-		System.out.println("---");
-		node.fwd(partOf).one().fwd().nonConstrainedFacetValueCounts().exec().toList().blockingGet().forEach(System.out::println);
-		//node.remainingValues().exec().toList().blockingGet().forEach(System.out::println);
-		System.out.println(getQueryPattern(node));
-		*/
+		taskGenerator.modifyClassConstraintSubClassRandom(node);
+		assertEquals("{ ?v_1  <http://www.example.org/ontologies/places#partOf>  ?v_2 .\n" +
+				"  ?v_2  a                     <http://www.example.org/ontologies/places#PoliticalCounty>\n" +
+				"}", getQueryPattern(node));
 	}
 
 	@Test
@@ -629,13 +589,13 @@ public class TestFacetedQuery2 {
 
 		changeTracker.commitChanges();
 		final SolutionTracker solutions = new SolutionTracker(
-				"{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2 ;\n" +
-						"        a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+				"{ ?v_1  <http://www.example.org/locatedIn>  ?v_2 ;\n" +
+						"        a                     <http://www.example.org/City>\n" +
 						"  FILTER bound(?v_2)\n" +
 						"}",
 
-				"{ ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  ?v_2 ;\n" +
-						"        a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+				"{ ?v_1  <http://www.example.org/mayor>  ?v_2 ;\n" +
+						"        a                     <http://www.example.org/City>\n" +
 						"  FILTER bound(?v_2)\n" +
 						"}"
 				);
