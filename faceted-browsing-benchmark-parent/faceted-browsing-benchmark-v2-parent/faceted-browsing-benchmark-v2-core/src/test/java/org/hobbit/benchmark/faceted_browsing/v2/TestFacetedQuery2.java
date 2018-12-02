@@ -78,22 +78,25 @@ public class TestFacetedQuery2 {
 	public void testHierarchy() {
 		load(DS_SIMPLE_3);
 
-		Path path = new P_Link(RDFS.subClassOf.asNode());
+		Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
 
-		UnaryRelation classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+		UnaryRelation broadClases = Concept.parse("?s | VALUES(?s) { (eg:Foobar) }", PrefixMapping.Extended);
+		
+		UnaryRelation availableClasses = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
 		UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
-				classes,
-				path);
+				broadClases,
+				narrowingRelation,
+				availableClasses);
 		
 		DataQuery<Resource> dq = new DataQueryImpl<>(fq.connection(), subClasses, null, Resource.class);
 		System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
 		
 
-		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
-				Concept.parse("?s | VALUES(?s) { (eg:Foobar) }", PrefixMapping.Extended),
-				path);
-		
-		System.out.println(subClasses);
+//		UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+//				Concept.parse("?s | VALUES(?s) { (eg:Foobar) }", PrefixMapping.Extended),
+//				narrowingRelation);
+//		
+//		System.out.println(subClasses2);
 	}
 	
 	@Test//done
