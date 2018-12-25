@@ -5,6 +5,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+
+import org.aksw.commons.collections.selector.WeightedSelector;
+import org.aksw.commons.collections.selector.WeightedSelectorImmutable;
+import org.aksw.commons.collections.selector.WeightedSelectorMutable;
+import org.aksw.commons.collections.selector.WeigthedSelectorDrawWithReplacement;
 import org.aksw.facete.v3.api.*;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
@@ -124,9 +129,9 @@ public class TaskGenerator {
 					.add(E_Equals.class)
 					.build();
 
-	public static Map<HLFacetConstraint, Map<Character, Node>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
-		Map<HLFacetConstraint, Map<Character, Node>> result = new LinkedHashMap<>();
-		for (HLFacetConstraint c : new ArrayList<>(constraintFacade.listHl())) {
+	public static Map<HLFacetConstraint<?>, Map<Character, Node>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
+		Map<HLFacetConstraint<?>, Map<Character, Node>> result = new LinkedHashMap<>();
+		for (HLFacetConstraint<?> c : new ArrayList<>(constraintFacade.listHl())) {
 			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
 			final FacetNode fn = facetNodes.iterator().next();
 
@@ -1285,10 +1290,10 @@ public class TaskGenerator {
 		boolean result;
 		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented: // PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
 
-		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+		Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
 		if (!numericConstraints.isEmpty()) {
-			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
+			final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
 		} else {
 			result = applyNumericCp(fn, pathPattern, 0, 0, false, true, true, true);
@@ -1307,10 +1312,10 @@ public class TaskGenerator {
 		org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented // PathParser.parse("(eg:p|^eg:p){2,}", PrefixMapping.Extended);
 		boolean result;
 
-		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+		Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
 		if (!numericConstraints.isEmpty()) {
-			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
+			final Collection<HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
 		} else {
 			result = applyNumericCp(fn, pathPattern, 1, 3, false, true, true, true);
@@ -1330,10 +1335,10 @@ public class TaskGenerator {
 	public boolean applyCp8(FacetNode fn) {
 //		
 		boolean result = false;
-		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+		Map<? extends HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
 		if (numericConstraints.size() >= 2 && rand.nextInt(10) > 2) {
-			final Collection<HLFacetConstraint> hlFacetConstraints = fn.root().constraints().listHl();
+			final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
 			result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
 		} else {
 			result = applyNumericCp(fn, null, 0, 3, false, true, true, false);
@@ -1659,7 +1664,7 @@ public class TaskGenerator {
 	public boolean modifyNumericConstraintMakeUnbound(Collection<HLFacetConstraint> hlFacetConstraints, Entry<HLFacetConstraint, Map<Character, Node>> constraintMode, boolean unboundLower) {
 		boolean result = false
 				;
-		final HLFacetConstraint constraint = constraintMode.getKey();
+		final HLFacetConstraint<?> constraint = constraintMode.getKey();
 		final Map<Character, Node> constraintModeValue = constraintMode.getValue();
 
 		hlFacetConstraints.remove(constraint);
@@ -1693,9 +1698,9 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public boolean modifyNumericConstraintRandomValue(Collection<HLFacetConstraint> hlFacetConstraints, Entry<HLFacetConstraint, Map<Character, Node>> constraintMode, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
+	public boolean modifyNumericConstraintRandomValue(Collection<? extends HLFacetConstraint<?>> hlFacetConstraints, Entry<? extends HLFacetConstraint<?>, Map<Character, Node>> constraintMode, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
 		boolean result = false;
-		final HLFacetConstraint constraint = constraintMode.getKey();
+		final HLFacetConstraint<?> constraint = constraintMode.getKey();
 		final Map<Character, Node> constraintModeValue = constraintMode.getValue();
 
 		hlFacetConstraints.remove(constraint);
@@ -1755,19 +1760,19 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public boolean modifyNumericConstraintRandom(Collection<HLFacetConstraint> hlFacetConstraints, Map<HLFacetConstraint, Map<Character, Node>> numericConstraints, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
-		final List<Entry<HLFacetConstraint, Map<Character, Node>>> entryList = new ArrayList<>(numericConstraints.entrySet());
+	public boolean modifyNumericConstraintRandom(Collection<? extends HLFacetConstraint<?>> hlFacetConstraints, Map<? extends HLFacetConstraint<?>, Map<Character, Node>> numericConstraints, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound) {
+		final List<Entry<? extends HLFacetConstraint<?>, Map<Character, Node>>> entryList = new ArrayList<>(numericConstraints.entrySet());
 		shuffle(entryList, rand);
 		if (entryList.isEmpty()) {
 			return false;
 		}
-		final Entry<HLFacetConstraint, Map<Character, Node>> constraintMode = entryList.get(0);
+		final Entry<? extends HLFacetConstraint<?>, Map<Character, Node>> constraintMode = entryList.get(0);
 
 
 		return modifyNumericConstraintRandomValue(hlFacetConstraints, constraintMode, pickConstant, pickLowerBound, pickUpperBound);
 	}
 
-	public boolean modifyClassConstraintRandomSubClassValue(Collection<HLFacetConstraint> hlFacetConstraints, List<Node> constraintClasses, HLFacetConstraint hlFacetConstraint) {
+	public boolean modifyClassConstraintRandomSubClassValue(Collection<? extends HLFacetConstraint<?>> hlFacetConstraints, List<Node> constraintClasses, HLFacetConstraint<?> hlFacetConstraint) {
 		final Path narrowingRelation = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
 		///Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
 		boolean result = false;

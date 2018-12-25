@@ -550,7 +550,7 @@ public class TestFacetedQuery2 {
 
 		{
 			final Resource world = ResourceFactory.createResource(PLACES_NS + "World");
-			final FacetNode fn = node.fwd(partOf).one().fwd(RDF.type).one().constraints().eq(world).end();
+			final FacetNode fn = node.fwd(partOf).one().fwd(RDF.type).one().constraints().eq(world).activate().end();
 		}
 
 
@@ -742,8 +742,8 @@ public class TestFacetedQuery2 {
 		load(DS_S_L_IN_G);
 		final DataQuery<FacetCount> facetCountDataQuery = fq.root()
 				.constraints()
-				    .eqIri("http://www.example.org/Leipzig")
-				    .eqIri("http://www.example.org/Germany")
+				    .eqIri("http://www.example.org/Leipzig").activate()
+				    .eqIri("http://www.example.org/Germany").activate()
 				.end()
 
 				//.fwd("http://www.example.org/contains")

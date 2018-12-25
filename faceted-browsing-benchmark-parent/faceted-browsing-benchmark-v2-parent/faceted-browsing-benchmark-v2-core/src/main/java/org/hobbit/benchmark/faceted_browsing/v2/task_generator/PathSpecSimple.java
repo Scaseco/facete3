@@ -1,6 +1,11 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
 import com.google.common.collect.Maps;
+
+import org.aksw.commons.collections.selector.WeightedSelector;
+import org.aksw.commons.collections.selector.WeightedSelectorImmutable;
+import org.aksw.commons.collections.selector.WeigthedSelectorDrawWithReplacement;
+import org.aksw.commons.collections.selector.WeigthedSelectorFailover;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.apache.jena.sparql.path.P_Path0;

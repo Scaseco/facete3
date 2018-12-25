@@ -7,6 +7,7 @@ import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.expr.Expr;
 
 import com.google.common.collect.Range;
 
@@ -21,14 +22,14 @@ import com.google.common.collect.Range;
 public interface ConstraintFacade<B> {
 	Collection<FacetConstraint> list();
 
-	Collection<HLFacetConstraint> listHl(); 
+	Collection<HLFacetConstraint<? extends ConstraintFacade<B>>> listHl(); 
 	
 	default Stream<FacetConstraint> stream() {
 		return list().stream();
 	}
 	
 	/** Add an anonymous equal constraint */
-	ConstraintFacade<B> eq(Node node);
+	HLFacetConstraint<ConstraintFacade<B>> eq(Node node);
 	ConstraintFacade<B> exists();
 	ConstraintFacade<B> gt(Node node);
 	ConstraintFacade<B> neq(Node node);
@@ -36,18 +37,55 @@ public interface ConstraintFacade<B> {
 	
 	ConstraintFacade<B> range(Range<NodeHolder> range);
 
-	default ConstraintFacade<B> eqIri(String iriStr) {
+	/**
+	 * Return the expr that denotes the ConstraintFacade's underlying
+	 * FacetNode or FacetMultiNode.
+	 * @return
+	 */
+	Expr thisAsExpr();
+	
+	boolean hasExpr(Expr expr);
+	ConstraintFacade<B> addExpr(Expr expr);
+	boolean removeExpr(Expr expr);
+	
+
+	default boolean toggle(Expr expr) {
+		boolean alreadySet = hasExpr(expr);
+		if(!alreadySet) {
+			addExpr(expr);
+		} else {
+			removeExpr(expr);
+		}
+		
+		return !alreadySet;
+	}
+	
+
+	
+	default HLFacetConstraint<ConstraintFacade<B>> eqIri(String iriStr) {
 		return eq(NodeFactory.createURI(iriStr));
 	}
 
-	default ConstraintFacade<B> eq(String stringLiteral) {
+	default HLFacetConstraint<ConstraintFacade<B>> eq(String stringLiteral) {
 		return eq(NodeFactory.createLiteral(stringLiteral));
 	}
 	
-	default ConstraintFacade<B> eq(RDFNode rdfNode) {
+	default HLFacetConstraint<ConstraintFacade<B>> eq(RDFNode rdfNode) {
 		return eq(rdfNode.asNode());
 	}
 
+//	default find(Function<? super Expr, ? extends Expr> expr) {
+//		
+//	}
+//	
+//	default Stream<HLFacetConstraint> find(Class<?> exprType, Node ... nodes) {
+//		Stream<HLFacetConstraint> result = listHl().stream()
+//			.filter(c -> exprType.isAssignableFrom(c.expr().getClass())
+//					;
+//			//.filter(x -> true);
+//		return result;
+//	}
+	
 //	default ConstraintFacade<B> exists(RDFNode rdfNode) {
 //		return exists(rdfNode.asNode());
 //	}

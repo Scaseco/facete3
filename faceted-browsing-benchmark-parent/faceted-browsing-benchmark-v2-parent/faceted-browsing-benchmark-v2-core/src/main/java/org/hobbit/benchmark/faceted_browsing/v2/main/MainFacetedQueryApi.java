@@ -1,5 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Random;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+
+import org.aksw.commons.collections.selector.WeightedSelectorMutable;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -30,11 +39,8 @@ import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.WeightedSelectorMutableOld;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
+import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 
 public class MainFacetedQueryApi {
 
@@ -63,19 +69,24 @@ public class MainFacetedQueryApi {
 				map2.put("c", 5);
 		
 				Map<String, Integer> xx = new TreeMap<>();
-				WeightedSelectorMutableOld<String> fn = WeightedSelectorMutableOld.create(map2.entrySet(), Entry::getKey, Entry::getValue);
+				WeightedSelectorMutable<String> fn = WeightedSelectorMutable.create(map2.entrySet(), Entry::getKey, Entry::getValue);
 				Random rand = new Random();
 				for(int i = 0; i < 100000; ++i) {
 					double x = rand.nextDouble();
-					String v = fn.sample(x);
-					if(v == null) {
+					Entry<String, ? extends Number> e = fn.sampleEntry(x);
+					if(e == null) {
 						break;
 					}
 	
-					Double weight = fn.getWeight(v);
+					String v = e.getKey();
+					Double weight = e.getValue().doubleValue();
 					System.out.println("Sampled " + v + " [" + weight + "]");
 					
-					fn.setWeight(v, Optional.ofNullable(weight).map(w -> w.doubleValue() - 1.0).orElse(0.0));
+					// Re-insert the entry with reduced weight
+					fn.remove(e);
+					fn.put(Maps.immutableEntry(v, Math.max(0, weight - 1.0)));
+					
+//					fn.setWeight(v, Optional.ofNullable(weight).map(w -> w.doubleValue() - 1.0).orElse(0.0));
 					
 					xx.compute(v, (kk, vv) -> vv == null ? 1 : vv + 1);
 					//System.out.println();

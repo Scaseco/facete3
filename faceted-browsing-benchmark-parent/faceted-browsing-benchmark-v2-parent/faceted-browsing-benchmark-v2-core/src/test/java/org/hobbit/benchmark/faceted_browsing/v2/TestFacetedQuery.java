@@ -78,7 +78,7 @@ public class TestFacetedQuery {
 				fq.root()
 				.fwd(RDF.type).one()
 					.constraints()
-						.eq(OWL.Class)
+						.eq(OWL.Class).activate()
 					.end()
 				.parent()
 				.fwd()

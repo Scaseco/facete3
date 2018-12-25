@@ -56,7 +56,7 @@ public class FacetValueCountImpl
 	
 	@Override
 	public String toString() {
-		return "FacetCountImpl [" + this.getPredicate() + ": " + getValue() + ": " + getFocusCount() + "]";
+		return "FacetValueCountImpl [" + this.getPredicate() + ": " + getValue() + ": " + getFocusCount() + "]";
 	}
 
 }

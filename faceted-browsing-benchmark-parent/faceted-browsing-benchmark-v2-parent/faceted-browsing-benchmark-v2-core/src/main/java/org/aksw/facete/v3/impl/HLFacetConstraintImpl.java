@@ -11,14 +11,20 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.apache.jena.sparql.expr.Expr;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 
-public class HLFacetConstraintImpl
-	implements HLFacetConstraint
+public class HLFacetConstraintImpl<P>
+	implements HLFacetConstraint<P>
 {
+	protected P parent;
 	protected FacetNode facetNode;
+	
+	// The expression that can be added and removed from the state
+	//protected Expr constraintExpr;
+	
 	protected FacetConstraint state;
 	
-	public HLFacetConstraintImpl(FacetNode facetNode, FacetConstraint state) {
+	public HLFacetConstraintImpl(P parent, FacetNode facetNode, FacetConstraint state) {
 		super();
+		this.parent = parent;
 		this.facetNode = facetNode;
 		this.state = state;
 	}
@@ -66,5 +72,31 @@ public class HLFacetConstraintImpl
 	public boolean equals(Object obj) {
 		boolean result = obj instanceof HLFacetConstraint && Objects.equals(state, ((HLFacetConstraint)obj).state());
 		return result;
+	}
+
+
+	@Override
+	public boolean isActive() {
+		boolean result = facetNode.constraints().list().contains(state);
+		return result;
+	}
+
+	@Override
+	public boolean setActive() {
+		boolean result = facetNode.constraints().list().add(state);
+		return result;
+		//return this;
+	}
+	
+	@Override
+	public boolean remove() {
+		boolean result = facetNode.constraints().list().remove(state);
+		return result;
+		//return this;
+	}
+
+	@Override
+	public P parent() {
+		return parent;
 	}
 }
