@@ -115,7 +115,7 @@ public interface ConstraintFacade<B> {
 		return eq(NodeFactory.createURI(iriStr));
 	}
 
-	default HLFacetConstraint<? extends ConstraintFacade<B>> eq(String stringLiteral) {
+	default HLFacetConstraint<? extends ConstraintFacade<B>> eqStr(String stringLiteral) {
 		return eq(NodeFactory.createLiteral(stringLiteral));
 	}
 	

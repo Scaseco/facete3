@@ -66,7 +66,7 @@ public class TestFacetedQuery {
 		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
 		System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 
-		fq.root().fwd(RDFS.label).one().constraints().eq("ThingA");
+		fq.root().fwd(RDFS.label).one().constraints().eqStr("ThingA");
 		System.out.println("Label Available values: " + fq.root().fwd(RDFS.label).one().availableValues().exec().toList().blockingGet());
 	}
 	
@@ -118,7 +118,7 @@ public class TestFacetedQuery {
 		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
 		System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 
-		fq.root().fwd(RDFS.label).one().constraints().eq("ThingA");
+		fq.root().fwd(RDFS.label).one().constraints().eqStr("ThingA");
 		System.out.println("Label Available values: " + fq.root().fwd(RDFS.label).one().availableValues().exec().toList().blockingGet());
 		
 		
