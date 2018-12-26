@@ -396,14 +396,14 @@ public class TestFacetedQuery2 {
 		System.out.println("Pick: " + r);
 
 		if (r != null) {
-			r.getKey().constraints().range(r.getValue());
+			r.getKey().constraints().range(r.getValue()).activate();
 		}
 
 		System.out.println(node);
 
-		final Collection<HLFacetConstraint> hlFacetConstraints = fq.root().constraints().listHl();
+		final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fq.root().constraints().listHl();
 		System.out.println(hlFacetConstraints);
-		Map<HLFacetConstraint, Map<Character, Node>> numericConstraints =
+		Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
 				TaskGenerator.findExistingNumericConstraints(fq.root().constraints());
 
 		System.out.println(">>>" + numericConstraints);
@@ -571,7 +571,7 @@ public class TestFacetedQuery2 {
 		//taskGenerator.applyCp12(node);
 		System.out.println(getQueryPattern(node));
 
-		final Map<HLFacetConstraint, List<Node>> existingConstraints = TaskGenerator.findExistingEqConstraintsOfType(node.constraints(), partOf);
+		final Map<HLFacetConstraint<?>, List<Node>> existingConstraints = TaskGenerator.findExistingEqConstraintsOfType(node.constraints(), partOf);
 
 		System.out.println(existingConstraints);
 	}
@@ -724,6 +724,7 @@ public class TestFacetedQuery2 {
 				    .range(Range.closed(
 						new NodeHolder(NodeValue.makeInteger(50000).asNode()),
 						new NodeHolder(NodeValue.makeInteger(80000000).asNode())))
+				    .activate()
 				.end()
 				.parent()
 				;

@@ -1,5 +1,6 @@
 package org.aksw.facete3.cli.main;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -87,6 +88,22 @@ public class MainCliFacete3 {
 	Table<String> resultTable = new Table<String>("Item");
 	ActionListBox facetList = new ActionListBox(); //new TerminalSize(30, 10));
 
+	
+	
+	class Test<P> {
+		P value;
+		public Test(P value) {
+			this.value = value;
+		}
+		
+	}
+
+	public void test() {
+		Collection<Test<?>> c = new ArrayList<>();
+		c.add(new Test<String>("hi"));
+		c.add(new Test<Number>(1));
+		
+	}
 	
 	public void updateItems(FacetedQuery fq) {
 		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
