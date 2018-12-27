@@ -230,4 +230,18 @@ public class FacetNodeImpl
 		return this.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this))
 				+ "{" + c + "}";
 	}
+
+	@Override
+	public FacetNode chRoot() {
+		
+		
+		
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public FacetNode makeFocus() {
+		query.focus(this);
+		return this;
+	}
 }

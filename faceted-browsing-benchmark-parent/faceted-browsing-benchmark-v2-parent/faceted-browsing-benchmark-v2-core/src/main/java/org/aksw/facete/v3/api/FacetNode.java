@@ -4,6 +4,8 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 
+import com.google.common.annotations.Beta;
+
 
 /**
  * An object backed by the set of resources at a certain (possibly empty) path of properties.
@@ -18,6 +20,31 @@ public interface FacetNode
 
 	FacetedQuery query();
 
+	/**
+	 * Change the root of this FacetNode's faceted query to this node.
+	 * 
+	 * It is not totally clear to me, what exact changes this method should do, but the corner stones are:
+	 * - There should be no changes to the id of all nodes in the rdf model corresponding to
+	 *   any of FacetNode, FacetDirNode and Constraint
+	 *   -> Clarify, whether the nodes used for the map structures on BgpMultiNode can remain the same
+	 *   
+	 *   Ideally, changing the root back should give exactly the same query as before.
+	 * 
+	 * - The changes are
+	 *   - Set the query()'s root to this node
+	 *   - Update the directions of the transitions accordingly
+	 *   - As this node becomes the root, its underlying BgpNode's parent must become null in the process
+	 * 
+	 * 
+	 * @return
+	 */
+	@Beta
+	FacetNode chRoot();
+	
+	@Beta
+	FacetNode makeFocus();
+	
+	
 	FacetNode as(String varName);
 	FacetNode as(Var var);
 	Var alias();

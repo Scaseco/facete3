@@ -253,12 +253,14 @@ public class DataQueryImpl<T extends RDFNode>
 
 	@Override
 	public DataQuery<T> filter(UnaryRelation concept) {
-		if(filter == null) {
-			filter = concept;
-		} else {
-			filter = filter.joinOn(filter.getVar()).with(concept).toUnaryRelation();
+		if(concept != null) {
+			if(filter == null) {
+				filter = concept;
+			} else {
+				filter = filter.joinOn(filter.getVar()).with(concept).toUnaryRelation();
+			}
 		}
-		
+
 		return this;
 	}
 
@@ -457,7 +459,7 @@ public class DataQueryImpl<T extends RDFNode>
 		query = rewrite(query, rewrite);
 
 		
-		logger.info("After rewrite: " + query);
+		logger.debug("After rewrite: " + query);
 		return Maps.immutableEntry((Var)rootVar, query);
 	}
 
