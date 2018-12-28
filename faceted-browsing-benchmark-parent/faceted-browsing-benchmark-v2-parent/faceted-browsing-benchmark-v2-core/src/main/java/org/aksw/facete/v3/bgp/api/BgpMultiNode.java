@@ -1,5 +1,7 @@
 package org.aksw.facete.v3.bgp.api;
 
+import java.util.Collection;
+
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.MultiNodeNavigation;
 import org.apache.jena.rdf.model.Property;
@@ -19,4 +21,6 @@ public interface BgpMultiNode
 	 */
 	BgpNode one();
 	boolean contains(BgpNode bgpNode);
+	
+	Collection<BgpNode> children();
 }

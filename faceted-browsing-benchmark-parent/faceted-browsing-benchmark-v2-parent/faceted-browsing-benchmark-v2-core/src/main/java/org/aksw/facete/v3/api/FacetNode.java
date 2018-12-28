@@ -42,7 +42,7 @@ public interface FacetNode
 	FacetNode chRoot();
 	
 	@Beta
-	FacetNode makeFocus();
+	FacetNode chFocus();
 	
 	
 	FacetNode as(String varName);

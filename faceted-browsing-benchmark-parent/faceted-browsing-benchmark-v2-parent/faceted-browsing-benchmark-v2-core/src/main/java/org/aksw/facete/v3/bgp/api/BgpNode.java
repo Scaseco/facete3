@@ -36,6 +36,8 @@ public interface BgpNode
 //		parent().isReverse()
 //		parent().reachingProperty();
 //	}
+	
+	public BgpNode chRoot();
 
 	public static P_Path0 toStep(BgpMultiNode node) {
 		P_Path0 result = FORWARD.equals(node.getDirection())

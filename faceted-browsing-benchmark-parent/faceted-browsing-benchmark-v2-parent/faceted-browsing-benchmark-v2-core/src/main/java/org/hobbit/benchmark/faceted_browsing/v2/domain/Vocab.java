@@ -24,6 +24,7 @@ public class Vocab {
 	public static final Property bwd = property("bwd");
 	public static final Property property = property("property");
 	public static final Property one = property("one");
+	public static final Property child = property("child");
 
 	public static final Property BgpNode = property("BgpNode");
 

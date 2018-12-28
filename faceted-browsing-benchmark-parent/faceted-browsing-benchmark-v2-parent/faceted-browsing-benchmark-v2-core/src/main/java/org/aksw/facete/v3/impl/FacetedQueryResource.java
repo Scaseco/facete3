@@ -7,6 +7,9 @@ public interface FacetedQueryResource
 	extends FacetedQuery//, Resource
 {
 	FacetNodeResource root();
+	
+	//FacetedQueryResource root(Resource newRoot);
+	
 	FacetNodeResource focus();
 
 	XFacetedQuery modelRoot();

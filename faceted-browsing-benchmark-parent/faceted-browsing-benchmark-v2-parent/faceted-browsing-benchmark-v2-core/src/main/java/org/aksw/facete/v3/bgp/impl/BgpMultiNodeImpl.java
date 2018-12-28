@@ -1,6 +1,13 @@
 package org.aksw.facete.v3.bgp.impl;
 
-import jersey.repackaged.com.google.common.collect.Iterables;
+import static org.aksw.facete.v3.api.Direction.BACKWARD;
+import static org.aksw.facete.v3.api.Direction.FORWARD;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
+
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
@@ -13,13 +20,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.aksw.facete.v3.api.Direction.BACKWARD;
-import static org.aksw.facete.v3.api.Direction.FORWARD;
+import jersey.repackaged.com.google.common.collect.Iterables;
 
 public class BgpMultiNodeImpl
 	extends ResourceBase
@@ -54,17 +55,19 @@ public class BgpMultiNodeImpl
 	@Override
 	public BgpNode one() {
 		Set<BgpNode> set = new SetFromPropertyValues<>(this, Vocab.one, BgpNode.class);
+		Set<BgpNode> children = new SetFromPropertyValues<>(this, Vocab.child, BgpNode.class);
 
-		BgpNode result = toOptional(set).orElseGet(() -> chainAdd(set, getModel().createResource()
+		BgpNode result = toOptional(set).orElseGet(() -> chainAdd(children, chainAdd(set, getModel().createResource()
 				.addProperty(RDF.type, Vocab.BgpNode)
-				.as(BgpNode.class)));
+				.as(BgpNode.class))));
 		
+
 		return result;
 	}
 
 	@Override
 	public boolean contains(BgpNode bgpNode) {
-		Set<BgpNode> set = new SetFromPropertyValues<>(this, Vocab.one, BgpNode.class);
+		Set<BgpNode> set = new SetFromPropertyValues<>(this, Vocab.child, BgpNode.class);
 
 		boolean result = set.contains(bgpNode);
 
@@ -108,5 +111,12 @@ public class BgpMultiNodeImpl
 						.orElseThrow(() -> new IllegalStateException()));
 		return result;
 
+	}
+
+	@Override
+	public Collection<BgpNode> children() {
+		Set<BgpNode> result = new SetFromPropertyValues<>(this, Vocab.child, BgpNode.class);
+
+		return result;
 	}
 }

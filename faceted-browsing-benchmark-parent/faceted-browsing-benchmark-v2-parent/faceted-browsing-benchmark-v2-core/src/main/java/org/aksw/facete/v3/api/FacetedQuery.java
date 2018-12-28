@@ -24,6 +24,11 @@ public interface FacetedQuery
 {
 	FacetNode root();
 	
+	// If we expose a root setter on this interface, it must be a high level operation
+	// that leaves the query in a consistent state - i.e. this method would have
+	// to be equivalent to node.chRoot();
+	//FacetNode root(FacetNode newRoot);
+	
 //	SPath getFocus();
 //	void setFocus(SPath path);
 
