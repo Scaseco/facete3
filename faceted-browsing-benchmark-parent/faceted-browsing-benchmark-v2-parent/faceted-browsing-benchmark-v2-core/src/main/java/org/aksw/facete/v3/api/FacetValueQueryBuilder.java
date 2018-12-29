@@ -12,13 +12,13 @@ import org.apache.jena.rdf.model.RDFNode;
  *
  * @param <T>
  */
-public interface FacetValueBuilder<T extends RDFNode> {
+public interface FacetValueQueryBuilder<T extends RDFNode> {
 	FacetDirNode parent();
-	FacetValueBuilder<FacetValueCount> withCounts();
+	FacetValueQueryBuilder<FacetValueCount> withCounts();
 
-	<X extends RDFNode> FacetValueBuilder<X> itemsAs(Class<X> itemClazz);
+	<X extends RDFNode> FacetValueQueryBuilder<X> itemsAs(Class<X> itemClazz);
 	
 	
-	FacetValueBuilder<T> includeAbsent();
+	FacetValueQueryBuilder<T> includeAbsent();
 	DataQuery<T> query();
 }

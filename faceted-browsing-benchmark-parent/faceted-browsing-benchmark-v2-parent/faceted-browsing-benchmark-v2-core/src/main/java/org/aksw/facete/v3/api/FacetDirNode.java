@@ -32,7 +32,7 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	
 	
 	
-	default FacetValueBuilder<? extends FacetValue> facetValues() {
+	default FacetValueQueryBuilder<? extends FacetValue> facetValues() {
 		throw new RuntimeException("This should become the new API for facetValues - but its only a stub yet");
 	}
 	
