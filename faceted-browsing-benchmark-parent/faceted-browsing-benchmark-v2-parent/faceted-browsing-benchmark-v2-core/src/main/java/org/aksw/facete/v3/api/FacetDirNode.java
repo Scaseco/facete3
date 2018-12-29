@@ -30,8 +30,25 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	/** Facets and counts **/
 	DataQuery<FacetCount> facetCounts();
 	
+	
+	
+	default FacetValueBuilder<? extends FacetValue> facetValues() {
+		throw new RuntimeException("This should become the new API for facetValues - but its only a stub yet");
+	}
+	
 	// Get the facets of this set of values with the counts referring the the query's focus
+	@Deprecated
 	DataQuery<FacetValueCount> facetValueCounts();
+
+	/**
+	 * This method is an API hack to get the feature in now (without breaking everything)
+	 * It should be replaced with a "FacetValueBuilder facetValues()" method
+	 * 
+	 * @return
+	 */
+	@Deprecated
+	DataQuery<FacetValueCount> facetValueCountsWithAbsent();
+
 	
 	/** Yield all facet value counts NOT affected by filters -
 	 *  So each item can be used as a fresh filter */

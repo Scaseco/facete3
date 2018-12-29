@@ -206,6 +206,11 @@ public class FacetDirNodeImpl
 		return result;
 	}
 
+	@Override
+	public DataQuery<FacetValueCount> facetValueCountsWithAbsent() {
+		throw new RuntimeException("not implemented yet");
+	}
+
 //	@Override
 //	public ExprFragment2 constraintExpr() {
 //		FacetedQueryResource facetedQuery = this.parent().query();
