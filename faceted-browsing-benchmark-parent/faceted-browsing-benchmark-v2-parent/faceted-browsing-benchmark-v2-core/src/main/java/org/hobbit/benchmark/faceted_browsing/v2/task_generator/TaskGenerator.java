@@ -132,7 +132,7 @@ public class TaskGenerator {
 	public static Map<HLFacetConstraint<?>, Map<Character, Node>> findExistingNumericConstraints(ConstraintFacade<? extends FacetNode> constraintFacade) {
 		Map<HLFacetConstraint<?>, Map<Character, Node>> result = new LinkedHashMap<>();
 		for (HLFacetConstraint<?> c : new ArrayList<>(constraintFacade.listHl())) {
-			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
+			final Collection<FacetNode> facetNodes = c.mentionedFacetNodes().values();
 			final FacetNode fn = facetNodes.iterator().next();
 
 			final Expr expr = c.expr();
@@ -165,7 +165,7 @@ public class TaskGenerator {
 		Map<HLFacetConstraint<?>, List<Node>> result = new LinkedHashMap<>();
 
 		for (HLFacetConstraint<?> c : new ArrayList<>(constraintFacade.listHl())) {
-			final Set<FacetNode> facetNodes = c.mentionedFacetNodes();
+			final Collection<FacetNode> facetNodes = c.mentionedFacetNodes().values();
 			final FacetNode fn = facetNodes.iterator().next();
 			final Expr expr = c.expr();
 			if (expr instanceof E_Equals && FacetNodeResource.reachingProperty(fn).equals(type)) {
@@ -1270,7 +1270,7 @@ public class TaskGenerator {
 		logger.debug("Pick: " + r);
 
 		if (r != null) {
-			if (!r.getKey().root().constraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().contains(r.getKey()))
+			if (!r.getKey().root().constraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().values().contains(r.getKey()))
 				|| allowExisting ) {
 				r.getKey().constraints().range(r.getValue()).activate();
 				result = true;
@@ -1669,7 +1669,7 @@ public class TaskGenerator {
 
 		hlFacetConstraints.remove(constraint);
 
-		final FacetNode facetNode = constraint.mentionedFacetNodes().iterator().next();
+		final FacetNode facetNode = constraint.mentionedFacetNodes().values().iterator().next();
 
 		final Node oldLower = constraintModeValue.getOrDefault('>', constraintModeValue.getOrDefault('=', null));
 		final Node oldUpper = constraintModeValue.getOrDefault('<', constraintModeValue.getOrDefault('=', null));
@@ -1706,7 +1706,7 @@ public class TaskGenerator {
 		//hlFacetConstraints.remove(constraint);
 		constraint.deactivate();
 		
-		final FacetNode facetNode = constraint.mentionedFacetNodes().iterator().next();
+		final FacetNode facetNode = constraint.mentionedFacetNodes().values().iterator().next();
 
 		final Entry<FacetNode, Range<NodeHolder>> facetNodeRangeEntry = pickRange(getRandom(), getPseudoRandom(), getNumericProperties(), getConceptPathFinder(),
 				facetNode, null, -1, 0, false, true, true);
@@ -1779,7 +1779,7 @@ public class TaskGenerator {
 		///Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
 		boolean result = false;
 		final Concept broaderClasses = ConceptUtils.createConcept(constraintClasses);
-		final FacetNode fn = hlFacetConstraint.mentionedFacetNodes().iterator().next();
+		final FacetNode fn = hlFacetConstraint.mentionedFacetNodes().values().iterator().next();
 		logger.debug("fn="+fn);
 		{
 			//hlFacetConstraints.remove(hlFacetConstraint);

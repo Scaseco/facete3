@@ -1,13 +1,15 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.Expr;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 
@@ -40,20 +42,22 @@ public class HLFacetConstraintImpl<P>
 		return result;
 	}
 
-	public Set<FacetNode> mentionedFacetNodes() {
+	public Map<Node, FacetNode> mentionedFacetNodes() {
 		FacetedQueryResource fqr = facetNode.query().as(FacetedQueryResource.class);
-		FacetNodeResource root = facetNode.root().as(FacetNodeResource.class); 
+//		FacetNodeResource root = facetNode.root().as(FacetNodeResource.class); 
+		FacetNodeResource root = facetNode.query().root().as(FacetNodeResource.class); 
+
 		BgpNode rootState = root.state();
 		Expr baseExpr = state.expr();
 		
 		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(rootState);
 		
-		Set<BgpNode> paths = PathAccessorImpl.getPathsMentioned(baseExpr, pathAccessor::tryMapToPath);
+		Map<Node, BgpNode> paths = PathAccessorImpl.getPathsMentioned(baseExpr, pathAccessor::tryMapToPath);
 		
-		Set<FacetNode> result = new LinkedHashSet<>();
+		Map<Node, FacetNode> result = new LinkedHashMap<>();
 		
-		for(BgpNode bgpNode : paths) {
-			result.add(new FacetNodeImpl(fqr, bgpNode));
+		for(Entry<Node, BgpNode> e : paths.entrySet()) {
+			result.put(e.getKey(), new FacetNodeImpl(fqr, e.getValue()));
 		}
 //		accessor.tryMapToPath(node)
 		

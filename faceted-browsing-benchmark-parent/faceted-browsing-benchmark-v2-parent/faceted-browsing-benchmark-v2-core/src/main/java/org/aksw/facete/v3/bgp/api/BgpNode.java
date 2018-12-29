@@ -5,6 +5,7 @@ import org.aksw.facete.v3.api.NodeNavigation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -17,7 +18,11 @@ import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.aksw.facete.v3.api.Direction.BACKWARD;
 import static org.aksw.facete.v3.api.Direction.FORWARD;
@@ -130,4 +135,23 @@ public interface BgpNode
 		return result;
 	}
 
+	
+	public static SimplePath toSimplePath(BgpNode fn) {
+//		BgpNode o;
+//		o.parent().
+		List<P_Path0> steps =
+			Streams.stream(
+					Traverser.<BgpNode>forTree(x ->
+			Optional.ofNullable(x.parent())
+				.map(BgpMultiNode::parent)
+				.map(Collections::singleton)
+				.orElse(Collections.emptySet()))
+			.depthFirstPreOrder(fn))
+			.filter(x -> x.parent() != null)
+			.map(x -> PathUtils.createStep(x.parent().reachingProperty().asNode(), x.parent().getDirection().isForward()))
+			.collect(Collectors.toList());
+	
+		SimplePath result = new SimplePath(steps);
+		return result;
+	}
 }

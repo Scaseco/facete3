@@ -22,7 +22,15 @@ public interface FacetNode
 
 	/**
 	 * Change the root of this FacetNode's faceted query to this node.
+	 * All transitive parents of this node are turned to children.
 	 * 
+	 * Implementations of this operation should leave all FacetNodes intact.
+	 * FacetDirNodes may become invalidated by this operation under certain conditions.
+	 * 
+	 * 
+	 * 
+	 * 
+	 * TODO Below is probably outdated by now - check
 	 * It is not totally clear to me, what exact changes this method should do, but the corner stones are:
 	 * - There should be no changes to the id of all nodes in the rdf model corresponding to
 	 *   any of FacetNode, FacetDirNode and Constraint

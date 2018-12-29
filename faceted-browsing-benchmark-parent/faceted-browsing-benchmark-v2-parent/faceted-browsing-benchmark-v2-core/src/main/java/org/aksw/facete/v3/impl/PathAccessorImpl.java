@@ -1,8 +1,9 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.common.graph.Traverser;
 
@@ -122,15 +124,15 @@ public class PathAccessorImpl
 	 	return result;
 	}
 
-	public static <P> Set<P> getPathsMentioned(Expr expr, Function<? super Node, ? extends P> tryMapPath) {
-		Set<P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
+	public static <P> Map<Node, P> getPathsMentioned(Expr expr, Function<? super Node, ? extends P> tryMapPath) {
+		Map<Node, P> result = Streams.stream(Traverser.forTree(ExprUtils::getSubExprs).depthFirstPreOrder(expr).iterator())
 			.filter(Expr::isConstant)
 			.map(org.apache.jena.sparql.util.ExprUtils::eval)
 			.map(NodeValue::asNode)
-			.map(tryMapPath)
-			.filter(p -> p != null)
-			.collect(Collectors.toSet());
-		
+			.map(node -> Maps.immutableEntry(node, tryMapPath.apply(node)))
+			.filter(e -> e.getValue() != null)
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (u, v) -> u));
+
 		return result;
 	}
 

@@ -156,8 +156,8 @@ public class TestFacetedQuery2 {
 
 		System.out.println("FROM CONSTRAINT: " + fq.root().fwd().facetValueCounts().only(RDF.type).exec().toList().blockingGet());
 
-		for (HLFacetConstraint fc : fq.focus().fwd(RDF.type).one().constraints().listHl()) {
-			Set<FacetNode> fns = fc.mentionedFacetNodes();
+		for (HLFacetConstraint<?> fc : fq.focus().fwd(RDF.type).one().constraints().listHl()) {
+			Collection<FacetNode> fns = fc.mentionedFacetNodes().values();
 			System.out.println("GOT MENTIONED: " + fns.size());
 			for (FacetNode fn : fns) {
 				System.out.println("FROM CONSTRAINT: " + fn.availableValues().exec().toList().blockingGet());

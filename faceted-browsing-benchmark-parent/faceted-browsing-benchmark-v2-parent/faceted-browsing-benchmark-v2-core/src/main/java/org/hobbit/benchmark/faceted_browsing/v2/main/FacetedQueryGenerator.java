@@ -236,7 +236,7 @@ public class FacetedQueryGenerator<P> {
 
 		// Collect all mentioned paths so we can getOrCreate their elements
 		for(Expr expr : exprs) {
-			Set<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+			Collection<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values();
 
 			for(P path : paths) {
 				BinaryRelation br = mapper.getOverallRelation(path);
@@ -397,7 +397,7 @@ public class FacetedQueryGenerator<P> {
 		boolean result = false;
 
 		// Find all constraints on successor paths
-		Set<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+		Collection<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values();
 
 		// Check if any parent of the path is the given path
 		for(P candPath : paths) {
@@ -604,7 +604,7 @@ public class FacetedQueryGenerator<P> {
 		
 		SetMultimap<P, Expr> result = LinkedHashMultimap.create();
 		for(Expr expr : constraints) {
-			Set<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+			Collection<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values();
 			for(P path : paths) {
 				result.put(path, expr);
 			}

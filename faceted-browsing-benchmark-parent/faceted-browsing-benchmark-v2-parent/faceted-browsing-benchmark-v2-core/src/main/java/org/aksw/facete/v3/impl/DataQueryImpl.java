@@ -333,7 +333,7 @@ public class DataQueryImpl<T extends RDFNode>
 		Collection<Element> elts = FacetedQueryGenerator.createElementsForExprs(mapper, pathAccessor, Collections.singleton(expr), false);
 
 		// FIXME Hack to obtain a zero-length path; equals on SPath is broken
-		SPath root = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).stream()
+		SPath root = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values().stream()
 			.map(p -> TreeUtils.findRoot(p, pathAccessor::getParent))
 			.findFirst()
 			.orElseThrow(() -> new RuntimeException("Should not happen: Expr without path - " + expr));

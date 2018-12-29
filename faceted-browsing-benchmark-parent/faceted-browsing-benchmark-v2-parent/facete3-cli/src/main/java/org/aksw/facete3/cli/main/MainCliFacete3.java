@@ -3,8 +3,11 @@ package org.aksw.facete3.cli.main;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -18,24 +21,38 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.impl.FacetNodeImpl;
+import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.facete.v3.impl.FacetedQueryResource;
+import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.main.KeywordSearchUtils;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
@@ -45,9 +62,11 @@ import com.googlecode.lanterna.gui2.Borders;
 import com.googlecode.lanterna.gui2.Button;
 import com.googlecode.lanterna.gui2.CheckBoxList;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
+import com.googlecode.lanterna.gui2.Direction;
 import com.googlecode.lanterna.gui2.EmptySpace;
 import com.googlecode.lanterna.gui2.GridLayout;
 import com.googlecode.lanterna.gui2.GridLayout.Alignment;
+import com.googlecode.lanterna.gui2.LinearLayout;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
@@ -64,6 +83,8 @@ import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
+
+import jersey.repackaged.com.google.common.collect.Maps;
 
 
 // If we wanted to create an Amazon like faceted interface we'd need:
@@ -84,6 +105,138 @@ import com.googlecode.lanterna.terminal.Terminal;
  *
  */
 public class MainCliFacete3 {
+	
+	public static String treeToString() {
+		return null;
+	}
+	
+
+
+	public static BgpNode HACK = ModelFactory.createDefaultModel().createResource("should not appear anywhere").as(BgpNode.class);
+
+	public HLFacetConstraint<?> toHlConstraint(FacetedQuery fq, FacetConstraint fc) {
+//		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(fq.root().as(FacetNodeResource.class).state());
+//		Map<Node, BgpNode> map = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
+
+		FacetedQueryResource r = fq.as(FacetedQueryResource.class);
+		
+		
+		// HACK FacetNodeImpl requires a bgpNode - but we don't need its value
+		// We only need it in order to set up HLFacetConstraint.pathsMentioned
+		FacetNode tmp = new FacetNodeImpl(r, HACK);
+		
+		HLFacetConstraint<?> result = new HLFacetConstraintImpl<Void>(null, tmp, fc);
+		return result;
+	}
+	
+	/**
+	 * Extract all nodes involved with the constraint so they can be resolved to labels
+	 * 
+	 * @param constraint
+	 * @return
+	 */
+	public static Set<Node> extractNodes(HLFacetConstraint<?> constraint) {
+		
+		Map<Node, FacetNode> map = constraint.mentionedFacetNodes();
+
+		Set<Node> nodes = new LinkedHashSet<>();
+		
+		for(FacetNode fn : map.values()) {
+			BgpNode state = fn.as(FacetNodeResource.class).state();
+			SimplePath simplePath = BgpNode.toSimplePath(state);
+			Set<Node> contrib = SimplePath.mentionedNodes(simplePath);
+			
+			nodes.addAll(contrib);
+		}
+		
+		// Add all iri and literal constants of the expr to the result
+		Expr expr = constraint.expr();
+		Set<Node> contrib = Streams.stream(Traverser.<Expr>forTree(e -> e.isFunction() ? e.getFunction().getArgs() : Collections.emptyList())
+			.depthFirstPreOrder(expr))
+			.filter(Expr::isConstant)
+			.map(Expr::getConstant)
+			.map(NodeValue::asNode)
+			.filter(n -> n.isURI() || n.isLiteral())
+			.collect(Collectors.toSet());
+			
+		nodes.addAll(contrib);
+		
+		return nodes;
+	}
+	
+	public static Map<Node, SimplePath> indexPaths(HLFacetConstraint<?> constraint) {
+		Map<Node, SimplePath> result = constraint.mentionedFacetNodes().entrySet().stream()
+				.map(e -> {
+					Node k = e.getKey();
+					FacetNode fn = e.getValue();
+					BgpNode state = fn.as(FacetNodeResource.class).state();
+					SimplePath simplePath = BgpNode.toSimplePath(state);
+					return Maps.immutableEntry(k, simplePath);
+				})
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		return result;
+	}
+	
+	public static String toString(P_Path0 step, Function<Node, String> nodeToStr) {
+		Node node = step.getNode();
+		String result = (!step.isForward() ? "^" : "") + nodeToStr.apply(node);
+		return result;
+	}
+
+	public static String toString(SimplePath sp, Function<Node, String> nodeToStr) {
+		String result = sp.getSteps().stream()
+			.map(step -> toString(step, nodeToStr))
+			.collect(Collectors.joining("/"));
+		
+		return result;
+	}
+
+	public static String toString(HLFacetConstraint<?> constraint, LookupService<Node, String> labelService) {
+		Expr expr = constraint.expr();
+		Set<Node> nodes = extractNodes(constraint);
+		
+		Map<Node, String> nodeToLabel = getLabels(nodes, Function.identity(), labelService);
+		
+		Map<Node, String> bgpNodeLabels = indexPaths(constraint).entrySet().stream()
+			.collect(Collectors.toMap(Entry::getKey, e -> toString(e.getValue(), nodeToLabel::get)));
+		
+		// Combine the maps to get the final label mapping
+		nodeToLabel.putAll(bgpNodeLabels);
+		
+		String result = toString(expr, nodeToLabel::get);
+		
+		return result;
+	}
+	
+	
+	public static String toString(Expr expr, Function<? super Node, ? extends String> nodeToLabel) {
+		String result;
+		if(expr.isConstant()) {
+			Node node = expr.getConstant().asNode();
+			result = nodeToLabel.apply(node);
+		} else if(expr.isVariable()) {
+			Node node = expr.asVar();
+			result = nodeToLabel.apply(node);
+		} else {
+			ExprFunction f = expr.getFunction();
+			String symbol = f.getFunctionSymbol().getSymbol();
+			if(symbol == null || symbol.isEmpty()) {
+				symbol = f.getFunctionIRI();
+			}
+			
+			List<String> argStrs = f.getArgs().stream()
+					.map(e -> toString(e, nodeToLabel))
+					.collect(Collectors.toList());
+			
+			result =
+					argStrs.size() == 1 ? symbol + argStrs.iterator().next() :
+					argStrs.size() == 2 ? argStrs.get(0) + " " + symbol + " " + argStrs.get(1) :
+					symbol + "(" + Joiner.on(",").join(argStrs) + ")";
+		}
+		
+		return result;
+	}
+	
 	
 	//RDFConnection conn;
 	FacetedQuery fq;
@@ -119,7 +272,10 @@ public class MainCliFacete3 {
 		constraintList.clearItems();
 		//constraintList.addl
 		for(FacetConstraint c : fq.constraints()) {
-			constraintList.addItem("" + c);
+			HLFacetConstraint<?> hlc = toHlConstraint(fq, c);
+			String str = toString(hlc, labelService);
+			
+			constraintList.addItem("" + str);
 		}
 	}
 	
@@ -397,6 +553,14 @@ public class MainCliFacete3 {
 //		dirList.addItem("Fwd");
 //		dirList.addItem("Bwd");
 //		facetPanel.addComponent(dirList);
+		Panel facetPathPanel = new Panel(new LinearLayout(Direction.HORIZONTAL));
+		facetPathPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+
+		facetPathPanel.addComponent(new Button("Foo"));
+		facetPathPanel.addComponent(new Button("Bar"));
+		facetPathPanel.addComponent(new Button("Baz"));
+		
+		facetPanel.addComponent(facetPathPanel);
 		
 		
 		facetPanel.addComponent(facetList);//.setLayoutData(
@@ -540,4 +704,25 @@ public class MainCliFacete3 {
 		Map<Node, String> map = labelService.fetchMap(s);
 		index.forEach((k, v) -> v.addLiteral(RDFS.label, map.getOrDefault(k, k.isURI() ? k.getLocalName() : k.toString())));
 	}
+
+
+	public static <T> Map<T, String> getLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
+		Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
+		//Map<Node, T> index = Maps.uniqueIndex();
+		Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
+		Map<Node, String> map = labelService.fetchMap(s);
+		
+		//Map<T, String> result = n
+
+		Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI() ? k.getLocalName() : k.toString()); 
+		
+		Map<T, String> result =
+			index.entries().stream().map(
+			e -> Maps.immutableEntry(e.getValue(), determineLabel.apply(e.getKey())))
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		
+		return result;
+		//index.forEach((k, v) -> v.addLiteral(RDFS.label, map.getOrDefault(k, k.isURI() ? k.getLocalName() : k.toString())));
+	}
+
 }

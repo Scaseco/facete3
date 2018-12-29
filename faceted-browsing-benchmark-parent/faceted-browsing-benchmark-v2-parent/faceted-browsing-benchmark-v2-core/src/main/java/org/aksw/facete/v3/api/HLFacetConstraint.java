@@ -1,12 +1,13 @@
 package org.aksw.facete.v3.api;
 
-import java.util.Set;
+import java.util.Map;
 
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.Expr;
 
 public interface HLFacetConstraint<B> {
 	FacetConstraint state();
-	Set<FacetNode> mentionedFacetNodes();
+	Map<Node, FacetNode> mentionedFacetNodes();
 
 	Expr expr();
 	
