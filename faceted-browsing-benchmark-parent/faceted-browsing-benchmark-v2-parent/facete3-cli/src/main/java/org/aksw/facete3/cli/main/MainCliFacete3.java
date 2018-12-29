@@ -246,7 +246,7 @@ public class MainCliFacete3 {
 	CheckBoxList<FacetValueCount> facetValueList = new CheckBoxList<>();
 	Table<String> resultTable = new Table<String>("Item");
 
-	CheckBoxList<String> constraintList = new CheckBoxList<>();
+	CheckBoxList<HLFacetConstraint<?>> constraintList = new CheckBoxList<>();
 
 	String facetFilter = null;
 	
@@ -273,9 +273,11 @@ public class MainCliFacete3 {
 		//constraintList.addl
 		for(FacetConstraint c : fq.constraints()) {
 			HLFacetConstraint<?> hlc = toHlConstraint(fq, c);
-			String str = toString(hlc, labelService);
+			//String str = toString(hlc, labelService);
 			
-			constraintList.addItem("" + str);
+			// TODO We should add pairs with the facet constraints together with the precomputed string
+			// then we can batch the label lookups here
+			constraintList.addItem(hlc);
 		}
 	}
 	
@@ -311,19 +313,6 @@ public class MainCliFacete3 {
 			facetValueList.setEnabled(false);
 			List<FacetValueCount> fvcs = fdn.facetValueCounts().only(selectedFacted).exec().toList().blockingGet();
 	
-			facetValueList.addListener((int itemIndex, boolean checked) -> {
-				FacetValueCount item = facetValueList.getItemAt(itemIndex);
-				//System.out.println(item);
-	
-				HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().constraints().eq(item.getValue());
-				tmp.setActive(checked);
-				
-				
-				updateFacets(fq);
-				updateItems(fq);
-				updateConstraints(fq);
-	
-			});
 			
 			enrichWithLabels(fvcs, FacetValueCount::getValue, labelService);
 			
@@ -484,6 +473,20 @@ public class MainCliFacete3 {
 		
 		
 		facetValueList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
+		facetValueList.addListener((int itemIndex, boolean checked) -> {
+			FacetValueCount item = facetValueList.getItemAt(itemIndex);
+			//System.out.println(item);
+
+			HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().constraints().eq(item.getValue());
+			tmp.setActive(checked);
+			
+			
+			updateFacets(fq);
+			updateItems(fq);
+			updateConstraints(fq);
+
+		});
+
 		facetValueList.setListItemRenderer(new CheckBoxList.CheckBoxListItemRenderer<FacetValueCount>() {
 			@Override
 			public String getLabel(com.googlecode.lanterna.gui2.CheckBoxList<FacetValueCount> listBox, int index, FacetValueCount item) {
@@ -609,6 +612,27 @@ public class MainCliFacete3 {
 //		mainPanel.addComponent(resultPanel.setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)).withBorder(Borders.singleLine("Items")));
 		
 		constraintList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
+		constraintList.addListener((int itemIndex, boolean checked) -> {
+			HLFacetConstraint<?> item = constraintList.getItemAt(itemIndex);
+			//System.out.println(item);
+
+			item.deactivate();
+			
+			updateFacets(fq);
+			updateFacetValues();
+			updateItems(fq);
+			updateConstraints(fq);
+		});
+		constraintList.setListItemRenderer(new CheckBoxList.CheckBoxListItemRenderer<HLFacetConstraint<?>>() {
+			@Override
+			public String getLabel(com.googlecode.lanterna.gui2.CheckBoxList<HLFacetConstraint<?>> listBox, int index, HLFacetConstraint<?> item) {
+	            boolean checked = listBox.isChecked(index);
+	            String check = checked ? "x" : " ";
+
+	            String text = MainCliFacete3.toString(item, labelService);
+	            return "[" + check + "] " + text;
+			};
+		});
 
 		
 		Panel constraintPanel = new Panel();
