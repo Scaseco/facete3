@@ -162,7 +162,7 @@ public class FacetDirNodeImpl
 
 
 	/**
-	 * Common method for (non-)negated facet value counts
+	 * Common method for negated and non-negated facet value counts
 	 * 
 	 * @param negated
 	 * @return

@@ -12,16 +12,19 @@ import org.junit.Test;
 
 public class TestFacetedQueryAbsentFacetValues {
 
+
 	@Test
-	public void testAbsentFacetValues() {
+	public void testAbsentConstraint() {
 		FacetedQuery fq =
 				FacetedQueryBuilder.builder()
 					.configDataConnection().defaultModel().end()
 				.create();
 
 		fq.focus().fwd(RDF.type).one().constraints().eq(OWL.Class).activate();
-		fq.focus().fwd(RDFS.label).one().constraints().absent().activate();
 		fq.focus().fwd(RDFS.label).one().constraints().eqStr("foo").activate();
+		fq.focus().fwd(RDFS.label).one().constraints().exists().activate();
+		fq.focus().fwd(RDFS.label).one().constraints().absent().activate();
+		fq.focus().fwd(RDFS.label).one().fwd(RDFS.comment).one().constraints().eqStr("foo").activate();
 
 		
 		// TODO Absence constraints on the focus should be ignored, and it seems this is working
@@ -30,13 +33,42 @@ public class TestFacetedQueryAbsentFacetValues {
 		
 		System.out.println(fq.focus().availableValues().toConstructQuery());
 		
-		fq.focus().fwd(RDFS.label).one().constraints().absent().deactivate();
-
-		System.out.println(fq.focus().availableValues().toConstructQuery());
+//		fq.focus().fwd(RDFS.label).one().constraints().absent().deactivate();
+//
+//		System.out.println(fq.focus().availableValues().toConstructQuery());
 		
 		
 //		FacetDirNode facetDirNode = fq.root().fwd();
 //		String str = "" + facetDirNode.facetValueCountsWithAbsent().toConstructQuery();
+//		
+//		System.out.println(str);
+		
+		
+//		FacetNode s = root.fwd(RDF.type).one();
+//		FacetNode y = s.bwd(RDF.type).one().constraints().exists().activate().end()	
+	}
+
+	@Test
+	public void testAbsentFacetValues() {
+		FacetedQuery fq =
+				FacetedQueryBuilder.builder()
+					.configDataConnection().defaultModel().end()
+				.create();
+
+//		fq.focus().fwd(RDF.type).one().constraints().eq(OWL.Class).activate();
+//		fq.focus().fwd(RDFS.label).one().constraints().eqStr("foo").activate();
+//		fq.focus().fwd(RDFS.label).one().constraints().exists().activate();
+//		fq.focus().fwd(RDFS.label).one().constraints().absent().activate();
+//		fq.focus().fwd(RDFS.label).one().fwd(RDFS.comment).one().constraints().eqStr("foo").activate();
+
+
+		fq.focus().fwd(RDF.type).one().chFocus();
+		
+		
+		System.out.println(fq.focus().availableValues().toConstructQuery());
+//
+		FacetDirNode facetDirNode = fq.root().fwd();
+		String str = "" + facetDirNode.facetValueCountsWithAbsent().toConstructQuery();
 //		
 //		System.out.println(str);
 		

@@ -214,36 +214,36 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public BinaryRelation getRemainingFacets(P basePath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated, boolean includeAbsent) {
+	public BinaryRelation getRemainingFacets(P facetOriginPath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated, boolean includeAbsent) {
 
-		Element baseEl = ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o));
+		Element tripleEl = ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o));
 //		
-//		Element baseEl;
-//		if(includeAbsent) {
-//			/**
-//			 * { ?s ?p ?o UNION { OPTIONAL { ?s ?p ?o } FILTER (!BOUND(?o)) } } 
-//			 * 
-//			 * 
-//			 * 
-//			 */
-//			baseEl = ElementUtils.unionIfNeeded(tripleEl,					
-//				ElementUtils.groupIfNeeded(
-//						new ElementOptional(tripleEl),
-//						new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(Vars.o))))));
-//			
-//					
-//			
-//		} else {
-//			baseEl = tripleEl;
-//		}
+		Element baseEl;
+		if(includeAbsent) {
+			/**
+			 * { ?s ?p ?o UNION { OPTIONAL { ?s ?p ?o } FILTER (!BOUND(?o)) } } 
+			 * 
+			 * 
+			 * 
+			 */
+			baseEl = ElementUtils.unionIfNeeded(tripleEl,					
+				ElementUtils.groupIfNeeded(
+						new ElementOptional(tripleEl),
+						new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(Vars.o))))));
+			
+					
+			
+		} else {
+			baseEl = tripleEl;
+		}
 
 		BinaryRelation br = new BinaryRelationImpl(baseEl, Vars.s, Vars.o);
 
 
 		// TODO Combine rel with the constraints
-		BinaryRelation rel = mapper.getOverallRelation(basePath);
+		BinaryRelation rel = mapper.getOverallRelation(facetOriginPath);
 
-		BinaryRelation tmp = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, false, includeAbsent);
+		BinaryRelation tmp = createConstraintRelationForPath(facetOriginPath, null, br, Vars.p, constraintIndex, false, includeAbsent);
 
 		
 		List<Element> elts = new ArrayList<>();
@@ -663,14 +663,14 @@ public class FacetedQueryGenerator<P> {
 		return createMapFacetsAndValues(path, isReverse, applySelfConstraints, false, false);
 	}
 	
-	public Map<String, BinaryRelation> createMapFacetsAndValues(P basePath, boolean isReverse, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P facetOriginPath, boolean isReverse, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
 		SetMultimap<P, Expr> constraintIndex = indexConstraints(pathAccessor, constraints);
 
 		Map<String, BinaryRelation> result = new HashMap<>();
 
 		Set<P> mentionedPaths = constraintIndex.keySet();
-		Set<P> constrainedChildPaths = extractChildPaths(basePath, isReverse, mentionedPaths);
+		Set<P> constrainedChildPaths = extractChildPaths(facetOriginPath, isReverse, mentionedPaths);
 		
 		for(P childPath : constrainedChildPaths) {
 			BinaryRelation br = createRelationForPath(childPath, constraintIndex, applySelfConstraints, negated, includeAbsent);
@@ -691,7 +691,7 @@ public class FacetedQueryGenerator<P> {
 		
 		// exclude all predicates that are constrained
 
-		BinaryRelation brr = getRemainingFacets(basePath, isReverse, constraintIndex, negated, includeAbsent);
+		BinaryRelation brr = getRemainingFacets(facetOriginPath, isReverse, constraintIndex, negated, includeAbsent);
 
 		// Build the constraint to remove all prior properties
 		ExprList constrainedPredicates = new ExprList(result.keySet().stream()
@@ -808,8 +808,8 @@ public class FacetedQueryGenerator<P> {
 	
 	
 	/**
-	 * Given a collection of paths, yield those that are a successor of 'basePath' in the direction
-	 * specified by 'isReverse'.
+	 * Given a collection of paths, yield those that are a direct successor of 'basePath'
+	 * in the direction specified by 'isReverse'.
 	 * 
 	 * 
 	 * @param basePath

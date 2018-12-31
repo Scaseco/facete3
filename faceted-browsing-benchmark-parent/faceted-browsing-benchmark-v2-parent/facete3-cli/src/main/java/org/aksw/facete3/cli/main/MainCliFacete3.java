@@ -396,6 +396,11 @@ public class MainCliFacete3 {
 	}
 	
 	
+	public void setFacetDir(org.aksw.facete.v3.api.Direction dir) {
+		fdn = fdn.parent().step(dir);
+		updateFacets(fq);
+	}
+	
 	public void init() throws Exception
 	{
 		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
@@ -560,8 +565,8 @@ public class MainCliFacete3 {
 		facetPathPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 
 		facetPathPanel.addComponent(new Button("Foo"));
-		facetPathPanel.addComponent(new Button("Bar"));
-		facetPathPanel.addComponent(new Button("Baz"));
+		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
+		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
 		
 		facetPanel.addComponent(facetPathPanel);
 		
