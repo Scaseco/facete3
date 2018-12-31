@@ -36,7 +36,28 @@ public interface ConstraintFacade<B> {
 	
 	/** Add an anonymous equal constraint */
 	HLFacetConstraint<? extends ConstraintFacade<B>> eq(Node node);
+	
+	/**
+	 * Constraint that matches all items that have any value
+	 * on the predicate this constraint is activated on.
+	 * 
+	 * @return
+	 */
 	HLFacetConstraint<? extends ConstraintFacade<B>> exists();
+	
+	
+	/**
+	 * Typically complex constraint that matches all items
+	 * that lack the predicate (on which this constraint is activated on)
+	 * on the *immediate parent*.
+	 * 
+	 * 
+	 * @return
+	 */
+	HLFacetConstraint<? extends ConstraintFacade<B>> absent();
+
+	
+	
 	HLFacetConstraint<? extends ConstraintFacade<B>> gt(Node node);
 	HLFacetConstraint<? extends ConstraintFacade<B>> neq(Node node);
 

@@ -3,8 +3,10 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.impl.ConstraintFacadeImpl;
 import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -36,6 +39,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.E_Bound;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
@@ -49,11 +54,14 @@ import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -166,7 +174,7 @@ public class FacetedQueryGenerator<P> {
 	 * @param negated
 	 * @return
 	 */
-	public BinaryRelation createRelationForPath(P childPath, SetMultimap<P, Expr> constraintIndex, boolean applySelfConstraints, boolean negated) {
+	public BinaryRelation createRelationForPath(P childPath, SetMultimap<P, Expr> constraintIndex, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
 		//BinaryRelation rel = pathAccessor.getReachingRelation(childPath);
 		BinaryRelation rel = mapper.getOverallRelation(childPath);
@@ -199,21 +207,43 @@ public class FacetedQueryGenerator<P> {
 			
 			P basePath = pathAccessor.getParent(childPath);
 
-			result = createConstraintRelationForPath(basePath, childPath, rel, Vars.p, effectiveCi, negated);
+			result = createConstraintRelationForPath(basePath, childPath, rel, Vars.p, effectiveCi, negated, includeAbsent);
 		} else {
 			result = rel;
 		}
 		return result;
 	}
 
-	public BinaryRelation getRemainingFacets(P basePath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated) {
-		BinaryRelation br = new BinaryRelationImpl(
-				ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o)), Vars.s, Vars.o);
-		
+	public BinaryRelation getRemainingFacets(P basePath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated, boolean includeAbsent) {
+
+		Element baseEl = ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o));
+//		
+//		Element baseEl;
+//		if(includeAbsent) {
+//			/**
+//			 * { ?s ?p ?o UNION { OPTIONAL { ?s ?p ?o } FILTER (!BOUND(?o)) } } 
+//			 * 
+//			 * 
+//			 * 
+//			 */
+//			baseEl = ElementUtils.unionIfNeeded(tripleEl,					
+//				ElementUtils.groupIfNeeded(
+//						new ElementOptional(tripleEl),
+//						new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(Vars.o))))));
+//			
+//					
+//			
+//		} else {
+//			baseEl = tripleEl;
+//		}
+
+		BinaryRelation br = new BinaryRelationImpl(baseEl, Vars.s, Vars.o);
+
+
 		// TODO Combine rel with the constraints
 		BinaryRelation rel = mapper.getOverallRelation(basePath);
 
-		BinaryRelation tmp = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, false);
+		BinaryRelation tmp = createConstraintRelationForPath(basePath, null, br, Vars.p, constraintIndex, false, includeAbsent);
 
 		
 		List<Element> elts = new ArrayList<>();
@@ -228,22 +258,228 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	
-	public static <P> Collection<Element> createElementsForExprs(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, Collection<Expr> exprs, boolean negate) {
+	public static boolean containsAbsent(Collection<? extends Expr> exprs) {
+		boolean result = exprs.stream().anyMatch(FacetedQueryGenerator::isAbsent);
+		return result;
+	}
+
+	public static int compareAbsent(Expr a, Expr b) {
+		int result = ComparisonChain.start()
+				.compareFalseFirst(isAbsent(a), isAbsent(b))
+				.result();
+		return result;
+	}
+
+	public static int compareAbsent(Collection<? extends Expr> a, Collection<? extends Expr> b) {
+		int result = ComparisonChain.start()
+				.compareFalseFirst(containsAbsent(a), containsAbsent(b))
+				.result();
+		return result;
+	}
+
+	public static boolean isAbsent(Expr expr) {
+		boolean result;
+		if(expr instanceof E_Equals) {
+			E_Equals e = (E_Equals)expr;
+			result = e.getArg2().equals(ConstraintFacadeImpl.NV_ABSENT);
+		} else {
+			result = false;
+		}
+		
+		return result;
+	}
+
+	
+	public static Expr internalRewriteAbsent(Expr expr) {
+		return new E_LogicalNot(new E_Bound(expr.getFunction().getArgs().get(0)));
+	}
+//	
+//	
+	public static <P> Map<P, BinaryRelation> allocatePathRelations(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, Multimap<P, Expr> constraintIndex) {
+		Map<P, BinaryRelation> result = new LinkedHashMap<>();
+		
+		for(Entry<P, Collection<Expr>> e : constraintIndex.asMap().entrySet()) {
+//			llCollection<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values();
+//
+//			// FIXME And another issue:
+//			// Element creation for absent-constrainted paths has be done on the path level
+//			// Presently we operate expr-centric: whenever an expr references a Path we
+//			// create the path's element.
+
+			P path = e.getKey();
+			Collection<Expr> exprs = e.getValue();
+			// Deal with absent values
+			boolean containsAbsent = containsAbsent(exprs);
+			if(containsAbsent) {
+			
+				P parent = pathAccessor.getParent(path);
+				
+				// Somewhat hacky: First create the overall path in order to
+				// allocate variables in the mapper
+				BinaryRelation tmp = mapper.getOverallRelation(path);
+
+				// But actually we only need the path to the parent first
+				BinaryRelation br = mapper.getOverallRelation(parent);
+				
+				// We need to adjust the variable naming of the last step
+				// according to the mapper's state, so rename the variables
+				BinaryRelation rawLastStep = pathAccessor.getReachingRelation(path);
+
+				
+				// TODO Wrap this renaming construct up in the API
+				BinaryRelation helper = new BinaryRelationImpl(new ElementGroup(), br.getTargetVar(), tmp.getTargetVar());
+				BinaryRelation lastStep = helper.joinOn(helper.getSourceVar(), helper.getTargetVar())
+						.with(rawLastStep)
+						.toBinaryRelation();
+				
+					
+				Collection<Element> elts = new ArrayList<>();
+				elts.addAll(br.getElements());
+				elts.add(new ElementOptional(lastStep.getElement()));
+				//elts.add(new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar())))));
+				
+				Element group = ElementUtils.groupIfNeeded(elts);
+				
+				BinaryRelation newBr = new BinaryRelationImpl(group, tmp.getSourceVar(), lastStep.getTargetVar());
+				
+				result.put(path, newBr);
+////				result.put(key, value)
+////				
+////				// Wrapping an OPTIONAL with a group changes the semantics :/
+////				result.addAll(elts);
+//				//result.add(e);
+//
+//				//Expr resolved = ExprTransformer.transform(new NodeTransformExpr(nodeTransform), expr);
+//
+//				resolvedExprs.add(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar()))));
+//				//System.out.println(resolved);
+//				
+////				throw new RuntimeException("Not supported yet");
+			} else {
+				BinaryRelation br = mapper.getOverallRelation(path);
+
+				result.put(path, br);
+			}
+		}
+		
+		return result;
+	}
+	
+	
+	/**
+	 * Creates elements from the given constraint expressions.
+	 * This method collects all paths referenced in the expressions and
+	 * allocates their relations.
+	 * 
+	 * 
+	 * Used by DataQueryImpl::filter 
+	 * 
+	 * @param mapper
+	 * @param pathAccessor
+	 * @param constraints
+	 * @param negate
+	 * @return
+	 */
+	public static <P> Collection<Element> createElementsForExprs(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, Collection<Expr> constraints, boolean negate) {
+		
+		SetMultimap<P, Expr> constraintIndex = indexConstraints(pathAccessor, constraints);
+		Map<P, BinaryRelation> pathToRelation = allocatePathRelations(mapper, pathAccessor, constraintIndex);
+		
+		Collection<Element> result = createElementsForExprs(mapper, pathAccessor, pathToRelation, constraints, negate);
+
+		return result;
+	}	
+	
+	public static <P> Collection<Element> createElementsForExprs(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, Map<P, BinaryRelation> pathToRelation, Collection<Expr> baseExprs, boolean negate) {
+		
 		NodeTransform nodeTransform = createNodeTransformSubstitutePathReferences(mapper, pathAccessor);
 		
 		Set<Element> result = new LinkedHashSet<>();
 		Set<Expr> resolvedExprs = new LinkedHashSet<>();
 
+		// Sort base exprs - absent ones last
+		List<Expr> tmp = baseExprs.stream()
+				.map(e -> isAbsent(e) ? internalRewriteAbsent(e) : e)
+				.collect(Collectors.toList());
+		
+		List<Expr> exprs = new ArrayList<>(tmp);
+		Collections.sort(exprs, FacetedQueryGenerator::compareAbsent);
+		
 		// Collect all mentioned paths so we can getOrCreate their elements
+		
+		
 		for(Expr expr : exprs) {
 			Collection<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values();
-
 			for(P path : paths) {
-				BinaryRelation br = mapper.getOverallRelation(path);
-			
-				result.add(br.getElement());
+				BinaryRelation br = pathToRelation.get(path);
+				result.addAll(br.getElements());
 			}
 		}
+		
+//		Set<Expr> skipExprs = new HashSet<>();
+//		for(Expr expr : exprs) {
+//			Collection<P> paths = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath).values();
+
+			// FIXME And another issue:
+			// Element creation for absent-constrainted paths has be done on the path level
+			// Presently we operate expr-centric: whenever an expr references a Path we
+			// create the path's element.
+
+			// Deal with absent values
+//			if(isAbsent(expr)) {
+//			
+//				skipExprs.add(expr);
+//
+//				P path = paths.iterator().next();
+//				P parent = pathAccessor.getParent(path);
+//				
+//				// Somewhat hacky: First create the overall path in order to
+//				// allocate variables in the mapper
+//				BinaryRelation tmp = mapper.getOverallRelation(path);
+//
+//				// But actually we only need the path to the parent first
+//				BinaryRelation br = mapper.getOverallRelation(parent);
+//				
+//				// We need to adjust the variable naming of the last step
+//				// according to the mapper's state, so rename the variables
+//				BinaryRelation rawLastStep = pathAccessor.getReachingRelation(path);
+//
+//				
+//				// TODO Wrap this renaming construct up in the API
+//				BinaryRelation helper = new BinaryRelationImpl(new ElementGroup(), br.getTargetVar(), tmp.getTargetVar());
+//				BinaryRelation lastStep = helper.joinOn(helper.getSourceVar(), helper.getTargetVar())
+//						.with(rawLastStep)
+//						.toBinaryRelation();
+//				
+//					
+//				Collection<Element> elts = new ArrayList<>();
+//				elts.addAll(br.getElements());
+//				elts.add(new ElementOptional(lastStep.getElement()));
+//				//elts.add(new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar())))));
+//				
+//				//Element e = ElementUtils.groupIfNeeded(elts);
+//				
+//				//BinaryRelation newBr = new BinaryRelationImpl(e, tmp.getSourceVar(), lastStep.getTargetVar());
+//				
+//				// Wrapping an OPTIONAL with a group changes the semantics :/
+//				result.addAll(elts);
+//				//result.add(e);
+//
+//				//Expr resolved = ExprTransformer.transform(new NodeTransformExpr(nodeTransform), expr);
+//
+//				resolvedExprs.add(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar()))));
+//				//System.out.println(resolved);
+//				
+////				throw new RuntimeException("Not supported yet");
+//			} else {
+//				
+//				for(P path : paths) {
+//					BinaryRelation br = mapper.getOverallRelation(path);
+//				
+//					result.add(br.getElement());
+//				}
+//			}
+//		}
 		
 		// Resolve the expression
 		for(Expr expr : exprs) {
@@ -259,13 +495,15 @@ public class FacetedQueryGenerator<P> {
 		
 		Expr resolvedPathExpr = ExprUtils.orifyBalanced(resolvedExprs);
 		
-		if(negate) {
-			resolvedPathExpr = new E_LogicalNot(resolvedPathExpr);
-		}
-		
-		// Skip adding constraints that equal TRUE
-		if(!NodeValue.TRUE.equals(resolvedPathExpr)) {
-			result.add(new ElementFilter(resolvedPathExpr));
+		if(resolvedPathExpr != null) {
+			if(negate) {
+				resolvedPathExpr = new E_LogicalNot(resolvedPathExpr);
+			}
+			
+			// Skip adding constraints that equal TRUE
+			if(!NodeValue.TRUE.equals(resolvedPathExpr)) {
+				result.add(new ElementFilter(resolvedPathExpr));
+			}
 		}
 
 		//BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), br.getSourceVar(), br.getTargetVar());
@@ -283,7 +521,7 @@ public class FacetedQueryGenerator<P> {
 	 * @param negate Negate the constraints - this yields all facet+values unaffected by the effectiveConstraints do NOT apply
 	 * @return
 	 */
-	public BinaryRelation createConstraintRelationForPath(P basePath, P childPath, BinaryRelation facetRelation, Var pVar, Multimap<P, Expr> constraintIndex, boolean negate) {
+	public BinaryRelation createConstraintRelationForPath(P basePath, P childPath, BinaryRelation facetRelation, Var pVar, Multimap<P, Expr> constraintIndex, boolean negate, boolean includeAbsent) {
 
 //		Collection<Element> elts = createElementsFromConstraintIndex(constraintIndex,
 //				p -> !negate ? false : (childPath == null ? true : Objects.equals(p, childPath)));
@@ -342,7 +580,7 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	public UnaryRelation createConceptFacets(P path, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false);
+		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false, false);
 	
 		UnaryRelation result = createConceptFacets(relations, pConstraint);
 		return result;
@@ -355,7 +593,7 @@ public class FacetedQueryGenerator<P> {
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 		
-		Element e = ElementUtils.union(elements);
+		Element e = ElementUtils.unionIfNeeded(elements);
 
 		UnaryRelation result = new Concept(e, Vars.p);
 		//BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
@@ -374,7 +612,7 @@ public class FacetedQueryGenerator<P> {
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 		
-		Element e = ElementUtils.union(elements);
+		Element e = ElementUtils.unionIfNeeded(elements);
 
 		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
 
@@ -383,7 +621,7 @@ public class FacetedQueryGenerator<P> {
 
 
 	public BinaryRelation createQueryFacetsAndCounts(P path, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false);
+		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false, false);
 		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
 		
 		return result;
@@ -422,12 +660,12 @@ public class FacetedQueryGenerator<P> {
 	 * @return
 	 */
 	public Map<String, BinaryRelation> createMapFacetsAndValues(P path, boolean isReverse, boolean applySelfConstraints) {
-		return createMapFacetsAndValues(path, isReverse, applySelfConstraints, false);
+		return createMapFacetsAndValues(path, isReverse, applySelfConstraints, false, false);
 	}
 	
-	public Map<String, BinaryRelation> createMapFacetsAndValues(P basePath, boolean isReverse, boolean applySelfConstraints, boolean negated) {
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P basePath, boolean isReverse, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
-		SetMultimap<P, Expr> constraintIndex = indexConstraints(constraints);
+		SetMultimap<P, Expr> constraintIndex = indexConstraints(pathAccessor, constraints);
 
 		Map<String, BinaryRelation> result = new HashMap<>();
 
@@ -435,7 +673,7 @@ public class FacetedQueryGenerator<P> {
 		Set<P> constrainedChildPaths = extractChildPaths(basePath, isReverse, mentionedPaths);
 		
 		for(P childPath : constrainedChildPaths) {
-			BinaryRelation br = createRelationForPath(childPath, constraintIndex, applySelfConstraints, negated);
+			BinaryRelation br = createRelationForPath(childPath, constraintIndex, applySelfConstraints, negated, includeAbsent);
 			
 			String pStr = pathAccessor.getPredicate(childPath);
 			
@@ -453,7 +691,7 @@ public class FacetedQueryGenerator<P> {
 		
 		// exclude all predicates that are constrained
 
-		BinaryRelation brr = getRemainingFacets(basePath, isReverse, constraintIndex, negated);
+		BinaryRelation brr = getRemainingFacets(basePath, isReverse, constraintIndex, negated, includeAbsent);
 
 		// Build the constraint to remove all prior properties
 		ExprList constrainedPredicates = new ExprList(result.keySet().stream()
@@ -498,8 +736,12 @@ public class FacetedQueryGenerator<P> {
 	 * 
 	 */
 	
-	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter, boolean applySelfConstraints) {
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, applySelfConstraints);
+	
+	// TODO This method differs from the other one only by a single line that does
+	// a group by for counting
+	// we should streamline this
+	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter, boolean applySelfConstraints, boolean includeAbsent) {
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, applySelfConstraints, includeAbsent);
 
 		List<Element> elements = facetValues.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
@@ -508,15 +750,15 @@ public class FacetedQueryGenerator<P> {
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 
-		Element e = ElementUtils.union(elements);
+		Element e = ElementUtils.unionIfNeeded(elements);
 
 		TernaryRelation result = new TernaryRelationImpl(e, Vars.s, Vars.p, Vars.o);
 		return result;
 	}
 
-	public TernaryRelation createRelationFacetValues(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter) {
+	public TernaryRelation createRelationFacetValues(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter, boolean includeAbsent) {
 		
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, negated, false);
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
@@ -528,7 +770,7 @@ public class FacetedQueryGenerator<P> {
 				.collect(Collectors.toList());
 
 		
-		Element e = ElementUtils.union(elements);
+		Element e = ElementUtils.unionIfNeeded(elements);
 
 		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
 		
@@ -600,7 +842,7 @@ public class FacetedQueryGenerator<P> {
 	 * @param applySelfConstraints
 	 * @return
 	 */
-	public SetMultimap<P, Expr> indexConstraints(Collection<Expr> constraints) {
+	public static <P> SetMultimap<P, Expr> indexConstraints(PathAccessor<P> pathAccessor, Collection<Expr> constraints) {
 		
 		SetMultimap<P, Expr> result = LinkedHashMultimap.create();
 		for(Expr expr : constraints) {
@@ -625,8 +867,25 @@ public class FacetedQueryGenerator<P> {
 			Predicate<? super P> negatePath) {
 
 		Set<Element> result = new LinkedHashSet<>();
-		for(Entry<P, Collection<Expr>> e : constraintIndex.asMap().entrySet()) {
-			P path = e.getKey();
+		
+		
+		// Sort paths last that have constraints with an optional component (e.g. absent)
+		
+		Map<P, Collection<Expr>> map = constraintIndex.asMap();
+		List<P> order = new ArrayList<>(constraintIndex.keySet());
+		Collections.sort(order, (a, b) -> compareAbsent(map.get(a), map.get(b)));
+
+
+		// Map every path to its relation element
+		// We rely here on the constraintIndex containing entries for ALL referenced paths
+		Map<P, BinaryRelation> pathToRelation = allocatePathRelations(mapper, pathAccessor, constraintIndex);
+
+		//for(Entry<P, Collection<Expr>> e : constraintIndex.asMap().entrySet()) {
+		for(P path : order) {
+			Collection<Expr> exprs = map.get(path);
+			
+			
+			//P path = e.getKey();
 
 //			boolean skipped = skip == null ? false : skip.test(path);
 //			if(skipped) {
@@ -634,11 +893,11 @@ public class FacetedQueryGenerator<P> {
 //			}
 			
 			boolean negated = negatePath == null ? false : negatePath.test(path);
-			Collection<Expr> exprs = e.getValue();
+//			Collection<Expr> exprs = e.getValue();
 
 			
 			// The essence of calling createElementsForExprs is combining the exprs with logical or.
-			Collection<Element> eltContribs = createElementsForExprs(mapper, pathAccessor, exprs, negated);
+			Collection<Element> eltContribs = createElementsForExprs(mapper, pathAccessor, pathToRelation, exprs, negated);
 			result.addAll(eltContribs);
 		}
 		
@@ -654,7 +913,7 @@ public class FacetedQueryGenerator<P> {
 
 	public UnaryRelation getConceptForAtPath(P focusPath, P facetPath, boolean applySelfConstraints) {
 
-		SetMultimap<P, Expr> rawIndex = indexConstraints(constraints);
+		SetMultimap<P, Expr> rawIndex = indexConstraints(pathAccessor, constraints);
 		
 		SetMultimap<P, Expr> childPathToExprs = applySelfConstraints
 				? rawIndex
@@ -669,11 +928,11 @@ public class FacetedQueryGenerator<P> {
 			// can't we 
 			BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
 			//Set<Element> tmp = new LinkedHashSet<>();
-			elts.addAll(ElementUtils.toElementList(focusRelation.getElement()));
+			elts.addAll(focusRelation.getElements());
 			
 			BinaryRelation facetRelation = mapper.getOverallRelation(facetPath);
 			//Set<Element> tmp = new LinkedHashSet<>();
-			elts.addAll(ElementUtils.toElementList(facetRelation.getElement()));
+			elts.addAll(facetRelation.getElements());
 		}
 		
 		
@@ -694,13 +953,13 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	// [focus, facet, facetValue]
-	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated, boolean applySelfConstraints) {
+	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated, boolean applySelfConstraints, boolean includeAbsent) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
 		
 		//boolean applySelfConstraints = false;
-		Map<String, BinaryRelation> facets = createMapFacetsAndValues(facetPath, isReverse, applySelfConstraints, negated);
+		Map<String, BinaryRelation> facets = createMapFacetsAndValues(facetPath, isReverse, applySelfConstraints, negated, includeAbsent);
 
 		// Get the focus element
 		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);

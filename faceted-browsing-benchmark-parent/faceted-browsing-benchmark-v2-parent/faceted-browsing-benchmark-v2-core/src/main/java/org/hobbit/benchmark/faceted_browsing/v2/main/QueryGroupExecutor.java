@@ -155,7 +155,7 @@ public class QueryGroupExecutor {
 			resultElements.add(e);
 		}
 		resultVars.forEach(result::addResultVar);
-		Element e = ElementUtils.union(resultElements);
+		Element e = ElementUtils.unionIfNeeded(resultElements);
 		result.setQueryPattern(e);
 
 		return result;
@@ -282,7 +282,7 @@ public class QueryGroupExecutor {
 			elts.add(new ElementSubQuery(q));
 		}
 		
-		Element qp = ElementUtils.union(elts);
+		Element qp = ElementUtils.unionIfNeeded(elts);
 		
 		Query result = new Query();
 		result.setQuerySelectType();

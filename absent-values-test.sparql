@@ -1,0 +1,29 @@
+INSERT DATA {
+  eg:a eg:isDownloaded true .
+  eg:b eg:isDownloaded true .
+  eg:c rdf:type eg:Foo .
+  eg:d rdf:type eg:Bar .
+  eg:e rdf:type eg:Bar .
+}
+
+#SELECT ?facet ?facetValue (COUNT(?focus) AS ?o) {
+#  ?facetNode ?facet ?facetValue
+#  OPTIONAL {
+#    ?focus ?facet ?x
+#  }
+#}
+
+
+SELECT ?facet ?facetValue (COUNT(DISTINCT ?focus) AS ?o) {
+  { SELECT DISTINCT ?focus { ?focus ?x ?y } }
+
+  { SELECT DISTINCT ?facet { ?facetNode ?facet ?facetValue} }
+
+  OPTIONAL {
+    ?focus ?facet ?facetValue
+  }
+
+
+} GROUP BY ?facet ?facetValue
+ORDER BY ?facet ?facetValue
+

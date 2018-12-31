@@ -1,0 +1,100 @@
+
+# With this dataset, the issue we want to investigate is:
+# When computing the counts of absent values for eg:city - which count do we want to see?
+# The answer depends on whether there we consider the facetPath to be existentially qualified or not.
+# FacetPath =  the connection between ?focus and ?facetNode
+# In the former case, the absent value count would be 1 and the latter case 2.
+# 1: There is 1 resource that does not have a eg:city predicate for existing eg:beneficiary/eg:address property paths
+# 2: There are two fundings that do not have a eg:beneficiary/eg:address/eg:city path at all
+
+#I think the version that imposes existential restriction on the facet path is the more reasonable choice:
+# If one navigates along the predicates in a faceted browser, its all existential restrictions.
+# So if we select the absent values, the matching resources are those for which the path to the facetNode* exist,
+# but the value of the given facet is absent
+
+
+
+# *Note, that the facetNode denotes the set of resources from which (facet,facetValue) pairs are retrieved.
+
+
+
+# A further improvement in the faceted browsing API could be to add an explicit "optional" feature
+# FacetNode optionalFacetNode = fq.root().fwd(RDF.type).one().optional()
+
+INSERT DATA {
+  eg:f1 eg:beneficiary eg:f1b1 .
+  eg:f1b1 eg:address eg:f1b1a1 .
+  eg:f1b1a1 eg:city "Colorado" .
+
+  eg:f2 eg:beneficiary eg:f2b1 .
+  eg:f2b1 eg:address eg:f2b1a1 .
+  eg:f2b1a1 eg:city "Texas" .
+
+  eg:f3 eg:beneficiary eg:f3b1 .
+  eg:f3b1 eg:address eg:f3b1a1 .
+
+  eg:f4 eg:beneficiary eg:f4b1 .
+
+}
+
+
+SELECT ?facet ?facetValue (COUNT(DISTINCT ?focus) AS ?facetValueCount) {
+  { SELECT DISTINCT ?facet { ?focus eg:beneficiary/eg:address [ ?facet [] ] } }
+
+  # ?focus eg:beneficiary [] . # The base set of focus resources
+  { SELECT DISTINCT ?focus { ?focus eg:beneficiary [] } }
+  ?focus eg:beneficiary/eg:address ?facetNode .
+  OPTIONAL {
+    ?facetNode ?facet ?facetValue
+  }
+
+} GROUP BY ?facet ?facetValue
+ORDER BY ?facet ?facetValue
+
+
+# Query for the focus resources
+SELECT DISTINCT ?focus {
+  ?focus eg:beneficiary [] .
+
+  ?focus eg:beneficiary/eg:address ?facetNode .
+  OPTIONAL {
+    ?facetNode eg:city ?facetValue
+  }
+  FILTER(!BOUND(?facetValue))
+
+
+} ORDER BY ?focus
+
+#----------------------------------------------------------------
+#| facet                         | facetValue | facetValueCount |
+#================================================================
+#| <http://www.example.org/city> |            | 1               |
+#| <http://www.example.org/city> | "Colorado" | 1               |
+#| <http://www.example.org/city> | "Texas"    | 1               |
+#----------------------------------------------------------------
+
+
+
+SELECT ?facet ?facetValue (COUNT(DISTINCT ?focus) AS ?facetValueCount) {
+  { SELECT DISTINCT ?facet { ?focus eg:beneficiary/eg:address [ ?facet [] ] } }
+
+  # ?focus eg:beneficiary [] . # The base set of focus resources
+  { SELECT DISTINCT ?focus { ?focus eg:beneficiary [] } }
+  OPTIONAL {
+    ?focus eg:beneficiary/eg:address ?facetNode .
+    ?facetNode ?facet ?facetValue
+  }
+
+} GROUP BY ?facet ?facetValue
+ORDER BY ?facet ?facetValue
+
+
+#----------------------------------------------------------------
+#| facet                         | facetValue | facetValueCount |
+#================================================================
+#| <http://www.example.org/city> |            | 2               |
+#| <http://www.example.org/city> | "Colorado" | 1               |
+#| <http://www.example.org/city> | "Texas"    | 1               |
+#----------------------------------------------------------------
+
+

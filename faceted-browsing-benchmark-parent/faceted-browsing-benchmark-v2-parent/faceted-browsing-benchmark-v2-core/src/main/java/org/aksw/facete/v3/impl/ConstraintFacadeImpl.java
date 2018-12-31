@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -167,6 +168,16 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 			ll -> new HLFacetConstraintImpl<>(this, parent, ll)
 		));
 	
+		return result;
+	}
+
+	
+	public static final NodeValue NV_ABSENT = NodeValue.makeNode(NodeFactory.createURI("http://special.absent/none"));
+
+	@Override
+	public HLFacetConstraint<? extends ConstraintFacade<B>> absent() {
+		Expr expr = new E_Equals(thisAsExpr(), NV_ABSENT);
+		HLFacetConstraint<? extends ConstraintFacade<B>> result = getOrCreateConstraint(expr);
 		return result;
 	}
 

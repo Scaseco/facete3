@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,20 +82,23 @@ public class HLFacetConstraintImpl<P>
 
 	@Override
 	public boolean isActive() {
-		boolean result = facetNode.constraints().list().contains(state);
+		Collection<FacetConstraint> items = facetNode.constraints().list();
+		boolean result = items.contains(state);
 		return result;
 	}
 
 	@Override
 	public boolean setActive() {
-		boolean result = facetNode.constraints().list().add(state);
+		Collection<FacetConstraint> items = facetNode.constraints().list();
+		boolean result = items.add(state);
 		return result;
 		//return this;
 	}
 	
 	@Override
 	public boolean remove() {
-		boolean result = facetNode.constraints().list().remove(state);
+		Collection<FacetConstraint> items = facetNode.constraints().list();
+		boolean result = items.remove(state);
 		return result;
 		//return this;
 	}

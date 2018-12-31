@@ -11,19 +11,34 @@ import java.util.Optional;
  */
 public interface Castable {
 	default <T> T as(Class<T> clazz) {
-		boolean canAs = canAs(clazz);
-		@SuppressWarnings("unchecked")
-		T result = canAs ? (T)this : null;
+		T result = castAs(clazz, this);
 		return result;
 	}
 	
 	default <T> Optional<T> tryAs(Class<T> clazz) {
-		T tmp = as(clazz);
-		return Optional.ofNullable(tmp);
+		Optional<T> result = tryCastAs(clazz, this);
+		return result;
 	}
 	
 	default boolean canAs(Class<?> clazz) {
-		boolean result = clazz.isAssignableFrom(this.getClass());
+		boolean result = canCastAs(clazz, this);
+		return result;
+	}
+	
+	public static <T> T castAs(Class<T> clazz, Object o) {
+		@SuppressWarnings("unchecked")
+		T result = (T)o;
+		return result;
+	}
+	
+	public static boolean canCastAs(Class<?> clazz, Object o) {
+		boolean result = o == null ? true : clazz.isAssignableFrom(o.getClass());
+		return result;		
+	}
+	
+	public static <T> Optional<T> tryCastAs(Class<T> clazz, Object o) {
+		boolean canCastAs = canCastAs(clazz, o);
+		Optional<T> result = canCastAs ? Optional.of(castAs(clazz,o)) : Optional.empty();
 		return result;
 	}
 }

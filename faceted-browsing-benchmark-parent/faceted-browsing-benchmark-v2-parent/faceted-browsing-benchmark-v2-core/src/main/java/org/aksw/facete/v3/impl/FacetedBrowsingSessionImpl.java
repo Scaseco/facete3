@@ -186,7 +186,7 @@ public class FacetedBrowsingSessionImpl {
 				.collect(Collectors.toList());
 
 		
-		Element e = ElementUtils.union(es);
+		Element e = ElementUtils.unionIfNeeded(es);
 		Relation result = new RelationImpl(e, vars);
 		return result;
 	}
@@ -235,7 +235,7 @@ public class FacetedBrowsingSessionImpl {
 	
 	public TernaryRelation createQueryFacetValues(SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
 	
-		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, false);
+		Map<String, TernaryRelation> facetValues = queryGenerator.getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, false, false);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
@@ -247,7 +247,7 @@ public class FacetedBrowsingSessionImpl {
 				.collect(Collectors.toList());
 
 		
-		Element e = ElementUtils.union(elements);
+		Element e = ElementUtils.unionIfNeeded(elements);
 
 		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
 

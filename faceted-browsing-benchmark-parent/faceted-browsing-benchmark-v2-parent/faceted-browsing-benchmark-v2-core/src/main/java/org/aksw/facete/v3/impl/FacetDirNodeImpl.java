@@ -106,7 +106,7 @@ public class FacetDirNodeImpl
 
 	@Override
 	public DataQuery<FacetValueCount> facetValueCounts() {
-		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false);
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, false);
 		return result;
 //		FacetedQueryResource facetedQuery = this.parent().query();
 //
@@ -154,7 +154,7 @@ public class FacetDirNodeImpl
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		TernaryRelation tr = qgen.createRelationFacetValue(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null, false);
+		TernaryRelation tr = qgen.createRelationFacetValue(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), null, null, false, false);
 
 		BinaryRelation result = new BinaryRelationImpl(tr.getElement(), tr.getP(), tr.getO());
 		return result;
@@ -167,14 +167,14 @@ public class FacetDirNodeImpl
 	 * @param negated
 	 * @return
 	 */
-	public DataQuery<FacetValueCount> createQueryFacetValueCounts(boolean negated) {
+	public DataQuery<FacetValueCount> createQueryFacetValueCounts(boolean negated, boolean includeAbsent) {
 		FacetedQueryResource facetedQuery = this.parent().query();
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null);
+		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null, includeAbsent);
 		
 		// Inject that the object must not be a blank node
 		// TODO There should be a better place to do this - but where?		
@@ -202,13 +202,14 @@ public class FacetDirNodeImpl
 
 	@Override
 	public DataQuery<FacetValueCount> nonConstrainedFacetValueCounts() {
-		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(true);
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(true, false);
 		return result;
 	}
 
 	@Override
 	public DataQuery<FacetValueCount> facetValueCountsWithAbsent() {
-		throw new RuntimeException("not implemented yet");
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, true);
+		return result;
 	}
 
 //	@Override
