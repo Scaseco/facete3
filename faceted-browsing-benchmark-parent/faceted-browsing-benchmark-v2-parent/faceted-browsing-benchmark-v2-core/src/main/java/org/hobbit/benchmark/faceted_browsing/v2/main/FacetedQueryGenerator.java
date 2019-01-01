@@ -165,6 +165,46 @@ public class FacetedQueryGenerator<P> {
 
 	}
 	
+	public static <P> BinaryRelation createRelationForPath(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, P childPath, boolean includeAbsent) {
+		BinaryRelation result;
+		if(includeAbsent) {
+
+			P parent = pathAccessor.getParent(childPath);
+			
+			// Somewhat hacky: First create the overall path in order to
+			// allocate variables in the mapper
+			BinaryRelation tmp = mapper.getOverallRelation(childPath);
+
+			// But actually we only need the path to the parent first
+			BinaryRelation br = mapper.getOverallRelation(parent);
+			
+			// We need to adjust the variable naming of the last step
+			// according to the mapper's state, so rename the variables
+			BinaryRelation rawLastStep = pathAccessor.getReachingRelation(childPath);
+
+			
+			// TODO Wrap this renaming construct up in the API
+			BinaryRelation helper = new BinaryRelationImpl(new ElementGroup(), br.getTargetVar(), tmp.getTargetVar());
+			BinaryRelation lastStep = helper.joinOn(helper.getSourceVar(), helper.getTargetVar())
+					.with(rawLastStep)
+					.toBinaryRelation();
+			
+				
+			Collection<Element> elts = new ArrayList<>();
+			elts.addAll(br.getElements());
+			elts.add(new ElementOptional(lastStep.getElement()));
+			//elts.add(new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar())))));
+			
+			Element group = ElementUtils.groupIfNeeded(elts);
+			
+			result = new BinaryRelationImpl(group, tmp.getSourceVar(), lastStep.getTargetVar());
+			
+		} else {
+			result = mapper.getOverallRelation(childPath);
+		}
+		return result;
+	}
+	
 	/**
 	 * Creates the relation for the path given as the first argument
 	 * 
@@ -177,7 +217,7 @@ public class FacetedQueryGenerator<P> {
 	public BinaryRelation createRelationForPath(P childPath, SetMultimap<P, Expr> constraintIndex, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
 		//BinaryRelation rel = pathAccessor.getReachingRelation(childPath);
-		BinaryRelation rel = mapper.getOverallRelation(childPath);
+		BinaryRelation rel = createRelationForPath(mapper, pathAccessor, childPath, includeAbsent);//mapper.getOverallRelation(childPath);
 		BinaryRelation result;
 
 		if(!rel.isEmpty()) {
@@ -220,16 +260,19 @@ public class FacetedQueryGenerator<P> {
 //		
 		Element baseEl;
 		if(includeAbsent) {
-			/**
-			 * { ?s ?p ?o UNION { OPTIONAL { ?s ?p ?o } FILTER (!BOUND(?o)) } } 
-			 * 
-			 * 
-			 * 
-			 */
-			baseEl = ElementUtils.unionIfNeeded(tripleEl,					
-				ElementUtils.groupIfNeeded(
-						new ElementOptional(tripleEl),
-						new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(Vars.o))))));
+			// OPTIONAL { ?s ?p ?o }
+			baseEl = new ElementOptional(tripleEl);
+			
+//			/*
+//			 * { ?s ?p ?o UNION { OPTIONAL { ?s ?p ?o } FILTER (!BOUND(?o)) } } 
+//			 * 
+//			 * 
+//			 * 
+//			 */
+//			baseEl = ElementUtils.unionIfNeeded(tripleEl,					
+//				ElementUtils.groupIfNeeded(
+//						new ElementOptional(tripleEl),
+//						new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(Vars.o))))));
 			
 					
 			
@@ -310,56 +353,60 @@ public class FacetedQueryGenerator<P> {
 			Collection<Expr> exprs = e.getValue();
 			// Deal with absent values
 			boolean containsAbsent = containsAbsent(exprs);
-			if(containsAbsent) {
-			
-				P parent = pathAccessor.getParent(path);
-				
-				// Somewhat hacky: First create the overall path in order to
-				// allocate variables in the mapper
-				BinaryRelation tmp = mapper.getOverallRelation(path);
+			BinaryRelation br = createRelationForPath(mapper, pathAccessor, path, containsAbsent);
 
-				// But actually we only need the path to the parent first
-				BinaryRelation br = mapper.getOverallRelation(parent);
-				
-				// We need to adjust the variable naming of the last step
-				// according to the mapper's state, so rename the variables
-				BinaryRelation rawLastStep = pathAccessor.getReachingRelation(path);
+			result.put(path, br);
 
-				
-				// TODO Wrap this renaming construct up in the API
-				BinaryRelation helper = new BinaryRelationImpl(new ElementGroup(), br.getTargetVar(), tmp.getTargetVar());
-				BinaryRelation lastStep = helper.joinOn(helper.getSourceVar(), helper.getTargetVar())
-						.with(rawLastStep)
-						.toBinaryRelation();
-				
-					
-				Collection<Element> elts = new ArrayList<>();
-				elts.addAll(br.getElements());
-				elts.add(new ElementOptional(lastStep.getElement()));
-				//elts.add(new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar())))));
-				
-				Element group = ElementUtils.groupIfNeeded(elts);
-				
-				BinaryRelation newBr = new BinaryRelationImpl(group, tmp.getSourceVar(), lastStep.getTargetVar());
-				
-				result.put(path, newBr);
-////				result.put(key, value)
-////				
-////				// Wrapping an OPTIONAL with a group changes the semantics :/
-////				result.addAll(elts);
-//				//result.add(e);
-//
-//				//Expr resolved = ExprTransformer.transform(new NodeTransformExpr(nodeTransform), expr);
-//
-//				resolvedExprs.add(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar()))));
-//				//System.out.println(resolved);
+//			if(containsAbsent) {
+//			
+//				P parent = pathAccessor.getParent(path);
 //				
-////				throw new RuntimeException("Not supported yet");
-			} else {
-				BinaryRelation br = mapper.getOverallRelation(path);
-
-				result.put(path, br);
-			}
+//				// Somewhat hacky: First create the overall path in order to
+//				// allocate variables in the mapper
+//				BinaryRelation tmp = mapper.getOverallRelation(path);
+//
+//				// But actually we only need the path to the parent first
+//				BinaryRelation br = mapper.getOverallRelation(parent);
+//				
+//				// We need to adjust the variable naming of the last step
+//				// according to the mapper's state, so rename the variables
+//				BinaryRelation rawLastStep = pathAccessor.getReachingRelation(path);
+//
+//				
+//				// TODO Wrap this renaming construct up in the API
+//				BinaryRelation helper = new BinaryRelationImpl(new ElementGroup(), br.getTargetVar(), tmp.getTargetVar());
+//				BinaryRelation lastStep = helper.joinOn(helper.getSourceVar(), helper.getTargetVar())
+//						.with(rawLastStep)
+//						.toBinaryRelation();
+//				
+//					
+//				Collection<Element> elts = new ArrayList<>();
+//				elts.addAll(br.getElements());
+//				elts.add(new ElementOptional(lastStep.getElement()));
+//				//elts.add(new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar())))));
+//				
+//				Element group = ElementUtils.groupIfNeeded(elts);
+//				
+//				BinaryRelation newBr = new BinaryRelationImpl(group, tmp.getSourceVar(), lastStep.getTargetVar());
+//				
+//				result.put(path, newBr);
+//////				result.put(key, value)
+//////				
+//////				// Wrapping an OPTIONAL with a group changes the semantics :/
+//////				result.addAll(elts);
+////				//result.add(e);
+////
+////				//Expr resolved = ExprTransformer.transform(new NodeTransformExpr(nodeTransform), expr);
+////
+////				resolvedExprs.add(new E_LogicalNot(new E_Bound(new ExprVar(lastStep.getTargetVar()))));
+////				//System.out.println(resolved);
+////				
+//////				throw new RuntimeException("Not supported yet");
+//			} else {
+//				BinaryRelation br = mapper.getOverallRelation(path);
+//
+//				result.put(path, br);
+//			}
 		}
 		
 		return result;

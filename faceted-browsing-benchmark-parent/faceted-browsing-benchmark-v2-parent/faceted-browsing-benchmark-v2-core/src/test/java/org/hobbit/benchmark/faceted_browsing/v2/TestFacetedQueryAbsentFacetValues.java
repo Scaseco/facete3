@@ -68,6 +68,7 @@ public class TestFacetedQueryAbsentFacetValues {
 		System.out.println(fq.focus().availableValues().toConstructQuery());
 //
 		FacetDirNode facetDirNode = fq.root().fwd();
+		facetDirNode.via(RDFS.label).one().constraints().eqStr("test").activate();
 		String str = "" + facetDirNode.facetValueCountsWithAbsent().toConstructQuery();
 //		
 //		System.out.println(str);
