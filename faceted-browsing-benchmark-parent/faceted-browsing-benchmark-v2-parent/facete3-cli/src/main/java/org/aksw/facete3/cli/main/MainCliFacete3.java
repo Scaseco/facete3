@@ -311,8 +311,9 @@ public class MainCliFacete3 {
 			
 			
 			facetValueList.setEnabled(false);
-			List<FacetValueCount> fvcs = fdn.facetValueCounts().only(selectedFacted).exec().toList().blockingGet();
+			List<FacetValueCount> fvcs = fdn.facetValueCountsWithAbsent().only(selectedFacted).exec().toList().blockingGet();
 	
+			System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 			
 			enrichWithLabels(fvcs, FacetValueCount::getValue, labelService);
 			

@@ -365,7 +365,7 @@ public class FacetedQueryGenerator<P> {
 		boolean result;
 		if(expr instanceof E_Equals) {
 			E_Equals e = (E_Equals)expr;
-			result = e.getArg2().equals(ConstraintFacadeImpl.NV_ABSENT);
+			result = e.getArg2() == null || e.getArg2().equals(ConstraintFacadeImpl.NV_ABSENT);
 		} else {
 			result = false;
 		}

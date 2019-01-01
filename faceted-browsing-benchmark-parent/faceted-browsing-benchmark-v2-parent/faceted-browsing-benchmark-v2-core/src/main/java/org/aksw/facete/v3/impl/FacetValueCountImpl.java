@@ -6,8 +6,10 @@ import javax.persistence.Entity;
 
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.utils.CountInfo;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.engine.CountUtils;
@@ -32,7 +34,10 @@ public class FacetValueCountImpl
 
 	@Override
 	public Node getValue() {
-		return getProperty(Vocab.value).getObject().asNode();
+		return ResourceUtils.tryGetPropertyValue(this, Vocab.value)
+				.map(RDFNode::asNode)
+				.orElse(null);
+//		return getProperty(Vocab.value).getObject().asNode();
 	}
 
 	@Override

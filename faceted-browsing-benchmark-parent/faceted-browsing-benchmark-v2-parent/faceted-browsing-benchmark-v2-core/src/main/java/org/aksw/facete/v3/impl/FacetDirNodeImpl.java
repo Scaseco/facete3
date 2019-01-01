@@ -1,18 +1,30 @@
 package org.aksw.facete.v3.impl;
 
-import com.google.common.collect.ImmutableList;
-import org.aksw.facete.v3.api.*;
+import java.util.Map;
+
+import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetDirNode;
+import org.aksw.facete.v3.api.FacetMultiNode;
+import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
-import org.aksw.jena_sparql_api.concepts.*;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_LogicalNot;
+import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -20,7 +32,7 @@ import org.apache.jena.sparql.syntax.Template;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
-import java.util.Map;
+import com.google.common.collect.ImmutableList;
 
 public class FacetDirNodeImpl
 	implements FacetDirNode
@@ -177,10 +189,16 @@ public class FacetDirNodeImpl
 		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null, includeAbsent);
 		
 		// Inject that the object must not be a blank node
-		// TODO There should be a better place to do this - but where?		
+		// TODO There should be a better place to do this - but where?
+		
+		// NOTE jena's isBlank yields null (type error?) for unbound variables
+		// We don't want to filter out blank values but not unbound ones - hence the expression is
+		// FILTER(!bound(o) || !blank(?o)) 
 		tr = new TernaryRelationImpl(ElementUtils.createElementGroup(ImmutableList.<Element>builder()
 				.addAll(tr.getElements())
-				.add(new ElementFilter(new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP())))))
+				.add(new ElementFilter(new E_LogicalOr(
+						new E_LogicalNot(new E_Bound(new ExprVar(tr.getP()))),
+						new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP()))))))
 				.build()),
 				tr.getS(),
 				tr.getP(),
