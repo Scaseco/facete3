@@ -254,31 +254,20 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public BinaryRelation getRemainingFacets(P facetOriginPath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated, boolean includeAbsent) {
+	public BinaryRelation getRemainingFacets(P focusPath, P facetOriginPath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated, boolean includeAbsent) {
+		BinaryRelation result = includeAbsent
+				? getRemainingFacetsWithAbsent(focusPath, facetOriginPath, isReverse, constraintIndex, negated)
+				: getRemainingFacetsWithoutAbsent(facetOriginPath, isReverse, constraintIndex, negated, includeAbsent);
+				
+		return result;
+	}
 
+
+	public BinaryRelation getRemainingFacetsWithAbsent(P focusPath, P facetOriginPath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated) {
+		boolean includeAbsent = true;
+		
 		Element tripleEl = ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o));
-//		
-		Element baseEl;
-		if(includeAbsent) {
-			// OPTIONAL { ?s ?p ?o }
-			baseEl = new ElementOptional(tripleEl);
-			
-//			/*
-//			 * { ?s ?p ?o UNION { OPTIONAL { ?s ?p ?o } FILTER (!BOUND(?o)) } } 
-//			 * 
-//			 * 
-//			 * 
-//			 */
-//			baseEl = ElementUtils.unionIfNeeded(tripleEl,					
-//				ElementUtils.groupIfNeeded(
-//						new ElementOptional(tripleEl),
-//						new ElementFilter(new E_LogicalNot(new E_Bound(new ExprVar(Vars.o))))));
-			
-					
-			
-		} else {
-			baseEl = tripleEl;
-		}
+		Element baseEl = new ElementOptional(tripleEl);
 
 		BinaryRelation br = new BinaryRelationImpl(baseEl, Vars.s, Vars.o);
 
@@ -290,6 +279,58 @@ public class FacetedQueryGenerator<P> {
 
 		
 		List<Element> elts = new ArrayList<>();
+		
+		// In this case we need to inject the set of facets:
+		// so that we can left join the focus resources
+
+		// We are only interested in the null entry here which denotes the set of
+		// unconstraint facets
+		// Te constraint facets are properly processed individually
+		//Map<String, BinaryRelation> rawRelations = createMapFacetsAndValues(facetOriginPath, isReverse, false, false, false);
+		
+		Map<String, TernaryRelation> rawRelations3 = getFacetValuesCore(focusPath, facetOriginPath, null, null, isReverse, negated, false, false);
+
+		TernaryRelation tr = rawRelations3.get(null);
+		UnaryRelation rawFacetConcept = tr.project(tr.getP()).toUnaryRelation();
+		
+//		Map<String, TernaryRelation> rawRelation = Collections.singletonMap(null, rawRelations.get(null).));
+		//Map<String, TernaryRelation> relations = Collections.singletonMap(null, rawBr);
+		
+		//UnaryRelation rawFacetConcept = createConceptFacets(relations, null);
+		
+		//UnaryRelation rawFacetConcept = createConceptFacets(facetOriginPath, isReverse, false, null);
+
+		// This should make all variables of the facet concept 
+		// - except for ?p - distinct from the tmp
+		UnaryRelation facetConcept = rawFacetConcept.rename(varName -> "opt_" + varName, Vars.p).toUnaryRelation();
+		
+		//UnaryRelation facetConcept = rawFacetConcept.joinOn(Vars.p).yieldRenamedFilter(rawFacetConcept).toUnaryRelation();
+
+		elts.addAll(facetConcept.getElements());
+		
+		
+		elts.addAll(rel.getElements());
+		elts.addAll(tmp.getElements());
+
+		BinaryRelation result = new BinaryRelationImpl(
+				ElementUtils.groupIfNeeded(elts), tmp.getSourceVar(), tmp.getTargetVar()
+		);
+		
+		return result;
+	}
+	
+	public BinaryRelation getRemainingFacetsWithoutAbsent(P facetOriginPath, boolean isReverse, SetMultimap<P, Expr> constraintIndex, boolean negated, boolean includeAbsent) {
+
+		Element baseEl = ElementUtils.createElement(QueryFragment.createTriple(isReverse, Vars.s, Vars.p, Vars.o));
+
+		BinaryRelation br = new BinaryRelationImpl(baseEl, Vars.s, Vars.o);
+
+		// TODO Combine rel with the constraints
+		BinaryRelation rel = mapper.getOverallRelation(facetOriginPath);
+		BinaryRelation tmp = createConstraintRelationForPath(facetOriginPath, null, br, Vars.p, constraintIndex, false, includeAbsent);
+		
+		List<Element> elts = new ArrayList<>();
+
 		elts.addAll(rel.getElements());
 		elts.addAll(tmp.getElements());
 
@@ -626,8 +667,8 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public UnaryRelation createConceptFacets(P path, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false, false);
+	public UnaryRelation createConceptFacets(P facetOriginPath, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
+		Map<String, BinaryRelation> relations = createMapFacetsAndValues(null, facetOriginPath, isReverse, false, false, false);
 	
 		UnaryRelation result = createConceptFacets(relations, pConstraint);
 		return result;
@@ -667,8 +708,9 @@ public class FacetedQueryGenerator<P> {
 	}
 
 
-	public BinaryRelation createQueryFacetsAndCounts(P path, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = createMapFacetsAndValues(path, isReverse, false, false, false);
+	@Deprecated // Does not seem to be used / undeprecate if this is wrong
+	public BinaryRelation createQueryFacetsAndCounts(P facetOriginPath, boolean isReverse, Concept pConstraint) {
+		Map<String, BinaryRelation> relations = createMapFacetsAndValues(null, facetOriginPath, isReverse, false, false, false);
 		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
 		
 		return result;
@@ -678,6 +720,7 @@ public class FacetedQueryGenerator<P> {
 	
 	
     /** Create helper functions for filtering out the expressions that do not apply for a given path */
+	@Deprecated // Does not seem to be used / undeprecate if this is wrong
 	public boolean isExprExcluded(Expr expr, P path, boolean isReverse) {
 		boolean result = false;
 
@@ -698,19 +741,35 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 //	
+
+	
+	/**
+	 * Version without focus path
+	 * 
+	 * @param facetOriginPath
+	 * @param isReverse
+	 * @param applySelfConstraints
+	 * @return
+	 */
+	@Deprecated
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P facetOriginPath, boolean isReverse, boolean applySelfConstraints) {
+		Map<String, BinaryRelation> result = createMapFacetsAndValues(null, facetOriginPath, isReverse, applySelfConstraints);
+		return result;
+	}
+
 	/**
 	 * For the give path and direction, yield a map of binary relations for the corresponding facets.
 	 * An entry with key null indicates the predicate / distinct value count pairs with all constraints in place
 	 * 
-	 * @param path
+	 * @param facetOriginPath
 	 * @param isReverse
 	 * @return
 	 */
-	public Map<String, BinaryRelation> createMapFacetsAndValues(P path, boolean isReverse, boolean applySelfConstraints) {
-		return createMapFacetsAndValues(path, isReverse, applySelfConstraints, false, false);
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P focusPath, P facetOriginPath, boolean isReverse, boolean applySelfConstraints) {
+		return createMapFacetsAndValues(focusPath, facetOriginPath, isReverse, applySelfConstraints, false, false);
 	}
 	
-	public Map<String, BinaryRelation> createMapFacetsAndValues(P facetOriginPath, boolean isReverse, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
+	public Map<String, BinaryRelation> createMapFacetsAndValues(P focusPath, P facetOriginPath, boolean isReverse, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
 		SetMultimap<P, Expr> constraintIndex = indexConstraints(pathAccessor, constraints);
 
@@ -738,7 +797,7 @@ public class FacetedQueryGenerator<P> {
 		
 		// exclude all predicates that are constrained
 
-		BinaryRelation brr = getRemainingFacets(facetOriginPath, isReverse, constraintIndex, negated, includeAbsent);
+		BinaryRelation brr = getRemainingFacets(focusPath, facetOriginPath, isReverse, constraintIndex, negated, includeAbsent);
 
 		// Build the constraint to remove all prior properties
 		ExprList constrainedPredicates = new ExprList(result.keySet().stream()
@@ -1006,7 +1065,7 @@ public class FacetedQueryGenerator<P> {
 		//pathAccessor.getParent(facetPath);
 		
 		//boolean applySelfConstraints = false;
-		Map<String, BinaryRelation> facets = createMapFacetsAndValues(facetPath, isReverse, applySelfConstraints, negated, includeAbsent);
+		Map<String, BinaryRelation> facets = createMapFacetsAndValues(focusPath, facetPath, isReverse, applySelfConstraints, negated, includeAbsent);
 
 		// Get the focus element
 		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);

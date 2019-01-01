@@ -90,7 +90,7 @@ public class FacetDirNodeImpl
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(parent.state(), !this.state.isFwd(), false);
+		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(null, parent.state(), !this.state.isFwd(), false);
 		
 		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null);
 		
