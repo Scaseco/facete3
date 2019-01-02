@@ -82,10 +82,21 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 		return result;
 	}
 	
+	/**
+	 * At present we allow a null argument to denote absent values. 
+	 * 
+	 */
 	@Override
-	public HLFacetConstraint<? extends ConstraintFacade<B>> eq(Node node) {		
-		Expr expr = new E_Equals(thisAsExpr(), NodeValue.makeNode(node));
-		HLFacetConstraint<? extends ConstraintFacade<B>> result = getOrCreateConstraint(expr);
+	public HLFacetConstraint<? extends ConstraintFacade<B>> eq(Node node) {
+		HLFacetConstraint<? extends ConstraintFacade<B>> result;
+		
+		if(node == null || N_ABSENT.equals(node)) {
+			result = absent();
+		} else {		
+			Expr expr = new E_Equals(thisAsExpr(), NodeValue.makeNode(node));
+			result = getOrCreateConstraint(expr);
+		}
+
 		return result;
 
 //		
@@ -172,7 +183,8 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	}
 
 	
-	public static final NodeValue NV_ABSENT = NodeValue.makeNode(NodeFactory.createURI("http://special.absent/none"));
+	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
+	public static final NodeValue NV_ABSENT = NodeValue.makeNode(N_ABSENT);
 
 	@Override
 	public HLFacetConstraint<? extends ConstraintFacade<B>> absent() {

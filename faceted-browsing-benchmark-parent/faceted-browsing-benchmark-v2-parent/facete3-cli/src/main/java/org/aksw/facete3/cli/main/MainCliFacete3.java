@@ -8,6 +8,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -22,6 +24,7 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.impl.ConstraintFacadeImpl;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -38,6 +41,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -499,7 +503,9 @@ public class MainCliFacete3 {
 	            boolean checked = listBox.isChecked(index);
 	            String check = checked ? "x" : " ";
 
-	            String text = item.getProperty(RDFS.label).getString() + " (" + item.getFocusCount().getCount() + ")"; //item.toString();
+	            
+	            
+	            String text = Optional.ofNullable(item.getProperty(RDFS.label)).map(Statement::getString).orElse("(null)") + " (" + item.getFocusCount().getCount() + ")"; //item.toString();
 	            return "[" + check + "] " + text;
 			};
 		});
@@ -728,11 +734,21 @@ public class MainCliFacete3 {
 //	}
 
 	public static <T extends Resource> void enrichWithLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
-		Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
+		// Replace null nodes with Node.NULL
+		// TODO Use own own constant should jena remove this deprecated symbol
+		Multimap<Node, T> index = Multimaps.index(cs, item ->
+			Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(ConstraintFacadeImpl.N_ABSENT));
+
 		//Map<Node, T> index = Maps.uniqueIndex();
-		Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
+		Set<Node> s = index.keySet().stream()
+				.filter(Node::isURI)
+				.collect(Collectors.toSet());
+
 		Map<Node, String> map = labelService.fetchMap(s);
-		index.forEach((k, v) -> v.addLiteral(RDFS.label, map.getOrDefault(k, k.isURI() ? k.getLocalName() : k.toString())));
+		index.forEach((k, v) -> v.addLiteral(RDFS.label,
+				map.getOrDefault(k, ConstraintFacadeImpl.N_ABSENT.equals(k)
+						? "(null)"
+						: k.isURI() ? k.getLocalName() : k.toString())));
 	}
 
 
