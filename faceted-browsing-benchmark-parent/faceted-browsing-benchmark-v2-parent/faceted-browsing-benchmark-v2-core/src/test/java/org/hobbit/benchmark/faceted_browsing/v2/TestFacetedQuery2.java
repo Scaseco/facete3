@@ -40,14 +40,14 @@ import static org.junit.Assert.*;
 public class TestFacetedQuery2 {
 
 	//protected FacetedQuery fq;
-	final String DS_S_L_IN_G = "path-data-simple.ttl";
-	final String DS_S_L_WITH_2P = "path-data-simple-1.ttl";
-	final String DS_S_L_WITH_3P = "path-data-simple-2.ttl";
-	final String DS_S_2CTY_4P = "path-data-simple-3.ttl";
-	final String DS_S_L_IN_G_SCM = "path-data-simple-4.ttl";
-	final String DS_S_2CTY_3M1F = "path-data-simple-5.ttl";
-	final String DS_PLACES = "places-inferred.ttl";
-	final static String PLACES_NS = "http://www.example.org/ontologies/places#";
+	public static final String DS_S_L_IN_G = "path-data-simple.ttl";
+	public static final String DS_S_L_WITH_2P = "path-data-simple-1.ttl";
+	public static final String DS_S_L_WITH_3P = "path-data-simple-2.ttl";
+	public static final String DS_S_2CTY_4P = "path-data-simple-3.ttl";
+	public static final String DS_S_L_IN_G_SCM = "path-data-simple-4.ttl";
+	public static final String DS_S_2CTY_3M1F = "path-data-simple-5.ttl";
+	public static final String DS_PLACES = "places-inferred.ttl";
+	public static final String PLACES_NS = "http://www.example.org/ontologies/places#";
 
 	protected RdfChangeTrackerWrapper changeTracker;
 	protected FacetedQuery fq;

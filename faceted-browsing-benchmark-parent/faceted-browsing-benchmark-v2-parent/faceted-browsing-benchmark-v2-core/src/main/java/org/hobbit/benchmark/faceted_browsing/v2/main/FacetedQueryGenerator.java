@@ -659,7 +659,9 @@ public class FacetedQueryGenerator<P> {
 		
 		//boolean isReverse = pathAccessor.isReverse(path);
 		//Triple t = QueryFragment.createTriple(isReverse, s, Vars.p, Vars.o);
-		es.add(facetRelation.getElement());//ElementUtils.createElement(t));
+		//es.add(facetRelation.getElement());//ElementUtils.createElement(t));
+		
+		es.addAll(facetRelation.getElements());
 		
 		//BinaryRelation result = new BinaryRelation(ElementUtils.groupIfNeeded(es), Vars.p, Vars.o);
 		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(es), pVar, rename.getOrDefault(facetRelation.getTargetVar(), facetRelation.getTargetVar()));
@@ -807,7 +809,7 @@ public class FacetedQueryGenerator<P> {
 				.collect(Collectors.toList()));
 
 		if(!constrainedPredicates.isEmpty()) {		
-			List<Element> foo = ElementUtils.toElementList(brr.getElement());
+			List<Element> foo = brr.getElements();
 			foo.add(new ElementFilter(new E_NotOneOf(new ExprVar(brr.getSourceVar()), constrainedPredicates)));
 			brr = new BinaryRelationImpl(ElementUtils.groupIfNeeded(foo), brr.getSourceVar(), brr.getTargetVar());
 		}

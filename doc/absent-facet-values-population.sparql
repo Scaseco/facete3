@@ -6,38 +6,16 @@ INSERT DATA {
 }
 
 
+SELECT  ?p ?o (COUNT(DISTINCT ?s) AS ?c)
+              WHERE
+                { ?s  a                     ?v_3
+                    FILTER ( ( ?v_3 = <http://www.example.org/Country> ) || ( ?v_3 = <http://www.example.org/City> ) )
+                  
+                  OPTIONAL
+                      { ?s  <http://www.example.org/contains>  ?o }
+                    BIND(<http://www.example.org/contains> AS ?p)
+                 
+                }
+              GROUP BY ?p ?o
+              HAVING ( ?p IN (<http://www.example.org/contains>) ) ( ( ! bound(?o) ) || ( ! isBlank(?o) ) )
 
-SELECT DISTINCT  ?p ?o ?c
-WHERE
-  { SELECT  ?p ?o (COUNT(DISTINCT ?s) AS ?c)
-    WHERE
-      { ?opt_v_1  ?p  ?opt_o .
-        ?s ?foo ?bar .
-        OPTIONAL
-          { ?s  ?p  ?o }
-      }
-    GROUP BY ?p ?o
-#    HAVING ( ?p IN (<http://www.example.org/contains>) ) ( ! isBlank(?o) )
-  }
-
-
-SELECT  ?p ?o (COUNT(DISTINCT ?s) AS ?c) 
-          WHERE
-            { ?opt_v_1  a                     ?opt_v_2 ;
-                        ?p                    ?opt_o .
-              ?s        a                     ?v_2
-              FILTER ( ( ?v_2 = <http://www.example.org/Country> ) || ( ?v_2 = <http://www.example.org/City> ) )
-              FILTER ( ?p NOT IN (<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) )
-              FILTER ( ( ?opt_v_2 = <http://www.example.org/Country> ) || ( ?opt_v_2 = <http://www.example.org/City> ) )
-              OPTIONAL
-                { ?s  ?p  ?o }
-            }
-          GROUP BY ?p ?o
-          HAVING ( ?p IN (<http://www.example.org/contains>) && ( !bound(?o) || ! isBlank(?o) ) )
- 
-
-SELECT * {
-OPTIONAL { ?x eg:foo ?y }
-  BIND(isBlank(?y) AS ?isBlank)
-
-}
