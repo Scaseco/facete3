@@ -691,14 +691,14 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, Concept pConstraint) {
+	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, Concept pConstraint, boolean includeAbsent) {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relations.values().stream()
 				//.filter(e -> !e.isEmpty())
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
 				.map(Relation::toBinaryRelation)
 				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
-				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.o, countVar))
+				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.o, countVar, includeAbsent))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 		
@@ -710,14 +710,14 @@ public class FacetedQueryGenerator<P> {
 	}
 
 
-	@Deprecated // Does not seem to be used / undeprecate if this is wrong
-	public BinaryRelation createQueryFacetsAndCounts(P facetOriginPath, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = createMapFacetsAndValues(null, facetOriginPath, isReverse, false, false, false);
-		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
-		
-		return result;
-		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
-	}
+//	@Deprecated // Does not seem to be used / undeprecate if this is wrong
+//	public BinaryRelation createQueryFacetsAndCounts(P facetOriginPath, boolean isReverse, Concept pConstraint) {
+//		Map<String, BinaryRelation> relations = createMapFacetsAndValues(null, facetOriginPath, isReverse, false, false, false);
+//		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
+//		
+//		return result;
+//		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
+//	}
 
 	
 	
@@ -753,11 +753,11 @@ public class FacetedQueryGenerator<P> {
 	 * @param applySelfConstraints
 	 * @return
 	 */
-	@Deprecated
-	public Map<String, BinaryRelation> createMapFacetsAndValues(P facetOriginPath, boolean isReverse, boolean applySelfConstraints) {
-		Map<String, BinaryRelation> result = createMapFacetsAndValues(null, facetOriginPath, isReverse, applySelfConstraints);
-		return result;
-	}
+//	@Deprecated
+//	public Map<String, BinaryRelation> createMapFacetsAndValues(P facetOriginPath, boolean isReverse, boolean applySelfConstraints) {
+//		Map<String, BinaryRelation> result = createMapFacetsAndValues(null, facetOriginPath, isReverse, applySelfConstraints);
+//		return result;
+//	}
 
 	/**
 	 * For the give path and direction, yield a map of binary relations for the corresponding facets.
@@ -767,9 +767,9 @@ public class FacetedQueryGenerator<P> {
 	 * @param isReverse
 	 * @return
 	 */
-	public Map<String, BinaryRelation> createMapFacetsAndValues(P focusPath, P facetOriginPath, boolean isReverse, boolean applySelfConstraints) {
-		return createMapFacetsAndValues(focusPath, facetOriginPath, isReverse, applySelfConstraints, false, false);
-	}
+//	public Map<String, BinaryRelation> createMapFacetsAndValues(P focusPath, P facetOriginPath, boolean isReverse, boolean applySelfConstraints) {
+//		return createMapFacetsAndValues(focusPath, facetOriginPath, isReverse, applySelfConstraints, false, false);
+//	}
 	
 	public Map<String, BinaryRelation> createMapFacetsAndValues(P focusPath, P facetOriginPath, boolean isReverse, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
@@ -873,7 +873,7 @@ public class FacetedQueryGenerator<P> {
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
 				.map(Relation::toTernaryRelation)
 				.map(e -> e.joinOn(e.getP()).with(pFilter))
-				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar))
+				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar, includeAbsent))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 

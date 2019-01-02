@@ -28,8 +28,11 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	// Get the facets of this set of values with count of their distinct values
 	//Collection<FacetCount> getFacetsAndCounts();
 	/** Facets and counts **/
-	DataQuery<FacetCount> facetCounts();
+	DataQuery<FacetCount> facetCounts(boolean includeAbsent);
 	
+	default DataQuery<FacetCount> facetCounts() {
+		return facetCounts(false);
+	}
 	
 	
 	default FacetValueQueryBuilder<? extends FacetValue> facetValues() {
@@ -47,7 +50,7 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	 * @return
 	 */
 	@Deprecated
-	DataQuery<FacetValueCount> facetValueCountsWithAbsent();
+	DataQuery<FacetValueCount> facetValueCountsWithAbsent(boolean includeAbsent);
 
 	
 	/** Yield all facet value counts NOT affected by filters -

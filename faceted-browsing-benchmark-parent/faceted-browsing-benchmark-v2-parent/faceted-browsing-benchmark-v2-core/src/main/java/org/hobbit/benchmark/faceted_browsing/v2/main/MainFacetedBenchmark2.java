@@ -185,8 +185,8 @@ public class MainFacetedBenchmark2 {
 		Concept pFilter = ConceptUtils.createFilterConcept(RDF.type.asNode(), RDFS.label.asNode());;
 
 //		Map<Node, Range<Long>> facets = new HashMap<>();
-		Map<Node, Range<Long>> facets = session.getFacetsAndCounts(rootPath, false, pFilter)
-				.toMap(Entry::getKey, Entry::getValue).blockingGet();
+//		Map<Node, Range<Long>> facets = session.getFacetsAndCounts(rootPath, false, pFilter)
+//				.toMap(Entry::getKey, Entry::getValue).blockingGet();
 
 		
 		
@@ -223,7 +223,7 @@ public class MainFacetedBenchmark2 {
 		
 		
 		
-		System.out.println("FACETS: " + facets);
+//		System.out.println("FACETS: " + facets);
 		
 		Table<Node, Node, Range<Long>> facetValues = toTable(session.getFacetValues(rootPath, false, pFilter, null)).blockingGet();
 		

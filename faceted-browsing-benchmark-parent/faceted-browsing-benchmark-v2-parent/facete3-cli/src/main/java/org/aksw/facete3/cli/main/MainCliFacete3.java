@@ -257,6 +257,8 @@ public class MainCliFacete3 {
 	FacetDirNode fdn;
 	Node selectedFacted = null;
 	
+	boolean includeAbsent = true;
+	
 	class Test<P> {
 		P value;
 		public Test(P value) {
@@ -315,7 +317,7 @@ public class MainCliFacete3 {
 			
 			
 			facetValueList.setEnabled(false);
-			List<FacetValueCount> fvcs = fdn.facetValueCountsWithAbsent().only(selectedFacted).exec().toList().blockingGet();
+			List<FacetValueCount> fvcs = fdn.facetValueCountsWithAbsent(includeAbsent).only(selectedFacted).exec().toList().blockingGet();
 	
 			System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 			
@@ -363,7 +365,7 @@ public class MainCliFacete3 {
 			UnaryRelation filter = facetFilter == null ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
 	
 					
-			List<FacetCount> fcs = fdn.facetCounts()
+			List<FacetCount> fcs = fdn.facetCounts(includeAbsent)
 					.filter(filter)
 					.exec().toList()
 					// TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup

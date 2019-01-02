@@ -94,17 +94,19 @@ public class FacetDirNodeImpl
 	}
 	
 	@Override
-	public DataQuery<FacetCount> facetCounts() {
+	public DataQuery<FacetCount> facetCounts(boolean includeAbsent) {
 		FacetedQueryResource facetedQuery = this.parent().query();
 		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
-		
+
+		BgpNode focus = facetedQuery.modelRoot().getFocus();
+
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(null, parent.state(), !this.state.isFwd(), false);
+		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(focus, parent.state(), !this.state.isFwd(), false, false, includeAbsent);
 		
-		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null);
+		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null, includeAbsent);
 		
 		
 		BasicPattern bgp = new BasicPattern();
@@ -225,8 +227,8 @@ public class FacetDirNodeImpl
 	}
 
 	@Override
-	public DataQuery<FacetValueCount> facetValueCountsWithAbsent() {
-		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, true);
+	public DataQuery<FacetValueCount> facetValueCountsWithAbsent(boolean includeAbsent) {
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, includeAbsent);
 		return result;
 	}
 

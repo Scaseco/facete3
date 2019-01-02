@@ -23,16 +23,18 @@ public class TestFacetedQueryAbsentFacetValues {
 
 		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City").activate();
 		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/Country").activate();
-		fq.focus().fwd("http://www.example.org/contains").one().constraints().absent().activate();
+		//fq.focus().fwd("http://www.example.org/contains").one().constraints().absent().activate();
 
 		// We are expecting 2 facet values for the contains property:
 		// [null, Leipzig]
 		
 		// Reason for the issue: There are group graph patterns which break the optional
 		// '{ OPTIONAL { foo }' } yields LEFT_JOIN(unit, foo)
-		List<FacetValueCount> fvcs = fq.focus().fwd().facetValueCountsWithAbsent().only("http://www.example.org/contains").exec().toList().blockingGet();
-		
+		List<FacetValueCount> fvcs = fq.focus().fwd().facetValueCountsWithAbsent(true).only("http://www.example.org/contains").exec().toList().blockingGet();
 		System.out.println(fvcs);
+		
+		System.out.println("Facet counts: " + fq.focus().fwd().facetCounts(true).only("http://www.example.org/contains").exec().toList().blockingGet());
+		
 	}
 	
 	@Test
@@ -91,7 +93,7 @@ public class TestFacetedQueryAbsentFacetValues {
 //
 		FacetDirNode facetDirNode = fq.root().fwd();
 		facetDirNode.via(RDFS.label).one().constraints().eqStr("test").activate();
-		System.out.println("" + facetDirNode.facetValueCountsWithAbsent().toConstructQuery());
+		System.out.println("" + facetDirNode.facetValueCountsWithAbsent(true).toConstructQuery());
 //		
 //		System.out.println(str);
 		

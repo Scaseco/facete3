@@ -30,6 +30,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_Bound;
+import org.apache.jena.sparql.expr.E_Conditional;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
@@ -76,7 +78,7 @@ public class FacetedBrowsingSessionImpl {
 		
 		this.focus = root;
 		
-		queryGenerator.createMapFacetsAndValues(root, false, false);
+//		queryGenerator.createMapFacetsAndValues(root, false, false);
 	}
 	
 	public SPath getRoot() {
@@ -92,22 +94,23 @@ public class FacetedBrowsingSessionImpl {
 	 * @param isReverse
 	 * @return
 	 */
-	public Flowable<Entry<Node, Range<Long>>> getFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
-		BinaryRelation br = createQueryFacetsAndCounts(path, isReverse, pConstraint);
-		
-		
-		//RelationUtils.attr
-		
-		Query query = RelationUtils.createQuery(br);
-		
-		logger.info("Requesting facet counts: " + query);
-		
-		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
-			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
-	}
+//	public Flowable<Entry<Node, Range<Long>>> getFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
+//		BinaryRelation br = createQueryFacetsAndCounts(path, isReverse, pConstraint);
+//		
+//		
+//		//RelationUtils.attr
+//		
+//		Query query = RelationUtils.createQuery(br);
+//		
+//		logger.info("Requesting facet counts: " + query);
+//		
+//		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
+//			.map(b -> new SimpleEntry<>(b.get(br.getSourceVar()), Range.singleton(((Number)b.get(br.getTargetVar()).getLiteral().getValue()).longValue())));
+//	}
 	
 	public BinaryRelation createQueryFacetsAndCounts(SPath path, boolean isReverse, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = queryGenerator.createMapFacetsAndValues(path, isReverse, false);
+		Map<String, BinaryRelation> relations = null;
+		//		Map<String, BinaryRelation> relations = queryGenerator.createMapFacetsAndValues(path, isReverse, false);
 
 		// Align the relations
 		//Relation aligned = FacetedBrowsingSession.align(relations.values(), Arrays.asList(Vars.p, Vars.o));
@@ -131,7 +134,7 @@ public class FacetedBrowsingSessionImpl {
 //
 //		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
 
-		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint);
+		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint, false);
 		
 		return result;
 		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
@@ -192,11 +195,17 @@ public class FacetedBrowsingSessionImpl {
 	}
 
 	
-	public static Relation groupBy(Relation r, Var aggVar, Var resultVar) {
+	public static Relation groupBy(Relation r, Var aggVar, Var resultVar, boolean includeAbsent) {
 		Query query = new Query();
 		query.setQuerySelectType();
 		query.setQueryPattern(r.getElement());
-		Expr tmp = query.allocAggregate(new AggCountVarDistinct(new ExprVar(aggVar)));
+		
+		ExprVar ev = new ExprVar(aggVar);
+		
+		Expr e = includeAbsent
+				? new E_Conditional(new E_Bound(ev), ev, ConstraintFacadeImpl.NV_ABSENT)
+				: ev;
+		Expr tmp = query.allocAggregate(new AggCountVarDistinct(e));
 		
 		List<Var> vars = r.getVars();
 
@@ -242,7 +251,7 @@ public class FacetedBrowsingSessionImpl {
 				.map(e -> rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
 				.map(Relation::toTernaryRelation)
 				.map(e -> e.joinOn(e.getP()).with(pFilter))
-				.map(e -> groupBy(e, Vars.s, countVar))
+				.map(e -> groupBy(e, Vars.s, countVar, false))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 
