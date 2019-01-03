@@ -103,11 +103,15 @@ public class FacetDirNodeImpl
 		BgpNode focus = facetedQuery.modelRoot().getFocus();
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+		// TODO The API is not consistent with respect to passing the base concept
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
-		qgen.setBaseConcept(query().baseConcept());
+		UnaryRelation baseConcept = query().baseConcept();
+		qgen.setBaseConcept(baseConcept);
+		
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(focus, parent.state(), !this.state.isFwd(), false, false, includeAbsent);
+//		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(focus, parent.state(), !this.state.isFwd(), false, false, includeAbsent);
+		Map<String, TernaryRelation> relations = qgen.getFacetValuesCore(baseConcept, focus, parent.state(), null, null, !this.state.isFwd(), false, false, includeAbsent);
 		
 		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null, includeAbsent);
 		

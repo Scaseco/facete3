@@ -696,7 +696,29 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public static BinaryRelation createRelationFacetsAndCounts(Map<String, BinaryRelation> relations, Concept pConstraint, boolean includeAbsent) {
+	
+	public static BinaryRelation createRelationFacetsAndCounts(Map<String, TernaryRelation> relationsFocusFacetValue, Concept pConstraint, boolean includeAbsent) {
+		Var countVar = Var.alloc("__count__");
+		List<Element> elements = relationsFocusFacetValue.values().stream()
+				//.filter(e -> !e.isEmpty())
+				.map(e -> e.project(e.getP(), e.getO()))
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(Relation::toBinaryRelation)
+				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
+				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.o, countVar, includeAbsent))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+		
+		Element e = ElementUtils.unionIfNeeded(elements);
+
+		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
+
+		return result;
+	}
+
+	
+	@Deprecated
+	public static BinaryRelation createRelationFacetsAndCountsOld(Map<String, BinaryRelation> relations, Concept pConstraint, boolean includeAbsent) {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relations.values().stream()
 				//.filter(e -> !e.isEmpty())

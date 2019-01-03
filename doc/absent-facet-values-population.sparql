@@ -36,6 +36,6 @@ SELECT  ?p (COUNT(DISTINCT ?o) AS ?__count__)
 #         HAVING ( ?p IN (<http://www.example.org/contains>) )
  
 
-SELECT (UNDEF AS ?o) { }
+#SELECT (UNDEF AS ?o) { }
 SELECT COUNT(DISTINCT ?o) { VALUES (?o) { (eg:foo) (UNDEF) } }
 

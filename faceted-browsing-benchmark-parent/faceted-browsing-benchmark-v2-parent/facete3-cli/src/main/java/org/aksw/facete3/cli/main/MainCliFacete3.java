@@ -255,7 +255,7 @@ public class MainCliFacete3 {
 	String facetFilter = null;
 	
 	FacetDirNode fdn;
-	Node selectedFacted = null;
+	Node selectedFacet = null;
 	
 	boolean includeAbsent = true;
 	
@@ -307,17 +307,17 @@ public class MainCliFacete3 {
 	 */
 	public void selectFacet(FacetDirNode fdn, Node predicate) {
 		this.fdn = fdn;
-		this.selectedFacted = predicate;
+		this.selectedFacet = predicate;
 		updateFacetValues();
 	}
 	
 	
 	public void updateFacetValues() {
-		if(fdn != null && selectedFacted != null) {
+		if(fdn != null && selectedFacet != null) {
 			
 			
 			facetValueList.setEnabled(false);
-			List<FacetValueCount> fvcs = fdn.facetValueCountsWithAbsent(includeAbsent).only(selectedFacted).exec().toList().blockingGet();
+			List<FacetValueCount> fvcs = fdn.facetValueCountsWithAbsent(includeAbsent).only(selectedFacet).exec().toList().blockingGet();
 	
 			System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 			

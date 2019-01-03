@@ -4,7 +4,6 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,16 +12,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Streams;
@@ -134,10 +132,12 @@ public class FacetedBrowsingSessionImpl {
 //
 //		BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
 
-		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint, false);
+//		BinaryRelation result = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint, false);
 		
-		return result;
+//		return result;
 		//Map<String, TernaryRelation> facetValues = g.getFacetValues(focus, path, false);
+
+		return null;
 	}
 
 	public static Relation rename(Relation r, List<Var> targetVars) {
@@ -155,11 +155,16 @@ public class FacetedBrowsingSessionImpl {
 			(a, b) -> new SimpleEntry<>(a, b))
 			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 		
+		
 		// Extend the map by renaming all remaining variables
 		Set<Var> mentionedVars = r.getVarsMentioned();
 		Set<Var> remainingVars = Sets.difference(mentionedVars, relationVars);
-		
-		Map<Var, Var> map = VarUtils.createDistinctVarMap(targetVars, remainingVars, false, VarGeneratorImpl2.create());
+
+		//Set<Var> forbiddenVars = Sets.union(vs, mentionedVars);
+		Generator<Var> varGen = VarGeneratorBlacklist.create(remainingVars);
+
+		// targetVars
+		Map<Var, Var> map = VarUtils.createDistinctVarMap(targetVars, remainingVars, true, varGen);
 		map.putAll(rename);
 		
 		Relation result = r.applyNodeTransform(new NodeTransformSubst(map));
