@@ -1096,9 +1096,9 @@ public class FacetedQueryGenerator<P> {
 
 		UnaryRelation result = new Concept(ElementUtils.groupIfNeeded(elts), resultVar);
 		
-		if(baseConcept != null) {
-			result = result.joinOn(rootVar).with(baseConcept).toUnaryRelation();
-		}
+		//if(baseConcept != null) {
+			result = result.prependOn(rootVar).with(baseConcept).toUnaryRelation();
+		//}
 		
 		return result;
 

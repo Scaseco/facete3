@@ -260,20 +260,20 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals("{ ?v_2      <http://www.example.org/locatedIn>  ?v_1 .\n" +
-				"  <http://www.example.org/Germany>\n" +
-				"            <http://www.example.org/contains>  ?v_2 .\n" +
-				"  ?v_1      ?p                    ?o\n" +
+		assertEquals("{ ?v_1      ?p                    ?o .\n" + 
+				"  ?v_2      <http://www.example.org/locatedIn>  ?v_1 .\n" + 
+				"  <http://www.example.org/Germany>\n" + 
+				"            <http://www.example.org/contains>  ?v_2\n" + 
 				"}", getQueryPattern(node));
 
 		changeTracker.discardChanges();
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals("{ ?v_2      <http://www.example.org/mayor>  ?v_1 .\n" +
-				"  <http://www.example.org/LorenzStadler>\n" +
-				"            <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-				"  ?v_1      ?p                    ?o\n" +
+		assertEquals("{ ?v_1      ?p                    ?o .\n" + 
+				"  ?v_2      <http://www.example.org/mayor>  ?v_1 .\n" + 
+				"  <http://www.example.org/LorenzStadler>\n" + 
+				"            <http://xmlns.com/foaf/0.1/based_near>  ?v_2\n" + 
 				"}", getQueryPattern(node));
 	}
 
@@ -359,10 +359,10 @@ public class TestFacetedQuery2 {
 
 		final FacetNode node = fq.root();
 		taskGenerator.applyCp9(node);
-		assertEquals("{ ?v_2  <http://www.example.org/locatedIn>  ?v_1 ;\n" +
-				"        <http://www.example.org/population>  ?v_3 .\n" +
-				"  ?v_1  ?p                    ?o\n" +
-				"  FILTER ( ?v_3 >= 560472 )\n" +
+		assertEquals("{ ?v_1  ?p                    ?o .\n" + 
+				"  ?v_2  <http://www.example.org/locatedIn>  ?v_1 ;\n" + 
+				"        <http://www.example.org/population>  ?v_3\n" + 
+				"  FILTER ( ?v_3 >= 560472 )\n" + 
 				"}", getQueryPattern(node));
 /*
 		taskGenerator.getRandom().nextLong();
@@ -373,13 +373,13 @@ public class TestFacetedQuery2 {
 		taskGenerator.applyCp9(node);
 
 
-		assertEquals("{ ?v_2  <http://www.example.org/locatedIn>  ?v_1 ;\n" +
-				"        <http://www.example.org/population>  ?v_3 .\n" +
-				"  ?v_4  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" +
-				"        <http://xmlns.com/foaf/0.1/age>  ?v_5 .\n" +
-				"  ?v_1  ?p                    ?o\n" +
-				"  FILTER ( ?v_3 <= 560472 )\n" +
-				"  FILTER ( ?v_5 <= 60 )\n" +
+		assertEquals("{ ?v_1  ?p                    ?o .\n" + 
+				"  ?v_2  <http://www.example.org/locatedIn>  ?v_1 ;\n" + 
+				"        <http://www.example.org/population>  ?v_3 .\n" + 
+				"  ?v_4  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 ;\n" + 
+				"        <http://xmlns.com/foaf/0.1/age>  ?v_5\n" + 
+				"  FILTER ( ?v_3 <= 560472 )\n" + 
+				"  FILTER ( ?v_5 <= 60 )\n" + 
 				"}", getQueryPattern(node));
 	}
 
