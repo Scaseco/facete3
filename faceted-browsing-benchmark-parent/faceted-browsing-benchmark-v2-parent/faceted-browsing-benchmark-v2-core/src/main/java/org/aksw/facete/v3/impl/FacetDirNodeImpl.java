@@ -71,17 +71,24 @@ public class FacetDirNodeImpl
 	}
 	
 	@Override
-	public DataQuery<RDFNode> facets() {
+	public DataQuery<RDFNode> facets(boolean includeAbsent) {
 		FacetedQueryResource facetedQuery = this.parent().query();
-		
+
+		BgpNode focus = facetedQuery.modelRoot().getFocus();
+
 		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
-		qgen.setBaseConcept(query().baseConcept());
+		UnaryRelation baseConcept = query().baseConcept();
+		qgen.setBaseConcept(baseConcept);
 		facetedQuery.modelRoot().constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		UnaryRelation concept = qgen.createConceptFacets(parent.state(), !this.state.isFwd(), false, null);
+		Map<String, TernaryRelation> relations = qgen.getFacetValuesCore(baseConcept, focus, parent.state(), null, null, !this.state.isFwd(), false, false, includeAbsent);
+		
+		UnaryRelation concept = FacetedQueryGenerator.createConceptFacets(relations, null);
+
+//		UnaryRelation concept = qgen.createConceptFacets(parent.state(), !this.state.isFwd(), false, null);
 		
 //		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, pConstraint)(relations, null);
 //

@@ -674,14 +674,31 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public UnaryRelation createConceptFacets(P facetOriginPath, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
-		Map<String, BinaryRelation> relations = createMapFacetsAndValues(null, facetOriginPath, isReverse, false, false, false);
+//	public UnaryRelation createConceptFacets(P facetOriginPath, boolean isReverse, boolean applySelfConstraints, Concept pConstraint) {
+//		Map<String, BinaryRelation> relations = createMapFacetsAndValues(null, facetOriginPath, isReverse, false, false, false);
+//	
+//		UnaryRelation result = createConceptFacets(relations, pConstraint);
+//		return result;
+//	}
 	
-		UnaryRelation result = createConceptFacets(relations, pConstraint);
+	public static UnaryRelation createConceptFacets(Map<String, TernaryRelation> relations, Concept pConstraint) {
+		List<Element> elements = relations.values().stream()
+				.map(e -> e.project(e.getP()))
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p)))
+				.map(Relation::toUnaryRelation)
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+		
+		Element e = ElementUtils.unionIfNeeded(elements);
+
+		UnaryRelation result = new Concept(e, Vars.p);
+		//BinaryRelation result = new BinaryRelationImpl(e, Vars.p, countVar);
+
 		return result;
 	}
-	
-	public static UnaryRelation createConceptFacets(Map<String, BinaryRelation> relations, Concept pConstraint) {
+
+	@Deprecated
+	public static UnaryRelation createConceptFacetsOld(Map<String, BinaryRelation> relations, Concept pConstraint) {
 		List<Element> elements = relations.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
 				.map(Relation::toBinaryRelation)

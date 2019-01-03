@@ -7,6 +7,7 @@ import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
@@ -37,6 +38,9 @@ public class TestFacetedQueryAbsentFacetValues {
 
 		List<FacetCount> fcs = fq.focus().fwd().facetCounts(true).only(RDF.type).exec().toList().blockingGet();
 		System.out.println(fcs);
+
+		List<RDFNode> fs = fq.focus().fwd().facets(true).only(RDF.type).exec().toList().blockingGet();
+		System.out.println(fs);
 
 		//System.out.println("Facet counts: " + fq.focus().fwd().facetCounts(true).only("http://www.example.org/contains").exec().toList().blockingGet());
 		

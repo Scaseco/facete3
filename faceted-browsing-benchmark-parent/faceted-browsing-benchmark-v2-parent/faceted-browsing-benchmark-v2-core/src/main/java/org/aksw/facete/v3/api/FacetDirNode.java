@@ -26,8 +26,12 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	BinaryRelation facetValueRelation();
 		
 	/** Facets without counts, i.e. just the available predicates */
-	DataQuery<RDFNode> facets();
-	
+	DataQuery<RDFNode> facets(boolean includeAbsent);
+
+	default DataQuery<RDFNode> facets() {
+		return facets(false);
+	}
+
 	// Get the facets of this set of values with count of their distinct values
 	//Collection<FacetCount> getFacetsAndCounts();
 	/** Facets and counts **/
