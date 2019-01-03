@@ -130,6 +130,7 @@ public class FacetNodeImpl
 		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 		
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
+		qgen.setBaseConcept(query().baseConcept());
 		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		BgpNode focus = query().focus().state();

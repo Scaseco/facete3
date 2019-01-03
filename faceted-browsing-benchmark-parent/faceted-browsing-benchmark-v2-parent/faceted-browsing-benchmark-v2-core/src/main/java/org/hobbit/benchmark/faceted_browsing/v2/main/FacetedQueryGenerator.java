@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -70,7 +71,7 @@ import com.google.common.collect.Sets;
 
 
 public class FacetedQueryGenerator<P> {
-	protected Concept baseConcept;
+	protected UnaryRelation baseConcept;
 	protected PathToRelationMapper<P> mapper;
 	protected Collection<Expr> constraints;
 	
@@ -104,7 +105,7 @@ public class FacetedQueryGenerator<P> {
 	public FacetedQueryGenerator(PathAccessor<P> pathAccessor) {
 		super();
 		this.pathAccessor = pathAccessor;
-		this.baseConcept = ConceptUtils.createSubjectConcept();
+		//this.baseConcept = ConceptUtils.createSubjectConcept();
 		this.mapper = new PathToRelationMapper<>(pathAccessor);
 		this.constraints = new LinkedHashSet<>();
 	}
@@ -119,6 +120,10 @@ public class FacetedQueryGenerator<P> {
 //	}
 	public void addConstraint(Expr expr) {
 		constraints.add(expr);
+	}
+	
+	public void setBaseConcept(UnaryRelation baseConcept) {
+		this.baseConcept = baseConcept;
 	}
 
 //	public TernaryRelation createQueryFacetValues(SPath focus, SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
@@ -288,7 +293,7 @@ public class FacetedQueryGenerator<P> {
 		// Te constraint facets are properly processed individually
 		//Map<String, BinaryRelation> rawRelations = createMapFacetsAndValues(facetOriginPath, isReverse, false, false, false);
 		
-		Map<String, TernaryRelation> rawRelations3 = getFacetValuesCore(focusPath, facetOriginPath, null, null, isReverse, negated, false, false);
+		Map<String, TernaryRelation> rawRelations3 = getFacetValuesCore(baseConcept, focusPath, facetOriginPath, null, null, isReverse, negated, false, false);
 
 		TernaryRelation tr = rawRelations3.get(null);
 		UnaryRelation rawFacetConcept = tr.project(tr.getP()).toUnaryRelation();
@@ -849,7 +854,7 @@ public class FacetedQueryGenerator<P> {
 	// a group by for counting
 	// we should streamline this
 	public TernaryRelation createRelationFacetValue(P focus, P facetPath, boolean isReverse, UnaryRelation pFilter, UnaryRelation oFilter, boolean applySelfConstraints, boolean includeAbsent) {
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, false, applySelfConstraints, includeAbsent);
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, false, applySelfConstraints, includeAbsent);
 
 		List<Element> elements = facetValues.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
@@ -866,7 +871,7 @@ public class FacetedQueryGenerator<P> {
 
 	public TernaryRelation createRelationFacetValues(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter, boolean includeAbsent) {
 		
-		Map<String, TernaryRelation> facetValues = getFacetValuesCore(focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
@@ -1061,7 +1066,7 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	// [focus, facet, facetValue]
-	public Map<String, TernaryRelation> getFacetValuesCore(P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated, boolean applySelfConstraints, boolean includeAbsent) {
+	public Map<String, TernaryRelation> getFacetValuesCore(UnaryRelation baseConcept, P focusPath, P facetPath, UnaryRelation pFilter, UnaryRelation oFilter, boolean isReverse, boolean negated, boolean applySelfConstraints, boolean includeAbsent) {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
@@ -1081,7 +1086,29 @@ public class FacetedQueryGenerator<P> {
 			
 			Set<Element> e3 = Sets.union(e1, e2);
 			Element e4 = ElementUtils.groupIfNeeded(e3);
-			TernaryRelation tr = new TernaryRelationImpl(e4, focusRelation.getTargetVar(), rel.getSourceVar(), rel.getTargetVar());
+						
+			
+			
+			// TODO Factor out this block into a common method
+			Element e5;
+			{
+				UnaryRelation bc = Optional.ofNullable(baseConcept)
+						.orElse(ConceptUtils.createSubjectConcept());
+				
+				//Var resultVar = (Var)mapper.getNode(facetPath);
+	
+				P rootPath = getRoot(facetPath, pathAccessor::getParent);
+				Var rootVar = (Var)mapper.getNode(rootPath);
+	
+				UnaryRelation c4 = new Concept(e4, rootVar);
+				
+				
+				Relation tmp = c4.prependOn(rootVar).with(bc);
+				e5 = tmp.getElement();
+			}
+			
+			TernaryRelation tr = new TernaryRelationImpl(e5, focusRelation.getTargetVar(), rel.getSourceVar(), rel.getTargetVar());
+
 			
 			String p = facet.getKey();
 			result.put(p, tr);
@@ -1089,6 +1116,7 @@ public class FacetedQueryGenerator<P> {
 
 		return result;
 	}
+	
 	
 	//public TernaryRelation get
 	

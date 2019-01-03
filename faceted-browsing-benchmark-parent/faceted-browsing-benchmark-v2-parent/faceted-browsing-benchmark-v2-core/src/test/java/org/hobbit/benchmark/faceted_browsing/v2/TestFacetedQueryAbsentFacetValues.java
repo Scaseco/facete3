@@ -2,13 +2,12 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 
 import java.util.List;
 
+import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -23,7 +22,7 @@ public class TestFacetedQueryAbsentFacetValues {
 					.configDataConnection().setSource(RDFDataMgr.loadModel(TestFacetedQuery2.DS_S_L_IN_G)).end()
 				.create();
 
-		fq.baseConcept(Concept.parse("?s | ?s a eg:Foobar", PrefixMapping.Extended));
+//		fq.baseConcept(Concept.parse("?s | ?s a eg:Foobar", PrefixMapping.Extended));
 		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City").activate();
 		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/Country").activate();
 		fq.focus().fwd("http://www.example.org/contains").one().constraints().absent().activate();
@@ -35,7 +34,10 @@ public class TestFacetedQueryAbsentFacetValues {
 		
 		List<FacetValueCount> fvcs = fq.focus().fwd().facetValueCountsWithAbsent(true).only(RDF.type).exec().toList().blockingGet();
 		System.out.println(fvcs);
-		
+
+		List<FacetCount> fcs = fq.focus().fwd().facetCounts(true).only(RDF.type).exec().toList().blockingGet();
+		System.out.println(fcs);
+
 		//System.out.println("Facet counts: " + fq.focus().fwd().facetCounts(true).only("http://www.example.org/contains").exec().toList().blockingGet());
 		
 	}

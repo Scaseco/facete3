@@ -42,6 +42,8 @@ public interface FacetedQuery
 	FacetedQuery baseConcept(Supplier<? extends UnaryRelation> conceptSupplier);
 	FacetedQuery baseConcept(UnaryRelation concept);
 	
+	UnaryRelation baseConcept();
+	
 	FacetedQuery connection(SparqlQueryConnection conn);
 	SparqlQueryConnection connection();
 	

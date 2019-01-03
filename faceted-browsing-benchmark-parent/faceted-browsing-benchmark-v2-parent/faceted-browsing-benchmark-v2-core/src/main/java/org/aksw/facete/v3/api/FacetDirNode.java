@@ -4,11 +4,14 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.rdf.model.RDFNode;
 
 public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
-	/** The parent of this node, may be null */
+	/** The parent of this node, should never be null */
 	FacetNode parent();
 
 	/** Get the query object this node belongs to */
-	FacetedQuery getQuery();
+	default FacetedQuery query() {
+		FacetedQuery result = parent().query();
+		return result;
+	}
 	
 	/** The set of all outgoing edges - similar corrensponds to the triple ?s ?p ?o */
 	//FacetEdgeSet out();

@@ -6,6 +6,7 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.rdf.model.Model;
@@ -67,7 +68,7 @@ public class FacetedQueryImpl
 	public static FacetedQueryImpl create(XFacetedQuery modelRoot, SparqlQueryConnection conn) {
 		initResource(modelRoot);
 		
-		return new FacetedQueryImpl(modelRoot, null, conn);
+		return new FacetedQueryImpl(modelRoot, () -> ConceptUtils.subjectConcept, conn);
 	}
 
 	public FacetedQueryImpl(XFacetedQuery modelRoot, Supplier<? extends UnaryRelation> conceptSupplier, SparqlQueryConnection conn) {
@@ -125,6 +126,12 @@ public class FacetedQueryImpl
 		return baseConcept(() -> concept);
 	}
 
+	@Override
+	public UnaryRelation baseConcept() {
+		UnaryRelation result = conceptSupplier.get();
+		return result;
+	}
+	
 	@Override
 	public FacetedQuery connection(SparqlQueryConnection conn) {
 		this.conn = conn;

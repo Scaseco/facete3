@@ -110,9 +110,9 @@ public class TaskGenerator {
 
 		// RDF Resource with state
 		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
-		FacetedQueryImpl.initResource(facetedQuery);
+		//FacetedQueryImpl.initResource(facetedQuery);
 
-		currentQuery = new FacetedQueryImpl(facetedQuery, null, conn);
+		currentQuery = FacetedQueryImpl.create(facetedQuery, conn);
 //		try {
 //			generateScenario();
 //		} catch(Exception e) {

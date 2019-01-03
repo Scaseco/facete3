@@ -26,6 +26,7 @@ import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.function.library.leviathan.root;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
@@ -77,6 +78,7 @@ public class FacetDirNodeImpl
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
+		qgen.setBaseConcept(query().baseConcept());
 		facetedQuery.modelRoot().constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		UnaryRelation concept = qgen.createConceptFacets(parent.state(), !this.state.isFwd(), false, null);
@@ -102,6 +104,7 @@ public class FacetDirNodeImpl
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
+		qgen.setBaseConcept(query().baseConcept());
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(focus, parent.state(), !this.state.isFwd(), false, false, includeAbsent);
@@ -155,11 +158,11 @@ public class FacetDirNodeImpl
 	}
 
 
-	@Override
-	public FacetedQuery getQuery() {
-		// TODO Auto-generated method stub
-		throw new NotImplementedException();
-	}
+//	@Override
+//	public FacetedQuery query() {
+//		FacetedQuery result = parent().query();
+//		return result;
+//	}
 
 	@Override
 	public BinaryRelation facetValueRelation() {
@@ -186,8 +189,10 @@ public class FacetDirNodeImpl
 
 //		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
+		qgen.setBaseConcept(query().baseConcept());
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
+		this.query();
 		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null, includeAbsent);
 		
 		// Inject that the object must not be a blank node
