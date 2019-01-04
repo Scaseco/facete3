@@ -42,6 +42,8 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -92,6 +94,9 @@ import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
 
 import jersey.repackaged.com.google.common.collect.Maps;
+import joptsimple.NonOptionArgumentSpec;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 
 
 // If we wanted to create an Amazon like faceted interface we'd need:
@@ -428,7 +433,28 @@ public class MainCliFacete3 {
 
 	
 	public static void main(String[] args) throws Exception {
-		new MainCliFacete3().init();
+		
+	    OptionParser parser = new OptionParser();
+
+	    NonOptionArgumentSpec<String> filesOs = parser
+	    		.nonOptions()
+	    		.describedAs("Input files");
+
+	    
+	    OptionSet optionSet = parser.parse(args);
+	    
+
+	    List<String> files = filesOs.values(optionSet);
+	    
+	    Model model = ModelFactory.createDefaultModel();
+	    for(String file : files) {
+	    	Model tmp = RDFDataMgr.loadModel(file);
+	    	model.add(tmp);
+	    }
+	    
+	    Dataset dataset = DatasetFactory.wrap(model);
+		
+		new MainCliFacete3().init(dataset);
 	}
 	
 	
@@ -437,10 +463,10 @@ public class MainCliFacete3 {
 		updateFacets(fq);
 	}
 	
-	public void init() throws Exception
+	public void init(Dataset dataset) throws Exception
 	{
 		
-		Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
+		//Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
 //		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(dataset);
 		
@@ -479,7 +505,7 @@ public class MainCliFacete3 {
 
 		
 		// Setup terminal and screen layers
-        Terminal terminal = new DefaultTerminalFactory().setMouseCaptureMode(MouseCaptureMode.CLICK).createTerminal();
+        Terminal terminal = new DefaultTerminalFactory().setTerminalEmulatorTitle("Facete III").setMouseCaptureMode(MouseCaptureMode.CLICK).createTerminal();
         Screen screen = new TerminalScreen(terminal);
         screen.startScreen();
         
