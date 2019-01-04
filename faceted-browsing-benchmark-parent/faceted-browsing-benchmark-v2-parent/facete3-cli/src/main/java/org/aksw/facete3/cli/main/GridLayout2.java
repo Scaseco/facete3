@@ -447,7 +447,8 @@ public class GridLayout2 implements LayoutManager {
         //Next, start shrinking to make sure it fits the size of the area we are trying to lay out on.
         //Notice we subtract the horizontalSpacing to take the space between components into account
         TerminalSize areaWithoutHorizontalSpacing = area.withRelativeColumns(-horizontalSpacing * (table[0].length - 1));
-        int totalWidth = shrinkWidthToFitArea(areaWithoutHorizontalSpacing, columnWidths);
+//        int totalWidth = shrinkWidthToFitArea(areaWithoutHorizontalSpacing, columnWidths);
+        int totalWidth = shrinkSizeToFitArea(areaWithoutHorizontalSpacing.getColumns(), columnWidths);
 
         //Finally, if there is extra space, make the expandable columns larger
         while(areaWithoutHorizontalSpacing.getColumns() > totalWidth && !expandableColumns.isEmpty()) {
@@ -458,7 +459,7 @@ public class GridLayout2 implements LayoutManager {
         int[] rowHeights = getPreferredRowHeights(table);
         Set<Integer> expandableRows = getExpandableRows(table);
         TerminalSize areaWithoutVerticalSpacing = area.withRelativeRows(-verticalSpacing * (table.length - 1));
-        int totalHeight = shrinkHeightToFitArea(areaWithoutVerticalSpacing, rowHeights);
+        int totalHeight = shrinkSizeToFitArea(areaWithoutVerticalSpacing.getRows(), rowHeights);
         while(areaWithoutVerticalSpacing.getRows() > totalHeight && !expandableRows.isEmpty()) {
             totalHeight = grabExtraVerticalSpace(areaWithoutVerticalSpacing, rowHeights, expandableRows, totalHeight);
         }
@@ -711,65 +712,65 @@ public class GridLayout2 implements LayoutManager {
      * should be prioritized.
      * 
      * @param area
-     * @param rowHeights
+     * @param sizes
      * @return
      */
-    public int shrinkHeightToFitArea(TerminalSize area, int[] rowHeights) {
-        int totalHeight = 0;
-        for(int height: rowHeights) {
-            totalHeight += height;
+    public int shrinkSizeToFitArea(int availableSize, int[] sizes) {
+        int totalSize = 0;
+        for(int size: sizes) {
+            totalSize += size;
         }
 
-        int availableRows = area.getRows();
-        int remainingHeights = availableRows;
+//        int availableRows = area.getRows();
+        int remainingSize = availableSize;
         
-        int l = rowHeights.length;
+        int l = sizes.length;
         Set<Integer> open = new LinkedHashSet<Integer>();
         for(int i = 0; i < l; ++i) {
         	open.add(i);
         }
 
-        int[] currentHeights = new int[l];
-        Arrays.fill(currentHeights, 0);
+        int[] currentSizes = new int[l];
+        Arrays.fill(currentSizes, 0);
 
         while(!open.isEmpty()) {
         	// Distribute the remaining rows among the open ones
         	int n = open.size();
         	
-            int share = remainingHeights / n;
+            int share = remainingSize / n;
 
             for(Iterator<Integer> it = open.iterator(); it.hasNext();) {
 	        	int i = it.next();
-            	int preferred = rowHeights[i];
-	        	int now = currentHeights[i];
+            	int preferred = sizes[i];
+	        	int now = currentSizes[i];
 	        	int eligible = now + share;
 	        	if(preferred <= eligible) {
 	        		// The component's preferred height is less than or equal to the eligible height
-	        		currentHeights[i] = preferred;
-	        		int usedHeights = preferred - now;
-	        		remainingHeights -= usedHeights;
+	        		currentSizes[i] = preferred;
+	        		int usedSize = preferred - now;
+	        		remainingSize -= usedSize;
 	        		it.remove();
 	        	} else {
 	        		// The component needs to shrink
-	        		currentHeights[i] = eligible;
-	        		remainingHeights -= share;
+	        		currentSizes[i] = eligible;
+	        		remainingSize -= share;
 	        	}
 	        }
             
             
             // If the remaining heights is greater than the open components, we can give away
             // shares of heights again
-            if(!open.isEmpty() && remainingHeights >= open.size()) {
+            if(!open.isEmpty() && remainingSize >= open.size()) {
             	continue;
             } else {
             	// Distribute the remaining rows among the open components
             	for(int i : open) {
-            		if(remainingHeights <= 0) {
+            		if(remainingSize <= 0) {
             			break;
             		}
 
-            		++currentHeights[i];
-            		--remainingHeights;
+            		++currentSizes[i];
+            		--remainingSize;
             	}
             	
             	break;
@@ -778,22 +779,22 @@ public class GridLayout2 implements LayoutManager {
         
         
         int result = 0;
-        for(int height: currentHeights) {
-        	result += height;
+        for(int size: currentSizes) {
+        	result += size;
         }
 
-        System.arraycopy(currentHeights, 0, rowHeights, 0, l);
+        System.arraycopy(currentSizes, 0, sizes, 0, l);
 
         // Sanity checks for validation of the implementation while its in use
         boolean doSanityCheck = true;
         if(doSanityCheck) {
-        	if(result > availableRows) {
+        	if(result > availableSize) {
         		throw new RuntimeException("Result rows exceeded available rows");
         	}
         	
-        	if(totalHeight >= availableRows) {
-        		if(result != availableRows) {
-        			throw new RuntimeException("Lost some rows: Only " + result + "/" + availableRows + " rows used, although " + totalHeight + " requested");
+        	if(totalSize >= availableSize) {
+        		if(result != availableSize) {
+        			throw new RuntimeException("Lost some rows: Only " + result + "/" + availableSize + " size units used, although " + totalSize + " requested");
         		}
         	}
         }

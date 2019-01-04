@@ -36,7 +36,7 @@ public class TestFacetedQueryDeterminism {
 		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
 		FacetedQueryImpl.initResource(facetedQuery);
 		
-		fq = new FacetedQueryImpl(facetedQuery, null, conn);
+		fq = FacetedQueryImpl.create(facetedQuery, conn);
 
 		//FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
 	}

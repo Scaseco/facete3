@@ -42,7 +42,9 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_LogicalNot;
+import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
@@ -63,6 +65,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -1146,7 +1149,18 @@ public class FacetedQueryGenerator<P> {
 				e5 = tmp.getElement();
 			}
 			
+			
 			TernaryRelation tr = new TernaryRelationImpl(e5, focusRelation.getTargetVar(), rel.getSourceVar(), rel.getTargetVar());
+
+//			tr = new TernaryRelationImpl(ElementUtils.createElementGroup(ImmutableList.<Element>builder()
+//				.addAll(tr.getElements())
+//				.add(new ElementFilter(new E_LogicalOr(
+//						new E_LogicalNot(new E_Bound(new ExprVar(tr.getP()))),
+//						new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP()))))))
+//				.build()),
+//				tr.getS(),
+//				tr.getP(),
+//				tr.getO());
 
 			
 			String p = facet.getKey();

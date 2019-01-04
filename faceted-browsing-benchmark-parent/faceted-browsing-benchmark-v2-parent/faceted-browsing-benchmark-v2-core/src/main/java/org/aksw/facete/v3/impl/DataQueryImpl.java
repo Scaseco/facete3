@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.DataMultiNode;
@@ -280,8 +282,19 @@ public class DataQueryImpl<T extends RDFNode>
 	}
 	
 	@Override
-	public NodePath get(String attr) {
-		
+	public DataQuery<T> filterUsing(Relation relation, String... attrNames) {
+
+		if(relation != null) {
+			List<Var> vars = Arrays.asList(attrNames).stream()
+					.map(this::resolveAttrToVar)
+					.collect(Collectors.toList());
+	
+			baseRelation = baseRelation.joinOn(vars).with(relation);
+		}
+		return this;
+	}
+
+	public Var resolveAttrToVar(String attr) {
 		EntityOps entityOps = EntityModel.createDefaultModel(resultClass, null);
 		
 		PropertyOps pops = entityOps.getProperty(attr);
@@ -296,6 +309,14 @@ public class DataQueryImpl<T extends RDFNode>
 		Node node = Optional.ofNullable(match.getObject())
 				.orElseThrow(() -> new RuntimeException("No member with name " + attr + " in " + resultClass));
 
+		Var result = (Var)node;
+		return result;
+	}
+
+	@Override
+	public NodePath get(String attr) {
+		
+		Var var = resolveAttrToVar(attr);
 //		Node node = Optional.ofNullable(iri)
 //				.map(NodeFactory::createURI)				
 //				.orElseThrow(() -> new MemberNotFoundException("No member with name " + attr + " in " + resultClass));
@@ -312,7 +333,7 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		Model m = ModelFactory.createDefaultModel();
 		SPath tmp = new SPathImpl(m.createResource().asNode(), (EnhGraph)m);
-		tmp.setAlias((Var)node);
+		tmp.setAlias(var);
 		
 //		tmp = tmp.get(node.getURI(), false);
 		
@@ -635,6 +656,7 @@ public class DataQueryImpl<T extends RDFNode>
         
         return result;
 	}
+
 	
 }
 

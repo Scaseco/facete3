@@ -30,6 +30,7 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.ConstraintFacadeImpl;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
+import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
@@ -40,6 +41,7 @@ import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQuery
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -71,11 +73,9 @@ import com.googlecode.lanterna.gui2.ActionListBox;
 import com.googlecode.lanterna.gui2.BasicWindow;
 import com.googlecode.lanterna.gui2.Borders;
 import com.googlecode.lanterna.gui2.Button;
-import com.googlecode.lanterna.gui2.CheckBoxList;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.Direction;
 import com.googlecode.lanterna.gui2.EmptySpace;
-import com.googlecode.lanterna.gui2.LinearLayout;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
@@ -90,7 +90,6 @@ import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
-import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
 
 import jersey.repackaged.com.google.common.collect.Maps;
@@ -288,6 +287,8 @@ public class MainCliFacete3 {
 
 	String facetFilter = null;
 	
+	String facetValueFilter = null;
+	
 	FacetDirNode fdn;
 	Node selectedFacet = null;
 	
@@ -349,11 +350,19 @@ public class MainCliFacete3 {
 	public void updateFacetValues() {
 		if(fdn != null && selectedFacet != null) {
 			
+			UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
+
 			
 			facetValueList.setEnabled(false);
-			List<FacetValueCount> fvcs = fdn.facetValueCountsWithAbsent(includeAbsent).only(selectedFacet).exec().toList().blockingGet();
+			
+			List<FacetValueCount> fvcs = fdn
+					.facetValueCountsWithAbsent(includeAbsent)
+					//.filter(filter)
+					.filterUsing(filter, FacetValueCountImpl_.VALUE)
+					.only(selectedFacet).exec()
+					.toList().blockingGet();
 	
-			System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
+			//System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 			
 			enrichWithLabels(fvcs, FacetValueCount::getValue, labelService);
 			
@@ -396,7 +405,7 @@ public class MainCliFacete3 {
 		
 			facetList.setEnabled(false);
 		
-			UnaryRelation filter = facetFilter == null ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
+			UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
 	
 					
 			List<FacetCount> fcs = fdn.facetCounts(includeAbsent)
@@ -505,7 +514,10 @@ public class MainCliFacete3 {
 
 		
 		// Setup terminal and screen layers
-        Terminal terminal = new DefaultTerminalFactory().setTerminalEmulatorTitle("Facete III").setMouseCaptureMode(MouseCaptureMode.CLICK).createTerminal();
+        Terminal terminal = new DefaultTerminalFactory()
+        		.setTerminalEmulatorTitle("Facete III")
+//        		.setMouseCaptureMode(MouseCaptureMode.CLICK)
+        		.createTerminal();
         Screen screen = new TerminalScreen(terminal);
         screen.startScreen();
         
@@ -555,7 +567,7 @@ public class MainCliFacete3 {
 
 		facetValueList.setListItemRenderer(new CheckBoxList.CheckBoxListItemRenderer<FacetValueCount>() {
 			@Override
-			public String getLabel(com.googlecode.lanterna.gui2.CheckBoxList<FacetValueCount> listBox, int index, FacetValueCount item) {
+			public String getLabel(CheckBoxList<FacetValueCount> listBox, int index, FacetValueCount item) {
 	            boolean checked = listBox.isChecked(index);
 	            String check = checked ? "x" : " ";
 
@@ -601,6 +613,25 @@ public class MainCliFacete3 {
 		Panel facetPathPanel = new Panel();
 				//GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)));
 		
+		
+		TextBox facetValueFilterBox = new TextBox(); // new TerminalSize(16, 1))
+
+		
+		facetValueFilterBox.setInputFilter((i, keyStroke) -> {
+			if(keyStroke.getKeyType().equals(KeyType.Enter)) {
+				facetValueFilter = facetValueFilterBox.getText();
+				updateFacetValues();
+				return false;
+			}
+			
+			return true;
+		});
+
+		Panel facetValueFilterPanel = new Panel();
+
+		
+		
+		
 		Panel facetValuePanel = new Panel();
 				
 		// Prevent focus change on down arrow key when at end of list 
@@ -610,9 +641,9 @@ public class MainCliFacete3 {
 			if(KeyType.ArrowLeft.equals(keyStroke.getKeyType())) {
 				facetList.takeFocus();
 			}
-			
-			r = !(keyStroke.getKeyType().equals(KeyType.ArrowUp) && facetValueList.getSelectedIndex() == 0) &&
-			!(keyStroke.getKeyType().equals(KeyType.ArrowDown) && facetValueList.getItems().size() - 1 == facetValueList.getSelectedIndex());
+
+//			r = !(keyStroke.getKeyType().equals(KeyType.ArrowUp) && facetValueList.getSelectedIndex() == 0) &&
+			r = !(keyStroke.getKeyType().equals(KeyType.ArrowDown) && facetValueList.getItems().size() - 1 == facetValueList.getSelectedIndex());
 			return r;
 			});
 				
@@ -630,7 +661,7 @@ public class MainCliFacete3 {
 		});
 		constraintList.setListItemRenderer(new CheckBoxList.CheckBoxListItemRenderer<HLFacetConstraint<?>>() {
 			@Override
-			public String getLabel(com.googlecode.lanterna.gui2.CheckBoxList<HLFacetConstraint<?>> listBox, int index, HLFacetConstraint<?> item) {
+			public String getLabel(CheckBoxList<HLFacetConstraint<?>> listBox, int index, HLFacetConstraint<?> item) {
 	            boolean checked = listBox.isChecked(index);
 	            String check = checked ? "x" : " ";
 
@@ -643,11 +674,12 @@ public class MainCliFacete3 {
 		Panel facetPanel = new Panel();
 		Panel constraintPanel = new Panel();
 		Panel resultPanel = new Panel();
-
+		Panel resourcePanel = new Panel();
+		
 		// Component hierarchy and layouts
 		
 
-		facetPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1)); //.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
+		facetPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, false, false, 1, 1)); //.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 		facetPanel.setLayoutManager(new GridLayout2(1));
 		facetPanel.addComponent(facetFilterPanel.withBorder(Borders.singleLine("Filter")));
 		facetPanel.addComponent(facetPathPanel);
@@ -667,9 +699,15 @@ public class MainCliFacete3 {
 		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
 		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
 
+		facetValueFilterBox.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
+		
+		facetValueFilterPanel.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
+		facetValueFilterPanel.setLayoutManager(new GridLayout2(1));
+		facetValueFilterPanel.addComponent(facetValueFilterBox);
 
 		facetValuePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetValuePanel.setLayoutManager(new GridLayout2(1));
+		facetValuePanel.addComponent(facetValueFilterBox.withBorder(Borders.singleLine("Filter")));
 		facetValuePanel.addComponent(facetValueList);
 
 
@@ -684,10 +722,13 @@ public class MainCliFacete3 {
 		resultTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 
 
-		resultPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 2, 1));
+		resultPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 		resultPanel.setLayoutManager(new GridLayout2(1));
 		resultPanel.addComponent(resultTable);
 		
+		resourcePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
+		resourcePanel.setLayoutManager(new GridLayout2(1));
+		resourcePanel.addComponent(new ActionListBox());
 
 
 
@@ -698,6 +739,7 @@ public class MainCliFacete3 {
 		mainPanel.addComponent(facetValuePanel.withBorder(Borders.singleLine("Facet Values")));
 		mainPanel.addComponent(constraintPanel.withBorder(Borders.singleLine("Constraints")));
 		mainPanel.addComponent(resultPanel.withBorder(Borders.singleLine("Matches")));
+		mainPanel.addComponent(resourcePanel.withBorder(Borders.singleLine("Resource")));
 
 		
 		

@@ -1,8 +1,8 @@
 package org.aksw.facete.v3.api;
 
 import java.util.Arrays;
-import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -35,10 +35,10 @@ import io.reactivex.Single;
 import jersey.repackaged.com.google.common.collect.Iterables;
 
 
-interface MultiNode {
-	
-}
-
+// This is similar to relationjoiner
+//interface DataQueryJoiner<T extends RDFNode> {
+//	DataQuery<T> with(Relation relation);
+//}
 
 
 // Actually, this is pretty much a resource
@@ -71,6 +71,11 @@ public interface DataQuery<T extends RDFNode> {
 	DataNode getRoot();
 	
 	DataMultiNode add(Property property);
+	
+	
+	// this is similar to source.joinOn(attrNames).with(relation)
+	DataQuery<T> filterUsing(Relation relation, String ... attrNames);
+	
 	
 	
 	// Return the same data query with intersection on the given concept
