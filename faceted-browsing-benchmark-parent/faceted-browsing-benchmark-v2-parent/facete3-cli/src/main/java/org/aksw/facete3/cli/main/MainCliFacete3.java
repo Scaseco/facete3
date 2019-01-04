@@ -620,10 +620,12 @@ public class MainCliFacete3 {
 
 		// Component hierarchy and layouts
 		
+
 		facetPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1)); //.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 		facetPanel.setLayoutManager(new GridLayout2(1));
 		facetPanel.addComponent(facetFilterPanel.withBorder(Borders.singleLine("Filter")));
-		facetPanel.addComponent(facetList);//.setLayoutData(
+		facetPanel.addComponent(facetPathPanel);
+		facetPanel.addComponent(facetList);
 
 		facetFilterBox.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
 
@@ -631,12 +633,14 @@ public class MainCliFacete3 {
 		facetFilterPanel.setLayoutManager(new GridLayout2(2));
 		facetFilterPanel.addComponent(facetFilterBox);
 		facetFilterPanel.addComponent(btnApply);
+		facetFilterPanel.addComponent(btnApply);
 
 		facetPathPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetPathPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
 		facetPathPanel.addComponent(new Button("Foo"));
 		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
 		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
+
 
 		facetValuePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetValuePanel.setLayoutManager(new GridLayout2(1));

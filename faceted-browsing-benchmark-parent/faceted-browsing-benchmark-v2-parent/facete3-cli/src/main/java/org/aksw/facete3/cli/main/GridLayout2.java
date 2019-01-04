@@ -703,8 +703,8 @@ public class GridLayout2 implements LayoutManager {
 
     
     /**
-     * New strategy: Equally distribute the space - if a component occupies less space,
-     * distribute the remaining space as well
+     * New strategy: Equally distribute the space - if components occupy less space,
+     * distribute the remaining space among those components that want it
      * 
      * Note: We could distribute the available space based on weights as well
      * When distributing the remaining rows, those components with the largest fractions
@@ -728,7 +728,7 @@ public class GridLayout2 implements LayoutManager {
         for(int i = 0; i < l; ++i) {
         	open.add(i);
         }
-        //Map<Integer, Integer> rowToHeight = new HashMap<Integer, Integer>();
+
         int[] currentHeights = new int[l];
         Arrays.fill(currentHeights, 0);
 
@@ -737,32 +737,29 @@ public class GridLayout2 implements LayoutManager {
         	int n = open.size();
         	
             int share = remainingHeights / n;
-            //int remainder = remainingHeights % n;
 
             for(Iterator<Integer> it = open.iterator(); it.hasNext();) {
 	        	int i = it.next();
-            	int max = rowHeights[i];
+            	int preferred = rowHeights[i];
 	        	int now = currentHeights[i];
 	        	int eligible = now + share;
-	        	if(max <= eligible) {
-	        		currentHeights[i] = max;
-	        		int usedHeights = max - now;
-	        		//int unusedHeights = eligible - max;
-	        		//remainder += unusedHeights;
+	        	if(preferred <= eligible) {
+	        		// The component's preferred height is less than or equal to the eligible height
+	        		currentHeights[i] = preferred;
+	        		int usedHeights = preferred - now;
 	        		remainingHeights -= usedHeights;
-//	        		remainingRows += delta;
 	        		it.remove();
 	        	} else {
+	        		// The component needs to shrink
 	        		currentHeights[i] = eligible;
 	        		remainingHeights -= share;
 	        	}
 	        }
             
             
-            // If the remainder is greater than the open components, we can give away
-            // for shares of rows again
+            // If the remaining heights is greater than the open components, we can give away
+            // shares of heights again
             if(!open.isEmpty() && remainingHeights >= open.size()) {
-            	//remainingHeights += remainder;
             	continue;
             } else {
             	// Distribute the remaining rows among the open components
@@ -773,7 +770,6 @@ public class GridLayout2 implements LayoutManager {
 
             		++currentHeights[i];
             		--remainingHeights;
-            		//--remainder;     		
             	}
             	
             	break;
@@ -788,8 +784,7 @@ public class GridLayout2 implements LayoutManager {
 
         System.arraycopy(currentHeights, 0, rowHeights, 0, l);
 
-        // Sanity check: If the preferred height exceeded the available rows,
-        // make sure that the result equals the available rows
+        // Sanity checks for validation of the implementation while its in use
         boolean doSanityCheck = true;
         if(doSanityCheck) {
         	if(result > availableRows) {
