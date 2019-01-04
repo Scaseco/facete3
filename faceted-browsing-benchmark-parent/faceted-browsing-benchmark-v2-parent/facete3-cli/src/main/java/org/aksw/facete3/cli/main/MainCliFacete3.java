@@ -8,13 +8,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.accessors.SingleValuedAccessor;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -30,6 +33,7 @@ import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
+import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -42,6 +46,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -68,8 +73,6 @@ import com.googlecode.lanterna.gui2.CheckBoxList;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.Direction;
 import com.googlecode.lanterna.gui2.EmptySpace;
-import com.googlecode.lanterna.gui2.GridLayout;
-import com.googlecode.lanterna.gui2.GridLayout.Alignment;
 import com.googlecode.lanterna.gui2.LinearLayout;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
@@ -98,6 +101,32 @@ import jersey.repackaged.com.google.common.collect.Maps;
 // binaryRelation.clearOrder(); binaryRelation.addOrder(binaryRelation.getTargetVar(), 1)
 // * my current term for the generalization of a sparql join on the syntax level - which isn't necessarily a join in the first place
 
+
+// Idea for an api to allow for something similar to angularjs' dirty checking
+class DirtyChecker {
+	
+	
+	public static <S1> Runnable watch(Supplier<S1> s1, Consumer<? super S1> action) {
+		return null;
+	}
+	
+	
+	// Bind a computation to a getter/setter
+	public static <T, S1> Runnable bind(
+			SingleValuedAccessor<T> target,
+			Supplier<S1> s1, 
+			Function<? super S1, ? extends T> fn) {
+		return null;
+	}
+	
+	public static <T, S1, S2> Runnable bind(
+			SingleValuedAccessor<T> target,
+			Supplier<S1> s1, Supplier<S2> s2,
+			BiFunction<? super S1, ? super S2, ? extends T> fn) {
+		return null;
+	}
+	
+}
 
 /**
  * 
@@ -410,12 +439,14 @@ public class MainCliFacete3 {
 	
 	public void init() throws Exception
 	{
-		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
+		
+		Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
+//		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
 		RDFConnection conn = RDFConnectionFactory.connect(dataset);
 		
 		fq = FacetedQueryImpl.create(conn);
 
-		facetList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
+		//facetList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 
 		facetList.setInputFilter((i, keyStroke) -> {
 			if(KeyType.ArrowRight.equals(keyStroke.getKeyType())) {
@@ -443,7 +474,7 @@ public class MainCliFacete3 {
 		
 		labelService = LookupServiceUtils
 				.createLookupService(new QueryExecutionFactorySparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
-				.mapValues((k, vs) -> vs.isEmpty() ? k.getLocalName() : vs.iterator().next())
+				.mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
 				.mapValues((k, v) -> "" + v);
 
 		
@@ -456,14 +487,12 @@ public class MainCliFacete3 {
 
 //		TerminalSize size = new TerminalSize(80, 25);
 		
-		Panel mainPanel = new Panel(new GridLayout(2));
-		//mainPanel.setLayoutManager(new GridLayout(2)); //Direction.HORIZONTAL));
+		Panel mainPanel = new Panel();
 		
 		
 		TextBox facetFilterBox = new TextBox(); // new TerminalSize(16, 1))
 //		ComboBox<String> facetFilterBox = new ComboBox<>();
 //		facetFilterBox.setPreferredSize(new TerminalSize(16, 1));
-		facetFilterBox.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 //		facetFilterBox.addItem("foo");
 //		facetFilterBox.addItem("bar");
 //		facetFilterBox.addItem("baz");
@@ -484,7 +513,6 @@ public class MainCliFacete3 {
 		updateItems(fq);
 		
 		
-		facetValueList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 		facetValueList.addListener((int itemIndex, boolean checked) -> {
 			FacetValueCount item = facetValueList.getItemAt(itemIndex);
 			//System.out.println(item);
@@ -519,13 +547,8 @@ public class MainCliFacete3 {
 		
 
 		
-		Panel facetPanel = new Panel(new GridLayout(1));
-		facetPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 
-		Panel facetFilterPanel = new Panel(new GridLayout(2));
-		facetFilterPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
-
-		facetFilterPanel.addComponent(facetFilterBox);
+		Panel facetFilterPanel = new Panel();
 		
 //		Button btnClear = new Button("Clr") {
 //			public synchronized com.googlecode.lanterna.gui2.Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
@@ -546,50 +569,14 @@ public class MainCliFacete3 {
 				return super.handleKeyStroke(keyStroke);
 			};
 		};
-		facetFilterPanel.addComponent(btnApply);
 		
 		
-		facetPanel.addComponent(facetFilterPanel.withBorder(Borders.singleLine("Filter")));
-		facetPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
-
-		//		facetPanel.addComponent(facetFilterPanel);
-
-		//mainPanel.withBorder(Borders.singleLine("Facete 3"));
-
-//		facetPanel.addComponent(facetFilterBox.setLayoutData(
-//				GridLayout.createLayoutData(
-//					GridLayout.Alignment.BEGINNING,
-//					GridLayout.Alignment.BEGINNING,
-//					true,
-//					false,
-//					1, 1
-//					)));
-
 		
-//		RadioBoxList<String> dirList = new RadioBoxList<>();
-//		dirList.addItem("Fwd");
-//		dirList.addItem("Bwd");
-//		facetPanel.addComponent(dirList);
-		Panel facetPathPanel = new Panel(new LinearLayout(Direction.HORIZONTAL));
-		facetPathPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
-
-		facetPathPanel.addComponent(new Button("Foo"));
-		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
-		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
-		
-		facetPanel.addComponent(facetPathPanel);
-		
-		
-		facetPanel.addComponent(facetList);//.setLayoutData(
+		Panel facetPathPanel = new Panel();
 				//GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)));
 		
-		//mainPanel.addComponent(new Label("Type:"));
-
-		Panel facetValuePanel = new Panel(new GridLayout(1));
-		
-		facetValuePanel.setLayoutData(GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
-		//facetValuePanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));//.createHorizontallyEndAlignedLayoutData(1));
-		
+		Panel facetValuePanel = new Panel();
+				
 		// Prevent focus change on down arrow key when at end of list 
 		facetValueList.setInputFilter((i, keyStroke) -> {
 			boolean r;
@@ -602,30 +589,8 @@ public class MainCliFacete3 {
 			!(keyStroke.getKeyType().equals(KeyType.ArrowDown) && facetValueList.getItems().size() - 1 == facetValueList.getSelectedIndex());
 			return r;
 			});
-		facetValuePanel.addComponent(facetValueList);
+				
 		
-		mainPanel.addComponent(facetPanel.withBorder(Borders.singleLine("Facets")));
-		//mainPanel.addComponent(facetPanel);
-
-		mainPanel.addComponent(facetValuePanel.withBorder(Borders.singleLine("Facet Values")));
-		
-		
-
-		resultTable.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
-
-		Panel resultPanel = new Panel(new GridLayout(1));
-		resultPanel.setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.FILL, GridLayout.Alignment.BEGINNING, true, true, 2, 1));
-		//resultPanel.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
-		//setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 1, 1)
-		resultPanel.addComponent(resultTable);
-		//resultTable.getTableModel().addRow("[x]", "b", "c");
-		//resultPanel;
-		
-		//mainPanel.addComponent(resultPanel.setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)).withBorder(Borders.singleLine("Items")));
-
-//		mainPanel.addComponent(resultPanel.setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)).withBorder(Borders.singleLine("Items")));
-		
-		constraintList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 		constraintList.addListener((int itemIndex, boolean checked) -> {
 			HLFacetConstraint<?> item = constraintList.getItemAt(itemIndex);
 			//System.out.println(item);
@@ -648,29 +613,63 @@ public class MainCliFacete3 {
 			};
 		});
 
-		
+
+		Panel facetPanel = new Panel();
 		Panel constraintPanel = new Panel();
-		constraintPanel.setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.FILL, GridLayout.Alignment.BEGINNING, true, false, 2, 1));
+		Panel resultPanel = new Panel();
 
-		//constraintList.addItem("test");
+		// Component hierarchy and layouts
+		
+		facetPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1)); //.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
+		facetPanel.setLayoutManager(new GridLayout2(1));
+		facetPanel.addComponent(facetFilterPanel.withBorder(Borders.singleLine("Filter")));
+		facetPanel.addComponent(facetList);//.setLayoutData(
+
+		facetFilterBox.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
+
+		facetFilterPanel.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
+		facetFilterPanel.setLayoutManager(new GridLayout2(2));
+		facetFilterPanel.addComponent(facetFilterBox);
+		facetFilterPanel.addComponent(btnApply);
+
+		facetPathPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		facetPathPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+		facetPathPanel.addComponent(new Button("Foo"));
+		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
+		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
+
+		facetValuePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		facetValuePanel.setLayoutManager(new GridLayout2(1));
+		facetValuePanel.addComponent(facetValueList);
+
+
+		facetList.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		facetValueList.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
+		constraintList.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
+
+		constraintPanel.setLayoutData(GridLayout2.createLayoutData(GridLayout2.Alignment.FILL, GridLayout2.Alignment.BEGINNING, true, false, 2, 1));
 		constraintPanel.addComponent(constraintList);
+
+
+		resultTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
+
+
+		resultPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 2, 1));
+		resultPanel.setLayoutManager(new GridLayout2(1));
+		resultPanel.addComponent(resultTable);
 		
-		
+
+
+
+
+		//mainPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.FILL, true, true, 2, 1));
+		mainPanel.setLayoutManager(new GridLayout2(2));
+		mainPanel.addComponent(facetPanel.withBorder(Borders.singleLine("Facets")));
+		mainPanel.addComponent(facetValuePanel.withBorder(Borders.singleLine("Facet Values")));
 		mainPanel.addComponent(constraintPanel.withBorder(Borders.singleLine("Constraints")));
-		
 		mainPanel.addComponent(resultPanel.withBorder(Borders.singleLine("Matches")));
-		//resultPanel.setLayoutData(GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)));
 
-		//mainPanel.addComponent(new EmptySpace());
-		//mainPanel.addComponent(facetValueList);
 		
-//		CheckBoxList<String> checkBoxList = new CheckBoxList<String>(size);
-//		checkBoxList.addItem("item 1");
-//		checkBoxList.addItem("item 2");
-//		checkBoxList.addItem("item 3");
-//
-//		mainPanel.addComponent(checkBoxList);
-
 		
 		 // Create window to hold the panel
         BasicWindow window = new BasicWindow();
@@ -750,9 +749,25 @@ public class MainCliFacete3 {
 		index.forEach((k, v) -> v.addLiteral(RDFS.label,
 				map.getOrDefault(k, ConstraintFacadeImpl.N_ABSENT.equals(k)
 						? "(null)"
-						: k.isURI() ? k.getLocalName() : k.toString())));
+						: k.isURI() ? deriveLabelFromIri(k.getURI()) : k.toString())));
 	}
 
+	public static String deriveLabelFromIri(String iriStr) {
+
+		String result;
+		for(;;) {
+			// This is what Node.getLocalName does
+			result = iriStr.substring( Util.splitNamespaceXML(iriStr));
+			if(result.isEmpty() && !iriStr.isEmpty()) {
+				iriStr = iriStr.substring(0, iriStr.length() - 1);
+				continue;
+			} else {
+				break;
+			}
+		};	
+		return result;
+	}
+	
 
 	public static <T> Map<T, String> getLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
 		Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
@@ -762,7 +777,7 @@ public class MainCliFacete3 {
 		
 		//Map<T, String> result = n
 
-		Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI() ? k.getLocalName() : k.toString()); 
+		Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI() ? deriveLabelFromIri(k.getURI()) : k.toString()); 
 		
 		Map<T, String> result =
 			index.entries().stream().map(
