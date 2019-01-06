@@ -36,17 +36,24 @@ import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
@@ -76,6 +83,7 @@ import com.googlecode.lanterna.gui2.Button;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.Direction;
 import com.googlecode.lanterna.gui2.EmptySpace;
+import com.googlecode.lanterna.gui2.Label;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
@@ -105,8 +113,52 @@ import joptsimple.OptionSet;
 // binaryRelation.clearOrder(); binaryRelation.addOrder(binaryRelation.getTargetVar(), 1)
 // * my current term for the generalization of a sparql join on the syntax level - which isn't necessarily a join in the first place
 
+// Hack around ActionListBox to include custom data
+class PseudoRunnable<T>
+	implements Runnable
+{
+	protected String label;
+	protected Runnable runnable;
+	protected T data;
+
+	public PseudoRunnable(T data) {
+		this("" + data, data, null);
+	}
+
+	public PseudoRunnable(String label, T data, Runnable runnable) {
+		super();
+		this.label = label;
+		this.data = data;
+		this.runnable = runnable;
+	}
+
+	@Override
+	public void run() {
+		if(runnable != null) {
+			runnable.run();
+		}
+	}
+	
+	public T getData() {
+		return data;
+	}
+	
+	@Override
+	public String toString() {
+		return label;
+	}
+	
+	public static <T> PseudoRunnable<T> from(String label, T data, Runnable runnable) {
+		return new PseudoRunnable<T>(label, data, runnable);
+	}
+}
 
 // Idea for an api to allow for something similar to angularjs' dirty checking
+// - Have a DirtyChecker class to manage watch registrations
+// - There can be a public (convenience) API for type safety, which provides registration method
+//   for each number of arguments - up to some fixed limit
+//   Internally, we don't care about the types, so we can cast everything to object
+// - We can create Proxies that watch getters / setters of objects and invoke dirty checking
 class DirtyChecker {
 	
 	
@@ -115,7 +167,14 @@ class DirtyChecker {
 	}
 	
 	
-	// Bind a computation to a getter/setter
+	/**
+	 * Bind a computation to a getter/setter
+	 * 
+	 * @param target
+	 * @param s1
+	 * @param fn
+	 * @return
+	 */
 	public static <T, S1> Runnable bind(
 			SingleValuedAccessor<T> target,
 			Supplier<S1> s1, 
@@ -164,6 +223,41 @@ public class MainCliFacete3 {
 		
 		HLFacetConstraint<?> result = new HLFacetConstraintImpl<Void>(null, tmp, fc);
 		return result;
+	}
+	
+	public void updateResourceView(RDFNode n) {
+		TableModel<Node> model = resourceTable.getTableModel();
+		model.clear();
+		
+		if(n == null) {
+			resourceTableSubject = null;
+			resourceSubjectLabel.setText("No resource selected");
+		} else {
+			resourceSubjectLabel.setText("" + n);
+			
+			if(n.isResource()) {
+				Resource r = n.asResource();
+	
+				List<Property> predicates = r.listProperties().mapWith(Statement::getPredicate).toList()
+						.stream().distinct().collect(Collectors.toList());
+				
+				// TODO Fetch all nodes and resolve their labels
+				
+				Property prev = null;
+				for(Property curr : predicates) {
+					Node p = null;
+					if(prev != curr) {
+						p = curr.asNode();
+						prev = curr;
+					}
+	
+					for(RDFNode rdfNode : ResourceUtils.listPropertyValues(r, curr).toList()) {
+						Node o = rdfNode.asNode();
+						model.addRow(p, o);
+					}
+				}
+			}
+		}
 	}
 	
 	/**
@@ -275,13 +369,18 @@ public class MainCliFacete3 {
 	}
 	
 	
+	//KeyStroke resourceViewKey = new KeyStroke(' ', false, false);
+	public static final char resourceViewKey = ' ';
+	
+	RDFConnection conn;
+	
 	//RDFConnection conn;
 	FacetedQuery fq;
 	LookupService<Node, String> labelService;
 
 	ActionListBox facetList = new ActionListBox(); //new TerminalSize(30, 10));
 	CheckBoxList<FacetValueCount> facetValueList = new CheckBoxList<>();
-	Table<String> resultTable = new Table<String>("Item");
+	Table<Node> resultTable = new Table<>("Item");
 
 	CheckBoxList<HLFacetConstraint<?>> constraintList = new CheckBoxList<>();
 
@@ -294,6 +393,12 @@ public class MainCliFacete3 {
 	
 	boolean includeAbsent = true;
 	
+	
+	Node resourceTableSubject = null;
+	Label resourceSubjectLabel = new Label("");
+	Table<Node> resourceTable = new Table<Node>("p", "o");
+	
+
 	class Test<P> {
 		P value;
 		public Test(P value) {
@@ -325,11 +430,11 @@ public class MainCliFacete3 {
 	public void updateItems(FacetedQuery fq) {
 		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
 		
-		 TableModel<String> model = resultTable.getTableModel();
+	TableModel<Node> model = resultTable.getTableModel();
 		model.clear();
 		
 		for(RDFNode item : items) {
-			model.addRow("" + item);
+			model.addRow(item.asNode());
 		}
 	}
 	
@@ -421,19 +526,10 @@ public class MainCliFacete3 {
 			
 			
 			for(FacetCount fc : fcs) {
-					facetList.addItem(fc.getProperty(RDFS.label).getString() + " (" + fc.getDistinctValueCount().getCount() + ")" , new Runnable() {
-					@Override
-					public void run() {
-						selectFacet(fdn, fc.getPredicate());
-						
-		//				fc.getPredicate();
-		//				fc.g
-		//				fdn.via(node)
-						
-	//					System.out.println("run");
-						// Code to run when action activated
-					}
-				});
+					facetList.addItem(PseudoRunnable.from(
+							fc.getProperty(RDFS.label).getString() + " (" + fc.getDistinctValueCount().getCount() + ")",
+							fc.getPredicate(),
+							() -> selectFacet(fdn, fc.getPredicate())));
 			}
 			
 			facetList.setEnabled(true);
@@ -472,21 +568,55 @@ public class MainCliFacete3 {
 		updateFacets(fq);
 	}
 	
+	
+	public RDFNode fetchIfResource(Node node) {
+		Query q = QueryFactory.create("CONSTRUCT WHERE { ?s ?p ?o }");
+		UnaryRelation filter = ConceptUtils.createFilterConcept(node);
+		q.setQueryPattern(RelationImpl.create(q.getQueryPattern(), Vars.s).joinOn(Vars.s)
+				.with(filter).getElement());
+		
+		
+		Model model = conn.queryConstruct(q);
+		RDFNode result = model.asRDFNode(node);
+		
+		return result;
+		//QueryGenerationUtils.
+		//QueryGenerationUtils.
+	}
+	
 	public void init(Dataset dataset) throws Exception
 	{
 		
 		//Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
 //		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
-		RDFConnection conn = RDFConnectionFactory.connect(dataset);
+		conn = RDFConnectionFactory.connect(dataset);
 		
 		fq = FacetedQueryImpl.create(conn);
 
 		//facetList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 
 		facetList.setInputFilter((i, keyStroke) -> {
+			// Navigation; set the facetDirNode
+			Character c = keyStroke.getCharacter();
+			if(c != null) {
+				@SuppressWarnings("unchecked")
+				PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
+				Node node = pr.getData();
+
+				switch(c) {
+				case resourceViewKey:
+					if(node != null) {
+						RDFNode rdfNode = fetchIfResource(node);
+						updateResourceView(rdfNode);
+					}
+					break;
+				}
+			}
+				
 			if(KeyType.ArrowRight.equals(keyStroke.getKeyType())) {
 				facetValueList.takeFocus();
 			}
+
 			return true;
 		});
 		
@@ -550,6 +680,36 @@ public class MainCliFacete3 {
 		updateFacets(fq);
 		updateItems(fq);
 		
+		// Prevent focus change on down arrow key when at end of list 
+		facetValueList.setInputFilter((i, keyStroke) -> {
+			boolean r = true;
+
+			Character c = keyStroke.getCharacter();
+			
+			FacetValueCount item = facetValueList.getSelectedItem();
+			
+			if(c != null) {
+				switch(c) {
+				case resourceViewKey:
+					if(item != null) {
+						Node node = item.getValue();
+						RDFNode rdfNode = fetchIfResource(node);
+						updateResourceView(rdfNode);
+					}
+					r = false;
+				}
+			}
+
+			
+			if(KeyType.ArrowLeft.equals(keyStroke.getKeyType())) {
+				facetList.takeFocus();
+			}
+
+//			r = !(keyStroke.getKeyType().equals(KeyType.ArrowUp) && facetValueList.getSelectedIndex() == 0) &&
+			r = r && !(keyStroke.getKeyType().equals(KeyType.ArrowDown) && facetValueList.getItems().size() - 1 == facetValueList.getSelectedIndex());
+			return r;
+		});
+
 		
 		facetValueList.addListener((int itemIndex, boolean checked) -> {
 			FacetValueCount item = facetValueList.getItemAt(itemIndex);
@@ -578,6 +738,30 @@ public class MainCliFacete3 {
 			};
 		});
 
+		
+		resultTable.setCellSelection(true);
+		resultTable.setInputFilter((i, keyStroke) -> {
+			boolean r;
+
+			Character c = keyStroke.getCharacter();
+			int x = resultTable.getSelectedColumn();
+			int y = resultTable.getSelectedRow();
+			
+			Node node = x >= 0 && y >= 0 ? resultTable.getTableModel().getCell(x, y) : null;
+			
+			
+			if(c != null) {
+				switch(c) {
+				case resourceViewKey:
+					if(node != null) { 
+						RDFNode rdfNode = fetchIfResource(node);
+						updateResourceView(rdfNode);
+					}
+				}
+			}
+			
+			return true;
+		});
 //		FacetDirNode fdn2 = fq.focus().fwd();
 
 		updateFacetValues();
@@ -634,18 +818,6 @@ public class MainCliFacete3 {
 		
 		Panel facetValuePanel = new Panel();
 				
-		// Prevent focus change on down arrow key when at end of list 
-		facetValueList.setInputFilter((i, keyStroke) -> {
-			boolean r;
-			
-			if(KeyType.ArrowLeft.equals(keyStroke.getKeyType())) {
-				facetList.takeFocus();
-			}
-
-//			r = !(keyStroke.getKeyType().equals(KeyType.ArrowUp) && facetValueList.getSelectedIndex() == 0) &&
-			r = !(keyStroke.getKeyType().equals(KeyType.ArrowDown) && facetValueList.getItems().size() - 1 == facetValueList.getSelectedIndex());
-			return r;
-			});
 				
 		
 		constraintList.addListener((int itemIndex, boolean checked) -> {
@@ -669,6 +841,8 @@ public class MainCliFacete3 {
 	            return "[" + check + "] " + text;
 			};
 		});
+
+		
 
 
 		Panel facetPanel = new Panel();
@@ -726,9 +900,12 @@ public class MainCliFacete3 {
 		resultPanel.setLayoutManager(new GridLayout2(1));
 		resultPanel.addComponent(resultTable);
 		
+		resourceTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
+
 		resourcePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 		resourcePanel.setLayoutManager(new GridLayout2(1));
-		resourcePanel.addComponent(new ActionListBox());
+		resourcePanel.addComponent(resourceSubjectLabel);
+		resourcePanel.addComponent(resourceTable);
 
 
 
