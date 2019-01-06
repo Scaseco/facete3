@@ -27,6 +27,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -660,7 +661,21 @@ public class RabbitMqFlows {
     	ShutdownListener shutdownListener = throwable -> {
     		logger.debug("[STATUS] Channel is closing; completing flow");
     		if(throwable != null) {
-    			result.onError(throwable);
+    			boolean isCloseSignalWithoutError = false;
+
+    			if(throwable instanceof ShutdownSignalException) {
+    				ShutdownSignalException sse = (ShutdownSignalException)throwable;
+    			
+    				Throwable cause = sse.getCause();
+    				if(sse.isInitiatedByApplication() && cause == null) {
+    					isCloseSignalWithoutError = true;
+    				}
+    			}
+    			
+    			if(!isCloseSignalWithoutError) {
+	    			logger.warn("Encountered exception", throwable);
+	    			result.onError(throwable);
+    			}
     		}
     		result.onComplete();
     	};

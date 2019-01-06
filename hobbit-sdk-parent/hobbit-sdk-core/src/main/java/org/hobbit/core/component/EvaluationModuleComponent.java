@@ -52,7 +52,7 @@ public class EvaluationModuleComponent
     protected byte requestBody[];
 
     
-    protected Disposable esSubscription;
+    //protected Disposable esSubscription;
     
     
     protected CompletableFuture<?> terminationFuture = new CompletableFuture<Object>();
@@ -136,7 +136,7 @@ public class EvaluationModuleComponent
 
     @Override
     public void triggerShutdown() {
-    	esSubscription.dispose();
+    	//esSubscription.dispose();
 
     	super.triggerShutdown();
         // TODO Auto-generated method stub

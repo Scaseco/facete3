@@ -3,9 +3,12 @@ package org.hobbit.benchmark.faceted_browsing.component;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.utils.NodeUtils;
@@ -79,14 +82,22 @@ public class ReturnModelBuilder {
 
         LOGGER.info("Concatenated rdf: "+ rdfInTTL);
 
-        for(int i=1; i<=14; i++){
+        Set<Integer> chokepointIds = new TreeSet<>();
+        chokepointIds.addAll(chokePT_query_per_second_score.keySet());
+        chokepointIds.addAll(chokePT_precision.keySet());
+        chokepointIds.addAll(chokePT_recall.keySet());
+        chokepointIds.addAll(chokePT_f1.keySet());
+        
+        
+        //for(int i=1; i<=14; i++){
 
+        for(int i : chokepointIds) {
             String chokePTResults = String.format(" ; \n"
                     +" \t bench:precision_choke_point%d \" %f\"^^xsd:float ; \n"
                     +"\t bench:recall_choke_point%d \"%f\"^^xsd:float ; \n"
                     +"\t bench:fmeasure_choke_point%d \"%f\"^^xsd:float ; \n"
                     +"\t bench:query_per_second_score_choke_point%d \"%f\"^^xsd:float ",
-                    i , chokePT_precision.get(i) , i , chokePT_recall.get(i) , i , chokePT_f1.get(i) , i , chokePT_query_per_second_score.get(i));
+                    i , chokePT_precision.getOrDefault(i, -1.0) , i , chokePT_recall.getOrDefault(i, -1.0) , i , chokePT_f1.getOrDefault(i, -1.0) , i , chokePT_query_per_second_score.getOrDefault(i, -1.0));
             rdfInTTL = rdfInTTL.concat(chokePTResults);
         }
 
@@ -120,7 +131,8 @@ public class ReturnModelBuilder {
             }
 
 
-            for (int i=0; i<= 11; i++) {
+            //for (int i=0; i<= 11; i++) {
+            for(int i = 0; i < incompleteScenarios.length; ++i) {
                 if (incompleteScenarios[i] == true) {
                     if (i==0) {
                         incompleteScenariosStrSet.add("Counts");
