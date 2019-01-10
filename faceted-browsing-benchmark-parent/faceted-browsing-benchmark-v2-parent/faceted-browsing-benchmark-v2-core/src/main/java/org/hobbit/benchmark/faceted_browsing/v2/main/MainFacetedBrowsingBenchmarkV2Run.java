@@ -14,8 +14,10 @@ import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
@@ -24,7 +26,10 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.util.DatasetUtils;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
@@ -40,6 +45,8 @@ import io.reactivex.Flowable;
 public class MainFacetedBrowsingBenchmarkV2Run {
 	public static void main(String[] args) throws DockerCertificateException, Exception {
 
+
+		
 //		Dataset raw = DatasetFactory.create();
 		
 		//.forEach(d -> Streams.stream(d.asDatasetGraph().find()).forEach(raw.asDatasetGraph()::add));
@@ -100,23 +107,31 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 										), rawConn, rawConn);
 
 					
-					
 					Flowable<Dataset> flow = RDFDataMgrRx.createFlowableDatasets(
 							() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
 							Lang.TRIG,
 							"http://www.example.org/");
 					
-					Iterator<Dataset> it = flow.blockingNext().iterator();
-					for(int i = 0; i < 1000 && it.hasNext(); ++i) {
-						Dataset batch = it.next();
-						Model m = batch.getUnionModel();
+					int initSample = 1000;
+					//flow.onBackpressureBuffer().blockingNext();
+					//flow.forEach(x -> System.out.println("Next: " + x));
+					flow.take(initSample).forEach(batch -> {
 						
+						// Its probably more efficient (not scientifially evaluated)
+						// to create an indexed copy 
+						Dataset tmp = DatasetFactory.create();						
+						DatasetGraphUtils.addAll(tmp.asDatasetGraph(), batch.asDatasetGraph());
+						
+						Model m = tmp.getUnionModel();
 						UpdateRequest ur = UpdateRequestUtils.createUpdateRequest(m, null);
-						UpdateRequestUtils.applyWithIri(ur, "http://example.org/");
-						System.out.println("Update request: " + ur);
+						ur = UpdateRequestUtils.copyWithIri(ur, "http://example.org/", true);
+						//System.out.println("Update request: " + ur);
 						conn.update(ur);
-					}
+					});
+
 					
+
+//					System.out.println(Remaining item);flow.count().blockingGet();
 					
 					// One time auto config based on available data
 					TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
