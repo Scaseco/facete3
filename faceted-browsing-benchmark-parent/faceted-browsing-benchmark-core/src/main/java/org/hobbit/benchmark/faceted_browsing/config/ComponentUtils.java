@@ -17,9 +17,10 @@ import org.hobbit.benchmark.faceted_browsing.config.amqp.ConfigRabbitMqConnectio
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.service.api.DockerServiceDelegate;
-import org.hobbit.core.service.api.ServiceDelegate;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.api.DockerServiceSpec;
+import org.hobbit.core.service.docker.impl.core.ServiceDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -129,8 +130,11 @@ public class ComponentUtils {
         DockerServiceFactory<?> result = new DockerServiceFactory<DockerService>() {
 
         	@Override
-        	public DockerService create(String imageName, java.util.Map<String,String> env) {
-	        	DockerService r = delegate.create(imageName, env);
+        	public DockerService create(DockerServiceSpec serviceSpec) {
+        		
+        		String imageName = serviceSpec.getImageName();
+        		
+	        	DockerService r = delegate.create(serviceSpec);
 	
 	        	Map<Pattern, Function<DockerService, DockerService>> cands =
 	        			serviceWrappers.entrySet().stream()

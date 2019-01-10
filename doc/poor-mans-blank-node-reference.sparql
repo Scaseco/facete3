@@ -1,0 +1,10 @@
+INSERT DATA {
+  [] a eg:BlankNode .
+  [] a eg:BlankNode .
+  [] a eg:BlankNode .
+}
+
+SELECT * { ?s ?p ?o . FILTER(isBlank(?s)) }
+
+
+SELECT DISTINCT ?x { ?s ?p ?o . FILTER(isBlank(?s)) . BIND(?s AS ?x) }

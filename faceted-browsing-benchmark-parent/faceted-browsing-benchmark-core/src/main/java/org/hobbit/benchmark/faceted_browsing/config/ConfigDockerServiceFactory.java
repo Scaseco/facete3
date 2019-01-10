@@ -7,8 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceFactoryChain;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

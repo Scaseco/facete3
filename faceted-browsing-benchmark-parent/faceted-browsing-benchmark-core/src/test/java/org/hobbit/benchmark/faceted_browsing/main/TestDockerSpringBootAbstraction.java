@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceFactory;
-import org.hobbit.core.service.docker.DockerServiceFactorySpringApplicationBuilder;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.impl.spring_boot.DockerServiceFactorySpringApplicationBuilder;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.Banner;

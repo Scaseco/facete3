@@ -1,6 +1,7 @@
 package org.hobbit.core.service.api;
 
-import org.hobbit.core.service.docker.DockerService;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.impl.core.ServiceDelegate;
 
 public class DockerServiceDelegate<S extends DockerService>
 	extends ServiceDelegate<S>

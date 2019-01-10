@@ -42,6 +42,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -61,6 +62,7 @@ import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -90,7 +92,6 @@ import com.googlecode.lanterna.gui2.TextBox;
 import com.googlecode.lanterna.gui2.Window;
 import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
-import com.googlecode.lanterna.gui2.dialogs.MessageDialog;
 import com.googlecode.lanterna.gui2.table.Table;
 import com.googlecode.lanterna.gui2.table.TableModel;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -233,7 +234,7 @@ public class MainCliFacete3 {
 			resourceTableSubject = null;
 			resourceSubjectLabel.setText("No resource selected");
 		} else {
-			resourceSubjectLabel.setText("" + n);
+			resourceSubjectLabel.setText("s: " + n);
 			
 			if(n.isResource()) {
 				Resource r = n.asResource();
@@ -537,7 +538,34 @@ public class MainCliFacete3 {
 	}
 
 	
+	/**
+	 * Entry point for the Facete3 Command Line Interface
+	 * 
+	 * @param args
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
+		// TODO Move auto proxying to a proper test case
+		//MapperProxyUtils.createProxyFactory(Test2.class);
+		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(Test2.class.getPackage().getName());		
+		Test2 test = ModelFactory.createDefaultModel().createResource().as(Test2.class);
+		test.getFoo(Resource.class).add(RDFS.label);
+		test.getFoo(Integer.class).add(5);
+		test.getFoo(String.class).add("5");
+		
+		RDFDataMgr.write(System.err, test.getModel(), RDFFormat.TURTLE_PRETTY);
+		
+		System.out.println(test.getFoo(Resource.class));
+		System.out.println(test.getFoo(String.class));
+		System.out.println(test.getFoo(Integer.class));
+		
+//		for(Method m : Test2.class.getDeclaredMethods()) {
+//			MapperProxyUtils.canActAsCollectionView(m, Set.class, Resource.class);
+//			MapperProxyUtils.canActAsCollectionView(m, Set.class, Object.class);
+//		}
+		
+//		if(true) return;
+		
 		
 	    OptionParser parser = new OptionParser();
 
@@ -782,15 +810,21 @@ public class MainCliFacete3 {
 //		};
 //		facetFilterPanel.addComponent(btnClear);
 
+		Button facetFilterClearBtn = new Button("Clr");
+		facetFilterClearBtn.addListener(btn -> {
+			facetFilter = null;
+			facetFilterBox.setText("");
+			updateFacets(fq);
+		});
 		
-		Button btnApply = new Button("Ok") {
-			public synchronized com.googlecode.lanterna.gui2.Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
-				if(keyStroke.getKeyType().equals(KeyType.Enter)) {
-					MessageDialog.showMessageDialog(textGUI, "test", "test");
-				}
-				return super.handleKeyStroke(keyStroke);
-			};
-		};
+//		Button btnApply = new Button("Clr") {
+//			public synchronized com.googlecode.lanterna.gui2.Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
+//				if(keyStroke.getKeyType().equals(KeyType.Enter)) {
+//					MessageDialog.showMessageDialog(textGUI, "test", "test");
+//				}
+//				return super.handleKeyStroke(keyStroke);
+//			};
+//		};
 		
 		
 		
@@ -809,6 +843,13 @@ public class MainCliFacete3 {
 			}
 			
 			return true;
+		});
+
+		Button facetValueFilterClearBtn = new Button("Clr");
+		facetValueFilterClearBtn.addListener(btn -> {
+			facetValueFilter = null;
+			facetValueFilterBox.setText("");
+			updateFacetValues();
 		});
 
 		Panel facetValueFilterPanel = new Panel();
@@ -864,9 +905,8 @@ public class MainCliFacete3 {
 		facetFilterPanel.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
 		facetFilterPanel.setLayoutManager(new GridLayout2(2));
 		facetFilterPanel.addComponent(facetFilterBox);
-		facetFilterPanel.addComponent(btnApply);
-		facetFilterPanel.addComponent(btnApply);
-
+		facetFilterPanel.addComponent(facetFilterClearBtn);
+		
 		facetPathPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetPathPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
 		facetPathPanel.addComponent(new Button("Foo"));
@@ -876,12 +916,13 @@ public class MainCliFacete3 {
 		facetValueFilterBox.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
 		
 		facetValueFilterPanel.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
-		facetValueFilterPanel.setLayoutManager(new GridLayout2(1));
+		facetValueFilterPanel.setLayoutManager(new GridLayout2(2));
 		facetValueFilterPanel.addComponent(facetValueFilterBox);
+		facetValueFilterPanel.addComponent(facetValueFilterClearBtn);
 
 		facetValuePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetValuePanel.setLayoutManager(new GridLayout2(1));
-		facetValuePanel.addComponent(facetValueFilterBox.withBorder(Borders.singleLine("Filter")));
+		facetValuePanel.addComponent(facetValueFilterPanel.withBorder(Borders.singleLine("Filter")));
 		facetValuePanel.addComponent(facetValueList);
 
 

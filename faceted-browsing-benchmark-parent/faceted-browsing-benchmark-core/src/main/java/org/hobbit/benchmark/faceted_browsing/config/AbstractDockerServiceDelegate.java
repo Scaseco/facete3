@@ -1,6 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.config;
 
-import org.hobbit.core.service.docker.DockerService;
+import org.hobbit.core.service.docker.api.DockerService;
 
 public class AbstractDockerServiceDelegate<S extends DockerService>
     extends AbstractServiceDelegate<S>

@@ -4,6 +4,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sys.JenaSubsystemLifecycle;
 import org.hobbit.benchmark.faceted_browsing.config.BenchmarkConfig;
 import org.hobbit.benchmark.faceted_browsing.v1.config.ConfigVirtualDockerServiceFactoryV1;
+import org.hobbit.core.service.docker.impl.spring_boot.util.DockerServiceRegistrySpringBootUtils;
 import org.hobbit.sdk.docker.registry.DockerServiceRegistryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class HobbitPluginBenchmarkFacetedBrowsingV1
 		//BenchmarkConfig config = FacetedBrowsingBenchmarkV1Constants.config;
 		BenchmarkConfig config = RDFDataMgr.loadModel("faceted-browsing-benchmark-v1-config.ttl").getResource("http://project-hobbit.eu/resource/faceted-browsing-benchmark-v1-config").as(BenchmarkConfig.class);	
 		
-		DockerServiceRegistryImpl.registerSpringApplications(
+		DockerServiceRegistrySpringBootUtils.registerSpringApplications(
 				DockerServiceRegistryImpl.get(),
 				ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(config));
 	}	

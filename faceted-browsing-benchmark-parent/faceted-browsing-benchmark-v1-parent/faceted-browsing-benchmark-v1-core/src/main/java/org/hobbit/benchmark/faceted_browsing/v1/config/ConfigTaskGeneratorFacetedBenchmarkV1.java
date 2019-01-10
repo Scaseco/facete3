@@ -11,7 +11,7 @@ import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
 import org.hobbit.core.component.TaskGeneratorModule;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.springframework.context.annotation.Bean;
 
 import io.reactivex.Flowable;

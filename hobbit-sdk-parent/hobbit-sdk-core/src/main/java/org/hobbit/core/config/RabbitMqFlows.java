@@ -661,18 +661,19 @@ public class RabbitMqFlows {
     	ShutdownListener shutdownListener = throwable -> {
     		logger.debug("[STATUS] Channel is closing; completing flow");
     		if(throwable != null) {
-    			boolean isCloseSignalWithoutError = false;
+    			// Assume an error by default; unset under certain conditions
+    			boolean isCloseSignalWithError = true;
 
     			if(throwable instanceof ShutdownSignalException) {
     				ShutdownSignalException sse = (ShutdownSignalException)throwable;
     			
     				Throwable cause = sse.getCause();
     				if(sse.isInitiatedByApplication() && cause == null) {
-    					isCloseSignalWithoutError = true;
+    					isCloseSignalWithError = false;
     				}
     			}
     			
-    			if(!isCloseSignalWithoutError) {
+    			if(isCloseSignalWithError) {
 	    			logger.warn("Encountered exception", throwable);
 	    			result.onError(throwable);
     			}

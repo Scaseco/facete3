@@ -44,10 +44,10 @@ import org.hobbit.benchmark.faceted_browsing.v1.config.FacetedBrowsingBenchmarkV
 import org.hobbit.benchmark.faceted_browsing.v1.impl.FacetedTaskGeneratorOld;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.DataGeneratorComponentBase;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
-import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
-import org.hobbit.core.service.docker.DockerServiceFactory;
-import org.hobbit.core.service.docker.DockerServiceFactorySpringApplicationBuilder;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderJsonDelegate;
+import org.hobbit.core.service.docker.impl.spring_boot.DockerServiceFactorySpringApplicationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

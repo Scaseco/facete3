@@ -19,13 +19,14 @@ import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.config.SimpleReplyableMessage;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilder;
-import org.hobbit.core.service.docker.DockerServiceBuilderDockerClient;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
-import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
 import org.hobbit.core.service.docker.DockerServiceManagerClientComponent;
 import org.hobbit.core.service.docker.DockerServiceManagerServerComponent;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceBuilder;
+import org.hobbit.core.service.docker.api.DockerServiceSystem;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderJsonDelegate;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
@@ -123,21 +124,27 @@ public class TestDockerCommunication {
 	        portBindings.put("443", randomPort);
 
 	        HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
-	        ContainerConfig.Builder containerConfigBuilder = ContainerConfig.builder()
-	                .hostConfig(hostConfig);
-
+//	        ContainerConfig.Builder containerConfigBuilder = ContainerConfig.builder()
+//	                .hostConfig(hostConfig);
 	        
-	        // Create a supplier that yields preconfigured builders
-	        Supplier<DockerServiceBuilder<? extends DockerService>> builderSupplier = () -> {
-	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient(
-	        			dockerClient, containerConfigBuilder, true, null);
 
-//		        dockerServiceBuilder
-//		        		.setDockerClient(dockerClient)
-//		        		.setContainerConfigBuilder(containerConfigBuilder);
-		        
-		        return dockerServiceBuilder;
-	        };
+	        DockerServiceSystem<?> dss = new DockerServiceFactoryDockerClient(dockerClient,
+	        		() -> ContainerConfig.builder()
+	                .hostConfig(hostConfig),
+	                true, null);//DockerServiceFactoryDockerClient.create(hostMode, env, networks);
+	        
+
+	        // Create a supplier that yields preconfigured builders
+	        Supplier<DockerServiceBuilder<? extends DockerService>> builderSupplier = dss::newServiceBuilder;//() -> {
+//	        	DockerServiceBuilderDockerClient dockerServiceBuilder = new DockerServiceBuilderDockerClient(
+//	        			dockerClient, containerConfigBuilder, true, null);
+//
+////		        dockerServiceBuilder
+////		        		.setDockerClient(dockerClient)
+////		        		.setContainerConfigBuilder(containerConfigBuilder);
+//		        
+//		        return dockerServiceBuilder;
+//	        };
 	        
 	        DockerServiceManagerServerComponent result =
 	        		new DockerServiceManagerServerComponent(

@@ -19,6 +19,10 @@ import org.hobbit.core.Commands;
 import org.hobbit.core.component.BenchmarkControllerComponentImpl;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.api.DockerServiceSpec;
+import org.hobbit.core.service.docker.impl.core.DockerServiceSimpleDelegation;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,8 +131,18 @@ public abstract class DockerServiceManagerClientComponentBase
 
     //public DockerService get() {
     @Override
-    public DockerService create(String imageName, Map<String, String> env) {
-        Objects.requireNonNull(imageName);
+    public DockerService create(DockerServiceSpec serviceSpec) {
+    //public DockerService create(String containerName, String imageName, Map<String, String> env) {
+    	String containerName = serviceSpec.getContainerName();
+    	String imageName = serviceSpec.getImageName();
+    	Map<String, String> env = serviceSpec.getLocalEnvironment();
+    	
+    	if(containerName != null) {
+    		throw new RuntimeException("Hobbit protocol does not support custom container names; leave it null");
+    	}
+
+    	
+    	Objects.requireNonNull(imageName);
 
         DockerServiceSimpleDelegation service = new DockerServiceSimpleDelegation(imageName, env, this::startService, this::stopService);
 

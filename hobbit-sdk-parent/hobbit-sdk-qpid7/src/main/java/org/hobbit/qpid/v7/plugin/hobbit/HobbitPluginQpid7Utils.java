@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.hobbit.core.component.ServiceNoOp;
-import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
-import org.hobbit.core.service.docker.DockerServiceFactorySpringApplicationBuilder;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderJsonDelegate;
+import org.hobbit.core.service.docker.impl.spring_boot.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.sdk.docker.registry.DockerServiceRegistryImpl;
 import org.slf4j.Logger;

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import org.hobbit.core.Commands;
 import org.hobbit.core.data.StartCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.service.docker.util.EnvironmentUtils;
 import org.reactivestreams.Subscriber;
 
 import com.google.common.primitives.Bytes;
@@ -52,8 +53,8 @@ public class DockerServiceManagerClientComponent
     //private static final Logger logger = LoggerFactory.getLogger(DockerServiceManagerClientComponent.class);
 
 
-    public Entry<ByteBuffer, String> createStartCommand(String imageName, Map<String, String> env) {
-        String[] envArr = EnvironmentUtils.mapToList("=", env).toArray(new String[0]);
+    public Entry<ByteBuffer, String> createStartCommand(String imageName, Map<String, String> env) {    	
+    	String[] envArr = EnvironmentUtils.mapToList("=", env).toArray(new String[0]);
         StartCommandData msg = new StartCommandData(imageName, requestedContainerType, requesterContainerId, envArr);
         String jsonStr = gson.toJson(msg);
 

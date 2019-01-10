@@ -19,7 +19,7 @@ import org.apache.jena.util.ResourceUtils;
 import org.hobbit.core.Commands;
 import org.hobbit.core.Constants;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.core.service.api.ServiceBuilder;
+import org.hobbit.core.service.docker.api.ServiceBuilder;
 import org.hobbit.core.utils.ByteChannelUtils;
 import org.hobbit.core.utils.PublisherUtils;
 import org.hobbit.core.utils.ServiceManagerUtils;

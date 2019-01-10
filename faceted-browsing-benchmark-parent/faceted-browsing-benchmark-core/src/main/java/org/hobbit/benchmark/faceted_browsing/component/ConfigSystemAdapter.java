@@ -13,7 +13,7 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.config.amqp.DataQueueFactory;
 import org.hobbit.core.Constants;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.reactivestreams.Subscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;

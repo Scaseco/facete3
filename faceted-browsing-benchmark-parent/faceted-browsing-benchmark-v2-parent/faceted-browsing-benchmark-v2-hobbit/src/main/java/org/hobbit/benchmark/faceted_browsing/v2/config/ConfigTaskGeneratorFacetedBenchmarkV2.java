@@ -18,7 +18,7 @@ import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.TaskGeneratorModule;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.springframework.context.annotation.Bean;
 
 import io.reactivex.Flowable;

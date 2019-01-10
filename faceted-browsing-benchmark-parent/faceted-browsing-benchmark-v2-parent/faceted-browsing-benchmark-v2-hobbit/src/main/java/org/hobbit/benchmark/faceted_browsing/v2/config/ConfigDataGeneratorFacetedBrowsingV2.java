@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.core.Constants;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

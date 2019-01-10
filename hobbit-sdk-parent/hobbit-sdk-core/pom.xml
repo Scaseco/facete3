@@ -13,6 +13,21 @@
 
 	<dependencies>
 
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.hobbit</groupId> -->
+<!-- 			<artifactId>docker-service-api-core</artifactId> -->
+<!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>docker-service-api-docker-client</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>docker-service-api-spring-boot</artifactId>
+		</dependency>
+
 		<!-- Parsing of e.g. virtuoso.ini files -->
 		<dependency>
 			<groupId>org.ini4j</groupId>

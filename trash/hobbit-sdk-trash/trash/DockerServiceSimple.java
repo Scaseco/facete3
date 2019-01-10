@@ -4,8 +4,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceDockerClient;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

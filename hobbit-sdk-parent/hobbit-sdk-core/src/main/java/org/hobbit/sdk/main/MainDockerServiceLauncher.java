@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.jena.sys.JenaSystem;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
-import org.hobbit.core.service.docker.SpringEnvironmentUtils;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.impl.spring_boot.util.SpringEnvironmentUtils;
 import org.hobbit.sdk.docker.registry.DockerServiceRegistryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

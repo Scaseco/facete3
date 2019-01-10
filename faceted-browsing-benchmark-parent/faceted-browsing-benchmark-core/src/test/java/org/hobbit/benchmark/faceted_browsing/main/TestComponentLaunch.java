@@ -2,9 +2,9 @@ package org.hobbit.benchmark.faceted_browsing.main;
 
 import org.hobbit.core.config.ConfigGson;
 import org.hobbit.core.config.ConfigRabbitMqConnectionFactory;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilder;
-import org.hobbit.core.service.docker.DockerServiceBuilderFactory;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceBuilder;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.builder.SpringApplicationBuilder;

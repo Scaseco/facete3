@@ -7,11 +7,11 @@ import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
-import org.hobbit.benchmark.faceted_browsing.config.DockerServiceFactoryDockerClient;
-import org.hobbit.core.service.docker.DockerService;
-import org.hobbit.core.service.docker.DockerServiceBuilder;
-import org.hobbit.core.service.docker.DockerServiceBuilderJsonDelegate;
-import org.hobbit.core.service.docker.DockerServiceFactory;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceBuilder;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderJsonDelegate;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
