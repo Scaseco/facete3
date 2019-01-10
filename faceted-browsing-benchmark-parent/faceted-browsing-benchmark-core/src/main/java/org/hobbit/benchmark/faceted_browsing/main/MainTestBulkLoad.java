@@ -11,7 +11,7 @@ import org.hobbit.core.service.docker.api.DockerService;
 import org.hobbit.core.service.docker.api.DockerServiceBuilder;
 import org.hobbit.core.service.docker.api.DockerServiceFactory;
 import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderJsonDelegate;
-import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +23,7 @@ public class MainTestBulkLoad {
 
 	
 	public static void main(String[] args) throws Exception {
-		try(DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, new HashMap<>(), Collections.singleton("hobbit"))) {
+		try(DockerServiceFactory<?> dsf = DockerServiceSystemDockerClient.create(true, new HashMap<>(), Collections.singleton("hobbit"))) {
 			DockerServiceFactory<?> core = ComponentUtils.applyServiceWrappers(dsf);
 			DockerServiceBuilder<?> dsb = DockerServiceBuilderJsonDelegate.create(core::create);
 

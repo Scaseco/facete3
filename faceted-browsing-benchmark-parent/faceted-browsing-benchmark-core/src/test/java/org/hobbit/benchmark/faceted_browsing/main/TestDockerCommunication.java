@@ -26,7 +26,7 @@ import org.hobbit.core.service.docker.api.DockerServiceBuilder;
 import org.hobbit.core.service.docker.api.DockerServiceSystem;
 import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderJsonDelegate;
-import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
@@ -128,7 +128,7 @@ public class TestDockerCommunication {
 //	                .hostConfig(hostConfig);
 	        
 
-	        DockerServiceSystem<?> dss = new DockerServiceFactoryDockerClient(dockerClient,
+	        DockerServiceSystem<?> dss = new DockerServiceSystemDockerClient(dockerClient,
 	        		() -> ContainerConfig.builder()
 	                .hostConfig(hostConfig),
 	                true, null);//DockerServiceFactoryDockerClient.create(hostMode, env, networks);

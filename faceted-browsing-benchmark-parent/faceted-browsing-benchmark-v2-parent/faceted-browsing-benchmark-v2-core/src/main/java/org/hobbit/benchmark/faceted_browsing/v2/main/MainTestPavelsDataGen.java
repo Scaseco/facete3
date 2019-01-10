@@ -25,7 +25,7 @@ import org.hobbit.core.component.ServiceNoOp;
 import org.hobbit.core.config.RabbitMqFlows;
 import org.hobbit.core.service.docker.api.DockerService;
 import org.hobbit.core.service.docker.api.DockerServiceFactory;
-import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
 import org.hobbit.core.service.docker.impl.spring_boot.ServiceSpringApplicationBuilder;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public class MainTestPavelsDataGen {
 
 	
 	public static void main(String[] args) throws Exception {
-		try (DockerServiceFactory<?> dsf = DockerServiceFactoryDockerClient.create(true, Collections.emptyMap(), Collections.emptySet())) {
+		try (DockerServiceFactory<?> dsf = DockerServiceSystemDockerClient.create(true, Collections.emptyMap(), Collections.emptySet())) {
 			// Create a session id (used in naming of the amqp communication
 			// channels to avoid conflicts between different sessions)
 			String sessionId = "testsession" + "." + RabbitMqFlows.idGenerator.get();

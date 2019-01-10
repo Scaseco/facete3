@@ -10,7 +10,7 @@ import java.util.Map;
 import org.hobbit.core.service.docker.api.DockerService;
 import org.hobbit.core.service.docker.api.DockerServiceFactory;
 import org.hobbit.core.service.docker.impl.core.DockerServiceFactoryChain;
-import org.hobbit.core.service.docker.impl.docker_client.DockerServiceFactoryDockerClient;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,7 +36,7 @@ public class ConfigDockerServiceFactory {
 				DockerServiceFactory<?> dockerServiceFactoryOverrides) throws DockerCertificateException {
 	        
 	        // Configure the docker server component	        
-	        DockerServiceFactory<?> core = DockerServiceFactoryDockerClient.create(hostMode, env, Collections.singleton("hobbit"));
+	        DockerServiceFactory<?> core = DockerServiceSystemDockerClient.create(hostMode, env, Collections.singleton("hobbit"));
 	        
 
 	        // FIXME Hostmode controls two aspects which should be separated: (1) use container IPs instead of names (2) override docker images with the component registry
