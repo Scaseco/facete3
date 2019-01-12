@@ -8,9 +8,11 @@ import java.util.Objects;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.expr.Expr;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 
@@ -42,18 +44,42 @@ public class HLFacetConstraintImpl<P>
 		Expr result = state.expr();
 		return result;
 	}
+//	/**
+//	 * 
+//	 * Retrieves the expression and substitutes facet node
+//	 * references with its simple path
+//	 */
+//	@Override
+//	public String toString() {
+//		Expr expr = expr();
+//		
+//		FacetedQueryResource fqr = parent().
+//		HLFacetConstraintImpl.mentionedFacetNodes(fqr, expr);
+//		FacetNod.mentionedFacetNodes(fqr, baseExpr)
+//		
+//	}
+//	
 
-	public Map<Node, FacetNode> mentionedFacetNodes() {
-		FacetedQueryResource fqr = facetNode.query().as(FacetedQueryResource.class);
+	public static Map<Node, BgpNode> mentionedBgpNodes(Model model, Expr baseExpr) {
+		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(model);
+		
+		Map<Node, BgpNode> result = PathAccessorImpl.getPathsMentioned(baseExpr, pathAccessor::tryMapToPath);
+
+		return result;
+	}
+
+	
+	public static Map<Node, FacetNode> mentionedFacetNodes(FacetedQuery fq, Expr baseExpr) {
+		FacetedQueryResource fqr = fq.as(FacetedQueryResource.class);
 //		FacetNodeResource root = facetNode.root().as(FacetNodeResource.class); 
-		FacetNodeResource root = facetNode.query().root().as(FacetNodeResource.class); 
-
-		BgpNode rootState = root.state();
-		Expr baseExpr = state.expr();
-		
-		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(rootState);
-		
-		Map<Node, BgpNode> paths = PathAccessorImpl.getPathsMentioned(baseExpr, pathAccessor::tryMapToPath);
+		FacetNodeResource fnr  = fq.root().as(FacetNodeResource.class); 
+//
+		BgpNode rootState = fnr.state();
+//		//Expr baseExpr = state.expr();
+//		
+//		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(rootState.getModel());
+//		
+		Map<Node, BgpNode> paths = mentionedBgpNodes(rootState.getModel(), baseExpr); // PathAccessorImpl.getPathsMentioned(baseExpr, pathAccessor::tryMapToPath);
 		
 		Map<Node, FacetNode> result = new LinkedHashMap<>();
 		
@@ -62,6 +88,31 @@ public class HLFacetConstraintImpl<P>
 		}
 //		accessor.tryMapToPath(node)
 		
+		return result;
+	}
+	
+	public Map<Node, FacetNode> mentionedFacetNodes() {
+		FacetedQueryResource fqr = facetNode.query().as(FacetedQueryResource.class);
+		Expr baseExpr = state.expr();
+
+		Map<Node, FacetNode> result = mentionedFacetNodes(fqr, baseExpr);
+		
+////		FacetNodeResource root = facetNode.root().as(FacetNodeResource.class); 
+//		FacetNodeResource root = facetNode.query().root().as(FacetNodeResource.class); 
+//
+//		BgpNode rootState = root.state();
+//		
+//		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(rootState);
+//		
+//		Map<Node, BgpNode> paths = PathAccessorImpl.getPathsMentioned(baseExpr, pathAccessor::tryMapToPath);
+//		
+//		Map<Node, FacetNode> result = new LinkedHashMap<>();
+//		
+//		for(Entry<Node, BgpNode> e : paths.entrySet()) {
+//			result.put(e.getKey(), new FacetNodeImpl(fqr, e.getValue()));
+//		}
+////		accessor.tryMapToPath(node)
+//		
 		return result;
 	}
 
@@ -106,5 +157,10 @@ public class HLFacetConstraintImpl<P>
 	@Override
 	public P parent() {
 		return parent;
+	}
+	
+	@Override
+	public String toString() {
+		return facetNode.toString();
 	}
 }

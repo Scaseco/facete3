@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -481,6 +482,12 @@ public class DataQueryImpl<T extends RDFNode>
 
 		
 		logger.debug("After rewrite: " + query);
+
+		Pattern p = Pattern.compile("^.*v_2\\s*<[^>]*>\\s*v_2.*$", Pattern.MULTILINE);
+		if(p.matcher("" + query).find()) {
+			System.out.println("DEBUG POINT reached");
+		}
+		
 		return Maps.immutableEntry((Var)rootVar, query);
 	}
 
@@ -498,7 +505,7 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		Flowable<T> result = ReactiveSparqlUtils
 			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
-			.execSelect(() -> conn.query("" + query))
+			.execSelect(() -> conn.query(query))
 			.map(b -> {
 				Graph graph = GraphFactory.createDefaultGraph();
 

@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -14,10 +15,13 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
@@ -129,7 +133,8 @@ public class FacetNodeImpl
 	public DataQuery<RDFNode> createValueQuery(boolean applySelfConstraints) {
 		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 		
-		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
+//		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
+		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(state.getModel()));
 		qgen.setBaseConcept(query().baseConcept());
 		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
@@ -223,13 +228,24 @@ public class FacetNodeImpl
 
 	@Override
 	public String toString() {
-		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
-		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
-		query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+		//BgpNode bgpRoot = query.modelRoot().getBgpRoot();
+//		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot.getModel()));
 
-		UnaryRelation c = qgen.getConceptForAtPath(this.query.focus().state(), this.state, false);
-		return this.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this))
-				+ "{" + c + "}";
+		boolean pathMode = true; // false = queryPatternMode
+		
+		String result;
+		if(pathMode) {
+			result = "" + BgpNode.toSimplePath(state);
+			//result = "FacetNode::" + state;
+		} else {
+			FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(this.state.getModel()));
+			query.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+	
+			UnaryRelation c = qgen.getConceptForAtPath(this.query.focus().state(), this.state, false);
+			result = this.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this))
+					+ "{" + c + "}";
+		}
+		return result;
 	}
 
 	@Override
@@ -246,5 +262,5 @@ public class FacetNodeImpl
 	public FacetNode chFocus() {
 		query.focus(this);
 		return this;
-	}
+	}	
 }

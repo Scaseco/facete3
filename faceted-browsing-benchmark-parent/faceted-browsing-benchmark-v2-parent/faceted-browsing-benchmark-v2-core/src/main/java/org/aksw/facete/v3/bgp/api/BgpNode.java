@@ -1,7 +1,17 @@
 package org.aksw.facete.v3.bgp.api;
 
+import static org.aksw.facete.v3.api.Direction.BACKWARD;
+import static org.aksw.facete.v3.api.Direction.FORWARD;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.NodeNavigation;
+import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
@@ -17,15 +27,7 @@ import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
-
-import com.google.common.collect.Streams;
-import com.google.common.graph.Traverser;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.aksw.facete.v3.api.Direction.BACKWARD;
-import static org.aksw.facete.v3.api.Direction.FORWARD;
+import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
 public interface BgpNode
 	extends NodeNavigation<BgpNode, BgpDirNode, BgpMultiNode>, Resource
@@ -137,21 +139,23 @@ public interface BgpNode
 
 	
 	public static SimplePath toSimplePath(BgpNode fn) {
+		SimplePath result = FacetedQueryGenerator.toSimplePath(fn, new PathAccessorImpl(fn.getModel()));
+		return result;
 //		BgpNode o;
 //		o.parent().
-		List<P_Path0> steps =
-			Streams.stream(
-					Traverser.<BgpNode>forTree(x ->
-			Optional.ofNullable(x.parent())
-				.map(BgpMultiNode::parent)
-				.map(Collections::singleton)
-				.orElse(Collections.emptySet()))
-			.depthFirstPreOrder(fn))
-			.filter(x -> x.parent() != null)
-			.map(x -> PathUtils.createStep(x.parent().reachingProperty().asNode(), x.parent().getDirection().isForward()))
-			.collect(Collectors.toList());
-	
-		SimplePath result = new SimplePath(steps);
-		return result;
+//		List<P_Path0> steps =
+//			Streams.stream(
+//					Traverser.<BgpNode>forTree(x ->
+//			Optional.ofNullable(x.parent())
+//				.map(BgpMultiNode::parent)
+//				.map(Collections::singleton)
+//				.orElse(Collections.emptySet()))
+//			.depthFirstPreOrder(fn))
+//			.filter(x -> x.parent() != null)
+//			.map(x -> PathUtils.createStep(x.parent().reachingProperty().asNode(), x.parent().getDirection().isForward()))
+//			.collect(Collectors.toList());
+//	
+//		SimplePath result = new SimplePath(steps);
+//		return result;
 	}
 }

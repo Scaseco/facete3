@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
@@ -100,25 +101,29 @@ public class QueryGroupExecutor {
 	
 	public static void main(String[] args) {
 		Model m = RDFDataMgr.loadModel("path-data.ttl");
-		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));
-
-		//Query baseQuery = QueryFactory.create("SELECT ?g1 ?g2 (COUNT(DISTINCT ?g3) AS ?g4) { ?g1 ?g2 ?g3 } GROUP BY ?g1 ?g2");
-		Query baseQuery = QueryFactory.create("SELECT ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?p");
-
-		Query groupQuery = createQueryGroup(baseQuery);
-		System.out.println(groupQuery);
-
-		
-		Table groups = TableFactory.create(new QueryIteratorResultSet(conn.query(groupQuery).execSelect()));
-
-		Query splitQuery = splitByGroupBy(baseQuery, groups, 1);
-		System.out.println(splitQuery);
-		
-
-		System.out.println(groups);
-		
-		
-		System.out.println(ResultSetFormatter.asText(conn.query(splitQuery).execSelect()));
+		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m))) {
+	
+			//Query baseQuery = QueryFactory.create("SELECT ?g1 ?g2 (COUNT(DISTINCT ?g3) AS ?g4) { ?g1 ?g2 ?g3 } GROUP BY ?g1 ?g2");
+			Query baseQuery = QueryFactory.create("SELECT ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?p");
+	
+			Query groupQuery = createQueryGroup(baseQuery);
+			System.out.println(groupQuery);
+	
+			Table groups;
+			try(QueryExecution qe = conn.query(groupQuery)) {
+				groups = TableFactory.create(new QueryIteratorResultSet(qe.execSelect()));
+			}
+	
+			Query splitQuery = splitByGroupBy(baseQuery, groups, 1);
+			System.out.println(splitQuery);
+			
+	
+			System.out.println(groups);
+			
+			try(QueryExecution qe = conn.query(splitQuery)) {
+				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			}
+		}
 	}
 	
 	

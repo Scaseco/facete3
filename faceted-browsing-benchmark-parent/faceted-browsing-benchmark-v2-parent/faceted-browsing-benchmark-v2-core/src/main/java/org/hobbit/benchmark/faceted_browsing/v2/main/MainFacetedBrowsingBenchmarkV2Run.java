@@ -2,7 +2,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.FileInputStream;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -10,14 +9,15 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
@@ -26,18 +26,18 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
-import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.sparql.util.DatasetUtils;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
+import org.hobbit.core.component.ServiceNoOp;
 import org.hobbit.core.service.docker.api.DockerService;
 import org.hobbit.core.service.docker.api.DockerServiceSystem;
+import org.hobbit.core.service.docker.impl.core.DockerServiceWrapper;
 import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 
 import io.reactivex.Flowable;
@@ -62,20 +62,34 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 //		changeTracker.commitChangesWithoutTracking();
 //		
 		
+		boolean useDocker = true;
 		
 		try (DockerServiceSystem<?> dss = DockerServiceSystemDockerClient.create(true, Collections.emptyMap(), Collections.emptySet())) {
 
-			DockerService ds = dss.create("docker-service-example", "tenforce/virtuoso", ImmutableMap.<String, String>builder()
-					.put("SPARQL_UPDATE", "true")
-					.put("DEFAULT_GRAPH", "http://www.example.org/")
-					.build());
-			
+			DockerService ds;
+			if(useDocker) {
+				ds = dss.create("docker-service-example", "tenforce/virtuoso", ImmutableMap.<String, String>builder()
+						.put("SPARQL_UPDATE", "true")
+						.put("DEFAULT_GRAPH", "http://www.example.org/")
+	                    .put("VIRT_Parameters_NumberOfBuffers", "170000")
+	                    .put("VIRT_Parameters_MaxDirtyBuffers", "130000")
+	                    .put("VIRT_Parameters_MaxVectorSize", "1000000000")
+	                    .put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
+	                    .put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
+	                    .put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
+	                    .build());
+			} else {
+				ds = new DockerServiceWrapper<Service>(new ServiceNoOp(), "localhost/jena", () -> "store1");
+			}
 			try {
 				ds.startAsync().awaitRunning();
 
 				// Give the sparql endpoint 5 seconds to come up
 				// TODO Add another example for wrapping with health checks
-				Thread.sleep(10000);
+//				
+				if(useDocker) {
+					Thread.sleep(10000);
+				}
 				
 				// Load a subset of the data
 				
@@ -86,7 +100,16 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 				dss.findServiceByName("docker-service-example");
 				
 				
-				try(RDFConnection rawConn = RDFConnectionFactory.connect(sparqlEndpoint)) {
+//				try(RDFConnection rawConn = RDFConnectionFactory.connect(sparqlEndpoint)) {
+				RDFConnection tmpConn;
+				if(useDocker) {
+					tmpConn = RDFConnectionFactory.connect(sparqlEndpoint);
+				} else {
+					Dataset dataset = DatasetFactory.create();
+					tmpConn = RDFConnectionFactory.connect(dataset);
+				}
+				
+				try(RDFConnection rawConn = tmpConn) {
 					
 					// Wrap the connection to use a different content type for queries...
 					// Jena rejects some of Virtuoso's json output
@@ -106,6 +129,23 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 										.create()
 										), rawConn, rawConn);
 
+					
+					{
+						// This part works; TODO Make a unit test in jsa for it
+						for(int i = 0; i < 1000; ++i) {
+							System.out.println("Query deadlock test iteration #" + i);
+							QueryExecution test = conn.query("SELECT * { ?s ?p ?o }");
+							ReactiveSparqlUtils.execSelect(() -> test)
+								.limit(10)
+								.count()
+								.blockingGet();
+							
+							if(!test.isClosed()) {
+								throw new RuntimeException("QueryExecution was not closed with flow");
+							}
+						}
+					}					
+					
 					
 					Flowable<Dataset> flow = RDFDataMgrRx.createFlowableDatasets(
 							() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
@@ -163,7 +203,9 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 						//System.out.println(i + ": " + SparqlTaskResource.parse(tmp));
 						
 						System.out.println("Query: " + stmt);
-						SparqlStmtUtils.execAny(conn, stmt);
+//						try(SPARQLResultEx srx = SparqlStmtUtils.execAny(conn, stmt)) {
+//							// Ensure to close the result set
+//						}
 					}
 					
 					System.out.println("DONE");

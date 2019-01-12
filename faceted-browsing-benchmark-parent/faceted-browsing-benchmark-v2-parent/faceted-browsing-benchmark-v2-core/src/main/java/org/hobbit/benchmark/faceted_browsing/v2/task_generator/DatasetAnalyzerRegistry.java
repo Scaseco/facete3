@@ -144,14 +144,14 @@ public class DatasetAnalyzerRegistry {
 		model.add(RDFDataMgr.loadModel("xsd-facets.ttl"));
 		
 		String inferPropertiesQueryStr = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> CONSTRUCT { ?p a rdf:Property} { SELECT DISTINCT ?p { ?s ?p ?o } }";
-		model.add(conn.query(inferPropertiesQueryStr).execConstruct());
+		model.add(conn.queryConstruct(inferPropertiesQueryStr));
 		
 		// xsd uses a 'numeric'-facet to annotate types
 		// converting this to rdf would be the proper way to do this
 		
 		// PREFIX schema: <http://schema.org/>
 		String propertyLiteralRangeQueryStr = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> CONSTRUCT { ?p rdfs:range ?r } { SELECT DISTINCT ?p ?r { ?s ?p ?o . FILTER(isLiteral(?o)) . BIND(datatype(?o) AS ?r) } }";
-		model.add(conn.query(propertyLiteralRangeQueryStr).execConstruct());
+		model.add(conn.queryConstruct(propertyLiteralRangeQueryStr));
 
 
 		Relation r = new BinaryRelationImpl(ElementUtils.createElement(new Triple(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);

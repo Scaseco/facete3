@@ -18,6 +18,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.bgp.api.BgpMultiNode;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.ConstraintFacadeImpl;
 import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
@@ -30,6 +32,8 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
@@ -42,9 +46,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_LogicalNot;
-import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
@@ -54,6 +56,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformExpr;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -65,12 +68,13 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
 import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
 
 
 public class FacetedQueryGenerator<P> {
@@ -172,6 +176,46 @@ public class FacetedQueryGenerator<P> {
 //		effectiveConstraints = Sets.difference(constraints, excludes);
 
 	}
+
+
+// We have BgpNode.toSimplePath - maybe generalize its implementation to use a pathAccessor
+
+	public static <T> SimplePath toSimplePath(T path, PathAccessor<T> pathAccessor) {
+		List<P_Path0> steps =
+				Streams.stream(
+						Traverser.<T>forTree(x ->
+				Optional.ofNullable(pathAccessor.getParent(x))
+					.map(Collections::singleton)
+					.orElse(Collections.emptySet()))
+				.depthFirstPreOrder(path))
+				.filter(x -> pathAccessor.getParent(x) != null)
+//				.map(x -> PathUtils.createStep(pathAccessor.getPredicate(pathAccessor.getParent(x)), !pathAccessor.isReverse(pathAccessor.getParent(x))))
+				.map(x -> PathUtils.createStep(pathAccessor.getPredicate(x), !pathAccessor.isReverse(x)))
+				.collect(Collectors.toList());
+		
+			SimplePath result = new SimplePath(steps);
+			return result;
+	}
+	
+
+//	public static <P> SimplePath toSimplePath(P path, PathAccessor<P> pathAccessor) {
+//		P parent;
+//		// TODO Finish the impl
+//		List<P_Path0> steps = new ArrayList<>();
+//		while((parent = pathAccessor.getParent(path)) != null) {
+//			String predicate = pathAccessor.getPredicate(path);
+//			boolean isReverse = pathAccessor.isReverse(path);
+//			
+//			P_Path0 step = PathUtils.createStep(predicate, !isReverse);
+//			steps.add(step);
+//			
+//			path = parent;
+//		}
+//		Collections.reverse(steps);
+//		SimplePath result = new SimplePath(steps);
+//		
+//		return result;
+//	}
 	
 	public static <P> BinaryRelation createRelationForPath(PathToRelationMapper<P> mapper, PathAccessor<P> pathAccessor, P childPath, boolean includeAbsent) {
 		BinaryRelation result;

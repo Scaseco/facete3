@@ -9,6 +9,7 @@ import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
@@ -16,6 +17,7 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromProperty;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -100,6 +102,7 @@ public class BgpNodeImpl
 
 	@Override
 	public BgpNode root() {
+		//TODO Use guava's Traverser.forTree(tree)...
 		BgpNode result = TreeUtils.<BgpNode>findRoot(this, n -> Optional.ofNullable(n.parent()).map(BgpMultiNode::parent).orElse(null));
 		return result;
 	}
@@ -279,6 +282,11 @@ public class BgpNodeImpl
 				throw new IllegalStateException();
 			}
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return "BgpNodeImpl[" + BgpNode.toSimplePath(this) + "; " + super.toString() + "]";
 	}
 	
 //	@Override

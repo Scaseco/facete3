@@ -1,22 +1,51 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Range;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import static java.lang.Math.log;
+import static java.util.Collections.shuffle;
+
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nonnull;
 
 import org.aksw.commons.collections.selector.WeightedSelector;
 import org.aksw.commons.collections.selector.WeightedSelectorImmutable;
 import org.aksw.commons.collections.selector.WeightedSelectorMutable;
 import org.aksw.commons.collections.selector.WeigthedSelectorDrawWithReplacement;
-import org.aksw.facete.v3.api.*;
+import org.aksw.facete.v3.api.ConstraintFacade;
+import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.api.Direction;
+import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -27,7 +56,12 @@ import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.*;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprListUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.NodeHolder;
+import org.aksw.jena_sparql_api.utils.RangeUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
@@ -37,12 +71,27 @@ import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.expr.*;
+import org.apache.jena.sparql.expr.E_Bound;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_GreaterThan;
+import org.apache.jena.sparql.expr.E_GreaterThanOrEqual;
+import org.apache.jena.sparql.expr.E_LessThan;
+import org.apache.jena.sparql.expr.E_LessThanOrEqual;
+import org.apache.jena.sparql.expr.E_LogicalAnd;
+import org.apache.jena.sparql.expr.E_OneOf;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunction2;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
@@ -60,19 +109,12 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import java.io.StringWriter;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
 
-import static java.lang.Math.log;
-import static java.util.Collections.shuffle;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 
 
 public class TaskGenerator {
@@ -195,8 +237,8 @@ public class TaskGenerator {
 				.map(p -> p.getConstant().getNode())
 				.collect(Collectors.toList());
 
-		final Node bound = evc.get(0);
-		if (evc.size() == 1) {
+		if(!evc.isEmpty()) {
+			final Node bound = evc.get(0);
 			boundsMap.put(e.getOpName().charAt(0), bound);
 		}
 	}
@@ -1011,6 +1053,13 @@ public class TaskGenerator {
 		for (SimplePath path : paths) {
 			FacetNode target = fn.walk(SimplePath.toPropertyPath(path));
 
+			// Dump contstraints
+			for(FacetConstraint fc : target.query().constraints()) {
+				HLFacetConstraint<?> hlfc = new HLFacetConstraintImpl<>(null, target, fc);
+				System.out.println("DEBUG POINT CONSTRAINT: " + hlfc);
+			}
+			
+			
 			if (target != null) {
 				UnaryRelation numProps = createConcept(numericProperties);
 
@@ -1028,7 +1077,7 @@ public class TaskGenerator {
 							.fwd().facets()
 							.filter(numProps)
 							.pseudoRandom(pseudoRandom)
-							.exec().map(n -> n.asNode()).toList().blockingGet();
+							.exec().map(RDFNode::asNode).toList().blockingGet();
 				}
 
 				for (Node p : ps) {
@@ -1718,6 +1767,14 @@ public class TaskGenerator {
 			final Node xUpper = range.upperEndpoint().getNode();
 			final Node oldLower = constraintModeValue.getOrDefault('>', constraintModeValue.getOrDefault('=', null));
 			final Node oldUpper = constraintModeValue.getOrDefault('<', constraintModeValue.getOrDefault('=', null));
+
+			if(oldLower == null || oldUpper == null) {
+				System.out.println("newLower: " + newLower);
+				System.out.println("newUpper: " + newUpper);
+				System.out.println("DEBUG POINT here");
+				//throw new RuntimeException("Should not happen");
+			}
+			
 			if (oldLower == null || NodeValue.compare(NodeValue.makeNode(xLower), NodeValue.makeNode(oldLower)) == Expr.CMP_GREATER) {
 				newLower = xLower;
 				newUpper = oldUpper;

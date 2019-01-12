@@ -15,9 +15,11 @@ import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
@@ -29,10 +31,33 @@ import com.google.common.graph.Traverser;
 public class PathAccessorImpl
 	implements PathAccessor<BgpNode>
 {
-	protected BgpNode query;
+//	protected BgpNode query;
+//	
+//	public PathAccessorImpl(BgpNode query) {
+//		this.query = query;
+//	}
 	
-	public PathAccessorImpl(BgpNode query) {
-		this.query = query;
+	protected Model model;
+	
+	/**
+	 * A model which may contain a set of paths; only needed for tryMapToPath which tests whether an RDF term 'x' denotes a path object is the given model.
+	 * The test is based on the existence of a 'x' type BgpNode triple.
+	 * 
+	 */
+	public PathAccessorImpl() {
+		this((Model)null);
+	}
+
+	/**
+	 * Ctor version that in the future may resolve paths only if they are connected to the given resource
+	 * @param rdfNode
+	 */
+	public PathAccessorImpl(RDFNode rdfNode) {
+		this.model = rdfNode.getModel();
+	}
+
+	public PathAccessorImpl(Model model) {
+		this.model = model;
 	}
 	
 	@Override
@@ -57,7 +82,8 @@ public class PathAccessorImpl
 	@Override
 	public boolean isReverse(BgpNode path) {
 		BinaryRelation br = getReachingRelation(path);
-		Triple t = Objects.requireNonNull(ElementUtils.extractTriple(br.getElement()));
+		Element brE = br.getElement();
+		Triple t = Objects.requireNonNull(ElementUtils.extractTriple(brE));
 
 		
 		boolean result = !br.getSourceVar().equals(t.getSubject());
@@ -103,13 +129,15 @@ public class PathAccessorImpl
 
 	@Override
 	public BgpNode tryMapToPath(Node node) {
+		Objects.requireNonNull(model, "Testing whether a node denotes a path object requires a model to test against, but none was set.");
+		
 		//FacetNode result = null;
 		BgpNode result = null;
 		
 	 	if(node.isBlank()) {
 	 		
 		 	//Model model = query.modelRoot().getModel();
-		 	Model model = query.getModel();
+		 	//Model model = query.getModel();
 	 		
 		 	//ModelUtils.convertGraphNodeToRDFNode(node, model);
 		 	BgpNode state = model.wrapAsResource(node).as(BgpNode.class);
