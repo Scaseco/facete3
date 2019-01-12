@@ -1,8 +1,11 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.aksw.facete.v3.api.FacetConstraint;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
@@ -79,6 +82,25 @@ public class FacetConstraintImpl
 	
 	@Override
 	public String toString() {
-		return super.toString();
+		// Substitute references in the expression with their respective toString representation
+		Expr expr = expr();
+
+		Map<Node, BgpNode> map = HLFacetConstraintImpl.mentionedBgpNodes(this.getModel(), expr);
+		
+		Expr e = org.aksw.jena_sparql_api.utils.ExprUtils.applyNodeTransform(expr, n -> {
+			Node r;
+			BgpNode fn = map.get(n);
+			if(fn != null) {
+				r = NodeFactory.createLiteral("[" + fn + "]");
+			} else {
+				r = n;
+			}
+
+			return r;
+		});
+		
+		//String result = Objects.toString(e);
+		String result = org.apache.jena.sparql.util.ExprUtils.fmtSPARQL(e);
+		return  result;
 	}
 }

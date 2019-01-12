@@ -286,7 +286,7 @@ public class BgpNodeImpl
 	
 	@Override
 	public String toString() {
-		return "BgpNodeImpl[" + BgpNode.toSimplePath(this) + "; " + super.toString() + "]";
+		return "" + BgpNode.toSimplePath(this) + "; " + super.toString();
 	}
 	
 //	@Override
