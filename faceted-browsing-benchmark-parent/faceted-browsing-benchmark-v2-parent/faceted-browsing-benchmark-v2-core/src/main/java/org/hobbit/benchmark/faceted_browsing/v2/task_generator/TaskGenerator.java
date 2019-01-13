@@ -776,7 +776,7 @@ public class TaskGenerator {
 			Node o = fc.getValue();
 
 			//fn.step(p, isBwd).one().constraints().eq(o);
-			fn.step(p, dir).one().constraints().range(Range.singleton(new NodeHolder(o))).activate();
+			fn.step(p, dir).one().constraints().nodeRange(Range.singleton(new NodeHolder(o))).activate();
 
 			// Pick one of the facet values
 
@@ -1054,6 +1054,7 @@ public class TaskGenerator {
 			FacetNode target = fn.walk(SimplePath.toPropertyPath(path));
 
 			// Dump contstraints
+			System.out.println("DEBUG POINT FOCUS: " + target.query().focus());
 			for(FacetConstraint fc : target.query().constraints()) {
 				HLFacetConstraint<?> hlfc = new HLFacetConstraintImpl<>(null, target, fc);
 				System.out.println("DEBUG POINT CONSTRAINT: " + hlfc);
@@ -1321,7 +1322,7 @@ public class TaskGenerator {
 		if (r != null) {
 			if (!r.getKey().root().constraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().values().contains(r.getKey()))
 				|| allowExisting ) {
-				r.getKey().constraints().range(r.getValue()).activate();
+				r.getKey().constraints().nodeRange(r.getValue()).activate();
 				result = true;
 			}
 		}
@@ -1632,7 +1633,7 @@ public class TaskGenerator {
 		logger.debug("Pick: " + r);
 
 		if (r != null) {
-			r.getKey().constraints().range(r.getValue()).activate();
+			r.getKey().constraints().nodeRange(r.getValue()).activate();
 			result = true;
 		}
 
@@ -1727,14 +1728,14 @@ public class TaskGenerator {
 				result = false;
 			} else {
 				result = true;
-				facetNode.constraints().range(Range.atMost(new NodeHolder(oldUpper))).activate();
+				facetNode.constraints().nodeRange(Range.atMost(new NodeHolder(oldUpper))).activate();
 			}
 		} else {
 			if (oldLower == null) {
 				result = false;
 			} else {
 				result = true;
-				facetNode.constraints().range(Range.atLeast(new NodeHolder(oldLower))).activate();
+				facetNode.constraints().nodeRange(Range.atLeast(new NodeHolder(oldLower))).activate();
 			}
 		}
 		if (result) {
@@ -1797,13 +1798,13 @@ public class TaskGenerator {
 				facetNode.constraints().eq(newLower).activate();
 				result = true;
 			} else if (pickUpperBound && pickLowerBound){
-				facetNode.constraints().range(Range.closed(new NodeHolder(newLower), new NodeHolder(newUpper))).activate();
+				facetNode.constraints().nodeRange(Range.closed(new NodeHolder(newLower), new NodeHolder(newUpper))).activate();
 				result = true;
 			} else if (pickLowerBound) {
-				facetNode.constraints().range(Range.atLeast(new NodeHolder(newLower))).activate();
+				facetNode.constraints().nodeRange(Range.atLeast(new NodeHolder(newLower))).activate();
 				result = true;
 			} else if (pickUpperBound) {
-				facetNode.constraints().range(Range.atMost(new NodeHolder(newUpper))).activate();
+				facetNode.constraints().nodeRange(Range.atMost(new NodeHolder(newUpper))).activate();
 				result = true;
 			} else {
 				result = false;

@@ -62,7 +62,9 @@ public interface ConstraintFacade<B> {
 	HLFacetConstraint<? extends ConstraintFacade<B>> neq(Node node);
 
 	
-	HLFacetConstraint<? extends ConstraintFacade<B>> range(Range<NodeHolder> range);
+	HLFacetConstraint<? extends ConstraintFacade<B>> nodeRange(Range<NodeHolder> range);
+
+	HLFacetConstraint<? extends ConstraintFacade<B>> range(Range<?> range);
 
 	/**
 	 * Return the expr that denotes the ConstraintFacade's underlying

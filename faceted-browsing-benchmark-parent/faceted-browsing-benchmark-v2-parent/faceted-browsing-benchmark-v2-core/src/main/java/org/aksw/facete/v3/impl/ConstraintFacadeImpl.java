@@ -11,6 +11,8 @@ import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -19,8 +21,10 @@ import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 
 import com.google.common.base.Converter;
+import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 
 public class ConstraintFacadeImpl<B extends FacetNodeResource>
@@ -148,7 +152,7 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 
 
 	@Override
-	public HLFacetConstraint<? extends ConstraintFacade<B>> range(Range<NodeHolder> range) {
+	public HLFacetConstraint<? extends ConstraintFacade<B>> nodeRange(Range<NodeHolder> range) {
 		Expr expr = RangeUtils.createExpr(parent.state().asNode(), range);
 		HLFacetConstraint<? extends ConstraintFacade<B>> result = getOrCreateConstraint(expr);
 		return result;
@@ -190,6 +194,65 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	public HLFacetConstraint<? extends ConstraintFacade<B>> absent() {
 		Expr expr = new E_Equals(thisAsExpr(), NV_ABSENT);
 		HLFacetConstraint<? extends ConstraintFacade<B>> result = getOrCreateConstraint(expr);
+		return result;
+	}
+
+	
+	/**
+	 * Create a range from a range from Java objects (such as Integers) via Jena's Type mapper
+	 * 
+	 * @param range
+	 * @return
+	 */
+	public static Range<NodeHolder> toNodeRange(Range<?> range) {
+		TypeMapper tm = TypeMapper.getInstance();
+		
+		Node lowerNode = null;
+		Node upperNode = null;
+		
+		BoundType lowerBoundType = null;
+		BoundType upperBoundType = null;
+		
+		if(range.hasLowerBound()) {
+			lowerBoundType = range.lowerBoundType();
+
+			Object lb = range.lowerEndpoint();
+			Class<?> lbClass = lb.getClass();
+
+			RDFDatatype dtype = tm.getTypeByClass(lbClass);
+			if(dtype == null) {
+				throw new IllegalArgumentException("No type mapper entry for " + lbClass);
+			}
+			
+			lowerNode = NodeFactory.createLiteralByValue(lb, dtype);
+		}
+		
+		if(range.hasUpperBound()) {
+			upperBoundType = range.upperBoundType();
+
+			Object ub = range.upperEndpoint();
+			Class<?> ubClass = ub.getClass();
+
+			RDFDatatype dtype = tm.getTypeByClass(ubClass);
+			if(dtype == null) {
+				throw new IllegalArgumentException("No type mapper entry for " + ubClass);
+			}
+
+			upperNode = NodeFactory.createLiteralByValue(ub, dtype);
+		}
+		
+		NodeHolder lowerNh = lowerNode == null ? null : new NodeHolder(lowerNode);
+		NodeHolder upperNh = upperNode == null ? null : new NodeHolder(upperNode);
+		
+		Range<NodeHolder> result = RangeSpec.createRange(lowerNh, lowerBoundType, upperNh, upperBoundType);	
+		return result;
+	}
+	
+	@Override
+	public HLFacetConstraint<? extends ConstraintFacade<B>> range(Range<?> range) {
+		Range<NodeHolder> nodeRange = toNodeRange(range);
+	
+		HLFacetConstraint<? extends ConstraintFacade<B>> result = nodeRange(nodeRange);
 		return result;
 	}
 

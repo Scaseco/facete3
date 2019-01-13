@@ -23,6 +23,7 @@ import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
+import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -35,7 +36,6 @@ import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.ResourceComparator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Graph;
@@ -70,8 +70,6 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.sparql.util.NodeUtils;
-import org.apache.jena.util.ResourceUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
@@ -478,7 +476,7 @@ public class DataQueryImpl<T extends RDFNode>
 		//logger.info("Generated query: " + query);
 
 		Rewrite rewrite = createDefaultRewriter();
-		query = rewrite(query, rewrite);
+		query = rewrite(query, rewrite::rewrite);
 
 		
 		logger.debug("After rewrite: " + query);
@@ -587,10 +585,11 @@ public class DataQueryImpl<T extends RDFNode>
 
 	
 	// TODO Move to Query Utils
-	public static Query rewrite(Query query, Rewrite rewrite) {
-		Query result = rewrite(query, (Function<? super Op, ? extends Op>)rewrite::rewrite);
-		return result;
-	}
+//	public static Query rewrite(Query query, Rewrite rewrite) {
+//		Query result = rewrite(query, (Function<? super Op, ? extends Op>)rewrite::rewrite);
+//		result.getPrefixMapping().setNsPrefixes(query.getPrefixMapping());
+//		return result;
+//	}
 
 	// TODO Move to Query Utils
 	public static Query rewrite(Query query, Function<? super Op, ? extends Op> rewriter) {
@@ -599,6 +598,7 @@ public class DataQueryImpl<T extends RDFNode>
 		op = rewriter.apply(op);
 		
 		Query result = OpAsQuery.asQuery(op);
+		result.getPrefixMapping().setNsPrefixes(query.getPrefixMapping());
 		return result;
 	}
 
@@ -657,6 +657,8 @@ public class DataQueryImpl<T extends RDFNode>
         		op = TransformPushFiltersIntoBGP.transform(op);
         		
         		op = TransformDeduplicatePatterns.transform(op);
+        		
+        		op = TransformRedundantFilterRemoval.transform(op);
         		
         		return op;
         };

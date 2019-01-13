@@ -42,6 +42,20 @@ public interface RangeSpec
 	}
 
 	
+	/**
+	 * Utility function for creating ranges with null values.
+	 * Null is interpreted as the absence of a boundary, hence
+	 * createRange(null, null) yields Range.all().
+	 * 
+	 * If min or max is null, the corresponding value for inclusiveness is ignored.
+	 * 
+	 * 
+	 * @param min
+	 * @param isMinInclusive
+	 * @param max
+	 * @param isMaxInclusive
+	 * @return
+	 */
 	public static <T extends Comparable<T>> Range<T> createRange(T min, boolean isMinInclusive, T max, boolean isMaxInclusive) {
 		BoundType minBoundType = isMinInclusive ? BoundType.CLOSED : BoundType.OPEN;
 		BoundType maxBoundType = isMaxInclusive ? BoundType.CLOSED : BoundType.OPEN;
@@ -53,4 +67,28 @@ public interface RangeSpec
 		
 		return result;
 	}
+
+	/**
+	 * Utility function for creating ranges with null values.
+	 * Null is interpreted as the absence of a boundary, hence
+	 * createRange(null, null) yields Range.all().
+	 * 
+	 * If min or max is null, the corresponding value for inclusiveness is ignored.
+	 * 
+	 * @param min
+	 * @param minBoundType
+	 * @param max
+	 * @param maxBoundType
+	 * @return
+	 */
+	public static <T extends Comparable<T>> Range<T> createRange(T min, BoundType minBoundType, T max, BoundType maxBoundType) {
+
+		Range<T> result =
+				min == null
+					? max == null ? Range.all() : Range.upTo(max, maxBoundType)
+					: max == null ? Range.downTo(min, minBoundType) : Range.range(min, minBoundType, max, maxBoundType);
+		
+		return result;
+	}
+
 }

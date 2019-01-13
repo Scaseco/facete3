@@ -396,7 +396,7 @@ public class TestFacetedQuery2 {
 		System.out.println("Pick: " + r);
 
 		if (r != null) {
-			r.getKey().constraints().range(r.getValue()).activate();
+			r.getKey().constraints().nodeRange(r.getValue()).activate();
 		}
 
 		System.out.println(node);
@@ -721,7 +721,7 @@ public class TestFacetedQuery2 {
 				.one()
 				.constraints()
 //				.gt(NodeValue.makeInteger(50000).asNode())
-				    .range(Range.closed(
+				    .nodeRange(Range.closed(
 						new NodeHolder(NodeValue.makeInteger(50000).asNode()),
 						new NodeHolder(NodeValue.makeInteger(80000000).asNode())))
 				    .activate()
