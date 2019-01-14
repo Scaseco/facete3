@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.aksw.commons.accessors.SingleValuedAccessorDirect;
 
@@ -17,7 +18,21 @@ import org.aksw.commons.accessors.SingleValuedAccessorDirect;
  *
  */
 public class SupplierUtils {
+
+	public static <T> Supplier<T> toSupplier(Callable<T> callable) {
+		return () -> {
+			try {
+				return callable.call();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+	}
 	
+	public static <T> Callable<T> from(Iterable<T> iterable) {
+		return from(iterable.iterator());
+	}
+
 	public static <T> Callable<T> from(Iterator<T> it) {
 		return () -> it.hasNext() ? it.next() : null;
 	}
@@ -86,6 +101,14 @@ public class SupplierUtils {
 	 */
 	public static <T> Callable<T> flatMap(Callable<? extends Callable<? extends T>> supplier) {
 		return flatMap(supplier, null);
+	}
+
+	public static <T> Callable<T> flatMapIterable(Callable<? extends Iterable<T>> supplier) {
+		return flatMap(() -> {
+			Iterable<T> iterable = supplier.call();
+			Callable<T> r = iterable == null ? null : SupplierUtils.from(iterable);
+			return r;
+		});
 	}
 
 	/**

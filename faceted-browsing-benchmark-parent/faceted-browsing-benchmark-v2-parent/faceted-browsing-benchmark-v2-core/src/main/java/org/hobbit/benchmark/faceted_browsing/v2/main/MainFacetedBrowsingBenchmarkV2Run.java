@@ -1,9 +1,12 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -48,6 +51,17 @@ import io.reactivex.Flowable;
 public class MainFacetedBrowsingBenchmarkV2Run {
 	public static void main(String[] args) throws DockerCertificateException, Exception {
 
+		if(false) {
+			int[] start = {0};
+			Supplier<? extends Collection<String>> s = () -> Arrays.asList("" + start[0]++, "a", "b");
+	
+			Supplier<String> test = SupplierUtils.toSupplier(SupplierUtils.flatMapIterable(s::get));
+			for(int i = 0; i < 20; ++i) {
+				System.out.println(test.get());
+			}
+
+			return;
+		}
 
 		
 //		Dataset raw = DatasetFactory.create();

@@ -5,6 +5,7 @@ import static java.util.Collections.shuffle;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -142,6 +143,10 @@ public class TaskGenerator {
 		this.rand = new Random();
 		this.conceptPathFinder = conceptPathFinder;
 
+		resetQueryState();
+	}
+
+	public void resetQueryState() {
 		Model baseModel = ModelFactory.createDefaultModel();
 		Model changeModel = ModelFactory.createDefaultModel();
 
@@ -160,8 +165,9 @@ public class TaskGenerator {
 //		} catch(Exception e) {
 //			throw new RuntimeException(e);
 //		}
-	}
 
+	}
+	
 	final static ImmutableSet<Class<? extends Expr>> rangeComparisonExprs =
 			ImmutableSet.<Class<? extends Expr>>builder()
 					.add(E_GreaterThan.class)
@@ -496,6 +502,8 @@ public class TaskGenerator {
 		// if an action is not applicable, the supplier is null
 		Map<String, Callable<Boolean>> cpToAction = new HashMap<>();
 
+		
+		resetQueryState();
 		changeTracker.commitChangesWithoutTracking();
 
 		// How to wrap the actions such that changes go into the change Model?
@@ -582,11 +590,17 @@ public class TaskGenerator {
 //		
 //		return result;
 
-		int queryIdx[] = {0};
-		Supplier<SparqlTaskResource> result = () -> {
-			SparqlTaskResource r = null;
+		// One task can have multiple queries
+		int taskIdInScenario[] = {0};
+		
+		// Ideally for every task the query id would start at 0,
+		// but the eval module currently only supports (scenarioId, queryId)
+		int queryIdInScenario[] = {0};
+		Supplier<Collection<SparqlTaskResource>> tmp = () -> {
+			Collection<SparqlTaskResource> r = null;
 
-			int i = queryIdx[0]++;
+			int i = taskIdInScenario[0]++;
+			
 			if (i < scenarioLength) {
 
 				String cpName = nextAction(cpToAction, actionSelector);
@@ -594,28 +608,47 @@ public class TaskGenerator {
 
 				// HACK to parse out the integer id of a cp
 				// Needed for compatibility with the old evaluation module
-				// TODO Get rid of making assumptions about cp ids				
+				// FIXME Get rid of making assumptions about cp ids				
 				if (cpName != null) {
 					String cpSuffix = cpName.substring(2);
 					int cpId = Integer.parseInt(cpSuffix);
 
-					r = generateQuery();
-					r
-							.addLiteral(FacetedBrowsingVocab.queryId, i) //Integer.toString(i))
-							.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
+					r = generateQueries(currentQuery.focus());
+					// Add annotations
+					for(SparqlTaskResource s : r) {
+						s
+						.addLiteral(FacetedBrowsingVocab.queryId, queryIdInScenario[0]++) //Integer.toString(i))
+						.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
+					}
+//					r = generateQuery(currentQuery.focus().availableValues());
 				}
 
+				
 				//RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
 			}
 			return r;
 		};
+		
 
+		Supplier<SparqlTaskResource> result =
+				SupplierUtils.toSupplier(SupplierUtils.flatMapIterable(tmp::get));//SupplierUtils.flatMap(SupplierUtils.from()
+		
 		return result;
 	}
 
+	
+	public Collection<SparqlTaskResource> generateQueries(FacetNode focus) {
 
-	public SparqlTaskResource generateQuery() {
-		Entry<Node, Query> e = currentQuery.focus().availableValues().toConstructQuery();
+		List<SparqlTaskResource> result = Arrays.asList(
+			generateQuery(currentQuery.focus().availableValues().ordered().limit(1000)), // TODO Probably sort and take a limit
+			generateQuery(currentQuery.focus().fwd().facetCounts()),
+			generateQuery(currentQuery.focus().fwd().facetValueCounts()));
+			
+		return result;
+	}
+
+	public SparqlTaskResource generateQuery(DataQuery<?> dq) {
+		Entry<Node, Query> e = dq.toConstructQuery();
 		Query q = e.getValue();
 
 		SparqlTaskResource result = ModelFactory.createDefaultModel()
