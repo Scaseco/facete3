@@ -269,10 +269,10 @@ public class FacetedQueryGenerator<P> {
 	public BinaryRelation createRelationForPath(P childPath, SetMultimap<P, Expr> constraintIndex, boolean applySelfConstraints, boolean negated, boolean includeAbsent) {
 		
 		//BinaryRelation rel = pathAccessor.getReachingRelation(childPath);
-		BinaryRelation rel = createRelationForPath(mapper, pathAccessor, childPath, includeAbsent);//mapper.getOverallRelation(childPath);
+		BinaryRelation facetRelation = createRelationForPath(mapper, pathAccessor, childPath, includeAbsent);//mapper.getOverallRelation(childPath);
 		BinaryRelation result;
 
-		if(!rel.isEmpty()) {
+		if(!facetRelation.isEmpty()) {
 			List<Element> elts = new ArrayList<>();
 			// TODO If the relation is of form ?s <p> ?o, then rewrite as ?s ?p ?o . FILTER(?p = <p>)
 
@@ -287,7 +287,7 @@ public class FacetedQueryGenerator<P> {
 				// If the path exists as a constraint DO NOT add it 
 				// as it will be added by the constraint
 			} else {
-				elts.addAll(rel.getElements());
+				elts.addAll(facetRelation.getElements());
 			}
 
 			// NOTE The BIND blocks naive BGP / filter optimization; but a
@@ -295,16 +295,16 @@ public class FacetedQueryGenerator<P> {
 			elts.add(new ElementBind(Vars.p, NodeValue.makeNode(NodeFactory.createURI(pathAccessor.getPredicate(childPath)))));
 
 			
-			rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
+			facetRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), facetRelation.getSourceVar(), facetRelation.getTargetVar());
 			
 			
 			//P basePath = pathAccessor.getParent(childPath);
 
 			P rootPath = FacetedQueryGenerator.getRoot(childPath, pathAccessor::getParent);
 			
-			result = createConstraintRelationForPath(rootPath, childPath, rel, Vars.p, effectiveCi, negated, includeAbsent);
+			result = createConstraintRelationForPath(rootPath, childPath, facetRelation, Vars.p, effectiveCi, negated, includeAbsent);
 		} else {
-			result = rel;
+			result = facetRelation;
 		}
 		return result;
 	}
@@ -704,37 +704,38 @@ public class FacetedQueryGenerator<P> {
 		// Rename all instances of 'p' and 'o' variables 
 		// Also make sure that vars of facetRelation are not remapped among themselves
 		Set<Var> vars = facetRelation.getVarsMentioned();//new HashSet<>(Arrays.asList(Vars.p, Vars.o));
-		vars.remove(facetRelation.getSourceVar());
-		vars.remove(facetRelation.getTargetVar());
+//		vars.remove(facetRelation.getSourceVar());
+//		vars.remove(facetRelation.getTargetVar());
+
+		//forbiddenVars.addAll(vars);
 		
-		
-		Map<Var, Var> rename = VarUtils.createDistinctVarMap(vars, forbiddenVars, true, VarGeneratorBlacklist.create(forbiddenVars));
-//		rename.put(facetRelation.getSourceVar(), s);
+		Map<Var, Var> rename = VarUtils.createDistinctVarMap(forbiddenVars, Arrays.asList(pVar, facetRelation.getTargetVar()), true, null);//VarGeneratorBlacklist.create(forbiddenVars));
+		rename.put(facetRelation.getSourceVar(), s);
 //		rename.put(s, facetRelation.getSourceVar());
 	
 		// Connect the source of the facet relation to the variable of the
 		// base path
 		//Map<Var, Var> r2 = new HashMap<>();
-		rename.put(facetRelation.getSourceVar(), s);
+		//rename.put(facetRelation.getSourceVar(), s);
 	
 		BinaryRelation renamedFacetRelation = facetRelation.applyNodeTransform(new NodeTransformRenameMap(rename));
 		
 		//s = rename.getOrDefault(s, s);
 		
-		List<Element> es = new ArrayList<>();
-		for(Element e : elts) {
-			Element x = ElementUtils.createRenamedElement(e, rename);
-			es.add(x);
-		}
+//		List<Element> es = new ArrayList<>();
+//		for(Element e : elts) {
+//			Element x = ElementUtils.createRenamedElement(e, rename);
+//			es.add(x);
+//		}
 		
 		//boolean isReverse = pathAccessor.isReverse(path);
 		//Triple t = QueryFragment.createTriple(isReverse, s, Vars.p, Vars.o);
 		//es.add(facetRelation.getElement());//ElementUtils.createElement(t));
 		
-		es.addAll(renamedFacetRelation.getElements());
+		elts.addAll(renamedFacetRelation.getElements());
 		
 		//BinaryRelation result = new BinaryRelation(ElementUtils.groupIfNeeded(es), Vars.p, Vars.o);
-		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(es), pVar, rename.getOrDefault(facetRelation.getTargetVar(), facetRelation.getTargetVar()));
+		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), pVar, rename.getOrDefault(facetRelation.getTargetVar(), facetRelation.getTargetVar()));
 		
 		return result;
 	}
@@ -1184,12 +1185,14 @@ public class FacetedQueryGenerator<P> {
 		// This is incorrect; we need the values of the facet here;
 		// we could take the parent path and restrict it to a set of given predicates
 		//pathAccessor.getParent(facetPath);
+
+		// Get the focus element
+		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
+		// TODO We may want to use variables of focusRelation as input to blacklisting in var allocation
 		
 		//boolean applySelfConstraints = false;
 		Map<String, BinaryRelation> facets = createMapFacetsAndValues(focusPath, facetPath, isReverse, applySelfConstraints, negated, includeAbsent);
 
-		// Get the focus element
-		BinaryRelation focusRelation = mapper.getOverallRelation(focusPath);
 		Set<Element> e1 = new LinkedHashSet<>(ElementUtils.toElementList(focusRelation.getElement()));
 		
 		Map<String, TernaryRelation> result = new HashMap<>();
