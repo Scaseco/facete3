@@ -1769,7 +1769,7 @@ public class TaskGenerator {
 			final Node oldLower = constraintModeValue.getOrDefault('>', constraintModeValue.getOrDefault('=', null));
 			final Node oldUpper = constraintModeValue.getOrDefault('<', constraintModeValue.getOrDefault('=', null));
 
-			if(oldLower == null || oldUpper == null) {
+			if(oldLower == null && oldUpper == null) {
 				System.out.println("newLower: " + newLower);
 				System.out.println("newUpper: " + newUpper);
 				System.out.println("DEBUG POINT here");
@@ -1789,25 +1789,29 @@ public class TaskGenerator {
 				newLower = oldLower;
 				newUpper = xUpper;
 			}
-			if (NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_GREATER) {
-				Node tmp = newLower;
-				newLower = newUpper;
-				newUpper = tmp;
-			}
-			if (pickConstant || NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_EQUAL) {
-				facetNode.constraints().eq(newLower).activate();
-				result = true;
-			} else if (pickUpperBound && pickLowerBound){
-				facetNode.constraints().nodeRange(Range.closed(new NodeHolder(newLower), new NodeHolder(newUpper))).activate();
-				result = true;
-			} else if (pickLowerBound) {
-				facetNode.constraints().nodeRange(Range.atLeast(new NodeHolder(newLower))).activate();
-				result = true;
-			} else if (pickUpperBound) {
-				facetNode.constraints().nodeRange(Range.atMost(new NodeHolder(newUpper))).activate();
-				result = true;
-			} else {
-				result = false;
+			
+			if(newLower != null && newUpper != null) {
+			
+				if (NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_GREATER) {
+					Node tmp = newLower;
+					newLower = newUpper;
+					newUpper = tmp;
+				}
+				if (pickConstant || NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_EQUAL) {
+					facetNode.constraints().eq(newLower).activate();
+					result = true;
+				} else if (pickUpperBound && pickLowerBound){
+					facetNode.constraints().nodeRange(Range.closed(new NodeHolder(newLower), new NodeHolder(newUpper))).activate();
+					result = true;
+				} else if (pickLowerBound) {
+					facetNode.constraints().nodeRange(Range.atLeast(new NodeHolder(newLower))).activate();
+					result = true;
+				} else if (pickUpperBound) {
+					facetNode.constraints().nodeRange(Range.atMost(new NodeHolder(newUpper))).activate();
+					result = true;
+				} else {
+					result = false;
+				}
 			}
 		}
 		if (result) {

@@ -47,7 +47,7 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	}
 	
 	// Get the facets of this set of values with the counts referring the the query's focus
-	@Deprecated
+	//@Deprecated
 	DataQuery<FacetValueCount> facetValueCounts();
 
 	/**

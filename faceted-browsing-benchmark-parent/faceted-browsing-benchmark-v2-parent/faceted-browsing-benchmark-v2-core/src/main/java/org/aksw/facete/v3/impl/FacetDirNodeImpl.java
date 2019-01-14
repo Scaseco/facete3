@@ -203,7 +203,7 @@ public class FacetDirNodeImpl
 		qgen.setBaseConcept(query().baseConcept());
 		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
-		this.query();
+		//this.query();
 		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null, includeAbsent);
 		
 		// Inject that the object must not be a blank node

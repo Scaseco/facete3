@@ -187,7 +187,7 @@ public class FacetedQueryGenerator<P> {
 				Optional.ofNullable(pathAccessor.getParent(x))
 					.map(Collections::singleton)
 					.orElse(Collections.emptySet()))
-				.depthFirstPreOrder(path))
+				.depthFirstPostOrder(path))
 				.filter(x -> pathAccessor.getParent(x) != null)
 //				.map(x -> PathUtils.createStep(pathAccessor.getPredicate(pathAccessor.getParent(x)), !pathAccessor.isReverse(pathAccessor.getParent(x))))
 				.map(x -> PathUtils.createStep(pathAccessor.getPredicate(x), !pathAccessor.isReverse(x)))
@@ -283,9 +283,10 @@ public class FacetedQueryGenerator<P> {
 					? constraintIndex
 					: hideConstraintsForPath(constraintIndex, childPath);
 			
-			// If the path exists as a constraint DO NOT add it 
-			// as it will be added by the constraint
-			if(!effectiveCi.containsKey(childPath)) {
+			if(effectiveCi.containsKey(childPath)) {
+				// If the path exists as a constraint DO NOT add it 
+				// as it will be added by the constraint
+			} else {
 				elts.addAll(rel.getElements());
 			}
 
@@ -297,9 +298,11 @@ public class FacetedQueryGenerator<P> {
 			rel = new BinaryRelationImpl(ElementUtils.groupIfNeeded(elts), rel.getSourceVar(), rel.getTargetVar());
 			
 			
-			P basePath = pathAccessor.getParent(childPath);
+			//P basePath = pathAccessor.getParent(childPath);
 
-			result = createConstraintRelationForPath(basePath, childPath, rel, Vars.p, effectiveCi, negated, includeAbsent);
+			P rootPath = FacetedQueryGenerator.getRoot(childPath, pathAccessor::getParent);
+			
+			result = createConstraintRelationForPath(rootPath, childPath, rel, Vars.p, effectiveCi, negated, includeAbsent);
 		} else {
 			result = rel;
 		}
@@ -653,15 +656,21 @@ public class FacetedQueryGenerator<P> {
 	/**
 	 * Returns a binary relation with facet - facet value columns.
 	 * 
+	 * Attemps to rename variables of the facetRelation as to not conflict
+	 * with the variables of paths.
 	 * 
-	 * @param basePath only used to obtain the connecting variable
+	 * 
+	 * Issue: facetRelation is not relative to basePath but to root,
+	 * so the connection variable is that of root
+	 * 
+	 * @param rootPath only used to obtain the connecting variable
 	 * @param facetRelation
 	 * @param pVar
 	 * @param effectiveConstraints
 	 * @param negate Negate the constraints - this yields all facet+values unaffected by the effectiveConstraints do NOT apply
 	 * @return
 	 */
-	public BinaryRelation createConstraintRelationForPath(P basePath, P childPath, BinaryRelation facetRelation, Var pVar, Multimap<P, Expr> constraintIndex, boolean negate, boolean includeAbsent) {
+	public BinaryRelation createConstraintRelationForPath(P rootPath, P childPath, BinaryRelation facetRelation, Var pVar, Multimap<P, Expr> constraintIndex, boolean negate, boolean includeAbsent) {
 
 //		Collection<Element> elts = createElementsFromConstraintIndex(constraintIndex,
 //				p -> !negate ? false : (childPath == null ? true : Objects.equals(p, childPath)));
@@ -676,7 +685,8 @@ public class FacetedQueryGenerator<P> {
 		//List<Element> elts = tmp.getElements();
 
 		
-		Var s = (Var)mapper.getNode(basePath);//.asVar();
+		
+		Var s = (Var)mapper.getNode(rootPath);//.asVar();
 		
 		// Rename all instances of ?p and ?o
 		
@@ -685,21 +695,29 @@ public class FacetedQueryGenerator<P> {
 			Collection<Var> v = PatternVars.vars(e);
 			forbiddenVars.addAll(v);
 		}
+
+		//forbiddenVars.addAll(facetRelation.getVarsMentioned());
 		
+		// Set up the relation for the facets:
+		// Make sure that none of its ?p and ?o variables collides with variables
+		// of the constraint elements
 		// Rename all instances of 'p' and 'o' variables 
+		// Also make sure that vars of facetRelation are not remapped among themselves
 		Set<Var> vars = facetRelation.getVarsMentioned();//new HashSet<>(Arrays.asList(Vars.p, Vars.o));
 		vars.remove(facetRelation.getSourceVar());
 		vars.remove(facetRelation.getTargetVar());
+		
 		
 		Map<Var, Var> rename = VarUtils.createDistinctVarMap(vars, forbiddenVars, true, VarGeneratorBlacklist.create(forbiddenVars));
 //		rename.put(facetRelation.getSourceVar(), s);
 //		rename.put(s, facetRelation.getSourceVar());
 	
-		// Rename the source of the facet relation
-		Map<Var, Var> r2 = new HashMap<>();
-		r2.put(facetRelation.getSourceVar(), s);
+		// Connect the source of the facet relation to the variable of the
+		// base path
+		//Map<Var, Var> r2 = new HashMap<>();
+		rename.put(facetRelation.getSourceVar(), s);
 	
-		facetRelation = facetRelation.applyNodeTransform(new NodeTransformRenameMap(r2));
+		BinaryRelation renamedFacetRelation = facetRelation.applyNodeTransform(new NodeTransformRenameMap(rename));
 		
 		//s = rename.getOrDefault(s, s);
 		
@@ -713,7 +731,7 @@ public class FacetedQueryGenerator<P> {
 		//Triple t = QueryFragment.createTriple(isReverse, s, Vars.p, Vars.o);
 		//es.add(facetRelation.getElement());//ElementUtils.createElement(t));
 		
-		es.addAll(facetRelation.getElements());
+		es.addAll(renamedFacetRelation.getElements());
 		
 		//BinaryRelation result = new BinaryRelation(ElementUtils.groupIfNeeded(es), Vars.p, Vars.o);
 		BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(es), pVar, rename.getOrDefault(facetRelation.getTargetVar(), facetRelation.getTargetVar()));
@@ -959,6 +977,16 @@ public class FacetedQueryGenerator<P> {
 		
 		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
 
+		boolean sanityCheck = true;
+		if(sanityCheck) {
+			System.out.println("DEBUG POINT");
+			for(TernaryRelation r : facetValues.values()) {
+				if(Objects.equals(r.getS(), r.getO())) {
+					System.out.println("Should not happen");
+				}
+			}
+		}
+		
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))

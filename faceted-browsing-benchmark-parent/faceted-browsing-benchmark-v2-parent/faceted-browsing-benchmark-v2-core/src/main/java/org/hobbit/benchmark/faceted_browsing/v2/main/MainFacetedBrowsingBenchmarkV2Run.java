@@ -195,14 +195,15 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 						
 						System.out.println("GENERATED TASK: " + tmp.getURI());
 						RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
+						SparqlStmt stmt = SparqlTaskResource.parse(tmp);
+						System.out.println("Query: " + stmt);
+
 						if(scenarioId >= 10) {
 							break;
 						}
 						
-						SparqlStmt stmt = SparqlTaskResource.parse(tmp);
 						//System.out.println(i + ": " + SparqlTaskResource.parse(tmp));
 						
-						System.out.println("Query: " + stmt);
 //						try(SPARQLResultEx srx = SparqlStmtUtils.execAny(conn, stmt)) {
 //							// Ensure to close the result set
 //						}
