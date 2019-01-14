@@ -11,13 +11,16 @@ import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultEx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
@@ -198,6 +201,15 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 						SparqlStmt stmt = SparqlTaskResource.parse(tmp);
 						System.out.println("Query: " + stmt);
 
+						
+						try(SPARQLResultEx srx = SparqlStmtUtils.execAny(conn, stmt)) {
+							// Ensure to close the result set
+							if(srx.isResultSet()) {
+								System.out.println("RESULTSET SIZE: " + ResultSetFormatter.consume(srx.getResultSet()));
+							}
+						}
+
+						
 						if(scenarioId >= 10) {
 							break;
 						}
