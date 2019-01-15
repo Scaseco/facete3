@@ -181,7 +181,7 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 					
 					
 					Flowable<Dataset> flow = RDFDataMgrRx.createFlowableDatasets(
-							() -> new MetaBZip2CompressorInputStream(MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream("hobbit-sensor-stream-150k-events.trig.bz2")),
+							() -> new MetaBZip2CompressorInputStream(MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream("hobbit-sensor-stream-150k-events-data.trig.bz2")),
 //							() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
 							Lang.TRIG,
 							"http://www.example.org/");
