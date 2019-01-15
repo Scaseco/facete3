@@ -1,7 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,9 +18,7 @@ import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
-import org.aksw.jena_sparql_api.stmt.SPARQLResultEx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -39,7 +38,6 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
-import org.apache.jena.sparql.function.library.leviathan.log;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
@@ -64,6 +62,17 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MainFacetedBrowsingBenchmarkV2Run.class);
 
+	
+	public static InputStream openBz2InputStream(String name) throws IOException {
+		InputStream rawIn = MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream(name);
+		if(rawIn == null) {
+			throw new IOException("Resource not found: " + name);
+		}
+		
+		InputStream result = new MetaBZip2CompressorInputStream(rawIn);
+		return result;
+	}
+	
 	public static void main(String[] args) throws DockerCertificateException, Exception {
 		
 		if(false) {
