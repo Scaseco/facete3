@@ -5,12 +5,14 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Resource;
+import org.hobbit.core.component.BenchmarkVocab;
 
 
 public interface SparqlTaskResource
 	extends Resource
 {
-	@Iri("rdfs:label")
+	//@Iri("rdfs:label")
+	@Iri(BenchmarkVocab.Strs.taskPayload)
 	String getSparqlStmtString();
 	SparqlTaskResource setSparqlStmtString(String stmtStr);
 	

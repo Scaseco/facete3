@@ -80,9 +80,10 @@ public class TestFacetedQueryVariableNamingBug {
 		fq.focus()
 			.fwd("http://www.w3.org/ns/ssn/#hasValue").one().chFocus()
 			.fwd("http://www.agtinternational.com/ontologies/IoTCore#valueLiteral").one()
-			.constraints()
-				.range(Range.closed(29.79f, 30.43f)).activate()
-			.end();
+//			.constraints()
+//				.range(Range.closed(29.79f, 30.43f)).activate()
+//			.end()
+			;
 		
 		String queryStr = "" + fq.focus().fwd()
 				.facetValueCounts()

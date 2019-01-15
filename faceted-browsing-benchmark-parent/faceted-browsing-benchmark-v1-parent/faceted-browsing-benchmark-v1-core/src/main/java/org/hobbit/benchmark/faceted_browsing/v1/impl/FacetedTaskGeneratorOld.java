@@ -755,7 +755,7 @@ public class FacetedTaskGeneratorOld {
         	stmt.changeObject(newQueryStr);
         	
         	
-        	Resource r = annotateTaskWithReferenceResult(task, conn, refConn);
+        	Resource r = annotateTaskWithReferenceResult(task, refConn);
         	return r;
         });
         
@@ -763,7 +763,7 @@ public class FacetedTaskGeneratorOld {
     }
     
     
-	public static Resource annotateTaskWithReferenceResult(Resource task, SparqlQueryConnection conn, SparqlQueryConnection refConn) {
+	public static Resource annotateTaskWithReferenceResult(Resource task, SparqlQueryConnection refConn) {
 
         logger.info("Generated task: " + task);
         

@@ -262,11 +262,14 @@ public class TaskGenerator {
 			Callable<SparqlTaskResource> taskSupplier = () -> {
 				SparqlTaskResource s = core.get();
 				if (s != null) {
+					// Id of 0 conflicts with the eval module...
+					int displayId = scenarioIdx + 1;
+					
 					// add scenario id
-					s.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioIdx);
+					s.addLiteral(FacetedBrowsingVocab.scenarioId, displayId);
 
 					Integer queryId = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(s, FacetedBrowsingVocab.queryId, Integer.class); //getString();
-					String scenarioName = "scenario" + scenarioIdx;
+					String scenarioName = "scenario" + displayId;
 
 					s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
 							.as(SparqlTaskResource.class);
