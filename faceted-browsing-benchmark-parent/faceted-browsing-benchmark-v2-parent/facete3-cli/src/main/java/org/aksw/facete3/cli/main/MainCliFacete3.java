@@ -909,7 +909,7 @@ public class MainCliFacete3 {
 		
 		facetPathPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetPathPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
-		facetPathPanel.addComponent(new Button("Foo"));
+//		facetPathPanel.addComponent(new Button("Foo"));
 		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
 		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
 

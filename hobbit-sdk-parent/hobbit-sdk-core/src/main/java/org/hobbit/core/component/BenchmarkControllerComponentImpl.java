@@ -46,7 +46,7 @@ public class BenchmarkControllerComponentImpl
     // Time allowed for the task generator to finish
     public static final int MAX_BENCHMARK_TIME_IN_SECONDS = 60 * 45;    
 
-    public static final int MAX_COMPONENT_STARTUP_TIME_IN_SECONDS = 60 * 3;    
+    public static final int MAX_COMPONENT_STARTUP_TIME_IN_SECONDS = 60 * 10;    
     public static final int MAX_COMPONENT_SHUTDOWN_TIME_IN_SECONDS = 60;
  
     // Short requests should usually be served within a few seconds
