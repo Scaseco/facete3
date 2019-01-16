@@ -13,6 +13,11 @@
 	</parent>
 
 	<dependencies>
+                <dependency>
+                        <groupId>org.hobbit</groupId>
+                        <artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
+			<scope>test</scope>
+                </dependency>
 
 		<dependency>
 			<groupId>org.hobbit</groupId>

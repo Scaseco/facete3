@@ -21,6 +21,12 @@
 <!-- 				<version>3.6.0-2-SNAPSHOT</version> -->
 <!-- 			</dependency> -->
 
+                <dependency>
+                        <groupId>org.hobbit</groupId>
+                        <artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
+                    <scope>test</scope>
+                </dependency>
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>faceted-browsing-benchmark-v2-core</artifactId>
