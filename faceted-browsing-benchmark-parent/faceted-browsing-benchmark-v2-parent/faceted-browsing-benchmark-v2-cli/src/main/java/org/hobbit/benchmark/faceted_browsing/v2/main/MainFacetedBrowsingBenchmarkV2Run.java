@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
@@ -189,8 +190,16 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 							Lang.TRIG,
 							"http://www.example.org/");
 					
+					
+					
 					long count = flow.count().blockingGet();
-					long initSample = count / 10;
+					long initSample = count / 2;
+
+					
+					long triples = flow.limit(initSample).map(xxx -> xxx.asDatasetGraph().size())
+					.toList().blockingGet().stream().mapToLong(yyy -> yyy).sum();
+					
+					logger.info("Records stats from given dataset (used/available - triples: " + initSample + "/" + count + " - " + triples);
 					//flow.onBackpressureBuffer().blockingNext();
 					//flow.forEach(x -> System.out.println("Next: " + x));
 					flow.limit(initSample).forEach(batch -> {

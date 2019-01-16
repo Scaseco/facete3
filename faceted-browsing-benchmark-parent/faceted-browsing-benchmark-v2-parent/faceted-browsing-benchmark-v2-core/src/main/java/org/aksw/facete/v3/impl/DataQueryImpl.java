@@ -479,7 +479,7 @@ public class DataQueryImpl<T extends RDFNode>
 		query = rewrite(query, rewrite::rewrite);
 
 		
-		logger.debug("After rewrite: " + query);
+//		logger.debug("After rewrite: " + query);
 
 
 		// Pattern p = Pattern.compile("^.*v_2\\s*<[^>]*>\\s*v_2.*$", Pattern.MULTILINE);

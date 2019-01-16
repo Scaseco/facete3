@@ -78,7 +78,7 @@ import io.reactivex.Flowable;
 	  
 	    public static Flowable<Resource> readStaticFile() throws IOException {
 
-	    	InputStream in = HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-tasks.ttl.bz2");	    	
+	    	InputStream in = HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-75k-events-tasks.ttl.bz2");	    	
 			Model taskModel = ModelFactory.createDefaultModel();
 			RDFDataMgr.read(
 				taskModel,

@@ -15,6 +15,8 @@ import org.hobbit.benchmark.faceted_browsing.main.HobbitBenchmarkUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
@@ -24,6 +26,9 @@ public class ConfigDataGeneratorFacetedBrowsingV2 {
 //    public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
 //    	return () -> Stream.of(new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.Property));
 //    }
+	
+	
+	private static final Logger logger = LoggerFactory.getLogger(ConfigDataGeneratorFacetedBrowsingV2.class);
 
     @Bean
     public TripleStreamSupplier dataGenerationMethod(DockerServiceBuilderFactory<?> dockerServiceBuilderFactory, @Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {
@@ -36,8 +41,12 @@ public class ConfigDataGeneratorFacetedBrowsingV2 {
 			} catch (IOException e) {
 				throw new  RuntimeException(e);
 			}
-    		Iterator<Quad> it = RDFDataMgr.createIteratorQuads(in, Lang.TRIG, "http://www.example.org/");
+
+			logger.info("WARNING: LIMIT ON DATASET SIZE IN PLACE");
+			
+			Iterator<Quad> it = RDFDataMgr.createIteratorQuads(in, Lang.TRIG, "http://www.example.org/");
     		Stream<Triple> r = Streams.stream(it)
+    				.limit(412747)
     				.map(Quad::asTriple)
     				.onClose(() -> {
     					// Consume the underlying iterator to trigger jena's
