@@ -41,7 +41,7 @@ public class BenchmarkControllerComponentImpl
     extends ComponentBaseExecutionThread
     //implements BenchmarkController
 {
-    public static final int MAX_DATAGENERATION_TIME_IN_SECONDS = 60 * 15;
+    public static final int MAX_DATAGENERATION_TIME_IN_SECONDS = 60 * 30;
     
     // Time allowed for the task generator to finish
     public static final int MAX_BENCHMARK_TIME_IN_SECONDS = 60 * 45;    
