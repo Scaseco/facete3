@@ -5,27 +5,18 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
-import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
-import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.main.MainFacetedBrowsingBenchmarkV2Run;
+import org.hobbit.benchmark.faceted_browsing.main.HobbitBenchmarkUtils;
 import org.hobbit.core.Constants;
 import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
 import org.hobbit.interfaces.TripleStreamSupplier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-
-import io.reactivex.Flowable;
 
 
 public class ConfigDataGeneratorFacetedBrowsingV2 {
@@ -41,7 +32,7 @@ public class ConfigDataGeneratorFacetedBrowsingV2 {
     	return () -> {
     		InputStream in;
 			try {
-				in = new MetaBZip2CompressorInputStream(MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream("hobbit-sensor-stream-150k-events-data.trig.bz2"));
+				in = HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-data.trig.bz2");//new MetaBZip2CompressorInputStream(MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream("hobbit-sensor-stream-150k-events-data.trig.bz2"));
 			} catch (IOException e) {
 				throw new  RuntimeException(e);
 			}

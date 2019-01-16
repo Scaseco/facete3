@@ -481,10 +481,11 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		logger.debug("After rewrite: " + query);
 
-		Pattern p = Pattern.compile("^.*v_2\\s*<[^>]*>\\s*v_2.*$", Pattern.MULTILINE);
-		if(p.matcher("" + query).find()) {
-			System.out.println("DEBUG POINT reached");
-		}
+
+		// Pattern p = Pattern.compile("^.*v_2\\s*<[^>]*>\\s*v_2.*$", Pattern.MULTILINE);
+		// if(p.matcher("" + query).find()) {
+		// 	System.out.println("DEBUG POINT reached");
+		// }
 		
 		return Maps.immutableEntry((Var)rootVar, query);
 	}

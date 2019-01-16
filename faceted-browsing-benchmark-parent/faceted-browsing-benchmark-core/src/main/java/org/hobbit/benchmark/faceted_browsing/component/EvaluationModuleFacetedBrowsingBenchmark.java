@@ -238,9 +238,9 @@ public class EvaluationModuleFacetedBrowsingBenchmark
             fp = receivedDataInstances.size() - tp;
             
             
-            if(fp != 0) {
-                System.out.println("DEBUG POINT REACHED");
-            }
+            //if(fp != 0) {
+            //    System.out.println("DEBUG POINT REACHED");
+            //}
             
 
             int time_needed = responseReceivedTimestamp > 0L && responseReceivedTimestamp - taskSentTimestamp < timeOut ?

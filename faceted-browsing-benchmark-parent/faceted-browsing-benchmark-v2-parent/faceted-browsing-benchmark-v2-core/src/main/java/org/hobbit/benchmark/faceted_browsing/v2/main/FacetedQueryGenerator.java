@@ -978,15 +978,15 @@ public class FacetedQueryGenerator<P> {
 		
 		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
 
-		boolean sanityCheck = true;
-		if(sanityCheck) {
-			System.out.println("DEBUG POINT");
-			for(TernaryRelation r : facetValues.values()) {
-				if(Objects.equals(r.getS(), r.getO())) {
-					System.out.println("Should not happen");
-				}
-			}
-		}
+//		boolean sanityCheck = false;
+//		if(sanityCheck) {
+//			System.out.println("DEBUG POINT");
+//			for(TernaryRelation r : facetValues.values()) {
+//				if(Objects.equals(r.getS(), r.getO())) {
+//					System.out.println("Should not happen");
+//				}
+//			}
+//		}
 		
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()

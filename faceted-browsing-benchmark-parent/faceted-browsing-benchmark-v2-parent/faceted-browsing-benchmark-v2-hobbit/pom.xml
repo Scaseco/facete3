@@ -21,12 +21,18 @@
 <!-- 				<version>3.6.0-2-SNAPSHOT</version> -->
 <!-- 			</dependency> -->
 
+
+                        <dependency>
+                                <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-log4j12</artifactId>
+                        </dependency>
+<!--
                 <dependency>
                         <groupId>org.hobbit</groupId>
                         <artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
                     <scope>test</scope>
                 </dependency>
-
+-->
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>faceted-browsing-benchmark-v2-core</artifactId>
@@ -41,12 +47,6 @@
 <!-- 			<scope>test</scope> -->
 <!-- 		</dependency> -->
 
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>${slf4j.version}</version>
-<!-- 			<scope>test</scope> -->
-		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>

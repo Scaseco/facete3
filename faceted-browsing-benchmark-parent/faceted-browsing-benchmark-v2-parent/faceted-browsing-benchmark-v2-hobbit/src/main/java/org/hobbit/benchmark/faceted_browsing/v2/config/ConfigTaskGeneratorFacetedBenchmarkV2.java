@@ -27,7 +27,7 @@ import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.component.TaskGeneratorModuleFacetedBrowsing;
-import org.hobbit.benchmark.faceted_browsing.v2.main.MainFacetedBrowsingBenchmarkV2Run;
+import org.hobbit.benchmark.faceted_browsing.main.HobbitBenchmarkUtils;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.TaskGeneratorModule;
 import org.hobbit.core.service.docker.impl.core.DockerServiceBuilderFactory;
@@ -78,7 +78,7 @@ import io.reactivex.Flowable;
 	  
 	    public static Flowable<Resource> readStaticFile() throws IOException {
 
-	    	InputStream in = MainFacetedBrowsingBenchmarkV2Run.openBz2InputStream("hobbit-sensor-stream-150k-events-tasks.ttl.bz2");	    	
+	    	InputStream in = HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-tasks.ttl.bz2");	    	
 			Model taskModel = ModelFactory.createDefaultModel();
 			RDFDataMgr.read(
 				taskModel,

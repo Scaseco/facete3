@@ -1,6 +1,7 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,6 +10,7 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.function.Supplier;
 
+import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigCommunicationWrapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
@@ -42,6 +44,17 @@ public class HobbitBenchmarkUtils {
 //	public static class Context {
 //	}
 	
+	
+	public static InputStream openBz2InputStream(String name) throws IOException {
+		InputStream rawIn = HobbitBenchmarkUtils.class.getClassLoader().getResourceAsStream(name);
+		if(rawIn == null) {
+			throw new IOException("Resource not found: " + name);
+		}
+		
+		InputStream result = new MetaBZip2CompressorInputStream(rawIn);
+		return result;
+	}
+
 	
 	/**
 	 * A different context layout, where the infrastructure (qpid server and docker service manager) are separated

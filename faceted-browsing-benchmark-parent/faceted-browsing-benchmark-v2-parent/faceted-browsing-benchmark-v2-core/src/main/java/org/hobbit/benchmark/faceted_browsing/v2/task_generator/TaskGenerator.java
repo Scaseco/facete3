@@ -645,7 +645,7 @@ public class TaskGenerator {
 		List<SparqlTaskResource> result = Arrays.asList(
 			generateQuery(currentQuery.focus().availableValues().ordered().limit(1000)), // TODO Probably sort and take a limit
 			generateQuery(currentQuery.focus().fwd().facetCounts()),
-			generateQuery(currentQuery.focus().fwd().facetValueCounts()));
+			generateQuery(currentQuery.focus().fwd().facetValueCounts().ordered().limit(1000)));
 			
 		return result;
 	}
@@ -1090,11 +1090,11 @@ public class TaskGenerator {
 			FacetNode target = fn.walk(SimplePath.toPropertyPath(path));
 
 			// Dump contstraints
-			System.out.println("DEBUG POINT FOCUS: " + target.query().focus());
-			for(FacetConstraint fc : target.query().constraints()) {
-				HLFacetConstraint<?> hlfc = new HLFacetConstraintImpl<>(null, target, fc);
-				System.out.println("DEBUG POINT CONSTRAINT: " + hlfc);
-			}
+			// System.out.println("DEBUG POINT FOCUS: " + target.query().focus());
+			// for(FacetConstraint fc : target.query().constraints()) {
+			//	HLFacetConstraint<?> hlfc = new HLFacetConstraintImpl<>(null, target, fc);
+			//	System.out.println("DEBUG POINT CONSTRAINT: " + hlfc);
+			// }
 			
 			
 			if (target != null) {
@@ -1135,7 +1135,9 @@ public class TaskGenerator {
 					//				.pseudoRandom(pseudoRandom)
 					//				.limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
-					logger.debug("Values: " + distribution);
+					// Printing out the whole distribution is usually too large!
+					// FIXME In the future we need to implement a strategy to summarize the distribution
+					logger.debug("# Values: " + distribution.size());
 
 //					result = Maps.immutableEntry(v, distribution);
 
@@ -1265,7 +1267,7 @@ public class TaskGenerator {
 				numericProperties);
 		if (!cands.isEmpty()) {
 
-			logger.debug("range candidates: " + cands);
+			logger.debug("# range candidates: " + cands.size());
 
 			// Select candidates, thereby using the sum of the value counts as weights divided by the path length
 			Map<FacetNode, Long> candToWeight =
@@ -1805,12 +1807,12 @@ public class TaskGenerator {
 			final Node oldLower = constraintModeValue.getOrDefault('>', constraintModeValue.getOrDefault('=', null));
 			final Node oldUpper = constraintModeValue.getOrDefault('<', constraintModeValue.getOrDefault('=', null));
 
-			if(oldLower == null && oldUpper == null) {
-				System.out.println("newLower: " + newLower);
-				System.out.println("newUpper: " + newUpper);
-				System.out.println("DEBUG POINT here");
-				//throw new RuntimeException("Should not happen");
-			}
+//			if(oldLower == null && oldUpper == null) {
+//				System.out.println("newLower: " + newLower);
+//				System.out.println("newUpper: " + newUpper);
+//				System.out.println("DEBUG POINT here");
+//				//throw new RuntimeException("Should not happen");
+//			}
 			
 			if (oldLower == null || NodeValue.compare(NodeValue.makeNode(xLower), NodeValue.makeNode(oldLower)) == Expr.CMP_GREATER) {
 				newLower = xLower;
@@ -1900,7 +1902,7 @@ public class TaskGenerator {
 				.filter(p -> subClassNodes.contains(new NodeHolder(p.getValue())))
 				.toList()
 				.blockingGet();
-		logger.debug("Facet Value Counts: {}", fn2_av);
+		//logger.debug("Facet Value Counts: {}", fn2_av);
 		if (!fn2_av.isEmpty()) {
 			final WeightedSelector<Node> subClassSelector = WeightedSelectorImmutable
 					.create(fn2_av, ge -> ge.getValue(), gw -> 1 + log(gw.getFocusCount().getCount()));

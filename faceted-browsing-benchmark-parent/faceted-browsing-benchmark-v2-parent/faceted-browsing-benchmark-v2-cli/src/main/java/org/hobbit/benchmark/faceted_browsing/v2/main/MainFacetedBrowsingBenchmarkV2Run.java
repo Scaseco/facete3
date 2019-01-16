@@ -1,8 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +9,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
@@ -42,6 +39,7 @@ import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
+import org.hobbit.benchmark.faceted_browsing.main.HobbitBenchmarkUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.component.ServiceNoOp;
@@ -62,17 +60,7 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MainFacetedBrowsingBenchmarkV2Run.class);
 
-	
-	public static InputStream openBz2InputStream(String name) throws IOException {
-		InputStream rawIn = MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream(name);
-		if(rawIn == null) {
-			throw new IOException("Resource not found: " + name);
-		}
 		
-		InputStream result = new MetaBZip2CompressorInputStream(rawIn);
-		return result;
-	}
-	
 	public static void main(String[] args) throws DockerCertificateException, Exception {
 		
 		if(false) {
@@ -152,13 +140,16 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 				
 				try(RDFConnection rawConn = tmpConn) {
 					
+					RDFConnection baseConn = rawConn;
+					//RDFConnection baseConn = RDFConnectionFactory.connect(DatasetFactory.create());
+
 					// Wrap the connection to use a different content type for queries...
 					// Jena rejects some of Virtuoso's json output
 					@SuppressWarnings("resource")
-					RDFConnection conn =
+					RDFConnection wrappedConn =
 							new RDFConnectionModular(new SparqlQueryConnectionJsa(
 									FluentQueryExecutionFactory
-										.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
+										.from(new QueryExecutionFactorySparqlQueryConnection(baseConn))
 										.config()
 										.withDatasetDescription(DatasetDescriptionUtils.createDefaultGraph("http://www.example.org/"))
 										.withPostProcessor(qe -> {
@@ -168,8 +159,11 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 										})
 										.end()
 										.create()
-										), rawConn, rawConn);
+										), baseConn, baseConn);
 
+					
+					
+					RDFConnection conn = wrappedConn;
 					
 					if(false)
 					{
@@ -190,15 +184,16 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 					
 					
 					Flowable<Dataset> flow = RDFDataMgrRx.createFlowableDatasets(
-							() -> new MetaBZip2CompressorInputStream(MainFacetedBrowsingBenchmarkV2Run.class.getClassLoader().getResourceAsStream("hobbit-sensor-stream-150k-events-data.trig.bz2")),
+							() -> HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-data.trig.bz2"),
 //							() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
 							Lang.TRIG,
 							"http://www.example.org/");
 					
-					int initSample = 1000;
+					long count = flow.count().blockingGet();
+					long initSample = count / 10;
 					//flow.onBackpressureBuffer().blockingNext();
 					//flow.forEach(x -> System.out.println("Next: " + x));
-					flow.forEach(batch -> {
+					flow.limit(initSample).forEach(batch -> {
 //					flow.limit(initSample).forEach(batch -> {
 						
 						// Its probably more efficient (not scientifially evaluated)
