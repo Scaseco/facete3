@@ -3,9 +3,10 @@ package org.hobbit.benchmark.faceted_browsing.v2.config;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.BiFunction;
 
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -85,7 +86,18 @@ import io.reactivex.Flowable;
 				"http://www.example.org/",
 				Lang.TURTLE);
     		
-			
+			Set<String> skips = new HashSet<>(Arrays.asList(
+				"http://example.org/scenario6-2",
+				"http://example.org/scenario5-2",
+				"http://example.org/scenario6-5",
+				"http://example.org/scenario9-5",
+				"http://example.org/scenario2-8",
+				"http://example.org/scenario7-2",
+				"http://example.org/scenario2-5"));
+
+			for(String skip : skips) {
+				taskModel.createResource(skip).removeProperties();
+			}
 			
 //			taskModel.removeAll(null, BenchmarkVocab.expectedResult, null);
 //			taskModel.removeAll(null, BenchmarkVocab.expectedResultSetSize, null);

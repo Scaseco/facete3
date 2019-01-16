@@ -252,11 +252,12 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M1</version>
-
-
 					<!-- The spring based unit tests presently cannot configure properties 
 						across all containers -->
 					<configuration>
+						<forkCount>1</forkCount>
+						<argLine>-Xmx8192m</argLine>
+
 						<!-- VHOST no longer has to be set -->
 						<!-- <systemPropertyVariables> -->
 						<!-- <AMQP_VHOST>default</AMQP_VHOST> -->
