@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.component;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -116,11 +117,11 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         ByteBuffer buf = ByteBuffer.wrap(expectedData);
         Resource expected = expectedDataDecoder.apply(buf);
         
-        String resultsString;
+        String actualResultStr;
         try {
             ResultSet received = ResultSetFactory.fromJSON(inReceived);
             byte[] resultsBytes = formatResultData(received);
-            resultsString = RabbitMQUtils.readString(resultsBytes);
+            actualResultStr = RabbitMQUtils.readString(resultsBytes);
         } catch ( org.apache.jena.atlas.json.JsonParseException e){
         	throw new RuntimeException(e);
             //resultsString="";
@@ -148,7 +149,10 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         String taskidGold = expected.getURI();
         Integer scenario = ResourceUtils.getLiteralPropertyValue(expected, FacetedBrowsingVocab.scenarioId, Integer.class);
         Integer query = ResourceUtils.getLiteralPropertyValue(expected, FacetedBrowsingVocab.queryId, Integer.class);
-        String goldsString = ResourceUtils.getLiteralPropertyValue(expected, BenchmarkVocab.expectedResult, String.class);
+        String expectedResultStr = ResourceUtils.getLiteralPropertyValue(expected, BenchmarkVocab.expectedResult, String.class);
+        
+
+        
         
         Set<Integer> cps = new SetFromLiteralPropertyValues<>(expected, FacetedBrowsingVocab.chokepointId, Integer.class);
         
@@ -165,12 +169,12 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         // WTF???? Why is there a sleep??? ~Claus
         //TimeUnit.MILLISECONDS.sleep(500);
         
-        String[] resultsArray = resultsString.split(",");
+        String[] resultsArray = actualResultStr.split(",");
         for (int i=0 ; i< resultsArray.length; i++){
             resultsArray[i]=resultsArray[i].trim();
         }
 
-        String[] goldsArray = goldsString.split(",");
+        String[] goldsArray = expectedResultStr.split(",");
         for (int i=0 ; i< goldsArray.length; i++){
             goldsArray[i]=goldsArray[i].trim();
         }
@@ -452,7 +456,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
     }
 
-    public byte[] formatResultData(ResultSet result){
+    public static byte[] formatResultData(ResultSet result){
         StringBuilder listString = new StringBuilder();
         while(result.hasNext()) {
             String value = (result.next().get(result.getResultVars().get(0)).toString());

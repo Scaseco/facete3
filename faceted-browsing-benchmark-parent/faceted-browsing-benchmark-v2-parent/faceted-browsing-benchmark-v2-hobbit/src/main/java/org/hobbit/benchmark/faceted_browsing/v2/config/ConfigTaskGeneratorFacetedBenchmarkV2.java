@@ -84,7 +84,12 @@ import io.reactivex.Flowable;
 				in,
 				"http://www.example.org/",
 				Lang.TURTLE);
-    					
+    		
+			
+			
+//			taskModel.removeAll(null, BenchmarkVocab.expectedResult, null);
+//			taskModel.removeAll(null, BenchmarkVocab.expectedResultSetSize, null);
+			
 			// Get task resources ordered by sequence ID
 			Query query = QueryFactory.create("SELECT DISTINCT ?s { ?s <" + FacetedBrowsingVocab.sequenceId.getURI() + "> ?o } ORDER BY ASC(?o)");
 			

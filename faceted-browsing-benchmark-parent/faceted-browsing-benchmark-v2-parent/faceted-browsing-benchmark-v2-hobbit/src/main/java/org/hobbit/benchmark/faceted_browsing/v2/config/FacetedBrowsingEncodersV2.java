@@ -1,13 +1,17 @@
 package org.hobbit.benchmark.faceted_browsing.v2.config;
 
+import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.jena.ext.com.google.common.primitives.Bytes;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.ResourceUtils;
+import org.hobbit.benchmark.faceted_browsing.component.EvaluationModuleFacetedBrowsingBenchmark;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -69,6 +73,18 @@ public class FacetedBrowsingEncodersV2 {
     	
     	
     	Resource result = FacetedBrowsingEncoders.jsonToResource(payloadStr, gson);
+    	
+
+    	// Its ridiculous, but we need to encode the result set in another format
+        {
+            String rawExpectedResultStr = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(result, BenchmarkVocab.expectedResult, String.class);
+        	ResultSet expectedRs = ResultSetFactory.fromJSON(new ByteArrayInputStream(rawExpectedResultStr.getBytes(StandardCharsets.UTF_8)));
+            byte[] resultsBytes = EvaluationModuleFacetedBrowsingBenchmark.formatResultData(expectedRs);
+            String expectedResultStr = RabbitMQUtils.readString(resultsBytes);        	
+            org.aksw.jena_sparql_api.utils.model.ResourceUtils.setLiteralProperty(result, BenchmarkVocab.expectedResult, expectedResultStr);
+        }
+
+    	
 //        int scenarioId = Integer.parseInt(scenarioStr);
 //        int queryId = Integer.parseInt(queryIdStr);
         
