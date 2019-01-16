@@ -46,7 +46,8 @@ public class ConfigDataGeneratorFacetedBrowsingV2 {
 			
 			Iterator<Quad> it = RDFDataMgr.createIteratorQuads(in, Lang.TRIG, "http://www.example.org/");
     		Stream<Triple> r = Streams.stream(it)
-    				.limit(412747)
+    				//.limit(412747) for the 75K dataset
+    				.limit(103156)
     				.map(Quad::asTriple)
     				.onClose(() -> {
     					// Consume the underlying iterator to trigger jena's

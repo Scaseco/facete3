@@ -193,7 +193,7 @@ public class MainFacetedBrowsingBenchmarkV2Run {
 					
 					
 					long count = flow.count().blockingGet();
-					long initSample = count / 2;
+					long initSample = count / 8;
 
 					
 					long triples = flow.limit(initSample).map(xxx -> xxx.asDatasetGraph().size())

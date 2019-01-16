@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.config;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -78,22 +79,27 @@ import io.reactivex.Flowable;
 	  
 	    public static Flowable<Resource> readStaticFile() throws IOException {
 
-	    	InputStream in = HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-75k-events-tasks.ttl.bz2");	    	
+	    	//String src = "hobbit-sensor-stream-75k-events-tasks.ttl.bz2";
+	    	String src = "hobbit-sensor-stream-2516-events-103156-triples-tasks.ttl.bz2";
+	    	
+	    	
+	    	InputStream in = HobbitBenchmarkUtils.openBz2InputStream(src);	    	
 			Model taskModel = ModelFactory.createDefaultModel();
 			RDFDataMgr.read(
 				taskModel,
 				in,
 				"http://www.example.org/",
 				Lang.TURTLE);
-    		
-			Set<String> skips = new HashSet<>(Arrays.asList(
-				"http://example.org/scenario6-2",
-				"http://example.org/scenario5-2",
-				"http://example.org/scenario6-5",
-				"http://example.org/scenario9-5",
-				"http://example.org/scenario2-8",
-				"http://example.org/scenario7-2",
-				"http://example.org/scenario2-5"));
+
+			Set<String> skips = Collections.emptySet();
+//			Set<String> skips = new HashSet<>(Arrays.asList(
+//				"http://example.org/scenario6-2",
+//				"http://example.org/scenario5-2",
+//				"http://example.org/scenario6-5",
+//				"http://example.org/scenario9-5",
+//				"http://example.org/scenario2-8",
+//				"http://example.org/scenario7-2",
+//				"http://example.org/scenario2-5"));
 
 			for(String skip : skips) {
 				taskModel.createResource(skip).removeProperties();
