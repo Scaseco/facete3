@@ -57,9 +57,9 @@ import com.spotify.docker.client.exceptions.DockerCertificateException;
 
 import io.reactivex.Flowable;
 
-public class MainFacetedBrowsingBenchmarkV2Run {
+public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	
-	private static final Logger logger = LoggerFactory.getLogger(MainFacetedBrowsingBenchmarkV2Run.class);
+	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedBrowsingBenchmarkV2TaskGenerator.class);
 
 		
 	public static void main(String[] args) throws DockerCertificateException, Exception {

@@ -33,6 +33,8 @@
 
 		<module>faceted-browsing-benchmark-v1-parent</module>
 		<module>faceted-browsing-benchmark-v2-parent</module>
+
+		<module>faceted-browsing-benchmark-debian-cli</module>
 	</modules>
 
 

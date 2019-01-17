@@ -1,0 +1,12 @@
+Package: hobbit-fbb-cli
+Version: [[version]]
+Section: web
+Priority: optional
+Architecture: all
+Depends: java-runtime-headless
+Maintainer: Claus Stadler <cstadler@informatik.uni-leipzig.de>
+Description: Hobbit Faceted Browsing Benchmark CLI
+Distribution: ldstack-nightly
+Homepage: https://github.com/hobbit-project/faceted-browsing-benchmark
+Vcs-Git: git://github.com/hobbit-project/faceted-browsing-benchmark.git
+Vcs-Browser: https://github.com/hobbit-project/faceted-browsing-benchmark
