@@ -1,0 +1,11 @@
+LOAD <path-data.ttl>
+
+SELECT  *
+WHERE
+  { { ?v_1  a                     ?v_2 . 
+      ?v_2  a                     ?v_3
+      FILTER ( ?v_3 = <http://www.w3.org/2002/07/owl#Class> )
+    }
+    ?v_1  ?p  ?o
+  }
+

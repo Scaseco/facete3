@@ -1,0 +1,68 @@
+@prefix eg: <http://www.example.org/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix wgs: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+eg:a
+  a eg:ThingA ;
+  rdfs:label "a" ;
+  eg:value 10 ;
+  .
+
+eg:a eg:p1 eg:x1 .
+eg:x1 eg:p2 eg:x2 .
+eg:x2 eg:p3 eg:x3 .
+eg:x3 eg:p4 eg:x4 .
+eg:x4 geo:geometry eg:ag .
+eg:ag geo:asWKT "POINT (1 2)"^^geo:wktLiteral .
+
+eg:b
+  a eg:ThingB ;
+  rdfs:label "b" ;
+  eg:value 20 ;
+  .
+
+eg:b eg:q1 [ eg:q2 [ eg:q3 [ eg:q4 eg:bg ] ] ] .
+eg:bg wgs:lat 10 ; wgs:long 20 .
+
+eg:c
+  a eg:ThingC ;
+  rdfs:label "c" ;
+  eg:value 30 ;
+  .
+
+eg:ThingA
+  a owl:Class ;
+  rdfs:label "ThingA" ;
+  .
+  
+
+eg:ThingB
+  a owl:Class ;
+  rdfs:label "ThingB" ;
+  .
+
+eg:ThingC
+  a owl:Class ;
+  rdfs:label "ThingC" ;
+  .
+  
+eg:ThingD
+  a owl:Class ;
+  rdfs:label "ThingD" ;
+  .
+
+
+eg:ThingB rdfs:subClassOf eg:ThingA .
+eg:ThingC rdfs:subClassOf eg:ThingB .
+eg:ThingA rdfs:subClassOf eg:ThingC .
+
+eg:ThingD rdfs:subClassOf eg:ThingC .
+
+eg:ThingX rdfs:subClassOf eg:ThingY .
+
+eg:ThingZ rdfs:subClassOf eg:ThingZ .
+  

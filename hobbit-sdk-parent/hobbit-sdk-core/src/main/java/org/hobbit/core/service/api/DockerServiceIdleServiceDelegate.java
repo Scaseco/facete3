@@ -1,7 +1,8 @@
 package org.hobbit.core.service.api;
 
 import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
-import org.hobbit.core.service.docker.DockerService;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.impl.core.ServiceDelegate;
 
 @Deprecated
 public class DockerServiceIdleServiceDelegate

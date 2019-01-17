@@ -1,0 +1,28 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+#@prefix o: <http://project-hobbit.eu/ontology/>
+@prefix o: <http://aksw.org/adhoc/ontology/> .
+@prefix : <http://project-hobbit.eu/resource/> .
+
+:defaultScenarioConfig
+  a o:ScenarioConfig ;
+  o:randomSeed 1000 ;
+  o:scenarioLength [ o:min 8; o:max 16] ;
+  o:weights [
+     rdfs:member [ o:key "cp1"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp2"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp3"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp4"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp5"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp6"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp7"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp8"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp9"  ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp10" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp11" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp13" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+     rdfs:member [ o:key "cp14" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+  ] ;
+  .
+

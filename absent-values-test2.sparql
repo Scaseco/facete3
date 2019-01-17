@@ -1,0 +1,144 @@
+INSERT DATA {
+  eg:a
+    a eg:Dataset ;
+    eg:distribution eg:ad ;
+    eg:publisher eg:ap ;
+  .
+
+  eg:ap
+    a eg:Publisher ;
+    eg:label "Publisher of A" ;
+    .
+
+  eg:ad
+    a eg:Distribution ;
+    eg:localDownload <file:///tmp/foo> ;
+    .
+
+
+
+  eg:b
+    a eg:Dataset ;
+    eg:distribution eg:bd ;
+    eg:publisher eg:bp ;
+  .
+
+  eg:bp
+    a eg:Publisher ;
+    eg:label "Publisher of B" ;
+    .
+
+  eg:bd
+    a eg:Distribution ;
+    eg:localDownload <file:///tmp/bar> ;
+    .
+  
+
+  eg:c
+    a eg:Dataset ;
+    eg:distribution eg:cd ;
+    eg:publisher eg:cp ;
+  .
+
+  eg:cp
+    a eg:Publisher ;
+    eg:label "Publisher of C" ;
+    .
+
+  eg:cd
+    a eg:Distribution ;
+    .
+
+
+  eg:d
+    a eg:Dataset ;
+    eg:distribution eg:bd ;
+  .
+
+  eg:dd
+    a eg:Distribution ;
+    .
+
+}
+
+
+
+SELECT ?facet ?facetValue ?focus (COUNT(DISTINCT ?focus) AS ?o) {
+
+  # Set of all available facets under constraints at the given facetNode
+  # - independent of the focus
+  # concept(?facet)
+  ?yy a eg:Dataset .
+  ?yy eg:distribution ?fns .
+  ?fns ?facet ?foo .
+
+  # Set of focus resources under constraints
+  ?s a eg:Dataset .
+  ?s eg:publisher ?focus .
+  ?s eg:distribution ?fnx .
+  OPTIONAL {
+    ?fnx ?facet ?facetValue
+  } 
+
+} GROUP BY ?facet ?facetValue ?focus
+ORDER BY ?facet ?facetValue
+
+
+# For a specific facet
+SELECT ?facet ?facetValue ?focus (COUNT(DISTINCT ?focus) AS ?o) {
+
+
+  # Set of focus resources under constraints
+  ?s a eg:Dataset .
+  ?s eg:publisher ?focus .
+  ?s eg:distribution ?fnx .
+  VALUES (?facet) { (eg:localDownload) }
+  OPTIONAL {
+    ?fnx ?facet ?facetValue
+  } 
+
+} GROUP BY ?facet ?facetValue ?focus
+ORDER BY ?facet ?facetValue
+
+
+# Maybe be can refrase:
+# There is a set of root resources under constraints
+# A subset of the roots have a relation to the focus resources
+# Another subset has relation to the facetNode
+
+
+
+#SELECT ?facet ?facetValue ?focus (COUNT(DISTINCT ?focus) AS ?o) {
+
+
+SELECT ?focus ?fnx ?fny ?facet ?facetValue {
+  # Set of root under constraints
+  ?s a eg:Dataset .
+
+  # Focus path (focus is mandatory - otherwise we would get
+  # facet value counts of 0)
+  #OPTIONAL {
+    ?s eg:publisher ?focus .
+  #}
+
+  # The path to the facet node
+  ?s eg:distribution ?fnx .
+    
+      ?fnx ?facet ?xxx .
+
+    ?s eg:distribution ?fny
+
+    OPTIONAL {
+      ?fny ?facet ?facetValue
+    }
+
+
+
+}
+# GROUP BY ?facet ?facetValue ?focus
+#ORDER BY ?facet ?facetValue
+
+
+
+
+

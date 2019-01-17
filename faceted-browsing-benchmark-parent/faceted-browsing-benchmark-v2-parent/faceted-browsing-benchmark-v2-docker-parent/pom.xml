@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>faceted-browsing-benchmark-v2-docker-parent</artifactId>
+	<packaging>pom</packaging>
+
+
+	<parent>
+		<groupId>org.hobbit</groupId>
+		<artifactId>faceted-browsing-benchmark-v2-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<properties>
+<!--        <docker.repository>git.project-hobbit.eu:4567</docker.repository> -->
+		<prefix>git.project-hobbit.eu:4567/cstadler/fbb/fbb-v2-</prefix>
+
+		<docker.benchmark-controller.repository>${prefix}bc</docker.benchmark-controller.repository>
+		<docker.data-generator.repository>${prefix}dg</docker.data-generator.repository>
+		<docker.task-generator.repository>${prefix}tg</docker.task-generator.repository>
+		<docker.evaluation-module.repository>${prefix}em</docker.evaluation-module.repository>
+
+<!--		<docker.qpid-server.repository>git.project-hobbit.eu:4567/gkatsibras/qpidserver</docker.qpid-server.repository> -->
+<!--		<docker.evaluation-storage.repository>git.project-hobbit.eu:4567/cstadler/evaluationstorage/image</docker.evaluation-storage.repository> -->
+<!--		<docker.system-adapter.repository>git.project-hobbit.eu:4567/gkatsibras/facetedsystem</docker.system-adapter.repository> -->
+
+
+<!--		<docker.docker-service-manager-server.repository>git.project-hobbit.eu:4567/gkatsibras/dockerservicemanagerserver</docker.docker-service-manager-server.repository> -->
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<!-- <maven.compiler.source>9</maven.compiler.source> -->
+		<!-- <maven.compiler.target>9</maven.compiler.target> -->
+		<!-- <maven.compiler.release>9</maven.compiler.release> -->
+	</properties>
+
+	<modules>
+		<module>benchmark-controller</module>
+		<module>data-generator</module>
+		<module>task-generator</module>
+		<module>evaluation-module</module>
+<!--
+		<module>qpid-server</module>
+		<module>system-adapter</module>
+-->
+<!--		<module>evaluation-storage</module> -->
+<!--
+		<module>docker-service-manager-server</module>
+-->
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>hobbit-sdk-core</artifactId>
+				<version>${project.version}</version>
+<!--
+				<exclusions>
+					<exclusion>
+						<groupId>com.spotify</groupId>
+						<artifactId>docker-client</artifactId>
+					</exclusion>
+				</exclusions>
+-->
+			</dependency>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>faceted-browsing-benchmark-v2-hobbit</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
+
+
+	<build>
+		<pluginManagement>
+			<plugins>
+
+                        <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-deploy-plugin</artifactId>
+                                <configuration>
+                                        <skip>true</skip>
+                                </configuration>
+                        </plugin>
+
+				<plugin>
+					<groupId>com.spotify</groupId>
+					<artifactId>dockerfile-maven-plugin</artifactId>
+					<version>1.4.0</version>
+					<executions>
+						<execution>
+							<id>default</id>
+							<goals>
+								<goal>build</goal>
+								<goal>push</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<!-- <repository>${docker.repository}</repository> -->
+						<useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+						<tag>latest</tag>
+						<!-- <tag>${project.version}</tag> -->
+						<buildArgs>
+							<MAIN_CLASS>${docker.mainClass}</MAIN_CLASS>
+							<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+						</buildArgs>
+					</configuration>
+				</plugin>
+
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>3.0.2</version>
+					<executions>
+						<execution>
+							<phase>prepare-package</phase>
+							<!-- <phase>package</phase> -->
+							<goals>
+								<goal>copy-dependencies</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<!-- <useBaseVersion>false</useBaseVersion> -->
+						<overWriteReleases>false</overWriteReleases>
+						<overWriteSnapshots>true</overWriteSnapshots>
+						<includeScope>runtime</includeScope>
+						<outputDirectory>${project.build.directory}/lib</outputDirectory>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+<!--
+<distributionManagement>
+    <repository>
+        <id>git.project-hobbit.eu:4567</id>
+        <name>hobbit docker repo</name>
+        <url>git.project-hobbit.eu:4567</url>
+    </repository>
+</distributionManagement>
+-->
+
+</project>

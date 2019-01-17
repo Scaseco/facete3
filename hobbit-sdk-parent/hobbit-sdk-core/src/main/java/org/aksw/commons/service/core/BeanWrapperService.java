@@ -1,5 +1,7 @@
 package org.aksw.commons.service.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -24,6 +26,9 @@ import com.google.common.util.concurrent.Service;
 public class BeanWrapperService<T extends Service>
 	implements InitializingBean, DisposableBean
 {
+	private static final Logger logger = LoggerFactory.getLogger(BeanWrapperService.class);
+
+	
 	protected T service;
 
 	public BeanWrapperService(T service) {
@@ -37,9 +42,9 @@ public class BeanWrapperService<T extends Service>
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		System.out.println(service + ": AWAITING RUNNING STATE");
+		logger.debug(service + ": AWAITING RUNNING STATE");
 		service.startAsync().awaitRunning();
-		System.out.println(service + ": RUNNING");
+		logger.debug(service + ": RUNNING");
 	}
 
 	@Override

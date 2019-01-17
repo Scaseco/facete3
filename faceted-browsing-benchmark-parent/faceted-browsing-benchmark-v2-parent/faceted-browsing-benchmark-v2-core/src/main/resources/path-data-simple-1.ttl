@@ -1,0 +1,42 @@
+@prefix eg: <http://www.example.org/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix wgs: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:	<http://xmlns.com/foaf/0.1/> .
+
+
+#eg:City a owl:Class .
+#eg:Germany a owl:Class .
+
+eg:Leipzig
+  a eg:City ;
+  rdfs:label "Leipzig" ;
+  eg:mayor eg:BurkhardJung ;
+  eg:population 500000 ;
+  eg:locatedIn eg:Germany ;
+  .
+
+eg:Germany
+  a eg:Country ;
+  rdfs:label "Germany" ;
+  eg:population 80000000 ;
+  eg:contains eg:Leipzig ;
+  .
+
+eg:BurkhardJung
+  a foaf:Person ;
+  foaf:age 60 ;
+  rdfs:label "Burkhard Jung" ;
+  foaf:gender "male"@en ;
+  foaf:based_near eg:Leipzig ;
+  .
+
+eg:MarieSchmidt
+  a foaf:Person ;
+  foaf:age 10 ;
+  rdfs:label "Marie Schmidt" ;
+  foaf:gender "female"@en ;
+  foaf:based_near eg:Leipzig ;
+  .

@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 
 import org.aksw.jena_sparql_api.ServiceContext;
 import org.hobbit.core.Commands;
-import org.hobbit.core.service.api.ServiceBuilder;
+import org.hobbit.core.service.docker.api.ServiceBuilder;
 import org.hobbit.core.utils.ServiceManagerUtils;
 import org.hobbit.interfaces.BenchmarkController;
 import org.slf4j.Logger;
@@ -92,14 +92,14 @@ public class PseudoHobbitPlatformController
 
                 service.startAsync();
                 try {
-                    service.awaitRunning(BenchmarkControllerFacetedBrowsing.MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
+                    service.awaitRunning(BenchmarkControllerComponentImpl.MAX_COMPONENT_STARTUP_TIME_IN_SECONDS, TimeUnit.SECONDS);
                     //Service benchmarkController = service.getComponent();
                     //benchmarkController.executeBenchmark();
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 } finally {
                     logger.debug("Waiting for benchmark to finish...");
-                    ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(service, BenchmarkControllerFacetedBrowsing.MAX_BENCHMARK_TIME_IN_SECONDS, TimeUnit.SECONDS, BenchmarkControllerFacetedBrowsing.MAX_COMPONENT_SHUTDOWN_TIME_IN_SECONDS, TimeUnit.SECONDS);
+                    ServiceManagerUtils.awaitTerminatedOrStopAfterTimeout(service, BenchmarkControllerComponentImpl.MAX_BENCHMARK_TIME_IN_SECONDS, TimeUnit.SECONDS, BenchmarkControllerComponentImpl.MAX_COMPONENT_SHUTDOWN_TIME_IN_SECONDS, TimeUnit.SECONDS);
 //                    service.awaitTerminated(5, TimeUnit.MINUTES);
 //                    service.stopAsync();
 //                    try {

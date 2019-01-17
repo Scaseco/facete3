@@ -249,7 +249,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
         
         
         logger.info("TaskGenerator waiting for start signal");
-        startTaskGenerationFuture.get(BenchmarkControllerFacetedBrowsing.MAX_DATAGENERATION_TIME_IN_SECONDS, TimeUnit.SECONDS);
+        startTaskGenerationFuture.get(BenchmarkControllerComponentImpl.MAX_DATAGENERATION_TIME_IN_SECONDS, TimeUnit.SECONDS);
 
         //logger.debug("Task generator received start signal; running task generation");
         //runTaskGeneration();
@@ -263,11 +263,11 @@ public class TaskGeneratorFacetedBenchmarkMocha
         // Pretend we have a stream of tasks because this is what it should eventually be        
 
         logger.info("TaskGenerator: Generating tasks...");
-    	try(Stream<Resource> taskStream = taskGeneratorModule.generateTasks()) {
+    	try(Stream<? extends Resource> taskStream = taskGeneratorModule.generateTasks()) {
 
             logger.info("TaskGenerator: Task generation complete, sending out tasks...");
             //taskStream.forEach(task -> {
-            Iterator<Resource> it = taskStream.iterator();
+            Iterator<? extends Resource> it = taskStream.iterator();
             
             //"http://example.org/Scenario_1-1", "http://example.org/Scenario_7-2",
             Set<String> taskBlacklist = new HashSet<>(Arrays.asList("http://example.org/Scenario_7-14"));
@@ -297,7 +297,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
                 
                 // The SA only needs to see the URI and the label (the query string)
                 Resource subResource = task.inModel(ModelFactory.createDefaultModel());
-                subResource.addLiteral(RDFS.label, task.getProperty(RDFS.label).getString());
+                subResource.addLiteral(BenchmarkVocab.taskPayload, task.getProperty(BenchmarkVocab.taskPayload).getString());
                 
                 ByteBuffer buf2 = taskEncoderForSystemAdapter.apply(subResource);
                 
@@ -321,7 +321,7 @@ public class TaskGeneratorFacetedBenchmarkMocha
                     
                // Wait for acknowledgement
                try {
-            	   taskAckFuture.get(BenchmarkControllerFacetedBrowsing.MAX_TASK_EXECUTION_TIME_IN_SECONDS, TimeUnit.SECONDS);
+            	   taskAckFuture.get(BenchmarkControllerComponentImpl.MAX_TASK_EXECUTION_TIME_IN_SECONDS, TimeUnit.SECONDS);
                } catch (InterruptedException | ExecutionException | TimeoutException e) {
             	   throw new RuntimeException("Timeout or failure waiting for acknowledgement of task " + taskId, e);
                }

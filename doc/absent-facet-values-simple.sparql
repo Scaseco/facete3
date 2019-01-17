@@ -1,0 +1,18 @@
+INSERT DATA {
+  eg:a a owl:Class ; rdfs:label "foo" .
+
+  eg:b a owl:Class ; rdfs:label "bar" .
+
+  eg:c a owl:Class .
+}
+
+SELECT DISTINCT  ?v_1
+WHERE
+  { { ?v_1  a                     <http://www.w3.org/2002/07/owl#Class>
+      OPTIONAL
+        { ?v_1  <http://www.w3.org/2000/01/rdf-schema#label>  ?v_3 }
+    }
+    FILTER ( ! bound(?v_3) )
+  }
+
+

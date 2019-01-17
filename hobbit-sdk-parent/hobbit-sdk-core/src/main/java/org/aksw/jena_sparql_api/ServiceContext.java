@@ -3,13 +3,7 @@ package org.aksw.jena_sparql_api;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.hobbit.core.component.PseudoHobbitPlatformController;
-import org.hobbit.core.service.api.ExecutionThreadServiceDelegate;
-import org.hobbit.core.service.api.IdleServiceCapable;
-import org.hobbit.core.service.api.IdleServiceDelegate;
-import org.hobbit.core.service.api.RunnableServiceCapable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -19,7 +13,6 @@ import com.google.common.util.concurrent.Service;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
-import jersey.repackaged.com.google.common.util.concurrent.MoreExecutors;
 
 // No longer needed - SpringApplication does this
 

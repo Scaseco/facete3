@@ -1,0 +1,45 @@
+# Ok, the discrepancy between facets and facet counts in simply due to blank nodes not having been filtered out for the former
+# So its something that can be easily fixed
+
+LOAD </home/raven/Projects/Eclipse/lsq-parent/unsorted-files/sparqlqc-all.nt>
+
+SELECT DISTINCT  ?p ?__count__
+WHERE
+  { SELECT  ?p (COUNT(DISTINCT if(bound(?o), ?o, <http://special.absent/none>)) AS ?__count__)
+    WHERE
+      { ?opt_v_1  a                     <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> .
+        ?opt_o    ?p                    ?opt_v_1 .
+        ?v_1      a                     <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest>
+        OPTIONAL
+          { ?o  ?p  ?v_1 }
+      }
+    GROUP BY ?p
+  }
+
+
+
+  SELECT  DISTINCT ?p (if(bound(?o), ?o, <http://special.absent/none>) AS ?__count__)
+    WHERE
+      { ?opt_v_1  a                     <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> .
+        ?opt_o    ?p                    ?opt_v_1 .
+        ?v_1      a                     <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest>
+        OPTIONAL
+          { ?o  ?p  ?v_1 }
+      }
+ 
+
+
+
+SELECT DISTINCT  ?p ?o ?c
+WHERE
+  { SELECT  ?p ?o (COUNT(DISTINCT if(bound(?s), ?s, <http://special.absent/none>)) AS ?c)
+    WHERE
+      { ?opt_v_1  a                     <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> .
+        ?opt_o    ?p                    ?opt_v_1 .
+        ?s        a                     <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest>
+        OPTIONAL
+          { ?o  ?p  ?s }
+      }
+    GROUP BY ?p ?o
+    HAVING ( ?p IN (<http://www.w3.org/1999/02/22-rdf-syntax-ns#first>) ) ( ( ! bound(?o) ) || ( ! isBlank(?o) ) )
+  }

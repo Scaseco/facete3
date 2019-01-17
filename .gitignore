@@ -4,7 +4,11 @@
 .settings
 target
 
-bin
+#bin
+
+# work directory of qpid
+work
+
 
 # Package Files #
 *.jar
@@ -27,6 +31,6 @@ output.txt
 felix-cache
 
 *.swp
-
+*~
 
 work

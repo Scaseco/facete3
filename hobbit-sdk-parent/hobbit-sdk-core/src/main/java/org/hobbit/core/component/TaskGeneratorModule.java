@@ -15,7 +15,7 @@ public interface TaskGeneratorModule
 	void shutDown() throws Exception;
 	
 	void loadDataFromStream(InputStream tmpIn);
-	Stream<Resource> generateTasks();
+	Stream<? extends Resource> generateTasks();
 	
 	
     CompletableFuture<?> getDataLoadingComplete();

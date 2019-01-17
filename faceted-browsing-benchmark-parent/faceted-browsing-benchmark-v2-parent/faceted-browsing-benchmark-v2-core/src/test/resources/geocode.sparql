@@ -1,0 +1,31 @@
+# Search for resources with eg:georef attribute but without geo:geometry
+# For these resources, obtain a the geometry from a geocoding service such as nominatim
+
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+CONSTRUCT {
+  ?s
+    geo:geometry ?g ;
+    # TODO include proper prov metadata, such as the geocoding service used
+    #eg:derivedFrom ?placeName ;
+    .
+
+  ?g
+    geo:asWKT ?w ;
+    .
+
+} {
+  ?s
+    eg:georef ?placeName ;
+    .
+
+  FILTER(!EXISTS { ?s geo:geometry [] })
+
+  BIND(IF(isBLANK(?s), BNODE(), IRI(CONCAT(STR(?s), '-geometry'))) AS ?g)
+  BIND(STRDT(url:text(CONCAT('https://nominatim.openstreetmap.org/?format=json&q=', ?placeName)), xsd:json) AS ?json)
+  BIND(json:path(?json, '$[0]') AS ?item)
+  FILTER(BOUND(?item))
+
+  BIND(STRDT(CONCAT('POINT (', STR(json:path(?item, '$.lon')), ' ', STR(json:path(?item, '$.lat')), ')'), geo:wktLiteral) AS ?w)
+}
+
+

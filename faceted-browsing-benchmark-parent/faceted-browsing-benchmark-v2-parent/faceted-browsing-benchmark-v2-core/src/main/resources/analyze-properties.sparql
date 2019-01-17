@@ -1,0 +1,19 @@
+
+
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+INSERT { ?p a rdf:Property}
+#WHERE { SERVICE <remote> { ?s ?p ?o } }
+WHERE { SERVICE <remote> { [] fn:inject("input" ?p ?o) } }
+		
+		
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+INSERT { ?p rdfs:range ?r }
+WHERE { SERVICE <remote> { ?s ?p ?o . FILTER(isLiteral(?o)) . BIND(datatype(?o) AS ?r) } }
+#WHERE { SERVICE <remote> { [] fn:inject("input" ?p ?o) . FILTER(isLiteral(?o)) . BIND(datatype(?o) AS ?r) } }
+
+
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX schema: <http://schema.org/>
+INSERT { ?p schema:rangeIncludes xsd:}
+WHERE { ?p rdfs:range ?r . FILTER(?r IN (xsd:int, xsd:integer, xsd:long, xsd:decimal, xsd:float, and xsd:double)) }
+

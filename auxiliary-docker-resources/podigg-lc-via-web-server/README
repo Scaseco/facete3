@@ -1,0 +1,40 @@
+## podigg-lc-via-webserver
+
+This is a wrapper of podigg-lc that simply forwards all podigg parameters passed via the docker environment to the podigg-lc tool.
+The essence of this image is, that the generated data is exposed via a web server ready for download.
+
+Note, that podigg-lc is the RDF output wrapper around podigg; lc stands for "linked connections".
+
+
+## Building and Tagging
+```bash
+docker build -t podigg-lc-via-web-server .
+```
+
+In order to use the image with the faceted browsing benchmark, first run the command above, then do:
+```
+docker tag podigg-lc-via-web-server git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/podigg-lc-via-web-server
+```
+
+
+## Run
+You can run the image also directly.
+
+```bash
+docker run -it podigg-lc-via-web-server
+```
+
+
+## Deployment
+(For Hobbit contributors)
+
+Uploading the image to the hobbit gitlab container registry requires logging in and pushing:
+
+```
+docker login git.project-hobbit.eu:4567
+docker push git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/podigg-lc-via-web-server
+```
+
+## Idea for future work
+Cache priorly generated datasets in a volume; this would make any repeated data generation with the same (identifying) parameters nearly instant.
+

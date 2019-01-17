@@ -132,7 +132,7 @@ public class DefaultEvaluationStorage
 
         actualResultsFromSystemAdapter.subscribe(data -> {
         	data = data.duplicate();
-            logger.info("Got actual result from system adapter");
+            logger.info("Got an actual result from system adapter - decoding the message...");
 
             if(resultSent[0]) {
             	throw new RuntimeException("Evaluation module already requested data, yet an attempt to add another actual result was seen");

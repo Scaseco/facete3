@@ -16,9 +16,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.hobbit.core.Commands;
-import org.hobbit.core.component.BenchmarkControllerFacetedBrowsing;
+import org.hobbit.core.component.BenchmarkControllerComponentImpl;
 import org.hobbit.core.data.StopCommandData;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.api.DockerServiceFactory;
+import org.hobbit.core.service.docker.api.DockerServiceSpec;
+import org.hobbit.core.service.docker.impl.core.DockerServiceSimpleDelegation;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,8 +131,18 @@ public abstract class DockerServiceManagerClientComponentBase
 
     //public DockerService get() {
     @Override
-    public DockerService create(String imageName, Map<String, String> env) {
-        Objects.requireNonNull(imageName);
+    public DockerService create(DockerServiceSpec serviceSpec) {
+    //public DockerService create(String containerName, String imageName, Map<String, String> env) {
+    	String containerName = serviceSpec.getContainerName();
+    	String imageName = serviceSpec.getImageName();
+    	Map<String, String> env = serviceSpec.getLocalEnvironment();
+    	
+    	if(containerName != null) {
+    		throw new RuntimeException("Hobbit protocol does not support custom container names; leave it null");
+    	}
+
+    	
+    	Objects.requireNonNull(imageName);
 
         DockerServiceSimpleDelegation service = new DockerServiceSimpleDelegation(imageName, env, this::startService, this::stopService);
 
@@ -208,7 +222,7 @@ public abstract class DockerServiceManagerClientComponentBase
 	        	serviceStub.setExitCode(exitCode);
 	        	if(exitCode != 0) {
 //	        		try {
-	        			serviceStub.declareFailure(new RuntimeException("Remote service terminated with non-zero exit code"));
+	        			serviceStub.declareFailure(new RuntimeException("Remote service from " + serviceStub.getImageName() + " terminated with non-zero exit code"));
 //	        		} catch(Exception e) {
 //	        			// Ensure we do not raise an exception when handling a remote termination message
 //	        			e.printStackTrace();
@@ -258,7 +272,7 @@ public abstract class DockerServiceManagerClientComponentBase
         CompletableFuture<ByteBuffer> response = requestToServer.apply(buffer);
         ByteBuffer responseBuffer;
         try {
-            responseBuffer = response.get(BenchmarkControllerFacetedBrowsing.MAX_LONG_REQUEST_TIME_IN_SECONDS, TimeUnit.SECONDS).duplicate();
+            responseBuffer = response.get(BenchmarkControllerComponentImpl.MAX_LONG_REQUEST_TIME_IN_SECONDS, TimeUnit.SECONDS).duplicate();
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException("Failure while waiting for image [" + imageName + "] to start", e);
         }

@@ -1,0 +1,41 @@
+INSERT DATA {
+  eg:Leipzig a eg:City .
+  eg:Germany a eg:Country .
+
+  eg:Germany eg:contains eg:Leipzig .
+}
+
+
+SELECT  ?p ?o (COUNT(DISTINCT ?s) AS ?c)
+              WHERE
+                { ?s  a                     ?v_3
+                    FILTER ( ( ?v_3 = <http://www.example.org/Country> ) || ( ?v_3 = <http://www.example.org/City> ) )
+                  
+                  OPTIONAL
+                      { ?s  <http://www.example.org/contains>  ?o }
+                    BIND(<http://www.example.org/contains> AS ?p)
+                 
+                }
+              GROUP BY ?p ?o
+              HAVING ( ?p IN (<http://www.example.org/contains>) ) ( ( ! bound(?o) ) || ( ! isBlank(?o) ) )
+
+
+
+SELECT  ?p (COUNT(DISTINCT ?o) AS ?__count__)
+          WHERE
+            { ?opt_v_1  a                     ?opt_v_2 ;
+                        ?p                    ?opt_o .
+              ?v_1      a                     ?v_2
+              FILTER ( ( ?v_2 = <http://www.example.org/Country> ) || ( ?v_2 = <http://www.example.org/City> ) )
+              FILTER ( ?p NOT IN (<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) )
+              FILTER ( ( ?opt_v_2 = <http://www.example.org/Country> ) || ( ?opt_v_2 = <http://www.example.org/City> ) )
+              OPTIONAL
+                { ?v_1  ?p  ?o }
+            }
+          GROUP BY ?p
+#         HAVING ( ?p IN (<http://www.example.org/contains>) )
+ 
+
+#SELECT (UNDEF AS ?o) { }
+SELECT COUNT(DISTINCT ?o) { VALUES (?o) { (eg:foo) (UNDEF) } }
+

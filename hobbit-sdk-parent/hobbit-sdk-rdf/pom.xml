@@ -19,11 +19,11 @@
 		</dependency>
 
 		<!-- Parsing of virtuoso.ini files -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.ini4j</groupId> -->
-<!-- 			<artifactId>ini4j</artifactId> -->
-<!-- 			<version>0.5.4</version> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.ini4j</groupId> -->
+		<!-- <artifactId>ini4j</artifactId> -->
+		<!-- <version>0.5.4</version> -->
+		<!-- </dependency> -->
 
 		<dependency>
 			<groupId>org.hobbit</groupId>
@@ -32,14 +32,6 @@
 
 	</dependencies>
 
-<!--
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
--->
+	<!-- <build> <plugins> <plugin> <groupId>org.apache.maven.plugins</groupId> 
+		<artifactId>maven-shade-plugin</artifactId> </plugin> </plugins> </build> -->
 </project>

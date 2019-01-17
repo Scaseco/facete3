@@ -1,0 +1,11 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# TODO in the XML spec, 'numeric' is a 'facet', i.e. an attribute of an type, rather than a type itself
+xsd:int rdfs:subClassOf xsd:numeric .
+xsd:integer rdfs:subClassOf xsd:numeric .
+xsd:long rdfs:subClassOf xsd:numeric .
+xsd:decimal rdfs:subClassOf xsd:numeric  .
+xsd:float rdfs:subClassOf xsd:numeric .
+xsd:double rdfs:subClassOf xsd:numeric .
+

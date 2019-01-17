@@ -1,0 +1,35 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+@prefix cv: <http://aksw.org/chart-vocab/> .
+@prefix iv: <http://iv.aksw.org/vocab#> .
+@prefix iguana: <http://iguana.aksw.org/ontology#> .
+
+@prefix bsbm: <http://bsbm.org/> .
+@prefix eg: <http://example.org/> .
+
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+eg:exp1
+  a cv:StatisticalBarChart ;
+  rdfs:label "Performance Histogram" ;
+  cv:xAxisTitle "Workload" ;
+  cv:yAxisTitle "Time (s)" ;
+  cv:width 1650 ;
+  cv:height 1050 ;
+  cv:style [
+    cv:legendPosition "InsideNW" ;
+    cv:yAxisLogarithmic true ;
+    cv:yAxisTicksVisible true ;
+    cv:xAxisLabelRotation 45 ;
+    cv:yAxisDecimalPattern "###,###,###,###,###.#####" ;
+    cv:yAxisMin "0.0"^^xsd:double ;
+    cv:yAxisMax "1.0"^^xsd:double ;
+  ] ;
+  cv:series [
+    a cv:ConceptBasedSeries ;
+    cv:seriesProperty <http://w3id.org/hobbit/vocab#involvesSystemInstance> ;
+    cv:valueProperty <http://w3id.org/bench#fmeasure_total> ;
+    cv:sliceType <http://w3id.org/hobbit/vocab#Experiment> ;
+  ] .
+

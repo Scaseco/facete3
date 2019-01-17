@@ -1,0 +1,43 @@
+#CONSTRUCT {
+#  ?s ?p ?o
+#} {
+SELECT * {
+  SERVICE <https://db.project-hobbit.eu/sparql> {
+    SELECT DISTINCT * {
+      ?s
+        a <http://w3id.org/hobbit/vocab#Experiment> ;
+        <http://w3id.org/hobbit/vocab#startTime> ?t ;
+        ?p ?o
+      FILTER(NOW() - ?t < 7 * 24 * 60 * 60)
+    } ORDER BY ?s ?p
+  }
+}
+
+
+LOAD <chart.ttl>
+
+CONSTRUCT WHERE { ?s ?p ?o }
+
+CONSTRUCT {
+  ?exp ?p ?o
+} {
+  SERVICE <https://db.project-hobbit.eu/sparql> {
+    SELECT ?exp ?p ?o {
+      { SELECT ?btype ?sys (MAX(?t) AS ?latest) {
+          ?exp
+            <http://w3id.org/hobbit/vocab#involvesBenchmark> ?btype ;
+            <http://w3id.org/hobbit/vocab#involvesSystemInstance> ?sys ;
+            <http://w3id.org/hobbit/vocab#startTime> ?t
+          FILTER(?btype IN (<http://w3id.org/bench#facetedBrowsingBenchmarkV2>))
+        } GROUP BY ?btype ?sys
+      }
+      ?exp
+        <http://w3id.org/hobbit/vocab#involvesBenchmark> ?btype ;
+        <http://w3id.org/hobbit/vocab#involvesSystemInstance> ?sys ;
+        <http://w3id.org/hobbit/vocab#startTime> ?latest ;
+        ?p ?o
+    }
+  }
+}
+
+

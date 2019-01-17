@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>docker-service-manager-server</artifactId>
+
+	<parent>
+		<groupId>org.hobbit</groupId>
+		<artifactId>hobbit-skd-docker-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<!-- TODO hobbit-sdk should be sufficient -->
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>hobbit-sdk-core</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<configuration>
+					<repository>${docker.docker-service-manager-server.repository}</repository>
+					<buildArgs>
+						<MAIN_IMAGE>${docker.docker-service-manager-server.repository}</MAIN_IMAGE>
+						<ARTIFACT_ID>${project.artifactId}</ARTIFACT_ID>
+					</buildArgs>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+
+</project>
+

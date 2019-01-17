@@ -52,7 +52,7 @@ public class EvaluationModuleComponent
     protected byte requestBody[];
 
     
-    protected Disposable esSubscription;
+    //protected Disposable esSubscription;
     
     
     protected CompletableFuture<?> terminationFuture = new CompletableFuture<Object>();
@@ -87,7 +87,7 @@ public class EvaluationModuleComponent
         logger.info("EM now requesting data from ES");
         while (true) {
         	CompletableFuture<ByteBuffer> responseFuture = em2esClient.apply(ByteBuffer.wrap(requestBody));
-        	ByteBuffer buffer = responseFuture.get(BenchmarkControllerFacetedBrowsing.MAX_SHORT_REQUEST_TIME_IN_SECONDS, TimeUnit.SECONDS);
+        	ByteBuffer buffer = responseFuture.get(BenchmarkControllerComponentImpl.MAX_SHORT_REQUEST_TIME_IN_SECONDS, TimeUnit.SECONDS);
         
             if (buffer.remaining() == 0) {
                 throw new IllegalStateException("Protocol error: Got a completely empty response from the evaluation storage.");
@@ -136,7 +136,7 @@ public class EvaluationModuleComponent
 
     @Override
     public void triggerShutdown() {
-    	esSubscription.dispose();
+    	//esSubscription.dispose();
 
     	super.triggerShutdown();
         // TODO Auto-generated method stub

@@ -1,0 +1,10 @@
+@prefix r: <http://project-hobbit.eu/resource/> .
+@prefix o: <http://project-hobbit.eu/ontology/> .
+
+r:faceted-browsing-benchmark-v1-config
+  o:benchmarkController "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-benchmark-controller" ;
+  o:dataGenerator "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-data-generator" ;
+  o:taskGenerator "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-task-generator" ;
+  o:evaluationModule "git.project-hobbit.eu:4567/cstadler/faceted-browsing-benchmark-releases/faceted-browsing-benchmark-v1-evaluation-module" ;
+  .
+

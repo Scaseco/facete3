@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -13,6 +12,21 @@
 	</parent>
 
 	<dependencies>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.hobbit</groupId> -->
+<!-- 			<artifactId>docker-service-api-core</artifactId> -->
+<!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>docker-service-api-docker-client</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>docker-service-api-spring-boot</artifactId>
+		</dependency>
 
 		<!-- Parsing of e.g. virtuoso.ini files -->
 		<dependency>
@@ -35,10 +49,12 @@
 			<artifactId>jena-sparql-api-virtuoso</artifactId>
 		</dependency>
 
+<!--
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-collections</artifactId>
 		</dependency>
+-->
 
 		<dependency>
 			<groupId>org.hobbit</groupId>
@@ -60,12 +76,8 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.batch</groupId>
-			<artifactId>spring-batch-core</artifactId>
-		</dependency>
-
+		<!-- <dependency> <groupId>org.springframework.batch</groupId> <artifactId>spring-batch-core</artifactId> 
+			</dependency> -->
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>core</artifactId>

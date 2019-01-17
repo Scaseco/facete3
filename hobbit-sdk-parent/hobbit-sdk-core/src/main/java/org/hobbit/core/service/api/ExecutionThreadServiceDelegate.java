@@ -1,6 +1,6 @@
 package org.hobbit.core.service.api;
 
-import org.hobbit.core.service.docker.DockerServiceSimpleDelegation;
+import org.hobbit.core.service.docker.impl.core.DockerServiceSimpleDelegation;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 

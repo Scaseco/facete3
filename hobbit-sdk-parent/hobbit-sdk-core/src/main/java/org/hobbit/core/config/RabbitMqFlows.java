@@ -27,6 +27,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -606,20 +607,83 @@ public class RabbitMqFlows {
     }
     
     
+//    public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueueAlternative(Channel channel, String queueName, Channel responseChannel, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
+//    	Flowable<SimpleReplyableMessage<ByteBuffer>> result = Flowable.create(emitter -> {
+//		
+//	    	ShutdownListener shutdownListener = throwable -> {
+//	    		logger.debug("[STATUS] Channel is closing; completing flow");	    		
+//    			emitter.onError(throwable);
+//				emitter.onComplete();
+//	    	};
+//	    	
+//	    	channel.addShutdownListener(shutdownListener);
+//	
+//	    	//result.doOnCancel(() -> channel.removeShutdownListener(shutdownListener));
+//	   	
+//	    	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
+//	    		@Override
+//	    		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+//	    				throws IOException {
+//					String replyTo = properties.getReplyTo();
+//					
+//					Consumer<ByteBuffer> reply = createReplyToConsumer(responseChannel, replyTo);
+//					
+//					
+//					//System.out.println("Received message from queue " + queueName);
+//			    	ByteBuffer buffer = ByteBuffer.wrap(body);
+//			    	
+//			    	Iterable<ByteBuffer> bufs = receiverTransform.apply(buffer);
+//			    	
+//			    	for(ByteBuffer buf : bufs) {
+//				    	SimpleReplyableMessage<ByteBuffer> msg = new SimpleReplyableMessageImpl<ByteBuffer>(buf, reply);
+//				    	
+//				    	//result.onSubscribe();
+//				    	
+//				    	//result.onNext(buffer);
+//				    	//logger.info("Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+//				    	
+////				    	if(!emitter.hasSubscribers()) {
+////					    	logger.warn("No subscribers on flow " + result + ", this may indicate a bug: Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+////				    	}
+//				    	
+//				    	emitter.onNext(msg);
+//			    	}
+//			    }	        		
+//	    	});
+//    	}, BackpressureStrategy.BUFFER);
+//
+//    	return result;
+//    }
+    
     public static Flowable<SimpleReplyableMessage<ByteBuffer>> createFlowableForQueue(Channel channel, String queueName, Channel responseChannel, Function<? super ByteBuffer, ? extends Iterable<ByteBuffer>> receiverTransform) throws IOException {
     	PublishProcessor<SimpleReplyableMessage<ByteBuffer>> result = PublishProcessor.create();
 		
-    	ShutdownListener shutdownListener = (throwable) -> {
-    		System.out.println("[STATUS] Channel is closing; completing flow");
+    	ShutdownListener shutdownListener = throwable -> {
+    		logger.debug("[STATUS] Channel is closing; completing flow");
     		if(throwable != null) {
-    			result.onError(throwable);
+    			// Assume an error by default; unset under certain conditions
+    			boolean isCloseSignalWithError = true;
+
+    			if(throwable instanceof ShutdownSignalException) {
+    				ShutdownSignalException sse = (ShutdownSignalException)throwable;
+    			
+    				Throwable cause = sse.getCause();
+    				if(sse.isInitiatedByApplication() && cause == null) {
+    					isCloseSignalWithError = false;
+    				}
+    			}
+    			
+    			if(isCloseSignalWithError) {
+	    			logger.warn("Encountered exception", throwable);
+	    			result.onError(throwable);
+    			}
     		}
     		result.onComplete();
     	};
 
+    	channel.addShutdownListener(shutdownListener);
     	result.doOnCancel(() -> channel.removeShutdownListener(shutdownListener));
-    	
-
+   	
     	channel.basicConsume(queueName, true, new DefaultConsumer(channel) {
     		@Override
     		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
@@ -643,7 +707,7 @@ public class RabbitMqFlows {
 			    	//logger.info("Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
 			    	
 			    	if(!result.hasSubscribers()) {
-				    	logger.warn("No subscribers on a flow, this may indicate a bug: Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
+				    	logger.warn("No subscribers on flow " + result + ", this may indicate a bug: Received message on queue " + queueName + " and forwarding it flow " + result + " which hasSubscribers=" + result.hasSubscribers());
 			    	}
 			    	
 			    	result.onNext(msg);
@@ -651,7 +715,8 @@ public class RabbitMqFlows {
 		    }	        		
     	});
 
-    	return result.onBackpressureLatest(); //.publish().publish();
+    	return result;
+    	//return result.onBackpressureLatest(); //.publish().publish();
     }
     /**
      * Creates a flowable which re-publishes all messages received from a queue on a given channel,
@@ -890,7 +955,8 @@ public class RabbitMqFlows {
 //    	};
 
 		channel.queueDeclare(queueName, false, false, true, null);
-    	Flowable<ByteBuffer> flowable = RabbitMqFlows.createFlowableForQueue(channel, queueName, channel, x -> Collections.singletonList(x)).map(SimpleReplyableMessage::getValue);
+    	Flowable<ByteBuffer> flowable = RabbitMqFlows.createFlowableForQueue(channel, queueName, channel, x -> Collections.singletonList(x))
+    			.map(SimpleReplyableMessage::getValue);
 
     	return flowable;
     }
