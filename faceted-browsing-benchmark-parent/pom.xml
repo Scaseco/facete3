@@ -41,9 +41,15 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-                    		<groupId>org.slf4j</groupId>
-	                    <artifactId>slf4j-log4j12</artifactId>
-        	            <version>1.7.24</version>
+				<groupId>com.beust</groupId>
+				<artifactId>jcommander</artifactId>
+				<version>1.72</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>1.7.24</version>
 			</dependency>
 
 			<dependency>
@@ -88,11 +94,11 @@
 				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
-                        <dependency>
-                                <groupId>org.hobbit</groupId>
-                                <artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
-                                <version>${project.version}</version>
-                        </dependency>
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>

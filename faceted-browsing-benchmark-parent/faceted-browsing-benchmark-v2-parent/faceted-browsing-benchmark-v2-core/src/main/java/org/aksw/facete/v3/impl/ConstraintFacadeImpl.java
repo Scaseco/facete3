@@ -178,7 +178,7 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	public Collection<HLFacetConstraint<? extends ConstraintFacade<B>>> listHl() {
 		Collection<FacetConstraint> lowLevel = list();
 
-		CollectionFromConverter<HLFacetConstraint<? extends ConstraintFacade<B>>, FacetConstraint> result = new CollectionFromConverter<>(lowLevel, Converter.from(
+		CollectionFromConverter<HLFacetConstraint<? extends ConstraintFacade<B>>, FacetConstraint, ?> result = new CollectionFromConverter<>(lowLevel, Converter.from(
 			hl -> hl.state(),
 			ll -> new HLFacetConstraintImpl<>(this, parent, ll)
 		));

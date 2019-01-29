@@ -45,6 +45,12 @@ public class HobbitBenchmarkUtils {
 //	}
 	
 	
+	public static InputStream openResource(String name) throws IOException {
+//		() -> HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-data.trig.bz2"),
+
+		return openBz2InputStream(name);
+	}
+	
 	public static InputStream openBz2InputStream(String name) throws IOException {
 		InputStream rawIn = HobbitBenchmarkUtils.class.getClassLoader().getResourceAsStream(name);
 		if(rawIn == null) {

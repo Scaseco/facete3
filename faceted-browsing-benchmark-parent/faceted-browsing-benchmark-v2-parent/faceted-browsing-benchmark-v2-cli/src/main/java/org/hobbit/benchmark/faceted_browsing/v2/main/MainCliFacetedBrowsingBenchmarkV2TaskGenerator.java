@@ -2,20 +2,18 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
@@ -26,6 +24,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
@@ -37,6 +36,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
@@ -51,54 +51,217 @@ import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDock
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 
 import io.reactivex.Flowable;
 
+
+
+/**
+ * Entry point for the CLI of the task generator of the
+ * hobbit faceted browsing benchmark v2
+ * 
+ * @author Claus Stadler, Jan 17, 2019
+ *
+ */
 public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedBrowsingBenchmarkV2TaskGenerator.class);
 
+	@Parameters(separators = "=", commandDescription = "Parameters")
+	public static interface CommandMain
+		extends Resource
+	{	
+		@Iri("eg:nonOptionArg")
+		List<String> getNonOptionArgs();
+
+		@Iri("eg:help")
+		boolean isHelp();// = false;
+				
+		@Parameter(names = "--help", help = true)
+		CommandMain setHelp(boolean help);
+		
+		@Parameter(description = "Non option args")
+		CommandMain setNonOptionArgs(List<String> args);
+		
+//		@Parameter(names={"--r"}, description="Fraction of events to read from input - e.g . 0.5 for half of it")
+//		public Long eventsRatio = null;
+//
+//		@Parameter(names={"--e"}, description="Number of (e)vents to read from input")
+//		public Long numEvents = null;
+//		
+//		@Parameter(names = "--ns", description="Number of scenarios to generate")
+//		public Long numScenarios = 10l;
+//		
+//		@Parameter(names={"--maxScenarioLength"}, description="Maximum length of a scenario")
+//		public Long maxScenarioLength = 10l;
+	}
+
+//	
+//	public static class CommandMainImpl
+//		extends ResourceImpl
+//		implements CommandMain
+//	{
+//		public CommandMainImpl(Node n, EnhGraph m) {
+//			super(n, m);
+//			System.out.println("new instance");
+//		}
+//
+//		@Override
+//		public List<String> getNonOptionArgs() {
+//			List<RDFNode> raw = new ListFromRDFList(this, RDFS.seeAlso);
+//			
+//			// Probably NodeMapper should simply implement the converter interface
+//			NodeMapper<String> nodeMapper = NodeMapperFactory.from(String.class);
+//			Converter<RDFNode, String> converter = new ConverterFromNodeMapperAndModel<RDFNode, String>(this.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(nodeMapper));
+//			
+//			
+//			List<String> result = new ListFromConverter<>(raw, converter.reverse());
+//			return result;
+//		}
+//
+//		@Override
+//		public boolean isHelp() {
+//			Boolean result = ResourceUtils.getLiteralPropertyValue(this, RDFS.label, Boolean.class);
+//			return result == null ? false : result;
+//		}
+//
+//		@Override
+//		public CommandMain setHelp(boolean help) {
+//			ResourceUtils.setLiteralProperty(this, RDFS.label, help);
+//			return this;
+//		}
+//
+//		@Override
+//		public CommandMain setNonOptionArgs(List<String> args) {
+//			// Always create a copy, because the argument might be a view
+//			// of the backing list
+//			List<String> copy = new ArrayList<>(args);
+//			List<String> list = getNonOptionArgs();
+////			System.out.println(System.identityHashCode(args) + " vs " + System.identityHashCode(list));
+////			if(args != list) {
+//				
+//				System.out.println("Invocation with " + args);
+//				
+//				System.out.println("Current list: " + list);
+//				list.clear();
+//				list.addAll(copy);
+////			}
+//			return this;
+//		}
+//		
+//	}
+	
+
+//	@Parameters(separators = "=", commandDescription = "Retrieve DCAT descriptions from CKAN")
+//	public static class CommandImportCkan {
+//
+//		@Parameter(names="--host", description="The URL of the CKAN instance", required=true)
+//		protected String host;
+//
+//		@Parameter(names="--apikey", description="Your API key for the CKAN instance")
+//		protected String apikey;
+//
+//		@Parameter(names = { "--ds" ,"--dataset"} , description = "Import a specific datasets (ckan id or name)")
+//		protected List<String> datasets = new ArrayList<>();
+
+//	@Parameters(separators = "=", commandDescription = "Show DCAT information")
+//	public static class CommandShow {
+//
+//		@Parameter(description = "Any RDF file")
+//		protected String file;
+//	}
+
 		
 	public static void main(String[] args) throws DockerCertificateException, Exception {
-		
-		if(false) {
-			int[] start = {0};
-			Supplier<? extends Collection<String>> s = () -> Arrays.asList("" + start[0]++, "a", "b");
-	
-			Supplier<String> test = SupplierUtils.toSupplier(SupplierUtils.flatMapIterable(s::get));
-			for(int i = 0; i < 20; ++i) {
-				System.out.println(test.get());
-			}
 
-			return;
-		}
+		JenaSystem.init();
+//		BuiltinPersonalities.model.add(CommandMain.class, new SimpleImplementation(CommandMainImpl::new));
+		
+		JenaPluginUtils.registerJenaResourceClass(CommandMain.class);
+
+				
+		
+		
+		
+		CommandMain cmMain = ModelFactory.createDefaultModel().createResource().as(CommandMain.class);
+
+		System.out.println("I AM " + cmMain.getClass());
+		//		CommandShow cmShow = new CommandShow();
+//		CommandExpand cmExpand = new CommandExpand();
+//		CommandDeploy cmDeploy = new CommandDeploy();		
+//		CommandImport cmImport = new CommandImport();
+//		CommandInstall cmInstall = new CommandInstall();
 
 		
-//		Dataset raw = DatasetFactory.create();
-		
-		//.forEach(d -> Streams.stream(d.asDatasetGraph().find()).forEach(raw.asDatasetGraph()::add));
+		// CommandCommit commit = new CommandCommit();
+		JCommander jc = JCommander.newBuilder()
+				.addObject(cmMain)
+//				.addCommand("show", cmShow)
+//				.addCommand("expand", cmExpand)
+//				.addCommand("deploy", cmDeploy)
+//				.addCommand("import", cmImport)
+//				.addCommand("install", cmInstall)
+				.build();
 
-		
-//		
-//		Model model = RDFDataMgr.loadModel(uri);
-//		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));
+//		JCommander deploySubCommands = jc.getCommands().get("deploy");
 //
-//		taskGenerator = TaskGenerator.autoConfigure(conn);
-//		changeTracker = taskGenerator.getChangeTracker();
-//		fq = taskGenerator.getCurrentQuery();
-//		changeTracker.commitChangesWithoutTracking();
+//		CommandDeployCkan cmDeployCkan = new CommandDeployCkan();
+//		deploySubCommands.addCommand("ckan", cmDeployCkan);
+//		Path path = 
+//		String contentType = Files.probeContentType(path);
 //		
+//		logger.info("Content type " + contentType + " detected on " + path.toAbsolutePath());
+//		
+//		String filename = path.getFileName().toString();
+//		
+//		Path actualFile;
+//		if("application/x-bzip".equals(contentType)) {
+		
+		
+		// Parameters (sketch)
+		// What dataset to use (may be sparql endpoint)
+		// Streaming - what constitutes a streaming record, what defines their order, how many events to use
+		//   what (time) range
+		// Which local triple store to use (for indexing the data)
+		// Task generation
+		// Distribution of chokepoints
+		// Maximum number of scenarios
+		// Maximum number of queries
+          
+		
+		jc.parse(args);
+		
+		System.out.println(cmMain.isHelp());
+		System.out.println(cmMain.getNonOptionArgs());
+
+		RDFDataMgr.write(System.out, cmMain.getModel(), RDFFormat.TURTLE_PRETTY);
+		if(true) { return; }
+
+        if(cmMain.isHelp()) {
+            jc.usage();
+            return;
+        }
+
+        // TODO Change this to a plugin system - for now I hack this in statically
+		//String cmd = jc.getParsedCommand();
+
+		
+		String dockerContainerName = "hobbit-fbb2-tg";
 		
 		boolean useDocker = true;
-		
+//		dss.findServiceByName(dockerContainerName);
+
 		try (DockerServiceSystem<?> dss = DockerServiceSystemDockerClient.create(true, Collections.emptyMap(), Collections.emptySet())) {
 
 			DockerService ds;
 			if(useDocker) {
-				ds = dss.create("docker-service-example", "tenforce/virtuoso", ImmutableMap.<String, String>builder()
+				ds = dss.create(dockerContainerName, "tenforce/virtuoso", ImmutableMap.<String, String>builder()
 						.put("SPARQL_UPDATE", "true")
 						.put("DEFAULT_GRAPH", "http://www.example.org/")
 	                    .put("VIRT_Parameters_NumberOfBuffers", "170000")
@@ -127,7 +290,6 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 				String sparqlApiBase = "http://" + ds.getContainerId() + ":8890/";
 				String sparqlEndpoint = sparqlApiBase + "sparql";
 
-				dss.findServiceByName("docker-service-example");
 				
 				
 //				try(RDFConnection rawConn = RDFConnectionFactory.connect(sparqlEndpoint)) {
@@ -166,29 +328,14 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 					
 					RDFConnection conn = wrappedConn;
 					
-					if(false)
-					{
-						// This part works; TODO Make a unit test in jsa for it
-						for(int i = 0; i < 1000; ++i) {
-							System.out.println("Query deadlock test iteration #" + i);
-							QueryExecution test = conn.query("SELECT * { ?s ?p ?o }");
-							ReactiveSparqlUtils.execSelect(() -> test)
-								.limit(10)
-								.count()
-								.blockingGet();
-							
-							if(!test.isClosed()) {
-								throw new RuntimeException("QueryExecution was not closed with flow");
-							}
-						}
-					}					
-					
 					
 					Flowable<Dataset> flow = RDFDataMgrRx.createFlowableDatasets(
 							() -> HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-data.trig.bz2"),
 //							() -> new FileInputStream("/home/raven/Projects/Data/Hobbit/hobbit-sensor-stream-150k.trig"),
 							Lang.TRIG,
 							"http://www.example.org/");
+					
+					
 					
 					
 					
@@ -341,3 +488,23 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
         return task;
 	}
 }
+
+
+
+
+//if(false)
+//{
+//	// This part works; TODO Make a unit test in jsa for it
+//	for(int i = 0; i < 1000; ++i) {
+//		System.out.println("Query deadlock test iteration #" + i);
+//		QueryExecution test = conn.query("SELECT * { ?s ?p ?o }");
+//		ReactiveSparqlUtils.execSelect(() -> test)
+//			.limit(10)
+//			.count()
+//			.blockingGet();
+//		
+//		if(!test.isClosed()) {
+//			throw new RuntimeException("QueryExecution was not closed with flow");
+//		}
+//	}
+//}					
