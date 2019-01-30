@@ -87,6 +87,7 @@ public class TestPathMatcher {
 	}
 	
 	
+	// TODO Move to jena-sparql-api path module
 	@Test
 	public void testPathMatcherRequireAtLastOneBackwardEdge() {
 		JenaSystem.init();

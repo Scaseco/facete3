@@ -10,7 +10,7 @@
 
 	<properties>
 		<!-- <jena-sparql-api.version>3.7.0-1-SNAPSHOT</jena-sparql-api.version> -->
-		<jena.version>3.8.0</jena.version>
+		<jena.version>3.10.0</jena.version>
 		<jena-sparql-api.version>${jena.version}-1-SNAPSHOT</jena-sparql-api.version>
 		<spring.version>4.3.11.RELEASE</spring.version>
 		<slf4j.version>1.7.25</slf4j.version>
@@ -141,12 +141,13 @@
 				<artifactId>jena-sparql-api-virtuoso</artifactId>
 				<version>${jena-sparql-api.version}</version>
 			</dependency>
-
+<!--
 			<dependency>
 				<groupId>org.apache.jena</groupId>
 				<artifactId>jena-fuseki-embedded</artifactId>
 				<version>${jena.version}</version>
 			</dependency>
+-->
 
 			<!-- <dependency> -->
 			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
