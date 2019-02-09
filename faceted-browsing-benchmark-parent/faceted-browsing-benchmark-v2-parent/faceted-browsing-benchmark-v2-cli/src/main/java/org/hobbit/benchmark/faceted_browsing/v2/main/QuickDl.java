@@ -158,12 +158,12 @@ public class QuickDl {
 		
 		// In general, at this stage we need to deal with non-trivial discrimination:
 		// This means, that there is no single feature that is common to all positive (negative) examples.
-		// Hence, a thumb-times-pi approach might be to generate candidate and validate candidate
+		// Hence, a thumb-times-pi approach might be to generate and validate candidate
 		// sets of features:
 		// Starting with the minimum set of discriminative features that cover
 		// the maximum number of positive resources, start adding features until we reach solutions
 		// that don't cover (too m)any negative examples (this sounds like knapsack problem is part of the solution)
-
+		// Note: https://pdfs.semanticscholar.org/0f6f/b65ab0ac654a1f8be07d134c8957a692a83e.pdf mentions "greedy beam search" (only a limited set of partial solutions is considered) https://en.wikipedia.org/wiki/Beam_search
 		List<FacetCount> posff = fq.baseConcept(posConcept).focus().fwd("http://localhost/foo#hasCard").one().fwd().facetCounts().exec().toList().blockingGet();
 		posff.forEach(x -> System.out.println("posFC: " + x));
 		
@@ -177,23 +177,9 @@ public class QuickDl {
 		Set<Resource> diff = Sets.difference(posP, negP);
 		System.out.println("Diff: " + diff);
 		
-		
-		// In the example, at this stage the diff is:
+		// Output (after traversal of http://localhost/foo#hasCard):
 		// Diff: [FacetCountImpl [http://localhost/foo#sameRank: CountInfo [count=21, hasMoreItems=false, itemLimit=null]]]
-        // So EXISTS hasCard EXIST sameRank is discriminates the positive and negative examples	
-		
-		
-//		List<FacetValueCount> posffs = fq.baseConcept(posConcept).focus().fwd("http://localhost/foo#hasCard").one().fwd().facetValueCounts().exec().toList().blockingGet();
-//		posffs.forEach(x -> System.out.println("posFVC: " + x));
-//		
-//		List<FacetValueCount> negffs = fq.baseConcept(negConcept).focus().fwd("http://localhost/foo#hasCard").one().fwd().facetValueCounts().exec().toList().blockingGet();
-//		posffs.forEach(x -> System.out.println("negFVC: " + x));
-		
-		//Collector
-		
-		
-		//RDFDataMgr.write(System.out, ResourceUtils.reachableClosure(pos.iterator().next()), RDFFormat.TURTLE_PRETTY);
-		
+        // So "EXISTS hasCard EXIST sameRank" discriminates the positive and negative examples		
 	}
 	
 }
