@@ -1,13 +1,13 @@
 package org.aksw.facete.v3.impl;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetMultiNode;
 import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -16,7 +16,6 @@ import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -26,7 +25,6 @@ import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.function.library.leviathan.root;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
@@ -133,9 +131,23 @@ public class FacetDirNodeImpl
 	}
 
 	@Override
-	public DataQuery<FacetValueCount> facetValueCounts() {
-		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, false);
+	public DataQuery<FacetValueCount> facetValueTypeCounts() {
+		TernaryRelation tr = createQueryGenerator()
+				.createRelationFacetValueTypeCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null, false);
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+
 		return result;
+	}
+
+	@Override
+	public DataQuery<FacetValueCount> facetValueCounts() {
+		TernaryRelation tr = createQueryGenerator()
+				.createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null, false);
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+
+		return result;
+
+//		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, false);
 //		FacetedQueryResource facetedQuery = this.parent().query();
 //
 ////		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
@@ -188,6 +200,17 @@ public class FacetDirNodeImpl
 		return result;
 	}
 
+	
+	public FacetedQueryGenerator<BgpNode> createQueryGenerator() {
+		FacetedQueryResource facetedQuery = this.parent().query();
+
+//		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+		FacetedQueryGenerator<BgpNode> result = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
+		result.setBaseConcept(query().baseConcept());
+		facetedQuery.constraints().forEach(c -> result.addConstraint(c.expr()));
+
+		return result;
+	}
 
 	/**
 	 * Common method for negated and non-negated facet value counts
@@ -195,16 +218,16 @@ public class FacetDirNodeImpl
 	 * @param negated
 	 * @return
 	 */
-	public DataQuery<FacetValueCount> createQueryFacetValueCounts(boolean negated, boolean includeAbsent) {
-		FacetedQueryResource facetedQuery = this.parent().query();
-
-//		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
-		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
-		qgen.setBaseConcept(query().baseConcept());
-		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+	public DataQuery<FacetValueCount> createQueryFacetValueCounts(TernaryRelation tr) { //boolean negated, boolean includeAbsent) {
+//		FacetedQueryResource facetedQuery = this.parent().query();
+//
+////		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+//		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(facetedQuery.modelRoot().getBgpRoot()));
+//		qgen.setBaseConcept(query().baseConcept());
+//		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
 
 		//this.query();
-		TernaryRelation tr = qgen.createRelationFacetValues(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null, includeAbsent);
+		//TernaryRelation tr = relationSupplier.get();//qgen.createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), negated, null, null, includeAbsent);
 		
 		// Inject that the object must not be a blank node
 		// TODO There should be a better place to do this - but where?
@@ -238,13 +261,21 @@ public class FacetDirNodeImpl
 
 	@Override
 	public DataQuery<FacetValueCount> nonConstrainedFacetValueCounts() {
-		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(true, false);
+		
+		TernaryRelation tr = createQueryGenerator()
+				.createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), true, null, null, false);
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+//				
+//				true, false);
 		return result;
 	}
 
 	@Override
 	public DataQuery<FacetValueCount> facetValueCountsWithAbsent(boolean includeAbsent) {
-		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(false, includeAbsent);
+		TernaryRelation tr = createQueryGenerator()
+				.createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null, includeAbsent);
+		DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+
 		return result;
 	}
 

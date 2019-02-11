@@ -200,6 +200,15 @@ public class FacetedBrowsingSessionImpl {
 	}
 
 	
+	/**
+	 * Apply groupBy and count(Distinct ?var) to one of a relation's variables.
+	 * 
+	 * @param r
+	 * @param aggVar
+	 * @param resultVar
+	 * @param includeAbsent if true, unbound values count too
+	 * @return
+	 */
 	public static Relation groupBy(Relation r, Var aggVar, Var resultVar, boolean includeAbsent) {
 		Query query = new Query();
 		query.setQuerySelectType();

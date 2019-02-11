@@ -64,6 +64,7 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
@@ -974,7 +975,47 @@ public class FacetedQueryGenerator<P> {
 		return result;
 	}
 
-	public TernaryRelation createRelationFacetValues(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter, boolean includeAbsent) {
+	
+	
+	/**
+	 * A modification of facet value counts that instead of the values yields the values' types.
+	 * Useful for description logics stuff, as it yields the 'Cs' in "exists r.C"
+	 * 
+	 * @param focus
+	 * @param facetPath
+	 * @param isReverse
+	 * @param negated
+	 * @param pFilter
+	 * @param oFilter
+	 * @param includeAbsent
+	 * @return
+	 */
+	public TernaryRelation createRelationFacetValueTypeCounts(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter, boolean includeAbsent) {
+		
+		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
+
+		BinaryRelation typeRel = BinaryRelationImpl.createFwd(Vars.s, RDF.type.asNode(), Vars.o);
+
+		Var countVar = Vars.c;
+		List<Element> elements = facetValues.values().stream()
+				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(r -> r.joinOn(Vars.o).projectSrcVars(Vars.s, Vars.p).projectTgtVars(Vars.o).with(typeRel, Vars.s))
+				.map(Relation::toTernaryRelation)
+				.map(e -> e.joinOn(e.getP()).with(pFilter))
+				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar, includeAbsent))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+
+		
+		Element e = ElementUtils.unionIfNeeded(elements);
+
+		TernaryRelation result = new TernaryRelationImpl(e, Vars.p, Vars.o, countVar);
+		
+		return result;
+	}
+	
+	
+	public TernaryRelation createRelationFacetValueCounts(P focus, P facetPath, boolean isReverse, boolean negated, UnaryRelation pFilter, UnaryRelation oFilter, boolean includeAbsent) {
 		
 		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, negated, false, includeAbsent);
 

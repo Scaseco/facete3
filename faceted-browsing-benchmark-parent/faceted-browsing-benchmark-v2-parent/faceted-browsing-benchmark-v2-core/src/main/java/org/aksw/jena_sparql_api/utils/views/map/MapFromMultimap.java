@@ -11,6 +11,15 @@ import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
+/**
+/* This class is used to view a multimap as a map
+/* This assumes, that no key of the multimap maps to multiple values
+ * 
+ * @author Claus Stadler, Feb 9, 2019
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class MapFromMultimap<K, V>
 	extends AbstractMap<K, V>
 {

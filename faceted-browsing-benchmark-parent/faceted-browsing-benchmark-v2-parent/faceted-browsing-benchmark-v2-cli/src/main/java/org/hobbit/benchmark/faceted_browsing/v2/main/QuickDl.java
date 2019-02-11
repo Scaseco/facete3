@@ -122,10 +122,10 @@ public class QuickDl {
 		
 		// Check if there are any facet-filler pairs, that discriminate the positive from the negative examples
 		
-		List<FacetValueCount> posFvcs = fq.baseConcept(posConcept).focus().fwd().facetValueCounts().exec().toList().blockingGet()
+		List<FacetValueCount> posFvcs = fq.baseConcept(posConcept).focus().fwd().facetValueTypeCounts().exec().toList().blockingGet()
 			.stream()
-			.filter(fv -> fv.getFocusCount().getCount() != 1)
-			.filter(fv -> fv.getFocusCount().getCount() != pos.size())			
+//			.filter(fv -> fv.getFocusCount().getCount() != 1)
+//			.filter(fv -> fv.getFocusCount().getCount() != pos.size())			
 			.sorted((a, b) -> (int)(a.getFocusCount().getCount() - b.getFocusCount().getCount()))
 			.collect(Collectors.toList());
 			
@@ -133,10 +133,10 @@ public class QuickDl {
 		
 		
 		fq.baseConcept(negConcept);
-		List<FacetValueCount> negFvcs = fq.baseConcept(negConcept).focus().fwd().facetValueCounts().exec().toList().blockingGet()
+		List<FacetValueCount> negFvcs = fq.baseConcept(negConcept).focus().fwd().facetValueTypeCounts().exec().toList().blockingGet()
 				.stream()
-				.filter(fv -> fv.getFocusCount().getCount() != 1)
-				.filter(fv -> fv.getFocusCount().getCount() != neg.size())			
+//				.filter(fv -> fv.getFocusCount().getCount() != 1)
+//				.filter(fv -> fv.getFocusCount().getCount() != neg.size())			
 				.sorted((a, b) -> (int)(a.getFocusCount().getCount() - b.getFocusCount().getCount()))
 				.collect(Collectors.toList());
 				

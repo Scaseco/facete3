@@ -50,6 +50,8 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	//@Deprecated
 	DataQuery<FacetValueCount> facetValueCounts();
 
+	DataQuery<FacetValueCount> facetValueTypeCounts();
+
 	/**
 	 * This method is an API hack to get the feature in now (without breaking everything)
 	 * It should be replaced with a "FacetValueBuilder facetValues()" method
