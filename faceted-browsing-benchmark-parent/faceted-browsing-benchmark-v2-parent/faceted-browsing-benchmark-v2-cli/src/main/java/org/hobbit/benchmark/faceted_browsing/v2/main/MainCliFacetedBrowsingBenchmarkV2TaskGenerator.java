@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +11,6 @@ import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQuery
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
-import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
@@ -52,9 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ObjectArrays;
 import com.google.common.util.concurrent.Service;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 
@@ -72,126 +69,22 @@ import io.reactivex.Flowable;
 public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedBrowsingBenchmarkV2TaskGenerator.class);
-
-	@Parameters(separators = "=", commandDescription = "Parameters")
-	public static interface CommandMain
-		extends Resource
-	{	
-		@Iri("eg:nonOptionArg")
-		List<String> getNonOptionArgs();
-
-		@Iri("eg:help")
-		boolean isHelp();// = false;
-				
-		@Parameter(names = "--help", help = true)
-		CommandMain setHelp(boolean help);
-		
-		@Parameter(description = "Non option args")
-		CommandMain setNonOptionArgs(List<String> args);
-		
-//		@Parameter(names={"--r"}, description="Fraction of events to read from input - e.g . 0.5 for half of it")
-//		public Long eventsRatio = null;
-//
-//		@Parameter(names={"--e"}, description="Number of (e)vents to read from input")
-//		public Long numEvents = null;
-//		
-//		@Parameter(names = "--ns", description="Number of scenarios to generate")
-//		public Long numScenarios = 10l;
-//		
-//		@Parameter(names={"--maxScenarioLength"}, description="Maximum length of a scenario")
-//		public Long maxScenarioLength = 10l;
-	}
-
-//	
-//	public static class CommandMainImpl
-//		extends ResourceImpl
-//		implements CommandMain
-//	{
-//		public CommandMainImpl(Node n, EnhGraph m) {
-//			super(n, m);
-//			System.out.println("new instance");
-//		}
-//
-//		@Override
-//		public List<String> getNonOptionArgs() {
-//			List<RDFNode> raw = new ListFromRDFList(this, RDFS.seeAlso);
-//			
-//			// Probably NodeMapper should simply implement the converter interface
-//			NodeMapper<String> nodeMapper = NodeMapperFactory.from(String.class);
-//			Converter<RDFNode, String> converter = new ConverterFromNodeMapperAndModel<RDFNode, String>(this.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(nodeMapper));
-//			
-//			
-//			List<String> result = new ListFromConverter<>(raw, converter.reverse());
-//			return result;
-//		}
-//
-//		@Override
-//		public boolean isHelp() {
-//			Boolean result = ResourceUtils.getLiteralPropertyValue(this, RDFS.label, Boolean.class);
-//			return result == null ? false : result;
-//		}
-//
-//		@Override
-//		public CommandMain setHelp(boolean help) {
-//			ResourceUtils.setLiteralProperty(this, RDFS.label, help);
-//			return this;
-//		}
-//
-//		@Override
-//		public CommandMain setNonOptionArgs(List<String> args) {
-//			// Always create a copy, because the argument might be a view
-//			// of the backing list
-//			List<String> copy = new ArrayList<>(args);
-//			List<String> list = getNonOptionArgs();
-////			System.out.println(System.identityHashCode(args) + " vs " + System.identityHashCode(list));
-////			if(args != list) {
-//				
-//				System.out.println("Invocation with " + args);
-//				
-//				System.out.println("Current list: " + list);
-//				list.clear();
-//				list.addAll(copy);
-////			}
-//			return this;
-//		}
-//		
-//	}
-	
-
-//	@Parameters(separators = "=", commandDescription = "Retrieve DCAT descriptions from CKAN")
-//	public static class CommandImportCkan {
-//
-//		@Parameter(names="--host", description="The URL of the CKAN instance", required=true)
-//		protected String host;
-//
-//		@Parameter(names="--apikey", description="Your API key for the CKAN instance")
-//		protected String apikey;
-//
-//		@Parameter(names = { "--ds" ,"--dataset"} , description = "Import a specific datasets (ckan id or name)")
-//		protected List<String> datasets = new ArrayList<>();
-
-//	@Parameters(separators = "=", commandDescription = "Show DCAT information")
-//	public static class CommandShow {
-//
-//		@Parameter(description = "Any RDF file")
-//		protected String file;
-//	}
-
 		
 	public static void main(String[] args) throws DockerCertificateException, Exception {
 
-		JenaSystem.init();
+		// HACK/WORKAROUND for Jcommander issue
+		// https://github.com/cbeust/jcommander/issues/464
+		// Add a dummy element to initialize a list property
+		args = ObjectArrays.concat(new String[] {"-d", "foo"}, args, String.class);
+		
+		
+		//JenaSystem.init();
 //		BuiltinPersonalities.model.add(CommandMain.class, new SimpleImplementation(CommandMainImpl::new));
 		
 		JenaPluginUtils.registerJenaResourceClass(CommandMain.class);
-
-				
-		
-		
 		
 		CommandMain cmMain = ModelFactory.createDefaultModel().createResource().as(CommandMain.class);
 
-		System.out.println("I AM " + cmMain.getClass());
 		//		CommandShow cmShow = new CommandShow();
 //		CommandExpand cmExpand = new CommandExpand();
 //		CommandDeploy cmDeploy = new CommandDeploy();		
@@ -237,13 +130,15 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		
 		jc.parse(args);
 		
-		System.out.println(cmMain.isHelp());
-		System.out.println(cmMain.getNonOptionArgs());
+		if(cmMain.getHelp()) {
+			jc.usage();
+			return;
+		}
 
 		RDFDataMgr.write(System.out, cmMain.getModel(), RDFFormat.TURTLE_PRETTY);
 		if(true) { return; }
 
-        if(cmMain.isHelp()) {
+        if(cmMain.getHelp()) {
             jc.usage();
             return;
         }
