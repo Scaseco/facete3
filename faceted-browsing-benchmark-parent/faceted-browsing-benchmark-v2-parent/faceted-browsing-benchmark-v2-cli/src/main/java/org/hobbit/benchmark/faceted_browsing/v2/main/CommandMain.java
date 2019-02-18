@@ -9,36 +9,46 @@ import org.apache.jena.rdf.model.Resource;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+// Parameters (sketch)
+// What dataset to use (may be sparql endpoint)
+// Streaming - what constitutes a streaming record, what defines their order, how many events to use
+//   what (time) range
+// Which local triple store to use (for indexing the data)
+// Task generation
+// Distribution of chokepoints
+// Maximum number of scenarios
+// Maximum number of queries
+
 @Parameters(separators="=", commandDescription="Parameters")
-	public interface CommandMain
+public interface CommandMain
 		extends Resource
-	{	
+{	
 //		@Iri("eg:nonOptionArg")
 //		List<String> getNonOptionArgs();
 
-		@Iri("eg:sparqlEndpoint")
-		String getSparqlEndpoint();
+	@Iri("eg:sparqlEndpoint")
+	String getSparqlEndpoint();
 
-		@Iri("eg:defaultGraphUris")
-		@IriType
-		List<String> getDefaultGraphUris();
-		
-		@Iri("eg:help")
-		boolean getHelp();// =# false;
-				
-		@Parameter(names={"-h", "--help"}, help=true)
-		CommandMain setHelp(boolean help);
-		
+	@Iri("eg:defaultGraphUris")
+	@IriType
+	List<String> getDefaultGraphUris();
+	
+	@Iri("eg:help")
+	boolean getHelp();// =# false;
+			
+	@Parameter(names={"-h", "--help"}, help=true)
+	CommandMain setHelp(boolean help);
+	
 //		@Parameter(description = "Non option args")
 //		CommandMain setNonOptionArgs(List<String> args);
 
-		@Parameter(names="-e", required=true, description="SPARQL Endpoint")
-		CommandMain setSparqlEndpoint(String sparqlEndpoint);
+	@Parameter(names="-e", required=true, description="SPARQL Endpoint")
+	CommandMain setSparqlEndpoint(String sparqlEndpoint);
 
-		@Parameter(names="-d", description="Default Graph URIs")
-		CommandMain setDefaultGraphUris(List<String> args);
-		
-		
+	@Parameter(names="-d", description="Default Graph URIs")
+	CommandMain setDefaultGraphUris(List<String> args);
+	
+	
 //		@Parameter(names={"--r"}, description="Fraction of events to read from input - e.g . 0.5 for half of it")
 //		public Long eventsRatio = null;
 //
@@ -50,4 +60,4 @@ import com.beust.jcommander.Parameters;
 //		
 //		@Parameter(names={"--maxScenarioLength"}, description="Maximum length of a scenario")
 //		public Long maxScenarioLength = 10l;
-	}
+}
