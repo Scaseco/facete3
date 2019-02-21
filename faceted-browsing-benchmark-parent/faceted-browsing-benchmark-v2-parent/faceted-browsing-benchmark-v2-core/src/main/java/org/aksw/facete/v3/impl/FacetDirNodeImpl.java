@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetMultiNode;
@@ -60,6 +61,12 @@ public class FacetDirNodeImpl
 	@Override
 	public FacetNodeResource parent() {
 		return parent;
+	}
+	
+	@Override
+	public Direction dir() {
+		Direction result = state.isFwd() ? Direction.FORWARD : Direction.BACKWARD;
+		return result;
 	}
 
 	@Override
@@ -292,4 +299,9 @@ public class FacetDirNodeImpl
 //		xxx;
 //	}
 	
+	@Override
+	public String toString() {
+		Direction dir = dir();
+		return (parent == null ? "" : parent.toString()) + (Direction.FORWARD.equals(dir) ? "->" : "<-");
+	}
 }

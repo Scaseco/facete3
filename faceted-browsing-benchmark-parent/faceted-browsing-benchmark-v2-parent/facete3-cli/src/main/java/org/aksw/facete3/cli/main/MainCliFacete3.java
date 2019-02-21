@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -384,7 +387,9 @@ public class MainCliFacete3 {
 	Table<Node> resultTable = new Table<>("Item");
 
 	CheckBoxList<HLFacetConstraint<?>> constraintList = new CheckBoxList<>();
+	Panel facetPathPanel = new Panel();
 
+	
 	String facetFilter = null;
 	
 	String facetValueFilter = null;
@@ -453,6 +458,18 @@ public class MainCliFacete3 {
 	}
 	
 	
+	public void updateFacetPathPanel() {
+		facetPathPanel.removeAllComponents();
+		
+		facetPathPanel.addComponent(new Label("" + fdn));
+		
+		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
+		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
+
+		
+	}
+	
+	
 	public void updateFacetValues() {
 		if(fdn != null && selectedFacet != null) {
 			
@@ -509,7 +526,10 @@ public class MainCliFacete3 {
 		
 		if(fdn != null) {
 		
-			facetList.setEnabled(false);
+			int idx = facetList.getSelectedIndex();
+			
+			
+//			facetList.setEnabled(false);
 		
 			UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
 	
@@ -533,7 +553,10 @@ public class MainCliFacete3 {
 							() -> selectFacet(fdn, fc.getPredicate())));
 			}
 			
-			facetList.setEnabled(true);
+//			int newIdx = Math.min(facetList.getItemCount() - 1, idx);
+//			facetList.setSelectedIndex(newIdx);
+			
+//			facetList.setEnabled(true);
 		}
 	}
 
@@ -614,6 +637,8 @@ public class MainCliFacete3 {
 	
 	public void init(Dataset dataset) throws Exception
 	{
+//		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+
 		
 		//Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
 //		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
@@ -640,6 +665,22 @@ public class MainCliFacete3 {
 					break;
 				}
 			}
+			
+			
+			if(KeyType.Backspace.equals(keyStroke.getKeyType())) {
+				PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
+				Node node = pr.getData();
+
+//				ses.schedule(() -> {
+					org.aksw.facete.v3.api.Direction dir = fdn.dir();
+					fq.focus().step(node, dir).one().chFocus();
+					fdn = fq.focus().step(dir);
+					
+					updateFacets(fq);
+					updateFacetPathPanel();
+					return false;
+//				}, 1, TimeUnit.SECONDS);
+			}	
 				
 			if(KeyType.ArrowRight.equals(keyStroke.getKeyType())) {
 				facetValueList.takeFocus();
@@ -828,7 +869,6 @@ public class MainCliFacete3 {
 		
 		
 		
-		Panel facetPathPanel = new Panel();
 				//GridLayout.createLayoutData(GridLayout.Alignment.BEGINNING, GridLayout.Alignment.BEGINNING, true, true, 2, 1)));
 		
 		
@@ -910,9 +950,9 @@ public class MainCliFacete3 {
 		facetPathPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetPathPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
 //		facetPathPanel.addComponent(new Button("Foo"));
-		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
-		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
-
+		
+		updateFacetPathPanel();
+		
 		facetValueFilterBox.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
 		
 		facetValueFilterPanel.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));

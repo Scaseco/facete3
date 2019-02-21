@@ -7,6 +7,8 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	/** The parent of this node, should never be null */
 	FacetNode parent();
 
+	Direction dir();
+	
 	/** Get the query object this node belongs to */
 	default FacetedQuery query() {
 		FacetedQuery result = parent().query();
