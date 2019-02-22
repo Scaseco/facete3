@@ -1,6 +1,5 @@
 package org.aksw.facete.v3.impl;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -8,6 +7,7 @@ import java.util.Set;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
@@ -20,8 +20,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 
@@ -131,7 +129,7 @@ public class FacetNodeImpl
 	
 
 	public DataQuery<RDFNode> createValueQuery(boolean applySelfConstraints) {
-		BgpNode bgpRoot = query.modelRoot().getBgpRoot();
+		//BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 		
 //		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
 		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(state.getModel()));
@@ -225,6 +223,17 @@ public class FacetNodeImpl
 			return false;
 		return true;
 	}
+	
+//	@Override
+//	public List<Directed<FacetNode>> path() {
+//		
+//		
+//		this.parent()
+//		
+//		
+////		result = "" + BgpNode.toSimplePath(state);
+//		
+//	}
 
 	@Override
 	public String toString() {
@@ -262,5 +271,20 @@ public class FacetNodeImpl
 	public FacetNode chFocus() {
 		query.focus(this);
 		return this;
+	}
+
+	@Override
+	public Node reachingPredicate() {
+		BgpMultiNode parent = state.parent();
+		Node result = parent == null ? null : parent.reachingProperty().asNode();
+		return result;
+	}
+	
+	@Override
+	public Direction reachingDirection() 
+	{
+		BgpMultiNode parent = state.parent();
+		Direction result = parent == null ? null : parent.getDirection();
+		return result;
 	}	
 }

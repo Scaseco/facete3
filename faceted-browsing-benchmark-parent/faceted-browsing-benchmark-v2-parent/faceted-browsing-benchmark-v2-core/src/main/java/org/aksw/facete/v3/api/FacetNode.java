@@ -1,10 +1,19 @@
 package org.aksw.facete.v3.api;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 
 import com.google.common.annotations.Beta;
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
 
 
 /**
@@ -17,6 +26,36 @@ import com.google.common.annotations.Beta;
 public interface FacetNode
 	extends NodeNavigation<FacetNode, FacetDirNode, FacetMultiNode>, Castable
 {
+	
+	/**
+	 * TODO Maybe remove this method; do we really need it?
+	 * 
+	 * The list of taken steps to reach the current node.
+	 * The last item in the list is this node together with the reaching direction - UNLESS
+	 * this node is the root, then the list is empty.
+	 * 
+	 * The path never includes the root node.
+	 * 
+	 * 
+	 * @return
+	 */
+	default List<Directed<FacetNode>> path() {
+		
+        List<Directed<FacetNode>> result =
+                Streams.stream(
+                		Traverser.<FacetNode>forTree(x ->
+		                Optional.ofNullable(x.parent())
+		                        .map(Collections::singleton)
+		                        .orElse(Collections.emptySet()))
+		                .depthFirstPostOrder(this))
+                .filter(x ->  x.parent() != null)
+//              .map(x -> PathUtils.createStep(pathAccessor.getPredicate(pathAccessor.getParent(x)), !pathAccessor.isReverse(pathAccessor.getParent(x))))
+                .map(x -> new Directed<>(x, x.reachingDirection().isBackward()))
+                .collect(Collectors.toList());
+
+		
+        return result;
+	}
 
 	FacetedQuery query();
 
@@ -59,6 +98,10 @@ public interface FacetNode
 
 
 	FacetNode parent();
+	
+	
+	Direction reachingDirection();
+	Node reachingPredicate();
 
 	BinaryRelation getReachingRelation();
 	

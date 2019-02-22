@@ -10,9 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -48,6 +45,7 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.graph.Node;
@@ -457,14 +455,78 @@ public class MainCliFacete3 {
 		updateFacetValues();
 	}
 	
+	public void changeFocus(FacetNode tmp) {
+//		org.aksw.facete.v3.api.Direction dir =
+//				Optional.of(direction)
+//				.orElse(Optional.ofNullable(tmp.reachingDirection())
+//						.orElse(fdn.dir()));
+
+		
+		org.aksw.facete.v3.api.Direction dir = tmp.reachingDirection();
+		if(dir == null) {
+			dir = fdn.dir();
+		}
+		
+		tmp.chFocus();
+
+		// For robustness ; dir should never be null
+		if(dir != null) {
+			fdn = tmp.step(dir);
+		}
+		
+		updateFacets(fq);
+		updateFacetPathPanel();
+		facetList.takeFocus();
+
+	}
 	
 	public void updateFacetPathPanel() {
 		facetPathPanel.removeAllComponents();
 		
-		facetPathPanel.addComponent(new Label("" + fdn));
 		
-		facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
-		facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
+		// Add a 'home button'
+		facetPathPanel.addComponent(new Button("\u2302", () -> changeFocus(fdn.parent().root())));
+		
+		org.aksw.facete.v3.api.Direction dir = fdn.dir();
+		
+		// For each path element, create another button
+		List<Directed<FacetNode>> path = fdn.parent().path();
+
+		Set<Node> nodes = path.stream().map(Directed::getValue).map(FacetNode::reachingPredicate).collect(Collectors.toSet());
+		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
+		//Map<Node, String> labelMap = labelService.fetchMap(nodes);
+
+		int n = path.size();
+		for(int i = 0; i < n; ++i) {
+			boolean isLastStep = i + 1 == n;
+
+			Directed<FacetNode> step = path.get(i);
+
+			FacetNode tmp = step.getValue();//current.step(current.reachingDirection());
+			Node p = tmp.reachingPredicate();
+			boolean isFwd = tmp.reachingDirection().isForward();
+			String label = labelMap.get(p);
+			Runnable action = () -> changeFocus(tmp);
+
+			String str = (isFwd ? "" : "^") + label;
+
+			if(!isLastStep) {
+				facetPathPanel.addComponent(new Button(str, action));
+			} else {
+				facetPathPanel.addComponent(new Label(str));				
+			}
+		}		
+
+		switch(dir) {
+		case FORWARD:
+			facetPathPanel.addComponent(new Button(">", () -> setFacetDir(org.aksw.facete.v3.api.Direction.BACKWARD)));
+			break;
+		case BACKWARD:
+			facetPathPanel.addComponent(new Button("<", () -> setFacetDir(org.aksw.facete.v3.api.Direction.FORWARD)));
+			break;
+		}
+
+	
 
 		
 	}
@@ -616,7 +678,10 @@ public class MainCliFacete3 {
 	
 	public void setFacetDir(org.aksw.facete.v3.api.Direction dir) {
 		fdn = fdn.parent().step(dir);
+		updateFacetPathPanel();
 		updateFacets(fq);
+		
+		facetList.takeFocus();
 	}
 	
 	
