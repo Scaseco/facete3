@@ -34,7 +34,6 @@ import org.aksw.commons.collections.selector.WeigthedSelectorDrawWithReplacement
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.Direction;
-import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
@@ -46,7 +45,6 @@ import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
-import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -55,7 +53,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
-import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystemBidirectional;
+import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystem3;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
@@ -292,7 +290,8 @@ public class TaskGenerator {
 
 		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
 
-		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
+//		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
+		ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
 
 
 		// Use the system to compute a data summary
