@@ -1,12 +1,13 @@
-package org.aksw.facete.v3.impl;
+package org.aksw.jena_sparql_api.data_query.impl;
 
 import java.util.Objects;
 
+import org.aksw.jena_sparql_api.data_query.api.PathTraitString;
+import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.apache.jena.graph.NodeVisitor;
 import org.apache.jena.graph.Node_Fluid;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
 
 public class NodePath
 	extends Node_Fluid

@@ -4,6 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VPath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;

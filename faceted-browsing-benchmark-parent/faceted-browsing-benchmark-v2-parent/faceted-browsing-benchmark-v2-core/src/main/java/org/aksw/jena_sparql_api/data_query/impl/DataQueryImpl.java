@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.impl;
+package org.aksw.jena_sparql_api.data_query.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
-import org.aksw.facete.v3.api.DataQuery;
+import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
@@ -32,6 +32,9 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
+import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -70,10 +73,6 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.Context;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessorSPath;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.SPath;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.SPathImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.main.FacetedQueryGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
 import org.slf4j.Logger;
@@ -501,6 +500,9 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		// PseudoRandomness affects:
 		// limit, offset, orderByRandom, ... what else?
+		
+		
+		logger.debug("Executing query:\n" + query);
 		
 		Flowable<T> result = ReactiveSparqlUtils
 			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 

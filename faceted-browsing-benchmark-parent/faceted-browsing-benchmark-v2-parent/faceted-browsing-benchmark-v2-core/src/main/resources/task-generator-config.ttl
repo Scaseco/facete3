@@ -2,7 +2,8 @@
 
 
 #@prefix o: <http://project-hobbit.eu/ontology/>
-@prefix o: <http://aksw.org/adhoc/ontology/> .
+#@prefix o: <http://aksw.org/adhoc/ontology/> .
+@prefix o: <http://www.example.org/> .
 @prefix : <http://project-hobbit.eu/resource/> .
 
 :defaultScenarioConfig
@@ -23,6 +24,17 @@
      rdfs:member [ o:key "cp11" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp13" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
      rdfs:member [ o:key "cp14" ; o:value [ o:min 0.6 ; o:max 1.0 ] ] ;
+  ] ;
+  .
+
+
+:automatonTemplate
+  a o:Nfa ;
+  o:startState o:state1 ;
+  o:transition [
+    o:from o:state1 ;
+    o:to o:state2 ;
+    o:key "cp1" ; o:value [ o:min 0.6 ; o:max 1.0 ]
   ] ;
   .
 

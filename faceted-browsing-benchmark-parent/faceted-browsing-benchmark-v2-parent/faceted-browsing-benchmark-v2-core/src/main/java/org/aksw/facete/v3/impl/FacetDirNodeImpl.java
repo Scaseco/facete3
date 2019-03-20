@@ -3,7 +3,6 @@ package org.aksw.facete.v3.impl;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
@@ -16,6 +15,8 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;

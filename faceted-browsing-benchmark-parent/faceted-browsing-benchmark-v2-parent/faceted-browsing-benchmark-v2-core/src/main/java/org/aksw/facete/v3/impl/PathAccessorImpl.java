@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
@@ -21,7 +22,6 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 import com.google.common.collect.Maps;

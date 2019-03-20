@@ -1,7 +1,8 @@
-package org.hobbit.benchmark.faceted_browsing.v2.domain;
+package org.aksw.jena_sparql_api.data_query.impl;
 
-import org.aksw.facete.v3.impl.NodePath;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
+import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 

@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.ConstraintFacade;
-import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
@@ -14,6 +13,8 @@ import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;

@@ -32,6 +32,7 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -65,7 +66,6 @@ import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.vocabulary.RDF;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
 import com.google.common.collect.ComparisonChain;

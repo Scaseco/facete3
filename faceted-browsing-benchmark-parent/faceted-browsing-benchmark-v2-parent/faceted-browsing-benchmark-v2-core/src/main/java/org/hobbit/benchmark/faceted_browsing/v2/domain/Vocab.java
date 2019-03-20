@@ -6,7 +6,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 public class Vocab {
 
-	public static final String ns = "http://aksw.org/adhoc/ontology/";
+	//public static final String ns = "http://aksw.org/adhoc/ontology/";
+	public static final String ns = "http://www.example.org/";
 	public static Property property(String localName) {
 		return ResourceFactory.createProperty(ns + localName);
 	}
@@ -71,7 +72,10 @@ public class Vocab {
 
 
 	public static final Property query = property("query");
+	
+	
 //	public static final Property constraint = property("constraint");
+	public static final Resource Nfa = resource("Nfa");
 
 
 }

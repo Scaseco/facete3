@@ -11,12 +11,12 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.expr.Expr;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 
 public class HLFacetConstraintImpl<P>
 	implements HLFacetConstraint<P>

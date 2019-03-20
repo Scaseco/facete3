@@ -1,7 +1,8 @@
-package org.hobbit.benchmark.faceted_browsing.v2.domain;
+package org.aksw.jena_sparql_api.data_query.impl;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -12,6 +13,8 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.SelectionImpl;
 
 public class SPathImpl
 	extends SelectionImpl

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -70,8 +71,11 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.main.KeywordSearchUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
@@ -86,12 +90,10 @@ import com.googlecode.lanterna.gui2.Button;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.Direction;
 import com.googlecode.lanterna.gui2.EmptySpace;
-import com.googlecode.lanterna.gui2.Label;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
 import com.googlecode.lanterna.gui2.Window;
-import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
 import com.googlecode.lanterna.gui2.table.Table;
 import com.googlecode.lanterna.gui2.table.TableModel;
@@ -203,6 +205,8 @@ class DirtyChecker {
  *
  */
 public class MainCliFacete3 {
+	private static final Logger logger = LoggerFactory.getLogger(MainCliFacete3.class);
+	
 	
 	public static String treeToString() {
 		return null;
@@ -260,6 +264,17 @@ public class MainCliFacete3 {
 				}
 			}
 		}
+		
+		//resourceTable.invalidate();
+
+		System.out.println("resourcelabel prefsize: " + resourceSubjectLabel.getPreferredSize());
+		System.out.println("resourcelabel prefsize: " + resourceSubjectLabel.getSize());
+//		System.out.println("resourcepanel Prefsize: " + resourcePanel.getPreferredSize());
+//		System.out.println("resourcepanel Actualsize: " + resourcePanel.getSize());
+//		System.out.println("resourcetable Prefsize: " + resourceTable.getPreferredSize());
+//		System.out.println("resourcetable Actualsize: " + resourceTable.getSize());
+
+
 	}
 	
 	/**
@@ -395,13 +410,16 @@ public class MainCliFacete3 {
 	FacetDirNode fdn;
 	Node selectedFacet = null;
 	
-	boolean includeAbsent = true;
+	boolean includeAbsent = false; //true;
 	
 	
 	Node resourceTableSubject = null;
-	Label resourceSubjectLabel = new Label("");
+	Label2 resourceSubjectLabel = new Label2("");
 	Table<Node> resourceTable = new Table<Node>("p", "o");
 	
+	
+	Panel resourcePanel = new Panel();
+
 
 	class Test<P> {
 		P value;
@@ -432,14 +450,28 @@ public class MainCliFacete3 {
 	}
 	
 	public void updateItems(FacetedQuery fq) {
+		Stopwatch sw = Stopwatch.createStarted();
+		
 		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
 		
-	TableModel<Node> model = resultTable.getTableModel();
+		TableModel<Node> model = resultTable.getTableModel();
 		model.clear();
 		
 		for(RDFNode item : items) {
 			model.addRow(item.asNode());
 		}
+		
+		if(resultTable.getSelectedRow() > model.getRowCount()) {
+			resultTable.setSelectedRow(model.getRowCount() - 1);
+		}
+		
+		if(resultTable.getSelectedColumn() > model.getColumnCount()) {
+			resultTable.setSelectedColumn(model.getColumnCount() - 1);
+		}
+		
+		logger.info("updateItems: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
+		System.out.println("resulttable Prefsize: " + resultTable.getPreferredSize());
+		System.out.println("resulttable Actualsize: " + resultTable.getSize());
 	}
 	
 	/**
@@ -513,7 +545,7 @@ public class MainCliFacete3 {
 			if(!isLastStep) {
 				facetPathPanel.addComponent(new Button(str, action));
 			} else {
-				facetPathPanel.addComponent(new Label(str));				
+				facetPathPanel.addComponent(new Label2(str));				
 			}
 		}		
 
@@ -533,6 +565,8 @@ public class MainCliFacete3 {
 	
 	
 	public void updateFacetValues() {
+		Stopwatch sw = Stopwatch.createStarted();
+
 		if(fdn != null && selectedFacet != null) {
 			
 			UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
@@ -582,9 +616,12 @@ public class MainCliFacete3 {
 			//facetValueList.addItem(null);
 			// TODO Show in the panel that the list is empty
 		}
+		
+		logger.info("updateFacetValues: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
 	}
 	
 	public void updateFacets(FacetedQuery fq) {
+		Stopwatch sw = Stopwatch.createStarted();
 		
 		if(fdn != null) {
 		
@@ -604,6 +641,8 @@ public class MainCliFacete3 {
 					.blockingGet();
 			//enrichWithLabels(fcs, FacetCount::getPredicate, labelService);
 		
+			logger.info("updateFacets [finished query]: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
+
 			//List<Entry<FacetDirNode, >>fcs.stream().map(fc -> Maps.immutableEntry(fdn, fc)).collect(Collectors.toList());
 			facetList.clearItems();
 			
@@ -620,6 +659,9 @@ public class MainCliFacete3 {
 			
 //			facetList.setEnabled(true);
 		}
+
+	
+		logger.info("updateFacets: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
 	}
 
 	
@@ -665,10 +707,14 @@ public class MainCliFacete3 {
 	    List<String> files = filesOs.values(optionSet);
 	    
 	    Model model = ModelFactory.createDefaultModel();
+	    Stopwatch sw = Stopwatch.createStarted();
+	    logger.info("Loading RDF files...");
 	    for(String file : files) {
+		    logger.info("  Attempting to loading " + file);
 	    	Model tmp = RDFDataMgr.loadModel(file);
 	    	model.add(tmp);
 	    }
+	    logger.info("Done loading " + model.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
 	    
 	    Dataset dataset = DatasetFactory.wrap(model);
 		
@@ -702,6 +748,9 @@ public class MainCliFacete3 {
 	
 	public void init(Dataset dataset) throws Exception
 	{
+		Stopwatch sw = Stopwatch.createStarted();
+		
+		
 //		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
 		
@@ -775,7 +824,6 @@ public class MainCliFacete3 {
 				.createLookupService(new QueryExecutionFactorySparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
 				.mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
 				.mapValues((k, v) -> "" + v);
-
 		
 		// Setup terminal and screen layers
         Terminal terminal = new DefaultTerminalFactory()
@@ -785,7 +833,7 @@ public class MainCliFacete3 {
         Screen screen = new TerminalScreen(terminal);
         screen.startScreen();
         
-        WindowBasedTextGUI textGUI = new MultiWindowTextGUI(screen);
+        //WindowBasedTextGUI textGUI = new MultiWindowTextGUI(screen);
 
 //		TerminalSize size = new TerminalSize(80, 25);
 		
@@ -994,7 +1042,6 @@ public class MainCliFacete3 {
 		Panel facetPanel = new Panel();
 		Panel constraintPanel = new Panel();
 		Panel resultPanel = new Panel();
-		Panel resourcePanel = new Panel();
 		
 		// Component hierarchy and layouts
 		
@@ -1039,17 +1086,20 @@ public class MainCliFacete3 {
 		constraintPanel.addComponent(constraintList);
 
 
+		resultTable.setRenderer(new DefaultTableRenderer2<Node>());
 		resultTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
-
 
 		resultPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 		resultPanel.setLayoutManager(new GridLayout2(1));
 		resultPanel.addComponent(resultTable);
 		
+		resourceTable.setRenderer(new DefaultTableRenderer2<Node>());
 		resourceTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 
 		resourcePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 		resourcePanel.setLayoutManager(new GridLayout2(1));
+		
+		resourceSubjectLabel.setLineWrapper(MainCliFacete3::wrapLines);
 		resourcePanel.addComponent(resourceSubjectLabel);
 		resourcePanel.addComponent(resourceTable);
 
@@ -1128,10 +1178,42 @@ public class MainCliFacete3 {
 //		Map<Node, String> map = labelService.fetchMap(index.keySet());
 //		index.forEach((k, v) -> v.addLiteral(RDFS.label, map.getOrDefault(k, k.getLocalName())));
 //	}
+	
+	public static List<String> wrapLines(int cols, String[] lines) {
+		List<String> result = Arrays.asList(lines).stream()
+				.map(line -> cropString(line, cols, 0, tooMany -> "\u2026"))
+				.collect(Collectors.toList());
+		return result;
+	}
+	
+    public static String cropString(String str, int nMax, int nTolerance, Function<Integer, String> suffixFn)
+    {
+        String result = str;
+        int nGiven = str.length();
+        
+        if(nGiven > nMax) {
+            int tooMany = nGiven - nMax;
+            
+            if(tooMany > nTolerance) {
+            	String suffix = suffixFn.apply(tooMany);
+            	int suffixLength = suffix.length();
+            	int availSuffix = Math.min(nMax, suffixLength);
+
+            	int subLength = Math.max(0, nMax - suffixLength);
+            	result = str.substring(0, subLength) + suffix.substring(0, availSuffix);
+//                result = str.substring(0, nMax) +
+//                    "... (" + tooMany + " more bytes)";
+            }
+        }
+        return result;
+    }
+
 
 	public static <T extends Resource> void enrichWithLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
 		// Replace null nodes with Node.NULL
 		// TODO Use own own constant should jena remove this deprecated symbol
+		logger.info("enrichWithLabels: Lookup of size " + cs.size());
+		
 		Multimap<Node, T> index = Multimaps.index(cs, item ->
 			Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(ConstraintFacadeImpl.N_ABSENT));
 

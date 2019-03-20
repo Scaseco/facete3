@@ -33,9 +33,14 @@ public interface CommandMain
 	@IriType
 	List<String> getDefaultGraphUris();
 	
+	@Iri("eg:pathFindingDataSummary")
+	@IriType
+	String getPathFindingDataSummaryUri();
+	
 	@Iri("eg:help")
 	boolean getHelp();// =# false;
 			
+	
 	@Parameter(names={"-h", "--help"}, help=true)
 	CommandMain setHelp(boolean help);
 	
@@ -48,7 +53,10 @@ public interface CommandMain
 	@Parameter(names="-d", description="Default Graph URIs")
 	CommandMain setDefaultGraphUris(List<String> args);
 	
-	
+
+	@Parameter(names="-s", description="Data Summary")
+	CommandMain setPathFindingDataSummaryUri(String file);
+
 //		@Parameter(names={"--r"}, description="Fraction of events to read from input - e.g . 0.5 for half of it")
 //		public Long eventsRatio = null;
 //

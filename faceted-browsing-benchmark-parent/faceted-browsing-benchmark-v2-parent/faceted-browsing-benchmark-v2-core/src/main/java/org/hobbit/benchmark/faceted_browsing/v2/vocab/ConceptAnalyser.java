@@ -3,11 +3,11 @@ package org.hobbit.benchmark.faceted_browsing.v2.vocab;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.aksw.facete.v3.api.DataQuery;
-import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;

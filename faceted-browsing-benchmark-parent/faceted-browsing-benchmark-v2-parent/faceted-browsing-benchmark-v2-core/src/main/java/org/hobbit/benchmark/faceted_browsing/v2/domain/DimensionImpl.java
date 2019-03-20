@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;

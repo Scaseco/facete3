@@ -1,0 +1,13 @@
+PREFIX o: <http://www.example.org/>
+
+INSERT {
+  ?srcState o:outgoingTransition ?transition .
+  ?tgtState o:ingoingTransition ?transition
+} WHERE {
+	[] o:transition ?transition .
+
+	?transition
+	  o:from ?srcState ;
+	  o:to ?tgtState ;
+	.
+}

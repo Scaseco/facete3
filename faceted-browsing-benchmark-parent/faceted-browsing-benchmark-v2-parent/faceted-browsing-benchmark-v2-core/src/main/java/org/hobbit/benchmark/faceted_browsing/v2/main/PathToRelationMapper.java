@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -19,7 +20,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.PathAccessor;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.QueryFragment;
 
 import com.google.common.collect.Iterables;

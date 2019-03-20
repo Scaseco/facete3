@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VPath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;

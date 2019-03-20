@@ -1,9 +1,9 @@
-package org.aksw.facete.v3.impl;
+package org.aksw.jena_sparql_api.data_query.api;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 
-interface PathTraitString<T>
+public interface PathTraitString<T>
 	extends PathTrait<T>
 {
 	// The following commented-out method must be implemented:

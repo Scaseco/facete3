@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api;
+package org.aksw.jena_sparql_api.data_query.api;
 
 import java.util.Arrays;
 import java.util.Map.Entry;
@@ -7,10 +7,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.aksw.facete.v3.impl.NodePath;
+import org.aksw.facete.v3.api.DataMultiNode;
+import org.aksw.facete.v3.api.DataNode;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.impl.NodePath;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;

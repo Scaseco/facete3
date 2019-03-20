@@ -79,6 +79,15 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		
 		RDFConnection tmpConn = RDFConnectionFactory.connect(sparqEndpoint);
 		
+		String dataSummaryUri = cmMain.getPathFindingDataSummaryUri();
+		Model dataSummaryModel = null;
+		if(dataSummaryUri != null) {
+			logger.info("Loading path finding data summary from " + dataSummaryUri);
+			dataSummaryModel = RDFDataMgr.loadModel(dataSummaryUri);
+			logger.info("Done loading path finding data summary from" + dataSummaryUri);
+		}
+		
+		
 		try(RDFConnection rawConn = tmpConn) {
 			
 			RDFConnection baseConn = rawConn;
@@ -107,7 +116,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			RDFConnection conn = wrappedConn;
 			
 			// One time auto config based on available data
-			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
+			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn, dataSummaryModel);
 			
 			// Now wrap the scenario supplier with the injection of sparql update statements
 			

@@ -2,8 +2,8 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 
 import java.util.function.Function;
 
-import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.junit.Assert;

@@ -32,7 +32,6 @@ import org.aksw.commons.collections.selector.WeightedSelectorImmutable;
 import org.aksw.commons.collections.selector.WeightedSelectorMutable;
 import org.aksw.commons.collections.selector.WeigthedSelectorDrawWithReplacement;
 import org.aksw.facete.v3.api.ConstraintFacade;
-import org.aksw.facete.v3.api.DataQuery;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
@@ -41,7 +40,6 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
-import org.aksw.facete.v3.impl.DataQueryImpl;
 import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
@@ -50,6 +48,8 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -287,22 +287,35 @@ public class TaskGenerator {
 	}
 
 	public static TaskGenerator autoConfigure(RDFConnection conn) {
+		TaskGenerator result = autoConfigure(conn, null);
+		return result;
+	}
 
+	public static TaskGenerator autoConfigure(RDFConnection conn, Model dataSummary) {
+
+		logger.info("Starting analyzing numeric properties...");
 		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
-
+		logger.info("Done analyzing numeric properties");
 //		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
 		ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
 
 
 		// Use the system to compute a data summary
 		// Note, that the summary could be loaded from any place, such as a file used for caching
-		Model dataSummary = system.computeDataSummary(conn).blockingGet();
+		if(dataSummary == null) {
+			logger.info("No path finding data summary specified, creating it on demand");
+			dataSummary = system.computeDataSummary(conn).blockingGet();
+			logger.info("Path finding data summary computed");
 
-		if (logger.isDebugEnabled()) {
-			final StringWriter sw = new StringWriter();
-			RDFDataMgr.write(sw, dataSummary, RDFFormat.TURTLE_PRETTY);
-			logger.debug("Data Summary: {}", sw.toString());
+//			if (logger.isDebugEnabled()) {
+//				final StringWriter sw = new StringWriter();
+//				RDFDataMgr.write(sw, dataSummary, RDFFormat.TURTLE_PRETTY);
+//				logger.debug("Data Summary: {}", sw.toString());
+//			}
+		} else {
+			logger.info("Using specified path finding data summary");
 		}
+
 
 		// Build a path finder; for this, first obtain a factory from the system
 		// set its attributes and eventually build the path finder.
