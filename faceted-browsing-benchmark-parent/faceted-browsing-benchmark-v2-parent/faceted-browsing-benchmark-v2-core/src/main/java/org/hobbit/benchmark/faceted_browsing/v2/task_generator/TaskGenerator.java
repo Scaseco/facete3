@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 import static java.lang.Math.log;
 import static java.util.Collections.shuffle;
 
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,13 +58,8 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
-import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
-import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
-import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -75,9 +69,9 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -103,7 +97,9 @@ import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SupplierUtils;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.NfaState;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.NfaTransition;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -511,6 +507,43 @@ public class TaskGenerator {
 		return result;
 	}
 
+	public static void substituteRangesWithRandomValue(Random rand, Model model) {
+		// List all resources with min / max attributes
+		
+		Set<Resource> candidates =
+				model.listResourcesWithProperty(Vocab.min).andThen(model.listResourcesWithProperty(Vocab.max)).toSet();
+	
+		for(Resource cand : candidates) {
+			Set<Statement> stmts = org.aksw.jena_sparql_api.utils.model.ResourceUtils.listReverseProperties(cand, null).toSet();
+			
+			for(Statement stmt : stmts) {
+				Resource s = stmt.getSubject();
+				Property p = stmt.getPredicate();
+				Resource o = stmt.getObject().asResource();
+				Number min = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(o, Vocab.min, Number.class);
+				Number max = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(o, Vocab.max, Number.class);
+				
+				if(min == null && max == null) {
+					// Nothing todo / skip
+				} else if(min != null && max != null) {
+					Range<Double> range = Range.closedOpen(min.doubleValue(), max.doubleValue());
+	//				Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
+					double point = range.lowerEndpoint() + rand.nextDouble() * (range.upperEndpoint() - range.lowerEndpoint());
+	
+					s.removeAll(p);
+					o.removeProperties();
+					s.addLiteral(p, point);
+					
+				} else {
+					throw new RuntimeException("Ranges must be restricted on both ends; " + o + "min: " + min + ", max: " + max);
+				}
+				
+				System.out.println("min: " + min + ", max: " + max);
+			}
+	
+		}
+	}
+	
 	public Supplier<SparqlTaskResource> generateScenario() {
 		// Maps a chokepoint id to a function that given a faceted query
 		// yields a supplier. Invoking the supplier applies the action and yields a runnable for undo.
@@ -543,49 +576,57 @@ public class TaskGenerator {
 		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
 
-		Model weightModel = RDFDataMgr.loadModel("task-generator-config.ttl");
-		Set<Resource> configs = weightModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
+		Model configModel = RDFDataMgr.loadModel("task-generator-config.ttl");
+		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
 
-		Resource config = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
+		Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
 				.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
 
-		Map<RDFNode, RDFNode> map = viewResourceAsMap(config.getPropertyResourceValue(Vocab.weights));
-
-		Map<String, RDFNode> mmm = new MapFromKeyConverter<>(map, new ConverterFromNodeMapperAndModel<>(weightModel, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.string)));
-		//new MapFromValueConverter<>(mmm, converter);
-
-		Map<String, Range<Double>> xxx = Maps.transformValues(mmm, n -> n.as(RangeSpec.class).toRange(Double.class));//new MapFromValueConverter<>(mmm, new ConverterFromNode)
-		//Map<String >
-		//RangeUtils.
-
-		// Derive a concrete map
-		Map<String, Double> concreteWeights = xxx.entrySet().stream()
-				.map(x -> {
-					Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
-					double rr = r.lowerEndpoint() + rand.nextDouble() * (r.upperEndpoint() - r.lowerEndpoint());
-					return Maps.immutableEntry(x.getKey(), rr);
-				})
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-		logger.debug("Concrete weights " + concreteWeights);
-
-		// Remove references to unavailable actions
-		for (String k : new ArrayList<>(concreteWeights.keySet())) {
-			if (!cpToAction.containsKey(k)) {
-				logger.warn("Ignoring reference to action " + k + " as no implementation was registered");
-				concreteWeights.remove(k);
+		
+		ScenarioConfig scenarioTemplate = configRes.as(ScenarioConfig.class);
+		
+		// Report references to unavailable actions from the template
+		for(NfaTransition transition : scenarioTemplate.getNfa().getTransitions()) {
+			String key = getTransitionKey(transition);
+			if (!cpToAction.containsKey(key)) {
+				logger.warn("Ignoring reference to action " + key + " as no implementation was registered");
+//
+//				List<Statement> stmts = org.aksw.jena_sparql_api.utils.model.ResourceUtils.listReverseProperties(transition).toList();
+//				transition.removeProperties();
+//				configModel.remove(stmts);
 			}
 		}
 
 
+		
+//		Map<RDFNode, RDFNode> map = viewResourceAsMap(config.getPropertyResourceValue(Vocab.weights));
+//
+//		Map<String, RDFNode> mmm = new MapFromKeyConverter<>(map, new ConverterFromNodeMapperAndModel<>(weightModel, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.string)));
+//		//new MapFromValueConverter<>(mmm, converter);
+//
+//		Map<String, Range<Double>> xxx = Maps.transformValues(mmm, n -> n.as(RangeSpec.class).toRange(Double.class));//new MapFromValueConverter<>(mmm, new ConverterFromNode)
+//		//Map<String >
+//		//RangeUtils.
+//
+//		// Derive a concrete map
+//		Map<String, Double> concreteWeights = xxx.entrySet().stream()
+//				.map(x -> {
+//					Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
+//					double rr = r.lowerEndpoint() + rand.nextDouble() * (r.upperEndpoint() - r.lowerEndpoint());
+//					return Maps.immutableEntry(x.getKey(), rr);
+//				})
+//				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+//
+//		logger.debug("Concrete weights " + concreteWeights);
+
 		//WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
-
-		WeightedSelector<String> actionSelector = WeigthedSelectorDrawWithReplacement.create(concreteWeights);
-
-		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
-		int scenarioLength = (int) RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
-		//scenarioLength = 100;
-		logger.debug("Scenario length: " + scenarioLength);
+//
+//		WeightedSelector<String> actionSelector = WeigthedSelectorDrawWithReplacement.create(concreteWeights);
+//
+//		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
+//		int scenarioLength = (int) RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
+//		//scenarioLength = 100;
+//		logger.debug("Scenario length: " + scenarioLength);
 
 //		FacetedQuery fq = FacetedQueryImpl.create(conn);
 		//fq.connection(conn);
@@ -608,37 +649,52 @@ public class TaskGenerator {
 		// One task can have multiple queries
 		int taskIdInScenario[] = {0};
 		
+		
 		// Ideally for every task the query id would start at 0,
 		// but the eval module currently only supports (scenarioId, queryId)
 		int queryIdInScenario[] = {0};
 		Supplier<Collection<SparqlTaskResource>> tmp = () -> {
 			Collection<SparqlTaskResource> r = null;
 
+			
+			// Create a concrete instance of the scenario configuration template
+			ScenarioConfig config =
+					scenarioTemplate.inModel(ResourceUtils.reachableClosure(scenarioTemplate))
+					.as(ScenarioConfig.class);
+			
+			substituteRangesWithRandomValue(rand, config.getModel());
+			Integer scenarioLength = config.getScenarioLength();
+			
+			NfaState currentState = config.getNfa().getStartState();
+			
 			int i = taskIdInScenario[0]++;
 			
 			if (i < scenarioLength) {
 
-				String cpName = nextAction(cpToAction, actionSelector);
-
-
-				// HACK to parse out the integer id of a cp
-				// Needed for compatibility with the old evaluation module
-				// FIXME Get rid of making assumptions about cp ids				
-				if (cpName != null) {
-					String cpSuffix = cpName.substring(2);
-					int cpId = Integer.parseInt(cpSuffix);
-
-					r = generateQueries(currentQuery.focus());
-					// Add annotations
-					for(SparqlTaskResource s : r) {
-						s
-						.addLiteral(FacetedBrowsingVocab.queryId, queryIdInScenario[0]++) //Integer.toString(i))
-						.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
-					}
-//					r = generateQuery(currentQuery.focus().availableValues());
-				}
-
+				NfaTransition transition = nextState(cpToAction, currentState);
+				if(transition != null) {				
+									
+					String cpName = getTransitionKey(transition);
 				
+					// HACK to parse out the integer id of a cp
+					// Needed for compatibility with the old evaluation module
+					// FIXME Get rid of making assumptions about cp ids				
+					if (cpName != null) {
+						String cpSuffix = cpName.substring(2);
+						int cpId = Integer.parseInt(cpSuffix);
+	
+						r = generateQueries(currentQuery.focus());
+						// Add annotations
+						for(SparqlTaskResource s : r) {
+							s
+							.addLiteral(FacetedBrowsingVocab.queryId, queryIdInScenario[0]++) //Integer.toString(i))
+							.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
+						}
+	//					r = generateQuery(currentQuery.focus().availableValues());
+					}
+	
+					currentState = transition.getTarget();
+				}				
 				//RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
 			}
 			return r;
@@ -674,11 +730,36 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public String nextAction(Map<String, Callable<Boolean>> cpToAction, WeightedSelector<String> actionSelector) {
-		String result = null; // the chosen action
+	// Nfa nfa, 
+	public NfaTransition nextState(Map<String, Callable<Boolean>> cpToAction, NfaState current) {
+		Map<NfaTransition, Double> weights = current.getOutgoingTransitions().stream()
+				.filter(t -> cpToAction.containsKey(getTransitionKey(t)))
+				.collect(Collectors.toMap(t -> t, NfaTransition::getWeight));
+	
+		WeightedSelector<NfaTransition> actionSelector = WeigthedSelectorDrawWithReplacement.create(weights);
+
+		NfaTransition result = nextAction(cpToAction, actionSelector);
+	
+		return result;
+	}
+	
+	public static String getTransitionKey(NfaTransition transition) {
+		String result = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(transition, Vocab.key, String.class);
+		return result;
+	}
+
+	/**
+	 * Returns the applied transition
+	 * 
+	 * @param cpToAction
+	 * @param actionSelector
+	 * @return
+	 */
+	public NfaTransition nextAction(Map<String, Callable<Boolean>> cpToAction, WeightedSelector<NfaTransition> actionSelector) {
+		NfaTransition result = null; // the chosen action
 
 		// Reset the available actions after each iteration
-		WeightedSelector<String> s = actionSelector.clone();
+		WeightedSelector<NfaTransition> s = actionSelector.clone();
 
 		// Simplest recovery strategy: If an action could not be applied
 		// repeat the process and hope that due to randomness we can advance
@@ -686,7 +767,8 @@ public class TaskGenerator {
 		for (int j = 0; j < maxRandomRetries && !s.isEmpty(); ++j) {
 			//while(!s.isEmpty()) {
 			double w = rand.nextDouble();
-			String step = s.sample(w);
+			NfaTransition transition = s.sample(w);
+			String step = getTransitionKey(transition);
 			logger.info("Next randomly selected action: " + step);
 
 			Callable<Boolean> actionFactory = cpToAction.get(step);
@@ -711,7 +793,7 @@ public class TaskGenerator {
 
 //					System.out.println("CAN UNDO: " + changeTracker.canUndo());
 					//chosenActions.add(step);
-					result = step;
+					result = transition;
 					break;
 				} else {
 					// TODO deal with that case ; pick another action instead or even backtrack
