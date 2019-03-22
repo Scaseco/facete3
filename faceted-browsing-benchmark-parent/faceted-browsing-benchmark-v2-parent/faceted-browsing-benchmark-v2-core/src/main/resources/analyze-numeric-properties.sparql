@@ -1,0 +1,52 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# TODO in the XML spec, 'numeric' is a 'facet', i.e. an attribute of an type, rather than a type itself
+CONSTRUCT {
+  xsd:int rdfs:subClassOf xsd:numeric .
+  xsd:integer rdfs:subClassOf xsd:numeric .
+  xsd:long rdfs:subClassOf xsd:numeric .
+  xsd:decimal rdfs:subClassOf xsd:numeric  .
+  xsd:float rdfs:subClassOf xsd:numeric .
+  xsd:double rdfs:subClassOf xsd:numeric .
+} {
+
+}
+
+CONSTRUCT {
+  ?p a rdf:Property
+} {
+  { SELECT DISTINCT ?p {
+    ?s ?p ?o
+  } }
+}
+
+CONSTRUCT {
+  ?p rdfs:range ?r
+} {
+  { SELECT DISTINCT ?p ?r {
+    ?s ?p ?o .
+    FILTER(isLiteral(?o)) .
+    BIND(datatype(?o) AS ?r)
+  } }
+}
+
+CONSTRUCT {
+  ?p
+    eg:totalValueCount ?x ;
+    eg:distinctValueCount ?a ;
+    eg:min ?y ;
+    eg:max ?z
+} {
+  { SELECT ?p
+      (COUNT(?o) AS ?x)
+      (COUNT(DISTINCT ?o) AS ?a)
+      (MIN(?o) AS ?y)
+      (MAX(?o) AS ?z) {
+      ?s  ?p  ?o
+      FILTER isNumeric(?o)
+  } GROUP BY ?p }
+}
+
+

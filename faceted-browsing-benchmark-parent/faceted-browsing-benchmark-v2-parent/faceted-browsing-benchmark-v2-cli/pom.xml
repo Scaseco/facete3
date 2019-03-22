@@ -22,9 +22,17 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>faceted-browsing-benchmark-v2-core</artifactId>
+			<!-- <scope>test</scope> -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.dcat-suite</groupId>
+			<artifactId>dcat-suite-binding-ckan</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 			<!-- <scope>test</scope> -->
 		</dependency>
 

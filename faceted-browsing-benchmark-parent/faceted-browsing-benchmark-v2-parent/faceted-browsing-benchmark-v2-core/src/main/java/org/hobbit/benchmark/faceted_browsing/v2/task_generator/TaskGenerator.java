@@ -687,8 +687,8 @@ public class TaskGenerator {
 						// Add annotations
 						for(SparqlTaskResource s : r) {
 							s
-							.addLiteral(FacetedBrowsingVocab.queryId, queryIdInScenario[0]++) //Integer.toString(i))
-							.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
+								.addLiteral(FacetedBrowsingVocab.queryId, queryIdInScenario[0]++) //Integer.toString(i))
+								.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
 						}
 	//					r = generateQuery(currentQuery.focus().availableValues());
 					}
