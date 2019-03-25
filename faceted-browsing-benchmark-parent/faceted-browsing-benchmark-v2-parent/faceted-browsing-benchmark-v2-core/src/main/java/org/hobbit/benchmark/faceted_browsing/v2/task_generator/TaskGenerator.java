@@ -47,6 +47,7 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -95,6 +96,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
+import org.hobbit.benchmark.faceted_browsing.v2.main.RdfWorkflowSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SupplierUtils;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.NfaState;
@@ -282,15 +284,49 @@ public class TaskGenerator {
 		return querySupplier;
 	}
 
-	public static TaskGenerator autoConfigure(RDFConnection conn) {
+	public static TaskGenerator autoConfigure(RDFConnectionEx conn) throws Exception {
 		TaskGenerator result = autoConfigure(conn, null);
 		return result;
 	}
+	
+	
+//	public static TaskGeneratorConfig {
+//		Resource getDataSummary();
+//		Resource getNumericPropertites();
+//	}
+//
+//	
+//	public static void autoConfigure(TaskGeneratorConfig baseConfig) {
+//		
+//	}
+	
 
-	public static TaskGenerator autoConfigure(RDFConnection conn, Model dataSummary) {
+	/**
+	 * The auto configuration procedure generates the necessary benchmark artifacts,
+	 * namely:
+	 * 
+	 * - properties + classification (whether they are numeric)
+	 * - path finding summary
+	 *  
+	 * @param conn
+	 * @param dataSummary
+	 * @return
+	 */
+	public static TaskGenerator autoConfigure(RDFConnectionEx conn, Model dataSummary) throws Exception {
 
 		logger.info("Starting analyzing numeric properties...");
-		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
+		Model model = new RdfWorkflowSpec()
+				.deriveDatasetWithSparql(conn, "analyze-numeric-properties.sparql")
+				.cache()
+				.getModel();
+
+
+		List<SetSummary> numericProperties = model.listSubjects()
+				//.filterKeep() // TODO Filter by numerc property
+				.mapWith(s -> s.as(SetSummary.class))
+				.toList();
+		
+//		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
 		logger.info("Done analyzing numeric properties");
 //		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
 		ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
@@ -299,10 +335,18 @@ public class TaskGenerator {
 		// Use the system to compute a data summary
 		// Note, that the summary could be loaded from any place, such as a file used for caching
 		if(dataSummary == null) {
-			logger.info("No path finding data summary specified, creating it on demand");
-			dataSummary = system.computeDataSummary(conn).blockingGet();
-			logger.info("Path finding data summary computed");
+//			logger.info("No path finding data summary specified, creating it on demand");
+//			dataSummary = system.computeDataSummary(conn).blockingGet();
+//			logger.info("Path finding data summary computed");
 
+			logger.info("Creating path finding data summary");
+
+			 dataSummary = new RdfWorkflowSpec()
+				.deriveDatasetWithFunction(conn, "path-finding-summary", () -> system.computeDataSummary(conn).blockingGet())
+				//.cache()
+				.getModel();
+				logger.info("Created path finding data summary");
+			
 //			if (logger.isDebugEnabled()) {
 //				final StringWriter sw = new StringWriter();
 //				RDFDataMgr.write(sw, dataSummary, RDFFormat.TURTLE_PRETTY);

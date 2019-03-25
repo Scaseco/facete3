@@ -3,9 +3,9 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.RDFConnectionEx;
+import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
+import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.query.Dataset;
@@ -16,19 +16,15 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
 import org.hobbit.core.component.BenchmarkVocab;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +52,10 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		// Add a dummy element to initialize a list property
 		args = ObjectArrays.concat(new String[] {"-d", "foo"}, args, String.class);
 		
-		JenaPluginUtils.registerJenaResourceClass(CommandMain.class);
+		JenaPluginUtils.registerJenaResourceClasses(
+				CommandMain.class,
+				RDFConnectionMetaData.class,
+				ScenarioConfig.class);
 		
 		CommandMain cmMain = ModelFactory.createDefaultModel().createResource().as(CommandMain.class);
 
@@ -77,7 +76,8 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		DatasetDescription datasetDescription = new DatasetDescription();
 		datasetDescription.addAllDefaultGraphURIs(cmMain.getDefaultGraphUris());
 		
-		RDFConnection tmpConn = RDFConnectionFactory.connect(sparqEndpoint);
+				
+				//RDFConnectionFactory.connect(sparqEndpoint);
 		
 		String dataSummaryUri = cmMain.getPathFindingDataSummaryUri();
 		Model dataSummaryModel = null;
@@ -88,32 +88,9 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		}
 		
 		
-		try(RDFConnection rawConn = tmpConn) {
+		try(RDFConnectionEx conn = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription)) {
 			
-			RDFConnection baseConn = rawConn;
-			//RDFConnection baseConn = RDFConnectionFactory.connect(DatasetFactory.create());
-
-			// Wrap the connection to use a different content type for queries...
-			// Jena rejects some of Virtuoso's json output
-			@SuppressWarnings("resource")
-			RDFConnection wrappedConn =
-					new RDFConnectionModular(new SparqlQueryConnectionJsa(
-							FluentQueryExecutionFactory
-								.from(new QueryExecutionFactorySparqlQueryConnection(baseConn))
-								.config()
-								.withDatasetDescription(datasetDescription)
-								.withPostProcessor(qe -> {
-									if(qe instanceof QueryEngineHTTP) {
-										((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-									}
-								})
-								.end()
-								.create()
-								), baseConn, baseConn);
-
-	
-	
-			RDFConnection conn = wrappedConn;
+			
 			
 			// One time auto config based on available data
 			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn, dataSummaryModel);

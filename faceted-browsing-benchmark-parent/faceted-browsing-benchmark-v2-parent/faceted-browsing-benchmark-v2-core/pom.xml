@@ -13,11 +13,16 @@
 	</parent>
 
 	<dependencies>
-                <dependency>
-                        <groupId>org.hobbit</groupId>
-                        <artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
 			<scope>test</scope>
-                </dependency>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.dcat-suite</groupId>
+			<artifactId>dcat-suite-binding-ckan</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.hobbit</groupId>

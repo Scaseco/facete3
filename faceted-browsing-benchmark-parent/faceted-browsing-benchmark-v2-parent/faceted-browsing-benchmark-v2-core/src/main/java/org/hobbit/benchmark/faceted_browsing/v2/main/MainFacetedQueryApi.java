@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -16,9 +15,8 @@ import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.RDFConnectionEx;
+import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -28,11 +26,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -98,20 +93,22 @@ public class MainFacetedQueryApi {
 
 		Model m = RDFDataMgr.loadModel("path-data-simple.ttl");
 		RDFConnection coreConn = RDFConnectionFactory.connect(DatasetFactory.create(m));
+//		
+//		RDFConnection conn =
+//			new RDFConnectionModular(new SparqlQueryConnectionJsa(
+//					FluentQueryExecutionFactory
+//						.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
+//						.config()
+//						.withPostProcessor(qe -> {
+//							if(qe instanceof QueryEngineHTTP) {
+//								((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
+//							}
+//						})
+//						.end()
+//						.create()
+//						), null, null);
 		
-		RDFConnection conn =
-			new RDFConnectionModular(new SparqlQueryConnectionJsa(
-					FluentQueryExecutionFactory
-						.from(new QueryExecutionFactorySparqlQueryConnection(coreConn))
-						.config()
-						.withPostProcessor(qe -> {
-							if(qe instanceof QueryEngineHTTP) {
-								((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-							}
-						})
-						.end()
-						.create()
-						), null, null);
+		RDFConnectionEx conn = RDFConnectionFactoryEx.wrap(coreConn, null);
 
 		Delta delta = new DeltaWithFixedIterator(m.getGraph());
 		Model model = ModelFactory.createModelForGraph(delta);
