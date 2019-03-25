@@ -48,6 +48,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
+import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -60,8 +61,11 @@ import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.model.NodeMapperRdfDatatype;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -70,6 +74,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
@@ -99,6 +104,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.RdfWorkflowSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SupplierUtils;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.Nfa;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.NfaState;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.NfaTransition;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
@@ -343,7 +349,7 @@ public class TaskGenerator {
 
 			 dataSummary = new RdfWorkflowSpec()
 				.deriveDatasetWithFunction(conn, "path-finding-summary", () -> system.computeDataSummary(conn).blockingGet())
-				//.cache()
+				.cache()
 				.getModel();
 				logger.info("Created path finding data summary");
 			
@@ -566,6 +572,10 @@ public class TaskGenerator {
 				Resource o = stmt.getObject().asResource();
 				Number min = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(o, Vocab.min, Number.class);
 				Number max = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(o, Vocab.max, Number.class);
+	
+				
+				String dtypeStr = Optional.ofNullable(o.getProperty(ResourceFactory.createProperty("http://www.example.org/type"))).map(oo -> oo.getObject().asResource().getURI()).orElse(null);
+				
 				
 				if(min == null && max == null) {
 					// Nothing todo / skip
@@ -574,9 +584,23 @@ public class TaskGenerator {
 	//				Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
 					double point = range.lowerEndpoint() + rand.nextDouble() * (range.upperEndpoint() - range.lowerEndpoint());
 	
+					RDFNode value;
+					if(dtypeStr != null) {
+						RDFDatatype t = TypeMapper.getInstance().getTypeByName(dtypeStr);
+						Object raw = NodeMapperRdfDatatype.toJavaCore(NodeValue.makeDouble(point).asNode(), t);
+					
+					///String lex = t.unparse(raw);
+						 value = model.createTypedLiteral(raw, t);
+					} else {
+						value = model.createTypedLiteral(point);
+					}
+					//Resourceutils.setlit
+					//Node v = t.parse("" + point);
+					
+					
 					s.removeAll(p);
 					o.removeProperties();
-					s.addLiteral(p, point);
+					s.addProperty(p, value);
 					
 				} else {
 					throw new RuntimeException("Ranges must be restricted on both ends; " + o + "min: " + min + ", max: " + max);
@@ -621,6 +645,8 @@ public class TaskGenerator {
 
 
 		Model configModel = RDFDataMgr.loadModel("task-generator-config.ttl");
+		RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
+
 		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
 
 		Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
@@ -629,8 +655,11 @@ public class TaskGenerator {
 		
 		ScenarioConfig scenarioTemplate = configRes.as(ScenarioConfig.class);
 		
+		Nfa nfa = scenarioTemplate.getNfa();
+		Collection<NfaTransition> transitions = nfa.getTransitions();
+
 		// Report references to unavailable actions from the template
-		for(NfaTransition transition : scenarioTemplate.getNfa().getTransitions()) {
+		for(NfaTransition transition : transitions) {
 			String key = getTransitionKey(transition);
 			if (!cpToAction.containsKey(key)) {
 				logger.warn("Ignoring reference to action " + key + " as no implementation was registered");
@@ -708,6 +737,8 @@ public class TaskGenerator {
 			
 			substituteRangesWithRandomValue(rand, config.getModel());
 			Integer scenarioLength = config.getScenarioLength();
+			Objects.requireNonNull(scenarioLength);
+			
 			
 			NfaState currentState = config.getNfa().getStartState();
 			
@@ -776,7 +807,9 @@ public class TaskGenerator {
 
 	// Nfa nfa, 
 	public NfaTransition nextState(Map<String, Callable<Boolean>> cpToAction, NfaState current) {
-		Map<NfaTransition, Double> weights = current.getOutgoingTransitions().stream()
+		Collection<NfaTransition> transitions = current.getOutgoingTransitions();
+		
+		Map<NfaTransition, Double> weights = transitions.stream()
 				.filter(t -> cpToAction.containsKey(getTransitionKey(t)))
 				.collect(Collectors.toMap(t -> t, NfaTransition::getWeight));
 	

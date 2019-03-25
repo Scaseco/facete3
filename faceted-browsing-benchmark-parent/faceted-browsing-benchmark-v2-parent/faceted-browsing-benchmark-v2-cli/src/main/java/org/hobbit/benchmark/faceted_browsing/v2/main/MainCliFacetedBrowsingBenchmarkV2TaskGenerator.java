@@ -19,8 +19,17 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.expr.E_Function;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionEnvBase;
 import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.apache.jena.sparql.util.ExprUtils;
+import org.apache.jena.vocabulary.XSD;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
@@ -46,7 +55,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedBrowsingBenchmarkV2TaskGenerator.class);
 		
 	public static void main(String[] args) throws Exception {
-
+		
 		// HACK/WORKAROUND for Jcommander issue
 		// https://github.com/cbeust/jcommander/issues/464
 		// Add a dummy element to initialize a list property
@@ -54,8 +63,18 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		
 		JenaPluginUtils.registerJenaResourceClasses(
 				CommandMain.class,
-				RDFConnectionMetaData.class,
-				ScenarioConfig.class);
+				RDFConnectionMetaData.class);
+		
+		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(ScenarioConfig.class);
+		
+//		Expr e = ExprUtils.parse("xsd:integer(floor(1.2)", PrefixMapping.Extended);
+//		System.out.println(e);
+//		NodeValue x = e.eval(BindingFactory.root(), FunctionEnvBase.createTest());
+//		System.out.println(x);
+//System.out.println("yay");
+//		Expr ffs = new E_Function(XSD.xint.getURI(), new ExprList(NodeValue.makeDecimal(1.2))); 
+//		System.out.println(ffs.eval(BindingFactory.root(), FunctionEnvBase.createTest()));
+//		if(true) { return; }
 		
 		CommandMain cmMain = ModelFactory.createDefaultModel().createResource().as(CommandMain.class);
 

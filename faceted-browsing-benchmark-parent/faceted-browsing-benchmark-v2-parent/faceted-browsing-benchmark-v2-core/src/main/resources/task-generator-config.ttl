@@ -5,12 +5,13 @@
 #@prefix o: <http://aksw.org/adhoc/ontology/> .
 @prefix o: <http://www.example.org/> .
 @prefix : <http://project-hobbit.eu/resource/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 :defaultScenarioConfig
   a o:ScenarioConfig ;
   o:randomSeed 1000 ;
-  o:scenarioLength [ o:min 8; o:max 16] ;
-  o:nfaTemplate [
+  o:scenarioLength [ o:min 8; o:max 16; o:type xsd:integer] ;
+  o:nfa [
     o:startState o:state1 ;
     o:transition [
       o:from o:state1 ;
