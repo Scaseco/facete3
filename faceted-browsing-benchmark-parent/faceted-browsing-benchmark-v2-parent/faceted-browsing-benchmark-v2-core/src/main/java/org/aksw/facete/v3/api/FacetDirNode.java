@@ -40,6 +40,8 @@ public interface FacetDirNode extends DirNodeNavigation<FacetMultiNode> {
 	/** Facets and counts **/
 	DataQuery<FacetCount> facetCounts(boolean includeAbsent);
 	
+	public DataQuery<FacetCount> facetFocusCounts(boolean includeAbsent);
+
 	default DataQuery<FacetCount> facetCounts() {
 		return facetCounts(false);
 	}

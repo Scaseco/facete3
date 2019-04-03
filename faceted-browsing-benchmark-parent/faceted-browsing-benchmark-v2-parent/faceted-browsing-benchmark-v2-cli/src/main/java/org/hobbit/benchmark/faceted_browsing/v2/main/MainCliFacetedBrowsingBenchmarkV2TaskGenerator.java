@@ -1,16 +1,28 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.aksw.commons.collections.tagmap.TagMapSetTrie;
+import org.aksw.commons.collections.tagmap.TagSet;
+import org.aksw.commons.collections.tagmap.TagSetImpl;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
@@ -19,17 +31,13 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.TransformCopy;
+import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.core.DatasetDescription;
-import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.expr.E_Function;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.function.FunctionEnvBase;
 import org.apache.jena.sparql.resultset.ResultSetMem;
-import org.apache.jena.sparql.util.ExprUtils;
-import org.apache.jena.vocabulary.XSD;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
@@ -39,7 +47,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
+import com.eccenca.access_control.property_based.core.GenericLayer;
+import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
 import com.google.common.collect.ObjectArrays;
+
 
 
 
@@ -54,7 +65,37 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedBrowsingBenchmarkV2TaskGenerator.class);
 		
+
+//	public static void simplifyFilters(Expr expr) {
+//		Set<Set<Expr>> dnf = DnfUtils.toSetDnf(expr);
+//
+//	}
+	
+	public static void allocateAllowedPredicates(SparqlQueryConnection conn) {
+//		FacetedQuery fq = FacetedQueryImpl.create(conn);
+//		Map<CountInfo, Collection<Node>> map = fq.focus().fwd().facetFocusCounts(false).exec()
+//			.toMultimap(FacetCount::getDistinctValueCount, FacetCount::getPredicate, () -> new TreeMap<>(Ordering.natural().reversed()))
+//			.blockingGet();
+//		
+//		map.entrySet().forEach(x -> System.out.println(x.getValue().size() < 10 ? "" + x : "" + x.getKey() + ": " + x.getValue().size()));
+		 
+		
+		Query query = QueryFactory.create("SELECT * { ?x a ?y . ?y <foobar> ?z . FILTER(?z = <http://www.w3.org/2000/01/rdf-schema#foo>)}");
+		
+		GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery("SELECT ?s ?p ?o { ?s ?p ?o FILTER(?p = rdfs:label && ?o IN (rdfs:foo, rdfs:bar)) }"));
+		Query q = ElementTransformTripleRewrite.transform(query, layer, true);
+		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
+		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
+		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
+
+		System.out.println(q);
+		//return
+	}
+	
+	
 	public static void main(String[] args) throws Exception {
+	
+		//PropertyBasedAcFluent.create();
 		
 		// HACK/WORKAROUND for Jcommander issue
 		// https://github.com/cbeust/jcommander/issues/464
@@ -105,14 +146,18 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			dataSummaryModel = RDFDataMgr.loadModel(dataSummaryUri);
 			logger.info("Done loading path finding data summary from" + dataSummaryUri);
 		}
-		
+				
 		
 		try(RDFConnectionEx conn = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription)) {
+		
+			allocateAllowedPredicates(conn);
 			
+			if(true) return;
 			
-			
+			Random random = new Random(0);
+
 			// One time auto config based on available data
-			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn, dataSummaryModel);
+			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(random, conn, dataSummaryModel);
 			
 			// Now wrap the scenario supplier with the injection of sparql update statements
 			

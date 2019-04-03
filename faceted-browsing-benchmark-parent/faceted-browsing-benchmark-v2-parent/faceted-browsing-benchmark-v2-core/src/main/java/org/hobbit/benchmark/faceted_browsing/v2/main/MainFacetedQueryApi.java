@@ -147,13 +147,16 @@ public class MainFacetedQueryApi {
 			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
 		
+		
+		
 		System.out.println("Done listing roots");
 		fq
 			.connection(conn)
 			.baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
 		
 		// One time auto config based on available data
-		TaskGenerator taskGenerator = TaskGenerator.autoConfigure(conn);
+		Random random = new Random(0);
+		TaskGenerator taskGenerator = TaskGenerator.autoConfigure(random, conn);
 		
 		// Now wrap the scenario supplier with the injection of sparql update statements
 		

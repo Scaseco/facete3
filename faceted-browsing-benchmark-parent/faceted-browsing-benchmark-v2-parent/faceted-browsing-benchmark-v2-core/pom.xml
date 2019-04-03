@@ -14,6 +14,26 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.eccenca</groupId>
+			<artifactId>property-ac-core</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.eccenca</groupId>
+					<artifactId>property-ac-jsa-unit</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.jena</groupId>
+					<artifactId>jena-arq</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.jena</groupId>
+					<artifactId>jena-rdfconnection</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>faceted-browsing-benchmark-resources-test-config</artifactId>
 			<scope>test</scope>

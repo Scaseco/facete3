@@ -781,11 +781,11 @@ public class FacetedQueryGenerator<P> {
 	}
 
 	
-	public static BinaryRelation createRelationFacetsAndCounts(Map<String, TernaryRelation> relationsFocusFacetValue, Concept pConstraint, boolean includeAbsent) {
+	public static BinaryRelation createRelationFacetsAndCounts(Map<String, TernaryRelation> relationsFocusFacetValue, Concept pConstraint, boolean includeAbsent, boolean focusCount) {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relationsFocusFacetValue.values().stream()
 				//.filter(e -> !e.isEmpty())
-				.map(e -> e.project(e.getP(), e.getO()))
+				.map(e -> e.project(e.getP(), focusCount ? e.getS() : e.getO()))
 				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
 				.map(Relation::toBinaryRelation)
 				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))

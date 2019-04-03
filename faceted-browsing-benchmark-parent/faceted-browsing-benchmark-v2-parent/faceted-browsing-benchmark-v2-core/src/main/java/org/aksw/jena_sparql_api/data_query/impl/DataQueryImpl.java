@@ -14,7 +14,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -22,8 +21,12 @@ import org.aksw.facete.v3.api.DataMultiNode;
 import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
+import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
+import org.aksw.jena_sparql_api.algebra.transform.TransformSimplifyFilter;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -55,9 +58,11 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
+import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.Rename;
 import org.apache.jena.sparql.expr.E_Random;
@@ -597,7 +602,7 @@ public class DataQueryImpl<T extends RDFNode>
 	// TODO Move to Query Utils
 	public static Query rewrite(Query query, Function<? super Op, ? extends Op> rewriter) {
 		Op op = Algebra.compile(query);
-
+//System.out.println(op);
 		op = rewriter.apply(op);
 		
 		Query result = OpAsQuery.asQuery(op);
@@ -608,7 +613,11 @@ public class DataQueryImpl<T extends RDFNode>
 	public static Rewrite createDefaultRewriter() {
 
         Context context = new Context();
-        context.put(ARQ.optMergeBGPs, true);
+        context.put(ARQ.optPromoteTableEmpty, false);
+        
+        //context.put(ARQ.optReorderBGP, true);
+        
+        context.put(ARQ.optMergeBGPs, false); // We invoke this manually
         context.put(ARQ.optMergeExtends, true);
 
         // false; OpAsQuery throws Not implemented: OpTopN (jena 3.8.0)
@@ -621,6 +630,7 @@ public class DataQueryImpl<T extends RDFNode>
         context.put(ARQ.optFilterPlacementBGP, false);
         context.put(ARQ.optFilterPlacementConservative, false); // with false the result looks better
 
+        // Retain E_OneOf expressions
         context.put(ARQ.optFilterExpandOneOf, false);
 
 //        
@@ -652,6 +662,7 @@ public class DataQueryImpl<T extends RDFNode>
         Rewrite  result = op -> {
 
         		op = core.rewrite(op);
+        		
         		// Issue with Jena 3.8.0 (possibly other versions too)
         		// Jena's rewriter returned by Optimize.getFactory() renames variables (due to scoping)
         		// but does not reverse the renaming - so we need to do it explicitly here
@@ -663,6 +674,14 @@ public class DataQueryImpl<T extends RDFNode>
         		
         		op = TransformRedundantFilterRemoval.transform(op);
         		
+        		op = TransformSimplifyFilter.transform(op);
+
+
+        		op = TransformPullFiltersIfCanMergeBGPs.transform(op);
+        		op = Transformer.transform(new TransformMergeBGPs(), op);
+        		
+        		op = TransformFilterFalseToEmptyTable.transform(op);
+        		op = TransformPromoteTableEmptyVarPreserving.transform(op);
         		return op;
         };
         

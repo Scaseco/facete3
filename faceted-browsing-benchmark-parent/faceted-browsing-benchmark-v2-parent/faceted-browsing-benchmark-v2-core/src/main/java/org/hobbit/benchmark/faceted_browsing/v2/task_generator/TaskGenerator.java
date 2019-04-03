@@ -69,6 +69,8 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -139,10 +141,10 @@ public class TaskGenerator {
 	protected FacetedQuery currentQuery;
 
 
-	public TaskGenerator(RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
+	public TaskGenerator(Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
 		this.conn = conn;
 		this.numericProperties = numericProperties;
-		this.rand = new Random();
+		this.rand = random;
 		this.conceptPathFinder = conceptPathFinder;
 
 		resetQueryState();
@@ -290,8 +292,8 @@ public class TaskGenerator {
 		return querySupplier;
 	}
 
-	public static TaskGenerator autoConfigure(RDFConnectionEx conn) throws Exception {
-		TaskGenerator result = autoConfigure(conn, null);
+	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn) throws Exception {
+		TaskGenerator result = autoConfigure(random, conn, null);
 		return result;
 	}
 	
@@ -318,14 +320,13 @@ public class TaskGenerator {
 	 * @param dataSummary
 	 * @return
 	 */
-	public static TaskGenerator autoConfigure(RDFConnectionEx conn, Model dataSummary) throws Exception {
+	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn, Model dataSummary) throws Exception {
 
 		logger.info("Starting analyzing numeric properties...");
 		Model model = new RdfWorkflowSpec()
 				.deriveDatasetWithSparql(conn, "analyze-numeric-properties.sparql")
 				.cache()
-				.getModel();
-
+				.getModel();		
 
 		List<SetSummary> numericProperties = model.listSubjects()
 				//.filterKeep() // TODO Filter by numerc property
@@ -362,6 +363,12 @@ public class TaskGenerator {
 			logger.info("Using specified path finding data summary");
 		}
 
+		logger.info("Loaded " + dataSummary.size() + " triples");
+		// Select only the most common relations
+		dataSummary = QueryExecutionFactory.create("CONSTRUCT { ?s ?p ?o . ?s <http://www.w3.org/2002/07/owl#inverseOf> ?x . ?x ?y ?z} WHERE { { SELECT DISTINCT ?s { ?s <http://www.example.org/count> ?c . } ORDER BY DESC(?c) LIMIT 1000 } ?s ?p ?o . OPTIONAL { ?s <http://www.w3.org/2002/07/owl#inverseOf> ?x . ?x ?y ?z } }", dataSummary).execConstruct();
+		//Model subModel = QueryExecutionFactory.create("CONSTRUCT { }", model);
+		logger.info("Reduced to " + dataSummary.size() + " triples");
+
 
 		// Build a path finder; for this, first obtain a factory from the system
 		// set its attributes and eventually build the path finder.
@@ -376,7 +383,7 @@ public class TaskGenerator {
 
 //		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
 
-		TaskGenerator result = new TaskGenerator(conn, numericProperties, pathFinder);
+		TaskGenerator result = new TaskGenerator(random, conn, numericProperties, pathFinder);
 		return result;
 	}
 	
@@ -601,12 +608,12 @@ public class TaskGenerator {
 					s.removeAll(p);
 					o.removeProperties();
 					s.addProperty(p, value);
-					
+				
+					logger.info("Substituted range[min: " + min + ", max: " + max +") -> " + value);// + "(" + + ")");
+
 				} else {
 					throw new RuntimeException("Ranges must be restricted on both ends; " + o + "min: " + min + ", max: " + max);
-				}
-				
-				System.out.println("min: " + min + ", max: " + max);
+				}				
 			}
 	
 		}
@@ -1255,7 +1262,7 @@ public class TaskGenerator {
 					minPathLength, pathLength,
 					numericProperties);
 		}
-		logger.info("Found " + paths.size() + " paths leading to numeric facets: " + paths);
+		logger.info("Found " + paths.size());// + " paths leading to numeric facets: " + paths);
 
 		for (SimplePath path : paths) {
 			FacetNode target = fn.walk(SimplePath.toPropertyPath(path));
@@ -1392,7 +1399,7 @@ public class TaskGenerator {
 				//				.pseudoRandom(pseudoRandom)
 				//				.limit(2).exec().map(nv -> Double.parseDouble(nv.asNode().getLiteralLexicalForm())).toList().blockingGet();
 
-				logger.debug("Values: " + distribution);
+				logger.debug("Values: " + distribution.size());
 
 				result = Maps.immutableEntry(v, distribution);
 			}
@@ -2065,7 +2072,7 @@ public class TaskGenerator {
 		final List<Resource> subClasses = dq.exec().toList().blockingGet();
 
 
-		logger.debug("Subclasses: " + subClasses);
+		logger.debug("Subclasses: " + subClasses.size());
 		final List<NodeHolder> subClassNodes = subClasses.stream().map(c -> new NodeHolder(c.asNode())).collect(Collectors.toList());
 		final List<FacetValueCount> fn2_av = fn.parent().fwd().facetValueCounts()
 				.only(RDF.type)

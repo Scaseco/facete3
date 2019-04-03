@@ -82,7 +82,8 @@ public class TestFacetedQuery2 {
 			RDFConnectionFactory.connect(DatasetFactory.create(model)), null);
 
 		try {
-			taskGenerator = TaskGenerator.autoConfigure(conn);
+			Random random = new Random(0);
+			taskGenerator = TaskGenerator.autoConfigure(random, conn);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

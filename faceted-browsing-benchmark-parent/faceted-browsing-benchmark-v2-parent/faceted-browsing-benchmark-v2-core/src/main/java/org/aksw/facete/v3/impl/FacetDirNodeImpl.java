@@ -107,9 +107,54 @@ public class FacetDirNodeImpl
 //
 		return result;
 	}
+
+	
+//	@Override
+//	public DataQuery<FacetCount> facetFocusCounts() {
+//		FacetedQueryResource facetedQuery = this.parent().query();
+//		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
+//
+//		BgpNode focus = facetedQuery.modelRoot().getFocus();
+//
+////		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
+//		// TODO The API is not consistent with respect to passing the base concept
+//		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<>(new PathAccessorImpl(bgpRoot));
+//		UnaryRelation baseConcept = query().baseConcept();
+//		qgen.setBaseConcept(baseConcept);
+//		
+//		facetedQuery.constraints().forEach(c -> qgen.addConstraint(c.expr()));
+//
+////		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(focus, parent.state(), !this.state.isFwd(), false, false, includeAbsent);
+//		Map<String, TernaryRelation> relations = qgen.getFacetValuesCore(baseConcept, focus, parent.state(), null, null, !this.state.isFwd(), false, false, includeAbsent);
+//		
+//		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null, includeAbsent);
+//		
+//		
+//		BasicPattern bgp = new BasicPattern();
+//		bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
+//		Template template = new Template(bgp);
+//		
+//		DataQuery<FacetCount> result = new DataQueryImpl<>(parent.query().connection(), br.getSourceVar(), br.getElement(), template, FacetCount.class);
+//
+//		return result;
+//	}
+
 	
 	@Override
 	public DataQuery<FacetCount> facetCounts(boolean includeAbsent) {
+		DataQuery<FacetCount> result = facetCounts(includeAbsent, false);
+		
+		return result;
+	}
+
+	@Override
+	public DataQuery<FacetCount> facetFocusCounts(boolean includeAbsent) {
+		DataQuery<FacetCount> result = facetCounts(includeAbsent, true);
+		
+		return result;
+	}
+
+	public DataQuery<FacetCount> facetCounts(boolean includeAbsent, boolean focusCount) {
 		FacetedQueryResource facetedQuery = this.parent().query();
 		BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
 
@@ -126,7 +171,7 @@ public class FacetDirNodeImpl
 //		Map<String, BinaryRelation> relations = qgen.createMapFacetsAndValues(focus, parent.state(), !this.state.isFwd(), false, false, includeAbsent);
 		Map<String, TernaryRelation> relations = qgen.getFacetValuesCore(baseConcept, focus, parent.state(), null, null, !this.state.isFwd(), false, false, includeAbsent);
 		
-		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null, includeAbsent);
+		BinaryRelation br = FacetedQueryGenerator.createRelationFacetsAndCounts(relations, null, includeAbsent, focusCount);
 		
 		
 		BasicPattern bgp = new BasicPattern();
