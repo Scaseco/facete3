@@ -80,9 +80,9 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 //		map.entrySet().forEach(x -> System.out.println(x.getValue().size() < 10 ? "" + x : "" + x.getKey() + ": " + x.getValue().size()));
 		 
 		
-		Query query = QueryFactory.create("SELECT * { ?x a ?y . ?y <foobar> ?z . FILTER(?z = <http://www.w3.org/2000/01/rdf-schema#foo>)}");
+		Query query = QueryFactory.create("SELECT * { ?s a ?t . ?t ?y  ?z . FILTER(?y = <http://www.example.org/foo> && ?z = <http://www.example.org/bar>)}");
 		
-		GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery("SELECT ?s ?p ?o { ?s ?p ?o FILTER(?p = rdfs:label && ?o IN (rdfs:foo, rdfs:bar)) }"));
+		GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery("SELECT ?s ?p ?o { ?s ?p ?o FILTER(?p = rdf:type && ?o IN (rdfs:Class, owl:Class) || ?p != rdf:type) }"));
 		Query q = ElementTransformTripleRewrite.transform(query, layer, true);
 		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
 		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);

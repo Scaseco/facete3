@@ -26,7 +26,7 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarP
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
-import org.aksw.jena_sparql_api.algebra.transform.TransformSimplifyFilter;
+import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -673,13 +673,12 @@ public class DataQueryImpl<T extends RDFNode>
         		op = TransformDeduplicatePatterns.transform(op);
         		
         		op = TransformRedundantFilterRemoval.transform(op);
-        		
-        		op = TransformSimplifyFilter.transform(op);
-
 
         		op = TransformPullFiltersIfCanMergeBGPs.transform(op);
         		op = Transformer.transform(new TransformMergeBGPs(), op);
         		
+        		op = TransformFilterSimplify.transform(op);
+
         		op = TransformFilterFalseToEmptyTable.transform(op);
         		op = TransformPromoteTableEmptyVarPreserving.transform(op);
         		return op;
