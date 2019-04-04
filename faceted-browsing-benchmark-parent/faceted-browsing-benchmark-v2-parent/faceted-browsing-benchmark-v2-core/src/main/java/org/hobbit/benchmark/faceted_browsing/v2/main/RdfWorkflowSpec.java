@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -19,10 +21,15 @@ import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
@@ -32,6 +39,8 @@ import org.apache.jena.sparql.lang.arq.ParseException;
 
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.Iterables;
+
+import io.reactivex.Flowable;
 
 /**
  * Base class for SPARQL-based operators.
@@ -50,34 +59,64 @@ class OpLoadFileOrUrl {
 	
 }
 
-
-class ModelCreationImpl
-	implements ModelCreation
-{
-	//protected SparqlServiceReference ssr;
-	protected RDFConnectionEx conn;
-	
+/**
+ * There are three types of caching patterns:
+ * Result objects can be consumable and non-consumable
+ * 
+ * - Create a Model, write it to a file (possibly async if readonly), hand it to the application
+ *   - (It would also be possible to read from cache)
+ * - Create an consumable resource, write to cache, then read from cache
+ * - Create an consumable resource, and wrap it so that items get serialized to the file
+ * 
+ * 
+ * @author raven
+ *
+ * @param <T>
+ */
+class ModelCreationImpl<T>
+	implements ModelCreation<T>
+{	
+	protected Supplier<String> datasetIri;
 	protected String cacheId;
-	protected Supplier<? extends Model> modelSupplier;
+	protected Supplier<? extends T> resultSupplier;
+
+	protected BiConsumerWithException<? super Path, ? super T> resultSerializer;
+	protected FunctionWithException<? super Path, ? extends T> resultDeserializer;
 	
-	// File with CONSTRUCT queries
-	protected String sparqlFilenameOrUri;
+//	// File with CONSTRUCT queries
+//	protected String sparqlFilenameOrUri;
 
 	//protected Map<SparqlServiceReference, Function<SparqlServiceReference, RDFConnection>> rdfConnectionFactoryRegistry;
 	
 	protected boolean allowCacheRead;
-	
 	protected boolean allowCacheWrite;
-	
 	protected Path repoRoot;
 	
-	public ModelCreationImpl(RDFConnectionEx conn, String cacheId, Supplier<? extends Model> modelSupplier) {//Map<SparqlServiceReference, Function<SparqlServiceReference, RDFConnection>> rdfConnectionFactoryRegistry) {
+	public static interface BiConsumerWithException<T, U> {
+		void accept(T t, U u) throws Exception;
+	}
+
+	public static interface FunctionWithException<T, R> {
+		R apply(T t) throws Exception;
+	}
+
+	public ModelCreationImpl(
+			Supplier<String> datasetIri,
+			String cacheId,
+			//boolean isResultExhaustable,
+			Supplier<? extends T> resultSupplier,
+			BiConsumerWithException<? super Path, ? super T> resultSerializer,
+			FunctionWithException<? super Path, ? extends T> resultDeserializer) {//Map<SparqlServiceReference, Function<SparqlServiceReference, RDFConnection>> rdfConnectionFactoryRegistry) {
 		super();
+		this.datasetIri = datasetIri;
 		//this.ssr = ssr;
-		this.conn = conn;
+		//this.conn = conn;
 		//this.sparqlFilenameOrUri = sparqlFilenameOrUri;
 		this.cacheId = cacheId;
-		this.modelSupplier = modelSupplier;
+		this.resultSupplier = resultSupplier;
+		
+		this.resultSerializer = resultSerializer;
+		this.resultDeserializer = resultDeserializer;
 		
 		//this.rdfConnectionFactoryRegistry = rdfConnectionFactoryRegistry;
 		
@@ -99,7 +138,7 @@ class ModelCreationImpl
 	 * @param conn
 	 * @return
 	 */
-	public String deriveDatasetIri(RDFConnectionEx conn) {
+	public static String deriveDatasetIri(RDFConnectionEx conn) {
 		RDFConnectionMetaData metadata = conn.getMetaData();
 
 		Resource dataset = Iterables.getFirst(metadata.getDatasets(), null);
@@ -176,9 +215,9 @@ class ModelCreationImpl
 		return result;
 	}
 
-	public ModelCreation cache() {
-		allowCacheRead = true;
-		allowCacheWrite = true;
+	public ModelCreation<T> cache(boolean onOrOff) {
+		allowCacheRead = onOrOff;
+		allowCacheWrite = onOrOff;
 		
 		return this;
 	}
@@ -201,31 +240,37 @@ class ModelCreationImpl
 		return result;
 	}
 	
-	public Model getModel() throws Exception {
-		Model result;
+	public T getModel() throws Exception {
+		T result;
 
 		// Create a hash from the sparqlFilename
-		String datasetIri = deriveDatasetIri(conn);
+		//String datasetIri = deriveDatasetIri(conn);
 		//String queriesHash = //createHashForSparqlQueryFile(PrefixMapping.Extended, sparqlFilenameOrUri);
 	
 		// Full cache id is based on ssr + hash
-		Path relPath = CatalogResolverFilesystem
-				.resolvePath(datasetIri)
-//				.resolve(graphsHash)
-				.resolve(cacheId);
-
-
-
-		//Path root = Paths.get("/tmp");
-		Path cacheFolder = repoRoot.resolve(relPath);
-		
-		Files.createDirectories(cacheFolder);
-		
-		Path cacheFile = cacheFolder.resolve("data.ttl");
+		Path cacheFile = null;
+		if(allowCacheRead) {
+			String d = datasetIri.get();
+			Path relPath = CatalogResolverFilesystem
+					.resolvePath(d)
+	//				.resolve(graphsHash)
+					.resolve(cacheId);
+	
+	
+	
+			//Path root = Paths.get("/tmp");
+			Path cacheFolder = repoRoot.resolve(relPath);
+			
+			Files.createDirectories(cacheFolder);
+			
+			cacheFile = cacheFolder.resolve("data.ttl");
+		}
 		
 		if(allowCacheRead && Files.exists(cacheFile)) {
 			// Lookup with key
-			result = RDFDataMgr.loadModel(cacheFile.toUri().toString());
+			//result = RDFDataMgr.loadModel(cacheFile.toUri().toString());
+			result = resultDeserializer.apply(cacheFile);
+
 		} else {
 			
 //			Function<SparqlServiceReference, RDFConnection> defaultConnFactory = rdfConnectionFactoryRegistry.get(null);
@@ -234,11 +279,17 @@ class ModelCreationImpl
 //					rdfConnectionFactoryRegistry.getOrDefault(ssr, defaultConnFactory);
 
 //			try(RDFConnection conn = connFactory.apply(ssr)) {
-				result = modelSupplier.get();		
+				result = resultSupplier.get();		
+				
+				
 //			}
 			
 			if(allowCacheWrite) {
-				RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE);
+				resultSerializer.accept(cacheFile, result);
+				
+				//RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE);
+				
+				result = resultDeserializer.apply(cacheFile);
 			}
 		}
 		
@@ -264,29 +315,72 @@ public class RdfWorkflowSpec {
 	}
 	
 	// This creates an operator instance
-	public ModelCreation deriveDatasetWithSparql(SparqlServiceReference ssr, String filenameOrUri) {
+	public ModelCreation<Model> deriveDatasetWithSparql(SparqlServiceReference ssr, String filenameOrUri) {
 		RDFConnectionEx conn = RDFConnectionFactoryEx.connect(ssr);
 		//return new ModelCreationImpl(ssr, filenameOrUri, rdfConnectionFactoryRegistory);
-		ModelCreation result = deriveDatasetWithSparql(conn, filenameOrUri);
+		ModelCreation<Model> result = deriveDatasetWithSparql(conn, filenameOrUri);
 		return result;
 	}
+
 	
-	public ModelCreation deriveDatasetWithSparql(RDFConnectionEx conn, String sparqlFilenameOrUri) {
+	public ModelCreationImpl<Flowable<Resource>> execFlowable(RDFConnectionEx conn, Entry<Node, Query> partitionedQuery) {
+		String cacheId = "sparql-query/flowable/" + StringUtils.md5Hash("" + partitionedQuery);
+
+		return new ModelCreationImpl<Flowable<Resource>>(
+				() -> ModelCreationImpl.deriveDatasetIri(conn),
+				cacheId,
+				() -> ReactiveSparqlUtils.execPartitioned(conn, partitionedQuery),
+				(cacheFile, result) -> RDFDataMgrRx.writeResources(result, cacheFile, RDFFormat.TRIG),
+				cacheFile -> RDFDataMgrRx.createFlowableResources(() -> new FileInputStream(cacheFile.toFile()), Lang.TRIG, cacheFile.toAbsolutePath().toString())
+			);
+	}
+
+	
+	public ModelCreation<Model> execConstruct(RDFConnectionEx conn, String queryStr) {
+		String cacheId = "sparql-query/construct/" + StringUtils.md5Hash(queryStr);
+		
+		//return new ModelCreationImpl(conn, cacheId, () -> conn.queryConstruct(queryStr));
+		return new ModelCreationImpl<Model>(
+				() -> ModelCreationImpl.deriveDatasetIri(conn),
+				cacheId,
+				() -> conn.queryConstruct(queryStr),
+				(cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),
+				cacheFile -> RDFDataMgr.loadModel(cacheFile.toUri().toString())
+			);
+	}
+
+	
+	public ModelCreation<Model> deriveDatasetWithSparql(RDFConnectionEx conn, String sparqlFilenameOrUri) {
 		String cacheId;
 		try {
 			cacheId = ModelCreationImpl.createHashForSparqlQueryFile(PrefixMapping.Extended, sparqlFilenameOrUri);
 		} catch (IOException | ParseException e) {
 			throw new RuntimeException(e);
 		}
-		
-		return new ModelCreationImpl(conn, cacheId, () -> {
-			return RDFDataMgrEx.execConstruct(conn, sparqlFilenameOrUri);
-		});
+
+		//String datasetIri = ModelCreationImpl.deriveDatasetIri(conn);
+
+		return new ModelCreationImpl<Model>(
+				() -> ModelCreationImpl.deriveDatasetIri(conn),
+				cacheId,
+				() -> RDFDataMgrEx.execConstruct(conn, sparqlFilenameOrUri),
+				(cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),
+				cacheFile -> RDFDataMgr.loadModel(cacheFile.toUri().toString())
+			);
+
+//		return new ModelCreationImpl(conn, cacheId, () -> {
+//			return RDFDataMgrEx.execConstruct(conn, sparqlFilenameOrUri);
+//		});
 	}
 
-	public ModelCreation deriveDatasetWithFunction(RDFConnectionEx conn, String cacheId, Supplier<? extends Model> modelSupplier) {//Function<? super RDFConnectionEx, ? extends Model> modelSupplier) {
-		return new ModelCreationImpl(conn,
+	public ModelCreation<Model> deriveDatasetWithFunction(RDFConnectionEx conn, String cacheId, Supplier<? extends Model> modelSupplier) {//Function<? super RDFConnectionEx, ? extends Model> modelSupplier) {
+		return new ModelCreationImpl<Model>(
+				() -> ModelCreationImpl.deriveDatasetIri(conn),
 				cacheId,
-				modelSupplier);
+				modelSupplier,
+				(cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),
+				cacheFile -> RDFDataMgr.loadModel(cacheFile.toUri().toString())				
+				);
 	}
+	
 }

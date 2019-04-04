@@ -83,7 +83,7 @@ public class TestFacetedQuery2 {
 
 		try {
 			Random random = new Random(0);
-			taskGenerator = TaskGenerator.autoConfigure(random, conn);
+			taskGenerator = TaskGenerator.autoConfigure(random, conn, false);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

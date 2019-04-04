@@ -32,7 +32,7 @@ public class DatasetCache {
 		Model model = new RdfWorkflowSpec()
 			//.setDefaultConnectionFactory(FluentQueryExecutionFactory::connect)
 			.deriveDatasetWithSparql(conn, "analyze-numeric-properties.sparql")
-			.cache()
+			.cache(true)
 			.getModel();
 		
 //		Model model = RdfWorkflowRunner

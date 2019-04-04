@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -22,11 +21,11 @@ import org.aksw.facete.v3.api.DataNode;
 import org.aksw.facete.v3.impl.PathAccessorImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
+import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
-import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -44,7 +43,6 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.enhanced.EnhGraph;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ARQ;
@@ -63,6 +61,7 @@ import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.Rename;
 import org.apache.jena.sparql.expr.E_Random;
@@ -70,8 +69,6 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
-import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
@@ -85,7 +82,6 @@ import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
@@ -390,6 +386,8 @@ public class DataQueryImpl<T extends RDFNode>
 	}
 
 	
+	
+	// Note: The construct template may be empty - use in conjunction with ReactiveSparqlUtils.execPartitioned()
 	@Override
 	public Entry<Node, Query> toConstructQuery() {
 		Set<Var> vars = new LinkedHashSet<>();
@@ -398,17 +396,27 @@ public class DataQueryImpl<T extends RDFNode>
 			vars.add((Var)rootVar);
 		}
 		
+		//boolean canAsConstruct = template != null && !template.getBGP().isEmpty();
+
 		if(template != null) {
 			vars.addAll(PatternVars.vars(new ElementTriplesBlock(template.getBGP())));
 		}
 
 		Query query = new Query();
-		//query.setQueryResultStar(true);
 		query.setQuerySelectType();
-
 		for(Var v : vars) {
 			query.getProject().add(v);
 		}
+//		query.setQueryConstructType();
+//		query.setConstructTemplate(template);
+
+		
+		//query.setQueryResultStar(true);
+		//query.setQuerySelectType();
+
+		// Start with a select query, optimize it, and at the end turn it into construct
+//		query.setQuerySelectType();
+
 		
 		Element baseQueryPattern = baseRelation.getElement();
 		
@@ -482,7 +490,16 @@ public class DataQueryImpl<T extends RDFNode>
 		Rewrite rewrite = createDefaultRewriter();
 		query = rewrite(query, rewrite::rewrite);
 
+		// NOTE: The CONSTRUCT part gets lost in the rewriting, restore it 
 		
+		//if(canAsConstruct) {
+		//}
+
+		Query c = new Query();
+		c.setQueryConstructType();
+		c.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
+		c.setQueryPattern(QueryUtils.asPatternForConstruct(query));
+
 //		logger.debug("After rewrite: " + query);
 
 
@@ -491,7 +508,7 @@ public class DataQueryImpl<T extends RDFNode>
 		// 	System.out.println("DEBUG POINT reached");
 		// }
 		
-		return Maps.immutableEntry((Var)rootVar, query);
+		return Maps.immutableEntry((Var)rootVar, c);
 	}
 
 
@@ -500,43 +517,45 @@ public class DataQueryImpl<T extends RDFNode>
 		Objects.requireNonNull(conn);
 
 		Entry<Node, Query> e = toConstructQuery();
-		Node rootVar = e.getKey();
-		Query query = e.getValue();
+//		Node rootVar = e.getKey();
+//		Query query = e.getValue();
 		
 		// PseudoRandomness affects:
 		// limit, offset, orderByRandom, ... what else?
 		
 		
-		logger.debug("Executing query:\n" + query);
+		logger.debug("Executing query:\n" + e);
+//		
+//		Flowable<T> result = ReactiveSparqlUtils
+//			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
+//			.execSelect(() -> conn.query(query))
+//			.map(b -> {
+//				Graph graph = GraphFactory.createDefaultGraph();
+//
+//				// TODO Re-allocate blank nodes
+//				if(template != null) {
+//					Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
+//					while(it.hasNext()) {
+//						Triple t = it.next();
+//						graph.add(t);
+//					}
+//				}
+//
+//				Node rootNode = rootVar.isVariable() ? b.get((Var)rootVar) : rootVar;
+//				
+//				Model m = ModelFactory.createModelForGraph(graph);
+//				RDFNode r = m.asRDFNode(rootNode);
+//				
+////				Resource r = m.createResource()
+////				.addProperty(RDF.predicate, m.asRDFNode(valueNode))
+////				.addProperty(Vocab.facetValueCount, );
+////			//m.wrapAsResource(valueNode);
+////			return r;
+//
+//				return r;
+//			})
 		
-		Flowable<T> result = ReactiveSparqlUtils
-			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
-			.execSelect(() -> conn.query(query))
-			.map(b -> {
-				Graph graph = GraphFactory.createDefaultGraph();
-
-				// TODO Re-allocate blank nodes
-				if(template != null) {
-					Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
-					while(it.hasNext()) {
-						Triple t = it.next();
-						graph.add(t);
-					}
-				}
-
-				Node rootNode = rootVar.isVariable() ? b.get((Var)rootVar) : rootVar;
-				
-				Model m = ModelFactory.createModelForGraph(graph);
-				RDFNode r = m.asRDFNode(rootNode);
-				
-//				Resource r = m.createResource()
-//				.addProperty(RDF.predicate, m.asRDFNode(valueNode))
-//				.addProperty(Vocab.facetValueCount, );
-//			//m.wrapAsResource(valueNode);
-//			return r;
-
-				return r;
-			})
+		Flowable<T> result = ReactiveSparqlUtils.execPartitioned(conn, e)
 			.map(r -> r.as(resultClass));
 		
 		

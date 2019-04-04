@@ -136,6 +136,7 @@ public class QueryGroupExecutor {
 		return result;
 	}
 	
+	
 	// TODO Move to QueryUtils
 	/**
 	 * 
@@ -154,7 +155,7 @@ public class QueryGroupExecutor {
 		for(Query q : queries) {
 			resultVars.addAll(q.getResultVars());
 			
-			Element e = !(q.hasAggregators() && q.hasGroupBy() && q.hasValues() && q.hasLimit() && q.hasHaving() && q.hasLimit())
+			Element e = !(q.hasAggregators() && q.hasGroupBy() && q.hasValues() && q.hasHaving() && q.hasOffset() && q.hasLimit())
 					? q.getQueryPattern()
 					: new ElementSubQuery(q);
 			resultElements.add(e);

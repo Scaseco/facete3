@@ -49,6 +49,7 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -70,7 +71,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -101,6 +101,7 @@ import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.XSD;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.hobbit.benchmark.faceted_browsing.v2.main.RdfWorkflowSpec;
@@ -292,8 +293,8 @@ public class TaskGenerator {
 		return querySupplier;
 	}
 
-	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn) throws Exception {
-		TaskGenerator result = autoConfigure(random, conn, null);
+	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn, boolean useCache) throws Exception {
+		TaskGenerator result = autoConfigure(random, conn, null, useCache);
 		return result;
 	}
 	
@@ -320,18 +321,28 @@ public class TaskGenerator {
 	 * @param dataSummary
 	 * @return
 	 */
-	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn, Model dataSummary) throws Exception {
+	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn, Model dataSummary, boolean useCache) throws Exception {
 
 		logger.info("Starting analyzing numeric properties...");
 		Model model = new RdfWorkflowSpec()
 				.deriveDatasetWithSparql(conn, "analyze-numeric-properties.sparql")
-				.cache()
+				.cache(useCache)
 				.getModel();		
 
-		List<SetSummary> numericProperties = model.listSubjects()
-				//.filterKeep() // TODO Filter by numerc property
-				.mapWith(s -> s.as(SetSummary.class))
-				.toList();
+		String numericRangeQueryStr = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT DISTINCT  ?p { ?p rdfs:range [ rdfs:subClassOf* xsd:numeric ] }";
+		List<SetSummary> numericProperties = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
+			.map(b -> b.getResource("p").as(SetSummary.class))
+			.toList()
+			.blockingGet();
+		
+//		Resource xsdNumeric = ResourceFactory.createResource(XSD.NS + "numeric");
+//		List<SetSummary> numericProperties = model.listSubjects()
+//				
+//				.filterKeep(r -> Optional.ofNullable(r.getPropertyResourceValue(RDFS.range))
+//						.map(x -> x.hasProperty(RDFS.subClassOf, xsdNumeric)).orElse(false))
+//				//.filterKeep() // TODO Filter by numerc property
+//				.mapWith(s -> s.as(SetSummary.class))
+//				.toList();
 		
 //		List<SetSummary> numericProperties = DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet();
 		logger.info("Done analyzing numeric properties");
@@ -350,7 +361,7 @@ public class TaskGenerator {
 
 			 dataSummary = new RdfWorkflowSpec()
 				.deriveDatasetWithFunction(conn, "path-finding-summary", () -> system.computeDataSummary(conn).blockingGet())
-				.cache()
+				.cache(useCache)
 				.getModel();
 				logger.info("Created path finding data summary");
 			
@@ -365,9 +376,11 @@ public class TaskGenerator {
 
 		logger.info("Loaded " + dataSummary.size() + " triples");
 		// Select only the most common relations
-		dataSummary = QueryExecutionFactory.create("CONSTRUCT { ?s ?p ?o . ?s <http://www.w3.org/2002/07/owl#inverseOf> ?x . ?x ?y ?z} WHERE { { SELECT DISTINCT ?s { ?s <http://www.example.org/count> ?c . } ORDER BY DESC(?c) LIMIT 1000 } ?s ?p ?o . OPTIONAL { ?s <http://www.w3.org/2002/07/owl#inverseOf> ?x . ?x ?y ?z } }", dataSummary).execConstruct();
-		//Model subModel = QueryExecutionFactory.create("CONSTRUCT { }", model);
-		logger.info("Reduced to " + dataSummary.size() + " triples");
+		
+		
+//		dataSummary = QueryExecutionFactory.create("CONSTRUCT { ?s ?p ?o . ?s <http://www.w3.org/2002/07/owl#inverseOf> ?x . ?x ?y ?z} WHERE { { SELECT DISTINCT ?s { ?s <http://www.example.org/count> ?c . } ORDER BY DESC(?c) LIMIT 1000 } ?s ?p ?o . OPTIONAL { ?s <http://www.w3.org/2002/07/owl#inverseOf> ?x . ?x ?y ?z } }", dataSummary).execConstruct();
+//		//Model subModel = QueryExecutionFactory.create("CONSTRUCT { }", model);
+//		logger.info("Reduced to " + dataSummary.size() + " triples");
 
 
 		// Build a path finder; for this, first obtain a factory from the system
