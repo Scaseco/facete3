@@ -97,6 +97,7 @@ import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.util.NodeUtils;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
@@ -1304,8 +1305,9 @@ public class TaskGenerator {
 					ps = target
 							.fwd().facets()
 							.filter(numProps)
-							.pseudoRandom(pseudoRandom)
-							.exec().map(RDFNode::asNode).toList().blockingGet();
+							//.pseudoRandom(pseudoRandom)
+							.exec()
+							.map(RDFNode::asNode).toSortedList(NodeUtils::compareRDFTerms).blockingGet();
 				}
 
 				for (Node p : ps) {
@@ -1317,8 +1319,9 @@ public class TaskGenerator {
 
 					FacetNode v = target.fwd(p).one();
 					Map<Node, Long> distribution = target.fwd().nonConstrainedFacetValueCounts()//.facetValueCounts()
-							.filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)"))
-							.pseudoRandom(pseudoRandom)
+							.only(p)
+							//.filter(Concept.parse("?s | FILTER(?s = <" + p.getURI() + ">)"))
+							//.pseudoRandom(pseudoRandom)
 							.exec()
 							.toMap(FacetValueCount::getValue, x -> x.getFocusCount().getCount(), LinkedHashMap::new)
 							.blockingGet();
