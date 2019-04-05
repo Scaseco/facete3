@@ -27,6 +27,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
@@ -329,7 +330,7 @@ public class RdfWorkflowSpec {
 		return new ModelCreationImpl<Flowable<Resource>>(
 				() -> ModelCreationImpl.deriveDatasetIri(conn),
 				cacheId,
-				() -> ReactiveSparqlUtils.execPartitioned(conn, partitionedQuery),
+				() -> ReactiveSparqlUtils.execPartitioned(conn, partitionedQuery).map(RDFNode::asResource),
 				(cacheFile, result) -> RDFDataMgrRx.writeResources(result, cacheFile, RDFFormat.TRIG),
 				cacheFile -> RDFDataMgrRx.createFlowableResources(() -> new FileInputStream(cacheFile.toFile()), Lang.TRIG, cacheFile.toAbsolutePath().toString())
 			);

@@ -45,8 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
-import com.eccenca.access_control.property_based.core.GenericLayer;
 import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
+import com.eccenca.access_control.triple_based.core.GenericLayer;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.ObjectArrays;
