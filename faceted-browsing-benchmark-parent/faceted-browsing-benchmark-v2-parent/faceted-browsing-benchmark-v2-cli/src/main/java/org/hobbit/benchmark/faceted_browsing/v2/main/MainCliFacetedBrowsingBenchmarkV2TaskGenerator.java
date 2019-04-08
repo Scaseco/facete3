@@ -119,7 +119,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			RDFConnectionMetaData metadata = ModelFactory.createDefaultModel()
 					.createResource().as(RDFConnectionMetaData.class);
 
-			String id = nonOptionArgs.stream().collect(Collectors.joining("---"));
+			String id = paths.stream().map(Object::toString).collect(Collectors.joining("---"));
 			id = StringUtils.urlEncode(id);
 			id = id.replaceAll("%2F", "_");
 			metadata.setServiceURL(id);
