@@ -1,0 +1,25 @@
+#!/usr/bin/sparql-integrate
+
+SELECT * {
+
+SERVICE <http://localhost:8890/sparql> {
+
+SELECT ?p1 ?p2 ?p3
+  (COUNT(DISTINCT ?s) AS ?cs)
+  (COUNT(DISTINCT ?o1) AS ?c1) (COUNT(DISTINCT ?o2) AS ?c2)
+  (COUNT(DISTINCT ?o3) AS ?c3)
+# FROM <http://dbpedia.org>
+{
+  ?s a <http://dbpedia.org/ontology/MusicalArtist> .
+  ?s  ?p1 ?o1 .
+  ?o1 ?p2 ?o2 .
+  ?o2 ?p3 ?o3 .
+  FILTER(STRSTARTS(STR(?p1), 'http://dbpedia.org/ontology/'))
+  FILTER(STRSTARTS(STR(?p2), 'http://dbpedia.org/ontology/'))
+  FILTER(STRSTARTS(STR(?p3), 'http://dbpedia.org/ontology/'))
+} GROUP BY ?p1 ?p2 ?p3
+
+}
+
+}
+

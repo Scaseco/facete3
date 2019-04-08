@@ -37,6 +37,8 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.lang.arq.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.Iterables;
@@ -77,6 +79,8 @@ class OpLoadFileOrUrl {
 class ModelCreationImpl<T>
 	implements ModelCreation<T>
 {	
+	private static final Logger logger = LoggerFactory.getLogger(RdfWorkflowSpec.class);	
+	
 	protected Supplier<String> datasetIri;
 	protected String cacheId;
 	protected Supplier<? extends T> resultSupplier;
@@ -265,6 +269,7 @@ class ModelCreationImpl<T>
 			Files.createDirectories(cacheFolder);
 			
 			cacheFile = cacheFolder.resolve("data.ttl");
+			logger.debug("Loading data from cache " + cacheFile);
 		}
 		
 		if(allowCacheRead && Files.exists(cacheFile)) {
@@ -303,6 +308,7 @@ interface ModelFile {
 }
 
 public class RdfWorkflowSpec {
+	
 	protected Map<SparqlServiceReference, Function<SparqlServiceReference, RDFConnection>> rdfConnectionFactoryRegistory = new LinkedHashMap<>();
 	
 	public RdfWorkflowSpec registerConnectionFactory(SparqlServiceReference ssr, Function<SparqlServiceReference, RDFConnection> fn) {

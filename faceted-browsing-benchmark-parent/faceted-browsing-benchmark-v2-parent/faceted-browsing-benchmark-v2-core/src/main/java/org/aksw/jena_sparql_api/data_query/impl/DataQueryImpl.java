@@ -26,6 +26,8 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarP
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
+import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -687,16 +689,21 @@ public class DataQueryImpl<T extends RDFNode>
         		// but does not reverse the renaming - so we need to do it explicitly here
         		// (also, without reversing, variable syntax is invalid, such as "?/0")
         		op = Rename.reverseVarRename(op, true);
-        		op = TransformPushFiltersIntoBGP.transform(op);
-        		
-        		op = TransformDeduplicatePatterns.transform(op);
-        		
-        		op = TransformRedundantFilterRemoval.transform(op);
 
-        		op = TransformPullFiltersIfCanMergeBGPs.transform(op);
-        		op = Transformer.transform(new TransformMergeBGPs(), op);
+        		op = FixpointIteration.apply(op, x -> {
+            		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
+            		x = Transformer.transform(new TransformMergeBGPs(), x);
+            		return x;
+        		});
+
+        		op = TransformPushFiltersIntoBGP.transform(op);
+
+        		//op = TransformDeduplicatePatterns.transform(op);
         		
-        		op = TransformFilterSimplify.transform(op);
+        		//op = TransformRedundantFilterRemoval.transform(op);
+
+        		
+        		//op = TransformFilterSimplify.transform(op);
 
         		op = TransformFilterFalseToEmptyTable.transform(op);
         		op = TransformPromoteTableEmptyVarPreserving.transform(op);

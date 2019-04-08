@@ -1,29 +1,17 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.OutputStream;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.FacetedQuery;
-import org.aksw.facete.v3.impl.FacetedQueryImpl;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
-import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
-import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
@@ -34,8 +22,6 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.resultset.ResultSetMem;
-import org.apache.jena.sparql.util.NodeUtils;
-import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
@@ -45,15 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
-import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
-import com.eccenca.access_control.triple_based.core.GenericLayer;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.ObjectArrays;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.TreeMultimap;
-
-import io.reactivex.Flowable;
 
 
 
@@ -70,109 +48,6 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedBrowsingBenchmarkV2TaskGenerator.class);
 		
 
-//	public static void simplifyFilters(Expr expr) {
-//		Set<Set<Expr>> dnf = DnfUtils.toSetDnf(expr);
-//
-//	}
-	
-	
-	
-	public static void allocateAllowedPredicates(RDFConnectionEx conn) throws Exception {
-		FacetedQuery fq = FacetedQueryImpl.create(conn);
-		
-		Entry<Node, Query> ffq = fq.focus().fwd().facetFocusCounts(false).toConstructQuery();
-		System.out.println("Facetcount query: " + ffq);
-		Flowable<FacetCount> facetFocusCounts = new RdfWorkflowSpec()
-				.execFlowable(conn, ffq)
-				.cache(true)
-				.getModel()
-				.map(r -> r.as(FacetCount.class));
-		
-		facetFocusCounts.toList().blockingGet();
-
-		
-		Entry<Node, Query> fcq = fq.focus().fwd().facetCounts().toConstructQuery();
-		System.out.println("Facetcount query: " + fcq);
-		Flowable<FacetCount> facetCounts = new RdfWorkflowSpec()
-				.execFlowable(conn,fcq)
-				.cache(true)
-				.getModel()
-				.map(r -> r.as(FacetCount.class));
-
-		facetCounts.toList().blockingGet();
-		
-		
-		Entry<Node, Query> qq = fq.focus().fwd().facetValueCounts().only(RDF.type).toConstructQuery();
-		
-		System.out.println(qq);
-		// Actually we want to cache the result as a stream...
-		//ReactiveSparqlUtils.
-		
-		Flowable<FacetValueCount> facetValueCounts = new RdfWorkflowSpec()
-			.execFlowable(conn, qq)
-			.cache(true)
-			.getModel()
-			.map(r -> r.as(FacetValueCount.class));
-		
-		// predicate to objects to counts
-		
-		// TODO This blockingGet in map is ugly - get rid of it!
-		System.out.println("Here");
-		Map<Node, Map<Node, Long>> poc = facetValueCounts.toList().blockingGet().stream()
-				.collect(Collectors.groupingBy(FacetValueCount::getPredicate,
-						Collectors.groupingBy(FacetValueCount::getValue, Collectors.summingLong(x -> x.getFocusCount().getCount()))));
-
-//		Map<Node, Map<Node, Long>> poc = facetValueCounts
-//				.groupBy(FacetValueCount::getPredicate)
-//				.map(g -> Maps.immutableEntry(g.getKey(), g.toMap(FacetValueCount::getValue, x -> x.getFocusCount().getCount()).blockingGet()))
-//				.toMap(Entry::getKey, Entry::getValue)
-//				.blockingGet();
-		
-		
-		Map<Node, Long> pc = poc.entrySet().stream()
-				.collect(Collectors.toMap(
-						Entry::getKey,
-						e -> e.getValue().values().stream().mapToLong(Long::longValue).sum()));
-		
-		Multimap<Long, Node> ipc = Multimaps.invertFrom(Multimaps.forMap(pc), TreeMultimap.<Long, Node>create(Ordering.natural().reversed(), NodeUtils::compareRDFTerms));
-
-		ipc.asMap().entrySet().forEach(x -> System.out.println(x.getValue().size() < 10 ? "" + x : "" + x.getKey() + ": " + x.getValue().size()));
-
-//		for(Entry<Long, Collectio> e : ipc.entrySet()) {
-//			System.out.println(e);
-//		}
-		
-		
-				//.toMap(GroupedFlowable::getKey);
-			
-			//.toMultimap(r -> r.getPredicate(), r -> ((Number)r.getValue().getLiteralValue()).longValue());
-		
-		
-		facetValueCounts.blockingForEach(x -> System.out.println(x));
-		// Now query by the model by the template pattern
-		
-//		System.out.println();
-//		
-//		Map<CountInfo, Collection<Node>> map = fq.focus().fwd().facetFocusCounts(false).exec()
-//			.toMultimap(FacetCount::getDistinctValueCount, FacetCount::getPredicate, () -> new TreeMap<>(Ordering.natural().reversed()))
-//			.blockingGet();
-		
-//		map.entrySet().forEach(x -> System.out.println(x.getValue().size() < 10 ? "" + x : "" + x.getKey() + ": " + x.getValue().size()));
-		 
-		
-//		Query query = QueryFactory.create("SELECT * { ?s a ?t . ?t ?y  ?z . FILTER(?y = <http://www.example.org/foo> && ?z = <http://www.example.org/bar>)}");
-		Query query = QueryFactory.create("SELECT * { ?s ?p ?o . ?o ?y ?z }");
-		
-		GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery("SELECT ?s ?p ?o { ?s ?p ?o FILTER(?p = rdf:type && ?o IN (rdfs:Class, owl:Class) || ?p != rdf:type) }"));
-		Query q = ElementTransformTripleRewrite.transform(query, layer, true);
-		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
-		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
-		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
-
-		System.out.println(q);
-		//return
-	}
-	
 	
 	public static void main(String[] args) throws Exception {
 	
@@ -231,9 +106,6 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 		
 		try(RDFConnectionEx conn = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription)) {
 		
-			allocateAllowedPredicates(conn);
-			
-			if(true) return;
 			
 			Random random = new Random(0);
 

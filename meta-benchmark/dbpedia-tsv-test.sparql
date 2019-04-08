@@ -1,0 +1,7 @@
+SELECT * {
+
+SERVICE <http://localhost:8890/sparql> {
+SELECT * { ?s ?p ?o } LIMIT 10
+}
+
+}
