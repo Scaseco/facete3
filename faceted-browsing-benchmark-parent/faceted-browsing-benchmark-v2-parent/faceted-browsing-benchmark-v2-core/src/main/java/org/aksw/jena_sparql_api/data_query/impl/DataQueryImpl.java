@@ -697,13 +697,9 @@ public class DataQueryImpl<T extends RDFNode>
         		});
 
         		op = TransformPushFiltersIntoBGP.transform(op);
-
-        		//op = TransformDeduplicatePatterns.transform(op);
-        		
-        		//op = TransformRedundantFilterRemoval.transform(op);
-
-        		
-        		//op = TransformFilterSimplify.transform(op);
+        		op = TransformDeduplicatePatterns.transform(op);        		
+        		op = TransformRedundantFilterRemoval.transform(op);
+        		op = TransformFilterSimplify.transform(op);
 
         		op = TransformFilterFalseToEmptyTable.transform(op);
         		op = TransformPromoteTableEmptyVarPreserving.transform(op);

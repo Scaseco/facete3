@@ -18,10 +18,10 @@
 		<module>faceted-browsing-benchmark-v2-hobbit</module>
 		<module>faceted-browsing-benchmark-v2-docker-parent</module>
 
-
+<!--
 		<module>facete3-cli</module>
 		<module>facete3-debian-cli</module>
-
+-->
 	</modules>
 
 </project>

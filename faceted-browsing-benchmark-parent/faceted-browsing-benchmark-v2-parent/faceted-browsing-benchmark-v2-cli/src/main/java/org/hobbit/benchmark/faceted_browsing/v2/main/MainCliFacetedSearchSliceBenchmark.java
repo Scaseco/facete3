@@ -26,11 +26,11 @@ import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystem3;
-import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -261,7 +261,7 @@ public class MainCliFacetedSearchSliceBenchmark {
 	}
 
 	public static Query toQuery(Collection<Entry<Node, Node>> es) {
-		Expr expr = toExpr(Vars.s, Vars.o, es);
+		Expr expr = toExpr(Vars.p, Vars.o, es);
 
 		Query result = new Query();
 		result.setQuerySelectType();
@@ -436,7 +436,7 @@ public class MainCliFacetedSearchSliceBenchmark {
 		GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery(view));
 		
 		
-		Query query = QueryFactory.create("SELECT * { ?x ?y ?z }");
+		Query query = QueryFactory.create("SELECT (COUNT(*) AS ?c) { ?x ?y ?z }");
 //		"SELECT DISTINCT ?p1 ?p2 ?p3 ?p4 (COUNT(DISTINCT ?s) AS ?cs) (COUNT(DISTINCT ?o1) AS ?c1) (COUNT(DISTINCT ?o2) AS ?c2) (COUNT(DISTINCT ?o3) AS ?c3) (COUNT(DISTINCT ?o4) AS ?c4){\n" + 
 //		"  ?s a <http://dbpedia.org/ontology/MusicalArtist> .\n" + 
 //		"  ?s  ?p1 ?o1 .\n" + 
@@ -449,6 +449,8 @@ public class MainCliFacetedSearchSliceBenchmark {
 		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
 
 		System.out.println(q);
+		Integer count = ServiceUtils.fetchInteger(conn.query(q), Vars.c);
+		System.out.println("Counted: " + count);
 		
 	//	for(Entry<Long, Collectio> e : ipc.entrySet()) {
 	//		System.out.println(e);
