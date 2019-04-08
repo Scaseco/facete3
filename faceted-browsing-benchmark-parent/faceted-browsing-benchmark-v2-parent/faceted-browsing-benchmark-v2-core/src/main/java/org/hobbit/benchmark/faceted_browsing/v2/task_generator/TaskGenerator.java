@@ -81,6 +81,8 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_GreaterThan;
@@ -818,6 +820,9 @@ public class TaskGenerator {
 		Entry<Node, Query> e = dq.toConstructQuery();
 		Query q = e.getValue();
 
+		// Convert to select query
+		q = OpAsQuery.asQuery(Algebra.compile(q));
+		
 		SparqlTaskResource result = ModelFactory.createDefaultModel()
 				.createResource()
 				.as(SparqlTaskResource.class)

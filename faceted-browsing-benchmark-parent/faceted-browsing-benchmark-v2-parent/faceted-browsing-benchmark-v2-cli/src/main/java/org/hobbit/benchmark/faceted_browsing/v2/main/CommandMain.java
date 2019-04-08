@@ -23,9 +23,9 @@ import com.beust.jcommander.Parameters;
 public interface CommandMain
 		extends Resource
 {	
-//		@Iri("eg:nonOptionArg")
-//		List<String> getNonOptionArgs();
-
+	@Iri("eg:nonOptionArg")
+	List<String> getNonOptionArgs();
+	
 	@Iri("eg:sparqlEndpoint")
 	String getSparqlEndpoint();
 
@@ -44,10 +44,10 @@ public interface CommandMain
 	@Parameter(names={"-h", "--help"}, help=true)
 	CommandMain setHelp(boolean help);
 	
-//		@Parameter(description = "Non option args")
-//		CommandMain setNonOptionArgs(List<String> args);
+	@Parameter(description = "Non option args")
+	CommandMain setNonOptionArgs(List<String> args);
 
-	@Parameter(names="-e", required=true, description="SPARQL Endpoint")
+	@Parameter(names="-e", description="SPARQL Endpoint")
 	CommandMain setSparqlEndpoint(String sparqlEndpoint);
 
 	@Parameter(names="-d", description="Default Graph URIs")

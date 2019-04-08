@@ -1,9 +1,14 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
+import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
@@ -17,6 +22,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -87,13 +93,56 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			return;
 		}
 		
+		RDFConnectionEx connTmp;
+		
+		List<String> nonOptionArgs = cmMain.getNonOptionArgs();
 		String sparqEndpoint = cmMain.getSparqlEndpoint();
 
-		DatasetDescription datasetDescription = new DatasetDescription();
-		datasetDescription.addAllDefaultGraphURIs(cmMain.getDefaultGraphUris());
-		
-				
-				//RDFConnectionFactory.connect(sparqEndpoint);
+		if(!nonOptionArgs.isEmpty()) {
+			
+			// Make paths absolute
+			List<Path> paths = nonOptionArgs.stream()
+					.map(Paths::get)
+					.map(Path::toAbsolutePath)
+					.collect(Collectors.toList());
+			
+			if(sparqEndpoint != null) {
+				throw new RuntimeException("Cannot mix file and sparql enpdoint sources");
+			}
+			
+			Model model = ModelFactory.createDefaultModel();
+			for(Path arg : paths) {
+				Model contrib = RDFDataMgr.loadModel(arg.toString());
+				model.add(contrib);
+			}
+			
+			RDFConnectionMetaData metadata = ModelFactory.createDefaultModel()
+					.createResource().as(RDFConnectionMetaData.class);
+
+			String id = nonOptionArgs.stream().collect(Collectors.joining("---"));
+			id = StringUtils.urlEncode(id);
+			id = id.replaceAll("%2F", "_");
+			metadata.setServiceURL(id);
+
+			
+			connTmp = RDFConnectionFactoryEx.wrap(
+					RDFConnectionFactory.connect(DatasetFactory.wrap(model)),
+					metadata);			
+//			if(cmMain.getNonOptionArgs().size() > 1) {
+//				throw new RuntimeException("Only 1 non-option argument expected");
+//			}
+		} else {
+			
+//			String sparqEndpoint = cmMain.getSparqlEndpoint();
+	
+			DatasetDescription datasetDescription = new DatasetDescription();
+			datasetDescription.addAllDefaultGraphURIs(cmMain.getDefaultGraphUris());
+			
+					
+					//RDFConnectionFactory.connect(sparqEndpoint);
+
+			connTmp = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription);
+		}				
 		
 		String dataSummaryUri = cmMain.getPathFindingDataSummaryUri();
 		Model dataSummaryModel = null;
@@ -102,9 +151,9 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			dataSummaryModel = RDFDataMgr.loadModel(dataSummaryUri);
 			logger.info("Done loading path finding data summary from" + dataSummaryUri);
 		}
-				
 		
-		try(RDFConnectionEx conn = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription)) {
+		
+		try(RDFConnectionEx conn = connTmp) {
 		
 			
 			Random random = new Random(0);
