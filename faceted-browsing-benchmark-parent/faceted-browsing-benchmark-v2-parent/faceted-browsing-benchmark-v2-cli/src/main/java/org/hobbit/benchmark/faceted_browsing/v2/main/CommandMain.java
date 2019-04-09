@@ -56,13 +56,23 @@ public interface CommandMain
 	@Parameter(names="-d", description="Default Graph URIs")
 	CommandMain setDefaultGraphUris(List<String> args);
 
-	@Parameter(names="-c", description="SPARQL Endpoint")
+	@Parameter(names="-c", description="Benchmark generator config file")
 	CommandMain setConfig(String config);
 
 
 	@Parameter(names="-s", description="Data Summary")
 	CommandMain setPathFindingDataSummaryUri(String file);
 
+	
+	// TODO Does not belong here
+	@Parameter(names="-t", description="Suffix tag for generated resources")
+	CommandMain setTag(String config);
+
+	@Iri("eg:tag")
+	String getTag();
+
+	
+	
 //		@Parameter(names={"--r"}, description="Fraction of events to read from input - e.g . 0.5 for half of it")
 //		public Long eventsRatio = null;
 //
