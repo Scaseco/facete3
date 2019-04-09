@@ -300,7 +300,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 					tmp.addLiteral(FacetedBrowsingVocab.sequenceId, i);
 
 					
-					RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
+					//RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
 					//SparqlStmt stmt = SparqlTaskResource.parse(tmp);
 					//System.out.println("Query: " + stmt);
 
