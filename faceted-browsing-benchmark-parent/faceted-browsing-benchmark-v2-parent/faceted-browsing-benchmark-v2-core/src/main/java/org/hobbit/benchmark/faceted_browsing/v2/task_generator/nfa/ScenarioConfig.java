@@ -17,8 +17,22 @@ public interface ScenarioConfig
 	@IriNs("eg")
 	Nfa getNfa();
 
+	
+	@IriNs("eg")
+//	RdfRange getScenarioLength();
+	Integer getNumScenarios();
+
+	@IriNs("eg")
+//	RdfRange getScenarioLength();
+	Integer getNumWarmups();
+
+	
 	ScenarioConfig setRandomSeed(Integer randomSeed);
 //	ScenarioConfig setScenarioLength(Resource range);
 	ScenarioConfig setScenarioLength(Integer scenarioLength);	
 	ScenarioConfig setNfa(Resource nfa);
+
+	ScenarioConfig setNumScenarios(Integer numScenarios);	
+	ScenarioConfig setNumWarmups(Integer numWarmups);
+
 }

@@ -120,7 +120,13 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 				return;
 			}
 			
-			String config = cmMain.getConfig();			
+			String configUri = cmMain.getConfig();			
+			if(configUri == null) {
+				configUri = "config-all.ttl";
+			}
+
+			ScenarioConfig config = TaskGenerator.extractScenarioConfig(configUri);			
+			
 			
 			RDFConnectionEx rawConnEx;
 			
@@ -284,22 +290,47 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			SparqlTaskResource tmp = null;
 			
 			
+			Integer numScenarios = config.getNumScenarios();
+			Integer numWarmups = config.getNumWarmups();
+		
+			logger.info("Num warmups  : " + numWarmups);
+			logger.info("Num scenarios: " + numScenarios);
+			
+			int numTotalScenarios = numScenarios + numWarmups;
 			
 			//try(OutputStream eventOutStream = new FileOutputStream("/tmp/hobbit-tasks.ttl")) {
 			OutputStream eventOutStream = System.out;
 //					try(OutputStream eventOutStream = new MetaBZip2CompressorInputStream(MainFacetedBrowsingBenchmarkV2Run.class.getResourceAsStream("hobbit-sensor-stream-150k-events.trig.bz2"))) {
 
+				int lastSeenScenario = -1;
+				
+				int scenarioCounter = 0;
 				
 				//List<String> 
 				for(int i = 0; (tmp = taskSupplier.call()) != null; ++i) {			
 					int scenarioId = ResourceUtils.tryGetLiteralPropertyValue(tmp, FacetedBrowsingVocab.scenarioId, Integer.class)
 						.orElseThrow(() -> new RuntimeException("no scenario id"));
 
+					if(scenarioId != lastSeenScenario) {
+						lastSeenScenario = scenarioId;
+						++scenarioCounter;
+					}
+					
+					if(scenarioCounter > numTotalScenarios) {
+						break;
+					}
+
+
+					if(scenarioCounter <= numWarmups) {
+						tmp.addLiteral(FacetedBrowsingVocab.warmup, true);						
+						tmp = org.apache.jena.util.ResourceUtils.renameResource(tmp, tmp.getURI() + "-warmup").as(SparqlTaskResource.class);
+					}
+
+					
 					//System.out.println("GENERATED TASK: " + tmp.getURI());
 					logger.info("GENERATED TASK: " + tmp.getURI());
 					tmp.addLiteral(FacetedBrowsingVocab.sequenceId, i);
-
-					
+										
 					//RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
 					//SparqlStmt stmt = SparqlTaskResource.parse(tmp);
 					//System.out.println("Query: " + stmt);
@@ -328,11 +359,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 						RDFDataMgr.write(eventOutStream, model, RDFFormat.TURTLE_PRETTY);								
 					}
 					eventOutStream.flush();
-					
-					if(scenarioId > 10) {
-						break;
-					}
-					
+										
 					//System.out.println(i + ": " + SparqlTaskResource.parse(tmp));
 					
 //						try(SPARQLResultEx srx = SparqlStmtUtils.execAny(conn, stmt)) {

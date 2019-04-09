@@ -10,9 +10,9 @@
 :defaultScenarioConfig
   a o:ScenarioConfig ;
   o:randomSeed 1000 ;
-  o:scenarioLength [ o:min 4; o:max 8; o:type xsd:integer] ;
-  o:numScenarios 10 ;
-  o:numWarmups 2 ;
+  o:scenarioLength [ o:min 3; o:max 3; o:type xsd:integer] ;
+  o:numScenarios 1 ;
+  o:numWarmups 1 ;
   o:nfa [
     o:startState o:state1 ;
     o:transition [

@@ -136,7 +136,7 @@ public class TaskGenerator {
 	protected ConceptPathFinder conceptPathFinder;
 	protected Random rand;
 	protected Random pseudoRandom;
-	protected Model configModel;
+	protected ScenarioConfig scenarioTemplate;
 
 //protected RdfChangeTracker state;
 
@@ -146,8 +146,8 @@ public class TaskGenerator {
 	protected FacetedQuery currentQuery;
 
 
-	public TaskGenerator(Model configModel, Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
-		this.configModel = configModel;
+	public TaskGenerator(ScenarioConfig scenarioTemplate, Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
+		this.scenarioTemplate = scenarioTemplate;
 		this.conn = conn;
 		this.numericProperties = numericProperties;
 		this.rand = random;
@@ -298,7 +298,7 @@ public class TaskGenerator {
 		return querySupplier;
 	}
 
-	public static TaskGenerator autoConfigure(String config, Random random, RDFConnectionEx conn, boolean useCache) throws Exception {
+	public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RDFConnectionEx conn, boolean useCache) throws Exception {
 		TaskGenerator result = autoConfigure(config, random, conn, null, useCache);
 		return result;
 	}
@@ -315,6 +315,27 @@ public class TaskGenerator {
 //	}
 	
 
+	public static ScenarioConfig extractScenarioConfig(String uri) {
+		Model configModel = RDFDataMgr.loadModel(uri);
+		
+		ScenarioConfig result = extractScenarioConfig(configModel);
+		return result;
+	}
+	
+	public static ScenarioConfig extractScenarioConfig(Model configModel) {
+		RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
+
+		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
+
+		Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
+				.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
+
+		ScenarioConfig result = configRes.as(ScenarioConfig.class);
+
+		return result;
+	}
+	
+
 	/**
 	 * The auto configuration procedure generates the necessary benchmark artifacts,
 	 * namely:
@@ -326,10 +347,10 @@ public class TaskGenerator {
 	 * @param dataSummary
 	 * @return
 	 */
-	public static TaskGenerator autoConfigure(String config, Random random, RDFConnectionEx conn, Model dataSummary, boolean useCache) throws Exception {
+	public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RDFConnectionEx conn, Model dataSummary, boolean useCache) throws Exception {
 
 		if(config == null) {
-			config = "config-all.ttl";
+			config = extractScenarioConfig("config-all.ttl");
 		}
 
 		logger.info("Starting analyzing numeric properties...");
@@ -403,15 +424,10 @@ public class TaskGenerator {
 				.addPathValidator(TaskGenerator::rejectConsecutiveReverseProperty)
 				.build();
 
-
 //		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
-
+		//Model configModel = RDFDataMgr.loadModel(config);
 		
-		
-		Model configModel = RDFDataMgr.loadModel(config);
-
-		
-		TaskGenerator result = new TaskGenerator(configModel, random, conn, numericProperties, pathFinder);
+		TaskGenerator result = new TaskGenerator(config, random, conn, numericProperties, pathFinder);
 		return result;
 	}
 	
@@ -690,15 +706,20 @@ public class TaskGenerator {
 		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
 
-		RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
-
-		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
-
-		Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
-				.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
-
+//		RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
+//
+//		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
+//
+//		Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
+//				.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
+//
+//		
+//		ScenarioConfig scenarioTemplate = configRes.as(ScenarioConfig.class);
 		
-		ScenarioConfig scenarioTemplate = configRes.as(ScenarioConfig.class);
+//		Model copyModel = ModelFactory.createDefaultModel();
+//		copyModel.add(scenarioTemplate.getModel());
+//		
+//		ScenarioConfig copy = scenarioTemplate.inModel(copyModel).as(ScenarioConfig.class);
 		
 		Nfa nfa = scenarioTemplate.getNfa();
 		Collection<NfaTransition> transitions = nfa.getTransitions();

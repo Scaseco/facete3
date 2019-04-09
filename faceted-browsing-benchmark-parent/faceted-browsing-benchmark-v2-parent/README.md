@@ -6,6 +6,7 @@ This benchmark comes with command line tools for data generation, benchmark gene
 
 
 * `-c` config resource (file, classpath resource or URL - via Jena)
+    * `config-tiny.ttl` - 1 scenario, 1 warmup, 3 tasks (with 3 queries each)
     * `config-all.ttl`
     * `config-no-ranges.ttl`
 
