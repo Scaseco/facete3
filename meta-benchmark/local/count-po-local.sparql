@@ -1,0 +1,8 @@
+#!/usr/bin/sparql-integrate
+
+SELECT * {
+  SERVICE <http://localhost:8890/sparql> {
+    SELECT ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?p
+  }
+}
+

@@ -136,6 +136,7 @@ public class TaskGenerator {
 	protected ConceptPathFinder conceptPathFinder;
 	protected Random rand;
 	protected Random pseudoRandom;
+	protected Model configModel;
 
 //protected RdfChangeTracker state;
 
@@ -145,7 +146,8 @@ public class TaskGenerator {
 	protected FacetedQuery currentQuery;
 
 
-	public TaskGenerator(Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
+	public TaskGenerator(Model configModel, Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
+		this.configModel = configModel;
 		this.conn = conn;
 		this.numericProperties = numericProperties;
 		this.rand = random;
@@ -296,8 +298,8 @@ public class TaskGenerator {
 		return querySupplier;
 	}
 
-	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn, boolean useCache) throws Exception {
-		TaskGenerator result = autoConfigure(random, conn, null, useCache);
+	public static TaskGenerator autoConfigure(String config, Random random, RDFConnectionEx conn, boolean useCache) throws Exception {
+		TaskGenerator result = autoConfigure(config, random, conn, null, useCache);
 		return result;
 	}
 	
@@ -324,7 +326,11 @@ public class TaskGenerator {
 	 * @param dataSummary
 	 * @return
 	 */
-	public static TaskGenerator autoConfigure(Random random, RDFConnectionEx conn, Model dataSummary, boolean useCache) throws Exception {
+	public static TaskGenerator autoConfigure(String config, Random random, RDFConnectionEx conn, Model dataSummary, boolean useCache) throws Exception {
+
+		if(config == null) {
+			config = "config-all.ttl";
+		}
 
 		logger.info("Starting analyzing numeric properties...");
 		Model model = new RdfWorkflowSpec()
@@ -394,12 +400,18 @@ public class TaskGenerator {
 				.setShortestPathsOnly(false)
 				// Skip path with immediate forward / backward traversals (or vice versa) on the same node 
 				.addPathValidator(TaskGenerator::rejectZigZagPath)
+				.addPathValidator(TaskGenerator::rejectConsecutiveReverseProperty)
 				.build();
 
 
 //		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
 
-		TaskGenerator result = new TaskGenerator(random, conn, numericProperties, pathFinder);
+		
+		
+		Model configModel = RDFDataMgr.loadModel(config);
+
+		
+		TaskGenerator result = new TaskGenerator(configModel, random, conn, numericProperties, pathFinder);
 		return result;
 	}
 	
@@ -408,11 +420,22 @@ public class TaskGenerator {
 
 		boolean result = ls == null
 				? true
-				: !(contrib.getNode().equals(ls.getNode()) && contrib.isForward() != ls.isForward());
+				: !(contrib.getNode().equals(ls.getNode()) && ls.isForward() != contrib.isForward());
 //		System.out.println("" + path + " + " + contrib + " = " + result);
 		return result;
 	}
 
+	public static boolean rejectConsecutiveReverseProperty(SimplePath path, P_Path0 contrib) {
+		P_Path0 ls = path.lastStep();
+
+		boolean result = ls == null
+				? true
+				: !(contrib.getNode().equals(ls.getNode()) && !ls.isForward() && !contrib.isForward());
+		//System.out.println("" + path + " + " + contrib + " = " + result);
+		return result;
+	}
+	
+	
 
 //	public static <T> WeightedSelector<T> createSelector(List<Entry<T, Double>> pmf, boolean drawWithReplacement) {
 //		WeightedSelectorMutable<T> result = drawWithReplacement
@@ -667,7 +690,6 @@ public class TaskGenerator {
 		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
 
-		Model configModel = RDFDataMgr.loadModel("task-generator-config.ttl");
 		RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
 
 		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
@@ -810,7 +832,7 @@ public class TaskGenerator {
 
 		List<SparqlTaskResource> result = Arrays.asList(
 			generateQuery(currentQuery.focus().availableValues().ordered().limit(1000)), // TODO Probably sort and take a limit
-			generateQuery(currentQuery.focus().fwd().facetCounts()),
+			generateQuery(currentQuery.focus().fwd().facetCounts().ordered().limit(1000)),
 			generateQuery(currentQuery.focus().fwd().facetValueCounts().ordered().limit(1000)));
 			
 		return result;
@@ -822,6 +844,7 @@ public class TaskGenerator {
 
 		// Convert to select query
 		q = OpAsQuery.asQuery(Algebra.compile(q));
+		//q.setResultVars();
 		
 		SparqlTaskResource result = ModelFactory.createDefaultModel()
 				.createResource()

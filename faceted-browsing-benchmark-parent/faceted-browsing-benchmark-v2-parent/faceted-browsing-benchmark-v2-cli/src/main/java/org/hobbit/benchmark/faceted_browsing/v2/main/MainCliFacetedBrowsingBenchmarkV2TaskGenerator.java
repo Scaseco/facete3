@@ -120,6 +120,8 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 				return;
 			}
 			
+			String config = cmMain.getConfig();			
+			
 			RDFConnectionEx rawConnEx;
 			
 			List<String> nonOptionArgs = cmMain.getNonOptionArgs();
@@ -169,6 +171,12 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 				DockerServiceDockerClient dsCore = dss.create("tenforce/virtuoso", ImmutableMap.<String, String>builder()
 						.put("SPARQL_UPDATE", "true")
 						.put("DEFAULT_GRAPH", "http://www.example.org/")
+						.put("VIRT_Parameters_NumberOfBuffers", "170000")
+						.put("VIRT_Parameters_MaxDirtyBuffers", "130000")
+						.put("VIRT_Parameters_MaxVectorSize", "1000000000")
+						.put("VIRT_SPARQL_ResultSetMaxRows", "1000000000")
+						.put("VIRT_SPARQL_MaxQueryCostEstimationTime", "0")
+						.put("VIRT_SPARQL_MaxQueryExecutionTime", "600")
 						.build());
 								
 				ds = ComponentUtils.wrapSparqlServiceWithHealthCheck(dsCore, 8890);
@@ -262,7 +270,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			Random random = new Random(0);
 
 			// One time auto config based on available data
-			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(random, conn, dataSummaryModel, true);
+			TaskGenerator taskGenerator = TaskGenerator.autoConfigure(config, random, conn, dataSummaryModel, true);
 			
 			// Now wrap the scenario supplier with the injection of sparql update statements
 			
@@ -289,11 +297,13 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 
 					//System.out.println("GENERATED TASK: " + tmp.getURI());
 					logger.info("GENERATED TASK: " + tmp.getURI());
+					tmp.addLiteral(FacetedBrowsingVocab.sequenceId, i);
+
+					
 					RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
 					//SparqlStmt stmt = SparqlTaskResource.parse(tmp);
 					//System.out.println("Query: " + stmt);
 
-					tmp.addLiteral(FacetedBrowsingVocab.sequenceId, i);
 					
 					annotateTaskWithReferenceResult(tmp, conn);
 					
@@ -309,7 +319,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 					// The old eval module applies special treatment to scenario 0
 					// We don't want that
 
-					if(false) {
+					if(true) {
 						Dataset taskData = DatasetFactory.create();
 						taskData.addNamedModel(tmp.getURI(), tmp.getModel());
 						RDFDataMgr.write(eventOutStream, taskData, RDFFormat.TRIG);

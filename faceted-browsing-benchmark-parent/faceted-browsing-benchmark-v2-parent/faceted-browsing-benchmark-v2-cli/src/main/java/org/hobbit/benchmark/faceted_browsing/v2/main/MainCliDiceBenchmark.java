@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -64,10 +65,11 @@ import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
 
+import avro.shaded.com.google.common.primitives.Ints;
 import io.reactivex.Flowable;
 
-public class MainCliFacetedSearchSliceBenchmark {	
-	private static final Logger logger = LoggerFactory.getLogger(MainCliFacetedSearchSliceBenchmark.class);
+public class MainCliDiceBenchmark {	
+	private static final Logger logger = LoggerFactory.getLogger(MainCliDiceBenchmark.class);
 
 	
 	public static void main(String[] args) throws Exception {
@@ -145,21 +147,39 @@ public class MainCliFacetedSearchSliceBenchmark {
 	
 	static class Choser {
 		
+//		public static <K, V> Entry<K, V> nearestKey(NavigableMap<K, V> map, K proto, Function<? super K, Long> distance) {
+//			K a = map.ceilingKey(proto);
+//			K b = map.floorKey(proto);
+//			
+//			if(a == null)
+//		}
+
+		public static <K, V> Entry<K, V> nearestEnty(NavigableMap<K, V> map, K proto, BiFunction<? super K, ? super K, Long> distance) {
+			Entry<K, V> a = map.floorEntry(proto);
+			Entry<K, V> b = map.ceilingEntry(proto);
+		
+			long da = a == null ? Long.MAX_VALUE : distance.apply(proto, a.getKey());
+			long db = b == null ? Long.MAX_VALUE : distance.apply(b.getKey(), proto);
+			
+			Entry<K, V> result = da <= db ? a : b; 
+			return result;
+		}
+		
 		public static <E> Set<E> chose(Map<E, Long> pc, Comparator<? super E> comparator) {
 
 
 			// Pick n properties
-			double scale = 1;
+			double scale = 0.1;
 			int numPicks = 10;
 
-			Random rand = new Random(1);
+			Random rand = new Random(1000);
 
 			// Each iteration adjust the weights, so that properties with totalSize / n have greatest weight
 			// First, 
 			
 			// With no property contributing more than m triples
 			long maxContribSize = (long)(100000 * scale);
-			long minContribSize = maxContribSize / 100;
+			long minContribSize = (long)(maxContribSize * 0.1);
 
 			// Amounting to at most triples
 			long totalSize = (long)(1000000 * scale);
@@ -168,7 +188,11 @@ public class MainCliFacetedSearchSliceBenchmark {
 			double totalTolerance = 0.1;
 			
 			
-			long maxTotalSize = (long)(1000000 * totalTolerance);
+			
+//			long minTotalSize = totalSize;
+			
+			long minTotalSize = (long)(totalSize * (1.0 -totalTolerance));
+			long maxTotalSize = (long)(totalSize * (1.0 + totalTolerance));
 			
 			//Map<E, Long> pc = null;
 			
@@ -190,30 +214,69 @@ public class MainCliFacetedSearchSliceBenchmark {
 			Set<E> chosen = new LinkedHashSet<>();
 
 			
-			for(int i = 0; i < numPicks; ++i) {
-				int remainingIterations = numPicks - i;
+			for(int i = 0; i < (numPicks * 2); ++i) {
+				int chosenSize = chosen.size();
+				
+				
+				// if we are at the last pick but have not reached the acceptance threshold,
+				// remove the smallest pick and pick again
+				if(chosenSize == numPicks) {
+						E removalItem = null;
+						if(totalChosenSize < minTotalSize) {
+							removalItem = chosen.stream().sorted((a, b) -> Ints.saturatedCast(pc.get(a) - pc.get(b))).findFirst().orElse(null);
+						} else if(totalChosenSize > maxTotalSize) {
+							removalItem = chosen.stream().sorted((a, b) -> Ints.saturatedCast(pc.get(b) - pc.get(a))).findFirst().orElse(null);						
+						}
+
+						if(removalItem != null) {
+							long reduction = pc.get(removalItem);
+							totalChosenSize -= reduction;
+							chosen.remove(removalItem);
+							--chosenSize;
+						} else {
+							break;
+						}
+//						else {
+//							throw new RuntimeException("Should not happen");
+//						}
+						
+						
+				}
+				
+				int remainingIterations = numPicks - chosenSize;
 
 				long remainingSize = totalSize - totalChosenSize / remainingIterations;
 
 		
-				double mean = remainingSize / (double)remainingIterations;
-				double stdev = remainingSize / 10.0; //totalSize / numPicks;//(double)remainingIterations;
+				double desiredMean = remainingSize / (double)remainingIterations;
+				//double stdev = Math.abs(remainingSize * 0.1); //totalSize / numPicks;//(double)remainingIterations;
 				
 				
-				System.out.println("Mean: " + mean + " - stdev: " + stdev);
+				// Set the mean to the actual value closest to it
+				Entry<Long, Collection<E>> tmpMean = Choser.nearestEnty(ipc.asMap(), (long)desiredMean, (a, b) -> a.longValue() - b.longValue());
+				double mean = tmpMean != null ? (double)tmpMean.getKey() : desiredMean;
+				
+				double stdev = 0.1 * mean;
+				
+				//System.out.println("Mean: " + mean + " - stdev: " + stdev);
 				
 //				Function<Double, Double> pmf = new Gaussian(mean, stdev)::value;
-				Function<Double, Double> pmf = v -> { double r = new Gaussian(1.0, mean, stdev).value(v); System.out.println("mean=" + mean + " value=" + v + " -> " + r); return r;};
+				Function<Double, Double> pmf = v -> {
+					//System.out.println("mean=" + mean + " value=" + v);
+					double r = new Gaussian(1.0, mean, stdev).value(v);
+//						System.out.println("mean=" + mean + " value=" + v + " -> " + r);
+					return r;
+				};
 				
 				
 				long span = to - from;
 				
-				double bucketSpan = span / (double)numPicks;
+				//double bucketSpan = span / (double)numPicks;
 				// Cut off the part of the map with maxTargetSize
 				NavigableMap<Long, Collection<E>> tmp = ipc.asMap();
 				tmp = tmp.tailMap(from, true);
 				tmp = tmp.headMap(to, true);
-				tmp.headMap(maxTotalSize, true);
+//				tmp.headMap(maxTotalSize, true);
 				
 		
 				ipc = mmSupplier.get(); //newRdfTreeMultimap();
@@ -250,9 +313,10 @@ public class MainCliFacetedSearchSliceBenchmark {
 //				}
 				
 				totalChosenSize += sizeContrib;
-				chosen.add(item);	
+				chosen.add(item);
 			}
-			
+				
+
 			System.out.println("Chose: " + totalChosenSize);
 
 			
@@ -320,13 +384,17 @@ public class MainCliFacetedSearchSliceBenchmark {
 	
 	public static void allocateAllowedPredicates(RDFConnectionEx conn) throws Exception {
 
-//		Function<Double, Double> pmf = new Gaussian(10, 5)::value;
-//		System.out.println(pmf.apply(1.0));
-//		System.out.println(pmf.apply(3.0));
-//		System.out.println(pmf.apply(5.0));
-//		System.out.println(pmf.apply(7.0));
-//		System.out.println(pmf.apply(10.0));
-
+//		double f = 1000.0;
+//		Function<Double, Double> pmf = new Gaussian(1, 5000, 500)::value;
+//		System.out.println(pmf.apply(0.0 * f));
+//		System.out.println(pmf.apply(2.5 * f));
+//		System.out.println(pmf.apply(5.0 * f));
+//		System.out.println(pmf.apply(7.5 * f));
+//		System.out.println(pmf.apply(10.0 * f));
+//		
+//		System.out.println(pmf.apply(5050.0));
+//
+//		if(true) { return; }
 
 		// Split properties into numBuckets by frequency 
 		//int numBuckets = 5;

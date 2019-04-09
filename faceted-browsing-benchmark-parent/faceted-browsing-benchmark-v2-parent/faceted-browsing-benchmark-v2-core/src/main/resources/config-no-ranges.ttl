@@ -15,86 +15,62 @@
     o:startState o:state1 ;
     o:transition [
       o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp1" ;
-      o:weight [ o:min 0.6 ; o:max 1.0 ]
-    ] ;
-    o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp2" ;
-      o:weight [ o:min 0.6 ; o:max 1.0 ]
-    ] ;
-    o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp3" ;
-      o:weight [ o:min 0.6 ; o:max 1.0 ]
-    ] ;
-    o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp4" ;
-      o:weight [ o:min 0.6 ; o:max 1.0 ]
-    ] ;
-    o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
+      o:to o:state2 ;
       o:key "cp5" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp6" ;
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp1" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp7" ;
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp2" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp8" ;
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp3" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp9" ;
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp4" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp5" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
       o:key "cp10" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
+      o:from o:state2 ;
+      o:to o:state2 ;
       o:key "cp11" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
+      o:from o:state2 ;
+      o:to o:state2 ;
       o:key "cp12" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
     o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
+      o:from o:state2 ;
+      o:to o:state2 ;
       o:key "cp13" ;
-      o:weight [ o:min 0.6 ; o:max 1.0 ]
-    ] ;
-    o:transition [
-      o:from o:state1 ;
-      o:to o:state1 ;
-      o:key "cp14" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
   ]
@@ -120,11 +96,10 @@
 
 #:automatonTemplate
 #  a o:Nfa ;
-#  o:startState o:state1 ;
+#  o:startState o:state2 ;
 #  o:transition [
-#    o:from o:state1 ;
+#    o:from o:state2 ;
 #    o:to o:state2 ;
 #    o:key "cp1" ; o:weight [ o:min 0.6 ; o:max 1.0 ]
 #  ] ;
 #  .
-

@@ -497,10 +497,8 @@ public class DataQueryImpl<T extends RDFNode>
 		//if(canAsConstruct) {
 		//}
 
-		Query c = new Query();
-		c.setQueryConstructType();
-		c.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
-		c.setQueryPattern(QueryUtils.asPatternForConstruct(query));
+		
+		Query c = selectToConstruct(query, template);
 
 //		logger.debug("After rewrite: " + query);
 
@@ -513,6 +511,33 @@ public class DataQueryImpl<T extends RDFNode>
 		return Maps.immutableEntry((Var)rootVar, c);
 	}
 
+	public static Query selectToConstruct(Query query, Template template) {
+		Query result = new Query();
+		result.setQueryConstructType();
+		result.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
+		
+		boolean canActAsConstruct = QueryUtils.canActAsConstruct(query);
+		if(canActAsConstruct) {
+			result.setQueryPattern(query.getQueryPattern());
+		} else {
+			result.setQueryPattern(new ElementSubQuery(query));
+		}
+
+		result.setLimit(query.getLimit());
+		result.setOffset(query.getOffset());
+		List<SortCondition> scs = query.getOrderBy();
+		if(scs != null) {
+			for(SortCondition sc : scs) {
+				result.addOrderBy(sc);
+			}
+			scs.clear();
+		}
+		
+		query.setLimit(Query.NOLIMIT);
+		query.setOffset(Query.NOLIMIT);
+
+		return result;
+	}
 
 	@Override
 	public Flowable<T> exec() {

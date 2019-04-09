@@ -5,6 +5,11 @@ This is a schema agnostic benchmark that will perform faceted browsing interacti
 This benchmark comes with command line tools for data generation, benchmark generation and benchmark execution.
 
 
+* `-c` config resource (file, classpath resource or URL - via Jena)
+    * `config-all.ttl`
+    * `config-no-ranges.ttl`
+
+
 * Benchmark generation
 
 Parameters

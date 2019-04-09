@@ -156,7 +156,7 @@ public class MainFacetedQueryApi {
 		
 		// One time auto config based on available data
 		Random random = new Random(0);
-		TaskGenerator taskGenerator = TaskGenerator.autoConfigure(random, conn, false);
+		TaskGenerator taskGenerator = TaskGenerator.autoConfigure(null, random, conn, false);
 		
 		// Now wrap the scenario supplier with the injection of sparql update statements
 		

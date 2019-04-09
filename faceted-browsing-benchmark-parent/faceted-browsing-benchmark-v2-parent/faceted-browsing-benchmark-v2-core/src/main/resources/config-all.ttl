@@ -1,0 +1,111 @@
+
+
+
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+#@prefix o: <http://project-hobbit.eu/ontology/>
+#@prefix o: <http://aksw.org/adhoc/ontology/> .
+@prefix o: <http://www.example.org/> .
+@prefix : <http://project-hobbit.eu/resource/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:defaultScenarioConfig
+  a o:ScenarioConfig ;
+  o:randomSeed 1000 ;
+  o:scenarioLength [ o:min 8; o:max 16; o:type xsd:integer] ;
+  o:nfa [
+    o:startState o:state1 ;
+    o:transition [
+      o:from o:state1 ;
+      o:to o:state2 ;
+      o:key "cp5" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp1" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp2" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp3" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp4" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp5" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp6" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp7" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp8" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp9" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp10" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp11" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp12" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp13" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+    o:transition [
+      o:from o:state2 ;
+      o:to o:state2 ;
+      o:key "cp14" ;
+      o:weight [ o:min 0.6 ; o:max 1.0 ]
+    ] ;
+  ]
+  .
+

@@ -29,6 +29,9 @@ public interface CommandMain
 	@Iri("eg:sparqlEndpoint")
 	String getSparqlEndpoint();
 
+	@Iri("eg:config")
+	String getConfig();
+
 	@Iri("eg:defaultGraphUris")
 	@IriType
 	List<String> getDefaultGraphUris();
@@ -52,7 +55,10 @@ public interface CommandMain
 
 	@Parameter(names="-d", description="Default Graph URIs")
 	CommandMain setDefaultGraphUris(List<String> args);
-	
+
+	@Parameter(names="-c", description="SPARQL Endpoint")
+	CommandMain setConfig(String config);
+
 
 	@Parameter(names="-s", description="Data Summary")
 	CommandMain setPathFindingDataSummaryUri(String file);
