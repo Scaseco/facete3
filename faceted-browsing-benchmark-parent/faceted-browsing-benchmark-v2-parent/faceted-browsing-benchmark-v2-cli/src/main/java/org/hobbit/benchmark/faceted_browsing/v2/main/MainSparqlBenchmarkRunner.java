@@ -20,14 +20,25 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.util.ResourceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ObjectArrays;
 
 import io.reactivex.Flowable;
 
 public class MainSparqlBenchmarkRunner {
+	private static final Logger logger = LoggerFactory.getLogger(MainSparqlBenchmarkRunner.class);
+	
+	
 	public static void main(String[] args) throws Exception {
+		// HACK/WORKAROUND for Jcommander issue
+		// https://github.com/cbeust/jcommander/issues/464
+		// Add a dummy element to initialize a list property
+		args = ObjectArrays.concat(new String[] {"-d", "foo"}, args, String.class);
+
 		
 		JenaPluginUtils.registerJenaResourceClasses(
 			CommandMain.class
@@ -73,10 +84,11 @@ public class MainSparqlBenchmarkRunner {
 				Model result = ModelFactory.createDefaultModel();
 				Resource r = task.inModel(result.add(ResourceUtils.reachableClosure(task)));
 
+				logger.info("Processing " + r);
 				//String str = task.getSparqlStmtString();
 				SparqlStmt stmt = SparqlTaskResource.parse(task);
 
-				r = ResourceUtils.renameResource(r, r.getURI() + "-" + suffix);
+				r = ResourceUtils.renameResource(r, r.getURI() + suffix);
 				r.addProperty(ResourceFactory.createProperty("http://www.example.org/origin"), task);
 				
 				
@@ -87,6 +99,8 @@ public class MainSparqlBenchmarkRunner {
 				long elapsed = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 				r.addLiteral(ResourceFactory.createProperty("http://www.example.org/elapsed"), elapsed);
 				
+				logger.info("Processed " + r + " - elapsed: " + elapsed);
+
 				Dataset x = DatasetFactory.create();
 				x.addNamedModel(r.getURI(), result);
 				return x;
