@@ -159,7 +159,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
         //seenCps.addAll(cps);
         LOGGER.info("Eval_mod task Id: "+ taskidGold);
         LOGGER.info("Scenario id: "+ scenario);
-        LOGGER.info("query: "+ query);
+        LOGGER.info("query id: "+ query);
         LOGGER.info("Chokepoints: "+ cps);
         
         QueryID key = new QueryID(scenario.byteValue(), query);

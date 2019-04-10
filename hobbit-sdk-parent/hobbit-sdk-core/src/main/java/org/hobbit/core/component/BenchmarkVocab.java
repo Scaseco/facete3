@@ -4,7 +4,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 public class BenchmarkVocab {
-	public static final String ns = "http://example.org/";
+	public static final String ns = "http://www.example.org/";
 
 	public static class Strs {
 	    public static final String taskPayload = ns + "taskPayload";

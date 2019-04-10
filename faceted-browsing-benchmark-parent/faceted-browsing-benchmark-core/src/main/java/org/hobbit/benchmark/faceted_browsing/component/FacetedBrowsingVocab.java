@@ -20,7 +20,7 @@ public class FacetedBrowsingVocab {
     
     public static final Property sequenceId = ResourceFactory.createProperty("http://www.example.org/sequenceId");
     
-    public static final Property queryId = ResourceFactory.createProperty("http://example.org/queryId");
+    public static final Property queryId = ResourceFactory.createProperty("http://www.example.org/queryId");
     public static final Property chokepointId = ResourceFactory.createProperty("http://www.example.org/chokepointId");
 
     
