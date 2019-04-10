@@ -2,50 +2,58 @@ PREFIX eg: <http://www.example.org/>
 CONSTRUCT {
   ?e0
     eg:depth 0 ;
-    eg:count ?cs ;
-    eg:transition ?e1 ;
-    .
+    eg:transition ?e1 .
 
   ?e1
     eg:depth 1 ;
     eg:predicate ?p1 ;
+#    eg:subjectCount ?cs ;
     eg:count ?c1 ;
-    eg:transition ?e2 ;
-    .
+    eg:transition ?e2 .
 
   ?e2
     eg:depth 2 ;
     eg:predicate ?p2 ;
     eg:count ?c2 ;
-    eg:transition ?e3 ;
-    .
+    eg:transition ?e3 .
 
   ?e3
     eg:depth 3 ;
     eg:count ?c3 ;
-    eg:predicate ?p3 ;
-   .
+    eg:predicate ?p3 .
 
-} WHERE {
+} {
 
-SERVICE <http://localhost:8890/sparql> {
-SELECT DISTINCT ?p1 ?p2 ?p3 (COUNT(DISTINCT ?s) AS ?cs) (COUNT(DISTINCT ?o1) AS ?c1) (COUNT(DISTINCT ?o2) AS ?c2) (COUNT(DISTINCT ?o3) AS ?c3) {
-  ?s a <http://dbpedia.org/ontology/MusicalArtist> .
-  ?s  ?p1 ?o1 .
-  ?o1 ?p2 ?o2 .
-  ?o2 ?p3 ?o3 .
+  { SELECT DISTINCT ?p1 ?p2 ?p3 (COUNT(DISTINCT ?s) AS ?cs) (COUNT(DISTINCT ?o1) AS ?c1) (COUNT(DISTINCT ?o2) AS ?c2) (COUNT(DISTINCT ?o3) AS ?c3) {
+    ?s a <http://dbpedia.org/ontology/Skyscraper> .
+    ?s  ?p1 ?o1 .
+    ?o1 ?p2 ?o2 .
+    ?o2 ?p3 ?o3 .
 
-  FILTER(STRSTARTS(STR(?p1), 'http://dbpedia.org/ontology/'))
-  FILTER(STRSTARTS(STR(?p2), 'http://dbpedia.org/ontology/'))
-  FILTER(STRSTARTS(STR(?p3), 'http://dbpedia.org/ontology/'))
+    FILTER(STRSTARTS(STR(?p1), 'http://dbpedia.org/ontology/'))
+    FILTER(STRSTARTS(STR(?p2), 'http://dbpedia.org/ontology/'))
+    FILTER(STRSTARTS(STR(?p3), 'http://dbpedia.org/ontology/'))
 
-  BIND(<http://dbpedia.org/ontology/MusicalArtist> AS ?t)
-  BIND(IRI(CONCAT(STR(?t), '-start')) AS ?e0)
+  } GROUP BY ?p1 ?p2 ?p3 }
 
-  BIND(IRI(CONCAT(STR(?p1), '-depth1')) AS ?e1)
-  BIND(IRI(CONCAT(STR(?p2), '-depth2')) AS ?e2)
-  BIND(IRI(CONCAT(STR(?p3), '-depth3')) AS ?e3)
+  # Local names
+  BIND(STRAFTER(STR(?p1), 'ontology/') AS ?x1)
+  BIND(STRAFTER(STR(?p2), 'ontology/') AS ?x2)
+  BIND(STRAFTER(STR(?p3), 'ontology/') AS ?x3)
 
-} GROUP BY ?p1 ?p2 ?p3
+  # Local IDs
+  BIND("Skyscraper" AS ?y0)
+  BIND(CONCAT(?y0, "/", ?x1) AS ?y1)
+  BIND(CONCAT(?y1, "/", ?x2) AS ?y2)
+  BIND(CONCAT(?y2, "/", ?x3) AS ?y3)
+
+  # Absolute IRIs
+  BIND("http://www.example.org/" AS ?ns)
+
+  BIND(IRI(CONCAT(?ns, ?y0)) AS ?e0)
+  BIND(IRI(CONCAT(?ns, ?y1)) AS ?e1)
+  BIND(IRI(CONCAT(?ns, ?y2)) AS ?e2)
+  BIND(IRI(CONCAT(?ns, ?y3)) AS ?e3)
 }
-}
+
+

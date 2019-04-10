@@ -13,7 +13,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 public interface PathNode
 	extends Resource
 {
-	public static final Property TRANSITIONS = ResourceFactory.createProperty("http://www.example.org/transitions");
+	public static final Property DEPTH = ResourceFactory.createProperty("http://www.example.org/depth");
+	public static final Property TRANSITIONS = ResourceFactory.createProperty("http://www.example.org/transition");
 	public static final Property PREDICATE = ResourceFactory.createProperty("http://www.example.org/predicate");
 	
 	@IriNs("eg")

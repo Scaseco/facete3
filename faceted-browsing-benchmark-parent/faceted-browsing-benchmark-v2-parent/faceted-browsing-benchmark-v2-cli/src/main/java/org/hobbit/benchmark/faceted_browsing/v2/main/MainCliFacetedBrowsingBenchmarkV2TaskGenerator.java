@@ -412,7 +412,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
         	String resultSetStr = FacetedBrowsingEncoders.resultSetToJsonStr(rsMem);
         	task
         		.addLiteral(BenchmarkVocab.expectedResult, resultSetStr)
-        		.addLiteral(BenchmarkVocab.expectedResultSetSize, numRows);
+        		.addLiteral(BenchmarkVocab.expectedResultSize, numRows);
 
         }
             	//result = FacetedBrowsingEncoders.formatForEvalStorage(task, resultSet, timestamp);

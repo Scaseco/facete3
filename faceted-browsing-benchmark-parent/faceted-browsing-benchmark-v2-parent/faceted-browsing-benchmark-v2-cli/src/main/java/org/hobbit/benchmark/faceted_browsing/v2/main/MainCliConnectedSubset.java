@@ -7,7 +7,7 @@ public class MainCliConnectedSubset {
 	public static void main(String[] args) {
 		JenaPluginUtils.registerJenaResourceClasses(PathNode.class);
 
-		PathNode test = RDFDataMgr.loadModel("path-node.ttl").createResource("http://www.example.org/foo").as(PathNode.class);
+		PathNode test = RDFDataMgr.loadModel("skyscraper-paths.ttl").listResourcesWithProperty(PathNode.DEPTH, 0).nextResource().as(PathNode.class);
 		
 		System.out.println(test.getPredicate());
 		System.out.println(test.getCount());

@@ -8,10 +8,14 @@ import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultEx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -19,7 +23,10 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.apache.jena.util.ResourceUtils;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
+import org.hobbit.core.component.BenchmarkVocab;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,11 +101,31 @@ public class MainSparqlBenchmarkRunner {
 				
 								
 				Stopwatch sw = Stopwatch.createStarted();
-				SparqlStmtUtils.execAny(conn, stmt);
+//				SPARQLResultEx ex = SparqlStmtUtils.execAny(conn, stmt);
+//				ex.close();
 
-				long elapsed = sw.stop().elapsed(TimeUnit.MILLISECONDS);
-				r.addLiteral(ResourceFactory.createProperty("http://www.example.org/elapsed"), elapsed);
+				ResultSetMem rsMem;
+				int numRows;
+				String queryStr = stmt.getAsQueryStmt().getOriginalString();
+				try(QueryExecution qe = conn.query(queryStr)) {
+		        	ResultSet resultSet = qe.execSelect();
+		        	//int wtf = ResultSetFormatter.consume(resultSet);
+		        	rsMem = new ResultSetMem(resultSet);
+		        	numRows = ResultSetFormatter.consume(rsMem);
+		            logger.info("Number of expected result set rows for task " + task + ": " + numRows + " query: " + queryStr);
+		        }
 				
+				long elapsed = sw.stop().elapsed(TimeUnit.MILLISECONDS);
+
+				r.addLiteral(ResourceFactory.createProperty("http://www.example.org/elapsed"), elapsed);
+
+				// Add actual result
+	        	rsMem.rewind();
+	        	String resultSetStr = FacetedBrowsingEncoders.resultSetToJsonStr(rsMem);
+	        	r
+	        		.addLiteral(BenchmarkVocab.actualResult, resultSetStr)
+	        		.addLiteral(BenchmarkVocab.actualResultSize, numRows);
+
 				logger.info("Processed " + r + " - elapsed: " + elapsed);
 
 				Dataset x = DatasetFactory.create();

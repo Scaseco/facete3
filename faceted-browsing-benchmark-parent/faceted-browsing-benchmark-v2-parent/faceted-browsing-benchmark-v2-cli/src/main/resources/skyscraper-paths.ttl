@@ -1,0 +1,1096 @@
+@prefix ns0:	<http://www.example.org/> .
+ns0:Skyscraper	ns0:depth	0 .
+@prefix ns1:	<http://www.example.org/Skyscraper/> .
+ns0:Skyscraper	ns0:transition	ns1:location ,
+		ns1:architect ,
+		ns1:engineer .
+@prefix ns2:	<http://www.example.org/Skyscraper/location/leader/> .
+ns2:serviceEndYear	ns0:depth	3 .
+@prefix ns3:	<http://dbpedia.org/ontology/> .
+ns2:serviceEndYear	ns0:predicate	ns3:serviceEndYear ;
+	ns0:count	1 .
+@prefix ns4:	<http://www.example.org/Skyscraper/location/country/> .
+ns4:capital	ns0:depth	3 ;
+	ns0:predicate	ns3:capital ;
+	ns0:count	3 .
+@prefix ns5:	<http://www.example.org/Skyscraper/location/department/> .
+ns5:isPartOf	ns0:depth	3 ;
+	ns0:predicate	ns3:isPartOf ;
+	ns0:count	1 .
+ns2:almaMater	ns0:depth	3 ;
+	ns0:predicate	ns3:almaMater ;
+	ns0:count	10 .
+ns5:elevation	ns0:depth	3 ;
+	ns0:predicate	ns3:elevation ;
+	ns0:count	1 .
+@prefix ns6:	<http://www.example.org/Skyscraper/architect/foundedBy/> .
+ns6:deathDate	ns0:depth	3 ;
+	ns0:predicate	ns3:deathDate ;
+	ns0:count	3 .
+@prefix ns7:	<http://www.example.org/Skyscraper/architect/deathPlace/> .
+ns7:area	ns0:depth	3 ;
+	ns0:predicate	ns3:area ;
+	ns0:count	1 .
+@prefix ns8:	<http://www.example.org/Skyscraper/architect/significantBuilding/> .
+ns8:owner	ns0:depth	3 ;
+	ns0:predicate	ns3:owner ;
+	ns0:count	1 .
+ns2:serviceStartYear	ns0:depth	3 ;
+	ns0:predicate	ns3:serviceStartYear ;
+	ns0:count	1 .
+@prefix ns9:	<http://www.example.org/Skyscraper/architect/service/> .
+ns9:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+@prefix ns10:	<http://www.example.org/Skyscraper/architect/foundationPlace/> .
+ns10:largestCity	ns0:depth	3 ;
+	ns0:predicate	ns3:largestCity ;
+	ns0:count	1 .
+@prefix ns11:	<http://www.example.org/Skyscraper/location/language/> .
+ns11:iso6392Code	ns0:depth	3 ;
+	ns0:predicate	ns3:iso6392Code ;
+	ns0:count	1 .
+ns8:openingYear	ns0:depth	3 ;
+	ns0:predicate	ns3:openingYear ;
+	ns0:count	1 .
+@prefix ns12:	<http://www.example.org/Skyscraper/engineer/deathPlace/> .
+ns12:mayor	ns0:depth	3 ;
+	ns0:predicate	ns3:mayor ;
+	ns0:count	1 .
+ns8:architect	ns0:depth	3 ;
+	ns0:predicate	ns3:architect ;
+	ns0:count	1 .
+ns7:postalCode	ns0:depth	3 ;
+	ns0:predicate	ns3:postalCode ;
+	ns0:count	1 .
+ns10:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+@prefix ns13:	<http://www.example.org/Skyscraper/location/mayor/> .
+ns13:party	ns0:depth	3 ;
+	ns0:predicate	ns3:party ;
+	ns0:count	1 .
+ns10:demonym	ns0:depth	3 ;
+	ns0:predicate	ns3:demonym ;
+	ns0:count	1 .
+ns8:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+ns4:longName	ns0:depth	3 ;
+	ns0:predicate	ns3:longName ;
+	ns0:count	2 .
+ns11:spokenIn	ns0:depth	3 ;
+	ns0:predicate	ns3:spokenIn ;
+	ns0:count	1 .
+ns10:utcOffset	ns0:depth	3 ;
+	ns0:predicate	ns3:utcOffset ;
+	ns0:count	2 .
+@prefix ns14:	<http://www.example.org/Skyscraper/architect/industry/> .
+ns14:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+@prefix ns15:	<http://www.example.org/Skyscraper/architect/birthPlace/> .
+ns15:mayor	ns0:depth	3 ;
+	ns0:predicate	ns3:mayor ;
+	ns0:count	1 .
+ns2:parent	ns0:depth	3 ;
+	ns0:predicate	ns3:parent ;
+	ns0:count	2 .
+ns7:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+@prefix ns16:	<http://www.example.org/Skyscraper/location/largestCity/> .
+ns16:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+@prefix ns17:	<http://www.example.org/Skyscraper/engineer/birthPlace/> .
+ns17:arrondissement	ns0:depth	3 ;
+	ns0:predicate	ns3:arrondissement ;
+	ns0:count	1 .
+ns7:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns7:subdivisions	ns0:depth	3 ;
+	ns0:predicate	ns3:subdivisions ;
+	ns0:count	1 .
+@prefix ns18:	<http://www.example.org/Skyscraper/location/leaderName/> .
+ns18:predecessor	ns0:depth	3 ;
+	ns0:predicate	ns3:predecessor ;
+	ns0:count	1 .
+ns18:birthPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	2 .
+@prefix ns19:	<http://www.example.org/Skyscraper/location/part/> .
+ns19:leaderParty	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderParty ;
+	ns0:count	1 .
+ns5:areaTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:areaTotal ;
+	ns0:count	1 .
+@prefix ns20:	<http://www.example.org/Skyscraper/location/capital/> .
+ns20:areaTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:areaTotal ;
+	ns0:count	1 .
+ns4:percentageOfAreaWater	ns0:depth	3 ;
+	ns0:predicate	ns3:percentageOfAreaWater ;
+	ns0:count	1 .
+ns5:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+ns2:birthPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	10 .
+@prefix ns21:	<http://www.example.org/Skyscraper/engineer/significantBuilding/> .
+ns21:owner	ns0:depth	3 ;
+	ns0:predicate	ns3:owner ;
+	ns0:count	1 .
+ns10:areaUrban	ns0:depth	3 ;
+	ns0:predicate	ns3:areaUrban ;
+	ns0:count	1 .
+ns10:elevation	ns0:depth	3 ;
+	ns0:predicate	ns3:elevation ;
+	ns0:count	1 .
+ns18:birthDate	ns0:depth	3 ;
+	ns0:predicate	ns3:birthDate ;
+	ns0:count	1 .
+ns10:maximumElevation	ns0:depth	3 ;
+	ns0:predicate	ns3:maximumElevation ;
+	ns0:count	2 .
+ns10:populationMetro	ns0:depth	3 ;
+	ns0:predicate	ns3:populationMetro ;
+	ns0:count	1 .
+@prefix ns22:	<http://www.example.org/Skyscraper/location/currency/> .
+ns22:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+ns2:deputy	ns0:depth	3 ;
+	ns0:predicate	ns3:deputy ;
+	ns0:count	3 .
+@prefix ns23:	<http://www.example.org/Skyscraper/architect/keyPerson/> .
+ns23:deathPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:deathPlace ;
+	ns0:count	2 .
+ns21:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+ns16:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	1 .
+ns15:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns23:discipline	ns0:depth	3 ;
+	ns0:predicate	ns3:discipline ;
+	ns0:count	3 .
+ns10:populationAsOf	ns0:depth	3 ;
+	ns0:predicate	ns3:populationAsOf ;
+	ns0:count	1 .
+ns2:activeYearsEndYear	ns0:depth	3 ;
+	ns0:predicate	ns3:activeYearsEndYear ;
+	ns0:count	1 .
+ns10:areaMetro	ns0:depth	3 ;
+	ns0:predicate	ns3:areaMetro ;
+	ns0:count	1 .
+ns17:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+@prefix ns24:	<http://www.example.org/Skyscraper/location/officialLanguage/> .
+ns24:iso6391Code	ns0:depth	3 ;
+	ns0:predicate	ns3:iso6391Code ;
+	ns0:count	1 .
+ns2:activeYearsStartYear	ns0:depth	3 ;
+	ns0:predicate	ns3:activeYearsStartYear ;
+	ns0:count	1 .
+ns4:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	3 .
+ns12:area	ns0:depth	3 ;
+	ns0:predicate	ns3:area ;
+	ns0:count	1 .
+ns4:governmentType	ns0:depth	3 ;
+	ns0:predicate	ns3:governmentType ;
+	ns0:count	4 .
+@prefix ns25:	<http://www.example.org/Skyscraper/location/governmentType/> .
+ns25:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+ns12:inseeCode	ns0:depth	3 ;
+	ns0:predicate	ns3:inseeCode ;
+	ns0:count	1 .
+ns20:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	2 .
+ns4:largestCity	ns0:depth	3 ;
+	ns0:predicate	ns3:largestCity ;
+	ns0:count	2 .
+ns10:founder	ns0:depth	3 ;
+	ns0:predicate	ns3:founder ;
+	ns0:count	1 .
+ns12:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	1 .
+ns23:education	ns0:depth	3 ;
+	ns0:predicate	ns3:education ;
+	ns0:count	2 .
+ns5:leaderName	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderName ;
+	ns0:count	1 .
+ns9:genre	ns0:depth	3 ;
+	ns0:predicate	ns3:genre ;
+	ns0:count	1 .
+ns19:leaderName	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderName ;
+	ns0:count	8 .
+ns2:predecessor	ns0:depth	3 ;
+	ns0:predicate	ns3:predecessor ;
+	ns0:count	16 .
+ns10:capital	ns0:depth	3 ;
+	ns0:predicate	ns3:capital ;
+	ns0:count	1 .
+ns4:demonym	ns0:depth	3 ;
+	ns0:predicate	ns3:demonym ;
+	ns0:count	6 .
+ns4:language	ns0:depth	3 ;
+	ns0:predicate	ns3:language ;
+	ns0:count	4 .
+ns20:part	ns0:depth	3 ;
+	ns0:predicate	ns3:part ;
+	ns0:count	25 .
+ns19:utcOffset	ns0:depth	3 ;
+	ns0:predicate	ns3:utcOffset ;
+	ns0:count	1 .
+ns2:activeYearsStartDate	ns0:depth	3 ;
+	ns0:predicate	ns3:activeYearsStartDate ;
+	ns0:count	1 .
+ns20:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+ns19:postalCode	ns0:depth	3 ;
+	ns0:predicate	ns3:postalCode ;
+	ns0:count	24 .
+@prefix ns26:	<http://www.example.org/Skyscraper/location/region/> .
+ns26:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+ns10:minimumElevation	ns0:depth	3 ;
+	ns0:predicate	ns3:minimumElevation ;
+	ns0:count	2 .
+ns4:flag	ns0:depth	3 ;
+	ns0:predicate	ns3:flag ;
+	ns0:count	3 .
+ns2:militaryCommand	ns0:depth	3 ;
+	ns0:predicate	ns3:militaryCommand ;
+	ns0:count	6 .
+ns10:motto	ns0:depth	3 ;
+	ns0:predicate	ns3:motto ;
+	ns0:count	1 .
+ns5:part	ns0:depth	3 ;
+	ns0:predicate	ns3:part ;
+	ns0:count	2 .
+ns13:nationality	ns0:depth	3 ;
+	ns0:predicate	ns3:nationality ;
+	ns0:count	1 .
+ns23:restingPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:restingPlace ;
+	ns0:count	3 .
+ns26:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	1 .
+ns21:address	ns0:depth	3 ;
+	ns0:predicate	ns3:address ;
+	ns0:count	1 .
+ns18:party	ns0:depth	3 ;
+	ns0:predicate	ns3:party ;
+	ns0:count	2 .
+ns4:populationDensity	ns0:depth	3 ;
+	ns0:predicate	ns3:populationDensity ;
+	ns0:count	4 .
+ns20:leaderTitle	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderTitle ;
+	ns0:count	4 .
+ns19:areaTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:areaTotal ;
+	ns0:count	23 .
+ns17:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+ns6:deathPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:deathPlace ;
+	ns0:count	3 .
+ns5:timeZone	ns0:depth	3 ;
+	ns0:predicate	ns3:timeZone ;
+	ns0:count	2 .
+ns2:residence	ns0:depth	3 ;
+	ns0:predicate	ns3:residence ;
+	ns0:count	3 .
+ns2:primeMinister	ns0:depth	3 ;
+	ns0:predicate	ns3:primeMinister ;
+	ns0:count	8 .
+ns15:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+@prefix ns27:	<http://www.example.org/Skyscraper/engineer/award/> .
+ns27:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns11:iso6391Code	ns0:depth	3 ;
+	ns0:predicate	ns3:iso6391Code ;
+	ns0:count	1 .
+ns19:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	24 .
+ns2:birthName	ns0:depth	3 ;
+	ns0:predicate	ns3:birthName ;
+	ns0:count	1 .
+ns21:seatingCapacity	ns0:depth	3 ;
+	ns0:predicate	ns3:seatingCapacity ;
+	ns0:count	1 .
+ns20:governmentType	ns0:depth	3 ;
+	ns0:predicate	ns3:governmentType ;
+	ns0:count	2 .
+ns13:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns5:utcOffset	ns0:depth	3 ;
+	ns0:predicate	ns3:utcOffset ;
+	ns0:count	2 .
+ns7:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	1 .
+@prefix ns28:	<http://www.example.org/Skyscraper/location/anthem/> .
+ns28:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	2 .
+ns2:monarch	ns0:depth	3 ;
+	ns0:predicate	ns3:monarch ;
+	ns0:count	1 .
+ns13:orderInOffice	ns0:depth	3 ;
+	ns0:predicate	ns3:orderInOffice ;
+	ns0:count	1 .
+ns2:appointer	ns0:depth	3 ;
+	ns0:predicate	ns3:appointer ;
+	ns0:count	1 .
+ns13:activeYearsStartDate	ns0:depth	3 ;
+	ns0:predicate	ns3:activeYearsStartDate ;
+	ns0:count	1 .
+ns21:openingYear	ns0:depth	3 ;
+	ns0:predicate	ns3:openingYear ;
+	ns0:count	1 .
+ns23:deathDate	ns0:depth	3 ;
+	ns0:predicate	ns3:deathDate ;
+	ns0:count	2 .
+ns4:leaderTitle	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderTitle ;
+	ns0:count	8 .
+ns20:isPartOf	ns0:depth	3 ;
+	ns0:predicate	ns3:isPartOf ;
+	ns0:count	1 .
+ns19:timeZone	ns0:depth	3 ;
+	ns0:predicate	ns3:timeZone ;
+	ns0:count	1 .
+ns2:religion	ns0:depth	3 ;
+	ns0:predicate	ns3:religion ;
+	ns0:count	6 .
+ns26:areaTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:areaTotal ;
+	ns0:count	1 .
+ns13:birthDate	ns0:depth	3 ;
+	ns0:predicate	ns3:birthDate ;
+	ns0:count	1 .
+ns19:areaCode	ns0:depth	3 ;
+	ns0:predicate	ns3:areaCode ;
+	ns0:count	20 .
+ns15:postalCode	ns0:depth	3 ;
+	ns0:predicate	ns3:postalCode ;
+	ns0:count	1 .
+ns17:areaCode	ns0:depth	3 ;
+	ns0:predicate	ns3:areaCode ;
+	ns0:count	1 .
+ns12:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+ns5:maximumElevation	ns0:depth	3 ;
+	ns0:predicate	ns3:maximumElevation ;
+	ns0:count	1 .
+ns2:militaryRank	ns0:depth	3 ;
+	ns0:predicate	ns3:militaryRank ;
+	ns0:count	1 .
+ns2:office	ns0:depth	3 ;
+	ns0:predicate	ns3:office ;
+	ns0:count	17 .
+ns17:postalCode	ns0:depth	3 ;
+	ns0:predicate	ns3:postalCode ;
+	ns0:count	1 .
+ns26:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns9:city	ns0:depth	3 ;
+	ns0:predicate	ns3:city ;
+	ns0:count	2 .
+ns10:leaderTitle	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderTitle ;
+	ns0:count	3 .
+ns10:leaderName	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderName ;
+	ns0:count	3 .
+ns5:minimumElevation	ns0:depth	3 ;
+	ns0:predicate	ns3:minimumElevation ;
+	ns0:count	1 .
+ns10:percentageOfAreaWater	ns0:depth	3 ;
+	ns0:predicate	ns3:percentageOfAreaWater ;
+	ns0:count	1 .
+ns22:usingCountry	ns0:depth	3 ;
+	ns0:predicate	ns3:usingCountry ;
+	ns0:count	1 .
+ns10:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	1 .
+ns10:areaCode	ns0:depth	3 ;
+	ns0:predicate	ns3:areaCode ;
+	ns0:count	1 .
+ns17:mayor	ns0:depth	3 ;
+	ns0:predicate	ns3:mayor ;
+	ns0:count	1 .
+ns2:battle	ns0:depth	3 ;
+	ns0:predicate	ns3:battle ;
+	ns0:count	2 .
+ns4:anthem	ns0:depth	3 ;
+	ns0:predicate	ns3:anthem ;
+	ns0:count	3 .
+ns19:type	ns0:depth	3 ;
+	ns0:predicate	ns3:type ;
+	ns0:count	2 .
+ns10:populationDensity	ns0:depth	3 ;
+	ns0:predicate	ns3:populationDensity ;
+	ns0:count	2 .
+ns12:region	ns0:depth	3 ;
+	ns0:predicate	ns3:region ;
+	ns0:count	1 .
+@prefix ns29:	<http://www.example.org/Skyscraper/location/timeZone/> .
+ns29:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns12:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns23:award	ns0:depth	3 ;
+	ns0:predicate	ns3:award ;
+	ns0:count	4 .
+ns2:nationality	ns0:depth	3 ;
+	ns0:predicate	ns3:nationality ;
+	ns0:count	1 .
+ns20:type	ns0:depth	3 ;
+	ns0:predicate	ns3:type ;
+	ns0:count	1 .
+ns4:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	2 .
+ns23:depictionDescription	ns0:depth	3 ;
+	ns0:predicate	ns3:depictionDescription ;
+	ns0:count	1 .
+ns2:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	7 .
+@prefix ns30:	<http://www.example.org/Skyscraper/architect/award/> .
+ns30:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns24:languageFamily	ns0:depth	3 ;
+	ns0:predicate	ns3:languageFamily ;
+	ns0:count	3 .
+ns4:areaTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:areaTotal ;
+	ns0:count	5 .
+ns19:isPartOf	ns0:depth	3 ;
+	ns0:predicate	ns3:isPartOf ;
+	ns0:count	2 .
+ns19:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	24 .
+ns8:seatingCapacity	ns0:depth	3 ;
+	ns0:predicate	ns3:seatingCapacity ;
+	ns0:count	1 .
+ns20:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	2 .
+ns24:iso6392Code	ns0:depth	3 ;
+	ns0:predicate	ns3:iso6392Code ;
+	ns0:count	1 .
+ns4:currency	ns0:depth	3 ;
+	ns0:predicate	ns3:currency ;
+	ns0:count	5 .
+ns15:areaCode	ns0:depth	3 ;
+	ns0:predicate	ns3:areaCode ;
+	ns0:count	1 .
+ns10:areaWater	ns0:depth	3 ;
+	ns0:predicate	ns3:areaWater ;
+	ns0:count	2 .
+ns2:orderInOffice	ns0:depth	3 ;
+	ns0:predicate	ns3:orderInOffice ;
+	ns0:count	1 .
+ns2:signature	ns0:depth	3 ;
+	ns0:predicate	ns3:signature ;
+	ns0:count	1 .
+ns7:region	ns0:depth	3 ;
+	ns0:predicate	ns3:region ;
+	ns0:count	1 .
+ns2:successor	ns0:depth	3 ;
+	ns0:predicate	ns3:successor ;
+	ns0:count	9 .
+ns9:publisher	ns0:depth	3 ;
+	ns0:predicate	ns3:publisher ;
+	ns0:count	1 .
+ns10:areaLand	ns0:depth	3 ;
+	ns0:predicate	ns3:areaLand ;
+	ns0:count	2 .
+ns2:otherParty	ns0:depth	3 ;
+	ns0:predicate	ns3:otherParty ;
+	ns0:count	2 .
+ns10:areaTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:areaTotal ;
+	ns0:count	2 .
+ns8:address	ns0:depth	3 ;
+	ns0:predicate	ns3:address ;
+	ns0:count	1 .
+ns10:postalCode	ns0:depth	3 ;
+	ns0:predicate	ns3:postalCode ;
+	ns0:count	1 .
+ns2:termPeriod	ns0:depth	3 ;
+	ns0:predicate	ns3:termPeriod ;
+	ns0:count	21 .
+ns18:office	ns0:depth	3 ;
+	ns0:predicate	ns3:office ;
+	ns0:count	1 .
+ns23:birthPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	3 .
+ns4:timeZone	ns0:depth	3 ;
+	ns0:predicate	ns3:timeZone ;
+	ns0:count	2 .
+ns16:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns10:populationTotalRanking	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotalRanking ;
+	ns0:count	1 .
+ns18:termPeriod	ns0:depth	3 ;
+	ns0:predicate	ns3:termPeriod ;
+	ns0:count	1 .
+ns19:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 .
+ns4:officialLanguage	ns0:depth	3 ;
+	ns0:predicate	ns3:officialLanguage ;
+	ns0:count	1 .
+ns2:party	ns0:depth	3 ;
+	ns0:predicate	ns3:party ;
+	ns0:count	4 .
+ns2:spouse	ns0:depth	3 ;
+	ns0:predicate	ns3:spouse ;
+	ns0:count	2 .
+ns4:leader	ns0:depth	3 ;
+	ns0:predicate	ns3:leader ;
+	ns0:count	12 .
+ns5:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns18:religion	ns0:depth	3 ;
+	ns0:predicate	ns3:religion ;
+	ns0:count	1 .
+ns15:arrondissement	ns0:depth	3 ;
+	ns0:predicate	ns3:arrondissement ;
+	ns0:count	1 .
+ns21:architect	ns0:depth	3 ;
+	ns0:predicate	ns3:architect ;
+	ns0:count	1 .
+ns24:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns2:militaryBranch	ns0:depth	3 ;
+	ns0:predicate	ns3:militaryBranch ;
+	ns0:count	1 .
+ns10:governmentType	ns0:depth	3 ;
+	ns0:predicate	ns3:governmentType ;
+	ns0:count	1 .
+ns10:timeZone	ns0:depth	3 ;
+	ns0:predicate	ns3:timeZone ;
+	ns0:count	2 .
+ns20:elevation	ns0:depth	3 ;
+	ns0:predicate	ns3:elevation ;
+	ns0:count	1 .
+ns2:president	ns0:depth	3 ;
+	ns0:predicate	ns3:president ;
+	ns0:count	3 .
+ns10:governingBody	ns0:depth	3 ;
+	ns0:predicate	ns3:governingBody ;
+	ns0:count	1 .
+ns5:populationTotal	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotal ;
+	ns0:count	1 .
+ns20:leaderName	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderName ;
+	ns0:count	1 .
+ns5:leaderTitle	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderTitle ;
+	ns0:count	1 .
+ns10:type	ns0:depth	3 ;
+	ns0:predicate	ns3:type ;
+	ns0:count	1 .
+ns10:foundingDate	ns0:depth	3 ;
+	ns0:predicate	ns3:foundingDate ;
+	ns0:count	2 .
+ns7:inseeCode	ns0:depth	3 ;
+	ns0:predicate	ns3:inseeCode ;
+	ns0:count	1 .
+ns4:foundingDate	ns0:depth	3 ;
+	ns0:predicate	ns3:foundingDate ;
+	ns0:count	3 .
+ns18:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	1 .
+ns13:birthPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	2 .
+ns2:region	ns0:depth	3 ;
+	ns0:predicate	ns3:region ;
+	ns0:count	4 .
+ns2:imdbId	ns0:depth	3 ;
+	ns0:predicate	ns3:imdbId ;
+	ns0:count	1 .
+ns11:languageFamily	ns0:depth	3 ;
+	ns0:predicate	ns3:languageFamily ;
+	ns0:count	3 .
+ns6:birthDate	ns0:depth	3 ;
+	ns0:predicate	ns3:birthDate ;
+	ns0:count	3 .
+ns19:leaderTitle	ns0:depth	3 ;
+	ns0:predicate	ns3:leaderTitle ;
+	ns0:count	5 .
+ns6:nationality	ns0:depth	3 ;
+	ns0:predicate	ns3:nationality ;
+	ns0:count	1 .
+ns12:postalCode	ns0:depth	3 ;
+	ns0:predicate	ns3:postalCode ;
+	ns0:count	1 .
+ns2:birthDate	ns0:depth	3 ;
+	ns0:predicate	ns3:birthDate ;
+	ns0:count	8 .
+ns20:populationMetro	ns0:depth	3 ;
+	ns0:predicate	ns3:populationMetro ;
+	ns0:count	1 .
+ns23:birthDate	ns0:depth	3 ;
+	ns0:predicate	ns3:birthDate ;
+	ns0:count	2 .
+ns23:nationality	ns0:depth	3 ;
+	ns0:predicate	ns3:nationality ;
+	ns0:count	1 .
+ns12:subdivisions	ns0:depth	3 ;
+	ns0:predicate	ns3:subdivisions ;
+	ns0:count	1 .
+ns5:populationTotalRanking	ns0:depth	3 ;
+	ns0:predicate	ns3:populationTotalRanking ;
+	ns0:count	1 .
+ns18:almaMater	ns0:depth	3 ;
+	ns0:predicate	ns3:almaMater ;
+	ns0:count	2 .
+ns10:country	ns0:depth	3 ;
+	ns0:predicate	ns3:country ;
+	ns0:count	2 .
+ns6:birthPlace	ns0:depth	3 ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	3 .
+ns10:language	ns0:depth	3 ;
+	ns0:predicate	ns3:language ;
+	ns0:count	1 .
+ns7:mayor	ns0:depth	3 ;
+	ns0:predicate	ns3:mayor ;
+	ns0:count	1 .
+ns10:isPartOf	ns0:depth	3 ;
+	ns0:predicate	ns3:isPartOf ;
+	ns0:count	3 .
+ns24:spokenIn	ns0:depth	3 ;
+	ns0:predicate	ns3:spokenIn ;
+	ns0:count	1 .
+ns11:thumbnail	ns0:depth	3 ;
+	ns0:predicate	ns3:thumbnail ;
+	ns0:count	3 .
+ns6:award	ns0:depth	3 ;
+	ns0:predicate	ns3:award ;
+	ns0:count	2 .
+@prefix ns31:	<http://www.example.org/Skyscraper/location/> .
+ns31:leader	ns0:depth	2 ;
+	ns0:transition	ns2:successor ,
+		ns2:signature ,
+		ns2:orderInOffice ,
+		ns2:termPeriod ,
+		ns2:otherParty ,
+		ns2:party ,
+		ns2:spouse ,
+		ns2:militaryRank ,
+		ns2:office ,
+		ns2:battle ,
+		ns2:thumbnail ,
+		ns2:nationality ,
+		ns2:militaryBranch ,
+		ns2:president ,
+		ns2:imdbId ,
+		ns2:region ,
+		ns2:birthDate ,
+		ns2:parent ,
+		ns2:birthPlace ,
+		ns2:deputy ,
+		ns2:activeYearsEndYear ,
+		ns2:serviceEndYear ,
+		ns2:serviceStartYear ,
+		ns2:almaMater ,
+		ns2:birthName ,
+		ns2:residence ,
+		ns2:primeMinister ,
+		ns2:appointer ,
+		ns2:monarch ,
+		ns2:religion ,
+		ns2:activeYearsStartYear ,
+		ns2:predecessor ,
+		ns2:activeYearsStartDate ,
+		ns2:militaryCommand ;
+	ns0:predicate	ns3:leader ;
+	ns0:count	8 ,
+		4 ,
+		5 ,
+		6 ,
+		7 ,
+		1 ,
+		2 ,
+		3 .
+ns31:country	ns0:depth	2 ;
+	ns0:transition	ns4:timeZone ,
+		ns4:officialLanguage ,
+		ns4:currency ,
+		ns4:areaTotal ,
+		ns4:populationTotal ,
+		ns4:anthem ,
+		ns4:foundingDate ,
+		ns4:leader ,
+		ns4:percentageOfAreaWater ,
+		ns4:longName ,
+		ns4:capital ,
+		ns4:leaderTitle ,
+		ns4:populationDensity ,
+		ns4:flag ,
+		ns4:demonym ,
+		ns4:language ,
+		ns4:governmentType ,
+		ns4:thumbnail ,
+		ns4:largestCity ;
+	ns0:predicate	ns3:country ;
+	ns0:count	1 ,
+		2 ,
+		3 .
+ns31:department	ns0:depth	2 ;
+	ns0:transition	ns5:minimumElevation ,
+		ns5:maximumElevation ,
+		ns5:populationTotalRanking ,
+		ns5:leaderTitle ,
+		ns5:populationTotal ,
+		ns5:thumbnail ,
+		ns5:country ,
+		ns5:areaTotal ,
+		ns5:elevation ,
+		ns5:isPartOf ,
+		ns5:utcOffset ,
+		ns5:timeZone ,
+		ns5:part ,
+		ns5:leaderName ;
+	ns0:predicate	ns3:department ;
+	ns0:count	1 .
+@prefix ns32:	<http://www.example.org/Skyscraper/architect/> .
+ns32:foundedBy	ns0:depth	2 ;
+	ns0:transition	ns6:birthPlace ,
+		ns6:award ,
+		ns6:nationality ,
+		ns6:birthDate ,
+		ns6:deathDate ,
+		ns6:deathPlace ;
+	ns0:predicate	ns3:foundedBy ;
+	ns0:count	1 ,
+		3 .
+ns32:deathPlace	ns0:depth	2 ;
+	ns0:transition	ns7:region ,
+		ns7:mayor ,
+		ns7:inseeCode ,
+		ns7:thumbnail ,
+		ns7:subdivisions ,
+		ns7:country ,
+		ns7:postalCode ,
+		ns7:area ,
+		ns7:populationTotal ;
+	ns0:predicate	ns3:deathPlace ;
+	ns0:count	1 .
+ns32:significantBuilding	ns0:depth	2 ;
+	ns0:transition	ns8:seatingCapacity ,
+		ns8:address ,
+		ns8:owner ,
+		ns8:thumbnail ,
+		ns8:openingYear ,
+		ns8:architect ;
+	ns0:predicate	ns3:significantBuilding ;
+	ns0:count	1 ,
+		2 .
+ns32:service	ns0:depth	2 ;
+	ns0:transition	ns9:city ,
+		ns9:publisher ,
+		ns9:genre ,
+		ns9:thumbnail ;
+	ns0:predicate	ns3:service ;
+	ns0:count	1 ,
+		2 .
+ns32:foundationPlace	ns0:depth	2 ;
+	ns0:transition	ns10:governmentType ,
+		ns10:governingBody ,
+		ns10:timeZone ,
+		ns10:type ,
+		ns10:foundingDate ,
+		ns10:country ,
+		ns10:isPartOf ,
+		ns10:language ,
+		ns10:leaderTitle ,
+		ns10:percentageOfAreaWater ,
+		ns10:leaderName ,
+		ns10:populationTotal ,
+		ns10:areaCode ,
+		ns10:populationDensity ,
+		ns10:areaWater ,
+		ns10:areaTotal ,
+		ns10:areaLand ,
+		ns10:postalCode ,
+		ns10:populationTotalRanking ,
+		ns10:founder ,
+		ns10:capital ,
+		ns10:motto ,
+		ns10:minimumElevation ,
+		ns10:largestCity ,
+		ns10:thumbnail ,
+		ns10:demonym ,
+		ns10:utcOffset ,
+		ns10:areaUrban ,
+		ns10:maximumElevation ,
+		ns10:populationMetro ,
+		ns10:elevation ,
+		ns10:populationAsOf ,
+		ns10:areaMetro ;
+	ns0:predicate	ns3:foundationPlace ;
+	ns0:count	1 ,
+		2 .
+ns31:language	ns0:depth	2 ;
+	ns0:transition	ns11:languageFamily ,
+		ns11:thumbnail ,
+		ns11:iso6391Code ,
+		ns11:iso6392Code ,
+		ns11:spokenIn ;
+	ns0:predicate	ns3:language ;
+	ns0:count	1 ,
+		3 .
+@prefix ns33:	<http://www.example.org/Skyscraper/engineer/> .
+ns33:deathPlace	ns0:depth	2 ;
+	ns0:transition	ns12:postalCode ,
+		ns12:subdivisions ,
+		ns12:thumbnail ,
+		ns12:region ,
+		ns12:country ,
+		ns12:populationTotal ,
+		ns12:area ,
+		ns12:inseeCode ,
+		ns12:mayor ;
+	ns0:predicate	ns3:deathPlace ;
+	ns0:count	1 .
+ns31:mayor	ns0:depth	2 ;
+	ns0:transition	ns13:birthPlace ,
+		ns13:birthDate ,
+		ns13:nationality ,
+		ns13:activeYearsStartDate ,
+		ns13:orderInOffice ,
+		ns13:thumbnail ,
+		ns13:party ;
+	ns0:predicate	ns3:mayor ;
+	ns0:count	1 .
+ns32:industry	ns0:depth	2 ;
+	ns0:transition	ns14:thumbnail ;
+	ns0:predicate	ns3:industry ;
+	ns0:count	1 .
+ns32:birthPlace	ns0:depth	2 ;
+	ns0:transition	ns15:arrondissement ,
+		ns15:postalCode ,
+		ns15:areaCode ,
+		ns15:country ,
+		ns15:mayor ,
+		ns15:thumbnail ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	1 .
+ns31:largestCity	ns0:depth	2 ;
+	ns0:transition	ns16:thumbnail ,
+		ns16:country ,
+		ns16:populationTotal ;
+	ns0:predicate	ns3:largestCity ;
+	ns0:count	1 .
+ns33:birthPlace	ns0:depth	2 ;
+	ns0:transition	ns17:postalCode ,
+		ns17:areaCode ,
+		ns17:mayor ,
+		ns17:country ,
+		ns17:arrondissement ,
+		ns17:thumbnail ;
+	ns0:predicate	ns3:birthPlace ;
+	ns0:count	1 .
+ns31:leaderName	ns0:depth	2 ;
+	ns0:transition	ns18:almaMater ,
+		ns18:religion ,
+		ns18:thumbnail ,
+		ns18:office ,
+		ns18:termPeriod ,
+		ns18:party ,
+		ns18:predecessor ,
+		ns18:birthPlace ,
+		ns18:birthDate ;
+	ns0:predicate	ns3:leaderName ;
+	ns0:count	1 .
+ns31:part	ns0:depth	2 ;
+	ns0:transition	ns19:leaderTitle ,
+		ns19:thumbnail ,
+		ns19:isPartOf ,
+		ns19:country ,
+		ns19:areaCode ,
+		ns19:type ,
+		ns19:areaTotal ,
+		ns19:populationTotal ,
+		ns19:timeZone ,
+		ns19:leaderName ,
+		ns19:postalCode ,
+		ns19:utcOffset ,
+		ns19:leaderParty ;
+	ns0:predicate	ns3:part ;
+	ns0:count	19 ,
+		2 ,
+		24 ,
+		23 .
+ns31:capital	ns0:depth	2 ;
+	ns0:transition	ns20:populationMetro ,
+		ns20:elevation ,
+		ns20:leaderName ,
+		ns20:populationTotal ,
+		ns20:type ,
+		ns20:isPartOf ,
+		ns20:governmentType ,
+		ns20:leaderTitle ,
+		ns20:part ,
+		ns20:thumbnail ,
+		ns20:country ,
+		ns20:areaTotal ;
+	ns0:predicate	ns3:capital ;
+	ns0:count	1 ,
+		2 .
+ns33:significantBuilding	ns0:depth	2 ;
+	ns0:transition	ns21:architect ,
+		ns21:openingYear ,
+		ns21:seatingCapacity ,
+		ns21:address ,
+		ns21:thumbnail ,
+		ns21:owner ;
+	ns0:predicate	ns3:significantBuilding ;
+	ns0:count	1 ,
+		2 .
+ns31:currency	ns0:depth	2 ;
+	ns0:transition	ns22:usingCountry ,
+		ns22:thumbnail ;
+	ns0:predicate	ns3:currency ;
+	ns0:count	1 ,
+		2 .
+ns32:keyPerson	ns0:depth	2 ;
+	ns0:transition	ns23:birthDate ,
+		ns23:nationality ,
+		ns23:birthPlace ,
+		ns23:depictionDescription ,
+		ns23:award ,
+		ns23:deathDate ,
+		ns23:restingPlace ,
+		ns23:education ,
+		ns23:deathPlace ,
+		ns23:discipline ;
+	ns0:predicate	ns3:keyPerson ;
+	ns0:count	1 ,
+		2 .
+ns31:officialLanguage	ns0:depth	2 ;
+	ns0:transition	ns24:iso6391Code ,
+		ns24:languageFamily ,
+		ns24:iso6392Code ,
+		ns24:thumbnail ,
+		ns24:spokenIn ;
+	ns0:predicate	ns3:officialLanguage ;
+	ns0:count	1 .
+ns31:governmentType	ns0:depth	2 ;
+	ns0:transition	ns25:thumbnail ;
+	ns0:predicate	ns3:governmentType ;
+	ns0:count	2 .
+ns31:region	ns0:depth	2 ;
+	ns0:transition	ns26:country ,
+		ns26:populationTotal ,
+		ns26:areaTotal ,
+		ns26:thumbnail ;
+	ns0:predicate	ns3:region ;
+	ns0:count	1 .
+ns33:award	ns0:depth	2 ;
+	ns0:transition	ns27:thumbnail ;
+	ns0:predicate	ns3:award ;
+	ns0:count	1 .
+ns31:anthem	ns0:depth	2 ;
+	ns0:transition	ns28:thumbnail ;
+	ns0:predicate	ns3:anthem ;
+	ns0:count	2 .
+ns31:timeZone	ns0:depth	2 ;
+	ns0:transition	ns29:thumbnail ;
+	ns0:predicate	ns3:timeZone ;
+	ns0:count	1 .
+ns32:award	ns0:depth	2 ;
+	ns0:transition	ns30:thumbnail ;
+	ns0:predicate	ns3:award ;
+	ns0:count	1 .
+ns1:location	ns0:depth	1 ;
+	ns0:transition	ns31:mayor ,
+		ns31:language ,
+		ns31:currency ,
+		ns31:capital ,
+		ns31:leaderName ,
+		ns31:part ,
+		ns31:largestCity ,
+		ns31:country ,
+		ns31:department ,
+		ns31:leader ,
+		ns31:anthem ,
+		ns31:timeZone ,
+		ns31:region ,
+		ns31:officialLanguage ,
+		ns31:governmentType ;
+	ns0:predicate	ns3:location ;
+	ns0:count	4 ,
+		5 ,
+		1 ,
+		2 ,
+		3 .
+ns1:architect	ns0:depth	1 ;
+	ns0:transition	ns32:foundedBy ,
+		ns32:deathPlace ,
+		ns32:keyPerson ,
+		ns32:foundationPlace ,
+		ns32:significantBuilding ,
+		ns32:service ,
+		ns32:industry ,
+		ns32:birthPlace ,
+		ns32:award ;
+	ns0:predicate	ns3:architect ;
+	ns0:count	1 .
+ns1:engineer	ns0:depth	1 ;
+	ns0:transition	ns33:significantBuilding ,
+		ns33:birthPlace ,
+		ns33:deathPlace ,
+		ns33:award ;
+	ns0:predicate	ns3:engineer ;
+	ns0:count	1 .
