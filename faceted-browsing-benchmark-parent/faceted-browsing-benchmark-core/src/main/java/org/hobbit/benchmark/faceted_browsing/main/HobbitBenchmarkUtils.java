@@ -1,5 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.main;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -11,7 +12,12 @@ import java.net.URLStreamHandler;
 import java.util.function.Supplier;
 
 import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.hobbit.benchmark.common.launcher.ConfigsFacetedBrowsingBenchmark.BenchmarkLauncher;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigCommunicationWrapper;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceFactory;
 import org.hobbit.benchmark.faceted_browsing.config.ConfigDockerServiceManagerClient;
@@ -45,10 +51,30 @@ public class HobbitBenchmarkUtils {
 //	}
 	
 	
+	
 	public static InputStream openResource(String name) throws IOException {
+        InputStream rawIn = HobbitBenchmarkUtils.class.getClassLoader().getResourceAsStream(name);
+    	if(rawIn == null) {
+    		throw new RuntimeException("Could not open resource: " + name);
+    	}
+
+    	InputStream in;
+		if(name.endsWith(".bz2")) {
+			try {
+				in = new MetaBZip2CompressorInputStream(rawIn);
+			} catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			in = rawIn;
+		}
+
+		
+		
 //		() -> HobbitBenchmarkUtils.openBz2InputStream("hobbit-sensor-stream-150k-events-data.trig.bz2"),
 
-		return openBz2InputStream(name);
+		//return openBz2InputStream(name);
+    	return in;
 	}
 	
 	public static InputStream openBz2InputStream(String name) throws IOException {
@@ -70,8 +96,15 @@ public class HobbitBenchmarkUtils {
 	 * @throws IOException
 	 */
 	//@Test
-	public static void testBenchmarkTwoAppContexts(String bcImageName, String saImageName, Class<?> dockerServiceFactoryOverridesClass) throws MalformedURLException, IOException {		
+	public static void testBenchmarkTwoAppContexts(
+			Model configModel,
+			String bcImageName,
+			String saImageName,
+			Class<?> dockerServiceFactoryOverridesClass) throws MalformedURLException, IOException {		
 		
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		RDFDataMgr.write(baos, configModel, RDFFormat.JSONLD);
+		String configModelStr = baos.toString();
 		
 		//System.out.println(CharStreams.toString(new InputStreamReader(new URL("docker+http://foobar:8892/sparql").openStream(), StandardCharsets.UTF_8)));		
 		//System.exit(0);
@@ -90,6 +123,9 @@ public class HobbitBenchmarkUtils {
 					.build());
 		
 		SpringApplicationBuilder infrastructureBuilder = builderFactory.get()
+			.properties(new ImmutableMap.Builder<String, Object>()
+					.put(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, configModelStr)
+					.build())
 			.sources(ConfigQpidBroker.class)
 			// Register the docker service manager server component; for this purpose:
 			// (1) Register any pseudo docker images - i.e. launchers of local components

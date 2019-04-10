@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,7 +69,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 		DockerServiceFactory<?> dsf = ConfigDockerServiceFactory.createDockerServiceFactory(
 				true,
 				ImmutableMap.<String, String>builder().build(),
-				new DockerServiceFactorySpringApplicationBuilder(ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config))
+				new DockerServiceFactorySpringApplicationBuilder(ConfigVirtualDockerServiceFactoryV1.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV1Constants.config, Collections.emptyMap()))
 		);
 		
 		DockerServiceBuilderFactory<?> dsbf = () -> DockerServiceBuilderJsonDelegate.create(dsf::create);

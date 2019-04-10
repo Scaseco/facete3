@@ -1,0 +1,8 @@
+@prefix eg: <http://www.example.org/>
+
+eg:task1 {
+  eg:task1
+  
+}
+
+

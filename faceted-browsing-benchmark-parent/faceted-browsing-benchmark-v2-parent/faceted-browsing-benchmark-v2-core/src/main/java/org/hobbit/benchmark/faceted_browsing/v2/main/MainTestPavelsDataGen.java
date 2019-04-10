@@ -135,7 +135,7 @@ public class MainTestPavelsDataGen {
 					// the life cycle of the spring context is bound to that of the service
 					// Hence, stopping the service tears down the context and consequently
 					// frees all associated resources, such as AMQP connections
-					ServiceSpringApplicationBuilder tgService = new ServiceSpringApplicationBuilder("tg", ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
+					ServiceSpringApplicationBuilder tgService = new ServiceSpringApplicationBuilder("tg", ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK, Collections.emptyMap())
 							.properties(ImmutableMap.<String, Object>builder()
 									.put(Constants.RABBIT_MQ_HOST_NAME_KEY, amqpHost)
 									.put(Constants.HOBBIT_SESSION_ID_KEY, sessionId)

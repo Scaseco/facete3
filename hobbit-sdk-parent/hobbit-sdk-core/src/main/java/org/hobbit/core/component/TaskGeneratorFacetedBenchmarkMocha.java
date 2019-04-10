@@ -331,6 +331,9 @@ public class TaskGeneratorFacetedBenchmarkMocha
 //                    throw new RuntimeException(e);
 //                }
             }
+        } catch(Exception e) {
+        	logger.error("Error during task generation", e);
+        	throw new RuntimeException(e);
         }
     }
 

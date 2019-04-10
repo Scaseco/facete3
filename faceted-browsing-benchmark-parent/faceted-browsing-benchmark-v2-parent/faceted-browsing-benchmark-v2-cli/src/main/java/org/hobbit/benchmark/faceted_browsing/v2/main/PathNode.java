@@ -4,11 +4,15 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromProperty;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+
+import com.google.common.base.Converter;
 
 public interface PathNode
 	extends Resource
@@ -27,7 +31,24 @@ public interface PathNode
 	@IriNs("eg")
 	Long getCount();
 	
-	default Map<RDFNode, Resource> getTransitions() {
-		return new MapFromProperty(this, TRANSITIONS, PREDICATE);
+	default Map<Resource, PathNode> getTransitions() {
+		Map<RDFNode, Resource> map = new MapFromProperty(this, TRANSITIONS, PREDICATE);
+		
+		Map<Resource, Resource> m = new MapFromKeyConverter<>(map, Converter.from(r -> r.as(Resource.class), RDFNode::asResource));		
+		Map<Resource, PathNode> result = new MapFromValueConverter<>(m, Converter.from(r -> r.as(PathNode.class), RDFNode::asResource));
+
+		return result;
+	}
+	
+	
+	// Returns this nodes count plus the counts of all its children
+	default long getTotalCount() {
+		long result = getCount();
+		for(PathNode pn : getTransitions().values()) {
+			long contrib = pn.getTotalCount();
+			result += contrib;
+		}
+		
+		return result;
 	}
 }

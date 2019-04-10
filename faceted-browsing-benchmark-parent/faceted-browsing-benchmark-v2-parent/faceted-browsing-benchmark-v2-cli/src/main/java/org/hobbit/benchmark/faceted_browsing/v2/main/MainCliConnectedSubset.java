@@ -12,5 +12,18 @@ public class MainCliConnectedSubset {
 		System.out.println(test.getPredicate());
 		System.out.println(test.getCount());
 		System.out.println(test.getTransitions());
+		
+		
+		for(PathNode pn : test.getTransitions().values()) {
+			System.out.println(pn.getPredicate() + " " + pn.getCount() + " " + pn.getTotalCount());
+		}
+		
+		int desiredTripleCount = 1000;
+		int desiredConnectionsBetweenLevels = 3;
+		int maxLevels = 3;
+		int predicatesPerTarget = 7;
+
+		
 	}
 }
+

@@ -26,4 +26,9 @@ public class FacetedBrowsingVocab {
     
     public static final Property warmup = ResourceFactory.createProperty("http://www.example.org/warmup");
 
+    
+    
+    public static final Property preconfData = ResourceFactory.createProperty("http://w3id.org/bench#paramPreconfData");
+    public static final Property preconfTasks = ResourceFactory.createProperty("http://w3id.org/bench#paramPreconfTasks");
+
 }

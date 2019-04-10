@@ -145,11 +145,18 @@ public class MainCliDiceBenchmark {
 //		return TreeMultimap.create(Ordering.natural(), entryComparator(NodeUtils::compareRDFTerms, NodeUtils::compareRDFTerms));	
 //	}
 	
-	static class Choser {
+	public static class Chooser<E> {
 		
-		protected Random random;
+		protected Random rand;
 		protected int numPicks;
+		protected Comparator<? super E> comparator;
 		
+		
+		public Chooser(Comparator<? super E> comparator, Random random, int numPicks) {
+			this.rand = random;
+			this.numPicks = numPicks;
+			this.comparator = comparator;
+		}
 		
 //		public static <K, V> Entry<K, V> nearestKey(NavigableMap<K, V> map, K proto, Function<? super K, Long> distance) {
 //			K a = map.ceilingKey(proto);
@@ -169,14 +176,14 @@ public class MainCliDiceBenchmark {
 			return result;
 		}
 		
-		public static <E> Set<E> chose(Map<E, Long> pc, Comparator<? super E> comparator) {
+		public Set<E> choose(Map<E, Long> pc) {
 
 
 			// Pick n properties
 			double scale = 0.1;
-			int numPicks = 10;
+//			int numPicks = 10;
 
-			Random rand = new Random(1000);
+//			Random rand = new Random(1000);
 
 			// Each iteration adjust the weights, so that properties with totalSize / n have greatest weight
 			// First, 
@@ -195,7 +202,7 @@ public class MainCliDiceBenchmark {
 			
 //			long minTotalSize = totalSize;
 			
-			long minTotalSize = (long)(totalSize * (1.0 -totalTolerance));
+			long minTotalSize = (long)(totalSize * (1.0 - totalTolerance));
 			long maxTotalSize = (long)(totalSize * (1.0 + totalTolerance));
 			
 			//Map<E, Long> pc = null;
@@ -257,7 +264,7 @@ public class MainCliDiceBenchmark {
 				
 				
 				// Set the mean to the actual value closest to it
-				Entry<Long, Collection<E>> tmpMean = Choser.nearestEnty(ipc.asMap(), (long)desiredMean, (a, b) -> a.longValue() - b.longValue());
+				Entry<Long, Collection<E>> tmpMean = Chooser.nearestEnty(ipc.asMap(), (long)desiredMean, (a, b) -> a.longValue() - b.longValue());
 				double mean = tmpMean != null ? (double)tmpMean.getKey() : desiredMean;
 				
 				double stdev = 0.1 * mean;
@@ -495,7 +502,9 @@ public class MainCliDiceBenchmark {
 		
 		
 		// Split the properties into bins based on their frequency
-		Set<Entry<Node, Node>> chosen = Choser.chose(freqencies, entryComparator(NodeUtils::compareRDFTerms, NodeUtils::compareRDFTerms));
+		int numPicks = 10;
+		Chooser<Entry<Node, Node>> chooser = new Chooser<>(entryComparator(NodeUtils::compareRDFTerms, NodeUtils::compareRDFTerms), new Random(0), numPicks);
+		Set<Entry<Node, Node>> chosen = chooser.choose(freqencies);
 		
 
 		for(Entry<Node, Node> item : chosen) {

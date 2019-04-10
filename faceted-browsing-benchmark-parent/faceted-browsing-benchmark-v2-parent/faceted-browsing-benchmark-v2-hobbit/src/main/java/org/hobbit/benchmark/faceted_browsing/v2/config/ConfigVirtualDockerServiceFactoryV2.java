@@ -28,38 +28,41 @@ import org.hobbit.core.service.docker.api.DockerServiceFactory;
 import org.hobbit.core.service.docker.impl.spring_boot.DockerServiceFactorySpringApplicationBuilder;
 import org.hobbit.qpid.v7.config.ConfigQpidBroker;
 import org.hobbit.rdf.component.SystemAdapterRDFConnectionMocha;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
+
+import com.google.common.collect.ImmutableMap;
 
 public class ConfigVirtualDockerServiceFactoryV2 {
 
 
-	public static Map<String, Supplier<SpringApplicationBuilder>> getDockerServiceFactoryOverrides(BenchmarkConfig config) { 
+	public static Map<String, Supplier<SpringApplicationBuilder>> getDockerServiceFactoryOverrides(BenchmarkConfig config, Map<String, Object> env) { 
 		//Function<String, SpringApplicationBuilder> baseConfigFactory = ConfigVirtualDockerServiceFactory::createComponentBaseConfig;
 
 		// Note: We make the actual components children of the channel configuration, so that we ensure that
 		// channels are only closed once the components have shut down and sent their final messages
-		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> ComponentUtils.createComponentBaseConfig("bc", Constants.CONTAINER_TYPE_BENCHMARK)
+		Supplier<SpringApplicationBuilder> bcAppBuilder = () -> ComponentUtils.createComponentBaseConfig("bc", Constants.CONTAINER_TYPE_BENCHMARK, env)
 				.child(ConfigBenchmarkControllerFacetedBrowsingServicesV2.class)
 					.child(BenchmarkControllerComponentImpl.class);
 		
-		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("dg", Constants.CONTAINER_TYPE_BENCHMARK)
+		Supplier<SpringApplicationBuilder> dgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("dg", Constants.CONTAINER_TYPE_BENCHMARK, env)
 				.child(ConfigDataGeneratorFacetedBrowsingV2.class, ConfigDataGenerator.class)
 						.child(DataGeneratorComponentImpl.class);
 		
-		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK)
+		Supplier<SpringApplicationBuilder> tgAppBuilder = () -> ComponentUtils.createComponentBaseConfig("tg", Constants.CONTAINER_TYPE_BENCHMARK, env)
 				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigTaskGenerator.class, ConfigTaskGeneratorFacetedBenchmarkV2.class)
 					.child(TaskGeneratorFacetedBenchmarkMocha.class);
 
-		Supplier<SpringApplicationBuilder> saAppBuilder = () -> ComponentUtils.createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM)
+		Supplier<SpringApplicationBuilder> saAppBuilder = () -> ComponentUtils.createComponentBaseConfig("sa", Constants.CONTAINER_TYPE_SYSTEM, env)
 				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigSystemAdapter.class)
 					.child(SystemAdapterRDFConnectionMocha.class);
 			
-		Supplier<SpringApplicationBuilder> esAppBuilder = () -> ComponentUtils.createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE)
+		Supplier<SpringApplicationBuilder> esAppBuilder = () -> ComponentUtils.createComponentBaseConfig("es", Constants.CONTAINER_TYPE_DATABASE, env)
 				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigEvaluationStorage.class, ConfigEvaluationStorageStorageProvider.class)
 					.child(DefaultEvaluationStorage.class);
 		
-		Supplier<SpringApplicationBuilder> emAppBuilder = () -> ComponentUtils.createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM)
+		Supplier<SpringApplicationBuilder> emAppBuilder = () -> ComponentUtils.createComponentBaseConfig("em", Constants.CONTAINER_TYPE_SYSTEM, env)
 				.child(ConfigEncodersFacetedBrowsingV2.class, ConfigEvaluationModule.class, ConfigEvaluationModuleFacetedBrowsingV2.class)
 					.child(EvaluationModuleComponent.class);
 		
@@ -121,8 +124,13 @@ public class ConfigVirtualDockerServiceFactoryV2 {
 	
 	@Bean
 	//public Map<String, Supplier<SpringApplicationBuilder>> dockerServiceFactoryOverrides() {
-	public DockerServiceFactory<?> dockerServiceFactoryOverrides() {
-		Map<String, Supplier<SpringApplicationBuilder>> map = ConfigVirtualDockerServiceFactoryV2.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV2Constants.config);
+	public DockerServiceFactory<?> dockerServiceFactoryOverrides(@Value("${" + Constants.BENCHMARK_PARAMETERS_MODEL_KEY + ":{}}") String paramModelStr) {//Environment env) {
+		
+		Map<String, Object> e = ImmutableMap.<String, Object>builder()
+				.put(Constants.BENCHMARK_PARAMETERS_MODEL_KEY, paramModelStr)
+				.build();
+		
+		Map<String, Supplier<SpringApplicationBuilder>> map = ConfigVirtualDockerServiceFactoryV2.getDockerServiceFactoryOverrides(FacetedBrowsingBenchmarkV2Constants.config, e);
 
 		DockerServiceFactory<?> result = new DockerServiceFactorySpringApplicationBuilder(map);
 		return result;

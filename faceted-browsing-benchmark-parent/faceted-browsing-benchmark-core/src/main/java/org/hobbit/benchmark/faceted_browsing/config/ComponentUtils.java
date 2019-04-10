@@ -34,9 +34,10 @@ public class ComponentUtils {
     public static final String DEFAULT_REQUESTED_CONTAINER_TYPE_KEY = "defaultRequstedContainerType";
 	
 	
-	public static SpringApplicationBuilder createComponentBaseConfig(String componentName, String defaultRequestedContainerType) {
+	public static SpringApplicationBuilder createComponentBaseConfig(String componentName, String defaultRequestedContainerType, Map<String, Object> env) {
 	    SpringApplicationBuilder result = new SpringApplicationBuilder()
 	            .properties(new ImmutableMap.Builder<String, Object>()
+	                    .putAll(env)
 	                    .put(COMPONENT_NAME_KEY, componentName)
 	                    .put(DEFAULT_REQUESTED_CONTAINER_TYPE_KEY, defaultRequestedContainerType)
 	                    .build())
