@@ -109,7 +109,7 @@ public class MainSparqlBenchmarkRunner {
 		            logger.info("Number of expected result set rows for task " + task + ": " + numRows + " query: " + queryStr);
 					} catch (QueryExceptionHTTP exceptionHTTP) {
 						logger.info("Query failed: {}", exceptionHTTP.toString() );
-						r.addLiteral(ResourceFactory.createProperty("http://www.example.org/failed"), false);
+						r.addLiteral(ResourceFactory.createProperty("http://www.example.org/failed"), true);
 					}
 		        }
 				
