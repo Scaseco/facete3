@@ -23,6 +23,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Dimension;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.DimensionImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpec;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RangeSpecImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStack;
@@ -63,5 +64,7 @@ public class JenaPluginFacetedBrowsing {
 		p.add(RdfStack.class, new SimpleImplementation(RdfStackImpl::new));
 
 		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(SparqlTaskResource.class.getPackage().getName());	
+
+		JenaPluginUtils.registerJenaResourceClasses(ScenarioConfig.class);
 	}
 }
