@@ -1,45 +1,26 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
+import com.beust.jcommander.JCommander;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ObjectArrays;
+import com.spotify.docker.client.DockerClient;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.apache.jena.sparql.resultset.ResultSetMem;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
 import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
@@ -52,13 +33,20 @@ import org.hobbit.core.service.docker.impl.docker_client.DockerServiceDockerClie
 import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.beust.jcommander.JCommander;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ObjectArrays;
-import com.spotify.docker.client.DockerClient;
-
 import virtuoso.jdbc4.VirtuosoDataSource;
+
+import java.io.File;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 
@@ -335,8 +323,12 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 					//SparqlStmt stmt = SparqlTaskResource.parse(tmp);
 					//System.out.println("Query: " + stmt);
 
-					
-					annotateTaskWithReferenceResult(tmp, conn);
+
+					try {
+						annotateTaskWithReferenceResult(tmp, conn);
+					} catch (QueryExceptionHTTP exceptionHTTP) {
+						logger.warn("Query execution failed: {}", exceptionHTTP.toString());
+					}
 					
 //							try(SPARQLResultEx srx = SparqlStmtUtils.execAny(conn, stmt)) {
 //								// Ensure to close the result set
@@ -401,7 +393,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 //        	if(task.getURI().equals("http://example.org/Scenario_10-1")) {
 //        		System.out.println("DEBUG POINT REACHED");
 //        	}
-        	
+        	logger.debug(queryStr);
         	ResultSet resultSet = qe.execSelect();
         	//int wtf = ResultSetFormatter.consume(resultSet);
         	ResultSetMem rsMem = new ResultSetMem(resultSet);
