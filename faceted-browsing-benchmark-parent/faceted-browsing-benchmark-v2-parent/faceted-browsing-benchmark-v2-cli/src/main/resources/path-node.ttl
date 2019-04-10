@@ -1,0 +1,15 @@
+ @prefix eg: <http://www.example.org/>
+ 
+ eg:foo
+    eg:depth 0 ;
+    eg:count 1 ;
+    eg:transitions eg:bar-d1 ;
+    .
+
+ eg:bar-d1
+    eg:predicate eg:bar ;
+    eg:depth 1 ;
+    eg:count 2 ;
+    eg:transitions eg:baz ;
+    .
+ 

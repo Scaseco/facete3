@@ -28,6 +28,24 @@ import com.github.jsonldjava.shaded.com.google.common.base.Stopwatch;
 import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 
+/**
+ * A map view for over the values of a specific property of a specific resource,
+ * modeled in the following way:
+ * 
+ * :subject
+ *   :entryProperty ?value .
+ *   
+ *  ?value
+ *     :keyProperty ?key .
+ *     
+ *  The map associates each ?key with ?value.
+ *  
+ *  Use a converter to convert the value to e.g. a property of ?value
+ *  (this way, the map will lose its put capability)
+ *  
+ * @author raven
+ *
+ */
 public class MapFromProperty
 	extends AbstractMap<RDFNode, Resource>
 {

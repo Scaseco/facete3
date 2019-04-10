@@ -147,6 +147,10 @@ public class MainCliDiceBenchmark {
 	
 	static class Choser {
 		
+		protected Random random;
+		protected int numPicks;
+		
+		
 //		public static <K, V> Entry<K, V> nearestKey(NavigableMap<K, V> map, K proto, Function<? super K, Long> distance) {
 //			K a = map.ceilingKey(proto);
 //			K b = map.floorKey(proto);
