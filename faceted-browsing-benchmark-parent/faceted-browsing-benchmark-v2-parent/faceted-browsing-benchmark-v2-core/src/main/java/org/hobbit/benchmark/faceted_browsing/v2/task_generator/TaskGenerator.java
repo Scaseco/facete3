@@ -792,27 +792,31 @@ public class TaskGenerator {
 		// Ideally for every task the query id would start at 0,
 		// but the eval module currently only supports (scenarioId, queryId)
 		int queryIdInScenario[] = {0};
+
+		// Create a concrete instance of the scenario configuration template
+		ScenarioConfig config =
+				scenarioTemplate.inModel(ResourceUtils.reachableClosure(scenarioTemplate))
+				.as(ScenarioConfig.class);
+
+		NfaState currentState[] = {config.getNfa().getStartState()};
+
+		
 		Supplier<Collection<SparqlTaskResource>> tmp = () -> {
 			Collection<SparqlTaskResource> r = null;
 
 			
-			// Create a concrete instance of the scenario configuration template
-			ScenarioConfig config =
-					scenarioTemplate.inModel(ResourceUtils.reachableClosure(scenarioTemplate))
-					.as(ScenarioConfig.class);
 			
 			substituteRangesWithRandomValue(rand, config.getModel());
 			Integer scenarioLength = config.getScenarioLength();
 			Objects.requireNonNull(scenarioLength);
 			
 			
-			NfaState currentState = config.getNfa().getStartState();
 			
 			int i = taskIdInScenario[0]++;
 			
 			if (i < scenarioLength) {
 
-				NfaTransition transition = nextState(cpToAction, currentState);
+				NfaTransition transition = nextState(cpToAction, currentState[0]);
 				if(transition != null) {				
 									
 					String cpName = getTransitionKey(transition);
@@ -834,7 +838,7 @@ public class TaskGenerator {
 	//					r = generateQuery(currentQuery.focus().availableValues());
 					}
 	
-					currentState = transition.getTarget();
+					currentState[0] = transition.getTarget();
 				}				
 				//RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
 			}
