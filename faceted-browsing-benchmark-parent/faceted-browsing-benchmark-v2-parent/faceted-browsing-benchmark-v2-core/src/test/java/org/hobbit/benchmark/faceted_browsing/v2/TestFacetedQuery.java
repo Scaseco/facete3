@@ -45,8 +45,8 @@ public class TestFacetedQuery {
 	 */
 	@Test
 	public void testConstraintDisjunction() {
-		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
-		fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class);
+		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class).activate();
+		fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class).activate();
 
 		System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 		
@@ -84,7 +84,7 @@ public class TestFacetedQuery {
 				.fwd()
 				.facetValueCounts()	
 				// --- DataQuery API
-				.sample()
+				//.sample()
 				.randomOrder()
 				.limit(1)
 				.exec()

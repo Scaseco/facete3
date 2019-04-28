@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 
 import io.reactivex.Flowable;
 
@@ -231,7 +232,7 @@ class ModelCreationImpl<T>
 		PrefixMapping pmCopy = new PrefixMappingImpl();
 		pmCopy.setNsPrefixes(pm);
 		
-		String str = SparqlStmtUtils.processFile(pmCopy, sparqlFilenameOrUri)
+		String str = Streams.stream(SparqlStmtUtils.processFile(pmCopy, sparqlFilenameOrUri))
 				.map(Object::toString)
 				.collect(Collectors.joining("\n"));
 

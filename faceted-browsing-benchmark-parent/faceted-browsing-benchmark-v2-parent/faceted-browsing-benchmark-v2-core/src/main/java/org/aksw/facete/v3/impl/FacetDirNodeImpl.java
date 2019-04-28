@@ -1,7 +1,8 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
@@ -284,15 +285,21 @@ public class FacetDirNodeImpl
 		
 		// Inject that the object must not be a blank node
 		// TODO There should be a better place to do this - but where?
+
+		List<Element> filters = new ArrayList<>();
+		boolean discardBlankNodes = false;
+		if(discardBlankNodes) {
+			filters.add(new ElementFilter(new E_LogicalOr(
+					new E_LogicalNot(new E_Bound(new ExprVar(tr.getP()))),
+					new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP()))))));
+		}
 		
 		// NOTE jena's isBlank yields null (type error?) for unbound variables
 		// We don't want to filter out blank values but not unbound ones - hence the expression is
 		// FILTER(!bound(o) || !blank(?o)) 
 		tr = new TernaryRelationImpl(ElementUtils.createElementGroup(ImmutableList.<Element>builder()
 				.addAll(tr.getElements())
-				.add(new ElementFilter(new E_LogicalOr(
-						new E_LogicalNot(new E_Bound(new ExprVar(tr.getP()))),
-						new E_LogicalNot(new E_IsBlank(new ExprVar(tr.getP()))))))
+				.addAll(filters)
 				.build()),
 				tr.getS(),
 				tr.getP(),

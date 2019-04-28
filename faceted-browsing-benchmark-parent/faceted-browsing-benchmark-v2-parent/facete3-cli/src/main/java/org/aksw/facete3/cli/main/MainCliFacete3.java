@@ -36,11 +36,15 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
+import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
@@ -63,6 +67,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.Expr;
@@ -267,8 +272,8 @@ public class MainCliFacete3 {
 		
 		//resourceTable.invalidate();
 
-		System.out.println("resourcelabel prefsize: " + resourceSubjectLabel.getPreferredSize());
-		System.out.println("resourcelabel prefsize: " + resourceSubjectLabel.getSize());
+//		System.out.println("resourcelabel prefsize: " + resourceSubjectLabel.getPreferredSize());
+//		System.out.println("resourcelabel prefsize: " + resourceSubjectLabel.getSize());
 //		System.out.println("resourcepanel Prefsize: " + resourcePanel.getPreferredSize());
 //		System.out.println("resourcepanel Actualsize: " + resourcePanel.getSize());
 //		System.out.println("resourcetable Prefsize: " + resourceTable.getPreferredSize());
@@ -746,6 +751,21 @@ public class MainCliFacete3 {
 		//QueryGenerationUtils.
 	}
 	
+	public static RDFConnection wrapWithVirtualBnodesUris(RDFConnection conn) {
+		RDFConnection result =
+				new RDFConnectionModular(new SparqlQueryConnectionJsa(
+						FluentQueryExecutionFactory
+							.from(new QueryExecutionFactorySparqlQueryConnection(conn))
+							.config()
+								.withQueryTransform(ExprTransformVirtualBnodeUris::rewrite)
+								.end()
+							.create()
+							), conn, conn);
+	
+		return result;
+	}
+
+	
 	public void init(Dataset dataset) throws Exception
 	{
 		Stopwatch sw = Stopwatch.createStarted();
@@ -757,6 +777,8 @@ public class MainCliFacete3 {
 		//Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
 //		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
 		conn = RDFConnectionFactory.connect(dataset);
+		conn = wrapWithVirtualBnodesUris(conn);
+		
 		
 		fq = FacetedQueryImpl.create(conn);
 

@@ -98,9 +98,9 @@ public interface Viewport
 //		Geometry screenGeometry = geometry.transform( screenCRS, transform );
 //
 //		
-		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(0, 0)), dataToScreen));
-		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(0, 0)), screenToData));
-		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(viewport.getWidth().doubleValue(), viewport.getHeight().doubleValue())), screenToData));
+//		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(0, 0)), dataToScreen));
+//		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(0, 0)), screenToData));
+//		System.out.println(JTS.transform(geometryFactory.createPoint(new Coordinate(viewport.getWidth().doubleValue(), viewport.getHeight().doubleValue())), screenToData));
 	}
 		
 }
