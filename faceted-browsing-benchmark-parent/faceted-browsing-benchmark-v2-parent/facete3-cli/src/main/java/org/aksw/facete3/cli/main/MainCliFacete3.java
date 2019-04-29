@@ -42,6 +42,7 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
@@ -750,21 +751,13 @@ public class MainCliFacete3 {
 		//QueryGenerationUtils.
 		//QueryGenerationUtils.
 	}
+
 	
-	public static RDFConnection wrapWithVirtualBnodesUris(RDFConnection conn) {
-		RDFConnection result =
-				new RDFConnectionModular(new SparqlQueryConnectionJsa(
-						FluentQueryExecutionFactory
-							.from(new QueryExecutionFactorySparqlQueryConnection(conn))
-							.config()
-								.withQueryTransform(ExprTransformVirtualBnodeUris::rewrite)
-								.end()
-							.create()
-							), conn, conn);
-	
+	public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String vendorLabel, String bnodeLabelFn) {
+		ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(vendorLabel, bnodeLabelFn);
+		RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
 		return result;
 	}
-
 	
 	public void init(Dataset dataset) throws Exception
 	{
@@ -777,7 +770,7 @@ public class MainCliFacete3 {
 		//Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
 //		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
 		conn = RDFConnectionFactory.connect(dataset);
-		conn = wrapWithVirtualBnodesUris(conn);
+		conn = wrapWithVirtualBnodeUris(conn, "jena", "<http://jena.apache.org/ARQ/function#bnode>");
 		
 		
 		fq = FacetedQueryImpl.create(conn);
