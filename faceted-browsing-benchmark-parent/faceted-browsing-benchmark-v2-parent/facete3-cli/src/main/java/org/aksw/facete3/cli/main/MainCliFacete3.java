@@ -41,11 +41,8 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
@@ -58,7 +55,9 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -68,7 +67,6 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.Expr;
@@ -476,8 +474,8 @@ public class MainCliFacete3 {
 		}
 		
 		logger.info("updateItems: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
-		System.out.println("resulttable Prefsize: " + resultTable.getPreferredSize());
-		System.out.println("resulttable Actualsize: " + resultTable.getSize());
+//		System.out.println("resulttable Prefsize: " + resultTable.getPreferredSize());
+//		System.out.println("resulttable Actualsize: " + resultTable.getSize());
 	}
 	
 	/**
@@ -678,6 +676,15 @@ public class MainCliFacete3 {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		
+//		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
+//		conn = wrapWithVirtualBnodeUris(conn, "jena", "<http://jena.apache.org/ARQ/function#bnode>");
+//		try(QueryExecution qe = conn.query("SELECT * { ?s ?p ?o . FILTER(isBlank(?s)) } LIMIT 1")) {
+//			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+//		}
+//
+//		if(true) { return; }
+		
 		// TODO Move auto proxying to a proper test case
 		//MapperProxyUtils.createProxyFactory(Test2.class);
 		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(Test2.class.getPackage().getName());		
@@ -688,9 +695,9 @@ public class MainCliFacete3 {
 		
 		RDFDataMgr.write(System.err, test.getModel(), RDFFormat.TURTLE_PRETTY);
 		
-		System.out.println(test.getFoo(Resource.class));
-		System.out.println(test.getFoo(String.class));
-		System.out.println(test.getFoo(Integer.class));
+//		System.out.println(test.getFoo(Resource.class));
+//		System.out.println(test.getFoo(String.class));
+//		System.out.println(test.getFoo(Integer.class));
 		
 //		for(Method m : Test2.class.getDeclaredMethods()) {
 //			MapperProxyUtils.canActAsCollectionView(m, Set.class, Resource.class);
