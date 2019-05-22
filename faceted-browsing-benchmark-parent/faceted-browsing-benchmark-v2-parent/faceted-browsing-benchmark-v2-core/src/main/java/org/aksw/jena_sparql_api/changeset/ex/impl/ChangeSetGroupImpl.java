@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.changeset.ex.impl;
 
 import java.util.Set;
 
-import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
 import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
@@ -10,10 +9,11 @@ import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.vocabulary.RDFS;
 
 public class ChangeSetGroupImpl
-	extends ResourceBase
+	extends ResourceImpl
 	implements ChangeSetGroup
 {
 	public ChangeSetGroupImpl(Node n, EnhGraph m) {

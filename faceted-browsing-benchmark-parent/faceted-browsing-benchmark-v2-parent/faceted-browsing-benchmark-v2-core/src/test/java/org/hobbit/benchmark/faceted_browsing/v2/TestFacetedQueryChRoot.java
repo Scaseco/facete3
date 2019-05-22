@@ -2,8 +2,8 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetNodeResource;
 import org.aksw.facete.v3.api.FacetedQuery;
-import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;

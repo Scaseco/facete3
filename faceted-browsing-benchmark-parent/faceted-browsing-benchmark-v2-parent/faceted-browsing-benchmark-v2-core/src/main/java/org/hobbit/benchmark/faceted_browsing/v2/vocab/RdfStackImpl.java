@@ -7,7 +7,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.aksw.commons.collections.SinglePrefetchIterator;
-import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -15,6 +14,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 
@@ -64,7 +64,7 @@ class LinkedIterator<X, T>
 }
 
 public class RdfStackImpl
-	extends ResourceBase
+	extends ResourceImpl
 	implements RdfStack
 {
 	public RdfStackImpl(Node n, EnhGraph m) {

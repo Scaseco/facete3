@@ -24,16 +24,16 @@ import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetNodeResource;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.api.FacetedQueryResource;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
-import org.aksw.facete.v3.impl.ConstraintFacadeImpl;
+import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
-import org.aksw.facete.v3.impl.FacetNodeResource;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
-import org.aksw.facete.v3.impl.FacetedQueryResource;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
@@ -47,17 +47,17 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.base.Strings;
+import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -83,7 +83,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
-import com.google.common.graph.Traverser;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
@@ -295,7 +294,7 @@ public class MainCliFacete3 {
 		
 		for(FacetNode fn : map.values()) {
 			BgpNode state = fn.as(FacetNodeResource.class).state();
-			SimplePath simplePath = BgpNode.toSimplePath(state);
+			SimplePath simplePath = BgpNodeUtils.toSimplePath(state);
 			Set<Node> contrib = SimplePath.mentionedNodes(simplePath);
 			
 			nodes.addAll(contrib);
@@ -322,7 +321,7 @@ public class MainCliFacete3 {
 					Node k = e.getKey();
 					FacetNode fn = e.getValue();
 					BgpNode state = fn.as(FacetNodeResource.class).state();
-					SimplePath simplePath = BgpNode.toSimplePath(state);
+					SimplePath simplePath = BgpNodeUtils.toSimplePath(state);
 					return Maps.immutableEntry(k, simplePath);
 				})
 				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
@@ -455,6 +454,8 @@ public class MainCliFacete3 {
 	
 	public void updateItems(FacetedQuery fq) {
 		Stopwatch sw = Stopwatch.createStarted();
+		
+		Long count = fq.focus().availableValues().count().blockingGet();
 		
 		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
 		
@@ -1237,7 +1238,7 @@ public class MainCliFacete3 {
 		logger.info("enrichWithLabels: Lookup of size " + cs.size());
 		
 		Multimap<Node, T> index = Multimaps.index(cs, item ->
-			Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(ConstraintFacadeImpl.N_ABSENT));
+			Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(NodeUtils.nullUriNode));
 
 		//Map<Node, T> index = Maps.uniqueIndex();
 		Set<Node> s = index.keySet().stream()
@@ -1246,7 +1247,7 @@ public class MainCliFacete3 {
 
 		Map<Node, String> map = labelService.fetchMap(s);
 		index.forEach((k, v) -> v.addLiteral(RDFS.label,
-				map.getOrDefault(k, ConstraintFacadeImpl.N_ABSENT.equals(k)
+				map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
 						? "(null)"
 						: k.isURI() ? deriveLabelFromIri(k.getURI()) : k.toString())));
 	}

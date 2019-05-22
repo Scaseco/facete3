@@ -103,19 +103,19 @@ class PathSpecSimpleX
 
 }
 
-class RangeSpec {
-	protected boolean upperBound;
-	protected boolean lowerBound;
-	
-	RangeSpec withUpperBound() {
-		this.upperBound = true;
-		return this;
-	}
-
-	RangeSpec withLowerBound() {
-		this.lowerBound = true;
-		return this;
-	}
-	
-	
-}
+//class RangeSpec {
+//	protected boolean upperBound;
+//	protected boolean lowerBound;
+//	
+//	RangeSpec withUpperBound() {
+//		this.upperBound = true;
+//		return this;
+//	}
+//
+//	RangeSpec withLowerBound() {
+//		this.lowerBound = true;
+//		return this;
+//	}
+//	
+//	
+//}

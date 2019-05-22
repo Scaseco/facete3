@@ -1,9 +1,9 @@
 package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
+import org.aksw.jena_sparql_api.data_query.impl.PathToRelationMapper;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction0;
 import org.apache.jena.sparql.expr.ExprTransformCopy;
-import org.hobbit.benchmark.faceted_browsing.v2.main.PathToRelationMapper;
 
 //public class ExprTransformViaPathMapper<P>
 //	extends ExprTransformCopy

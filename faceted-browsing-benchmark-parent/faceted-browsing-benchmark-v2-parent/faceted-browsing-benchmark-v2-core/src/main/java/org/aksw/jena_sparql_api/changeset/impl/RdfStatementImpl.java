@@ -1,19 +1,17 @@
 package org.aksw.jena_sparql_api.changeset.impl;
 
-import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.changeset.api.RdfStatement;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ReifiedStatement;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.impl.ReifierStd;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.vocabulary.RDF;
 
 /**
@@ -23,7 +21,7 @@ import org.apache.jena.vocabulary.RDF;
  *
  */
 public class RdfStatementImpl
-	extends ResourceBase
+	extends ResourceImpl
 	implements RdfStatement
 {
 

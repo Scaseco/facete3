@@ -2,19 +2,19 @@ package org.aksw.jena_sparql_api.changeset.impl;
 
 import java.util.Collection;
 
-import org.aksw.facete.v3.impl.ResourceBase;
-import org.aksw.jena_sparql_api.changeset.CS;
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
 import org.aksw.jena_sparql_api.changeset.api.RdfStatement;
+import org.aksw.jena_sparql_api.changeset.vocab.CS;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 
 public class ChangeSetImpl
-	extends ResourceBase
+	extends ResourceImpl
 	implements ChangeSet
 {
 	public ChangeSetImpl(Node n, EnhGraph m) {

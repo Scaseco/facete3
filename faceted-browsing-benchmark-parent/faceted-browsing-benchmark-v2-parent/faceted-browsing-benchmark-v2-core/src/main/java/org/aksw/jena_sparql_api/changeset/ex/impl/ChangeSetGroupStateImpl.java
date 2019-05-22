@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.changeset.ex.impl;
 
 import java.util.Map;
 
-import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
@@ -11,9 +10,10 @@ import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 
 public class ChangeSetGroupStateImpl
-	extends ResourceBase
+	extends ResourceImpl
 	implements ChangeSetGroupState
 {
 	public ChangeSetGroupStateImpl(Node n, EnhGraph m) {

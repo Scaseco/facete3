@@ -6,13 +6,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.changeset.CS;
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
 import org.aksw.jena_sparql_api.changeset.api.RdfStatement;
 import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
+import org.aksw.jena_sparql_api.changeset.vocab.CS;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;

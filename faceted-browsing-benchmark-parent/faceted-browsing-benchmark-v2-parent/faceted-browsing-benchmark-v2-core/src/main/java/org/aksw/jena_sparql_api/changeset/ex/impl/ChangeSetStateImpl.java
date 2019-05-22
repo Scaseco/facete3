@@ -1,15 +1,15 @@
 package org.aksw.jena_sparql_api.changeset.ex.impl;
 
-import org.aksw.facete.v3.impl.ResourceBase;
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
 import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 
 public class ChangeSetStateImpl
-	extends ResourceBase
+	extends ResourceImpl
 	implements ChangeSetState
 {
 	public ChangeSetStateImpl(Node n, EnhGraph m) {

@@ -1,21 +1,20 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 
 import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
-import org.aksw.facete.v3.impl.FacetedBrowsingSessionImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
+import org.aksw.jena_sparql_api.data_query.impl.FacetedBrowsingSessionImpl;
+import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
+import org.aksw.jena_sparql_api.data_query.impl.FactoryWithModel;
 import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
@@ -41,19 +40,16 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.ExprPath;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.FactoryWithModel;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.ExprUtilsGeo;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Range;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
-import com.vividsolutions.jts.geom.Envelope;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
-
+// This file can be removed; its just a collection of random experiments
 public class MainFacetedBenchmark2 {
 	
 //	public static <P> Set<P> getPathsMentioned(Expr expr, Class<P> pathClass) {
@@ -114,8 +110,8 @@ public class MainFacetedBenchmark2 {
 //		System.out.println(q);
 
 				
-		Envelope env = new Envelope(0, 10, 0, 10);
-		System.out.println(org.apache.jena.sparql.util.ExprUtils.fmtSPARQL(ExprUtilsGeo.createExprOgcIntersects(Vars.s, env, null, null)));
+//		Envelope env = new Envelope(0, 10, 0, 10);
+//		System.out.println(org.apache.jena.sparql.util.ExprUtils.fmtSPARQL(ExprUtilsGeo.createExprOgcIntersects(Vars.s, env, null, null)));
 		
 		
 		Model x = RDFDataMgr.loadModel("cyclic-data.nt");
