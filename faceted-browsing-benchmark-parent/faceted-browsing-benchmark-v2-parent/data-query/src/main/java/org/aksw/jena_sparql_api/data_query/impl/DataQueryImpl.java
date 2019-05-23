@@ -704,15 +704,19 @@ public class DataQueryImpl<T extends RDFNode>
 	}
 
 	@Override
-	public Single<Long> count() {
-		// TODO Auto-generated method stub
-		return null;
+	public Single<CountInfo> count() {
+		return count(null, null);
 	}
 
 	@Override
 	public Single<CountInfo> count(Long distinctItemCount, Long rowCount) {
-		// TODO Auto-generated method stub
-		return null;
+		Entry<Node, Query> e = toConstructQuery();
+		Query query = e.getValue();
+		//		QueryExecutionUtils.countQuery(query, new QueryExecutionFactorySparqlQueryConnection(conn));
+		Single<CountInfo> result = ReactiveSparqlUtils.fetchCountQuery(conn, query, distinctItemCount, rowCount)
+				.map(range -> CountUtils.toCountInfo(range));
+		
+		return result;
 	}
 
 	

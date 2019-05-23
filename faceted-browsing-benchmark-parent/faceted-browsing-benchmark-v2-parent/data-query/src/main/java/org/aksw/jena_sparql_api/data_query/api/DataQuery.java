@@ -203,6 +203,14 @@ public interface DataQuery<T extends RDFNode> {
 	Flowable<T> exec();
 
 
-	Single<Long> count();
+	/**
+	 * Count the number of resources matching this data query's configuration
+	 * using default request parameters.
+	 * The result may yield a partial count (the count upon reaching a timeout)
+	 * 
+	 * 
+	 * @return
+	 */
+	Single<CountInfo> count();
 	Single<CountInfo> count(Long distinctItemCount, Long rowCount);
 }

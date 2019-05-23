@@ -1,5 +1,6 @@
 package org.aksw.facete3.cli.main;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -89,7 +90,9 @@ import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.gui2.ActionListBox;
 import com.googlecode.lanterna.gui2.BasicWindow;
+import com.googlecode.lanterna.gui2.Border;
 import com.googlecode.lanterna.gui2.Borders;
+import com.googlecode.lanterna.gui2.Borders.StandardBorder;
 import com.googlecode.lanterna.gui2.Button;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.Direction;
@@ -214,7 +217,25 @@ public class MainCliFacete3 {
 	public static String treeToString() {
 		return null;
 	}
+
+	public static void setAttr(String clazzName, Object obj, String fieldName, Object value) {
+		try {
+			Class<?> clazz = Class.forName(clazzName);
+			setAttr(clazz, obj, fieldName, value);
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
+	public static void setAttr(Class<?> clazz, Object obj, String fieldName, Object value) {
+		try {
+			Field field = clazz.getField(fieldName);
+			field.setAccessible(true);
+			field.set(obj, value);
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 
 	public static BgpNode HACK = ModelFactory.createDefaultModel().createResource("should not appear anywhere").as(BgpNode.class);
@@ -404,6 +425,7 @@ public class MainCliFacete3 {
 
 	CheckBoxList<HLFacetConstraint<?>> constraintList = new CheckBoxList<>();
 	Panel facetPathPanel = new Panel();
+	Border resultPanelBorder;
 
 	
 	String facetFilter = null;
@@ -455,7 +477,10 @@ public class MainCliFacete3 {
 	public void updateItems(FacetedQuery fq) {
 		Stopwatch sw = Stopwatch.createStarted();
 		
-		//Long count = fq.focus().availableValues().count().blockingGet();
+		Long count = fq.focus().availableValues().count().blockingGet().getCount();
+		//setAttr("com.googlecode.lanterna.gui2.Borders$StandardBorder", resultPanelBorder, "title", "" + count);
+		//System.out.println("Item count: " + count);
+		((StandardBorder)resultPanelBorder).setTitle("" + count + " matches");
 		
 		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
 		
@@ -769,6 +794,8 @@ public class MainCliFacete3 {
 	
 	public void init(Dataset dataset) throws Exception
 	{
+		resultPanelBorder = Borders.singleLine("Matches");
+
 		Stopwatch sw = Stopwatch.createStarted();
 		
 		
@@ -1134,10 +1161,10 @@ public class MainCliFacete3 {
 		mainPanel.addComponent(facetPanel.withBorder(Borders.singleLine("Facets")));
 		mainPanel.addComponent(facetValuePanel.withBorder(Borders.singleLine("Facet Values")));
 		mainPanel.addComponent(constraintPanel.withBorder(Borders.singleLine("Constraints")));
-		mainPanel.addComponent(resultPanel.withBorder(Borders.singleLine("Matches")));
+		
+		mainPanel.addComponent(resultPanel.withBorder(resultPanelBorder));
 		mainPanel.addComponent(resourcePanel.withBorder(Borders.singleLine("Resource")));
 
-		
 		
 		 // Create window to hold the panel
         BasicWindow window = new BasicWindow();
