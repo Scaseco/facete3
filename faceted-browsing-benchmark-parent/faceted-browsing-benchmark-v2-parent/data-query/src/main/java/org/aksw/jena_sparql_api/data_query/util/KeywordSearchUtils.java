@@ -1,4 +1,4 @@
-package org.hobbit.benchmark.faceted_browsing.v2.main;
+package org.aksw.jena_sparql_api.data_query.util;
 
 import java.util.Arrays;
 
@@ -20,6 +20,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementOptional;
 
+// TODO Maybe move to the jsa concept package
 public class KeywordSearchUtils {
     /**
      * ?s ?p ?o // your relation

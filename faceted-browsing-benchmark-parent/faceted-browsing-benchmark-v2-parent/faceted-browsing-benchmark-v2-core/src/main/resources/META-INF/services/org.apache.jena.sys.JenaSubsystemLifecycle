@@ -1,2 +1,2 @@
-org.hobbit.faceted_browsing.action.InitJenaPluginFacetedBrowsing
+org.hobbit.benchmark.faceted_search.v2.plugin.JenaPluginFacetedSearch
 org.aksw.jena_sparql_api.changeset.plugin.JenaPluginChangeSet

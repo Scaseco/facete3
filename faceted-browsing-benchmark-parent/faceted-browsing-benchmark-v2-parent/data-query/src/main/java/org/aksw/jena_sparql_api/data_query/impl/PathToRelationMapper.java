@@ -16,15 +16,16 @@ import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.graph.SuccessorsFunction;
+import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.graph.SuccessorsFunction;
-import com.google.common.graph.Traverser;
+import com.github.davidmoten.guavamini.Lists;
+
 
 /**
  * Stateful mapper that creates SPARQL BinaryRelation objects from paths,

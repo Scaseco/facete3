@@ -43,6 +43,7 @@ import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
@@ -74,12 +75,12 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.benchmark.faceted_browsing.v2.main.KeywordSearchUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
@@ -107,7 +108,6 @@ import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
-import jersey.repackaged.com.google.common.collect.Maps;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -455,7 +455,7 @@ public class MainCliFacete3 {
 	public void updateItems(FacetedQuery fq) {
 		Stopwatch sw = Stopwatch.createStarted();
 		
-		Long count = fq.focus().availableValues().count().blockingGet();
+		//Long count = fq.focus().availableValues().count().blockingGet();
 		
 		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
 		

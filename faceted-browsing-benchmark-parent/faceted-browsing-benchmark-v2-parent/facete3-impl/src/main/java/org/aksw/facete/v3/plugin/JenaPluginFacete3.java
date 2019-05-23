@@ -1,4 +1,4 @@
-package trash.org.hobbit.faceted_browsing.action;
+package org.aksw.facete.v3.plugin;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -16,22 +16,23 @@ import org.aksw.facete.v3.impl.RangeSpec;
 import org.aksw.facete.v3.impl.RangeSpecImpl;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.data_query.impl.SPathImpl;
-import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.mapper.proxy.ProxyImplementation;
 import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.rdf.model.RDFNode;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.Dimension;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.DimensionImpl;
-import org.hobbit.benchmark.faceted_browsing.v2.main.SparqlTaskResource;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStack;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.RdfStackImpl;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummary;
-import org.hobbit.benchmark.faceted_browsing.v2.vocab.SetSummaryImpl;
+import org.apache.jena.sys.JenaSubsystemLifecycle;
 
-public class JenaPluginFacetedBrowsing {
+public class JenaPluginFacete3
+	implements JenaSubsystemLifecycle
+{
+	public void start() {
+		init();
+	}
+
+	@Override
+	public void stop() {
+	}
+	
 	public static void init() {
 		init(BuiltinPersonalities.model);		
 	}
@@ -45,11 +46,11 @@ public class JenaPluginFacetedBrowsing {
 		p.add(FacetConstraint.class, new SimpleImplementation(FacetConstraintImpl::new));
 		
 		p.add(SPath.class, new SimpleImplementation(SPathImpl::new));
-		p.add(Dimension.class, new SimpleImplementation(DimensionImpl::new));
+//		p.add(Dimension.class, new SimpleImplementation(DimensionImpl::new));
 
 		
-    	p.add(MapState.class, new SimpleImplementation(MapStateImpl::new));
-    	p.add(Viewport.class, new SimpleImplementation(ViewportImpl::new));
+//    	p.add(MapState.class, new SimpleImplementation(MapStateImpl::new));
+//    	p.add(Viewport.class, new SimpleImplementation(ViewportImpl::new));
 
 	
 		p.add(FacetCount.class, new SimpleImplementation(FacetCountImpl::new));
@@ -57,14 +58,9 @@ public class JenaPluginFacetedBrowsing {
 		
 
 		// TODO Make an interface
-		p.add(SetSummary.class, new SimpleImplementation(SetSummaryImpl::new));
 		
 		p.add(RangeSpec.class, new SimpleImplementation(RangeSpecImpl::new));
 		
-		p.add(RdfStack.class, new SimpleImplementation(RdfStackImpl::new));
 
-		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(SparqlTaskResource.class.getPackage().getName());	
-
-		JenaPluginUtils.registerJenaResourceClasses(ScenarioConfig.class);
 	}
 }

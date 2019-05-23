@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.data_query.impl.FacetedBrowsingSessionImpl;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
 import org.aksw.jena_sparql_api.data_query.impl.FactoryWithModel;
 import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
+import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

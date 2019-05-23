@@ -16,7 +16,7 @@
 
 		<dependency>
 			<groupId>org.hobbit</groupId>
-			<artifactId>faceted-browsing-benchmark-v2-core</artifactId>
+			<artifactId>facete3-impl</artifactId>
 		</dependency>
 
 		<dependency>
