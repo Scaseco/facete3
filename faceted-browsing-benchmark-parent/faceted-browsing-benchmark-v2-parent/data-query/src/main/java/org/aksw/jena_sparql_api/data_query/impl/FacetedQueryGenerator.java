@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.ExprFragment;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -745,7 +746,7 @@ public class FacetedQueryGenerator<P> {
 	public static UnaryRelation createConceptFacets(Map<String, TernaryRelation> relations, Concept pConstraint) {
 		List<Element> elements = relations.values().stream()
 				.map(e -> e.project(e.getP()))
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.p)))
 				.map(Relation::toUnaryRelation)
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
@@ -761,7 +762,7 @@ public class FacetedQueryGenerator<P> {
 	@Deprecated
 	public static UnaryRelation createConceptFacetsOld(Map<String, BinaryRelation> relations, Concept pConstraint) {
 		List<Element> elements = relations.values().stream()
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.p, Vars.o)))
 				.map(Relation::toBinaryRelation)
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
@@ -780,10 +781,10 @@ public class FacetedQueryGenerator<P> {
 		List<Element> elements = relationsFocusFacetValue.values().stream()
 				//.filter(e -> !e.isEmpty())
 				.map(e -> e.project(e.getP(), focusCount ? e.getS() : e.getO()))
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.p, Vars.o)))
 				.map(Relation::toBinaryRelation)
 				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
-				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.o, countVar, includeAbsent))
+				.map(e -> RelationUtils.groupBy(e, Vars.o, countVar, includeAbsent))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 		
@@ -800,10 +801,10 @@ public class FacetedQueryGenerator<P> {
 		Var countVar = Var.alloc("__count__");
 		List<Element> elements = relations.values().stream()
 				//.filter(e -> !e.isEmpty())
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.p, Vars.o)))
 				.map(Relation::toBinaryRelation)
 				.map(e -> e.joinOn(e.getSourceVar()).with(pConstraint))
-				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.o, countVar, includeAbsent))
+				.map(e -> RelationUtils.groupBy(e, Vars.o, countVar, includeAbsent))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 		
@@ -957,7 +958,7 @@ public class FacetedQueryGenerator<P> {
 		Map<String, TernaryRelation> facetValues = getFacetValuesCore(baseConcept, focus, facetPath, pFilter, oFilter, isReverse, false, applySelfConstraints, includeAbsent);
 
 		List<Element> elements = facetValues.values().stream()
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
 				.map(Relation::toTernaryRelation)
 				.map(e -> e.joinOn(e.getP()).with(pFilter))
 				.map(Relation::getElement)
@@ -992,11 +993,11 @@ public class FacetedQueryGenerator<P> {
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
 				.map(r -> r.joinOn(Vars.o).projectSrcVars(Vars.s, Vars.p).projectTgtVars(Vars.o).with(typeRel, Vars.s))
 				.map(Relation::toTernaryRelation)
 				.map(e -> e.joinOn(e.getP()).with(pFilter))
-				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar, includeAbsent))
+				.map(e -> RelationUtils.groupBy(e, Vars.s, countVar, includeAbsent))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 
@@ -1025,10 +1026,10 @@ public class FacetedQueryGenerator<P> {
 		
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
-				.map(e -> FacetedBrowsingSessionImpl.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
 				.map(Relation::toTernaryRelation)
 				.map(e -> e.joinOn(e.getP()).with(pFilter))
-				.map(e -> FacetedBrowsingSessionImpl.groupBy(e, Vars.s, countVar, includeAbsent))
+				.map(e -> RelationUtils.groupBy(e, Vars.s, countVar, includeAbsent))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 

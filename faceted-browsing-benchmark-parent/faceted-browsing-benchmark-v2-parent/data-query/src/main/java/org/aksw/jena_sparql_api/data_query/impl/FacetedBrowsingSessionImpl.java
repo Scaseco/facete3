@@ -1,49 +1,30 @@
 package org.aksw.jena_sparql_api.data_query.impl;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.concepts.RelationImpl;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
-import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Bound;
-import org.apache.jena.sparql.expr.E_Conditional;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementSubQuery;
-import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Range;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Table.Cell;
 import com.google.common.collect.Tables;
 
@@ -138,108 +119,6 @@ public class FacetedBrowsingSessionImpl {
 		return null;
 	}
 
-	public static Relation rename(Relation r, List<Var> targetVars) {
-		
-		
-		Set<Var> relationVars = new LinkedHashSet<>(r.getVars());
-		Set<Var> vs = new LinkedHashSet<>(targetVars);
-		if(vs.size() != relationVars.size()) {
-			throw new IllegalArgumentException("Number of distinct variables of the relation must match the number of distinct target variables");
-		}
-		
-		Map<Var, Var> rename = Streams.zip(
-			relationVars.stream(),
-			vs.stream(),
-			(a, b) -> new SimpleEntry<>(a, b))
-			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-		
-		
-		// Extend the map by renaming all remaining variables
-		Set<Var> mentionedVars = r.getVarsMentioned();
-		Set<Var> remainingVars = Sets.difference(mentionedVars, relationVars);
-
-		//Set<Var> forbiddenVars = Sets.union(vs, mentionedVars);
-		Generator<Var> varGen = VarGeneratorBlacklist.create(remainingVars);
-
-		// targetVars
-		Map<Var, Var> map = VarUtils.createDistinctVarMap(targetVars, remainingVars, true, varGen);
-		map.putAll(rename);
-		
-		Relation result = r.applyNodeTransform(new NodeTransformSubst(map));
-		
-//		System.out.println("RENAMED");
-//		System.out.println(r);
-//		System.out.println("TO");
-//		System.out.println(result);
-		
-		return result;
-	}
-	
-	/**
-	 * Rename variables of all relations to the given list of variables
-	 * All relations and the list of given variables must have the same length
-	 * 
-	 * @param relations
-	 * @return
-	 */
-	public static Relation align(Collection<? extends Relation> relations, List<Var> vars) {
-		List<Relation> tmp = relations.stream()
-				.map(r -> FacetedBrowsingSessionImpl.rename(r, vars))
-				.collect(Collectors.toList());
-
-		List<Element> es = tmp.stream()
-				.map(Relation::getElement)
-				.collect(Collectors.toList());
-
-		
-		Element e = ElementUtils.unionIfNeeded(es);
-		Relation result = new RelationImpl(e, vars);
-		return result;
-	}
-
-	
-	/**
-	 * Apply groupBy and count(Distinct ?var) to one of a relation's variables.
-	 * 
-	 * @param r
-	 * @param aggVar
-	 * @param resultVar
-	 * @param includeAbsent if true, unbound values count too
-	 * @return
-	 */
-	public static Relation groupBy(Relation r, Var aggVar, Var resultVar, boolean includeAbsent) {
-		Query query = new Query();
-		query.setQuerySelectType();
-		query.setQueryPattern(r.getElement());
-		
-		ExprVar ev = new ExprVar(aggVar);
-		
-		Expr e = includeAbsent
-				? new E_Conditional(new E_Bound(ev), ev, NodeValueUtils.NV_ABSENT)
-				: ev;
-		Expr tmp = query.allocAggregate(new AggCountVarDistinct(e));
-		
-		List<Var> vars = r.getVars();
-
-		// Add all other vars as group vars
-		List<Var> groupVars = vars.stream()
-				.filter(v -> !aggVar.equals(v))
-				.collect(Collectors.toList());
-	
-		query.addProjectVars(groupVars);
-		query.getProject().add(resultVar, tmp);
-		
-		List<Var> newVars = new ArrayList<>(groupVars);
-		newVars.add(resultVar);
-		
-		for(Var groupVar : groupVars) {
-			query.addGroupBy(groupVar);
-		}
-		
-		Relation result = new RelationImpl(new ElementSubQuery(query), newVars);
-		return result;
-	}
-	
 	
 	public Flowable<Cell<Node, Node, Range<Long>>> getFacetValues(SPath facetPath, boolean isReverse, Concept pFilter, Concept oFilter) {
 		TernaryRelation tr = createQueryFacetValues(facetPath, isReverse, pFilter, oFilter);
@@ -260,10 +139,10 @@ public class FacetedBrowsingSessionImpl {
 
 		Var countVar = Vars.c;
 		List<Element> elements = facetValues.values().stream()
-				.map(e -> rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
+				.map(e -> RelationUtils.rename(e, Arrays.asList(Vars.s, Vars.p, Vars.o)))
 				.map(Relation::toTernaryRelation)
 				.map(e -> e.joinOn(e.getP()).with(pFilter))
-				.map(e -> groupBy(e, Vars.s, countVar, false))
+				.map(e -> RelationUtils.groupBy(e, Vars.s, countVar, false))
 				.map(Relation::getElement)
 				.collect(Collectors.toList());
 

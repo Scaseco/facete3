@@ -1,5 +1,10 @@
-package org.aksw.facete.v3.api;
+package org.aksw.facete.v3.api.traversal;
 
+import static org.aksw.facete.v3.api.Direction.BACKWARD;
+
+import java.util.Optional;
+
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
@@ -9,15 +14,11 @@ import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
 
-import java.util.Optional;
-
-import static org.aksw.facete.v3.api.Direction.BACKWARD;
-
 
 /**
  * Mixin for Node Navigation methods
  */
-public interface NodeNavigation<N extends NodeNavigation<N,D,M>, D extends DirNodeNavigation<M>, M extends MultiNodeNavigation<N>> {
+public interface TraversalNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>> {
 	D fwd();
 	D bwd();
 
@@ -67,7 +68,7 @@ public interface NodeNavigation<N extends NodeNavigation<N,D,M>, D extends DirNo
 	}
 
 	default N walk(Path path) {
-		NodeNavigation<N, D, M> result;
+		TraversalNode<N, D, M> result;
 		if(path == null) {
 			result = this;
 		} else if(path instanceof P_Seq) {

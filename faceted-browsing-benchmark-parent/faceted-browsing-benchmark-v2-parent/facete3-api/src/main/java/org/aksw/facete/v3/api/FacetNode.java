@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.api.traversal.TraversalNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.utils.model.Directed;
@@ -25,7 +26,7 @@ import com.google.common.graph.Traverser;
  *
  */
 public interface FacetNode
-	extends NodeNavigation<FacetNode, FacetDirNode, FacetMultiNode>, Castable
+	extends TraversalNode<FacetNode, FacetDirNode, FacetMultiNode>, Castable
 {
 	
 	/**

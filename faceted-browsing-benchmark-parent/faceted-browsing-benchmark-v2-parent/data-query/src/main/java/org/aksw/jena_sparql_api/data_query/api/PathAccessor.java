@@ -1,20 +1,12 @@
 package org.aksw.jena_sparql_api.data_query.api;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.Var;
 
-public interface PathAccessor<P> {
+public interface PathAccessor<P>
+	extends PathAccessorRdf<P>
+{
 	Class<P> getPathClass();
-	
-	P getParent(P path);
-	BinaryRelation getReachingRelation(P path);
-	
-	
-	boolean isReverse(P path);
-	String getPredicate(P path);
-	
-	Var getAlias(P path);
+
 	
 	/** Try to map to expr to a path */
 	//P tryMapToPath(Expr expr);

@@ -1,6 +1,8 @@
 package org.aksw.facete.v3.api;
 
-public interface FacetMultiNode extends MultiNodeNavigation<FacetNode> {
+import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
+
+public interface FacetMultiNode extends TraversalMultiNode<FacetNode> {
 	
 	
 	/** True iff multiple aliases are referenced in constraints */

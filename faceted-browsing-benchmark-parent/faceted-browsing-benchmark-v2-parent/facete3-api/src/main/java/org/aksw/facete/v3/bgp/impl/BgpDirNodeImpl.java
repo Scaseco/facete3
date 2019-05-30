@@ -23,6 +23,10 @@ public class BgpDirNodeImpl
 		return isFwd;
 	}
 	
+	/**
+	 * Traverse via a given property instance with the given alias.
+	 * 
+	 */
 	@Override
 	public BgpMultiNode via(Resource property) {
 		Map<Resource, BgpMultiNode> map = isFwd ? node.fwdMultiNodes() : node.bwdMultiNodes() ;

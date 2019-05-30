@@ -9,7 +9,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessorRdf;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -127,7 +127,7 @@ public class QueryFragment {
 
 
 
-	public static Triple createTriple( boolean isReverse, Node s, Node p, Node o) {
+	public static Triple createTriple(boolean isReverse, Node s, Node p, Node o) {
 		Triple result = isReverse
 				? new Triple(o, p, s)
 				: new Triple(s, p, o)
@@ -259,13 +259,13 @@ public class QueryFragment {
 //	}
 	
 	
-	public static <P> void toElement(Iterable<P> paths, PathAccessor<P> accessor, Set<Element> elements, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
+	public static <P> void toElement(Iterable<P> paths, PathAccessorRdf<P> accessor, Set<Element> elements, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
 		for(P path : paths) {
 			toElement(path, accessor, pathToNode, forbiddenVars, varGen);
 		}
 	}
 
-	public static <P> Var getOrCreateAlias(P path, PathAccessor<P> accessor, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
+	public static <P> Var getOrCreateAlias(P path, PathAccessorRdf<P> accessor, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
 		varGen = VarGeneratorBlacklist.create(varGen, forbiddenVars);
 		
 		Var result = accessor.getAlias(path);
@@ -284,7 +284,7 @@ public class QueryFragment {
 		return result;
 	}
 	
-	public static <P> BinaryRelation toElement(P path, PathAccessor<P> accessor, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
+	public static <P> BinaryRelation toElement(P path, PathAccessorRdf<P> accessor, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
 		BinaryRelation result = pathToNode.get(path);
 
 		// If the relation segment has not been created for the path, compute it for the parent first

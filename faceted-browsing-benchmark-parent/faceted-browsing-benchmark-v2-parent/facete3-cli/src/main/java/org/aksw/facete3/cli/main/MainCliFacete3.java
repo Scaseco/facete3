@@ -97,6 +97,7 @@ import com.googlecode.lanterna.gui2.Button;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.Direction;
 import com.googlecode.lanterna.gui2.EmptySpace;
+import com.googlecode.lanterna.gui2.Interactable;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
@@ -114,6 +115,146 @@ import com.googlecode.lanterna.terminal.Terminal;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+
+
+interface Paginator<T> {
+	List<T> createPages(long numItems, long itemOffset);
+}
+
+
+//interface Page
+//	extends Resource
+//{
+//	long getPageNumber();
+//	long getPageOffset();
+//	boolean isActive();
+//
+//	void setPageOffset(long pageOffset);
+//	void setActive(boolean onOrOff);
+//	
+//	
+//	public static Page factory() {
+//		return ModelFactory.createDefaultModel().createResource().as(Page.class);
+//	}
+//}
+
+class Page {
+	long pageNumber;
+	long pageOffset;
+	boolean isActive;
+
+	public long getPageNumber() { return pageNumber; }
+	public void setPageNumber(long pageNumber) { this.pageNumber = pageNumber; }
+	public long getPageOffset() { return pageOffset; }
+	public void setPageOffset(long pageOffset) { this.pageOffset = pageOffset; }
+	public boolean isActive() { return isActive; }
+	public void setActive(boolean isActive) { this.isActive = isActive; }
+}
+
+/**
+ * Item-based paginator implementation
+ * 
+ * @author raven
+ *
+ * @param <T>
+ */
+abstract class PaginatorBase<T>
+	implements Paginator<T>
+{
+	public PaginatorBase(long itemsPerPage) {
+		this.itemsPerPage = itemsPerPage;
+	}
+
+	protected long itemsPerPage = 10;
+	
+	protected long showProximity = 4; // two prior / two next pages
+//	protected long showBefore = 3;
+//	protected long showAfter = 3;
+	
+	
+	// [<] [<<] [--] [-] [x] [+] [...] [>>] [>]
+	protected long visiblePages;
+// Potential further attributes (taken from jassa / angular)
+//	  boundaryLinks: false,
+//	  directionLinks: true,
+//	  firstText: 'First',
+//	  previousText: 'Previous',
+//	  nextText: 'Next',
+//	  lastText: 'Last',
+//	  rotate: true
+	
+	/**
+	 * 
+	 * 
+	 * @param numItems
+	 * @param itemOffset The page containing this offset is marked as active
+	 * @return
+	 */
+	public List<T> createPages(long numItems, long itemOffset) {
+		// Add one extra page if the devision yields a remainder
+		long numPages = numItems / itemsPerPage
+				+ Math.max(numItems % itemsPerPage, 1);
+
+		long activePage = itemOffset / itemsPerPage;
+
+		
+		long halfProximity = showProximity / 2;
+		long extraSpace = showProximity % 2;
+
+		long showBefore = halfProximity + extraSpace;
+		long showAfter = halfProximity;
+		
+
+		long availBefore = activePage;
+		long availAfter = numPages - activePage;
+				
+
+		long beforeToAfter = Math.max(showBefore - availBefore, 0);
+		showAfter += beforeToAfter;
+		
+		long afterToBefore = Math.max(showAfter - availAfter, 0);
+		showBefore += afterToBefore;
+		
+		// Final adjustment of show before (discard any still available space)
+		showBefore = Math.min(showBefore, availBefore);
+		
+		long from = activePage - showBefore;
+		long to = activePage + showAfter;
+		
+		List<T> result = new ArrayList<>();
+		for(long i = from; i <= to; ++i) {
+			long pageStart = i * itemsPerPage;
+			long pageEnd = pageStart + itemsPerPage;
+
+			boolean isActive = itemOffset >= pageStart && itemOffset < pageEnd;
+		
+			T page = createPage(i, pageStart, pageEnd, isActive);
+			result.add(page);
+		}
+		
+		return result;
+	}
+	
+	abstract protected T createPage(long pageNumber, long pageStart, long pageEnd, boolean isActive);
+}
+
+
+class PaginatorImpl
+	extends PaginatorBase<Page>
+{
+	public PaginatorImpl(long itemsPerPage) {
+		super(itemsPerPage);
+	}
+	
+	@Override
+	protected Page createPage(long pageNumber, long pageStart, long pageEnd, boolean isActive) {
+		Page result = new Page();//Page.factory();
+		result.setPageOffset(pageStart);
+		result.setActive(isActive);
+		result.setPageNumber(pageNumber + 1);
+		return result;
+	}
+}
 
 
 // If we wanted to create an Amazon like faceted interface we'd need:
@@ -213,7 +354,6 @@ class DirtyChecker {
 public class MainCliFacete3 {
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacete3.class);
 	
-	
 	public static String treeToString() {
 		return null;
 	}
@@ -240,6 +380,20 @@ public class MainCliFacete3 {
 
 	public static BgpNode HACK = ModelFactory.createDefaultModel().createResource("should not appear anywhere").as(BgpNode.class);
 
+	public static <T> T getCell(TableModel<T> model, int x, int y) {
+		int rowCount = model.getRowCount();
+		int colCount = model.getColumnCount();
+		
+		T result = x >= 0 && x < rowCount && y >= 0 && y < colCount
+			? model.getCell(y, x)
+			: null;
+		
+//		Node node = x >= 0 && y >= 0 ? resourceTable.getTableModel().getCell(x, y) : null;
+
+		return result;
+	}
+	
+	
 	public HLFacetConstraint<?> toHlConstraint(FacetedQuery fq, FacetConstraint fc) {
 //		PathAccessor<BgpNode> pathAccessor = new PathAccessorImpl(fq.root().as(FacetNodeResource.class).state());
 //		Map<Node, BgpNode> map = PathAccessorImpl.getPathsMentioned(expr, pathAccessor::tryMapToPath);
@@ -257,6 +411,8 @@ public class MainCliFacete3 {
 	
 	public void updateResourceView(RDFNode n) {
 		TableModel<Node> model = resourceTable.getTableModel();
+		resourceTable.setSelectedColumn(-1);
+		resourceTable.setSelectedRow(0);
 		model.clear();
 		
 		if(n == null) {
@@ -446,6 +602,9 @@ public class MainCliFacete3 {
 	Panel resourcePanel = new Panel();
 
 
+	Panel itemPagePanel = new Panel();
+
+	
 	class Test<P> {
 		P value;
 		public Test(P value) {
@@ -474,15 +633,55 @@ public class MainCliFacete3 {
 		}
 	}
 	
+	long itemPage[] = {0};
 	public void updateItems(FacetedQuery fq) {
 		Stopwatch sw = Stopwatch.createStarted();
 		
 		Long count = fq.focus().availableValues().count().blockingGet().getCount();
+		
+		// Update paginator with item count
+		int itemsPerPage = 20;
+		
+		
+		Paginator<Page> paginator = new PaginatorImpl(itemsPerPage);
+		List<Page> pages = paginator.createPages(count, itemPage[0]);
+
+		
+		boolean refocusPage = itemPagePanel.getChildren().stream()
+				.anyMatch(child -> child instanceof Interactable && ((Interactable)child).isFocused());
+		
+		itemPagePanel.removeAllComponents();
+		for(Page page : pages) {
+//			if(page.isActive()) {
+//				itemPagePanel.addComponent(new Label2("" + page.getPageNumber()));
+//			} else {
+				Button btn = new Button("" + page.getPageNumber(), () -> {
+					itemPage[0] = page.getPageOffset();
+					updateItems(fq);
+				});
+				itemPagePanel.addComponent(btn);
+				
+				if(page.isActive() && refocusPage) {
+					btn.takeFocus();
+				}
+//			}
+		}
+
+		
 		//setAttr("com.googlecode.lanterna.gui2.Borders$StandardBorder", resultPanelBorder, "title", "" + count);
 		//System.out.println("Item count: " + count);
-		((StandardBorder)resultPanelBorder).setTitle("" + count + " matches");
+		long itemStart = itemPage[0];
+		long itemEnd = itemStart + itemsPerPage;
+		String title = count == 0
+				? "(no matches)"
+				: String.format("Matches %d-%d/%d", itemStart + 1, itemEnd, count);
 		
-		List<RDFNode> items = fq.focus().availableValues().exec().toList().blockingGet();
+		((StandardBorder)resultPanelBorder).setTitle(title);
+		
+		List<RDFNode> items = fq.root().availableValues()
+				.offset(itemPage[0])
+				.limit(itemsPerPage)
+				.exec().toList().blockingGet();
 		
 		TableModel<Node> model = resultTable.getTableModel();
 		model.clear();
@@ -794,6 +993,7 @@ public class MainCliFacete3 {
 	
 	public void init(Dataset dataset) throws Exception
 	{
+		resourceTable.setCellSelection(true);
 		resultPanelBorder = Borders.singleLine("Matches");
 
 		Stopwatch sw = Stopwatch.createStarted();
@@ -972,14 +1172,14 @@ public class MainCliFacete3 {
 
 		
 		resultTable.setCellSelection(true);
+		
 		resultTable.setInputFilter((i, keyStroke) -> {
-			boolean r;
-
 			Character c = keyStroke.getCharacter();
-			int x = resultTable.getSelectedColumn();
-			int y = resultTable.getSelectedRow();
+			int x = resultTable.getSelectedRow();
+			int y = resultTable.getSelectedColumn();
 			
-			Node node = x >= 0 && y >= 0 ? resultTable.getTableModel().getCell(x, y) : null;
+			Node node = getCell(resultTable.getTableModel(), x, y);
+			//Node node = x >= 0 && y >= 0 ? resultTable.getTableModel().getCell(x, y) : null;
 			
 			
 			if(c != null) {
@@ -996,9 +1196,31 @@ public class MainCliFacete3 {
 		});
 //		FacetDirNode fdn2 = fq.focus().fwd();
 
+		
+		
 		updateFacetValues();
 		
-		
+		resourceTable.setInputFilter((i, keyStroke) -> {
+			Character c = keyStroke.getCharacter();
+			int x = resourceTable.getSelectedRow();
+			int y = resourceTable.getSelectedColumn();
+			
+//			Node node = x >= 0 && y >= 0 ? resourceTable.getTableModel().getCell(x, y) : null;
+			Node node = getCell(resourceTable.getTableModel(), x, y);
+			
+			
+			if(c != null) {
+				switch(c) {
+				case resourceViewKey:
+					if(node != null) { 
+						RDFNode rdfNode = fetchIfResource(node);
+						updateResourceView(rdfNode);
+					}
+				}
+			}
+			
+			return true;
+		});
 
 		
 
@@ -1136,11 +1358,16 @@ public class MainCliFacete3 {
 		constraintPanel.addComponent(constraintList);
 
 
+		
+		itemPagePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		itemPagePanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+
 		resultTable.setRenderer(new DefaultTableRenderer2<Node>());
 		resultTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 
 		resultPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 		resultPanel.setLayoutManager(new GridLayout2(1));
+		resultPanel.addComponent(itemPagePanel);
 		resultPanel.addComponent(resultTable);
 		
 		resourceTable.setRenderer(new DefaultTableRenderer2<Node>());

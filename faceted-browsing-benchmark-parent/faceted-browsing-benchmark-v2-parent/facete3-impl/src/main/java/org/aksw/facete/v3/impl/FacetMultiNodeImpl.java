@@ -1,5 +1,7 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Map;
+
 import org.aksw.facete.v3.api.FacetMultiNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetNodeResource;
@@ -110,7 +112,15 @@ public class FacetMultiNodeImpl
 		}
 		return result;
 	}
-	
-	
+
+	@Override
+	public FacetNode byAlias(String alias) {
+		throw new RuntimeException("Not implemented yet");
+	}
+
+	@Override
+	public Map<String, FacetNode> list() {
+		throw new RuntimeException("not implemented yet");
+	}
 	
 }

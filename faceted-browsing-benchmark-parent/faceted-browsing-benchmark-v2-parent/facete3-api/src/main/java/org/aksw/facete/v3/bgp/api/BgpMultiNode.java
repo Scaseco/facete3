@@ -3,12 +3,12 @@ package org.aksw.facete.v3.bgp.api;
 import java.util.Collection;
 
 import org.aksw.facete.v3.api.Direction;
-import org.aksw.facete.v3.api.MultiNodeNavigation;
+import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 
 public interface BgpMultiNode
-	extends Resource, MultiNodeNavigation<BgpNode> {
+	extends Resource, TraversalMultiNode<BgpNode> {
 	BgpNode parent();
 	
 	Property reachingProperty();

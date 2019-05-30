@@ -5,6 +5,7 @@ import static org.aksw.facete.v3.api.Direction.FORWARD;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -117,5 +118,15 @@ public class BgpMultiNodeImpl
 		Set<BgpNode> result = new SetFromPropertyValues<>(this, Vocab.child, BgpNode.class);
 
 		return result;
+	}
+
+	@Override
+	public BgpNode byAlias(String alias) {
+		throw new RuntimeException("not implemented yet");
+	}
+
+	@Override
+	public Map<String, BgpNode> list() {
+		throw new RuntimeException("not implemented yet");
 	}
 }

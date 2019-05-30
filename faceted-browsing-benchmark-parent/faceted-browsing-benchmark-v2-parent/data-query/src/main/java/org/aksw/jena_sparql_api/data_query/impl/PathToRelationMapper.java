@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
+import org.aksw.jena_sparql_api.data_query.api.PathAccessorRdf;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -42,7 +42,7 @@ import com.github.davidmoten.guavamini.Lists;
 public class PathToRelationMapper<P> {
 	
 	//protected Set<Triple> triples;
-	protected PathAccessor<P> pathAccessor;
+	protected PathAccessorRdf<P> pathAccessor;
 	//protected Set<Element> elements;
 	protected Map<P, BinaryRelation> map;
 	protected Set<Var> forbiddenVars;
@@ -72,17 +72,17 @@ public class PathToRelationMapper<P> {
 //		return result;
 //	}
 
-	public PathToRelationMapper(PathAccessor<P> pathAccessor) {
+	public PathToRelationMapper(PathAccessorRdf<P> pathAccessor) {
 		this(pathAccessor, null);
 	}
 	
-	public PathToRelationMapper(PathAccessor<P> pathAccessor, String baseName) {
+	public PathToRelationMapper(PathAccessorRdf<P> pathAccessor, String baseName) {
 		// Note: We cannot use an identity hash map if we use RDF-backed resources,
 		// as multiple of these stateless vies may created for the same backing node
 		this(pathAccessor,  new HashMap<>(), new LinkedHashSet<>(), VarGeneratorImpl2.create(baseName));
 	}
 	
-	public PathAccessor<P> getPathAccessor() {
+	public PathAccessorRdf<P> getPathAccessor() {
 		return pathAccessor;
 	}
 	
@@ -101,7 +101,7 @@ public class PathToRelationMapper<P> {
 	}
 
 	public PathToRelationMapper(
-			PathAccessor<P> pathAccessor,
+			PathAccessorRdf<P> pathAccessor,
 			Map<P, BinaryRelation> map,
 			Set<Var> forbiddenVars,
 			Generator<Var> varGen) {

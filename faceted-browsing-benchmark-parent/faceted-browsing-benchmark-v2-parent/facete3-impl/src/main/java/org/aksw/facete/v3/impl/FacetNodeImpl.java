@@ -122,7 +122,7 @@ public class FacetNodeImpl
 	
 	public boolean isReverse() {
 		boolean isReverse = false;
-		Set<Statement> set = ResourceUtils.listProperties(parent().state(), null).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
+		Set<Statement> set = ResourceUtils.listProperties(parent().state()).filterKeep(stmt -> stmt.getObject().equals(state)).toSet();
 		
 		if(set.isEmpty()) {
 			isReverse = true;

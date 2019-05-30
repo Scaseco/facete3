@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.aksw.facete.v3.api.Direction;
-import org.aksw.facete.v3.api.NodeNavigation;
+import org.aksw.facete.v3.api.traversal.TraversalNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
@@ -27,7 +27,7 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
 public interface BgpNode
-	extends NodeNavigation<BgpNode, BgpDirNode, BgpMultiNode>, Resource
+	extends TraversalNode<BgpNode, BgpDirNode, BgpMultiNode>, Resource
 {	
 	BgpDirNode fwd();
 	BgpDirNode bwd();
