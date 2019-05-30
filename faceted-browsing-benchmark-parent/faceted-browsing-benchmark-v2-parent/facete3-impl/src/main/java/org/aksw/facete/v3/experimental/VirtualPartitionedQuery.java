@@ -40,10 +40,10 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
-import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 
@@ -77,7 +77,8 @@ class ResolverUnion
 	public Collection<TernaryRelation> getContrib(boolean fwd) {
 		List<TernaryRelation> result = new ArrayList<>();
 		for(Resolver resolver : resolvers) {
-			result.addAll(resolver.getContrib(fwd));
+			Collection<TernaryRelation> contribs = resolver.getContrib(fwd);
+			result.addAll(contribs);
 		}
 
 		return result;
@@ -150,8 +151,6 @@ class ResolverTemplate
 		for(RDFNode rdfNode : starts) {
 			
 			Var var = (Var)rdfNode.asNode();
-			System.out.println(var);
-
 			UnaryRelation templateConcept = new Concept(basePattern, var);
 			
 			List<Statement> stmts = ResourceUtils.listProperties(rdfNode, isFwd).toList();
@@ -587,14 +586,18 @@ public class VirtualPartitionedQuery {
 	public static void main(String[] args) {
 		Query query = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
 		PartitionedQuery1 pq = new PartitionedQuery1(query, Vars.p);
+		Resolver resolver = createResolver(pq);
+		resolver = resolver.resolve(new P_Link(NodeFactory.createURI("http://facetCount")));
 		
 		//VirtualPartitionedQuery processor = new VirtualPartitionedQuery();
 		
-		Resolver resolver = createResolver(pq);
-		Node fc = NodeFactory.createURI("http://facetCount");
-		
 
-		//resolver = resolver.resolve(new P_Link(fc));
+
+//		Query query = QueryFactory.create("CONSTRUCT { ?city <http://hasMayor> ?mayor . ?mayor <http://hasParty> ?party } { ?city <http://hasMayor> ?mayor . ?mayor <http://hasParty> ?party }");
+//		PartitionedQuery1 pq = new PartitionedQuery1(query, Var.alloc("city"));
+//		Resolver resolver = createResolver(pq);
+//		resolver = resolver.resolve(new P_Link(NodeFactory.createURI("http://hasMayor")));
+
 		Collection<TernaryRelation> views = resolver.getContrib(true);
 		
 		System.out.println("Views:");
