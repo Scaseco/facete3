@@ -13,10 +13,14 @@ import org.aksw.commons.jena.graph.GraphVarImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationImpl;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessorRdf;
+import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.data_query.impl.PathToRelationMapper;
 import org.aksw.jena_sparql_api.data_query.impl.QueryFragment;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
@@ -46,6 +50,9 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+
+import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
+import com.eccenca.access_control.triple_based.core.GenericLayer;
 
 
 interface Resolver {
@@ -582,6 +589,24 @@ public class VirtualPartitionedQuery {
 //		System.out.println(ResourceUtils.listPropertyValues(root, step).toList());
 //	}
 
+	public static TernaryRelation unionTernary(Collection<? extends TernaryRelation> items) {
+		Relation tmp = union(items, Arrays.asList(Vars.s, Vars.p, Vars.o));
+		TernaryRelation result = tmp.toTernaryRelation();
+		return result;
+	}
+
+	
+	public static Relation union(Collection<? extends Relation> items, List<Var> proj) {
+		List<Element> elements = items.stream()
+				.map(e -> RelationUtils.rename(e, proj))
+				.map(Relation::getElement)
+				.collect(Collectors.toList());
+		
+		Element e = ElementUtils.unionIfNeeded(elements);
+
+		Relation result = new RelationImpl(e, proj);
+		return result;
+	}
 	
 	public static void main(String[] args) {
 		Query query = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
@@ -599,10 +624,25 @@ public class VirtualPartitionedQuery {
 //		resolver = resolver.resolve(new P_Link(NodeFactory.createURI("http://hasMayor")));
 
 		Collection<TernaryRelation> views = resolver.getContrib(true);
+
+		TernaryRelation tr = unionTernary(views);
+		System.out.println(tr);
 		
-		System.out.println("Views:");
-		for(TernaryRelation view : views) {
-			System.out.println(view);
+		GenericLayer layer = GenericLayer.create(tr);
+		Query userQuery = QueryFactory.create("SELECT DISTINCT ?p { ?s ?p ?o }");
+
+		
+		Query q = ElementTransformTripleRewrite.transform(userQuery, layer, true);
+		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
+
+		System.out.println("Rewritten query:");
+		System.out.println(q);
+		
+		if(false) {
+			System.out.println("Views:");
+			for(TernaryRelation view : views) {
+				System.out.println(view);
+			}
 		}
 		//processor.step(pq, new P_Link(NodeFactory.createURI("http://facetCount")), true, "a");
 	}
