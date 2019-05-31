@@ -608,43 +608,94 @@ public class VirtualPartitionedQuery {
 		return result;
 	}
 	
-	public static void main(String[] args) {
-		Query query = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
-		PartitionedQuery1 pq = new PartitionedQuery1(query, Vars.p);
-		Resolver resolver = createResolver(pq);
-		resolver = resolver.resolve(new P_Link(NodeFactory.createURI("http://facetCount")));
-		
-		//VirtualPartitionedQuery processor = new VirtualPartitionedQuery();
-		
+	
+//	public static Query rewrite(Resolver resolver, boolean isFwd, Query query) {
+//		Collection<TernaryRelation> views = resolver.getContrib(true);
+//
+//		TernaryRelation tr = unionTernary(views);
+////		System.out.println(tr);
+//		
+//		GenericLayer layer = GenericLayer.create(tr);
+//		
+//		Query raw = ElementTransformTripleRewrite.transform(query, layer, true);
+//		Query result = DataQueryImpl.rewrite(raw, DataQueryImpl.createDefaultRewriter()::rewrite);
+//
+//		if(false) {
+//			System.out.println("Views:");
+//			for(TernaryRelation view : views) {
+//				System.out.println(view);
+//			}
+//		}
+//
+//		return result;
+//	}
+//	
+	public static Resolver createResolver(Var viewVar, Query view) {
+		PartitionedQuery1 pq = new PartitionedQuery1(view, viewVar);
+		Resolver result = createResolver(pq);
 
-
-//		Query query = QueryFactory.create("CONSTRUCT { ?city <http://hasMayor> ?mayor . ?mayor <http://hasParty> ?party } { ?city <http://hasMayor> ?mayor . ?mayor <http://hasParty> ?party }");
-//		PartitionedQuery1 pq = new PartitionedQuery1(query, Var.alloc("city"));
-//		Resolver resolver = createResolver(pq);
-//		resolver = resolver.resolve(new P_Link(NodeFactory.createURI("http://hasMayor")));
-
-		Collection<TernaryRelation> views = resolver.getContrib(true);
-
+		return result;
+	}
+	
+	public static Query rewrite(Collection<TernaryRelation> views, Query query) {
+//		Resolver resolver = createResolver(view, viewVar);
+//		Query result = rewrite(resolver, true, query);
 		TernaryRelation tr = unionTernary(views);
-		System.out.println(tr);
+//		System.out.println(tr);
 		
 		GenericLayer layer = GenericLayer.create(tr);
-		Query userQuery = QueryFactory.create("SELECT DISTINCT ?p { ?s ?p ?o }");
-
 		
-		Query q = ElementTransformTripleRewrite.transform(userQuery, layer, true);
-		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
+		Query raw = ElementTransformTripleRewrite.transform(query, layer, true);
+		Query result = DataQueryImpl.rewrite(raw, DataQueryImpl.createDefaultRewriter()::rewrite);
 
-		System.out.println("Rewritten query:");
-		System.out.println(q);
-		
-		if(false) {
-			System.out.println("Views:");
-			for(TernaryRelation view : views) {
-				System.out.println(view);
-			}
-		}
-		//processor.step(pq, new P_Link(NodeFactory.createURI("http://facetCount")), true, "a");
+		return result;
 	}
+
+	public static void main(String[] args) {
+		
+		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
+		
+		Resolver resolver = createResolver(Vars.p, view);
+		
+		Query example1 = rewrite(
+				resolver
+					.getContrib(true),
+				QueryFactory.create("SELECT ?x ?y ?z { ?x ?y ?z }"));
+		System.out.println("Example 1\n" + example1);
+
+		Query example2 = rewrite(
+				resolver
+					.getContrib(true),
+				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
+		System.out.println("Example 2\n" + example2);
+
+		Query example3 = rewrite(
+				resolver
+					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	
+					.getContrib(true),
+				QueryFactory.create("SELECT ?x ?y ?z { ?x ?y ?z }"));
+		System.out.println("Example 3\n" + example3);
+
+		Query example4 = rewrite(
+				resolver
+					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	
+					.getContrib(true),
+				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
+		System.out.println("Example 4\n" + example4);
+	}
+	
+	//processor.step(pq, new P_Link(NodeFactory.createURI("http://facetCount")), true, "a");
+	
+	
+	//VirtualPartitionedQuery processor = new VirtualPartitionedQuery();
+	
+
+
+//	Query query = QueryFactory.create("CONSTRUCT { ?city <http://hasMayor> ?mayor . ?mayor <http://hasParty> ?party } { ?city <http://hasMayor> ?mayor . ?mayor <http://hasParty> ?party }");
+//	PartitionedQuery1 pq = new PartitionedQuery1(query, Var.alloc("city"));
+//	Resolver resolver = createResolver(pq);
+//	resolver = resolver.resolve(new P_Link(NodeFactory.createURI("http://hasMayor")));
+
+
 }
 
