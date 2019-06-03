@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,6 +36,7 @@ import org.aksw.jena_sparql_api.data_query.impl.PathToRelationMapper;
 import org.aksw.jena_sparql_api.data_query.impl.QueryFragment;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
@@ -61,9 +64,11 @@ import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 
 import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
 import com.eccenca.access_control.triple_based.core.GenericLayer;
+import com.google.common.collect.Lists;
 
 class Contrib {
 	protected BinaryRelation reachingRelation;
@@ -192,7 +197,10 @@ abstract class PathDirNode<N, M extends TraversalMultiNode<N>>
 
 	@Override
 	public M via(Resource property) {
-		M result = propToMultiNode.computeIfAbsent(property, this::viaImpl);
+		M result = propToMultiNode.computeIfAbsent(property, p -> {
+			// Expanded for easier debugging
+			return viaImpl(p); 
+		});
 		return result;
 	}
 
@@ -222,7 +230,10 @@ abstract class PathMultiNode<N extends TraversalNode<N,D,M>, D extends Traversal
 
 	@Override
 	public N viaAlias(String alias) {
-		N result = aliasToNode.computeIfAbsent(alias, this::viaImpl);
+		N result = aliasToNode.computeIfAbsent(alias, a -> {
+			// Expanded for easier debugging
+			return this.viaImpl(a);	
+		});
 		return result;
 	}
 
@@ -365,16 +376,19 @@ class ResolverNode
 {
 	protected Resolver resolver;
 	
-	public ResolverNode(Resolver resolver) {
-		super();
+//	public ResolverNode(Resolver resolver) {
+//		super();
+//		this.resolver = resolver;
+//	}
+
+	public ResolverNode(ResolverMultiNode parent, String alias, Resolver resolver) {
+		super(parent, alias);
 		this.resolver = resolver;
-	}
-	
+	}	
 
 	public Resolver getResolver() {
 		return resolver;
 	}
-
 
 	@Override
 	public ResolverDirNode create(boolean isFwd) {
@@ -388,7 +402,7 @@ class ResolverNode
 
 
 	public static ResolverNode from(Resolver resolver) {
-		return new ResolverNode(resolver);
+		return new ResolverNode(null, null, resolver);
 	}
 	
 	public static ResolverNode from(PartitionedQuery1 pq) {
@@ -437,10 +451,14 @@ class ResolverMultiNode
 	protected Resolver resolver;
 //	protected Map<String, ResolverNode> aliasToNode = new LinkedHashMap<>();
 
-
+	
 	public ResolverMultiNode(ResolverDirNode parent, Resource property) {
 		super(parent, property);		
 		this.resolver = parent.getResolver();
+	}
+
+	public Resolver getResolver() {
+		return resolver;
 	}
 
 	@Override
@@ -448,7 +466,7 @@ class ResolverMultiNode
 		Node n = property.asNode();
 		P_Path0 step = isFwd ? new P_Link(n) : new P_ReverseLink(n);
 		Resolver child = resolver.resolve(step, alias);
-		ResolverNode result = new ResolverNode(child);
+		ResolverNode result = new ResolverNode(this, alias, child);
 		return result;
 	}
 
@@ -499,7 +517,10 @@ class ResolverUnion
 	@Override
 	public Collection<BinaryRelation> getPaths() {
 		List<BinaryRelation> result = resolvers.stream()
-				.flatMap(resolver -> resolver.getPaths().stream())
+				.flatMap(resolver -> {
+					Collection<BinaryRelation> tmp = resolver.getPaths();
+					return tmp.stream();
+				})
 				.collect(Collectors.toList());
 		return result;
 	}
@@ -541,15 +562,15 @@ class ResolverTemplate
 	
 	@Override
 	public Resolver resolve(P_Path0 step, String alias) {
-		ResolverUnion result = new ResolverUnion(Arrays.asList(
+		ResolverUnion result = new ResolverUnion(Lists.newArrayList(Iterables.concat(
 				resolveTemplate(step, alias),
-				resolveData(step, alias)));
+				resolveData(step, alias))));
 		
 		return result;
 	}
 	
 
-	protected Resolver resolveTemplate(P_Path0 step, String alias) {
+	protected Collection<Resolver> resolveTemplate(P_Path0 step, String alias) {
 		//Collection<RDFNode> starts = Collections.singleton(root); 
 //			Property p = ResourceUtils.getProperty(step);
 		Set<RDFNode> targets =
@@ -558,7 +579,41 @@ class ResolverTemplate
 			.collect(Collectors.toSet());
 		
 		
-		return new ResolverTemplate(query, targets);
+		// If an alias is given, create a copy of the partitioned query
+		// with the target variables renamed
+		PartitionedQuery1 newPq = query;
+		Set<RDFNode> newTargets = targets;
+		if(alias != null) {
+			Map<Var, Var> renameMap = new HashMap<>();
+			for(RDFNode target : targets) {
+				Var var = (Var)target.asNode();
+				String varName = var.getName();
+				Var newName = Var.alloc(alias + "_" + varName);
+				renameMap.put(var, newName);				
+			}
+			Query newQuery = QueryUtils.applyNodeTransform(query.getQuery(), new NodeTransformSubst(renameMap));
+			Var oldRoot = query.getPartitionVar();
+			Var newRoot = renameMap.getOrDefault(oldRoot, oldRoot);
+			newPq = new PartitionedQuery1(newQuery, newRoot);
+			
+			newTargets = new LinkedHashSet<>();
+			for(RDFNode oldT : targets) {
+				Model m = oldT.getModel();
+				Node o = oldT.asNode();
+				Node newT = renameMap.get(o);
+				
+				RDFNode newN = newT == null ? oldT : m.asRDFNode(newT);
+				newTargets.add(newN);
+			}
+		}
+		
+		Collection<Resolver> result = newTargets.isEmpty()
+				? Collections.emptyList()
+				: Collections.singletonList(new ResolverTemplate(newPq, newTargets))
+				;
+		return result;
+		
+		//return new ResolverTemplate(newPq, newTargets);
 		
 		//Element basePattern = query.getQueryPattern();
 
@@ -566,8 +621,15 @@ class ResolverTemplate
 	
 	}
 	
-	protected Resolver resolveData(P_Path0 step, String alias) {
-		return new ResolverData(query, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)));
+	protected Collection<Resolver> resolveData(P_Path0 step, String alias) {
+		Collection<Resolver> result = new ArrayList<>();
+		for(RDFNode start : starts) {
+			PartitionedQuery1 tmp = new PartitionedQuery1(query.getQuery(), (Var)start.asNode());
+			Resolver item = new ResolverData(tmp, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)));
+			result.add(item);
+		}
+		
+		return result;
 		//return new ResolverData(query, Arrays.asList(Maps.immutableEntry(step, alias)));
 	}
 
@@ -1169,27 +1231,33 @@ public class VirtualPartitionedQuery {
 
 		// TODO We may need to tag alias as whether it corresponds to a fixed var name
 		// or a relative path id
-		System.out.println(
-				resolver
-					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")), "p")	
-					.resolve(new P_Link(NodeFactory.createURI("http://label")), "labelAlias")	
-					.getPaths());
+//		System.out.println(
+//				resolver
+//					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")), "p")	
+//					.resolve(new P_Link(NodeFactory.createURI("http://label")), "labelAlias")	
+//					.getPaths());
 
 		AliasedPath path = PathBuilderNode.start()
 			.fwd("http://facetCount").viaAlias("a")
 			.fwd("http://label").viaAlias("b")
 			.aliasedPath();
-		
+
+		path = PathBuilderNode.start()
+				.fwd("http://facetCount").one()
+				.fwd("http://label").one()
+				.aliasedPath();
+
 		System.out.println("built path: " + path);
 		
-		//extendQueryWithPath()
 		
 		// High level API:
-		System.out.println(ResolverNode.from(resolver)
-			.fwd("http://facetCount").viaAlias("a")
-			.fwd("http://label").viaAlias("b")
-			.getPaths());
+//		System.out.println("Paths: " + (ResolverNode.from(resolver)
+//			.fwd("http://facetCount").viaAlias("a")
+//			.fwd("http://label").viaAlias("b")
+//			.getPaths());
 		
+		System.out.println(pq);
+		extendQueryWithPath(pq, path);
 		
 //
 //		System.out.println(resolver
