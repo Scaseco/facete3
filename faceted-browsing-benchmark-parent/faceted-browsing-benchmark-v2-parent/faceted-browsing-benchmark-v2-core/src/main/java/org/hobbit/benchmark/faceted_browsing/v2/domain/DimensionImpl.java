@@ -19,7 +19,7 @@ public class DimensionImpl
 
 	protected Dimension parent;
 	protected BinaryRelation relation;
-	protected Var alias;
+	protected String alias;
 	
 	
 	@Override
@@ -70,12 +70,12 @@ public class DimensionImpl
 //	}
 
 	@Override
-	public void setAlias(Var alias) {
+	public void setAlias(String alias) {
 		this.alias = alias;
 	}
 
 	@Override
-	public Var getAlias() {
+	public String getAlias() {
 		return alias;
 	}
 

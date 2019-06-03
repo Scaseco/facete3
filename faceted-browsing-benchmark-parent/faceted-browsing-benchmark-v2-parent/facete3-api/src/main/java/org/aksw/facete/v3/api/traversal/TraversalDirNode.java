@@ -25,7 +25,7 @@ public interface TraversalDirNode<N, M extends TraversalMultiNode<N>> {
 	}
 
 	default N via(Resource property, String alias) {
-		return via(property).byAlias(alias);
+		return via(property).viaAlias(alias);
 	}
 
 	M via(Resource property);

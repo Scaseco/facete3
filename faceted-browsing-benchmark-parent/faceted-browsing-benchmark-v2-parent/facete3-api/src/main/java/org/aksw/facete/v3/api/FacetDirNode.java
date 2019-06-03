@@ -5,7 +5,9 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.apache.jena.rdf.model.RDFNode;
 
-public interface FacetDirNode extends TraversalDirNode<FacetNode, FacetMultiNode> {
+public interface FacetDirNode 
+	extends TraversalDirNode<FacetNode, FacetMultiNode>
+{
 	/** The parent of this node, should never be null */
 	FacetNode parent();
 
@@ -46,7 +48,11 @@ public interface FacetDirNode extends TraversalDirNode<FacetNode, FacetMultiNode
 	default DataQuery<FacetCount> facetCounts() {
 		return facetCounts(false);
 	}
-	
+
+	default FacetQueryBuilder<? extends RDFNode> facets2() {
+		throw new RuntimeException("This should become the new API for facetValues - but its only a stub yet");
+	}
+
 	
 	default FacetValueQueryBuilder<? extends FacetValue> facetValues() {
 		throw new RuntimeException("This should become the new API for facetValues - but its only a stub yet");

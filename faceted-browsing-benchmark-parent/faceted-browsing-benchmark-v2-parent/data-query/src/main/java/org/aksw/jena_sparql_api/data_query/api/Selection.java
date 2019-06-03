@@ -6,6 +6,9 @@ import org.apache.jena.sparql.core.Var;
 public interface Selection
 	extends Resource
 {
-	void setAlias(Var alias);
-	Var getAlias();
+//	void setAlias(Var alias);
+//	Var getAlias();
+	void setAlias(String alias);
+	String getAlias();
+
 }

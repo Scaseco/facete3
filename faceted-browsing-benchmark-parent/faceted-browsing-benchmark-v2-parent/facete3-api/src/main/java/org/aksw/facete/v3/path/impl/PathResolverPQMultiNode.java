@@ -12,7 +12,7 @@ public class PathResolverPQMultiNode
 	
 	
 	@Override
-	public PathResolverNode<Void> byAlias(String alias) {
+	public PathResolverNode<Void> viaAlias(String alias) {
 		// TODO Auto-generated method stub
 		return null;
 	}

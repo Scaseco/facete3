@@ -74,7 +74,7 @@ public interface BgpNode
 	
 	BgpNode as(String varName);
 	BgpNode as(Var var);
-	Var alias();
+	String alias();
 
 
 	BgpMultiNode parent();

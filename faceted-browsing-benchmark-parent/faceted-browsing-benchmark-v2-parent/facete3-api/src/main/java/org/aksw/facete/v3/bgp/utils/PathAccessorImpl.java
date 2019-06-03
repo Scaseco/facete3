@@ -90,7 +90,7 @@ public class PathAccessorImpl
 	}
 
 	@Override
-	public Var getAlias(BgpNode path) {
+	public String getAlias(BgpNode path) {
 		return path.alias();
 	}
 

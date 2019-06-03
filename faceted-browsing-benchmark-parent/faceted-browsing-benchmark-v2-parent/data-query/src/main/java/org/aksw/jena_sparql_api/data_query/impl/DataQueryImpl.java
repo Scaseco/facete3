@@ -330,7 +330,7 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		Model m = ModelFactory.createDefaultModel();
 		SPath tmp = new SPathImpl(m.createResource().asNode(), (EnhGraph)m);
-		tmp.setAlias(var);
+		tmp.setAlias(var.getName());
 		
 //		tmp = tmp.get(node.getURI(), false);
 		

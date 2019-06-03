@@ -7,11 +7,14 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -132,6 +135,47 @@ public class TestFacetedQuery {
 		
 	}
 	
+	
+	@Test
+	public void testFacetValueApi() {
+		
+		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
+
+		FacetedQuery fq2 = fq.root().fwd()
+			.facetValues()
+				.withCounts()
+				.withAbsent()
+				.itemsAs(Resource.class)
+				.query2()
+				.toFacetedQuery();
+//		
+//		DataQuery<? extends RDFNode> fv = fq2.focus().fwd().facets().query2();
+//
+//		Node pick = null; // Pick the facetCount property
+//
+//		fv.orderBy(pick); // In place operation
+//		
+//		fv.exec();
+		
+		
+		
+
+			
+			
+		
+		System.out.println("Label Available values: " + fq.root().fwd(RDFS.label).one().availableValues().exec().toList().blockingGet());
+		
+		
+		// Listing the nonConstrainedValues must not include
+		// 'rdf:type owl:Class' and
+		// 'rdfs:label
+		
+		List<FacetValueCount> fvcs = fq.root().fwd().nonConstrainedFacetValueCounts().exec().toList().blockingGet();
+		System.out.println("Non constrained values: " + fvcs);
+	
+		
+	}
+
 }
 
 

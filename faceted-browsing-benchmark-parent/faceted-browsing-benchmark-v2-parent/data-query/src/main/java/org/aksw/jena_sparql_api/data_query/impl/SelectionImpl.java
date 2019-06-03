@@ -6,7 +6,6 @@ import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.vocabulary.RDFS;
 
 public class SelectionImpl
@@ -18,17 +17,18 @@ public class SelectionImpl
     }
 
 	@Override
-	public void setAlias(Var alias) {
+	public void setAlias(String alias) {//Var alias) {
 		// TODO use proper vocab
-		ResourceUtils.setLiteralProperty(this, RDFS.seeAlso, alias.getName());
+//		ResourceUtils.setLiteralProperty(this, RDFS.seeAlso, alias.getName());
+		ResourceUtils.setLiteralProperty(this, RDFS.seeAlso, alias);
 	}
 
 	@Override
-	public Var getAlias() {
-		Var result = ResourceUtils.getLiteralProperty(this, RDFS.seeAlso, String.class)
+	public String getAlias() {
+		String result = ResourceUtils.getLiteralProperty(this, RDFS.seeAlso, String.class)
 		//Var result = Optional.ofNullable(getProperty(RDFS.seeAlso))
 			.map(Statement::getString)
-			.map(Var::alloc)
+			//.map(Var::alloc)
 			.orElse(null);
 		
 		return result;

@@ -25,7 +25,7 @@ public class PathAccessorSPath
 	}
 
 	@Override
-	public Var getAlias(SPath path) {
+	public String getAlias(SPath path) {
 		return path.getAlias();
 	}
 

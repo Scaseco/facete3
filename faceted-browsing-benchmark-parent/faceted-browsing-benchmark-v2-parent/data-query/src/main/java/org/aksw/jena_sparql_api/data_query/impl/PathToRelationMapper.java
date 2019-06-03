@@ -33,6 +33,7 @@ import com.github.davidmoten.guavamini.Lists;
  * 
  * The mapper does not track changes - such as modifying a path's alias
  * 
+ * TODO Here is the place for making use of a registry for mapping path elements to binary relations if desired ~ Claus Stadler, Jun 2, 2019
  * 
  * 
  * @author Claus Stadler, May 30, 2018
@@ -49,6 +50,10 @@ public class PathToRelationMapper<P> {
 	protected Generator<Var> varGen;
 	
 	
+	public Map<P, BinaryRelation> getMap() {
+		return map;
+	}
+
 	public static <P> NodeTransform createNodeTransformSubstitutePathReferences(
 			Function<? super Node, ? extends P> tryMapToPath,
 			Function<? super P, ? extends Node> mapToNode) {
@@ -75,7 +80,11 @@ public class PathToRelationMapper<P> {
 	public PathToRelationMapper(PathAccessorRdf<P> pathAccessor) {
 		this(pathAccessor, null);
 	}
-	
+
+//	public PathToRelationMapper(PathAccessorRdf<P> pathAccessor, String baseName) {
+//		this(null, pathAccessor, baseName);
+//	}
+
 	public PathToRelationMapper(PathAccessorRdf<P> pathAccessor, String baseName) {
 		// Note: We cannot use an identity hash map if we use RDF-backed resources,
 		// as multiple of these stateless vies may created for the same backing node
@@ -106,6 +115,9 @@ public class PathToRelationMapper<P> {
 			Set<Var> forbiddenVars,
 			Generator<Var> varGen) {
 		super();
+		
+		// TODO Take the root var into account
+		
 		this.pathAccessor = pathAccessor;
 		//this.elements = elements;
 		this.map = map;
@@ -120,7 +132,7 @@ public class PathToRelationMapper<P> {
 	
 	public BinaryRelation getOverallRelation(P path) {
 		
-		// Initialize the segments in {@link map} for the given pat
+		// Initialize the segments in {@link map} for the given path
 		getOrCreate(path);
 		
 		

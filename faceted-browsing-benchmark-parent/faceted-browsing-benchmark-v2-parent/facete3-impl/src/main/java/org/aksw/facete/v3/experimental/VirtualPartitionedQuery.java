@@ -4,12 +4,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.jena.graph.GraphVar;
 import org.aksw.commons.jena.graph.GraphVarImpl;
+import org.aksw.facete.v3.api.AliasedPath;
+import org.aksw.facete.v3.api.AliasedPathImpl;
+import org.aksw.facete.v3.api.traversal.TraversalDirNode;
+import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
+import org.aksw.facete.v3.api.traversal.TraversalNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -19,17 +26,18 @@ import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.concepts.XExpr;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessorRdf;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.data_query.impl.PathToRelationMapper;
 import org.aksw.jena_sparql_api.data_query.impl.QueryFragment;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -46,19 +54,154 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
+import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 
 import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
 import com.eccenca.access_control.triple_based.core.GenericLayer;
 
+class Contrib {
+	protected BinaryRelation reachingRelation;
+	protected TernaryRelation graphRelation;
+	
+	public Contrib(BinaryRelation reachingRelation, TernaryRelation graphRelation) {
+		super();
+		this.reachingRelation = reachingRelation;
+		this.graphRelation = graphRelation;
+	}
+
+	public BinaryRelation getReachingRelation() {
+		return reachingRelation;
+	}
+
+	public TernaryRelation getGraphRelation() {
+		return graphRelation;
+	}
+}
+
+
 
 interface Resolver {
-	Resolver resolve(P_Path0 stop);
+	//List<P_Path0> getPath();
+//	Resolver getParent();
+//	P_Path0 getReachingStep();
+
+	Resolver resolve(P_Path0 step, String alias);
+	
+	default Resolver resolve(P_Path0 step) {
+		Resolver result = resolve(step, null);
+		return result;
+	}
+	
+	
+//	BinaryRelation getBinaryRelation(boolean fwd);
+
+	
+	Collection<BinaryRelation> getPaths();
+	
 	Collection<TernaryRelation> getContrib(boolean fwd);
 }
+
+
+class ResolverNode
+	implements TraversalNode<ResolverNode, ResolverDirNode, ResolverMultiNode>
+{
+	protected Resolver resolver;
+
+	public ResolverNode(Resolver resolver) {
+		super();
+		this.resolver = resolver;
+	}
+
+	@Override
+	public ResolverDirNode fwd() {
+		return new ResolverDirNode(resolver, true);
+	}
+
+	@Override
+	public ResolverDirNode bwd() {
+		return new ResolverDirNode(resolver, false);
+	}
+	
+	Collection<BinaryRelation> getPaths() {
+		Collection<BinaryRelation> result = resolver.getPaths();
+		return result;
+	}
+	
+	public static ResolverNode from(Resolver resolver) {
+		return new ResolverNode(resolver);
+	}
+
+	
+}
+
+class ResolverDirNode
+	implements TraversalDirNode<ResolverNode, ResolverMultiNode>
+{
+	protected Resolver resolver;
+	protected boolean isFwd;
+	protected Map<Resource, ResolverMultiNode> propToMultiNode = new LinkedHashMap<>();
+	
+	
+	public ResolverDirNode(Resolver resolver, boolean isFwd) {
+		super();
+		this.resolver = resolver;
+		this.isFwd = isFwd;
+	}
+
+
+	@Override
+	public ResolverMultiNode via(Resource property) {
+		ResolverMultiNode result = propToMultiNode.computeIfAbsent(property, p -> new ResolverMultiNode(resolver, isFwd, property));
+		return result;
+	}
+	
+	public Collection<TernaryRelation> getContrib() {
+		Collection<TernaryRelation> result = resolver.getContrib(isFwd);
+		return result;
+	}
+	
+}
+
+class ResolverMultiNode
+	implements TraversalMultiNode<ResolverNode>
+{
+	protected Resolver resolver;
+	protected boolean isFwd;
+	protected Resource property;
+	protected Map<String, ResolverNode> aliasToNode = new LinkedHashMap<>();
+
+	
+
+	public ResolverMultiNode(Resolver resolver, boolean isFwd, Resource property) {
+		super();
+		this.resolver = resolver;
+		this.isFwd = isFwd;
+		this.property = property;
+	}
+
+	@Override
+	public ResolverNode viaAlias(String alias) {
+		Node n = property.asNode();
+		P_Path0 step = isFwd ? new P_Link(n) : new P_ReverseLink(n);
+		
+		Resolver child = resolver.resolve(step, alias);
+		ResolverNode result = aliasToNode.computeIfAbsent(alias, a -> new ResolverNode(child));
+		return result;
+	}
+
+	@Override
+	public Map<String, ResolverNode> list() {
+		return aliasToNode;
+	}
+
+}
+
+
 
 
 class ResolverUnion
@@ -72,8 +215,8 @@ class ResolverUnion
 	}
 
 	@Override
-	public Resolver resolve(P_Path0 step) {
-		Collection<Resolver> children = resolvers.stream().map(r -> r.resolve(step))
+	public Resolver resolve(P_Path0 step, String alias) {
+		Collection<Resolver> children = resolvers.stream().map(r -> r.resolve(step, alias))
 				.collect(Collectors.toList());
 		
 		Resolver result = new ResolverUnion(children);
@@ -82,12 +225,24 @@ class ResolverUnion
 
 	@Override
 	public Collection<TernaryRelation> getContrib(boolean fwd) {
-		List<TernaryRelation> result = new ArrayList<>();
-		for(Resolver resolver : resolvers) {
-			Collection<TernaryRelation> contribs = resolver.getContrib(fwd);
-			result.addAll(contribs);
-		}
+		List<TernaryRelation> result = resolvers.stream()
+				.flatMap(resolver -> resolver.getContrib(fwd).stream())
+				.collect(Collectors.toList());
+		
+//		List<TernaryRelation> result = new ArrayList<>();
+//		for(Resolver resolver : resolvers) {
+//			Collection<TernaryRelation> contribs = resolver.getContrib(fwd);
+//			result.addAll(contribs);
+//		}
 
+		return result;
+	}
+
+	@Override
+	public Collection<BinaryRelation> getPaths() {
+		List<BinaryRelation> result = resolvers.stream()
+				.flatMap(resolver -> resolver.getPaths().stream())
+				.collect(Collectors.toList());
 		return result;
 	}
 }
@@ -109,6 +264,16 @@ class ResolverTemplate
 	protected PartitionedQuery1 query;
 	protected Set<? extends RDFNode> starts;
 
+	public Collection<BinaryRelation> getPaths() {
+		Collection<BinaryRelation> result = starts.stream()
+				.map(x -> (Var)x.asNode())
+				.map(v -> new BinaryRelationImpl(new ElementGroup(), v, v))
+				.collect(Collectors.toList());
+
+		return result;
+	}
+	
+	
 	protected ResolverTemplate(PartitionedQuery1 query, Set<? extends RDFNode> starts) {
 		this.query = query;
 		this.starts = starts;
@@ -117,16 +282,16 @@ class ResolverTemplate
 	
 	
 	@Override
-	public Resolver resolve(P_Path0 step) {
+	public Resolver resolve(P_Path0 step, String alias) {
 		ResolverUnion result = new ResolverUnion(Arrays.asList(
-				resolveTemplate(step),
-				resolveData(step)));
+				resolveTemplate(step, alias),
+				resolveData(step, alias)));
 		
 		return result;
 	}
 	
 
-	protected Resolver resolveTemplate(P_Path0 step) {
+	protected Resolver resolveTemplate(P_Path0 step, String alias) {
 		//Collection<RDFNode> starts = Collections.singleton(root); 
 //			Property p = ResourceUtils.getProperty(step);
 		Set<RDFNode> targets =
@@ -143,8 +308,9 @@ class ResolverTemplate
 	
 	}
 	
-	protected Resolver resolveData(P_Path0 step) {
-		return new ResolverData(query, Arrays.asList(step));
+	protected Resolver resolveData(P_Path0 step, String alias) {
+		return new ResolverData(query, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)));
+		//return new ResolverData(query, Arrays.asList(Maps.immutableEntry(step, alias)));
 	}
 
 	@Override
@@ -192,7 +358,6 @@ class ResolverTemplate
 							new ElementBind(freshP, nvp)),
 						(Var)s, freshP, (Var)o);					
 				}
-				
 //				
 //				TernaryRelation combined = tr
 //						.prependOn((Var)s).with(templateConcept)
@@ -257,26 +422,54 @@ class ResolverData
 	implements Resolver
 {
 	//protected ResolverTemplate base;
-	protected List<P_Path0> steps;
+	//protected List<P_Path0> steps;
+	//protected List<Entry<P_Path0, String>> steps;
+	protected AliasedPath path;
 
 	protected PartitionedQuery1 query;
 	//protected RDFNode start;
 
 	
 //	public ResolverData(ResolverTemplate base, List<P_Path0> steps) {
-	public ResolverData(PartitionedQuery1 query, List<P_Path0> steps) {
+	public ResolverData(PartitionedQuery1 query, AliasedPath path) {
 		super();
 		this.query = query;
-		this.steps = steps;
+		this.path = path;
 		//this.base = base;
 		//this.steps = steps;
 	}
 
+	public BinaryRelation getPath() {
+		// Get the root var
+		Var var = query.getPartitionVar();
+
+		
+		// TODO Mark all variables mentioned in the query as forbidden 
+		//Set<Var> mentionedVars = null;
+		
+		String pathName = "path"; 
+		String baseName = var.getName() + "_" + pathName;
+		
+//		PathAccessorRdf<SimplePath> pathAccessor = new PathAccessorSimplePath();
+		PathAccessorRdf<AliasedPath> pathAccessor = new PathAccessorAliasedPath();
+		PathToRelationMapper<AliasedPath> mapper = new PathToRelationMapper<>(pathAccessor, baseName);
+		
+		mapper.getMap().put(AliasedPathImpl.empty(), new BinaryRelationImpl(new ElementGroup(), var, var));
+		
+		BinaryRelation result = mapper.getOverallRelation(path);
+
+		return result;
+	}
+	
+	public Collection<BinaryRelation> getPaths() {
+		BinaryRelation pathRelation = getPath();
+		return Collections.singleton(pathRelation);
+	}
+
 	@Override
-	public Resolver resolve(P_Path0 step) {
-		List<P_Path0> next = new ArrayList<>(steps);
-		next.add(step);
-		return new ResolverData(query, next);
+	public Resolver resolve(P_Path0 step, String alias) {
+		AliasedPath subPath = path.subPath(Maps.immutableEntry(step, alias));
+		return new ResolverData(query, subPath);
 	}
 
 	public static TernaryRelation createRelation(boolean isFwd, Var s, Var p, Var o) {
@@ -295,14 +488,13 @@ class ResolverData
 		
 
 		
-		PathAccessorRdf<SimplePath> pathAccessor = new PathAccessorSimplePath();
-		PathToRelationMapper<SimplePath> mapper = new PathToRelationMapper<>(pathAccessor, "w");
-
-		// We need to connect relations:
-		// concept - path - triple pattern
+//		PathAccessorRdf<SimplePath> pathAccessor = new PathAccessorSimplePath();
+//		PathToRelationMapper<SimplePath> mapper = new PathToRelationMapper<>(pathAccessor, "w");
+//		// We need to connect relations:
+//		// concept - path - triple pattern
+//		BinaryRelation pathRelation = mapper.getOverallRelation(new SimplePath(steps));
 		
-		
-		BinaryRelation pathRelation = mapper.getOverallRelation(new SimplePath(steps));
+		BinaryRelation pathRelation = getPath();
 		
 		BinaryRelation pathRelationWithConcept = pathRelation
 			.prependOn(pathRelation.getSourceVar()).with(baseConcept)
@@ -396,26 +588,44 @@ abstract class PathAccessorPath<P>
 	}
 
 	@Override
-	public Var getAlias(P path) {
+	public String getAlias(P path) {
 		return null;
 	}	
 }
 //
 //
-class PathAccessorSimplePath
-	extends PathAccessorPath<SimplePath>
+//class PathAccessorSimplePath
+//	extends PathAccessorPath<SimplePath>
+//{
+//	@Override
+//	public SimplePath getParent(SimplePath path) {
+//		return path.parentPath();
+//	}
+//
+//	@Override
+//	protected P_Path0 getLastStep(SimplePath path) {
+//		return path.lastStep();
+//	}
+//}
+
+class PathAccessorAliasedPath
+	extends PathAccessorPath<AliasedPath>
 {
 	@Override
-	public SimplePath getParent(SimplePath path) {
-		return path.parentPath();
+	public AliasedPath getParent(AliasedPath path) {
+		return path.getParent();
+	}
+	
+	@Override
+	public P_Path0 getLastStep(AliasedPath path) {
+		return path.getLastStep().getKey();
 	}
 
 	@Override
-	protected P_Path0 getLastStep(SimplePath path) {
-		return path.lastStep();
+	public String getAlias(AliasedPath path) {
+		return path.getLastStep().getValue();
 	}
 }
-
 
 
 
@@ -652,10 +862,10 @@ public class VirtualPartitionedQuery {
 	}
 
 	public static void main(String[] args) {
-		
-		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
-		
+		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");		
 		Resolver resolver = createResolver(Vars.p, view);
+		
+		if(false) {
 		
 		Query example1 = rewrite(
 				resolver
@@ -676,14 +886,55 @@ public class VirtualPartitionedQuery {
 				QueryFactory.create("SELECT ?x ?y ?z { ?x ?y ?z }"));
 		System.out.println("Example 3\n" + example3);
 
-		Query example4 = rewrite(
+		Query example4a = rewrite(
 				resolver
 					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	
 					.getContrib(true),
 				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
-		System.out.println("Example 4\n" + example4);
+		System.out.println("Example 4a\n" + example4a);
+		Query example4b = rewrite(
+				resolver
+					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")), "someAlias")	
+					.getContrib(true),
+				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
+		System.out.println("Example 4b\n" + example4b);
+		}
+
+		// TODO We may need to tag alias as whether it corresponds to a fixed var name
+		// or a relative path id
+		System.out.println(
+				resolver
+					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")), "p")	
+					.resolve(new P_Link(NodeFactory.createURI("http://label")), "labelAlias")	
+					.getPaths());
+
+		
+		// High level API:
+		System.out.println(ResolverNode.from(resolver)
+			.fwd("http://facetCount").viaAlias("a")
+			.fwd("http://label").viaAlias("b")
+			.getPaths());
+//
+//		System.out.println(resolver
+//			.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	
+//			.getPaths());
+
 	}
 	
+	static class GeneralizedStep {
+		boolean isFwd;
+		XExpr expr;
+	}
+	
+	
+	public static void extend(Element element, Collection<AliasedPathImpl> paths) {
+		
+	}
+	
+	public static void extend(Element element, BinaryRelation relation) {
+		
+		
+	}
 	//processor.step(pq, new P_Link(NodeFactory.createURI("http://facetCount")), true, "a");
 	
 	

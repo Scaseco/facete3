@@ -14,12 +14,39 @@ import org.apache.jena.rdf.model.RDFNode;
  * @param <T>
  */
 public interface FacetValueQueryBuilder<T extends RDFNode> {
+	// TODO Add a capabilities() method so client code can query for supported features
+	
 	FacetDirNode parent();
-	FacetValueQueryBuilder<FacetValueCount> withCounts();
+	FacetValueQueryBuilder<FacetValueCount> withCounts(boolean onOrOff);
 
+	default FacetValueQueryBuilder<FacetValueCount> withCounts() {
+		return withCounts(true);
+	}
+
+	default FacetValueQueryBuilder<FacetValueCount> withoutCounts() {
+		return withCounts(false);
+	}
+
+	
+	FacetValueQueryBuilder<T> includeAbsent(boolean onOrOff);
+
+	default FacetValueQueryBuilder<T> withAbsent() {
+		return includeAbsent(true);
+	}
+
+	default FacetValueQueryBuilder<T> withoutAbsent() {
+		return includeAbsent(false);
+	}
+
+	
+	
 	<X extends RDFNode> FacetValueQueryBuilder<X> itemsAs(Class<X> itemClazz);
 	
 	
-	FacetValueQueryBuilder<T> includeAbsent();
+//	default FacetValueQueryBuilder<T> includeAbsent() {
+//		return includeAbsent(true);
+//	}
+
 	DataQuery<T> query();
+	DataQuery2<T> query2();
 }

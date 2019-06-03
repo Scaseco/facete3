@@ -121,7 +121,7 @@ public class BgpMultiNodeImpl
 	}
 
 	@Override
-	public BgpNode byAlias(String alias) {
+	public BgpNode viaAlias(String alias) {
 		throw new RuntimeException("not implemented yet");
 	}
 

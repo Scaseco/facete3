@@ -268,17 +268,20 @@ public class QueryFragment {
 	public static <P> Var getOrCreateAlias(P path, PathAccessorRdf<P> accessor, Map<P, BinaryRelation> pathToNode, Set<Var> forbiddenVars, Generator<Var> varGen) {
 		varGen = VarGeneratorBlacklist.create(varGen, forbiddenVars);
 		
-		Var result = accessor.getAlias(path);
+		String tmp = accessor.getAlias(path);
 		
-		if(result == null) {
+		
+		if(tmp == null) {
 			P parent = accessor.getParent(path);
 //			if(parent == null) {
 //				path = null;
 //			}
 			
 			BinaryRelation br = pathToNode.get(path);
-			result = br != null ? br.getTargetVar() : varGen.next();
+			tmp = br != null ? br.getTargetVar().getName() : varGen.next().getName();
 		}
+		
+		Var result = Var.alloc(tmp);
 		
 		//Var result = pathToNode.computeIfAbsent(path, br -> Optional.ofNullable(aliasStr).map(Var::alloc).orElse(varGen.next()));
 		return result;

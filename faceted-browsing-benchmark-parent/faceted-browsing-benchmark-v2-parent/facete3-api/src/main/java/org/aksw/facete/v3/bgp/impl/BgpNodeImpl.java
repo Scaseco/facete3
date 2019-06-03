@@ -90,9 +90,9 @@ public class BgpNodeImpl
 //	}
 
 	@Override
-	public Var alias() {
-		Var result = ResourceUtils.tryGetLiteralPropertyValue(this, Vocab.alias, String.class)
-			.map(Var::alloc)
+	public String alias() {
+		String result = ResourceUtils.tryGetLiteralPropertyValue(this, Vocab.alias, String.class)
+			//.map(Var::alloc)
 			.orElse(null);
 
 		return result;

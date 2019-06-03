@@ -8,12 +8,12 @@ import java.util.Map;
 public interface TraversalMultiNode<N> {
 	/** getOrCreate the one single alias for this multi node. Raises an exception if there are already multiple aliases */
 	default N one() {
-		return byAlias(null);
+		return viaAlias(null);
 	}
 	
 
 	/** get or create semantics for each alias */
-	N byAlias(String alias);
+	N viaAlias(String alias);
 	
 	/**
 	 * List all previously allocated traversals with their aliases
