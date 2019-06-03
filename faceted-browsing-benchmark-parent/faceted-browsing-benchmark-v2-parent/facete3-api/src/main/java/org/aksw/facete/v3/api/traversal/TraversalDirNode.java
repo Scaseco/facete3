@@ -29,4 +29,6 @@ public interface TraversalDirNode<N, M extends TraversalMultiNode<N>> {
 	}
 
 	M via(Resource property);
+	
+	boolean isFwd();
 }

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -104,100 +105,357 @@ interface Resolver {
 	Collection<BinaryRelation> getPaths();
 	
 	Collection<TernaryRelation> getContrib(boolean fwd);
+	
+	
+	public static Resolver from(PartitionedQuery1 pq) {
+		RDFNode node = toRdfModel(pq);
+		Resolver result = new ResolverTemplate(pq, Collections.singleton(node));
+		return result;
+	}
+	
+	public static Resolver from(Var viewVar, Query view) {
+		PartitionedQuery1 pq = PartitionedQuery1.from(view, viewVar);
+		Resolver result = Resolver.from(pq);
+
+		return result;
+	}
+	
+	public static RDFNode toRdfModel(PartitionedQuery1 pq) {
+		Node rootNode = pq.getPartitionVar();
+		
+		Query query = pq.getQuery();
+		Template template = query.getConstructTemplate();
+		GraphVar graphVar = new GraphVarImpl(GraphFactory.createDefaultGraph());
+		GraphUtil.add(graphVar, template.getTriples());
+		Model model = ModelFactory.createModelForGraph(graphVar);
+		
+		Resource root = model.getRDFNode(rootNode).asResource();
+
+		return root;
+	}
+
+
 }
 
 
+abstract class PathNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>>
+	implements TraversalNode<N, D, M>
+{
+	protected M parent;
+	protected String alias;
+	
+	public PathNode() {
+		this(null, null);
+	}
+
+	public PathNode(M parent, String alias) {
+		super();
+		this.parent = parent;
+		this.alias = alias;
+	}
+
+	public M parent() {
+		return parent;
+	}
+	
+	@Override
+	public D fwd() {
+		return create(true);
+	}
+
+	@Override
+	public D bwd() {
+		return create(false);
+	}
+	
+	public abstract D create(boolean isFwd);
+}
+
+
+abstract class PathDirNode<N, M extends TraversalMultiNode<N>>
+	implements TraversalDirNode<N, M>
+{
+	protected N parent;
+	protected boolean isFwd;
+	protected Map<Resource, M> propToMultiNode = new LinkedHashMap<>();
+
+	public PathDirNode(N parent, boolean isFwd) {
+		super();
+		this.parent = parent;
+		this.isFwd = isFwd;
+	}
+	
+	@Override
+	public boolean isFwd() {
+		return isFwd;
+	}
+
+	@Override
+	public M via(Resource property) {
+		M result = propToMultiNode.computeIfAbsent(property, this::viaImpl);
+		return result;
+	}
+
+	protected abstract M viaImpl(Resource property);
+}
+
+
+
+
+abstract class PathMultiNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>>
+	implements TraversalMultiNode<N>
+{	
+	protected D parent;
+	protected boolean isFwd;
+	protected Resource property;
+	//protected boolean isFwd;
+	//protected Resource property;
+	protected Map<String, N> aliasToNode = new LinkedHashMap<>();
+
+		
+	public PathMultiNode(D parent, Resource property) {
+		super();
+		this.parent = parent;
+		this.isFwd = parent.isFwd();
+		this.property = property;
+	}
+
+	@Override
+	public N viaAlias(String alias) {
+		N result = aliasToNode.computeIfAbsent(alias, this::viaImpl);
+		return result;
+	}
+
+	@Override
+	public Map<String, N> list() {
+		return aliasToNode;
+	}
+
+	protected abstract N viaImpl(String alias);
+}
+
+
+
+interface Factory<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>> {
+
+	D newDirNode(N node, boolean isFwd);
+	M newMultiNode(D dirNode, Resource property);
+	N newNode(M multiNode, String alias);
+}
+
+
+class PathFactoryNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>>
+	extends PathNode<N, D, M>
+{
+	protected Factory<N, D, M> factory;
+
+	@Override
+	public D create(boolean isFwd) {
+		D result = factory.newDirNode((N)this, isFwd);
+		return result;
+	}	
+}
+
+class PathFactoryDirNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>>
+	extends PathDirNode<N, M>
+{
+	protected Factory<N, D, M> factory;
+
+	public PathFactoryDirNode(N parent, boolean isFwd, Factory<N, D, M> factory) {
+		super(parent, isFwd);
+		this.factory = factory;
+	}
+
+	@Override
+	protected M viaImpl(Resource property) {
+		M result = factory.newMultiNode((D)this, property);
+		return result;
+	}
+}
+
+class PathFactoryMultiNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>>
+	extends PathMultiNode<N, D, M>
+{
+	protected Factory<N, D, M> factory;
+	
+	
+	public PathFactoryMultiNode(D parent, Resource property, Factory<N, D, M> factory) {
+		super(parent, property);
+		this.factory = factory;
+	}
+
+
+	@Override
+	protected N viaImpl(String alias) {
+		N result = factory.newNode((M)this, alias);
+		return result;
+	}
+}
+
+
+
+class PathBuilderNode
+	extends PathNode<PathBuilderNode, PathBuilderDirNode, PathBuilderMultiNode>
+{
+	public PathBuilderNode(PathBuilderMultiNode parent, String alias) {
+		super(parent, alias);
+	}
+
+
+	@Override
+	public PathBuilderDirNode create(boolean isFwd) {
+		return new PathBuilderDirNode(this, isFwd);
+	}
+	
+	
+	public static PathBuilderNode start() {
+		return new PathBuilderNode(null, null);
+	}
+	
+	
+	public AliasedPath aliasedPath() {
+		AliasedPath result;
+		if(parent != null) {
+			AliasedPath parentPath = parent.parent.parent.aliasedPath();
+			
+			Node node = parent.property.asNode();
+			P_Path0 p = parent.isFwd ? new P_Link(node) : new P_ReverseLink(node);
+			Entry<P_Path0, String> step = Maps.immutableEntry(p, alias);
+			
+			result = parentPath.subPath(step);
+		} else {
+			result = new AliasedPathImpl(new ArrayList<>());
+		}
+		return result;
+	}
+}
+
+
+class PathBuilderDirNode
+	extends PathDirNode<PathBuilderNode, PathBuilderMultiNode>
+{
+	public PathBuilderDirNode(PathBuilderNode parent, boolean isFwd) {
+		super(parent, isFwd);
+	}
+
+	@Override
+	protected PathBuilderMultiNode viaImpl(Resource property) {
+		return new PathBuilderMultiNode(this, property);
+	}	
+}
+
+
+class PathBuilderMultiNode
+	extends PathMultiNode<PathBuilderNode, PathBuilderDirNode, PathBuilderMultiNode>
+{
+	public PathBuilderMultiNode(PathBuilderDirNode parent, Resource property) {
+		super(parent, property);
+	}
+
+	@Override
+	protected PathBuilderNode viaImpl(String alias) {
+		return new PathBuilderNode(this, alias);
+	}	
+}
+
+
+
 class ResolverNode
-	implements TraversalNode<ResolverNode, ResolverDirNode, ResolverMultiNode>
+	extends PathNode<ResolverNode, ResolverDirNode, ResolverMultiNode>
 {
 	protected Resolver resolver;
-
+	
 	public ResolverNode(Resolver resolver) {
 		super();
 		this.resolver = resolver;
 	}
+	
 
-	@Override
-	public ResolverDirNode fwd() {
-		return new ResolverDirNode(resolver, true);
+	public Resolver getResolver() {
+		return resolver;
 	}
 
+
 	@Override
-	public ResolverDirNode bwd() {
-		return new ResolverDirNode(resolver, false);
+	public ResolverDirNode create(boolean isFwd) {
+		return new ResolverDirNode(this, isFwd);
 	}
 	
 	Collection<BinaryRelation> getPaths() {
 		Collection<BinaryRelation> result = resolver.getPaths();
 		return result;
 	}
-	
+
+
 	public static ResolverNode from(Resolver resolver) {
 		return new ResolverNode(resolver);
 	}
+	
+	public static ResolverNode from(PartitionedQuery1 pq) {
+		return from(Resolver.from(pq));
+	}
 
+	public static ResolverNode from(Query query, Var partitionVar) {
+		return from(new PartitionedQuery1(query, partitionVar));
+	}
+	
 	
 }
 
 class ResolverDirNode
-	implements TraversalDirNode<ResolverNode, ResolverMultiNode>
+	extends PathDirNode<ResolverNode, ResolverMultiNode>
 {
 	protected Resolver resolver;
-	protected boolean isFwd;
-	protected Map<Resource, ResolverMultiNode> propToMultiNode = new LinkedHashMap<>();
+
 	
-	
-	public ResolverDirNode(Resolver resolver, boolean isFwd) {
-		super();
-		this.resolver = resolver;
+	public ResolverDirNode(ResolverNode parent, boolean isFwd) {
+		super(parent, isFwd);
+		this.resolver = parent.getResolver();
 		this.isFwd = isFwd;
 	}
-
-
-	@Override
-	public ResolverMultiNode via(Resource property) {
-		ResolverMultiNode result = propToMultiNode.computeIfAbsent(property, p -> new ResolverMultiNode(resolver, isFwd, property));
-		return result;
-	}
 	
+	public Resolver getResolver() {
+		return resolver;
+	}
+
 	public Collection<TernaryRelation> getContrib() {
 		Collection<TernaryRelation> result = resolver.getContrib(isFwd);
 		return result;
 	}
-	
+
+	@Override
+	protected ResolverMultiNode viaImpl(Resource property) {
+		return new ResolverMultiNode(this, property);
+	}
 }
 
+
+
 class ResolverMultiNode
-	implements TraversalMultiNode<ResolverNode>
+	extends PathMultiNode<ResolverNode, ResolverDirNode, ResolverMultiNode>
 {
 	protected Resolver resolver;
-	protected boolean isFwd;
-	protected Resource property;
-	protected Map<String, ResolverNode> aliasToNode = new LinkedHashMap<>();
+//	protected Map<String, ResolverNode> aliasToNode = new LinkedHashMap<>();
 
-	
 
-	public ResolverMultiNode(Resolver resolver, boolean isFwd, Resource property) {
-		super();
-		this.resolver = resolver;
-		this.isFwd = isFwd;
-		this.property = property;
+	public ResolverMultiNode(ResolverDirNode parent, Resource property) {
+		super(parent, property);		
+		this.resolver = parent.getResolver();
 	}
 
 	@Override
-	public ResolverNode viaAlias(String alias) {
+	protected ResolverNode viaImpl(String alias) {
 		Node n = property.asNode();
 		P_Path0 step = isFwd ? new P_Link(n) : new P_ReverseLink(n);
-		
 		Resolver child = resolver.resolve(step, alias);
-		ResolverNode result = aliasToNode.computeIfAbsent(alias, a -> new ResolverNode(child));
+		ResolverNode result = new ResolverNode(child);
 		return result;
 	}
 
-	@Override
-	public Map<String, ResolverNode> list() {
-		return aliasToNode;
-	}
+//	@Override
+//	public Map<String, ResolverNode> list() {
+//		return aliasToNode;
+//	}
 
 }
 
@@ -736,26 +994,13 @@ public class VirtualPartitionedQuery {
 //	
 	
 	
-	public static Resolver createResolver(PartitionedQuery1 pq) {
-		RDFNode node = toRdfModel(pq);
-		Resolver result = new ResolverTemplate(pq, Collections.singleton(node));
-		return result;
-	}
+//	public static Resolver createResolver(PartitionedQuery1 pq) {
+//		RDFNode node = toRdfModel(pq);
+//		Resolver result = new ResolverTemplate(pq, Collections.singleton(node));
+//		return result;
+//	}
 
 	
-	public static RDFNode toRdfModel(PartitionedQuery1 pq) {
-		Node rootNode = pq.getPartitionVar();
-		
-		Query query = pq.getQuery();
-		Template template = query.getConstructTemplate();
-		GraphVar graphVar = new GraphVarImpl(GraphFactory.createDefaultGraph());
-		GraphUtil.add(graphVar, template.getTriples());
-		Model model = ModelFactory.createModelForGraph(graphVar);
-		
-		Resource root = model.getRDFNode(rootNode).asResource();
-
-		return root;
-	}
 	
 //	public void step(SimplePath basePath, PartitionedQuery1 pq, P_Path0 step, boolean isFwd, String alias) {
 //		System.out.println(root.listProperties().toList());
@@ -840,12 +1085,6 @@ public class VirtualPartitionedQuery {
 //		return result;
 //	}
 //	
-	public static Resolver createResolver(Var viewVar, Query view) {
-		PartitionedQuery1 pq = new PartitionedQuery1(view, viewVar);
-		Resolver result = createResolver(pq);
-
-		return result;
-	}
 	
 	public static Query rewrite(Collection<TernaryRelation> views, Query query) {
 //		Resolver resolver = createResolver(view, viewVar);
@@ -860,10 +1099,38 @@ public class VirtualPartitionedQuery {
 
 		return result;
 	}
+	
+	
+	/**
+	 * 
+	 * @return The updated partitioned query with the variable set to the target of the path
+	 * 
+	 * TODO Maybe we want to return a PartitionedQuery2 - with source and target var
+	 */
+	public static PartitionedQuery1 extendQueryWithPath(PartitionedQuery1 base, AliasedPath path) {
+		Var targetVar = Var.alloc("todo-fresh-var");
+		
+		ResolverNode node = ResolverNode.from(base);
+		ResolverNode target = node.walk(path);
+
+		Collection<BinaryRelation> rawBrs = target.getPaths();
+
+		// Set the target variable of the paths to the desired alias
+		Collection<BinaryRelation> brs = rawBrs.stream()
+				.map(br -> RelationUtils.rename(br, Arrays.asList(br.getSourceVar(), targetVar)).toBinaryRelation())
+				.collect(Collectors.toList());
+		
+		for(BinaryRelation br : brs) {
+			System.out.println("Relation: " + br);
+		}
+		
+		return null;
+	}
 
 	public static void main(String[] args) {
 		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");		
-		Resolver resolver = createResolver(Vars.p, view);
+		PartitionedQuery1 pq = PartitionedQuery1.from(view, Vars.p);
+		Resolver resolver = Resolver.from(pq);
 		
 		if(false) {
 		
@@ -908,12 +1175,22 @@ public class VirtualPartitionedQuery {
 					.resolve(new P_Link(NodeFactory.createURI("http://label")), "labelAlias")	
 					.getPaths());
 
+		AliasedPath path = PathBuilderNode.start()
+			.fwd("http://facetCount").viaAlias("a")
+			.fwd("http://label").viaAlias("b")
+			.aliasedPath();
+		
+		System.out.println("built path: " + path);
+		
+		//extendQueryWithPath()
 		
 		// High level API:
 		System.out.println(ResolverNode.from(resolver)
 			.fwd("http://facetCount").viaAlias("a")
 			.fwd("http://label").viaAlias("b")
 			.getPaths());
+		
+		
 //
 //		System.out.println(resolver
 //			.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	

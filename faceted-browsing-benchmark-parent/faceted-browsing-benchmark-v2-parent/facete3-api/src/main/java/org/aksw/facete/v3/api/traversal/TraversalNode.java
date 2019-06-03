@@ -3,13 +3,18 @@ package org.aksw.facete.v3.api.traversal;
 import static org.aksw.facete.v3.api.Direction.BACKWARD;
 
 import java.util.Optional;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 
+import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
@@ -67,6 +72,35 @@ public interface TraversalNode<N extends TraversalNode<N,D,M>, D extends Travers
 		return BACKWARD.equals(direction) ? bwd(p) : fwd(p);
 	}
 
+	default N step(P_Path0 p, String alias) {
+		boolean isFwd = p.isForward();
+		Node node = p.getNode();
+		M tmp = isFwd ? fwd(node) : bwd(node);
+		N result = tmp.viaAlias(alias);
+		return result;
+	}
+	
+	default N walk(AliasedPath path) {
+		List<Entry<P_Path0, String>> steps = path.getSteps();
+		N result = walkAliased(steps.iterator());
+		return result;
+	}
+	
+	default N walkAliased(Iterator<? extends Entry<P_Path0, String>> it) {
+		N result;
+		if(it.hasNext()) {
+			Entry<P_Path0, String> step = it.next();
+			P_Path0 p = step.getKey();
+			String alias = step.getValue();
+			N next = step(p, alias);
+			result = next.walkAliased(it);
+		} else {
+			result = (N)this;
+		}
+		
+		return result;
+	}
+	
 	default N walk(Path path) {
 		TraversalNode<N, D, M> result;
 		if(path == null) {

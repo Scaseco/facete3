@@ -1,7 +1,6 @@
 package org.aksw.facete.v3.api;
 
 import java.util.List;
-import java.util.Objects;
 
 public interface PathBase<T extends PathBase<T, S>, S>
 {
