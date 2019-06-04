@@ -40,6 +40,7 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.GraphUtil;
@@ -114,7 +115,7 @@ interface Resolver {
 	
 	public static Resolver from(PartitionedQuery1 pq) {
 		RDFNode node = toRdfModel(pq);
-		Resolver result = new ResolverTemplate(pq, Collections.singleton(node));
+		Resolver result = new ResolverTemplate(pq, node, null);
 		return result;
 	}
 	
@@ -540,22 +541,32 @@ class ResolverUnion
 class ResolverTemplate
 	implements Resolver
 {
+	protected BinaryRelation reachingRelation;
+	
 	protected PartitionedQuery1 query;
-	protected Set<? extends RDFNode> starts;
+	///protected Set<? extends RDFNode> starts;
+	protected RDFNode start;
 
 	public Collection<BinaryRelation> getPaths() {
-		Collection<BinaryRelation> result = starts.stream()
-				.map(x -> (Var)x.asNode())
-				.map(v -> new BinaryRelationImpl(new ElementGroup(), v, v))
-				.collect(Collectors.toList());
+		Var v = (Var)start.asNode();
+		Collection<BinaryRelation> result = Collections.singleton(reachingRelation == null
+				? new BinaryRelationImpl(new ElementGroup(), v, v)
+				: reachingRelation);
+
+//		Collection<BinaryRelation> result = starts.stream()
+//				.map(x -> (Var)x.asNode())
+//				.map(v -> new BinaryRelationImpl(new ElementGroup(), v, v))
+//				.collect(Collectors.toList());
 
 		return result;
 	}
 	
 	
-	protected ResolverTemplate(PartitionedQuery1 query, Set<? extends RDFNode> starts) {
+	protected ResolverTemplate(PartitionedQuery1 query, RDFNode start, BinaryRelation reachingRelation) {
 		this.query = query;
-		this.starts = starts;
+		//this.starts = starts;
+		this.start = start;
+		this.reachingRelation = reachingRelation;
 	}
 	
 	
@@ -571,27 +582,48 @@ class ResolverTemplate
 	
 
 	protected Collection<Resolver> resolveTemplate(P_Path0 step, String alias) {
+		Var startVar = (Var)start.asNode();
 		//Collection<RDFNode> starts = Collections.singleton(root); 
 //			Property p = ResourceUtils.getProperty(step);
-		Set<RDFNode> targets =
-			starts.stream().flatMap(s ->
-				ResourceUtils.listPropertyValues(s.asResource(), step).toList().stream())
-			.collect(Collectors.toSet());
+		Set<RDFNode> targets = ResourceUtils.listPropertyValues(start.asResource(), step).toSet();
+			//starts.stream()
+//			Collections.singleton(start).stream().flatMap(s ->
+//				ResourceUtils.listPropertyValues(s.asResource(), step).toList().stream())
+//			.collect(Collectors.toSet());
 		
-		
+		Collection<Resolver> result = new ArrayList<>();
+
+
 		// If an alias is given, create a copy of the partitioned query
-		// with the target variables renamed
+		// with all variables - save for the one being joined on - renamed
 		PartitionedQuery1 newPq = query;
 		Set<RDFNode> newTargets = targets;
-		if(alias != null) {
+		if(alias != null && !targets.isEmpty()) {
 			Map<Var, Var> renameMap = new HashMap<>();
-			for(RDFNode target : targets) {
-				Var var = (Var)target.asNode();
-				String varName = var.getName();
-				Var newName = Var.alloc(alias + "_" + varName);
-				renameMap.put(var, newName);				
+			NodeTransformCollectNodes collector = new NodeTransformCollectNodes();
+			QueryUtils.applyNodeTransform(query.getQuery(), collector);
+			
+			Collection<Var> vars = collector.getNodes().stream()
+					.filter(n -> n.isVariable())
+					.map(n -> (Var)n)
+					.collect(Collectors.toSet());
+
+			for(Var var : vars) {
+				if(!var.equals(startVar)) {
+					String varName = var.getName();
+					Var newName = Var.alloc(alias + "_" + varName);
+					renameMap.put(var, newName);
+				}
 			}
+			
+//			for(RDFNode target : targets) {
+//				Var var = (Var)target.asNode();
+//				String varName = var.getName();
+//				Var newName = Var.alloc(alias + "_" + varName);
+//				renameMap.put(var, newName);				
+//			}
 			Query newQuery = QueryUtils.applyNodeTransform(query.getQuery(), new NodeTransformSubst(renameMap));
+
 			Var oldRoot = query.getPartitionVar();
 			Var newRoot = renameMap.getOrDefault(oldRoot, oldRoot);
 			newPq = new PartitionedQuery1(newQuery, newRoot);
@@ -600,17 +632,28 @@ class ResolverTemplate
 			for(RDFNode oldT : targets) {
 				Model m = oldT.getModel();
 				Node o = oldT.asNode();
-				Node newT = renameMap.get(o);
+				Var newT = renameMap.get(o);
 				
 				RDFNode newN = newT == null ? oldT : m.asRDFNode(newT);
 				newTargets.add(newN);
+				
+				BinaryRelation relation = new BinaryRelationImpl(newQuery.getQueryPattern(), startVar, newT);
+
+				if(reachingRelation != null) {
+					
+					Element grouped = ElementUtils.groupIfNeeded(Iterables.concat(reachingRelation.getElements(), relation.getElements()));
+					relation = new BinaryRelationImpl(grouped, reachingRelation.getSourceVar(), relation.getTargetVar());
+					
+				}
+				
+				result.add(new ResolverTemplate(newPq, newN, relation));
+			}
+		} else {
+			for(RDFNode oldT : targets) {
+				result.add(new ResolverTemplate(newPq, oldT, null));
 			}
 		}
 		
-		Collection<Resolver> result = newTargets.isEmpty()
-				? Collections.emptyList()
-				: Collections.singletonList(new ResolverTemplate(newPq, newTargets))
-				;
 		return result;
 		
 		//return new ResolverTemplate(newPq, newTargets);
@@ -623,11 +666,11 @@ class ResolverTemplate
 	
 	protected Collection<Resolver> resolveData(P_Path0 step, String alias) {
 		Collection<Resolver> result = new ArrayList<>();
-		for(RDFNode start : starts) {
+		//for(RDFNode start : starts) {
 			PartitionedQuery1 tmp = new PartitionedQuery1(query.getQuery(), (Var)start.asNode());
 			Resolver item = new ResolverData(tmp, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)));
 			result.add(item);
-		}
+		//}
 		
 		return result;
 		//return new ResolverData(query, Arrays.asList(Maps.immutableEntry(step, alias)));
@@ -641,12 +684,12 @@ class ResolverTemplate
 		Collection<Var> baseVars = PatternVars.vars(basePattern);
 		
 		// Find all outgoing predicates according to the template
-		for(RDFNode rdfNode : starts) {
+		//for(RDFNode rdfNode : starts) {
 			
-			Var var = (Var)rdfNode.asNode();
+			Var var = (Var)start.asNode();
 			UnaryRelation templateConcept = new Concept(basePattern, var);
 			
-			List<Statement> stmts = ResourceUtils.listProperties(rdfNode, isFwd).toList();
+			List<Statement> stmts = ResourceUtils.listProperties(start, isFwd).toList();
 			for(Statement stmt : stmts) {
 				Node s = stmt.getSubject().asNode();
 				Node p = stmt.getPredicate().asNode();
@@ -731,7 +774,7 @@ class ResolverTemplate
 //			RDFNode to = ResourceUtils.getSource(stmt, isFwd).asNode();
 
 		
-		}
+		//}
 		
 		return result;
 	}
@@ -1239,14 +1282,16 @@ public class VirtualPartitionedQuery {
 
 		AliasedPath path = PathBuilderNode.start()
 			.fwd("http://facetCount").viaAlias("a")
-			.fwd("http://label").viaAlias("b")
+			//.fwd("http://label").viaAlias("b")
 			.aliasedPath();
 
+		if(false) {
 		path = PathBuilderNode.start()
 				.fwd("http://facetCount").one()
 				.fwd("http://label").one()
 				.aliasedPath();
 
+		}
 		System.out.println("built path: " + path);
 		
 		

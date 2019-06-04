@@ -1,0 +1,25 @@
+INSERT DATA {
+  eg:a eg:value 1, 3 .
+  eg:b eg:value 2, 4 .
+
+  eg:value eg:foo "a" .
+  eg:value eg:foo "b" .
+}
+
+
+SELECT * {
+  ?s eg:value ?o
+  OPTIONAL {
+    BIND(?o AS ?x)
+  }
+}
+
+
+SELECT * {
+  ?s eg:value ?o
+  OPTIONAL {
+    ?s eg:value ?x
+  }
+}
+
+
