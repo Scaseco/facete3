@@ -35,6 +35,7 @@ import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataMultiNode;
 import org.aksw.jena_sparql_api.data_query.api.DataNode;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.api.NodePath;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
@@ -206,7 +207,7 @@ public class DataQueryImpl<T extends RDFNode>
 
 	//protected void setOffset(10);
 
-
+	
 	/**
 	 * Setting a random number generator (rng) makes query execution deterministic:
 	 * Random effects on result sets will be processed in the client:
@@ -310,6 +311,15 @@ public class DataQueryImpl<T extends RDFNode>
 		return result;
 	}
 
+	
+	/**
+	 * Hibernate-like get method which resolves an attribute of the resultClass
+	 * to a SPARQL variable of the underlying partitioned query's template
+	 * 
+	 * The result is a Node that can be used in Jena SPARQL {@link Expr} expressions,
+	 * which can be subsequently passed to e.g. filter(expr) of this class for filtering.
+	 * 
+	 */
 	@Override
 	public NodePath get(String attr) {
 		
@@ -341,6 +351,7 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		return result;
 	}
+	
 	
 	
 	@Override
@@ -580,7 +591,40 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		return result;
 	}
+	
 
+	/**
+	 * A template resolver enables traversal of the template and injection of
+	 * further triple patterns.
+	 * 
+	 * So essentially it is the Resource API with the addition of allowing DataResolution
+	 * references.
+	 *
+	 * 
+	 */
+//	public TemplateResolver templateResolver() {
+//		
+//	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public Resolver dataResolver() {
+		
+	}
+	
+//	public void addOrderBy(Node node, int direction) {
+//
+//	}
+
+	
+//	public void addSortCondition() {
+//		Query x;
+//		x.orde
+//		sortConditions.add(e)
+//	}
+	
 	@Override
 	public Relation baseRelation() {
 //		Element effectivePattern = filter == null

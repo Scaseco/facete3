@@ -13,7 +13,7 @@
 	</parent>
 
 	<modules>
-		<module>data-query</module>
+<!-- 		<module>data-query</module> -->
 		<module>facete3-vocab</module>
 		<module>facete3-api</module>
 		<module>facete3-impl</module>

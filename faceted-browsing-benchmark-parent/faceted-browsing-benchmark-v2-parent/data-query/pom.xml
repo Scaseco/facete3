@@ -14,6 +14,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>facete3-vocab</artifactId>
+		</dependency>
+
+		<dependency>
 			<!-- <groupId>org.apache.jena</groupId> -->
 			<!-- <artifactId>jena-arq</<artifactId>> -->
 			<groupId>org.aksw.jena-sparql-api</groupId>

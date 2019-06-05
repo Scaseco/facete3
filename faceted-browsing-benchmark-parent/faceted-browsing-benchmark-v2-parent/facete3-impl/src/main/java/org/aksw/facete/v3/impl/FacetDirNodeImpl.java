@@ -360,4 +360,10 @@ public class FacetDirNodeImpl
 		Direction dir = dir();
 		return (parent == null ? "" : parent.toString()) + (Direction.FORWARD.equals(dir) ? "->" : "<-");
 	}
+
+	@Override
+	public boolean isFwd() {
+		boolean result = state.isFwd();
+		return result;
+	}
 }

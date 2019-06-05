@@ -17,6 +17,17 @@
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-api</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-mapper-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-algebra</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<!-- <build> -->

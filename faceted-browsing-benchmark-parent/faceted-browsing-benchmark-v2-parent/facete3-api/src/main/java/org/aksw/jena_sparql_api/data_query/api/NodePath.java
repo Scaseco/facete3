@@ -1,9 +1,7 @@
-package org.aksw.jena_sparql_api.data_query.impl;
+package org.aksw.jena_sparql_api.data_query.api;
 
 import java.util.Objects;
 
-import org.aksw.jena_sparql_api.data_query.api.PathTraitString;
-import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.apache.jena.graph.NodeVisitor;
 import org.apache.jena.graph.Node_Fluid;
 import org.apache.jena.sparql.expr.Expr;
@@ -15,7 +13,7 @@ public class NodePath
 {
 	protected SPath path;
 
-	protected NodePath(SPath path) {
+	public NodePath(SPath path) {
 		super(path);
 		this.path = path;
 	}

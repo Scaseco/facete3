@@ -17,15 +17,6 @@
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-vocab</artifactId>
 		</dependency>
-
-		<dependency>
-			<!-- <groupId>org.apache.jena</groupId> -->
-			<!-- <artifactId>jena-arq</<artifactId>> -->
-			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
-			<!-- <artifactId>jena-sparql-api-core</artifactId> -->
-			<groupId>org.hobbit</groupId>
-			<artifactId>data-query</artifactId>
-		</dependency>
 	</dependencies>
 
 	<!-- <build> -->
