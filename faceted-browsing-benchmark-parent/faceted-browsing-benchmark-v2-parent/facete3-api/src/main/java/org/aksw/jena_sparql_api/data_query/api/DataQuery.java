@@ -187,7 +187,6 @@ public interface DataQuery<T extends RDFNode> {
 	boolean isRandomOrder();
 	
 	
-	
 	/**
 	 * Return a SPARQL construct query together with the designated root variable
 	 * 
@@ -212,4 +211,7 @@ public interface DataQuery<T extends RDFNode> {
 	 */
 	Single<CountInfo> count();
 	Single<CountInfo> count(Long distinctItemCount, Long rowCount);
+	
+	
+	ResolverNode resolver();
 }

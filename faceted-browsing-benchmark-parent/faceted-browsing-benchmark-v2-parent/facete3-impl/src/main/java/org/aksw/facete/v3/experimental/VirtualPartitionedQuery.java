@@ -10,12 +10,14 @@ import org.aksw.facete.v3.api.AliasedPathImpl;
 import org.aksw.facete.v3.api.traversal.TraversalDirNode;
 import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
 import org.aksw.facete.v3.api.traversal.TraversalNode;
+import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.XExpr;
+import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -332,6 +334,8 @@ public class VirtualPartitionedQuery {
 		GenericLayer layer = GenericLayer.create(tr);
 		
 		Query raw = ElementTransformTripleRewrite.transform(query, layer, true);
+		System.out.println("Raw rewritten query:\n" + raw);
+		
 		Query result = DataQueryImpl.rewrite(raw, DataQueryImpl.createDefaultRewriter()::rewrite);
 
 		return result;
@@ -347,7 +351,7 @@ public class VirtualPartitionedQuery {
 	public static PartitionedQuery1 extendQueryWithPath(PartitionedQuery1 base, AliasedPath path) {
 		Var targetVar = Var.alloc("todo-fresh-var");
 		
-		ResolverNode node = ResolverNode.from(base);
+		ResolverNode node = ResolverNodeImpl.from(base, null);
 		ResolverNode target = node.walk(path);
 
 		Collection<BinaryRelation> rawBrs = target.getPaths();
@@ -365,6 +369,10 @@ public class VirtualPartitionedQuery {
 	}
 
 	public static void main(String[] args) {
+
+		
+		
+		
 		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");		
 		PartitionedQuery1 pq = PartitionedQuery1.from(view, Vars.p);
 		Resolver resolver = Resolver.from(pq);

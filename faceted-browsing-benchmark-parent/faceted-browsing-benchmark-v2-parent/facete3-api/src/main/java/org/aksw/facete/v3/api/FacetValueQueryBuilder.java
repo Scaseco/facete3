@@ -48,5 +48,5 @@ public interface FacetValueQueryBuilder<T extends RDFNode> {
 //	}
 
 	DataQuery<T> query();
-	DataQuery2<T> query2();
+	//DataQuery2<T> query2();
 }

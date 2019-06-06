@@ -16,6 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.facete.v3.experimental.ResolverNodeImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
@@ -37,7 +38,9 @@ import org.aksw.jena_sparql_api.data_query.api.DataNode;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.api.NodePath;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
+import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
+import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -606,13 +609,6 @@ public class DataQueryImpl<T extends RDFNode>
 //		
 //	}
 	
-	/**
-	 * 
-	 * @return
-	 */
-	public Resolver dataResolver() {
-		
-	}
 	
 //	public void addOrderBy(Node node, int direction) {
 //
@@ -760,6 +756,15 @@ public class DataQueryImpl<T extends RDFNode>
 		Single<CountInfo> result = ReactiveSparqlUtils.fetchCountQuery(conn, query, distinctItemCount, rowCount)
 				.map(range -> CountUtils.toCountInfo(range));
 		
+		return result;
+	}
+
+	@Override
+	public ResolverNode resolver() {
+		Entry<Node, Query> e = toConstructQuery();
+		PartitionedQuery1 pq = PartitionedQuery1.from(e.getValue(), (Var)e.getKey());
+		
+		ResolverNode result = ResolverNodeImpl.from(pq, this);
 		return result;
 	}
 
