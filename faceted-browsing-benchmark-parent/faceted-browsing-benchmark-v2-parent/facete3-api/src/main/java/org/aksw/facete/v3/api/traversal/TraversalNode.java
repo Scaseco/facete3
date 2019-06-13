@@ -2,19 +2,18 @@ package org.aksw.facete.v3.api.traversal;
 
 import static org.aksw.facete.v3.api.Direction.BACKWARD;
 
-import java.util.Optional;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Optional;
 
 import org.aksw.facete.v3.api.AliasedPath;
+import org.aksw.facete.v3.api.AliasedPathStep;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.path.P_Link;
-import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
@@ -23,12 +22,31 @@ import org.apache.jena.sparql.path.Path;
 /**
  * Mixin for Node Navigation methods
  */
-public interface TraversalNode<N extends TraversalNode<N,D,M>, D extends TraversalDirNode<N, M>, M extends TraversalMultiNode<N>> {
+public interface TraversalNode<
+	N extends TraversalNode<N,D,M>,
+	D extends TraversalDirNode<N, M>,
+	M extends TraversalMultiNode<N>>
+//extends PathTraitNode<M>
+{
 	D fwd();
 	D bwd();
 
 	//BgpNode model();
 
+	
+	default boolean canOpt() {
+		return false;
+	}
+	
+	/**
+	 * Return a wrapping of this traversal node which makes the next step optional
+	 * 
+	 * @return
+	 */
+	default M opt() {
+		throw new UnsupportedOperationException("Optional traversal not implemented or not overridden");
+	}
+	
 	// Convenience shortcuts
 	default M fwd(Property property) {
 		return fwd().via(property);
@@ -71,28 +89,32 @@ public interface TraversalNode<N extends TraversalNode<N,D,M>, D extends Travers
 	default M step(Property p, Direction direction) {
 		return BACKWARD.equals(direction) ? bwd(p) : fwd(p);
 	}
-
-	default N step(P_Path0 p, String alias) {
-		boolean isFwd = p.isForward();
-		Node node = p.getNode();
-		M tmp = isFwd ? fwd(node) : bwd(node);
-		N result = tmp.viaAlias(alias);
-		return result;
+	
+	default N step(AliasedPathStep aliasedStep) {
+		throw new RuntimeException("Not implemented");
 	}
+
+//	default N step(P_Path0 p, String alias) {
+//		boolean isFwd = p.isForward();
+//		Node node = p.getNode();
+//		M tmp = isFwd ? fwd(node) : bwd(node);
+//		N result = tmp.viaAlias(alias);
+//		return result;
+//	}
 	
 	default N walk(AliasedPath path) {
-		List<Entry<P_Path0, String>> steps = path.getSteps();
+		List<AliasedPathStep> steps = path.getSteps();
 		N result = walkAliased(steps.iterator());
 		return result;
 	}
 	
-	default N walkAliased(Iterator<? extends Entry<P_Path0, String>> it) {
+	default N walkAliased(Iterator<? extends AliasedPathStep> it) {
 		N result;
 		if(it.hasNext()) {
-			Entry<P_Path0, String> step = it.next();
-			P_Path0 p = step.getKey();
-			String alias = step.getValue();
-			N next = step(p, alias);
+			AliasedPathStep step = it.next();
+//			P_Path0 p = step.getKey();
+//			String alias = step.getValue();
+			N next = step(step);
 			result = next.walkAliased(it);
 		} else {
 			result = (N)this;

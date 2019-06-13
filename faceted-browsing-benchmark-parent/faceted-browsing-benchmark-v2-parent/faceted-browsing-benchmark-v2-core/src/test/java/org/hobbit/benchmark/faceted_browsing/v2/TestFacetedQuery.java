@@ -7,18 +7,20 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.api.ResolverDirNode;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -142,15 +144,20 @@ public class TestFacetedQuery {
 		System.out.println("Got values: " + fq.focus().availableValues().exec().toList().blockingGet());
 		System.out.println("Facet values of these values: " + fq.focus().fwd().facetValueCounts().exec().toList().blockingGet());
 		
-		//FacetedQuery fq2 = 
-		List<?> x = fq.root().fwd()
-//			.facetValues()
-//				.withCounts()
-//				.withAbsent()
-//				.itemsAs(Resource.class)
-			.facetValueCounts()
-				.resolver().fwd().toFacetedQuery().focus().fwd().facetCounts().exec()
+		//FacetedQuery fq2 =
+		DataQuery<?> dq = fq.root().fwd()
+//		.facetValues()
+//			.withCounts()
+//			.withAbsent()
+//			.itemsAs(Resource.class)
+		.facetValueCounts();
+		
+		ResolverDirNode rdn = dq.resolver().fwd();
+		List<?> x = rdn.toFacetedQuery().focus().fwd().facetCounts().exec()
 				.toList().blockingGet();
+
+		//rdn.via(Vocab.facetValueCount).one().getPaths();
+		
 		
 		System.out.println(x.size() + " results");
 		for(Object item : x) {

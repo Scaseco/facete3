@@ -15,7 +15,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.experimental.ResolverNodeImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
@@ -36,6 +38,7 @@ import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataMultiNode;
 import org.aksw.jena_sparql_api.data_query.api.DataNode;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.api.NodeAliasedPath;
 import org.aksw.jena_sparql_api.data_query.api.NodePath;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
@@ -44,7 +47,6 @@ import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.enhanced.EnhGraph;
@@ -73,6 +75,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
@@ -83,11 +86,129 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.BiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+
+/**
+ * A more general view on path steps:
+ * What bothers me with the current path approach is, that it does not allow one to navigate to or along
+ * a predicate object of the *same* triple. Not that this is a commonly needed operation, but it
+ * shows a shortcoming of the approach.
+ * 
+ * "?s ?o WHERE ?s ?p ?o": How to navigate to ?p ?
+ * 
+ * 
+ * Path steps are operations on a component-based binary relation
+ * Component-based means, that we are referring to a specific component of a triple pattern in that relation
+ * - in constrast to a specific variable within a BGP (which can occur in many components).
+ * 
+ * 
+ * Given a binary relation ?s ?o WHERE { ?s ?p ?o },
+ * we could have an operation that modifies the relation target
+ * from e.g. the object of a triple pattern to the predicate component:
+ * 
+ * toTriplePredicate(?s ?o WHERE { ?s ?p ?o }) -&gt; (?s ?p WHERE { ?s ?p ?o }) 
+ *  
+ * Following a predicate could then be realized using a preconfigured operator created using a function:
+ * stepFwd('foo:bar')(?s ?o WHERE { ?s ?p ?o }) -&gt; ?s ?z WHERE { ?s ?p ?o . ?o foo:bar ?z}
+ *
+ * In any case, the questions that arise are:
+ * - When we allow traversals between ternary relations (of which triple patterns are a special case), then one component is always the source one,
+ * where as two components remain
+ * 
+ * Well, we don't need and want to modify the concept that a path intensionally connects two sets of RDF terms.
+ * What is missing, is a triple-based traversal, where its possible to select the predicate or 'target' component
+ * (and possibly add some constraint on these components
+ * 
+ * But still, it leads to point, where a path segment corresponds to either
+ * (a) the addition of a ternary relation or
+ * (b) switching to a different component within this added relation
+ * Then again, since we are using ternary relation objects, we can easily navigate to the subject, target, or source component
+ * 
+ * 
+ */
+
+/**
+ * Optional paths
+ * 
+ * Given the following graph patterns, are the some algebraic relations that hold between them?
+ * 
+ * (a) { OPTIONAL { X } }
+ * (b) { OPTIONAL { X OPTIONAL Y } }
+ * (c) { OPTIONAL { X Y } }
+ * 
+ * c: If for some binding of X there is no suitable binding of Y, the whole binding will be dropped
+ * 
+ * 
+ * Maybe optional should be part of the traversal api?
+ * fwd('foo').opt().fwd('bar')
+ * 
+ * 
+ * 
+ */
+
+/**
+ * NodeTransformer that detects nodes that are path references,
+ * and resolves them to appropriate variables, thereby keeping
+ * track of graph patterns that need to be injected into the
+ * base query.
+ * 
+ * Paths can be references as mandatory or as optional.
+ * 
+ * <pre>
+ *   <ul>
+ *     <li>OPTIONAL { X } X -&gt; X</li>
+ *     <li>OPTIONAL { HEAD } BODY OPTIONAL { TAIL } -&gt; should not happen, because if the body is mandatory, so should be head</li>
+ *   </ul>
+ * </pre>
+ * 
+ * @author raven
+ *
+ * @param <T>
+ */
+class NodeTransformResolvePaths
+	implements NodeTransform
+{
+	protected ResolverNode resolver; 
+	protected Generator<Var> vargen;
+	
+	protected BiMap<Var, ResolverNode> varToResolver;
+	
+	// If a path is referenced as mandatory, all parents are marked as mandatory as well
+	// Phase 1: Collection: Find all path references, mark parents as mandatory as needed
+	// Phaso 2: Graph Pattern Generation: For each referenced path, create graph patterns for its parent elements as needed
+	
+//	protected 
+	
+	public NodeTransformResolvePaths(ResolverNode resolver, Generator<Var> vargen,
+			BiMap<Var, ResolverNode> varToResolver) {
+		super();
+		this.resolver = resolver;
+		this.vargen = vargen;
+		this.varToResolver = varToResolver;
+	}
+
+	@Override
+	public Node apply(Node n) {
+		Node result = n instanceof NodeAliasedPath
+				? $apply((NodeAliasedPath)n)
+				: n;
+		return result;
+	}
+	
+	public Node $apply(NodeAliasedPath np) {
+		AliasedPath ap = np.getPath();
+		ResolverNode target = resolver.walk(ap);
+		
+		return null;
+	}
+	
+}
+
 
 public class DataQueryImpl<T extends RDFNode>
 	implements DataQuery<T>
@@ -400,8 +521,14 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	
 	// Note: The construct template may be empty - use in conjunction with ReactiveSparqlUtils.execPartitioned()
+	// TODO Rename to getEffectiveQuery
 	@Override
 	public Entry<Node, Query> toConstructQuery() {
+				
+		
+		
+		
+		
 		Set<Var> vars = new LinkedHashSet<>();
 		Node rootVar = baseRelation.getVars().get(0);
 		if(rootVar.isVariable()) {

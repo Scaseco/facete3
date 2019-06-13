@@ -2,23 +2,24 @@ package org.aksw.jena_sparql_api.data_query.api;
 
 import java.util.Objects;
 
+import org.aksw.facete.v3.api.AliasedPath;
 import org.apache.jena.graph.NodeVisitor;
 import org.apache.jena.graph.Node_Fluid;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 
-public class NodePath
+public class NodeAliasedPath
 	extends Node_Fluid
-	implements PathTraitString<NodePath>
+	//implements PathTraitString<NodePath>
 {
-	protected SPath path;
+	protected AliasedPath path;
 	
-	public NodePath(SPath path) {
+	public NodeAliasedPath(AliasedPath path) {
 		super(path);
 		this.path = path;
 	}
 
-	public SPath getPath() {
+	public AliasedPath getPath() {
 		return path;
 	}
 	
@@ -34,11 +35,11 @@ public class NodePath
 		return result;
 	}
 	
-	@Override
-	public NodePath step(String p, boolean isFwd) {
-		SPath tmp = path.get(p, !isFwd);
-		return new NodePath(tmp);
-	}
+//	@Override
+//	public NodePath step(String p, boolean isFwd) {
+//		SPath tmp = path.get(p, !isFwd);
+//		return new NodePath(tmp);
+//	}
 	
 	public Expr asExpr() {
 		return NodeValue.makeNode(this);
