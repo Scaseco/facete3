@@ -8,18 +8,18 @@ import java.util.Set;
 import org.aksw.facete.v3.api.AliasedPathStep;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementOptional;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 
 
-interface StepVisitor<T> {
-	T accept(StepUnion step);
-	T accept(StepRelation step);
-}
+//interface StepVisitor<T> {
+//	T accept(StepUnion step);
+//	T accept(StepRelation step);
+//}
 
 
 
@@ -77,6 +77,10 @@ interface StepVisitor<T> {
 //
 //
 
+class AliasedPathResolver {
+
+}
+
 
 
 
@@ -87,12 +91,12 @@ class MappedRelation {
 	Relation r;
 }
 
-interface Step {
-	Relation apply(Relation step);
-}
+//interface Step {
+//	Relation apply(Relation step);
+//}
 
 interface StepRelation
-	extends Step
+//	extends Step
 {
 	Relation getRelation();
 }
@@ -102,7 +106,7 @@ class StepRelationImpl
 
 	protected Relation r;
 	
-	@Override
+//	@Override
 	public Relation apply(Relation step) {
 		return r;
 	}
@@ -122,9 +126,9 @@ class OptionalStep {
 }
 
 
-class StepUnion {
-	List<Step> getMembers() { return null; }
-}
+//class StepUnion {
+//	List<Step> getMembers() { return null; }
+//}
 
 class V {
 	protected Relation r;
@@ -165,7 +169,7 @@ public class StepResolver {
 				
 				break;
 			case 2: // Optional
-				ElementOptional elt = new ElementOptional(ElementGroup());
+				ElementOptional elt = new ElementOptional(new ElementGroup());
 				
 				break;
 			}
@@ -195,13 +199,13 @@ public class StepResolver {
 		default: throw new IllegalArgumentException();
 		}		
 		
-		Containlet c = start.getTriplet().getContainlet();
-		c.getJoin().of(start.getTriplet()).with()
+//		Containlet c = start.getTriplet().getContainlet();
+//		c.getJoin().of(start.getTriplet()).with()
 		
 		
 //		step.getAlias()
 		
-		
+		return null;
 	}
 	
 	

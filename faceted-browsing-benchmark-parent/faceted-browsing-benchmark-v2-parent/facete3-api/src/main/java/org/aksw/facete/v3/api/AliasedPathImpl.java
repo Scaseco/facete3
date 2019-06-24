@@ -11,7 +11,7 @@ import java.util.List;
  *
  */
 public class AliasedPathImpl
-	extends PathImplList<AliasedPath, AliasedPathStep>
+	extends PathListBase<AliasedPath, AliasedPathStep>
 	implements AliasedPath
 {
 	public AliasedPathImpl(List<AliasedPathStep> steps) {

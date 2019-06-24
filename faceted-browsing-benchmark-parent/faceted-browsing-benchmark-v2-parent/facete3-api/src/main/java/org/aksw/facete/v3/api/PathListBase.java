@@ -6,12 +6,12 @@ import java.util.Objects;
 
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 
-public abstract class PathImplList<T extends PathBase<T, S>, S>
+public abstract class PathListBase<T extends PathBase<T, S>, S>
 	implements PathBase<T, S>
 {
 	protected List<S> steps;
 	
-	public PathImplList(List<S> steps) {
+	public PathListBase(List<S> steps) {
 		this.steps = steps;
 	}
 	
@@ -61,7 +61,7 @@ public abstract class PathImplList<T extends PathBase<T, S>, S>
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PathImplList other = (PathImplList) obj;
+		PathListBase other = (PathListBase) obj;
 		if (steps == null) {
 			if (other.steps != null)
 				return false;
