@@ -1,0 +1,520 @@
+package org.aksw.facete.v3.api.path;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.aksw.commons.collections.cluster.IndirectEquiMap;
+import org.aksw.commons.collections.collectors.CollectorUtils;
+import org.aksw.commons.collections.generator.Generator;
+import org.aksw.commons.collections.generator.GeneratorBlacklist;
+import org.aksw.commons.collections.generator.GeneratorFromFunction;
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Streams;
+import com.google.common.collect.Table;
+
+public class RelationletJoinImpl<T extends Relationlet>
+	extends RelationletBase
+{
+
+	// TODO better use a TreeMap instead of a separate ridOrder list
+	// Then again, with the tree map, we'd have to reassign ids if the order was changed
+	Map<Integer, RelationletEntry<T>> ridToEntry = new HashMap<>();
+	List<Integer> ridOrder = new ArrayList<>();
+
+	
+	//List<RelationletEntry> relationletEntries = new ArrayList<>();
+	// TODO In any case, labelToRid should be changed to labelToRe (i.e. make it a reference to the entry object)
+	BiMap<String, Integer> labelToRid = HashBiMap.create();//new LinkedHashMap<>();
+	
+	
+	// Exposed vars are seemingly variables of this relationlet and can be accessed without an alias
+	// TODO Implement: Variables that are unique to members are implicitly exposed if the exposeUniqueVars flag is true
+    // Expose does not imply that the final variable name is fixed.
+	Map<Var, VarRefStatic> explicitExposedVars = new LinkedHashMap<>();
+	
+	
+	//Map<String, RelationletEntry> labelToMember = new LinkedHashMap<>();
+
+	Generator<Integer> gen = GeneratorFromFunction.createInt();
+	
+	// Filter expressions, such as for theta-joins
+	List<Expr> exprs;
+	
+	// Joins
+	List<Join> joins = new ArrayList<>();
+
+	public String getLabelForId(int id) {
+		return labelToRid.inverse().get(id);
+	}
+	
+	public void expose(String exposedName, String alias, String varName) {
+		Var exposedVar = Var.alloc(exposedName);
+		
+		VarRefStatic varRef = new VarRefStatic(alias, Var.alloc(varName));
+		explicitExposedVars.put(exposedVar, varRef);
+	}
+	
+	
+	// Allocate a new id
+	public RelationletEntry<T> add(T item) {
+		String label = "genid" + gen.next();
+		RelationletEntry<T> result = add(label, item);
+		return result;
+	}
+	
+	public RelationletEntry<T> add(String label, T item) {
+		int id = gen.next();
+		RelationletEntry<T> entry = new RelationletEntry<>(id, item);
+		
+		//labelToMember.put(label, entry);
+		ridToEntry.put(id, entry);
+		ridOrder.add(id);
+		
+		if(label != null) {
+			Integer tmp = labelToRid.get(label);
+			if(tmp != null) {
+				throw new RuntimeException("Label " + label + " already in use");
+			}
+			
+			labelToRid.put(label, id);
+		}
+		
+		return entry;
+	}
+	
+	//Set<VarRef>
+	/**
+	 * Yield the set of variables that at least two members have in commen
+	 * (TODO add condition: and are not being joined on?!)
+	 * 
+	 */
+	public void getConflictingVars() {
+		
+	}
+	
+	/**
+	 * Yield the set of variables that are unqiue to a single member, hence
+	 * a request to it is unambiguous.
+	 * 
+	 */
+	public void getNonConflictingVars() {
+		
+	}
+
+	// TODO It might be usefule for a relationlet to communicate forbidden var names
+	// or suggest a generator for allowed vars. For example, certain prefixes may be forbidden as var names.
+//	public Set<Var> getForbiddenVars() {
+//		
+//	}
+	
+	public Entry<RelationletEntry<T>, Var> resolveVarRef(Object varRef) {
+		// TODO We way want to use a tag interface for var-refs + possibly visitor pattern here
+		Entry<RelationletEntry<T>, Var> result;
+
+		if(varRef instanceof VarRefStatic) {
+			VarRefStatic vr = (VarRefStatic)varRef;
+			String alias = vr.getLabel();
+			Var v = vr.getV();
+			
+			RelationletEntry<T> entry = ridToEntry.get(labelToRid.get(alias));
+			result = Maps.immutableEntry(entry, v);
+			
+		} else if(varRef instanceof VarRefFn) {
+			VarRefFn vr = (VarRefFn)varRef;
+			result = Maps.immutableEntry(vr.getEntry(), vr.getVar());
+		} else {
+			throw new IllegalArgumentException("Unsupported var ref type: " + varRef);
+		}
+		
+		return result;
+	}
+	
+	public static List<VarRef> toVarRefs(String alias, List<Var> vars) {
+		List<VarRef> result = vars.stream().map(v -> (VarRef)new VarRefStatic(alias, v)).collect(Collectors.toList());
+		return result;
+	}
+	
+	public void addJoin(VarRef lhsVarRef, VarRef rhsVarRef) {
+		Join join = new Join(Collections.singletonList(lhsVarRef), Collections.singletonList(rhsVarRef));
+		joins.add(join);
+	}
+	
+	public void addJoin(String lhsAlias, List<Var> lhsVars, String rhsAlias, List<Var> rhsVars) {
+		//labelToMember.get(lhsAlias);
+		List<VarRef> lhs = toVarRefs(lhsAlias, lhsVars);
+		List<VarRef> rhs = toVarRefs(rhsAlias, rhsVars);
+
+		Join join = new Join(lhs, rhs);
+		joins.add(join);
+	}
+	
+	public Relation effective() {
+		return null;
+	}
+	
+	
+	public Relationlet getMemberByLabel(String label) {
+		return ridToEntry.get(labelToRid.get(label)).getRelationlet();
+	}
+	
+	public Iterable<RelationletEntry<T>> getRelationletEntries() {
+		return () -> ridOrder.stream().map(ridToEntry::get).iterator();
+	}
+
+	/**
+	 * Create a snapshot of any referenced relationlet
+	 * 
+	 */
+	public RelationletNested materialize() {
+		
+		// Materialize all members
+		Map<Integer, RelationletNested> materializedMembers = Streams.stream(getRelationletEntries())
+				.collect(CollectorUtils.toLinkedHashMap(
+					e -> e.getId(),
+					e -> e.getRelationlet().materialize()));
+
+		
+		Map<String, RelationletNested> materializedMembersByLabel = materializedMembers.entrySet().stream()
+				.collect(CollectorUtils.toLinkedHashMap(
+						e -> getLabelForId(e.getKey()),
+						Entry::getValue));
+		
+		
+		
+		//Set<Var> forbiddenVars = new HashSet<>();
+		Predicate<Var> baseBlacklist = x -> false;
+
+//		List<?> members = new ArrayList<>();
+//		List<Map<Var, Var>> memberVarMaps = members.stream()
+//				.map(x -> new LinkedHashMap<Var, Var>())
+//				.collect(Collectors.toList());
+		
+		
+		IndirectEquiMap<Entry<Integer, Var>, Var> aliasedVarToEffectiveVar = new IndirectEquiMap<>();
+
+		for(Join join : joins) {
+//			RelationletEntry lhsEntry = ridToEntry.get(labelToRid.get(join.getLhsAlias()));
+//			RelationletEntry rhsEntry = ridToEntry.get(labelToRid.get(join.getRhsAlias()));
+//			List<Var> lhsVars = join.getLhsVars();
+//			List<Var> rhsVars = join.getRhsVars();
+
+//			int lhsId = lhsEntry.getId();
+//			int rhsId = rhsEntry.getId();
+			
+//			Relationlet lhsRel = lhsEntry.getRelationlet();
+//			Relationlet rhsRel = rhsEntry.getRelationlet();
+//			
+//			Map<Var, Var> lhsVarMap;
+//			Map<Var, Var> rhsVarMap;
+			
+
+			List<VarRef> lhsRefs = join.getLhs();
+			List<VarRef> rhsRefs = join.getRhs();
+
+			
+			//int n = lhsVars.size();
+			int n = join.getLhs().size();
+			// TODO Assert that var lists sizes are equal
+			
+			for(int i = 0; i < n; ++i) {
+				VarRef lhsRef = lhsRefs.get(i);
+				VarRef rhsRef = rhsRefs.get(i);
+
+				Entry<RelationletEntry<T>, Var> lhsEntry = resolveVarRef(lhsRef);
+				Entry<RelationletEntry<T>, Var> rhsEntry = resolveVarRef(rhsRef);
+
+				
+				int lhsId = lhsEntry.getKey().getId();
+				int rhsId = rhsEntry.getKey().getId();
+				
+				Var lhsVar = lhsEntry.getValue();
+				Var rhsVar = rhsEntry.getValue();
+
+				
+//				Var lhsVar = lhsVars.get(i);
+//				Var rhsVar = rhsVars.get(i);
+				
+				Entry<Integer, Var> lhsE = Maps.immutableEntry(lhsId, lhsVar);
+				Entry<Integer, Var> rhsE = Maps.immutableEntry(rhsId, rhsVar);
+				
+				// Put the rhs var first, so it gets renamed first
+				aliasedVarToEffectiveVar.stateEqual(rhsE, lhsE);
+			}
+		}
+		
+		
+		// Now that we have clustered the join variables, allocate for each cluster an
+		// effective variable
+		// In order to tidy up the output, we sort clusters that only make use of the same variable first
+		// If multiple clusters only make use of the same variable, they are ordered by size and var name
+		
+		Map<Integer, Collection<Entry<Integer, Var>>> rawClusters = aliasedVarToEffectiveVar.getEquivalences().asMap();
+
+		Map<Integer, Collection<Entry<RelationletEntry<T>, Var>>> clusters = rawClusters.entrySet().stream()
+				.collect(Collectors.toMap(
+						Entry::getKey,
+						e -> e.getValue().stream()
+							.map(f -> Maps.immutableEntry(ridToEntry.get(f.getKey()), f.getValue()))
+							.collect(Collectors.toList())
+						));
+		
+		// Index of which relationlets mention a var
+		// Used to check whether a cluster covers all mentions of a var - in this case,
+		// no renaming has to be performed
+		Multimap<Var, Integer> varToRids = HashMultimap.create();
+		//Multimap<Integer, Var> ridToVars = LinkedHashMultimap.create();
+
+		
+//		for(RelationletEntry<T> e : getRelationletEntries()) {
+		for(Entry<Integer, RelationletNested> ee : materializedMembers.entrySet()) {
+			//int id = e.getId();
+			//T r = e.getRelationlet();
+			int id = ee.getKey();
+			Relationlet r = ee.getValue();
+			Set<Var> varsMentioned = r.getVarsMentioned();
+			
+			for(Var v : varsMentioned) {
+				varToRids.put(v, id);
+				
+				//ridToVars.put(id, v);
+			}
+		}
+		
+		// The same var can join in different clusters with different relationlets
+//		Multimap<Var, Integer> joinVarToElRids = HashMultimap.create();
+//		for(Entry<Var, Integer> e : aliasedVarToEffectiveVar.getEquivalences()) {
+//			joinVarToElRids.put(e.getKey(), oo);
+//		}
+		
+		Map<Integer, Set<Var>> clusterToVars = clusters.entrySet().stream()
+				.collect(Collectors.toMap(
+						Entry::getKey,
+						e -> e.getValue().stream()
+							.map(Entry::getValue)
+							//.map(Var::getName)
+							.collect(Collectors.toCollection(HashSet::new))));
+		 
+		
+		Collection<Var> mentionedVars = Collections.emptySet();
+		Predicate<Var> isBlacklisted = baseBlacklist.and(mentionedVars::contains);
+		
+		//GeneratorLending<Var>
+		Generator<Var> basegen = VarGeneratorImpl2.create();
+		Generator<Var> vargen = GeneratorBlacklist.create(basegen, isBlacklisted);
+
+		Set<Var> takenFinalVars = new HashSet<>();
+		
+		Table<Integer, Var, Var> ridToVarToFinalVal = HashBasedTable.create(); 
+		for(Entry<Integer, Collection<Entry<RelationletEntry<T>, Var>>> e : clusters.entrySet()) {
+			int clusterId = e.getKey();
+			Collection<Entry<RelationletEntry<T>, Var>> members = e.getValue();
+			
+			Set<Var> fixedVars = new LinkedHashSet<>();
+			Multimap<Var, RelationletEntry<T>> varToRe = ArrayListMultimap.create();
+			for(Entry<RelationletEntry<T>, Var> f : members) {
+				RelationletEntry<T> re = f.getKey();
+				Relationlet r = re.getRelationlet();
+				Var v = f.getValue();
+				
+				varToRe.put(v, re);
+				boolean isFixed = r.isFixed(v);
+				if(isFixed) {
+					fixedVars.add(v);
+				}
+			}
+			
+			if(fixedVars.size() > 1) {
+				Multimap<Var, RelationletEntry<T>> conflictMentions = Multimaps.filterKeys(varToRe, fixedVars::contains);
+				throw new RuntimeException("Conflicting fixed vars encountered when processing join: " + fixedVars + " with mentions in " + conflictMentions);
+			}
+
+			// If there is a fixed variable within the set of used vars, pick this one
+			// If there are multiple ones, we have a conflict and throw an exception
+			// TODO Such conflicts should be detected early when adding the join condition!
+			
+			
+
+			Var finalVar = null;
+			boolean isFinalVarFixed = false;
+
+			if(fixedVars.size() == 1) {
+				finalVar = fixedVars.iterator().next();
+				isFinalVarFixed = true;
+			}
+			
+			
+			if(finalVar == null) {
+				// If any of the variables is not taken yet, use this for the cluster otherwise
+				// allocate a fresh variable
+				Set<Var> usedVars = varToRe.keySet();
+	
+				for(Var var : usedVars) {
+					if(!takenFinalVars.contains(var)) {
+						finalVar = var;
+						break;
+					}
+				}
+			}
+
+			if(finalVar == null) {
+				finalVar = vargen.next();
+			}
+
+			takenFinalVars.add(finalVar);
+
+			for(Entry<RelationletEntry<T>, Var> ridvar : clusters.get(clusterId)) {
+				int rid = ridvar.getKey().getId();
+				Var var = ridvar.getValue();
+				ridToVarToFinalVal.put(rid, var, finalVar);
+				
+				// Remove the entry from the conflicts
+				varToRids.remove(var, rid);
+				//ridToVars.remove(rid, var);
+			}
+		}
+		
+		// Make all remaining variables distinct from each other
+//		for(Integer rid : ridOrder) {
+//			ridToVars
+//		}
+		
+		for(Entry<Var, Collection<Integer>> e : varToRids.asMap().entrySet()) {
+			Var var = e.getKey();
+			Collection<Integer> tmpRids = e.getValue();
+			
+			// Sort the rids according to the ridOrder
+			List<Integer> rids = new ArrayList<>(ridOrder);
+			rids.retainAll(tmpRids);
+			
+			for(Integer rid : rids) {
+				boolean isFixed = ridToEntry.get(rid).getRelationlet().isFixed(var);
+				if(isFixed) {
+					takenFinalVars.add(var);
+					ridToVarToFinalVal.put(rid, var, var);
+				}
+			}			
+
+			for(Integer rid : rids) {
+				boolean isFixed = ridToEntry.get(rid).getRelationlet().isFixed(var);
+				if(!isFixed) {
+					boolean isTaken = takenFinalVars.contains(var);
+					
+					Var finalVar = isTaken ? vargen.next() : var;
+					takenFinalVars.add(finalVar);
+					
+					ridToVarToFinalVal.put(rid, var, finalVar);
+				}
+			}
+		}
+		
+//		Multimap<Var, Entry<Integer, Var>> finalVarToRidVars;
+		
+		
+		ElementGroup group = new ElementGroup();
+//		for(RelationletEntry<T> re : getRelationletEntries()) {
+		for(Entry<Integer, RelationletNested> ee : materializedMembers.entrySet()) {
+			//int id = e.getId();
+			//T r = e.getRelationlet();
+			int rid = ee.getKey();
+			Relationlet r = ee.getValue();
+			Element el = r.getElement();
+//			int rid = re.getId();
+//			Element el = re.getRelationlet().getElement();
+			
+			Map<Var, Var> originToFinal = ridToVarToFinalVal.row(rid);
+			Element contrib = ElementUtils.applyNodeTransform(el, new NodeTransformSubst(originToFinal));
+			group.addElement(contrib);
+			
+		}
+		
+		
+		Map<Var, Var> resolvedExposedVar = new LinkedHashMap<>();
+		for(Entry<Var, VarRefStatic> eve : explicitExposedVars.entrySet()) {
+			Var key = eve.getKey();
+			VarRefStatic vr = eve.getValue();
+			String label = vr.getLabel();
+			Var refVar = vr.getV();
+			int rid = labelToRid.get(label);
+			Var finalVar = ridToVarToFinalVal.get(rid, refVar);
+			resolvedExposedVar.put(key, finalVar);
+		}
+		
+		//ridToVarToFinalVal 
+		
+		// TODO Adjust the var maps of the materialized members
+		// This way, a deep reference such as a.b.c.?x can yield the effective variable at this		
+
+		
+		Map<String, NestedVarMap> memberToNestedVarMap = new LinkedHashMap<>();
+		for(Entry<String, RelationletNested> e : materializedMembersByLabel.entrySet()) {
+			String label = e.getKey();
+			NestedVarMap clone = e.getValue().getNestedVarMap().clone();
+			int rid = labelToRid.get(label);
+			Map<Var, Var> memberMap = ridToVarToFinalVal.row(rid);
+		
+			// In-place op
+			clone.transformValues(memberMap::get);
+			
+			memberToNestedVarMap.put(label, clone);			
+		}
+		
+		NestedVarMap nvm = new NestedVarMap(resolvedExposedVar, memberToNestedVarMap);
+		
+		
+		RelationletNested result = new RelationletNested(group, nvm, materializedMembersByLabel);
+		
+		System.out.println(ridToVarToFinalVal);
+		System.out.println(group);
+		return result;
+	}
+	
+	/**
+	 * Flatten a var name by giving it a new name that is visible
+	 * directly at this relationlet
+	 * 
+	 * @param name
+	 * @param alias
+	 * @param var
+	 * @return
+	 */
+//	public Var expose(Var name, String alias, Var var) {
+//		
+//	}
+	
+	/**
+	 * If var is unique among all member relationlets (up to the point of reference)
+	 * expose its occurrence. If the var is ambiguous, raise an exception.
+	 * 
+	 * @param var
+	 */
+//	public expose(Var var) {
+//		
+//	}
+}
