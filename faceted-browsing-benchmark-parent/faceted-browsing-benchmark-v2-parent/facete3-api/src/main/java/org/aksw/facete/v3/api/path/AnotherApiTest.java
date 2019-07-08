@@ -561,7 +561,7 @@ class PathletContainer
 			
 			keyToAliasToMember.put(key, alias, result);
 			RelationletEntry<Pathlet> e = this.add(result);
-			String el = this.getLabelForId(e.getId());
+			String el = e.getId();//this.getLabelForId(e.getId());
 			
 			
 			// Join this pathlet's joinTgt with the joinSrc of the member 
@@ -595,7 +595,7 @@ class PathletContainer
 			
 			keyToAliasToMember.put("optional", label, result);
 			RelationletEntry<Pathlet> e = this.add(result);
-			String el = this.getLabelForId(e.getId());
+			String el = e.getId();//this.getLabelForId(e.getId());
 			
 			
 			// Join this pathlet's joinTgt with the joinSrc of the member 
@@ -702,11 +702,16 @@ class VarRefPathlet
 		this.isTgtVarMode = isTgtVarMode;
 	}
 
-	@Override
-	public RelationletEntry getEntry() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Relationlet getRelationlet() {
+//		return pathlet;
+//	}
+	
+//	@Override
+//	public RelationletEntry getEntry() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	@Override
 	public Var getVar() {
@@ -778,7 +783,7 @@ class MappedList<L, T> {
 	
 	
 	
-	public MappedList(List<T> items,  List<Set<L>> idxToLabels) {
+	public MappedList(List<T> items, List<Set<L>> idxToLabels) {
 		super();
 		this.items = items;
 		this.labelToIdx = labelToIdx;
@@ -796,25 +801,64 @@ class MappedList<L, T> {
 
 // Self-resolving var ref
 interface VarRefFn {
-	RelationletEntry getEntry();
+	//RelationletEntry getEntry();
+	//Relationlet getRelationlet();
 	Var getVar();
+}
+
+interface VarRefEntry {
+	RelationletEntry<?> getEntry();
+	Var getVar();
+}
+
+class VarRefEntryFnImpl<T extends Relationlet>
+	implements VarRefEntry
+{
+	protected RelationletEntry<T> entry;
+	protected Function<? super T, ? extends Var> varFn;
+	
+	public VarRefEntryFnImpl(RelationletEntry<T> entry, Function<? super T, ? extends Var> varFn) {
+		super();
+		this.entry = entry;
+		this.varFn = varFn;
+	}
+
+	@Override
+	public RelationletEntry<?> getEntry() {
+		return entry;
+	}
+
+	@Override
+	public Var getVar() {
+		T relationlet = entry.getRelationlet();
+		Var result = varFn.apply(relationlet);
+		return result;
+	}
+	
 }
 
 class VarRefStatic
 	implements VarRef
 {
 	//Relationlet r;
-	protected String label;
+	//protected String label;
+	protected List<String> labels;
 	protected Var v;
 	
 	public VarRefStatic(String label, Var v) {
 		super();
-		this.label = label;
+		this.labels = Collections.singletonList(label);
 		this.v = v;
 	}
 
-	public String getLabel() {
-		return label;
+	public VarRefStatic(List<String> labels, Var v) {
+		super();
+		this.labels = labels;
+		this.v = v;
+	}
+
+	public List<String> getLabels() {
+		return labels;
 	}
 
 	public Var getV() {
@@ -822,17 +866,33 @@ class VarRefStatic
 	}
 }
 
-class RelationletEntry<T> {
+class RelationletEntry<T extends Relationlet> {
 	protected T relationlet;
 	//protected String label; // Allow multiple labels?
-	protected int id;
+	protected String id;
 
-	public RelationletEntry(int id, T relationlet) {
+	public RelationletEntry(String id, T relationlet) {
 		super();
 		this.id = id;
 		this.relationlet = relationlet;
 		//this.label = label;
 	}
+	
+	/**
+	 * Create a var ref to a variable to the relationlet wrapped by this specific entry. 
+	 * 
+	 * @param var
+	 * @return
+	 */
+	public VarRef createVarRef(Var var) {
+		//return new VarRefPathlet(pathlet, isTgtVarMode)
+		return null;
+	}
+	
+	public VarRefEntry cerateVarRef(Function<? super T, ? extends Var> varAccessor) {
+		return new VarRefEntryFnImpl<T>(this, varAccessor);
+	}
+	
 	
 	public T getRelationlet() {
 		return relationlet;
@@ -843,7 +903,7 @@ class RelationletEntry<T> {
 	
 
 	// Internal identifier allocated for this entry
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
@@ -863,11 +923,16 @@ class RelationletElement
 	implements Relationlet
 {
 	protected Element el;
-	protected Set<Var> fixedVars = new LinkedHashSet<>();
+	protected Set<Var> fixedVars;
 
 	public RelationletElement(Element el) {
+		this(el, new LinkedHashSet<>());
+	}
+
+	public RelationletElement(Element el, Set<Var> fixedVars) {
 		super();
 		this.el = el;
+		this.fixedVars = fixedVars;
 	}
 
 	public Element getEl() {
@@ -919,7 +984,7 @@ class RelationletElement
 
 	@Override
 	public String toString() {
-		return el + " (fixed " + fixedVars + ")";
+		return getElement() + " (fixed " + getFixedVars() + ")";
 	}
 
 	
@@ -928,7 +993,7 @@ class RelationletElement
 		Map<Var, Var> identityMap = getVarsMentioned().stream()
 				.collect(CollectorUtils.toLinkedHashMap(x -> x, x -> x));
 
-		RelationletNested result = new RelationletNested(getElement(), identityMap);
+		RelationletNested result = new RelationletNested(getElement(), identityMap, fixedVars);
 		return result;
 	}
 
@@ -1052,15 +1117,41 @@ class DeepVarRef {
 class NestedVarMap {
 	protected Map<Var, Var> localToFinalVarMap;
 	protected Map<String, NestedVarMap> memberVarMap;
+	protected Set<Var> fixedFinalVars;
 	
-	public NestedVarMap(Map<Var, Var> localToFinalVarMap) {
-		this(localToFinalVarMap, Collections.emptyMap());
+	
+	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Set<Var> fixedFinalVars) {
+		this(localToFinalVarMap, fixedFinalVars, Collections.emptyMap());
 	}
 
-	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Map<String, NestedVarMap> memberVarMap) {
+	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Set<Var> fixedFinalVars, Map<String, NestedVarMap> memberVarMap) {
 		super();
 		this.localToFinalVarMap = localToFinalVarMap;
 		this.memberVarMap = memberVarMap;
+		this.fixedFinalVars = fixedFinalVars;
+	}
+	
+	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Map<String, NestedVarMap> memberVarMap,
+			Set<Var> fixedFinalVars) {
+		super();
+		this.localToFinalVarMap = localToFinalVarMap;
+		this.memberVarMap = memberVarMap;
+		this.fixedFinalVars = fixedFinalVars;
+	}
+
+	public NestedVarMap get(List<String> aliases) {
+		String alias = aliases.iterator().next();
+		
+		List<String> sublist = aliases.subList(1, aliases.size() - 1);
+		NestedVarMap result = aliases.isEmpty()
+				? this
+				: memberVarMap.get(alias).get(sublist);
+		
+		return result;
+	}
+	
+	public Set<Var> getFixedFinalVars() {
+		return fixedFinalVars;
 	}
 
 	public Map<Var, Var> getLocalToFinalVarMap() {
@@ -1085,10 +1176,11 @@ class NestedVarMap {
 	
 	public NestedVarMap clone() {
 		Map<Var, Var> cp1 = new LinkedHashMap<>(localToFinalVarMap);
-		Map<String, NestedVarMap> cp2 = memberVarMap.entrySet().stream()
+		Set<Var> cp2 = new LinkedHashSet<>(fixedFinalVars);
+		Map<String, NestedVarMap> cp3 = memberVarMap.entrySet().stream()
 				.collect(CollectorUtils.toLinkedHashMap(Entry::getKey, e -> e.getValue().clone()));
 		
-		NestedVarMap result = new NestedVarMap(cp1, cp2);
+		NestedVarMap result = new NestedVarMap(cp1, cp2, cp3);
 		return result;
 	}
 
@@ -1108,8 +1200,9 @@ class RelationletNested
 
 	public RelationletNested(
 			Element el,
-			Map<Var, Var> varMap) {
-		this(el, new NestedVarMap(varMap), Collections.emptyMap());
+			Map<Var, Var> varMap,
+			Set<Var> fixedVars) {
+		this(el, new NestedVarMap(varMap, fixedVars), Collections.emptyMap());
 	}
 	
 	public RelationletNested(
@@ -1151,17 +1244,15 @@ class RelationletNested
 //		return null;
 //	}
 //
-//	@Override
-//	public Set<Var> getFixedVars() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+	@Override
+	public Set<Var> getFixedVars() {
+		return varMap.getFixedFinalVars();
+	}
 //
-//	@Override
-//	public Relationlet setVarFixed(Var var, boolean onOrOff) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+	@Override
+	public Relationlet setVarFixed(Var var, boolean onOrOff) {
+		throw new UnsupportedOperationException("Cannot mark vars as fixed on this object");
+	}
 }
 
 

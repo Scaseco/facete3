@@ -84,7 +84,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 					RDFConnectionMetaData.class);
 			
 			JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(ScenarioConfig.class);
-			
+
 	//		Expr e = ExprUtils.parse("xsd:integer(floor(1.2)", PrefixMapping.Extended);
 	//		System.out.println(e);
 	//		NodeValue x = e.eval(BindingFactory.root(), FunctionEnvBase.createTest());
