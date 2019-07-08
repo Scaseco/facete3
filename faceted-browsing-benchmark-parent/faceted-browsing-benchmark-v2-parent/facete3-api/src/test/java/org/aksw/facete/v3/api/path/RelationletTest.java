@@ -19,6 +19,7 @@ public class RelationletTest {
 		child.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).fix(Vars.s));
 		child.add("b", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDFS.label.asNode(), Vars.o)));
 		child.expose("u", "a", "s");
+		child.addJoin("a", Arrays.asList(Vars.s), "b", Arrays.asList(Vars.s));		
 		
 		RelationletJoinImpl<Relationlet> parent = new RelationletJoinImpl<>();
 		parent.add("a", child);
@@ -34,8 +35,12 @@ public class RelationletTest {
 
 		NestedVarMap tmp1 = me.getNestedVarMap().get(Arrays.asList("a", "a"));
 		Map<Var, Var> tmp2 = tmp1.getLocalToFinalVarMap();
+		
+		// expected: ?s
 		System.out.println("Effective var for a.a.s: " + tmp2.get(Vars.s));
-		System.out.println("Effective var for a.u " + me.getNestedVarMap().get(Arrays.asList("a")).getLocalToFinalVarMap().get(Vars.u));
+		
+		// expected: ?s
+		System.out.println("Effective var for a.u " + me.getNestedVarMap().get(Arrays.asList("a")).getLocalToFinalVarMap().get(Vars.u)); 
 
 	}
 
