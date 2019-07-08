@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.collectors.CollectorUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -1131,22 +1132,38 @@ class NestedVarMap {
 		this.fixedFinalVars = fixedFinalVars;
 	}
 	
-	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Map<String, NestedVarMap> memberVarMap,
-			Set<Var> fixedFinalVars) {
-		super();
-		this.localToFinalVarMap = localToFinalVarMap;
-		this.memberVarMap = memberVarMap;
-		this.fixedFinalVars = fixedFinalVars;
-	}
+//	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Map<String, NestedVarMap> memberVarMap,
+//			Set<Var> fixedFinalVars) {
+//		super();
+//		this.localToFinalVarMap = localToFinalVarMap;
+//		this.memberVarMap = memberVarMap;
+//		this.fixedFinalVars = fixedFinalVars;
+//	}
 
 	public NestedVarMap get(List<String> aliases) {
-		String alias = aliases.iterator().next();
+		NestedVarMap result;
+		if(aliases.isEmpty()) {
+			result = this;
+		} else {
+			String alias = aliases.iterator().next();
+			
+			List<String> sublist = aliases.subList(1, aliases.size());
+			result = memberVarMap.get(alias).get(sublist);
+		}
 		
-		List<String> sublist = aliases.subList(1, aliases.size() - 1);
-		NestedVarMap result = aliases.isEmpty()
-				? this
-				: memberVarMap.get(alias).get(sublist);
-		
+		return result;
+	}
+	
+	public boolean isFixed(Var var) {
+		boolean result = fixedFinalVars.contains(var);
+		return result;
+	}
+	
+	public boolean isFixed(VarRefStatic varRef) {
+		List<String> labels = varRef.getLabels();
+		NestedVarMap nvm = get(labels);
+		Var v = varRef.getV();
+		boolean result = nvm.isFixed(v);
 		return result;
 	}
 	
@@ -1172,6 +1189,17 @@ class NestedVarMap {
 		for(NestedVarMap child : memberVarMap.values()) {
 			child.transformValues(fn);
 		}
+		
+		// Update fixed vars
+		// Note: Fixed vars typically should not be remapped in the first place
+		Collection<Var> tmp = fixedFinalVars.stream().map(fn::apply).collect(Collectors.toList());
+		
+		if(!tmp.equals(fixedFinalVars)) {
+			System.out.println("DEBUG POINT");
+		}
+		fixedFinalVars.clear();
+		fixedFinalVars.addAll(tmp);
+		
 	}
 	
 	public NestedVarMap clone() {

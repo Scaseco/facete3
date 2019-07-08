@@ -29,6 +29,10 @@ public interface Relationlet {
 		return result;
 	}
 	
+	default Relationlet fix(Var var) {
+		return setVarFixed(var, true);
+	}
+	
 	Set<Var> getFixedVars();
 	Relationlet setVarFixed(Var var, boolean onOrOff);
 	

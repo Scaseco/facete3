@@ -486,23 +486,25 @@ public class RelationletJoinImpl<T extends Relationlet>
 
 		Set<Var> takenFinalVars = new HashSet<>();
 		
+		
 		Table<String, Var, Var> ridToVarToFinalVal = HashBasedTable.create(); 
 		for(Entry<Integer, Collection<Entry<String, Var>>> e : clusters.entrySet()) {
 			int clusterId = e.getKey();
 			Collection<Entry<String, Var>> members = e.getValue();
-			
+
 			Set<Var> fixedVars = new LinkedHashSet<>();
 			Multimap<Var, String> varToRe = ArrayListMultimap.create();
 			for(Entry<String, Var> f : members) {
 				String label = f.getKey();
-				Relationlet r = materializedMembers.get(label);
+				RelationletNested r = materializedMembers.get(label);
+				NestedVarMap nvm = r.getNestedVarMap();
 				
 				//RelationletEntry<T> re = f.getKey();
 				//Relationlet r = re.getRelationlet();
 				Var v = f.getValue();
 				
 				varToRe.put(v, label);
-				boolean isFixed = r.isFixed(v);
+				boolean isFixed = nvm.isFixed(v); //r.isFixed(v);
 				if(isFixed) {
 					fixedVars.add(v);
 				}
@@ -571,11 +573,12 @@ public class RelationletJoinImpl<T extends Relationlet>
 			// Sort the rids according to the ridOrder
 			// For this purpose, get the labels in order, and then retain only those from the cluster
 //			List<Integer> rids = new ArrayList<>(ridOrder);
-			List<String> rids = new ArrayList<>(labelToRe.keySet());
+			List<String> rids = new ArrayList<>(materializedMembers.keySet());
 			rids.retainAll(tmpRids);
 			
 			for(String rid : rids) {
-				boolean isFixed = labelToRe.get(rid).getRelationlet().isFixed(var);
+				//boolean isFixed = labelToRe.get(rid).getRelationlet().isFixed(var);
+				boolean isFixed = materializedMembers.get(rid).getNestedVarMap().isFixed(var);
 				if(isFixed) {
 					takenFinalVars.add(var);
 					ridToVarToFinalVal.put(rid, var, var);
@@ -583,7 +586,8 @@ public class RelationletJoinImpl<T extends Relationlet>
 			}			
 
 			for(String rid : rids) {
-				boolean isFixed = labelToRe.get(rid).getRelationlet().isFixed(var);
+				//boolean isFixed = labelToRe.get(rid).getRelationlet().isFixed(var);
+				boolean isFixed = materializedMembers.get(rid).getNestedVarMap().isFixed(var);
 				if(!isFixed) {
 					boolean isTaken = takenFinalVars.contains(var);
 					
@@ -651,7 +655,12 @@ public class RelationletJoinImpl<T extends Relationlet>
 			memberToNestedVarMap.put(label, clone);			
 		}
 		
-		NestedVarMap nvm = new NestedVarMap(resolvedExposedVar, fixedVars, memberToNestedVarMap);
+		
+		Set<Var> globalFixedVars = materializedMembers.values().stream()
+				.flatMap(re -> re.getNestedVarMap().getFixedFinalVars().stream())
+				.collect(Collectors.toSet());
+		
+		NestedVarMap nvm = new NestedVarMap(resolvedExposedVar, globalFixedVars, memberToNestedVarMap);
 		
 		
 		RelationletNested result = new RelationletNested(group, nvm, materializedMembers);
