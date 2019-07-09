@@ -7,6 +7,7 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class RelationletTest {
 		
 		RelationletJoinImpl<Relationlet> parent = new RelationletJoinImpl<>();
 		parent.add("a", child);
-		parent.add("c", Relationlets.from(ElementUtils.createElementTriple(Vars.x, RDFS.seeAlso.asNode(), Vars.y)));
+		parent.add("c", Relationlets.from(new ElementOptional(ElementUtils.createElementTriple(Vars.x, RDFS.seeAlso.asNode(), Vars.y))));
 		parent.addJoin("a", Collections.singletonList(Vars.u), "c", Collections.singletonList(Vars.x));
 			
 		RelationletNested me = parent.materialize();

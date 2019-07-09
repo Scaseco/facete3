@@ -36,7 +36,7 @@ public interface Relationlet {
 	Set<Var> getFixedVars();
 	Relationlet setVarFixed(Var var, boolean onOrOff);
 	
-	Element getElement();
+//	Element getElement();
 	
 	RelationletNested materialize();
 }

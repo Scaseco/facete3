@@ -8,10 +8,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.cluster.IndirectEquiMap;
 import org.aksw.commons.collections.collectors.CollectorUtils;
@@ -65,13 +68,52 @@ public class RelationletJoinImpl<T extends Relationlet>
 	//Map<Integer, RelationletEntry<T>> ridToEntry = new HashMap<>();
 	//List<Integer> ridOrder = new ArrayList<>();
 
-	Map<String, RelationletEntry<T>> labelToRe = new LinkedHashMap<>();
+	protected Map<String, RelationletEntry<T>> labelToRe = new LinkedHashMap<>();
+	
+	
+	// Post processor invoked upon materialization of the join members
+	protected Function<? super ElementGroup, ? extends Element> postProcessor;
+
+	public static Stream<Element> flatten(Stream<Element> stream) {
+		Stream<Element> result = stream.flatMap(e -> e instanceof ElementGroup
+				? flatten(((ElementGroup)e).getElements().stream())
+				: Stream.of(e));
+		return result;
+	}
+	
+	public static Element flatten(Element e) {
+		List<Element> tmp = flatten(Stream.of(e)).collect(Collectors.toList());
+		Element result = ElementUtils.groupIfNeeded(tmp);
+		return result;
+	}
+	
+	public RelationletJoinImpl() {
+		this(RelationletJoinImpl::flatten);
+	}
+	
+	public RelationletJoinImpl(Function<? super ElementGroup, ? extends Element> postProcessor) {
+		super();
+		this.postProcessor = postProcessor;
+	}
+	
+	
 	
 	//List<RelationletEntry> relationletEntries = new ArrayList<>();
 	// TODO In any case, labelToRid should be changed to labelToRe (i.e. make it a reference to the entry object)
 	//BiMap<String, Integer> labelToRid = HashBiMap.create();//new LinkedHashMap<>();
 	
 	
+	public Function<? super ElementGroup, ? extends Element> getPostProcessor() {
+		return postProcessor;
+	}
+
+	public void setMaterializeElementPostProcessor(
+			Function<? super ElementGroup, ? extends Element> postProcessor) {
+		this.postProcessor = postProcessor;
+	}
+
+
+
 	// Exposed vars are seemingly variables of this relationlet and can be accessed without an alias
 	// TODO Implement: Variables that are unique to members are implicitly exposed if the exposeUniqueVars flag is true
     // Expose does not imply that the final variable name is fixed.
@@ -194,7 +236,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 			Relationlet r = current.getRelationlet();
 			if(r instanceof RelationletJoinImpl) {
 				RelationletJoinImpl<?> tmp = (RelationletJoinImpl<?>)r;
-				for(RelationletEntry<?> e : tmp.getRelationletEntries()) {
+				for(RelationletEntry<?> e : tmp.labelToRe.values()) { //tmp.getRelationletEntries()) {
 					String id = e.getId();
 					NestedStack<String> next = new NestedStack<>(stack, id);		
 					result = find(entry, e, next);
@@ -298,10 +340,10 @@ public class RelationletJoinImpl<T extends Relationlet>
 		return labelToRe.get(label);
 	}
 	
-	public Iterable<RelationletEntry<T>> getRelationletEntries() {
-		//return () -> ridOrder.stream().map(ridToEntry::get).iterator();
-		return labelToRe.values();
-	}
+//	public Iterable<RelationletEntry<T>> getRelationletEntries() {
+//		//return () -> ridOrder.stream().map(ridToEntry::get).iterator();
+//		return labelToRe.values();
+//	}
 
 	/**
 	 * Resolve a variable against a map of materialized relationlets 
@@ -311,6 +353,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 	 * @return
 	 */
 	public static Entry<String, Var> resolveMat(Map<String, RelationletNested> map, VarRefStatic varRef) {
+		Var v = Objects.requireNonNull(varRef.getV());
 		List<String> labels = varRef.getLabels();
 		if(labels.isEmpty()) {
 			throw new RuntimeException("Should not happen");
@@ -323,8 +366,8 @@ public class RelationletJoinImpl<T extends Relationlet>
 		NestedVarMap tmp = subLabels.isEmpty() ? subMap : subMap.get(subLabels);
 		Map<Var, Var> varMap = tmp.getLocalToFinalVarMap();
 		
-		Var v = varRef.getV();
 		Var resultVar = varMap.get(v);
+		Objects.requireNonNull(resultVar);
 		
 		Entry<String, Var> result = Maps.immutableEntry(label, resultVar);
 		
@@ -344,7 +387,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 	public RelationletNested materialize() {
 
 		// Materialize all members
-		Map<String, RelationletNested> materializedMembers = Streams.stream(getRelationletEntries())
+		Map<String, RelationletNested> materializedMembers = labelToRe.values().stream()
 				.collect(CollectorUtils.toLinkedHashMap(
 					RelationletEntry::getId,
 					e -> e.getRelationlet().materialize()));
@@ -608,7 +651,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 			//int id = e.getId();
 			//T r = e.getRelationlet();
 			String rid = ee.getKey();
-			Relationlet r = ee.getValue();
+			RelationletNested r = ee.getValue();
 			Element el = r.getElement();
 //			int rid = re.getId();
 //			Element el = re.getRelationlet().getElement();
@@ -662,11 +705,25 @@ public class RelationletJoinImpl<T extends Relationlet>
 		
 		NestedVarMap nvm = new NestedVarMap(resolvedExposedVar, globalFixedVars, memberToNestedVarMap);
 		
+		Element finalElement = postProcessor == null
+				? group
+				: postProcessor.apply(group);
 		
-		RelationletNested result = new RelationletNested(group, nvm, materializedMembers);
+		RelationletNested result = new RelationletNested(finalElement, nvm, materializedMembers);
 		
 		System.out.println(ridToVarToFinalVal);
 		System.out.println(group);
+		return result;
+	}
+
+	@Override
+	public Set<Var> getVarsMentioned() {
+		Set<Var> result = labelToRe.values().stream()
+			.map(RelationletEntry::getRelationlet)
+			.map(Relationlet::getVarsMentioned)
+			.flatMap(Collection::stream)
+			.collect(Collectors.toSet());
+		
 		return result;
 	}
 	
