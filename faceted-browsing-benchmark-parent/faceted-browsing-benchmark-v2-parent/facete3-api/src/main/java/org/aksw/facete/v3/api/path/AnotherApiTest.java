@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.collectors.CollectorUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -314,6 +315,11 @@ class RelationletBinary
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		return "RelationletBinary [br=" + br + "]";
+	}
+
 //
 //	@Override
 //	public Var getSrcVar() {
@@ -324,6 +330,7 @@ class RelationletBinary
 //	public Var getTgtVar() {
 //		return br.getTargetVar();
 //	}
+	
 }
 
 abstract class RelationletForwarding
@@ -405,6 +412,11 @@ class PathletSimple
 	public Var getTgtVar() {
 		return tgtVar;
 	}
+
+	@Override
+	public String toString() {
+		return "PathletSimple [srcVar=" + srcVar + ", tgtVar=" + tgtVar + ", relationlet=" + relationlet + "]";
+	}
 }
 
 /**
@@ -481,6 +493,14 @@ class PathletContainer
 	public static final Var srcJoinVar = Var.alloc("srcJoinVar");
 	public static final Var tgtJoinVar = Var.alloc("tgtJoinVar");
 	
+	public static final Pathlet emptyPathlet = newPathlet(BinaryRelationImpl.empty(Vars.s));
+	
+	public static Pathlet newPathlet(BinaryRelation br) {
+		return new PathletSimple(
+				br.getSourceVar(), br.getTargetVar(),
+				new RelationletBinary(br));
+	}
+	
 //	protected Table<MemberKey, String, PathletMember> keyToAliasToMember;
 	protected Table<Object, String, Pathlet> keyToAliasToMember = HashBasedTable.create();
 	
@@ -493,20 +513,30 @@ class PathletContainer
 	// sourceVar / tgtVar...?
 	
 	public PathletContainer() {
-		this(RelationletJoinImpl::flatten);
+		this(emptyPathlet, RelationletJoinImpl::flatten);
 	}
 	
-	public PathletContainer(Function<? super ElementGroup, ? extends Element> postProcessor) {
+//	public PathletContainer(Function<? super ElementGroup, ? extends Element> postProcessor) {
+//		super(postProcessor);
+//		
+//		// set up the root member
+//		// Note super.add is necessary in order avoid setting up join of the root element with itself
+//		super.add("root", new PathletSimple(
+//			Vars.s, Vars.s,
+//			new RelationletBinary(BinaryRelationImpl.empty(Vars.s))));
+//		
+//		expose(srcJoinVar.getName(), "root", "s");
+//		expose(tgtJoinVar.getName(), "root", "s");
+//	}
+	public PathletContainer(Pathlet rootPathlet, Function<? super ElementGroup, ? extends Element> postProcessor) {
 		super(postProcessor);
 		
 		// set up the root member
 		// Note super.add is necessary in order avoid setting up join of the root element with itself
-		super.add("root", new PathletSimple(
-			Vars.s, Vars.s,
-			new RelationletBinary(BinaryRelationImpl.empty(Vars.s))));
+		super.add("root", rootPathlet);
 		
-		expose(srcJoinVar.getName(), "root", "s");
-		expose(tgtJoinVar.getName(), "root", "s");
+		expose(srcJoinVar.getName(), "root", rootPathlet.getSrcVar().getName());
+		expose(tgtJoinVar.getName(), "root", rootPathlet.getTgtVar().getName());
 	}
 
 	public RelationletEntry<Pathlet> getRootMember() {
@@ -619,14 +649,15 @@ class PathletContainer
 		PathletContainer result = (PathletContainer)getMember(key, alias);//members.find(m -> m.getPattern().equals(br.getElement()));
 
 		if(result == null) {
-			result = new PathletContainer(fn);
+			Pathlet childRootPathlet = newPathlet(br);
+			result = new PathletContainer(childRootPathlet, fn);
 //			RelationletBinary r = new RelationletBinary(br);
 //			//PathletMember childContainerMember = new PathletMember(childContainer, r, r.getSrcVar(), r.getTgtVar());
 //			
 //			
 //			this.add(br, alias, childContainer);
 			
-			result.add(new PathletSimple(br.getSourceVar(), br.getTargetVar(), new RelationletBinary(br)));
+			//result.add(new PathletSimple(br.getSourceVar(), br.getTargetVar(), new RelationletBinary(br)));
 			// Set up a join of this node with the newly created member
 			//childContainerMember.
 //			result.add("root", new PathletSimple(
@@ -719,14 +750,6 @@ class PathletContainer
 		return null;
 	}
 
-
-	@Override
-	public Set<Var> getVarsMentioned() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
 	@Override
 	public Set<Var> getFixedVars() {
 		// TODO Auto-generated method stub
@@ -756,6 +779,11 @@ class PathletContainer
 	public Pathlet optional(Pathlet rhs) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return "PathletContainer [keyToAliasToMember=" + keyToAliasToMember + "]";
 	}
 
 
@@ -982,7 +1010,8 @@ class VarRefStatic
 
 	@Override
 	public String toString() {
-		return "VarRefStatic [labels=" + labels + ", v=" + v + "]";
+		String result = Stream.concat(labels.stream(), Stream.of(v)).map(Object::toString).collect(Collectors.joining("."));
+		return result;
 	}
 }
 
@@ -1456,7 +1485,7 @@ public class AnotherApiTest {
 		
 		if(true) {
 			
-			Path commonParentPath = Path.newPath().optional().fwd(RDF.type);
+			Path commonParentPath = Path.newPath().fwd(RDF.type);
 
 			Path p1 = commonParentPath.fwd(RDFS.label, "p1");
 			Path p2 = commonParentPath.fwd(RDFS.label, "p2");
@@ -1464,8 +1493,9 @@ public class AnotherApiTest {
 			Path px = Path.newPath().fwd(RDF.type);
 
 			PathletContainer pathlet = new PathletContainer();
+			pathlet.resolvePath(px);
 			pathlet.resolvePath(p1);
-			pathlet.resolvePath(p2);
+			//pathlet.resolvePath(p2);
 //			pathlet.resolvePath(px);
 			
 			RelationletNested rn = pathlet.materialize();

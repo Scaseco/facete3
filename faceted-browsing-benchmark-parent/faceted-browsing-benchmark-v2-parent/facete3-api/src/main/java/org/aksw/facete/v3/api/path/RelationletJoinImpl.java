@@ -345,6 +345,12 @@ public class RelationletJoinImpl<T extends Relationlet>
 //		return labelToRe.values();
 //	}
 
+	public static VarRefStatic resolveMat(Map<String, RelationletNested> map, VarRefStatic varRef) {
+		Entry<String, Var> e = resolveMatCore(map, varRef);
+		VarRefStatic result = new VarRefStatic(e.getKey(), e.getValue());
+		return result;
+	}
+
 	/**
 	 * Resolve a variable against a map of materialized relationlets 
 	 * 
@@ -352,7 +358,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 	 * @param varRef
 	 * @return
 	 */
-	public static Entry<String, Var> resolveMat(Map<String, RelationletNested> map, VarRefStatic varRef) {
+	public static Entry<String, Var> resolveMatCore(Map<String, RelationletNested> map, VarRefStatic varRef) {
 		Var v = Objects.requireNonNull(varRef.getV());
 		List<String> labels = varRef.getLabels();
 		if(labels.isEmpty()) {
@@ -385,13 +391,18 @@ public class RelationletJoinImpl<T extends Relationlet>
 	 * 
 	 */
 	public RelationletNested materialize() {
-
+		
 		// Materialize all members
 		Map<String, RelationletNested> materializedMembers = labelToRe.values().stream()
 				.collect(CollectorUtils.toLinkedHashMap(
 					RelationletEntry::getId,
 					e -> e.getRelationlet().materialize()));
 
+		System.out.println("Processing: " + this);
+		
+		if(this.toString().equals("PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={}]}, optional={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  <http://www.w3.org/2000/01/rdf-schema#label>  ?o={p1=PathletContainer [keyToAliasToMember={}]}}]}}]}}]")) {
+			System.out.println("DEBUG POINT");
+		}
 		
 //		Map<String, RelationletNested> materializedMembersByLabel = materializedMembers.entrySet().stream()
 //				.collect(CollectorUtils.toLinkedHashMap(
@@ -412,7 +423,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 //				.collect(Collectors.toList());
 		
 		
-		IndirectEquiMap<VarRefStatic, Var> aliasedVarToEffectiveVar = new IndirectEquiMap<>();
+		IndirectEquiMap<Entry<String, Var>, Var> aliasedVarToEffectiveVar = new IndirectEquiMap<>();
 
 		for(Join join : joins) {
 //			RelationletEntry lhsEntry = ridToEntry.get(labelToRid.get(join.getLhsAlias()));
@@ -445,9 +456,15 @@ public class RelationletJoinImpl<T extends Relationlet>
 //				Entry<RelationletEntry<T>, Var> lhsEntry = resolveVarRef(lhsRef);
 //				Entry<RelationletEntry<T>, Var> rhsEntry = resolveVarRef(rhsRef);
 
-				VarRefStatic lhsEntry = matVarRef(lhsRef);
-				VarRefStatic rhsEntry = matVarRef(rhsRef);
+				VarRefStatic rawLhsEntry = matVarRef(lhsRef);
+				VarRefStatic rawRhsEntry = matVarRef(rhsRef);
 
+				Entry<String, Var> lhsEntry = resolveMatCore(materializedMembers, rawLhsEntry);
+				Entry<String, Var> rhsEntry = resolveMatCore(materializedMembers, rawRhsEntry);
+
+//				VarRefStatic lhsEntry = resolveMat(materializedMembers, rawLhsEntry);
+//				VarRefStatic rhsEntry = resolveMat(materializedMembers, rawRhsEntry);
+				
 				
 //				String lhsId = lhsEntry.getKey().getId();
 //				String rhsId = rhsEntry.getKey().getId();
@@ -473,15 +490,15 @@ public class RelationletJoinImpl<T extends Relationlet>
 		// In order to tidy up the output, we sort clusters that only make use of the same variable first
 		// If multiple clusters only make use of the same variable, they are ordered by size and var name
 		
-		Map<Integer, Collection<VarRefStatic>> rawClusters = aliasedVarToEffectiveVar.getEquivalences().asMap();
+		Map<Integer, Collection<Entry<String, Var>>> clusters = aliasedVarToEffectiveVar.getEquivalences().asMap();
 
-		Map<Integer, Collection<Entry<String, Var>>> clusters = rawClusters.entrySet().stream()
-				.collect(Collectors.toMap(
-						Entry::getKey,
-						e -> e.getValue().stream()
-							.map(f -> resolveMat(materializedMembers, f))
-							.collect(Collectors.toList())
-						));
+//		Map<Integer, Collection<Entry<String, Var>>> clusters = rawClusters.entrySet().stream()
+//				.collect(Collectors.toMap(
+//						Entry::getKey,
+//						e -> e.getValue().stream()
+//							.map(f -> resolveMat(materializedMembers, f))
+//							.collect(Collectors.toList())
+//						));
 		
 		// Index of which relationlets mention a var
 		// Used to check whether a cluster covers all mentions of a var - in this case,
@@ -517,17 +534,22 @@ public class RelationletJoinImpl<T extends Relationlet>
 						e -> e.getValue().stream()
 							.map(Entry::getValue)
 							//.map(Var::getName)
-							.collect(Collectors.toCollection(HashSet::new))));
-		 
-		
-		Collection<Var> mentionedVars = Collections.emptySet();
-		Predicate<Var> isBlacklisted = baseBlacklist.and(mentionedVars::contains);
+							.collect(Collectors.toSet())));
+		//System.out.println("cluster to vars: " + clusterToVars);
+
+		Set<Var> matVarsMentioned = materializedMembers.values().stream()
+				.map(Relationlet::getVarsMentioned)
+				.flatMap(Collection::stream)
+				.collect(Collectors.toSet());
+
+		Set<Var> takenFinalVars = new HashSet<>();
+
+		Collection<Var> mentionedVars = matVarsMentioned; //getVarsMentioned();//Collections.emptySet();
+		Predicate<Var> isBlacklisted = baseBlacklist.or(mentionedVars::contains).or(takenFinalVars::contains);
 		
 		//GeneratorLending<Var>
 		Generator<Var> basegen = VarGeneratorImpl2.create();
 		Generator<Var> vargen = GeneratorBlacklist.create(basegen, isBlacklisted);
-
-		Set<Var> takenFinalVars = new HashSet<>();
 		
 		
 		Table<String, Var, Var> ridToVarToFinalVal = HashBasedTable.create(); 
@@ -535,6 +557,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 			int clusterId = e.getKey();
 			Collection<Entry<String, Var>> members = e.getValue();
 
+			// Check the cluster for variables marked as fix
 			Set<Var> fixedVars = new LinkedHashSet<>();
 			Multimap<Var, String> varToRe = ArrayListMultimap.create();
 			for(Entry<String, Var> f : members) {
@@ -674,8 +697,10 @@ public class RelationletJoinImpl<T extends Relationlet>
 //			Var refVar = vr.getV();
 //			int rid = labelToRid.get(label);
 //			Var finalVar = ridToVarToFinalVal.get(rid, refVar);
-			Entry<String, Var> finalE = resolveMat(materializedMembers, vr);
-			Var finalVar = finalE.getValue();
+			Entry<String, Var> finalE = resolveMatCore(materializedMembers, vr);
+			String rid = finalE.getKey();
+			Var v = finalE.getValue();
+			Var finalVar = ridToVarToFinalVal.get(rid, v);
 			resolvedExposedVar.put(key, finalVar);
 		}
 		
