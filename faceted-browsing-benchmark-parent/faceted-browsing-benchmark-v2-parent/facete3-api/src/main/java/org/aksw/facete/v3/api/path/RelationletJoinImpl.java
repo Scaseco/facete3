@@ -701,6 +701,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 			String rid = finalE.getKey();
 			Var v = finalE.getValue();
 			Var finalVar = ridToVarToFinalVal.get(rid, v);
+			Objects.requireNonNull(finalVar);
 			resolvedExposedVar.put(key, finalVar);
 		}
 		

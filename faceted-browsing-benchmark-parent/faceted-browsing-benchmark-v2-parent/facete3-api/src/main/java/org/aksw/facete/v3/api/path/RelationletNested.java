@@ -1,6 +1,7 @@
 package org.aksw.facete.v3.api.path;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +31,15 @@ public class RelationletNested
 		this.aliasToMember = aliasToMember;
 //		this.aliasToMember = aliasToMember;
 //		this.exposedVarToElementVar = exposedVarToElementVar;
+	}
+	
+	@Override
+	public Set<Var> getVarsMentioned() {
+		Set<Var> result = new HashSet<>(super.getVarsMentioned());
+		Set<Var> mappedVars = varMap.getVarsMentioned();
+		result.addAll(mappedVars);
+
+		return result;
 	}
 	
 	public NestedVarMap getNestedVarMap() {

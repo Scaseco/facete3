@@ -19,7 +19,7 @@ public class Resolvers {
 
 	public static Resolver from(PartitionedQuery1 pq) {
 		RDFNode node = toRdfModel(pq);
-		Resolver result = new ResolverTemplate(pq, node, null);
+		Resolver result = new ResolverTemplate(pq, node, null, null);
 		return result;
 	}
 	

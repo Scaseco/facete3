@@ -63,11 +63,11 @@ public class RelationletTest {
 			Resolver resolver = Resolvers.from(Vars.s, QueryFactory.create(
 					"PREFIX eg: <http://www.example.org/>\n"
 					+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-					+ "CONSTRUCT { ?s <http://par.en/t> ?o } WHERE { ?s eg:test ?o }"));
+					+ "CONSTRUCT { ?x <http://parr.en/t> ?y } WHERE { ?s eg:test ?o }"));
 			
-			Path psimple = Path.newPath().fwd("http://par.en/t");
+			Path psimple = Path.newPath().fwd(RDF.type);
 			
-			Path commonParentPath = Path.newPath().optional().fwd(RDF.type);
+			Path commonParentPath = Path.newPath().optional().fwd("http://par.en/t");
 
 			Path p1 = commonParentPath.fwd("http://ch.il/d", "p1");
 			Path p2 = commonParentPath.fwd("http://ch.il/d", "p2");

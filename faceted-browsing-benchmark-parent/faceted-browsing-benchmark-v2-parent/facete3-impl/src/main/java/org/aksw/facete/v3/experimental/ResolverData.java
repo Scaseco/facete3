@@ -3,6 +3,7 @@ package org.aksw.facete.v3.experimental;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map.Entry;
 
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.AliasedPathImpl;
@@ -34,6 +35,8 @@ public class ResolverData
 	protected BinaryRelation reachingRelation;
 	protected AliasedPath path;
 
+	
+	
 	protected PartitionedQuery1 query;
 	//protected RDFNode start;
 
@@ -48,11 +51,17 @@ public class ResolverData
 		//this.steps = steps;
 	}
 
-	public Collection<BinaryRelation> getPathContrib() {
-		return Collections.singletonList(reachingRelation);
-	}
 	
-//	public BinaryRelation getPathContrib() {
+	public Collection<BinaryRelation> getPathContrib() {
+		PathToRelationMapper<AliasedPath> mapper = createPathMapper();
+		// Allocate the full path
+		BinaryRelation tmp = mapper.getOverallRelation(path);
+		
+		// Obtain the relation for the last segment of the path
+		BinaryRelation result = mapper.getMap().get(path);
+
+
+		return Collections.singleton(result);
 //		// Get the root var
 //		Var var = query.getPartitionVar();
 //
@@ -76,9 +85,9 @@ public class ResolverData
 //		BinaryRelation result = mapper.getOverallRelation(path);
 //
 //		return result;
-//	}
+	}
 
-	public BinaryRelation getPath() {
+	public PathToRelationMapper<AliasedPath> createPathMapper() {
 		// Get the root var
 		Var var = query.getPartitionVar();
 
@@ -92,13 +101,19 @@ public class ResolverData
 //		PathAccessorRdf<SimplePath> pathAccessor = new PathAccessorSimplePath();
 		PathAccessorRdf<AliasedPath> pathAccessor = new PathAccessorAliasedPath();
 		PathToRelationMapper<AliasedPath> mapper = new PathToRelationMapper<>(pathAccessor, baseName);
-		
+
 		BinaryRelation tmp = reachingRelation == null
 				? new BinaryRelationImpl(new ElementGroup(), var, var)
 				: reachingRelation;
 
 		mapper.getMap().put(AliasedPathImpl.empty(), tmp);
+
+		return mapper;
+	}
+	
+	public BinaryRelation getPath() {
 		
+		PathToRelationMapper<AliasedPath> mapper = createPathMapper();
 		BinaryRelation result = mapper.getOverallRelation(path);
 
 		return result;
@@ -112,6 +127,7 @@ public class ResolverData
 	@Override
 	public Resolver resolve(P_Path0 step, String alias) {
 		AliasedPath subPath = path.subPath(Maps.immutableEntry(step, alias));
+		
 		return new ResolverData(query, subPath, reachingRelation);
 	}
 

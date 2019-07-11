@@ -58,7 +58,7 @@ public class ResolverUnion
 	public Collection<BinaryRelation> getPathContrib() {
 		List<BinaryRelation> result = resolvers.stream()
 				.flatMap(resolver -> {
-					Collection<BinaryRelation> tmp = resolver.getPaths();
+					Collection<BinaryRelation> tmp = resolver.getPathContrib();
 					return tmp.stream();
 				})
 				.collect(Collectors.toList());

@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.collectors.CollectorUtils;
 import org.apache.jena.sparql.core.Var;
@@ -29,6 +30,16 @@ public class NestedVarMap {
 		this.localToFinalVarMap = localToFinalVarMap;
 		this.memberVarMap = memberVarMap;
 		this.fixedFinalVars = fixedFinalVars;
+	}
+	
+	public Set<Var> getVarsMentioned() {
+		Set<Var> result = Stream.concat(localToFinalVarMap.values().stream(),
+				memberVarMap.values().stream().flatMap(x -> x.getVarsMentioned().stream()))
+				.collect(Collectors.toSet());
+		return result;
+				
+		//Stream.coconcat(localToFinalVarMap.values().stream()
+			
 	}
 	
 //	public NestedVarMap(Map<Var, Var> localToFinalVarMap, Map<String, NestedVarMap> memberVarMap,

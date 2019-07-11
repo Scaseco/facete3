@@ -64,7 +64,8 @@ public class ResolverTemplate
 	 */
 	protected boolean singlePathMode = true;
 	
-	protected BinaryRelation reachingRelation;
+	protected BinaryRelation reachingRelation; // overall relation (subject to removal, as concatenation should be handled by the Pathlet API)
+	protected BinaryRelation reachingRelationContrib; // only the last contribution
 	
 	protected PartitionedQuery1 query;
 	///protected Set<? extends RDFNode> starts;
@@ -75,9 +76,9 @@ public class ResolverTemplate
 	@Override
 	public Collection<BinaryRelation> getPathContrib() {
 		Var v = (Var)start.asNode();
-		Collection<BinaryRelation> result = Collections.singleton(reachingRelation == null
+		Collection<BinaryRelation> result = Collections.singleton(reachingRelationContrib == null
 				? new BinaryRelationImpl(new ElementGroup(), v, v)
-				: reachingRelation);
+				: reachingRelationContrib);
 		
 		return result;
 	}
@@ -98,11 +99,12 @@ public class ResolverTemplate
 	}
 	
 	
-	protected ResolverTemplate(PartitionedQuery1 query, RDFNode start, BinaryRelation reachingRelation) {
+	protected ResolverTemplate(PartitionedQuery1 query, RDFNode start, BinaryRelation reachingRelation,  BinaryRelation reachingRelationContrib) {
 		this.query = query;
 		//this.starts = starts;
 		this.start = start;
 		this.reachingRelation = reachingRelation;
+		this.reachingRelationContrib = reachingRelationContrib;
 	}
 	
 	
@@ -142,7 +144,7 @@ public class ResolverTemplate
 
 
 		// If an alias is given, create a copy of the partitioned query
-		// with all variables - save for the one being joined on - renamed
+		// with all variables renamed - save for the one being joined on
 		PartitionedQuery1 newPq = query;
 		Set<RDFNode> newTargets = targets;
 		if(alias != null && !targets.isEmpty()) {
@@ -184,20 +186,23 @@ public class ResolverTemplate
 				RDFNode newN = newT == null ? oldT : m.asRDFNode(newT);
 				newTargets.add(newN);
 				
-				BinaryRelation relation = new BinaryRelationImpl(newQuery.getQueryPattern(), startVar, newT);
+				BinaryRelation relationContrib = new BinaryRelationImpl(newQuery.getQueryPattern(), startVar, newT);
 
+				BinaryRelation relation;
 				if(reachingRelation != null) {
 					
-					Element grouped = ElementUtils.groupIfNeeded(Iterables.concat(reachingRelation.getElements(), relation.getElements()));
-					relation = new BinaryRelationImpl(grouped, reachingRelation.getSourceVar(), relation.getTargetVar());
+					Element grouped = ElementUtils.groupIfNeeded(Iterables.concat(reachingRelation.getElements(), relationContrib.getElements()));
+					relation = new BinaryRelationImpl(grouped, reachingRelation.getSourceVar(), relationContrib.getTargetVar());
 					
+				} else {
+					relation = relationContrib;
 				}
 				
-				result.add(new ResolverTemplate(newPq, newN, relation));
+				result.add(new ResolverTemplate(newPq, newN, relation, relationContrib));
 			}
 		} else {
 			for(RDFNode oldT : targets) {
-				result.add(new ResolverTemplate(newPq, oldT, null));
+				result.add(new ResolverTemplate(newPq, oldT, null, null));
 			}
 		}
 		
