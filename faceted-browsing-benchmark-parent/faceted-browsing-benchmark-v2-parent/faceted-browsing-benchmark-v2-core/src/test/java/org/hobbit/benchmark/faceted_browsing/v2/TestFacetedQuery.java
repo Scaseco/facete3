@@ -157,7 +157,7 @@ public class TestFacetedQuery {
 				.toList().blockingGet();
 
 		//rdn.via(Vocab.facetValueCount).one().getPaths();
-		
+		//dq.resolver().fwd().getContrib()
 		
 		System.out.println(x.size() + " results");
 		for(Object item : x) {

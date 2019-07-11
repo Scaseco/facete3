@@ -6,6 +6,7 @@ import java.util.Collections;
 
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.AliasedPathImpl;
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -46,6 +47,36 @@ public class ResolverData
 		//this.base = base;
 		//this.steps = steps;
 	}
+
+	public Collection<BinaryRelation> getPathContrib() {
+		return Collections.singletonList(reachingRelation);
+	}
+	
+//	public BinaryRelation getPathContrib() {
+//		// Get the root var
+//		Var var = query.getPartitionVar();
+//
+//		
+//		// TODO Mark all variables mentioned in the query as forbidden 
+//		//Set<Var> mentionedVars = null;
+//		
+//		String pathName = "path"; 
+//		String baseName = var.getName() + "_" + pathName;
+//		
+////		PathAccessorRdf<SimplePath> pathAccessor = new PathAccessorSimplePath();
+//		PathAccessorRdf<AliasedPath> pathAccessor = new PathAccessorAliasedPath();
+//		PathToRelationMapper<AliasedPath> mapper = new PathToRelationMapper<>(pathAccessor, baseName);
+//		
+//		BinaryRelation tmp = reachingRelation == null
+//				? new BinaryRelationImpl(new ElementGroup(), var, var)
+//				: reachingRelation;
+//
+//		mapper.getMap().put(AliasedPathImpl.empty(), tmp);
+//		
+//		BinaryRelation result = mapper.getOverallRelation(path);
+//
+//		return result;
+//	}
 
 	public BinaryRelation getPath() {
 		// Get the root var

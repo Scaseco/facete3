@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.apache.jena.sparql.path.P_Path0;
@@ -51,5 +52,17 @@ public class ResolverUnion
 				})
 				.collect(Collectors.toList());
 		return result;
+	}
+
+	@Override
+	public Collection<BinaryRelation> getPathContrib() {
+		List<BinaryRelation> result = resolvers.stream()
+				.flatMap(resolver -> {
+					Collection<BinaryRelation> tmp = resolver.getPaths();
+					return tmp.stream();
+				})
+				.collect(Collectors.toList());
+		return result;
+
 	}
 }

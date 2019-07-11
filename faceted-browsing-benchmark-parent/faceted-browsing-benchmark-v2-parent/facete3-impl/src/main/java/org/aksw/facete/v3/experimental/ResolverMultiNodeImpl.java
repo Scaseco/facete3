@@ -1,5 +1,6 @@
 package org.aksw.facete.v3.experimental;
 
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.api.ResolverDirNode;
 import org.aksw.jena_sparql_api.data_query.api.ResolverMultiNode;

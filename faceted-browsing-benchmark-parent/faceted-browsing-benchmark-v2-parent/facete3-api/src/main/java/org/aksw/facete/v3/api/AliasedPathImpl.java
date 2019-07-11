@@ -2,6 +2,9 @@ package org.aksw.facete.v3.api;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
+
+import org.apache.jena.sparql.path.P_Path0;
 
 /**
  * An aliased path is a sequence of step-alias pairs.
@@ -11,15 +14,15 @@ import java.util.List;
  *
  */
 public class AliasedPathImpl
-	extends PathListBase<AliasedPath, AliasedPathStep>
+	extends PathListBase<AliasedPath, Entry<P_Path0, String>>
 	implements AliasedPath
 {
-	public AliasedPathImpl(List<AliasedPathStep> steps) {
+	public AliasedPathImpl(List<Entry<P_Path0, String>> steps) {
 		super(steps);
 	}
 
 	@Override
-	protected AliasedPathImpl create(List<AliasedPathStep> steps) {
+	protected AliasedPathImpl create(List<Entry<P_Path0, String>> steps) {
 		return new AliasedPathImpl(steps);
 	}
 	

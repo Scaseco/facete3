@@ -11,8 +11,12 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementOptional;
@@ -46,8 +50,14 @@ public class PathletContainerImpl
 	// protected Var connectorVar;
 	// sourceVar / tgtVar...?
 	
+	protected Resolver resolver;
+	
+	public PathletContainerImpl(Resolver resolver) {
+		this(resolver, emptyPathlet, RelationletJoinImpl::flatten);
+	}
+	
 	public PathletContainerImpl() {
-		this(emptyPathlet, RelationletJoinImpl::flatten);
+		this(null, emptyPathlet, RelationletJoinImpl::flatten);
 	}
 	
 //	public PathletContainer(Function<? super ElementGroup, ? extends Element> postProcessor) {
@@ -62,13 +72,13 @@ public class PathletContainerImpl
 //		expose(srcJoinVar.getName(), "root", "s");
 //		expose(tgtJoinVar.getName(), "root", "s");
 //	}
-	public PathletContainerImpl(Pathlet rootPathlet, Function<? super ElementGroup, ? extends Element> postProcessor) {
+	public PathletContainerImpl(Resolver resolver, Pathlet rootPathlet, Function<? super ElementGroup, ? extends Element> postProcessor) {
 		super(postProcessor);
 		
 		// set up the root member
 		// Note super.add is necessary in order avoid setting up join of the root element with itself
 		super.add("root", rootPathlet);
-		
+		this.resolver = resolver;
 		expose(srcJoinVar.getName(), "root", rootPathlet.getSrcVar().getName());
 		expose(tgtJoinVar.getName(), "root", rootPathlet.getTgtVar().getName());
 	}
@@ -108,7 +118,7 @@ public class PathletContainerImpl
 			result = optional(alias);
 			break;
 		case "br":
-			result = fwd(key, alias);
+			result = step(key, alias);
 			break;
 		default:
 			throw new RuntimeException("Unknown step type " + type);
@@ -148,11 +158,54 @@ public class PathletContainerImpl
 		return null;
 	}
 
-	PathletContainerImpl fwd(Object key, String alias) {
-		BinaryRelation br = (BinaryRelation)key;
+//	public static Node toNode(Object o) {
+//		Node result = o instanceof Node
+//			? (Node)o
+//			: o instanceof RDFNode
+//				? ((RDFNode)o).asNode()
+//				:null;
+//
+//		return result;
+//	}
+
+//	public PathletContainerImpl step(Object key, String alias) {
+//		PathletContainerImpl result = step(true, key, alias);
+//		return result;
+//	}
+	
+//	public PathletContainerImpl bwd(Object key, String alias) {
+//		PathletContainerImpl result = step(false, key, alias);
+//		return result;
+//	}
+
+	public PathletContainerImpl step(Object key, String alias) {
+		P_Path0 p = key instanceof P_Path0 ? (P_Path0)key : null; // Node(key);
+		BinaryRelation br;
+		Resolver subResolver = null;
+		if(p == null) {
+			br = (BinaryRelation)key;
+			subResolver = null;
+		} else {
+			if(resolver != null) {
+				subResolver = resolver.resolve(p, alias);
+				Collection<BinaryRelation> brs = subResolver.getPathContrib();
+				System.out.println("CONTRIBS:" + brs);
+				br = brs.iterator().next();
+			} else {
+				Node n = p.getNode();
+				boolean isFwd = p.isForward();
+				br = BinaryRelationImpl.create(Vars.s, n, Vars.o, isFwd);
+			}
+			// TODO Union the relations using (move the method)
+			///VirtualPartitionedquery.union()
+
+		}
 		
-		//BinaryRelation br = RelationUtils.createRelation(p, false, null)
-		return fwd(null, br, alias);
+		PathletContainerImpl result = step(subResolver, key, br, alias, RelationletJoinImpl::flatten);
+		return result;
+		
+//		//BinaryRelation br = RelationUtils.createRelation(p, false, null)
+//		return fwd(null, br, alias);
 	}
 
 	@Override
@@ -168,12 +221,26 @@ public class PathletContainerImpl
 		return result;
 	}
 
-	public PathletContainerImpl fwd(Object key, BinaryRelation br, String alias) {
-		PathletContainerImpl result = step(true, key, br, alias, RelationletJoinImpl::flatten);
-		return result;
-	}
+	
+//	public PathletContainerImpl step(P_Path0 step, String alias) {
+//		Resolver subResolver = resolver.resolve(step, alias);
+//
+//		Collection<BinaryRelation> brs = subResolver.getPaths();
+//		// TODO Union the relations using (move the method)
+//		///VirtualPartitionedquery.union()
+//
+//		BinaryRelation br = brs.iterator().next();
+//		Object key = br;
+//		PathletContainerImpl result = step(subResolver, true, key, br, alias, RelationletJoinImpl::flatten);
+//		return result;
+//	}
 
-	public PathletContainerImpl step(boolean isFwd, Object key, BinaryRelation br, String alias, Function<? super ElementGroup, ? extends Element> fn) {
+//	public PathletContainerImpl step(Object key, BinaryRelation br, String alias) {
+//		PathletContainerImpl result = step(true, key, br, alias, RelationletJoinImpl::flatten);
+//		return result;
+//	}
+
+	public PathletContainerImpl step(Resolver subResolver, Object key, BinaryRelation br, String alias, Function<? super ElementGroup, ? extends Element> fn) {
 		alias = alias == null ? "default" : alias;
 
 		key = key == null ? "" + br : key;
@@ -184,7 +251,7 @@ public class PathletContainerImpl
 
 		if(result == null) {
 			Pathlet childRootPathlet = newPathlet(br);
-			result = new PathletContainerImpl(childRootPathlet, fn);
+			result = new PathletContainerImpl(subResolver, childRootPathlet, fn);
 //			RelationletBinary r = new RelationletBinary(br);
 //			//PathletMember childContainerMember = new PathletMember(childContainer, r, r.getSrcVar(), r.getTgtVar());
 //			
@@ -223,7 +290,7 @@ public class PathletContainerImpl
 	@Override
 	public PathletContainerImpl optional(String label) {
 		
-		PathletContainerImpl result = step(true, "optional", BinaryRelationImpl.empty(), "default",
+		PathletContainerImpl result = step(resolver, "optional", BinaryRelationImpl.empty(), "default",
 				x -> new ElementOptional(RelationletJoinImpl.flatten(x)));
 		return result;
 

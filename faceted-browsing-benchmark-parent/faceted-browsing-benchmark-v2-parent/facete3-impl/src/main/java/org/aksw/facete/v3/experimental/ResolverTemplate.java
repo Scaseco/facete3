@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.AliasedPathImpl;
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -55,7 +56,7 @@ public class ResolverTemplate
 	implements Resolver
 {
 	/**
-	 * Simple mode ensures that only at most a single path is returned.
+	 * SinglePathMode ensures that only at most a single path is returned.
 	 * 
 	 * (1) resolution on the template level takes precedence over the data level - no unions of both
 	 * (2) resolution on the template level to multiple targets raises an exception
@@ -69,6 +70,19 @@ public class ResolverTemplate
 	///protected Set<? extends RDFNode> starts;
 	protected RDFNode start;
 
+	
+
+	@Override
+	public Collection<BinaryRelation> getPathContrib() {
+		Var v = (Var)start.asNode();
+		Collection<BinaryRelation> result = Collections.singleton(reachingRelation == null
+				? new BinaryRelationImpl(new ElementGroup(), v, v)
+				: reachingRelation);
+		
+		return result;
+	}
+	
+	@Override
 	public Collection<BinaryRelation> getPaths() {
 		Var v = (Var)start.asNode();
 		Collection<BinaryRelation> result = Collections.singleton(reachingRelation == null

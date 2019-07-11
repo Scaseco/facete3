@@ -4,8 +4,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
+import org.aksw.facete.v3.experimental.Resolvers;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.vocabulary.RDF;
@@ -17,8 +19,6 @@ public class RelationletTest {
 	@Test
 	public void testJoins() {
 		RelationletJoinImpl<Relationlet> joiner = new RelationletJoinImpl<>();
-		
-		
 		
 		if(false) {
 			joiner.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).setVarFixed(Vars.s, true));
@@ -60,19 +60,24 @@ public class RelationletTest {
 
 		
 		if(true) {
+			Resolver resolver = Resolvers.from(Vars.s, QueryFactory.create(
+					"PREFIX eg: <http://www.example.org/>\n"
+					+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+					+ "CONSTRUCT { ?s <http://par.en/t> ?o } WHERE { ?s eg:test ?o }"));
 			
-			Path commonParentPath = Path.newPath().fwd(RDF.type);
+			Path psimple = Path.newPath().fwd("http://par.en/t");
+			
+			Path commonParentPath = Path.newPath().optional().fwd(RDF.type);
 
-			Path p1 = commonParentPath.fwd(RDFS.label, "p1");
-			Path p2 = commonParentPath.fwd(RDFS.label, "p2");
+			Path p1 = commonParentPath.fwd("http://ch.il/d", "p1");
+			Path p2 = commonParentPath.fwd("http://ch.il/d", "p2");
 
-			Path px = Path.newPath().fwd(RDF.type);
 
-			PathletContainerImpl pathlet = new PathletContainerImpl();
-			pathlet.resolvePath(px);
+			PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
+			pathlet.resolvePath(psimple);
 			pathlet.resolvePath(p1);
-			//pathlet.resolvePath(p2);
-//			pathlet.resolvePath(px);
+			pathlet.resolvePath(p2);
+			pathlet.resolvePath(p2.fwd(RDFS.comment));
 			
 			RelationletNested rn = pathlet.materialize();
 			System.out.println("Materialized Element: " + rn.getElement());

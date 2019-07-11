@@ -400,9 +400,9 @@ public class RelationletJoinImpl<T extends Relationlet>
 
 		System.out.println("Processing: " + this);
 		
-		if(this.toString().equals("PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={}]}, optional={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  <http://www.w3.org/2000/01/rdf-schema#label>  ?o={p1=PathletContainer [keyToAliasToMember={}]}}]}}]}}]")) {
-			System.out.println("DEBUG POINT");
-		}
+//		if(this.toString().equals("PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={}]}, optional={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  <http://www.w3.org/2000/01/rdf-schema#label>  ?o={p1=PathletContainer [keyToAliasToMember={}]}}]}}]}}]")) {
+//			System.out.println("DEBUG POINT");
+//		}
 		
 //		Map<String, RelationletNested> materializedMembersByLabel = materializedMembers.entrySet().stream()
 //				.collect(CollectorUtils.toLinkedHashMap(

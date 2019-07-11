@@ -23,4 +23,9 @@ public enum Direction {
 	public boolean isBackward() {
 		return !isForward;
 	}
+	
+	public static Direction ofFwd(boolean isFwd) {
+		Direction result = isFwd ? FORWARD : BACKWARD;
+		return result;
+	}
 }

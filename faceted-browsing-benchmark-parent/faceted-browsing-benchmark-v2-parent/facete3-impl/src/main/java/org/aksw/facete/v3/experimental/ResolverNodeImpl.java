@@ -2,6 +2,7 @@ package org.aksw.facete.v3.experimental;
 
 import java.util.Collection;
 
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.api.ResolverDirNode;
@@ -50,7 +51,7 @@ public class ResolverNodeImpl
 	}
 	
 	public static ResolverNodeImpl from(PartitionedQuery1 pq, DataQuery<?> conn) {
-		return from(Resolver.from(pq), conn);
+		return from(Resolvers.from(pq), conn);
 	}
 
 	public static ResolverNodeImpl from(Query query, Var partitionVar, DataQuery<?> conn) {

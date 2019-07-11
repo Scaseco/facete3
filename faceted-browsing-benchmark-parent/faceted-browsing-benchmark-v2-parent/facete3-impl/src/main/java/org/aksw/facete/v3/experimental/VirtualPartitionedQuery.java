@@ -7,10 +7,10 @@ import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.AliasedPathImpl;
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.api.traversal.TraversalDirNode;
 import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
 import org.aksw.facete.v3.api.traversal.TraversalNode;
-import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
@@ -370,12 +370,9 @@ public class VirtualPartitionedQuery {
 
 	public static void main(String[] args) {
 
-		
-		
-		
 		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");		
 		PartitionedQuery1 pq = PartitionedQuery1.from(view, Vars.p);
-		Resolver resolver = Resolver.from(pq);
+		Resolver resolver = Resolvers.from(pq);
 		
 		if(false) {
 		
@@ -426,12 +423,12 @@ public class VirtualPartitionedQuery {
 			.aliasedPath();
 
 		if(false) {
-		path = PathBuilderNode.start()
-				.fwd("http://facetCount").one()
-				.fwd("http://label").one()
-				.aliasedPath();
-
+			path = PathBuilderNode.start()
+					.fwd("http://facetCount").one()
+					.fwd("http://label").one()
+					.aliasedPath();
 		}
+
 		System.out.println("built path: " + path);
 		
 		
