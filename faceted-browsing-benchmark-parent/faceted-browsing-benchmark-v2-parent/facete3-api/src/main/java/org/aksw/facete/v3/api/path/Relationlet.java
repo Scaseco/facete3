@@ -32,7 +32,27 @@ public interface Relationlet {
 	default Relationlet fix(Var var) {
 		return setVarFixed(var, true);
 	}
+
+	/**
+	 * Adds all variables <b>currently</b> returned by getVarsMentioned() to the set of fixed vars.
+	 * Does not mark vars that become available in the future as fixed.
+	 * 
+	 * @return
+	 */
+	default Relationlet fixAll() {
+		Set<Var> vars = getVarsMentioned();
+		Relationlet result = fixAll(vars);
+		return result;
+	}
 	
+	default Relationlet fixAll(Iterable<Var> vars) {
+		for(Var var : vars) {
+			setVarFixed(var, true);
+		//return setVarFixed(var, true);
+		}
+		return this;
+	}
+
 	Set<Var> getFixedVars();
 	Relationlet setVarFixed(Var var, boolean onOrOff);
 	

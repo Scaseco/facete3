@@ -3,11 +3,12 @@ package org.aksw.facete.v3.experimental;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map.Entry;
 
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.AliasedPathImpl;
+import org.aksw.facete.v3.api.path.RelationletBinary;
 import org.aksw.facete.v3.api.path.Resolver;
+import org.aksw.facete.v3.api.path.ResolverBase;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -27,8 +28,10 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
 public class ResolverData
-	implements Resolver
+	extends ResolverBase
 {
+	protected Resolver parent;
+	
 	//protected ResolverTemplate base;
 	//protected List<P_Path0> steps;
 	//protected List<Entry<P_Path0, String>> steps;
@@ -42,17 +45,18 @@ public class ResolverData
 
 	
 //	public ResolverData(ResolverTemplate base, List<P_Path0> steps) {
-	public ResolverData(PartitionedQuery1 query, AliasedPath path, BinaryRelation reachingRelation) {
-		super();
+	public ResolverData(Resolver parent, PartitionedQuery1 query, AliasedPath path, BinaryRelation reachingRelation) {
+		super(parent);
 		this.query = query;
 		this.path = path;
 		this.reachingRelation = reachingRelation;
 		//this.base = base;
 		//this.steps = steps;
 	}
+	
 
 	
-	public Collection<BinaryRelation> getPathContrib() {
+	public Collection<RelationletBinary> getPathContrib() {
 		PathToRelationMapper<AliasedPath> mapper = createPathMapper();
 		// Allocate the full path
 		BinaryRelation tmp = mapper.getOverallRelation(path);
@@ -61,7 +65,7 @@ public class ResolverData
 		BinaryRelation result = mapper.getMap().get(path);
 
 
-		return Collections.singleton(result);
+		return Collections.singleton(new RelationletBinary(result));
 //		// Get the root var
 //		Var var = query.getPartitionVar();
 //
@@ -128,7 +132,7 @@ public class ResolverData
 	public Resolver resolve(P_Path0 step, String alias) {
 		AliasedPath subPath = path.subPath(Maps.immutableEntry(step, alias));
 		
-		return new ResolverData(query, subPath, reachingRelation);
+		return new ResolverData(this, query, subPath, reachingRelation);
 	}
 
 	public static TernaryRelation createRelation(boolean isFwd, Var s, Var p, Var o) {

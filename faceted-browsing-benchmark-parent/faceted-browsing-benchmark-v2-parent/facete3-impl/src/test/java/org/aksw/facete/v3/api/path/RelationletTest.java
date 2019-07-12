@@ -7,9 +7,11 @@ import java.util.Map;
 import org.aksw.facete.v3.experimental.Resolvers;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.ElementOptional;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Test;
@@ -60,24 +62,33 @@ public class RelationletTest {
 
 		
 		if(true) {
-			Resolver resolver = Resolvers.from(Vars.s, QueryFactory.create(
-					"PREFIX eg: <http://www.example.org/>\n"
-					+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-					+ "CONSTRUCT { ?x <http://parr.en/t> ?y } WHERE { ?s eg:test ?o }"));
+			// Set up a base construct query for extension
+			Query baseQuery = QueryFactory.create(
+					"PREFIX eg: <http://www.example.org/>\n" +
+					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+					"CONSTRUCT { ?s <http://ex.org/parent> ?o }\n" +
+					"WHERE { ?s eg:test ?o }");
+			
+			Resolver resolver = Resolvers.from(Vars.s, baseQuery);
 			
 			Path psimple = Path.newPath().fwd(RDF.type);
 			
-			Path commonParentPath = Path.newPath().optional().fwd("http://par.en/t");
+			Path commonParentPath = Path.newPath().optional().fwd("http://ex.org/parent");
 
-			Path p1 = commonParentPath.fwd("http://ch.il/d", "p1");
-			Path p2 = commonParentPath.fwd("http://ch.il/d", "p2");
+			Path p1 = commonParentPath.fwd("http://ex.org/child", "p1");
+			Path p2 = commonParentPath.fwd("http://ex.org/child", "p2");
 
 
 			PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
-			pathlet.resolvePath(psimple);
+			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
+			// and ?s also being the connector for subsequent joins
+			pathlet.add(new PathletSimple(Vars.s, Vars.s, new RelationletElementImpl(baseQuery.getQueryPattern()).fixAll()));
+			
+			// Now add some paths
+//			pathlet.resolvePath(psimple);
 			pathlet.resolvePath(p1);
-			pathlet.resolvePath(p2);
-			pathlet.resolvePath(p2.fwd(RDFS.comment));
+//			pathlet.resolvePath(p2);
+//			pathlet.resolvePath(p2.fwd(RDFS.comment));
 			
 			RelationletNested rn = pathlet.materialize();
 			System.out.println("Materialized Element: " + rn.getElement());

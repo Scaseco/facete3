@@ -10,12 +10,17 @@ public class RelationletBinary
 	extends RelationletElementBase
 {
 	protected BinaryRelation br;
+	protected Set<Var> fixedVars;
 	
 	public RelationletBinary(BinaryRelation br) {
 		super();
 		this.br = br;
 	}
 
+	public BinaryRelation getBinaryRelation() {
+		return br;
+	}
+	
 	@Override
 	public Element getElement() {
 		return br.getElement();
@@ -34,7 +39,6 @@ public class RelationletBinary
 	public String toString() {
 		return "RelationletBinary [br=" + br + "]";
 	}
-
 //
 //	@Override
 //	public Var getSrcVar() {

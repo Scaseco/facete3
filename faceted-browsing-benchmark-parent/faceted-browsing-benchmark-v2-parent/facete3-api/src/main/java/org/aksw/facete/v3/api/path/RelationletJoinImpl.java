@@ -60,7 +60,7 @@ import com.google.common.collect.Table;
  * @param <T>
  */
 public class RelationletJoinImpl<T extends Relationlet>
-	extends RelationletBase
+	extends RelationletBaseWithFixed
 {
 
 	// TODO better use a TreeMap instead of a separate ridOrder list
@@ -403,7 +403,11 @@ public class RelationletJoinImpl<T extends Relationlet>
 //		if(this.toString().equals("PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={}]}, optional={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  <http://www.w3.org/2000/01/rdf-schema#label>  ?o={p1=PathletContainer [keyToAliasToMember={}]}}]}}]}}]")) {
 //			System.out.println("DEBUG POINT");
 //		}
-		
+
+		if(materializedMembers.toString().contains("http://www.example.org/test")) {
+			System.out.println("DEBUG POINT");
+		}
+
 //		Map<String, RelationletNested> materializedMembersByLabel = materializedMembers.entrySet().stream()
 //				.collect(CollectorUtils.toLinkedHashMap(
 //						e -> getLabelForId(e.getKey()),

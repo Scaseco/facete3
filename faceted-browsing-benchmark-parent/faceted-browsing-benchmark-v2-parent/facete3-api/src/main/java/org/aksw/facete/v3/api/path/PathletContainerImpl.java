@@ -179,6 +179,7 @@ public class PathletContainerImpl
 	public PathletContainerImpl step(Object key, String alias) {
 		P_Path0 p = key instanceof P_Path0 ? (P_Path0)key : null; // Node(key);
 		BinaryRelation br;
+		Set<Var> fixedVars = Collections.emptySet();
 		Resolver subResolver = null;
 		if(p == null) {
 			br = (BinaryRelation)key;
@@ -186,9 +187,11 @@ public class PathletContainerImpl
 		} else {
 			if(resolver != null) {
 				subResolver = resolver.resolve(p, alias);
-				Collection<BinaryRelation> brs = subResolver.getPathContrib();
+				Collection<RelationletBinary> brs = subResolver.getPathContrib();
 				System.out.println("CONTRIBS:" + brs);
-				br = brs.iterator().next();
+				RelationletBinary rb = brs.iterator().next(); 
+				br = rb.getBinaryRelation();
+				fixedVars = rb.getFixedVars();
 			} else {
 				Node n = p.getNode();
 				boolean isFwd = p.isForward();
@@ -199,7 +202,7 @@ public class PathletContainerImpl
 
 		}
 		
-		PathletContainerImpl result = step(subResolver, key, br, alias, RelationletJoinImpl::flatten);
+		PathletContainerImpl result = step(subResolver, key, br, fixedVars, alias, RelationletJoinImpl::flatten);
 		return result;
 		
 //		//BinaryRelation br = RelationUtils.createRelation(p, false, null)
@@ -238,7 +241,7 @@ public class PathletContainerImpl
 //		return result;
 //	}
 
-	public PathletContainerImpl step(Resolver subResolver, Object key, BinaryRelation br, String alias, Function<? super ElementGroup, ? extends Element> fn) {
+	public PathletContainerImpl step(Resolver subResolver, Object key, BinaryRelation br, Collection<Var> fixedVars, String alias, Function<? super ElementGroup, ? extends Element> fn) {
 		alias = alias == null ? "default" : alias;
 
 		key = key == null ? "" + br : key;
@@ -249,6 +252,7 @@ public class PathletContainerImpl
 
 		if(result == null) {
 			Pathlet childRootPathlet = newPathlet(br);
+			childRootPathlet.fixAll(fixedVars);
 			result = new PathletContainerImpl(subResolver, childRootPathlet, fn);
 //			RelationletBinary r = new RelationletBinary(br);
 //			//PathletMember childContainerMember = new PathletMember(childContainer, r, r.getSrcVar(), r.getTgtVar());
@@ -288,7 +292,7 @@ public class PathletContainerImpl
 	@Override
 	public PathletContainerImpl optional(String label) {
 		
-		PathletContainerImpl result = step(resolver, "optional", BinaryRelationImpl.empty(), "default",
+		PathletContainerImpl result = step(resolver, "optional", BinaryRelationImpl.empty(), Collections.emptySet(), "default",
 				x -> new ElementOptional(RelationletJoinImpl.flatten(x)));
 		return result;
 

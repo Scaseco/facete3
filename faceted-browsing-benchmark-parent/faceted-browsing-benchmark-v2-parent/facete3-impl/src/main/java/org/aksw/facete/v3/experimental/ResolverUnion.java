@@ -4,27 +4,30 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.api.path.RelationletBinary;
 import org.aksw.facete.v3.api.path.Resolver;
+import org.aksw.facete.v3.api.path.ResolverBase;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.apache.jena.sparql.path.P_Path0;
 
 public class ResolverUnion
-	implements Resolver
+	extends ResolverBase
 {
 	protected Collection<? extends Resolver> resolvers;
 
-	public ResolverUnion(Collection<? extends Resolver> resolvers) {
-		super();
+	public ResolverUnion(Resolver parent, Collection<? extends Resolver> resolvers) {
+		super(parent);
 		this.resolvers = resolvers;
 	}
 
+	
 	@Override
 	public Resolver resolve(P_Path0 step, String alias) {
 		Collection<Resolver> children = resolvers.stream().map(r -> r.resolve(step, alias))
 				.collect(Collectors.toList());
 		
-		Resolver result = new ResolverUnion(children);
+		Resolver result = new ResolverUnion(this, children);
 		return result;
 	}
 
@@ -55,10 +58,10 @@ public class ResolverUnion
 	}
 
 	@Override
-	public Collection<BinaryRelation> getPathContrib() {
-		List<BinaryRelation> result = resolvers.stream()
+	public Collection<RelationletBinary> getPathContrib() {
+		List<RelationletBinary> result = resolvers.stream()
 				.flatMap(resolver -> {
-					Collection<BinaryRelation> tmp = resolver.getPathContrib();
+					Collection<RelationletBinary> tmp = resolver.getPathContrib();
 					return tmp.stream();
 				})
 				.collect(Collectors.toList());

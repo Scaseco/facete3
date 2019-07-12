@@ -9,7 +9,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
 public abstract class RelationletElementBase
-	extends RelationletBase
+	extends RelationletBaseWithFixed
 	implements RelationletElement
 {
 	
@@ -27,6 +27,7 @@ public abstract class RelationletElementBase
 				.collect(CollectorUtils.toLinkedHashMap(x -> x, x -> x));
 
 		Element el = getElement();
+		Set<Var> fixedVars = getFixedVars();
 		RelationletNested result = new RelationletNested(el, identityMap, fixedVars);
 		return result;
 	}

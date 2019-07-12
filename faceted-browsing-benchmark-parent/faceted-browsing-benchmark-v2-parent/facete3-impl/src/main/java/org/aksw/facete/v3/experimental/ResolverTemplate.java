@@ -11,7 +11,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.AliasedPathImpl;
+import org.aksw.facete.v3.api.path.RelationletBinary;
 import org.aksw.facete.v3.api.path.Resolver;
+import org.aksw.facete.v3.api.path.ResolverBase;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -53,7 +55,7 @@ import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
  *
  */
 public class ResolverTemplate
-	implements Resolver
+	extends ResolverBase
 {
 	/**
 	 * SinglePathMode ensures that only at most a single path is returned.
@@ -71,14 +73,27 @@ public class ResolverTemplate
 	///protected Set<? extends RDFNode> starts;
 	protected RDFNode start;
 
+	protected ResolverTemplate parent;
 	
+	public Var getStartVar() {
+		Var result = (Var)start.asNode();
+		return result;
+	}
 
 	@Override
-	public Collection<BinaryRelation> getPathContrib() {
-		Var v = (Var)start.asNode();
-		Collection<BinaryRelation> result = Collections.singleton(reachingRelationContrib == null
-				? new BinaryRelationImpl(new ElementGroup(), v, v)
-				: reachingRelationContrib);
+	public Collection<RelationletBinary> getPathContrib() {
+		Var tgtVar = getStartVar();
+		
+		Var srcVar = ((ResolverTemplate)getRoot()).getStartVar();
+		
+		BinaryRelation br = reachingRelationContrib == null
+			? new BinaryRelationImpl(new ElementGroup(), srcVar, tgtVar)
+			: reachingRelationContrib;
+
+		RelationletBinary rb = new RelationletBinary(br);
+		rb.fix(tgtVar);
+		
+		Collection<RelationletBinary> result = Collections.singleton(rb);
 		
 		return result;
 	}
@@ -98,17 +113,17 @@ public class ResolverTemplate
 		return result;
 	}
 	
-	
-	protected ResolverTemplate(PartitionedQuery1 query, RDFNode start, BinaryRelation reachingRelation,  BinaryRelation reachingRelationContrib) {
+
+	protected ResolverTemplate(ResolverTemplate parent, PartitionedQuery1 query, RDFNode start, BinaryRelation reachingRelation,  BinaryRelation reachingRelationContrib) {
+		super(parent);
 		this.query = query;
 		//this.starts = starts;
 		this.start = start;
 		this.reachingRelation = reachingRelation;
 		this.reachingRelationContrib = reachingRelationContrib;
 	}
-	
-	
-	
+
+
 	@Override
 	public Resolver resolve(P_Path0 step, String alias) {
 		
@@ -119,7 +134,7 @@ public class ResolverTemplate
 			tmp.addAll(resolveData(step, alias));
 		}
 		
-		ResolverUnion result = new ResolverUnion(tmp);
+		ResolverUnion result = new ResolverUnion(this, tmp);
 		
 		return result;
 	}
@@ -198,11 +213,11 @@ public class ResolverTemplate
 					relation = relationContrib;
 				}
 				
-				result.add(new ResolverTemplate(newPq, newN, relation, relationContrib));
+				result.add(new ResolverTemplate(this, newPq, newN, relation, relationContrib));
 			}
 		} else {
 			for(RDFNode oldT : targets) {
-				result.add(new ResolverTemplate(newPq, oldT, null, null));
+				result.add(new ResolverTemplate(this, newPq, oldT, null, null));
 			}
 		}
 		
@@ -220,7 +235,7 @@ public class ResolverTemplate
 		Collection<Resolver> result = new ArrayList<>();
 		//for(RDFNode start : starts) {
 			PartitionedQuery1 tmp = new PartitionedQuery1(query.getQuery(), (Var)start.asNode());
-			Resolver item = new ResolverData(tmp, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)), reachingRelation);
+			Resolver item = new ResolverData(this, tmp, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)), reachingRelation);
 			result.add(item);
 		//}
 		
