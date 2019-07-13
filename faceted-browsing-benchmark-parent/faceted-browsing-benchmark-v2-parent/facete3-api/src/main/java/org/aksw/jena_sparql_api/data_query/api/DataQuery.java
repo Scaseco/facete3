@@ -214,4 +214,7 @@ public interface DataQuery<T extends RDFNode> {
 	
 	
 	ResolverNode resolver();
+	
+	
+	DataQuery<T> addOrderBy(Node node, int direction);
 }

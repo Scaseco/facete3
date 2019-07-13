@@ -89,7 +89,7 @@ public class PathletContainerImpl
 		return result;
 	}
 
-	Supplier<VarRefStatic> resolvePath(Path path) {
+	public Supplier<VarRefStatic> resolvePath(Path path) {
 		resolvePath(path, true);
 		
 		Supplier<VarRefStatic> result = () -> pathToVarRef(path);

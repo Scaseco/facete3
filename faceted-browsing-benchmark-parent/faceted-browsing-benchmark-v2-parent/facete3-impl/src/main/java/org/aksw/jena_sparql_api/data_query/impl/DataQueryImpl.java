@@ -18,7 +18,14 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.AliasedPath;
+import org.aksw.facete.v3.api.path.Path;
+import org.aksw.facete.v3.api.path.PathletContainerImpl;
+import org.aksw.facete.v3.api.path.PathletSimple;
+import org.aksw.facete.v3.api.path.RelationletElementImpl;
+import org.aksw.facete.v3.api.path.RelationletNested;
+import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.experimental.ResolverNodeImpl;
+import org.aksw.facete.v3.experimental.Resolvers;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
@@ -68,6 +75,7 @@ import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.Rename;
 import org.apache.jena.sparql.expr.E_Random;
@@ -251,7 +259,7 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	protected Class<T> resultClass;
 
-	protected List<SortCondition> sortConditions;
+	protected List<SortCondition> sortConditions = new ArrayList<>();
 	
 	public DataQueryImpl(SparqlQueryConnection conn, Node rootNode, Element baseQueryPattern, Template template, Class<T> resultClass) {
 		this(conn, new Concept(baseQueryPattern, (Var)rootNode), template, resultClass);
@@ -522,12 +530,41 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	// Note: The construct template may be empty - use in conjunction with ReactiveSparqlUtils.execPartitioned()
 	// TODO Rename to getEffectiveQuery
+//	@Override
+//	public Entry<Node, Query> toConstructQuery() {
+//		// This method perform in-place transform on the query object
+//		Entry<Node, Query> tmp = toBaseConstructQuery();
+//
+//		Var rootVar = (Var)tmp.getKey();
+//		Query baseQuery = tmp.getValue();
+//		Resolver resolver = Resolvers.from(rootVar, baseQuery);
+//		
+//		PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
+//		// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
+//		// and ?s also being the connector for subsequent joins
+//		pathlet.add(new PathletSimple(rootVar, rootVar, new RelationletElementImpl(baseQuery.getQueryPattern()).fixAll()));
+//
+//		// Substitute all NodePathletPath objects with NodePathletVarRef objects
+//		NodeTransform xform1 = new NodeTransformPathletPathResolver(pathlet);
+//		QueryUtils.applyNodeTransform(baseQuery, xform1);
+//
+//		// Now that all paths have been collected and added to the pathlet
+//		// materalize it
+//		RelationletNested rn = pathlet.materialize();
+//		
+//		// Resolve all var refs against the materialized relationlet
+//		NodeTransform xform2 = new NodeTransformPathletVarRefResolver(rn);
+//		QueryUtils.applyNodeTransform(baseQuery, xform2);
+//		
+//		Element e = rn.getElement();
+//
+//		baseQuery.setQueryPattern(e);
+//
+//		return tmp;
+//	}
+	
 	@Override
 	public Entry<Node, Query> toConstructQuery() {
-				
-		
-		
-		
 		
 		Set<Var> vars = new LinkedHashSet<>();
 		Node rootVar = baseRelation.getVars().get(0);
@@ -567,7 +604,7 @@ public class DataQueryImpl<T extends RDFNode>
 		if(!directFilters.isEmpty()) {
 			effectivePattern = ElementUtils.groupIfNeeded(Iterables.concat(Collections.singleton(effectivePattern), directFilters));
 		}
-		
+
 		
 		boolean deterministic = pseudoRandom != null;
 
@@ -611,7 +648,6 @@ public class DataQueryImpl<T extends RDFNode>
 				QueryUtils.applySlice(query, offset, limit, false);
 			}
 		}
-
 		
 		
 		if(ordered) {
@@ -622,6 +658,49 @@ public class DataQueryImpl<T extends RDFNode>
 			query.addOrderBy(new E_Random(), Query.ORDER_ASCENDING);
 //			query.addOrderBy(new E_RandomPseudo(), Query.ORDER_ASCENDING);
 		}
+
+		
+		for(SortCondition sc : sortConditions) {
+			query.addOrderBy(sc);
+		}
+		
+		
+		
+		// Resolve paths
+		{
+			Template effectiveTemplate = template != null ? template : new Template(new BasicPattern());
+
+			Query resolverConstruct = new Query();
+			resolverConstruct.setQueryConstructType();
+			resolverConstruct.setConstructTemplate(effectiveTemplate);
+			resolverConstruct.setQueryPattern(effectivePattern);
+			
+			Resolver resolver = Resolvers.from((Var)rootVar, resolverConstruct);
+
+			
+			PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
+			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
+			// and ?s also being the connector for subsequent joins
+			pathlet.add(new PathletSimple((Var)rootVar, (Var)rootVar, new RelationletElementImpl(query.getQueryPattern()).fixAll()));
+	
+			// Substitute all NodePathletPath objects with NodePathletVarRef objects
+			NodeTransform xform1 = new NodeTransformPathletPathResolver(pathlet);
+			query = QueryUtils.applyNodeTransform(query, xform1);
+	
+			// Now that all paths have been collected and added to the pathlet
+			// materalize it
+			RelationletNested rn = pathlet.materialize();
+			
+			// Resolve all var refs against the materialized relationlet
+			NodeTransform xform2 = new NodeTransformPathletVarRefResolver(rn);
+			query = QueryUtils.applyNodeTransform(query, xform2);
+			
+			Element e = rn.getElement();
+	
+			query.setQueryPattern(e);
+		}
+		
+		
 		
 		
 		//logger.info("Generated query: " + query);
@@ -737,9 +816,14 @@ public class DataQueryImpl<T extends RDFNode>
 //	}
 	
 	
-//	public void addOrderBy(Node node, int direction) {
-//
-//	}
+	public DataQuery<T> addOrderBy(Node node, int direction) {
+		sortConditions.add(new SortCondition(node, direction));
+		return this;
+	}
+
+	public DataQuery<T> addOrderBy(Path path, int direction) {
+		return addOrderBy(new NodePathletPath(path), direction);
+	}
 
 	
 //	public void addSortCondition() {

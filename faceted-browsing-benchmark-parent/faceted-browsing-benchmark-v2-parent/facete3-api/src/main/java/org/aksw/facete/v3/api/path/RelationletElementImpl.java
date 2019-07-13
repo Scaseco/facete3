@@ -7,7 +7,7 @@ import java.util.Set;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
-class RelationletElementImpl
+public class RelationletElementImpl
 	//implements Relationlet
 	extends RelationletElementBase
 {
