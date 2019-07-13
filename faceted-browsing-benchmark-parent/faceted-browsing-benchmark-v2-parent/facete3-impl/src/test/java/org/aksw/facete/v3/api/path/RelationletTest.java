@@ -3,6 +3,7 @@ package org.aksw.facete.v3.api.path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.aksw.facete.v3.experimental.Resolvers;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -11,7 +12,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.ElementOptional;
-import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Test;
@@ -76,7 +76,7 @@ public class RelationletTest {
 			Path commonParentPath = Path.newPath().optional().fwd("http://ex.org/parent");
 
 			Path p1 = commonParentPath.fwd("http://ex.org/child", "p1");
-			Path p2 = commonParentPath.fwd("http://ex.org/child", "p2");
+			Path p2 = commonParentPath.fwd("http://ex.org/child", "p1");
 
 
 			PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
@@ -85,14 +85,18 @@ public class RelationletTest {
 			pathlet.add(new PathletSimple(Vars.s, Vars.s, new RelationletElementImpl(baseQuery.getQueryPattern()).fixAll()));
 			
 			// Now add some paths
-//			pathlet.resolvePath(psimple);
+			pathlet.resolvePath(psimple);
 			pathlet.resolvePath(p1);
-//			pathlet.resolvePath(p2);
-//			pathlet.resolvePath(p2.fwd(RDFS.comment));
+			pathlet.resolvePath(p2);
+			Supplier<VarRefStatic> ref = pathlet.resolvePath(p2.optional().fwd(RDFS.comment));
 			
 			RelationletNested rn = pathlet.materialize();
 			System.out.println("Materialized Element: " + rn.getElement());
 			System.out.println("Materialized Vars    : " + rn.getExposedVars());
+			
+			System.out.println("Plain VarRef: " + ref.get());
+			System.out.println("Resolved VarRef: " + rn.resolve(ref.get()));
+			
 			
 			//p1.resolveIn(pathlet);
 			

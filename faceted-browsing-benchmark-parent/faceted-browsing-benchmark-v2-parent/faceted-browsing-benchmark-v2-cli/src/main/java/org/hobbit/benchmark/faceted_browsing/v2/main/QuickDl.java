@@ -27,7 +27,7 @@ public class QuickDl {
 	}
 	
 	public static void main(String[] args) {
-		Model m = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/DL-Learner/examples/poker/pair50.ttl");
+		Model m = RDFDataMgr.loadModel("/home/raven/Projects/EclipseOld2/DL-Learner/examples/poker/pair50.ttl");
 		m.setNsPrefix("kb", "http://localhost/foo#");
 
 		Set<Resource> pos = toSet(m, Arrays.asList(

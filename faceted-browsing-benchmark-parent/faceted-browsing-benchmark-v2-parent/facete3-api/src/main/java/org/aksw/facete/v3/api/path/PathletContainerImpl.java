@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Path0;
@@ -38,7 +41,7 @@ public class PathletContainerImpl
 	}
 	
 //	protected Table<MemberKey, String, PathletMember> keyToAliasToMember;
-	protected Table<Object, String, Pathlet> keyToAliasToMember = HashBasedTable.create();
+	protected Table<Object, String, RelationletEntry<? extends Pathlet>> keyToAliasToMember = HashBasedTable.create();
 	
 	
 	//protected PathletContainer container;
@@ -81,12 +84,32 @@ public class PathletContainerImpl
 		expose(tgtJoinVar.getName(), "root", rootPathlet.getTgtVar().getName());
 	}
 
-	public RelationletEntry<Pathlet> getRootMember() {
-		RelationletEntry<Pathlet> result = this.getMemberByLabel("root");
+	public RelationletEntry<? extends Pathlet> getRootMember() {
+		RelationletEntry<? extends Pathlet> result = this.getMemberByLabel("root");
+		return result;
+	}
+
+	Supplier<VarRefStatic> resolvePath(Path path) {
+		resolvePath(path, true);
+		
+		Supplier<VarRefStatic> result = () -> pathToVarRef(path);
+		
+		//PathletContainerImpl result = resolvePath(path, true);
+		return result;
+	}
+
+	VarRefStatic pathToVarRef(Path path) {
+		List<RelationletEntry<PathletContainerImpl>> list = resolvePath(path, false);
+		List<String> labels = list.stream()
+				.map(RelationletEntry::getId)
+				.collect(Collectors.toList());
+		Var v = Iterables.getLast(list).getRelationlet().getTgtVar();
+		
+		VarRefStatic result = new VarRefStatic(labels, v);
 		return result;
 	}
 	
-	PathletContainerImpl resolvePath(Path path) {
+	List<RelationletEntry<PathletContainerImpl>> resolvePath(Path path, boolean createIfNotExists) {
 		List<Step> steps = new ArrayList<>();
 		Path c = path;
 		do {
@@ -99,13 +122,13 @@ public class PathletContainerImpl
 
 		Collections.reverse(steps);
 
-		PathletContainerImpl result = resolve(steps.iterator());
+		List<RelationletEntry<PathletContainerImpl>> result = resolve(steps.iterator(), createIfNotExists);
 		return result;
 	}
 	
 	
-	PathletContainerImpl resolveStep(Step step) {
-		PathletContainerImpl result;
+	RelationletEntry<PathletContainerImpl> resolveStep(Step step, boolean createIfNotExists) {
+		RelationletEntry<PathletContainerImpl> result;
 		
 		String type = step.getType();
 		String alias = step.getAlias();
@@ -113,10 +136,10 @@ public class PathletContainerImpl
 
 		switch(type) {
 		case "optional":
-			result = optional(alias);
+			result = optional(alias, createIfNotExists);
 			break;
 		case "br":
-			result = step(key, alias);
+			result = step(key, alias, createIfNotExists);
 			break;
 		default:
 			throw new RuntimeException("Unknown step type " + type);
@@ -128,12 +151,19 @@ public class PathletContainerImpl
 	
 
 	
-	PathletContainerImpl resolve(Iterator<Step> it) {
-		PathletContainerImpl result = this;
-		while(it.hasNext()) {
+	List<RelationletEntry<PathletContainerImpl>> resolve(Iterator<Step> it, boolean createIfNotExists) {
+		List<RelationletEntry<PathletContainerImpl>> result = new ArrayList<>();
+		
+		PathletContainerImpl state = this;
+		while(it.hasNext() && state != null) {
 			Step step = it.next();
-			result = result.resolveStep(step);
-			Objects.requireNonNull(result, "Step resolution unexpectedly returned null");
+			RelationletEntry<PathletContainerImpl> tmp = state.resolveStep(step, createIfNotExists);
+			state = tmp.getRelationlet();
+			if(createIfNotExists) {
+				Objects.requireNonNull(state, "Step resolution unexpectedly returned null");
+			}
+			
+			result.add(tmp);
 		}
 //		} else {
 //			result = this;
@@ -146,11 +176,11 @@ public class PathletContainerImpl
 //		return super.add(pathlet);
 //	}
 	
-	Pathlet getMember(Object key, String alias) {
-		Pathlet member = keyToAliasToMember.get(key, alias);
-		//PathletContainer result = member.
-		return member;
-	}
+//	Pathlet getMember(Object key, String alias) {
+//		Pathlet member = keyToAliasToMember.get(key, alias);
+//		//PathletContainer result = member.
+//		return member;
+//	}
 
 	Pathlet add(Object key, String alias, Pathlet pathlet) {
 		return null;
@@ -176,7 +206,7 @@ public class PathletContainerImpl
 //		return result;
 //	}
 
-	public PathletContainerImpl step(Object key, String alias) {
+	public RelationletEntry<PathletContainerImpl> step(Object key, String alias, boolean createIfNotExists) {
 		P_Path0 p = key instanceof P_Path0 ? (P_Path0)key : null; // Node(key);
 		BinaryRelation br;
 		Set<Var> fixedVars = Collections.emptySet();
@@ -202,7 +232,7 @@ public class PathletContainerImpl
 
 		}
 		
-		PathletContainerImpl result = step(subResolver, key, br, fixedVars, alias, RelationletJoinImpl::flatten);
+		RelationletEntry<PathletContainerImpl> result = step(createIfNotExists, subResolver, key, br, fixedVars, alias, RelationletJoinImpl::flatten);
 		return result;
 		
 //		//BinaryRelation br = RelationUtils.createRelation(p, false, null)
@@ -214,7 +244,7 @@ public class PathletContainerImpl
 		RelationletEntry<Pathlet> result = super.add(label, item);
 
 		// Join the added pathlet with this container's root
-		RelationletEntry<Pathlet> root = getRootMember();
+		RelationletEntry<? extends Pathlet> root = getRootMember();
 		VarRef rootVarRef = root.createVarRef(x -> x.getTgtVar());
 		VarRef memberVarRef = result.createVarRef(x -> x.getSrcVar());
 		this.addJoin(rootVarRef, memberVarRef);
@@ -241,19 +271,23 @@ public class PathletContainerImpl
 //		return result;
 //	}
 
-	public PathletContainerImpl step(Resolver subResolver, Object key, BinaryRelation br, Collection<Var> fixedVars, String alias, Function<? super ElementGroup, ? extends Element> fn) {
+	public RelationletEntry<PathletContainerImpl> step(boolean createIfNotExists, Resolver subResolver, Object key, BinaryRelation br, Collection<Var> fixedVars, String alias, Function<? super ElementGroup, ? extends Element> fn) {
 		alias = alias == null ? "default" : alias;
 
 		key = key == null ? "" + br : key;
 
 		//BinaryRelation br = RelationUtils.createRelation(p, false, null);
 		// Check if there is a member with this relation pattern already
-		PathletContainerImpl result = (PathletContainerImpl)getMember(key, alias);//members.find(m -> m.getPattern().equals(br.getElement()));
+		RelationletEntry<PathletContainerImpl> result;
 
-		if(result == null) {
+		
+		result = (RelationletEntry<PathletContainerImpl>)keyToAliasToMember.get(key, alias);//members.find(m -> m.getPattern().equals(br.getElement()));
+
+		
+		if(result == null && createIfNotExists) {
 			Pathlet childRootPathlet = newPathlet(br);
 			childRootPathlet.fixAll(fixedVars);
-			result = new PathletContainerImpl(subResolver, childRootPathlet, fn);
+			PathletContainerImpl subContainer = new PathletContainerImpl(subResolver, childRootPathlet, fn);
 //			RelationletBinary r = new RelationletBinary(br);
 //			//PathletMember childContainerMember = new PathletMember(childContainer, r, r.getSrcVar(), r.getTgtVar());
 //			
@@ -269,8 +303,8 @@ public class PathletContainerImpl
 //			result.expose("joinSrc", "root", "s");
 //			result.expose("joinTgt", "root", "o");
 			
+			result = this.add(subContainer);
 			keyToAliasToMember.put(key, alias, result);
-			RelationletEntry<Pathlet> e = this.add(result);
 			//String el = e.getId();//this.getLabelForId(e.getId());
 //			VarRef vr = e.createVarRef(Vars.s);
 			
@@ -289,10 +323,10 @@ public class PathletContainerImpl
 		return result;
 	}
 
-	@Override
-	public PathletContainerImpl optional(String label) {
+	//@Override
+	public RelationletEntry<PathletContainerImpl> optional(String label, boolean isLookup) {
 		
-		PathletContainerImpl result = step(resolver, "optional", BinaryRelationImpl.empty(), Collections.emptySet(), "default",
+		RelationletEntry<PathletContainerImpl> result = step(isLookup, resolver, "optional", BinaryRelationImpl.empty(), Collections.emptySet(), "default",
 				x -> new ElementOptional(RelationletJoinImpl.flatten(x)));
 		return result;
 
@@ -378,11 +412,11 @@ public class PathletContainerImpl
 	}
 
 
-	@Override
-	public Pathlet optional(Pathlet rhs) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Pathlet optional(Pathlet rhs, boolean createIfNotExists) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	@Override
 	public String toString() {

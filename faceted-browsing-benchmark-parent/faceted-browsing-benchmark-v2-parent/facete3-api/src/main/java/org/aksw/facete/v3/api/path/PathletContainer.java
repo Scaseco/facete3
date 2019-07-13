@@ -22,15 +22,19 @@ interface PathletContainer
 	 * 
 	 * @return
 	 */
-	Pathlet optional(Pathlet rhs);
+//	Pathlet optional(Pathlet rhs, boolean createIfNotExists);
 	
 	// get or create an optional block with the given label
-	Pathlet optional(String label);
+	//Pathlet optional(String label, boolean createIfNotExists);
 	
 	// get or create an optional block with a null label
-    default Pathlet optional() {
-    	return optional((String)null);
-    }
+//    default Pathlet optional(boolean createIfNotExists) {
+//    	return optional((String)null, createIfNotExists);
+//    }
+//
+//    default Pathlet optional() {
+//    	return optional(true);
+//    }
 	
     static Pathlet as(String alias) {
 	    return null;

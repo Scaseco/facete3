@@ -68,7 +68,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 	//Map<Integer, RelationletEntry<T>> ridToEntry = new HashMap<>();
 	//List<Integer> ridOrder = new ArrayList<>();
 
-	protected Map<String, RelationletEntry<T>> labelToRe = new LinkedHashMap<>();
+	protected Map<String, RelationletEntry<? extends T>> labelToRe = new LinkedHashMap<>();
 	
 	
 	// Post processor invoked upon materialization of the join members
@@ -158,17 +158,17 @@ public class RelationletJoinImpl<T extends Relationlet>
 //		return result;
 //	}
 
-	public RelationletEntry<T> add(T item) {
+	public <U extends T> RelationletEntry<U> add(U item) {
 		String label = "genid" + gen.next();
-		RelationletEntry<T> result = add(label, item);
+		RelationletEntry<U> result = add(label, item);
 		return result;
 	}
 
-	public RelationletEntry<T> add(String label, T item) {
+	public <U extends T> RelationletEntry<U> add(String label, U item) {
 //		String id = gen.next();
 //		labelToRe.put(id, item);
 		
-		RelationletEntry<T> entry = new RelationletEntry<>(label, item);
+		RelationletEntry<U> entry = new RelationletEntry<>(label, item);
 		//labelToMember.put(label, entry);
 //		ridToEntry.put(id, entry);
 //		ridOrder.add(id);
@@ -335,7 +335,7 @@ public class RelationletJoinImpl<T extends Relationlet>
 		return null;
 	}
 	
-	public RelationletEntry<T> getMemberByLabel(String label) {
+	public RelationletEntry<? extends T> getMemberByLabel(String label) {
 		//return ridToEntry.get(labelToRid.get(label)).getRelationlet();
 		return labelToRe.get(label);
 	}

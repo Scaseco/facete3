@@ -3,6 +3,7 @@ package org.aksw.facete.v3.api.path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +37,18 @@ public class RelationletNested
 		this.aliasToMember = aliasToMember;
 //		this.aliasToMember = aliasToMember;
 //		this.exposedVarToElementVar = exposedVarToElementVar;
+	}
+	
+	public Var resolve(VarRefStatic varRef) {
+		List<String> labels = varRef.getLabels();
+		Var v = varRef.getV();
+		
+		NestedVarMap src = getNestedVarMap();
+		NestedVarMap tgt = src.get(labels);
+		Map<Var, Var> map = tgt.getLocalToFinalVarMap();
+		
+		Var result =  map.get(v);
+		return result;
 	}
 	
 	//@Override
