@@ -40,7 +40,7 @@ public class MainSparqlBenchmarkRunner {
 		args = ObjectArrays.concat(new String[] {"-d", "foo"}, args, String.class);
 
 		
-		JenaPluginUtils.registerJenaResourceClasses(
+		JenaPluginUtils.registerResourceClasses(
 			CommandMain.class
 		);
 		

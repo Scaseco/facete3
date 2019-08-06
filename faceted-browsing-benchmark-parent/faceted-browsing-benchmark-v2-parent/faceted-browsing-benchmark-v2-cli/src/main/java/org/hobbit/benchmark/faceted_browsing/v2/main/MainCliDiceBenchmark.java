@@ -78,11 +78,11 @@ public class MainCliDiceBenchmark {
 		// Add a dummy element to initialize a list property
 		args = ObjectArrays.concat(new String[] {"-d", "foo"}, args, String.class);
 		
-		JenaPluginUtils.registerJenaResourceClasses(
+		JenaPluginUtils.registerResourceClasses(
 				CommandMain.class,
 				RDFConnectionMetaData.class);
 		
-		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(ScenarioConfig.class);
+		JenaPluginUtils.scan(ScenarioConfig.class);
 		CommandMain cmMain = ModelFactory.createDefaultModel().createResource().as(CommandMain.class);
 
 		JCommander jc = JCommander.newBuilder().addObject(cmMain).build();

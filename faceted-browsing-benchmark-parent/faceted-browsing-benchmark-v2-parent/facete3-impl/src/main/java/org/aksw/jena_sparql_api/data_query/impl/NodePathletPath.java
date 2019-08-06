@@ -5,11 +5,10 @@ import org.aksw.facete.v3.api.path.Path;
 public class NodePathletPath
 	extends NodeCustom<Path>
 {	
-	protected NodePathletPath(Path value) {
+	public NodePathletPath(Path value) {
 		super(value);
 	}
-	
-	
+
 	public static NodePathletPath create(Path path) {
 		return new NodePathletPath(path);
 	}

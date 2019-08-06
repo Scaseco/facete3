@@ -56,7 +56,7 @@ public class ResolverData
 	
 
 	
-	public Collection<RelationletBinary> getPathContrib() {
+	public Collection<RelationletBinary> getReachingRelationlet() {
 		PathToRelationMapper<AliasedPath> mapper = createPathMapper();
 		// Allocate the full path
 		BinaryRelation tmp = mapper.getOverallRelation(path);
@@ -142,7 +142,7 @@ public class ResolverData
 	}
 	
 	@Override
-	public Collection<TernaryRelation> getContrib(boolean isFwd) {
+	public Collection<TernaryRelation> getRdfGraphSpec(boolean isFwd) {
 		
 		Element basePattern = query.getQuery().getQueryPattern();
 		Var baseVar = query.getPartitionVar();

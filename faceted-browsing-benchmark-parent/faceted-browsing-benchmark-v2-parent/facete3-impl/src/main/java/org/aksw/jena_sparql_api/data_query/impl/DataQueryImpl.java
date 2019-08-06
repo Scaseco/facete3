@@ -19,7 +19,7 @@ import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.path.Path;
-import org.aksw.facete.v3.api.path.PathletContainerImpl;
+import org.aksw.facete.v3.api.path.PathletJoinerImpl;
 import org.aksw.facete.v3.api.path.PathletSimple;
 import org.aksw.facete.v3.api.path.RelationletElementImpl;
 import org.aksw.facete.v3.api.path.RelationletNested;
@@ -30,6 +30,7 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPruneEmptyLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
@@ -678,7 +679,7 @@ public class DataQueryImpl<T extends RDFNode>
 			Resolver resolver = Resolvers.from((Var)rootVar, resolverConstruct);
 
 			
-			PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
+			PathletJoinerImpl pathlet = new PathletJoinerImpl(resolver);
 			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
 			// and ?s also being the connector for subsequent joins
 			pathlet.add(new PathletSimple((Var)rootVar, (Var)rootVar, new RelationletElementImpl(query.getQueryPattern()).fixAll()));
@@ -946,6 +947,8 @@ public class DataQueryImpl<T extends RDFNode>
         		op = TransformRedundantFilterRemoval.transform(op);
         		op = TransformFilterSimplify.transform(op);
 
+        		op = TransformPruneEmptyLeftJoin.transform(op);
+        		
         		op = TransformFilterFalseToEmptyTable.transform(op);
         		op = TransformPromoteTableEmptyVarPreserving.transform(op);
         		return op;

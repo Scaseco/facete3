@@ -41,7 +41,7 @@ public class ResolverDirNodeImpl
 	}
 
 	public Collection<TernaryRelation> getContrib() {
-		Collection<TernaryRelation> result = resolver.getContrib(isFwd);
+		Collection<TernaryRelation> result = resolver.getRdfGraphSpec(isFwd);
 		return result;
 	}
 

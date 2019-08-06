@@ -5,7 +5,7 @@ import org.apache.jena.riot.RDFDataMgr;
 
 public class MainCliConnectedSubset {
 	public static void main(String[] args) {
-		JenaPluginUtils.registerJenaResourceClasses(PathNode.class);
+		JenaPluginUtils.registerResourceClasses(PathNode.class);
 
 		PathNode test = RDFDataMgr.loadModel("skyscraper-paths.ttl").listResourcesWithProperty(PathNode.DEPTH, 0).nextResource().as(PathNode.class);
 		

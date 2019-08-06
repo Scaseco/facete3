@@ -8,8 +8,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -37,7 +37,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 
 /**
@@ -59,7 +58,7 @@ import com.google.common.collect.Table;
  *
  * @param <T>
  */
-public class RelationletJoinImpl<T extends Relationlet>
+public class RelationletJoinerImpl<T extends Relationlet>
 	extends RelationletBaseWithFixed
 {
 
@@ -87,11 +86,11 @@ public class RelationletJoinImpl<T extends Relationlet>
 		return result;
 	}
 	
-	public RelationletJoinImpl() {
-		this(RelationletJoinImpl::flatten);
+	public RelationletJoinerImpl() {
+		this(RelationletJoinerImpl::flatten);
 	}
 	
-	public RelationletJoinImpl(Function<? super ElementGroup, ? extends Element> postProcessor) {
+	public RelationletJoinerImpl(Function<? super ElementGroup, ? extends Element> postProcessor) {
 		super();
 		this.postProcessor = postProcessor;
 	}
@@ -234,8 +233,8 @@ public class RelationletJoinImpl<T extends Relationlet>
 			result = stack;
 		} else {
 			Relationlet r = current.getRelationlet();
-			if(r instanceof RelationletJoinImpl) {
-				RelationletJoinImpl<?> tmp = (RelationletJoinImpl<?>)r;
+			if(r instanceof RelationletJoinerImpl) {
+				RelationletJoinerImpl<?> tmp = (RelationletJoinerImpl<?>)r;
 				for(RelationletEntry<?> e : tmp.labelToRe.values()) { //tmp.getRelationletEntries()) {
 					String id = e.getId();
 					NestedStack<String> next = new NestedStack<>(stack, id);		
@@ -398,15 +397,15 @@ public class RelationletJoinImpl<T extends Relationlet>
 					RelationletEntry::getId,
 					e -> e.getRelationlet().materialize()));
 
-		System.out.println("Processing: " + this);
+//		System.out.println("Processing: " + this);
 		
 //		if(this.toString().equals("PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={}]}, optional={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  a                     ?o={default=PathletContainer [keyToAliasToMember={?s ?o | ?s  <http://www.w3.org/2000/01/rdf-schema#label>  ?o={p1=PathletContainer [keyToAliasToMember={}]}}]}}]}}]")) {
 //			System.out.println("DEBUG POINT");
 //		}
 
-		if(materializedMembers.toString().contains("http://www.example.org/test")) {
-			System.out.println("DEBUG POINT");
-		}
+//		if(materializedMembers.toString().contains("http://www.example.org/test")) {
+//			System.out.println("DEBUG POINT");
+//		}
 
 //		Map<String, RelationletNested> materializedMembersByLabel = materializedMembers.entrySet().stream()
 //				.collect(CollectorUtils.toLinkedHashMap(
@@ -741,8 +740,8 @@ public class RelationletJoinImpl<T extends Relationlet>
 		
 		RelationletNested result = new RelationletNested(finalElement, nvm, materializedMembers);
 		
-		System.out.println(ridToVarToFinalVal);
-		System.out.println(group);
+//		System.out.println(ridToVarToFinalVal);
+//		System.out.println(group);
 		return result;
 	}
 

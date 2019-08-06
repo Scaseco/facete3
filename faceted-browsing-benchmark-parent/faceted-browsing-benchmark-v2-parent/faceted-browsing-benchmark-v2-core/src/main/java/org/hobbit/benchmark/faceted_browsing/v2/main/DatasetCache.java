@@ -14,7 +14,7 @@ public class DatasetCache {
 	public static void main(String[] args) throws Exception {
 		JenaSystem.init();
 
-		JenaPluginUtils.registerJenaResourceClasses(RDFConnectionMetaData.class);
+		JenaPluginUtils.registerResourceClasses(RDFConnectionMetaData.class);
 		
 		// The workflow we want to implement is:
 		// 1. Create a RDFConnection to a SPARQL endpoint

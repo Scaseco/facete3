@@ -378,33 +378,33 @@ public class VirtualPartitionedQuery {
 		
 		Query example1 = rewrite(
 				resolver
-					.getContrib(true),
+					.getRdfGraphSpec(true),
 				QueryFactory.create("SELECT ?x ?y ?z { ?x ?y ?z }"));
 		System.out.println("Example 1\n" + example1);
 
 		Query example2 = rewrite(
 				resolver
-					.getContrib(true),
+					.getRdfGraphSpec(true),
 				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
 		System.out.println("Example 2\n" + example2);
 
 		Query example3 = rewrite(
 				resolver
 					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	
-					.getContrib(true),
+					.getRdfGraphSpec(true),
 				QueryFactory.create("SELECT ?x ?y ?z { ?x ?y ?z }"));
 		System.out.println("Example 3\n" + example3);
 
 		Query example4a = rewrite(
 				resolver
 					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")))	
-					.getContrib(true),
+					.getRdfGraphSpec(true),
 				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
 		System.out.println("Example 4a\n" + example4a);
 		Query example4b = rewrite(
 				resolver
 					.resolve(new P_Link(NodeFactory.createURI("http://facetCount")), "someAlias")	
-					.getContrib(true),
+					.getRdfGraphSpec(true),
 				QueryFactory.create("SELECT DISTINCT ?y { ?x ?y ?z }"));
 		System.out.println("Example 4b\n" + example4b);
 		}

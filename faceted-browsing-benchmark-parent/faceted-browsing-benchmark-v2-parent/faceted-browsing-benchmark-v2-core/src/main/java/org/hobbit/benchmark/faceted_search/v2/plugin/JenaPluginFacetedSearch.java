@@ -29,7 +29,7 @@ public class JenaPluginFacetedSearch implements JenaSubsystemLifecycle {
 	public static void init(Personality<RDFNode> p) {
 		p.add(SetSummary.class, new SimpleImplementation(SetSummaryImpl::new));
 		p.add(RdfStack.class, new SimpleImplementation(RdfStackImpl::new));
-		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(SparqlTaskResource.class.getPackage().getName());
-		JenaPluginUtils.registerJenaResourceClasses(ScenarioConfig.class);
+		JenaPluginUtils.scan(SparqlTaskResource.class.getPackage().getName());
+		JenaPluginUtils.registerResourceClasses(ScenarioConfig.class);
 	}
 }

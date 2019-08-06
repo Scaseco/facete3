@@ -41,7 +41,10 @@ public class Vocab {
 	public static final Property expr = property("expr");
 	public static final Property constraint = property("constraint");
 	public static final Property enabled = property("enabled");
+	// Mapping x a Constraint ; expr e ; mapping [ key "someNodeId" ; value _:blanknode ]
+	public static final Property mapping = property("mapping");
 
+	
 	public static final Property value = property("value");
 	public static final Property facetCount = property("facetCount");
 	public static final Property facetValueCount = property("facetValueCount");

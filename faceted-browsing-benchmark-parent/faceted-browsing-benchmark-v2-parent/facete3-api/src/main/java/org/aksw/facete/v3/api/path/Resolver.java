@@ -14,11 +14,25 @@ public interface Resolver {
 
 	Resolver resolve(P_Path0 step, String alias);
 	
+	Collection<RelationletBinary> getReachingRelationlet();
+	
+	/**
+	 * Return this resolver's specification
+	 * of the RDF graph reached in forward or backward direction.
+	 * Evaluation of each of the returned {@link TernaryRelation}s over an RDF graph
+	 * yields this spec's corresponding RDF graph. 
+	 * 
+	 * 
+	 * 
+	 * @param fwd
+	 * @return
+	 */
+	Collection<TernaryRelation> getRdfGraphSpec(boolean fwd);
+
 	default Resolver resolve(P_Path0 step) {
 		Resolver result = resolve(step, null);
 		return result;
 	}
-	
 	
 	default Resolver getRoot() {
 		Resolver result = TreeUtils.getRoot(this, Resolver::getParent);
@@ -28,10 +42,9 @@ public interface Resolver {
 	}
 	
 //	BinaryRelation getBinaryRelation(boolean fwd);
-
-	Collection<RelationletBinary> getPathContrib();
 	
-	Collection<BinaryRelation> getPaths();
-	
-	Collection<TernaryRelation> getContrib(boolean fwd);
+	@Deprecated
+	default Collection<BinaryRelation> getPaths() {
+		throw new UnsupportedOperationException("This method should no longer be used");
+	}	
 }

@@ -32,9 +32,9 @@ public class ResolverUnion
 	}
 
 	@Override
-	public Collection<TernaryRelation> getContrib(boolean fwd) {
+	public Collection<TernaryRelation> getRdfGraphSpec(boolean fwd) {
 		List<TernaryRelation> result = resolvers.stream()
-				.flatMap(resolver -> resolver.getContrib(fwd).stream())
+				.flatMap(resolver -> resolver.getRdfGraphSpec(fwd).stream())
 				.collect(Collectors.toList());
 		
 //		List<TernaryRelation> result = new ArrayList<>();
@@ -58,10 +58,10 @@ public class ResolverUnion
 	}
 
 	@Override
-	public Collection<RelationletBinary> getPathContrib() {
+	public Collection<RelationletBinary> getReachingRelationlet() {
 		List<RelationletBinary> result = resolvers.stream()
 				.flatMap(resolver -> {
-					Collection<RelationletBinary> tmp = resolver.getPathContrib();
+					Collection<RelationletBinary> tmp = resolver.getReachingRelationlet();
 					return tmp.stream();
 				})
 				.collect(Collectors.toList());

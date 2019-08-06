@@ -81,7 +81,7 @@ public class ResolverTemplate
 	}
 
 	@Override
-	public Collection<RelationletBinary> getPathContrib() {
+	public Collection<RelationletBinary> getReachingRelationlet() {
 		Var tgtVar = getStartVar();
 		
 		Var srcVar = ((ResolverTemplate)getRoot()).getStartVar();
@@ -244,7 +244,7 @@ public class ResolverTemplate
 	}
 
 	@Override
-	public Collection<TernaryRelation> getContrib(boolean isFwd) {
+	public Collection<TernaryRelation> getRdfGraphSpec(boolean isFwd) {
 		Collection<TernaryRelation> result = new ArrayList<>();
 		
 		Element basePattern = query.getQuery().getQueryPattern();

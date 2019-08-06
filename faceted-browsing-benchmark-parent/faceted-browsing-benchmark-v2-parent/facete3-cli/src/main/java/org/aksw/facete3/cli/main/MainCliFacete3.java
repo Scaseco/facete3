@@ -1,5 +1,6 @@
 package org.aksw.facete3.cli.main;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.FacetedQueryResource;
 import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete.v3.api.path.Path;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
@@ -44,6 +46,7 @@ import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
@@ -102,7 +105,10 @@ import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
 import com.googlecode.lanterna.gui2.Window;
+import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
+import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
+import com.googlecode.lanterna.gui2.dialogs.MessageDialogButton;
 import com.googlecode.lanterna.gui2.table.Table;
 import com.googlecode.lanterna.gui2.table.TableModel;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -193,20 +199,18 @@ abstract class PaginatorBase<T>
 	public List<T> createPages(long numItems, long itemOffset) {
 		// Add one extra page if the devision yields a remainder
 		long numPages = numItems / itemsPerPage
-				+ Math.max(numItems % itemsPerPage, 1);
+				+ Math.min(numItems % itemsPerPage, 1);
 
 		long activePage = itemOffset / itemsPerPage;
 
-		
 		long halfProximity = showProximity / 2;
 		long extraSpace = showProximity % 2;
 
 		long showBefore = halfProximity + extraSpace;
 		long showAfter = halfProximity;
-		
 
 		long availBefore = activePage;
-		long availAfter = numPages - activePage;
+		long availAfter = numPages - activePage - 1;
 				
 
 		long beforeToAfter = Math.max(showBefore - availBefore, 0);
@@ -217,6 +221,7 @@ abstract class PaginatorBase<T>
 		
 		// Final adjustment of show before (discard any still available space)
 		showBefore = Math.min(showBefore, availBefore);
+		showAfter = Math.min(showAfter, availAfter);
 		
 		long from = activePage - showBefore;
 		long to = activePage + showAfter;
@@ -224,7 +229,7 @@ abstract class PaginatorBase<T>
 		List<T> result = new ArrayList<>();
 		for(long i = from; i <= to; ++i) {
 			long pageStart = i * itemsPerPage;
-			long pageEnd = pageStart + itemsPerPage;
+			long pageEnd = Math.min(pageStart + itemsPerPage, numItems);
 
 			boolean isActive = itemOffset >= pageStart && itemOffset < pageEnd;
 		
@@ -578,6 +583,7 @@ public class MainCliFacete3 {
 	ActionListBox facetList = new ActionListBox(); //new TerminalSize(30, 10));
 	CheckBoxList<FacetValueCount> facetValueList = new CheckBoxList<>();
 	Table<Node> resultTable = new Table<>("Item");
+	Table<Node> cartTable = new Table<>("Item");
 
 	CheckBoxList<HLFacetConstraint<?>> constraintList = new CheckBoxList<>();
 	Panel facetPathPanel = new Panel();
@@ -671,10 +677,10 @@ public class MainCliFacete3 {
 		//setAttr("com.googlecode.lanterna.gui2.Borders$StandardBorder", resultPanelBorder, "title", "" + count);
 		//System.out.println("Item count: " + count);
 		long itemStart = itemPage[0];
-		long itemEnd = itemStart + itemsPerPage;
+		long itemEnd = Math.min(itemStart + itemsPerPage, count);
 		String title = count == 0
 				? "(no matches)"
-				: String.format("Matches %d-%d/%d", itemStart + 1, itemEnd, count);
+				: String.format("Matches %d-%d of %d", itemStart + 1, itemEnd, count);
 		
 		((StandardBorder)resultPanelBorder).setTitle(title);
 		
@@ -807,7 +813,9 @@ public class MainCliFacete3 {
 					.facetValueCountsWithAbsent(includeAbsent)
 					//.filter(filter)
 					.filterUsing(filter, FacetValueCountImpl_.VALUE)
-					.only(selectedFacet).exec()
+					.only(selectedFacet)
+					.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), Query.ORDER_DESCENDING)
+					.exec()
 					.toList().blockingGet();
 	
 			//System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
@@ -864,7 +872,10 @@ public class MainCliFacete3 {
 					
 			List<FacetCount> fcs = fdn.facetCounts(includeAbsent)
 					.filter(filter)
-					.exec().toList()
+					.addOrderBy(new NodePathletPath(Path.newPath()), Query.ORDER_ASCENDING)
+//					.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), Query.ORDER_DESCENDING)
+					.exec()
+					.toList()
 					// TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup
 					.doOnSuccess(list -> enrichWithLabels(list, FacetCount::getPredicate, labelService))
 					.blockingGet();
@@ -912,7 +923,7 @@ public class MainCliFacete3 {
 		
 		// TODO Move auto proxying to a proper test case
 		//MapperProxyUtils.createProxyFactory(Test2.class);
-		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(Test2.class.getPackage().getName());		
+		JenaPluginUtils.scan(Test2.class.getPackage().getName());		
 		Test2 test = ModelFactory.createDefaultModel().createResource().as(Test2.class);
 		test.getFoo(Resource.class).add(RDFS.label);
 		test.getFoo(Integer.class).add(5);
@@ -1029,7 +1040,6 @@ public class MainCliFacete3 {
 					break;
 				}
 			}
-			
 			
 			if(KeyType.Backspace.equals(keyStroke.getKeyType())) {
 				PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
@@ -1314,7 +1324,9 @@ public class MainCliFacete3 {
 		Panel facetPanel = new Panel();
 		Panel constraintPanel = new Panel();
 		Panel resultPanel = new Panel();
-		
+
+		Panel cartPanel = new Panel();
+
 		// Component hierarchy and layouts
 		
 
@@ -1380,7 +1392,12 @@ public class MainCliFacete3 {
 		resourcePanel.addComponent(resourceSubjectLabel);
 		resourcePanel.addComponent(resourceTable);
 
+		cartPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
+		cartPanel.setLayoutManager(new GridLayout2(1));
+		//resultPanel.addComponent(itemPagePanel);
+		cartPanel.addComponent(cartTable);
 
+		
 
 
 		//mainPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.FILL, true, true, 2, 1));
@@ -1391,6 +1408,7 @@ public class MainCliFacete3 {
 		
 		mainPanel.addComponent(resultPanel.withBorder(resultPanelBorder));
 		mainPanel.addComponent(resourcePanel.withBorder(Borders.singleLine("Resource")));
+		mainPanel.addComponent(cartPanel.withBorder(Borders.singleLine("Cart")));
 
 		
 		 // Create window to hold the panel
@@ -1407,6 +1425,30 @@ public class MainCliFacete3 {
 			
 			@Override
 			public void onInput(Window basePane, KeyStroke keyStroke, AtomicBoolean deliverEvent) {
+				
+				if(KeyType.Escape.equals(keyStroke.getKeyType())) {
+					MessageDialogButton selected = new MessageDialogBuilder()
+						.setTitle("")
+						.setText("Close this application?")
+						.addButton(MessageDialogButton.No)
+						.addButton(MessageDialogButton.Yes)
+						.build()
+						.showDialog((WindowBasedTextGUI)window.getTextGUI());
+					
+					switch(selected) {
+					case Yes:
+						window.close();
+						try {
+							terminal.close();
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+						break;
+					default:
+						break;
+					}
+				}
+
 				//keyStroke.getCharacter()
 				
 				// TODO Auto-generated method stub
@@ -1425,6 +1467,9 @@ public class MainCliFacete3 {
 				
 			}
 		});
+        
+        
+        
         
         //Window.Hint.NO_POST_RENDERING
         // Create gui and start gui

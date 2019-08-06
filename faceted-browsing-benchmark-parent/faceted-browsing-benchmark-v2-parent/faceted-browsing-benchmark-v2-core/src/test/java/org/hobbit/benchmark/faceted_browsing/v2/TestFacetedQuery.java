@@ -86,7 +86,7 @@ public class TestFacetedQuery {
 				.fwd(RDF.type).one()
 					.constraints()
 //					.range(Range.atLeast(0)).activate()
-//						.eq(OWL.Class).activate()
+						.eq(OWL.Class).activate()
 					.end()
 				.parent()
 				.fwd()

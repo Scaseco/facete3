@@ -22,7 +22,7 @@ public class TestRdfNfa {
 		Model model = RDFDataMgr.loadModel("task-generator-config.ttl");
 		RDFDataMgrEx.execSparql(model, "nfa-materialize.sparql");
 		
-		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(Nfa.class);
+		JenaPluginUtils.scan(Nfa.class);
 
 		RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
 

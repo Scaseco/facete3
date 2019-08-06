@@ -20,7 +20,7 @@ public class RelationletTest {
 
 	@Test
 	public void testJoins() {
-		RelationletJoinImpl<Relationlet> joiner = new RelationletJoinImpl<>();
+		RelationletJoinerImpl<Relationlet> joiner = new RelationletJoinerImpl<>();
 		
 		if(false) {
 			joiner.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).setVarFixed(Vars.s, true));
@@ -79,7 +79,7 @@ public class RelationletTest {
 			Path p2 = commonParentPath.fwd("http://ex.org/child", "p1");
 
 
-			PathletContainerImpl pathlet = new PathletContainerImpl(resolver);
+			PathletJoinerImpl pathlet = new PathletJoinerImpl(resolver);
 			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
 			// and ?s also being the connector for subsequent joins
 			pathlet.add(new PathletSimple(Vars.s, Vars.s, new RelationletElementImpl(baseQuery.getQueryPattern()).fixAll()));
@@ -109,13 +109,13 @@ public class RelationletTest {
 	
 	@Test
 	public void test() {		
-		RelationletJoinImpl<Relationlet> child = new RelationletJoinImpl<>();
+		RelationletJoinerImpl<Relationlet> child = new RelationletJoinerImpl<>();
 		child.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).fix(Vars.s));
 		child.add("b", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDFS.label.asNode(), Vars.o)));
 		child.expose("u", "a", "s");
 		child.addJoin("a", Arrays.asList(Vars.s), "b", Arrays.asList(Vars.s));		
 		
-		RelationletJoinImpl<Relationlet> parent = new RelationletJoinImpl<>();
+		RelationletJoinerImpl<Relationlet> parent = new RelationletJoinerImpl<>();
 		parent.add("a", child);
 		parent.add("c", Relationlets.from(new ElementOptional(ElementUtils.createElementTriple(Vars.x, RDFS.seeAlso.asNode(), Vars.y))));
 		parent.addJoin("a", Collections.singletonList(Vars.u), "c", Collections.singletonList(Vars.x));
