@@ -89,8 +89,8 @@ public class FacetConstraintImpl
 
 	public static Integer tryGetBnodeAsInt(Node n) {
 		Integer result = null;
-		if(n.isBlank()) {
-			String str = n.getBlankNodeLabel();
+		if(n.isVariable()) { // n.isBlank()
+			String str = n.getName(); //n.getBlankNodeLabel();
 			if(str.matches("\\d+")) {
 				result = Integer.parseInt(str);
 			}
@@ -144,8 +144,8 @@ public class FacetConstraintImpl
 		NodeTransformCollectNodes collector = new NodeTransformCollectNodes();
 		Set<Node> nodes = collector.getNodes();
 		
-		Expr tmpExpr = ExprTransformer.transform(new NodeTransformExpr(collector), expr);
-
+		ExprTransformer.transform(new NodeTransformExpr(collector), expr);
+		
 		// Create a map from blank node 
 		Map<Integer, Node> bnodeToInt = Streams.zip(
 			nodes.stream().filter(Node::isBlank),
@@ -156,7 +156,7 @@ public class FacetConstraintImpl
 		Map<Node, Node> encoder = bnodeToInt.entrySet().stream()
 				.collect(Collectors.toMap(
 						Entry::getValue,
-						e -> NodeFactory.createBlankNode(Objects.toString(e.getKey()))));
+						e -> Var.alloc(Objects.toString(e.getKey()))));
 		
 		for(Node node : nodes) {
 			System.out.println("  " + node + " -> " + encoder.get(node));
@@ -248,7 +248,7 @@ public class FacetConstraintImpl
 		FacetConstraint c = m.createResource().as(FacetConstraint.class);
 		c.expr(expr);
 		
-		RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+		RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_FLAT);
 		
 	}
 }
