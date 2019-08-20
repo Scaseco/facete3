@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;

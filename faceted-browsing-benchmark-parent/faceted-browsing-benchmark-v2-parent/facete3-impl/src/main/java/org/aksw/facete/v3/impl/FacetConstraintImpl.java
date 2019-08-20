@@ -10,13 +10,13 @@ import java.util.stream.IntStream;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
-import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
-import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
-import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
+import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromProperty2;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromResource2;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
@@ -100,7 +100,7 @@ public class FacetConstraintImpl
 
 	// Mapping of bnodes in the contraint expression *string* to bnodes in the model
 	public Map<Integer, Node> getBnodeMap() {
-		Map<RDFNode, RDFNode> rawMap = new MapFromProperty2(this, Vocab.mapping, Vocab.key, Vocab.value);
+		Map<RDFNode, RDFNode> rawMap = new MapFromResource2(this, Vocab.mapping, Vocab.key, Vocab.value);
 		
 		//Map<RDFNode, Resource> rawMap = new HashMap<>();
 		
@@ -108,10 +108,10 @@ public class FacetConstraintImpl
 		
 		Map<Integer, RDFNode> tmpMap = new MapFromKeyConverter<>(
 				rawMap,
-				new ConverterFromNodeMapperAndModel<>(model, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.from(Integer.class))));
+				new ConverterFromNodeMapperAndModel<>(model, RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.from(Integer.class))));
 
 		Map<Integer, Node> result = new MapFromValueConverter<>(
-				tmpMap, new ConverterFromNodeMapperAndModel<>(model, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.PASSTHROUGH)));
+				tmpMap, new ConverterFromNodeMapperAndModel<>(model, RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.PASSTHROUGH)));
 
 		return result;
 	}
@@ -158,9 +158,9 @@ public class FacetConstraintImpl
 						Entry::getValue,
 						e -> Var.alloc(Objects.toString(e.getKey()))));
 		
-		for(Node node : nodes) {
-			System.out.println("  " + node + " -> " + encoder.get(node));
-		}
+//		for(Node node : nodes) {
+//			System.out.println("  " + node + " -> " + encoder.get(node));
+//		}
 		
 		// Substitute blank nodes in the given expressions with the ids from the mapping
 		Expr effectiveExpr = ExprTransformer.transform(new NodeTransformExpr(x -> encoder.getOrDefault(x, x)), expr);		
@@ -168,6 +168,7 @@ public class FacetConstraintImpl
 		// Append the mapping to the resource
 		Map<Integer, Node> mapView = getBnodeMap();
 		mapView.clear();
+		
 		mapView.putAll(bnodeToInt);
 
 		
@@ -187,6 +188,7 @@ public class FacetConstraintImpl
 		
 		String str = ExprUtils.fmtSPARQL(effectiveExpr);
 		ResourceUtils.setLiteralProperty(this, Vocab.expr, str);
+//		RDFDataMgr.write(System.err, this.getModel(), RDFFormat.TURTLE_PRETTY);
 
 		return this;
 	}
@@ -237,16 +239,23 @@ public class FacetConstraintImpl
 		
 		Resource b1 = m.createResource();
 		Resource b2 = m.createResource();
+		Resource b3 = m.createResource();
 
 		b1.addProperty(RDF.type, RDFS.Resource);
 		b2.addProperty(RDF.type, RDFS.Resource);
+		b3.addProperty(RDF.type, RDFS.Resource);
 		
 		Resource iri = m.createResource("http://www.example.org/test");
 
-		Expr expr = new E_LogicalOr(NodeValue.makeNode(b1.asNode()), new E_LogicalOr(NodeValue.makeNode(b2.asNode()), NodeValue.makeNode(iri.asNode())));
+		Expr e1 = new E_LogicalOr(NodeValue.makeNode(b1.asNode()), new E_LogicalOr(NodeValue.makeNode(b2.asNode()), NodeValue.makeNode(iri.asNode())));
 
 		FacetConstraint c = m.createResource().as(FacetConstraint.class);
-		c.expr(expr);
+		c.expr(e1);
+
+		Expr e2 = NodeValue.makeNode(b3.asNode());
+		c.expr(e2);
+
+		
 		
 		RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_FLAT);
 		

@@ -1,6 +1,6 @@
 package org.aksw.facete.v3.impl;
 
-import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
@@ -23,11 +23,11 @@ public interface RangeSpec
 	void setMaxInclusive(boolean onOrOff);
 	
 	default <T> T getMin(Class<T> clazz) {
-		return NodeMapperFactory.from(clazz).toJava(getMin().asNode());
+		return NodeMappers.from(clazz).toJava(getMin().asNode());
 	}
 
 	default <T> T getMax(Class<T> clazz) {
-		return NodeMapperFactory.from(clazz).toJava(getMax().asNode());
+		return NodeMappers.from(clazz).toJava(getMax().asNode());
 	}
 	
 	default <T extends Comparable<T>> Range<T> toRange(Class<T> clazz) {

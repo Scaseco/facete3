@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,28 +35,37 @@ import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.api.path.Path;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
+import org.aksw.facete.v3.experimental.VirtualPartitionedQuery;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
+import org.aksw.facete.v3.impl.RDFConnectionBuilder;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
-import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -72,16 +82,20 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionRemoteBuilder;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
@@ -117,10 +131,6 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
-
-import joptsimple.NonOptionArgumentSpec;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
 
 
 interface Paginator<T> {
@@ -359,10 +369,20 @@ class DirtyChecker {
 public class MainCliFacete3 {
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacete3.class);
 	
-	public static String treeToString() {
-		return null;
+	@Parameters(separators = "=", commandDescription = "Facete3 Options")
+	public static class CommandMain {
+		@Parameter(description = "Non option args")
+		protected List<String> nonOptionArgs;
+
+		@Parameter(names="--bp", description="Blank node profile")
+		protected String bnodeProfile = "jena";
+
+		@Parameter(names = "--help", help = true)
+		protected boolean help = false;
 	}
 
+	
+	
 	public static void setAttr(String clazzName, Object obj, String fieldName, Object value) {
 		try {
 			Class<?> clazz = Class.forName(clazzName);
@@ -574,7 +594,7 @@ public class MainCliFacete3 {
 	//KeyStroke resourceViewKey = new KeyStroke(' ', false, false);
 	public static final char resourceViewKey = ' ';
 	
-	RDFConnection conn;
+	//RDFConnection conn;
 	
 	//RDFConnection conn;
 	FacetedQuery fq;
@@ -905,6 +925,34 @@ public class MainCliFacete3 {
 	}
 
 	
+	public static boolean isSparqlEndpoint(String url) {
+		boolean result = false;
+		try(RDFConnection conn = RDFConnectionFactory.connect(url)) {
+			result = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s a ?o } LIMIT 1"))
+				.timeout(10, TimeUnit.SECONDS)
+				.limit(1)
+				.map(x -> true)
+				.onErrorReturn(e -> false)
+				.blockingSingle();
+		}
+		
+		return result;
+	}
+	
+	
+	public static Query rewriteUnionDefaultGraph(Query q) {
+		List<TernaryRelation> views = Arrays.asList(
+				new TernaryRelationImpl(Concept.parseElement(
+						"{ GRAPH ?g { ?s ?p ?o } }", null), Vars.s, Vars.p, Vars.o)
+			);
+		Query result = VirtualPartitionedQuery.rewrite(
+				views,
+				q);
+//		System.out.println("Example 1\n" + example1);
+
+		return result;
+	}
+	
 	/**
 	 * Entry point for the Facete3 Command Line Interface
 	 * 
@@ -913,6 +961,23 @@ public class MainCliFacete3 {
 	 */
 	public static void main(String[] args) throws Exception {
 		
+		CommandMain cm = new CommandMain();
+		
+		// CommandCommit commit = new CommandCommit();
+		JCommander jc = JCommander.newBuilder()
+				.addObject(cm)
+				.build();
+
+		jc.parse(args);
+
+        if (cm.help) {
+            jc.usage();
+            return;
+        }
+        
+        
+        
+        
 //		RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org/sparql");
 //		conn = wrapWithVirtualBnodeUris(conn, "jena", "<http://jena.apache.org/ARQ/function#bnode>");
 //		try(QueryExecution qe = conn.query("SELECT * { ?s ?p ?o . FILTER(isBlank(?s)) } LIMIT 1")) {
@@ -923,13 +988,13 @@ public class MainCliFacete3 {
 		
 		// TODO Move auto proxying to a proper test case
 		//MapperProxyUtils.createProxyFactory(Test2.class);
-		JenaPluginUtils.scan(Test2.class.getPackage().getName());		
-		Test2 test = ModelFactory.createDefaultModel().createResource().as(Test2.class);
-		test.getFoo(Resource.class).add(RDFS.label);
-		test.getFoo(Integer.class).add(5);
-		test.getFoo(String.class).add("5");
-		
-		RDFDataMgr.write(System.err, test.getModel(), RDFFormat.TURTLE_PRETTY);
+//		JenaPluginUtils.scan(Test2.class.getPackage().getName());		
+//		Test2 test = ModelFactory.createDefaultModel().createResource().as(Test2.class);
+//		test.getFoo(Resource.class).add(RDFS.label);
+//		test.getFoo(Integer.class).add(5);
+//		test.getFoo(String.class).add("5");
+//		
+//		RDFDataMgr.write(System.err, test.getModel(), RDFFormat.TURTLE_PRETTY);
 		
 //		System.out.println(test.getFoo(Resource.class));
 //		System.out.println(test.getFoo(String.class));
@@ -941,33 +1006,49 @@ public class MainCliFacete3 {
 //		}
 		
 //		if(true) return;
-		
-		
-	    OptionParser parser = new OptionParser();
+			    
 
-	    NonOptionArgumentSpec<String> filesOs = parser
-	    		.nonOptions()
-	    		.describedAs("Input files");
+	    List<String> files = cm.nonOptionArgs;
+	    
+	    
+	    RDFConnection conn = null;
+	    try {
+		    
+		    if(files.size() == 1) {
+		    	logger.info("Probing argument for SPARQL endpoint");
+		    	String str = files.get(0);
+		    	boolean isSparql = isSparqlEndpoint(str);
+	
+		    	if(isSparql) {
+		    		logger.info("Probe query succeeded. Connecting with bnode profile " + cm.bnodeProfile + " ...");
+		    		conn = RDFConnectionFactory.connect(str);
 
-	    
-	    OptionSet optionSet = parser.parse(args);
-	    
+//		    		conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, MainCliFacete3::rewriteUnionDefaultGraph);		    		
+		    		conn = wrapWithVirtualBnodeUris(conn, cm.bnodeProfile);
+		    	}
+		    }
+		    
+		    if(conn == null) {
+			    Model model = ModelFactory.createDefaultModel();
+			    Stopwatch sw = Stopwatch.createStarted();
+			    logger.info("Loading RDF files...");
+			    for(String file : files) {
+				    logger.info("  Attempting to loading " + file);
+			    	Model tmp = RDFDataMgr.loadModel(file);
+			    	model.add(tmp);
+			    }
+			    logger.info("Done loading " + model.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
+			    
+			    Dataset dataset = DatasetFactory.wrap(model);
+			    conn = RDFConnectionFactory.connect(dataset);
+		    }
 
-	    List<String> files = filesOs.values(optionSet);
-	    
-	    Model model = ModelFactory.createDefaultModel();
-	    Stopwatch sw = Stopwatch.createStarted();
-	    logger.info("Loading RDF files...");
-	    for(String file : files) {
-		    logger.info("  Attempting to loading " + file);
-	    	Model tmp = RDFDataMgr.loadModel(file);
-	    	model.add(tmp);
+			new MainCliFacete3().init(conn);
+	    } finally {
+	    	if(conn != null) {
+	    		conn.close();
+	    	}
 	    }
-	    logger.info("Done loading " + model.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
-	    
-	    Dataset dataset = DatasetFactory.wrap(model);
-		
-		new MainCliFacete3().init(dataset);
 	}
 	
 	
@@ -987,7 +1068,7 @@ public class MainCliFacete3 {
 				.with(filter).getElement());
 		
 		
-		Model model = conn.queryConstruct(q);
+		Model model = fq.connection().queryConstruct(q);
 		RDFNode result = model.asRDFNode(node);
 		
 		return result;
@@ -996,13 +1077,23 @@ public class MainCliFacete3 {
 	}
 
 	
-	public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String vendorLabel, String bnodeLabelFn) {
-		ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(vendorLabel, bnodeLabelFn);
+	public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String profile) {
+		//ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(vendorLabel, bnodeLabelFn);
+		
+		Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
+		RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+
+		Set<String> profiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
+		Map<String, UserDefinedFunctionDefinition> macros = UserDefinedFunctions.load(model, profiles);
+		
+		ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(macros);
+
+		
 		RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
 		return result;
 	}
 	
-	public void init(Dataset dataset) throws Exception
+	public void init(RDFConnection conn) throws Exception
 	{
 		resourceTable.setCellSelection(true);
 		resultPanelBorder = Borders.singleLine("Matches");
@@ -1015,8 +1106,7 @@ public class MainCliFacete3 {
 		
 		//Dataset dataset = RDFDataMgr.loadDataset("/home/raven/.dcat/repository/datasets/data/dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04/_content/dcat.ttl");
 //		Dataset dataset = RDFDataMgr.loadDataset("path-data-simple.ttl");
-		conn = RDFConnectionFactory.connect(dataset);
-		conn = wrapWithVirtualBnodeUris(conn, "jena", "<http://jena.apache.org/ARQ/function#bnode>");
+		//conn = RDFConnectionFactory.connect("http://localhost:5000/provenance");
 		
 		
 		fq = FacetedQueryImpl.create(conn);
@@ -1081,7 +1171,7 @@ public class MainCliFacete3 {
 //		});
 		
 		labelService = LookupServiceUtils
-				.createLookupService(new QueryExecutionFactorySparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
+				.createLookupService(fq.connection(), BinaryRelationImpl.create(RDFS.label))
 				.mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
 				.mapValues((k, v) -> "" + v);
 		

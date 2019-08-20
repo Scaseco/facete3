@@ -16,11 +16,11 @@ import org.aksw.jena_sparql_api.changeset.vocab.CS;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -30,8 +30,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.sparql.expr.E_NotExists;
-import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.vocabulary.RDF;
 
@@ -67,7 +65,7 @@ public class ChangeSetUtils {
 				ElementUtils.createElementTriple(Vars.s, CSX.precedingChangeSetGroup.asNode(), csg.asNode()),
 				Vars.s);
 		
-		List<Node> items = ServiceUtils.fetchList(FluentQueryExecutionFactory.from(model).create(), concept);
+		List<Node> items = ServiceUtils.fetchList(new SparqlQueryConnectionJsa(FluentQueryExecutionFactory.from(model).create()), concept);
 		if(items.size() > 1) {
 			throw new RuntimeException("Multiple changeset groups");
 		}
@@ -86,7 +84,7 @@ public class ChangeSetUtils {
 				ElementUtils.createElementTriple(Vars.s, CS.precedingChangeSet.asNode(), cs.asNode()),
 				Vars.s);
 		
-		List<Node> items = ServiceUtils.fetchList(FluentQueryExecutionFactory.from(model).create(), concept);
+		List<Node> items = ServiceUtils.fetchList(new SparqlQueryConnectionJsa(FluentQueryExecutionFactory.from(model).create()), concept);
 		if(items.size() > 1) {
 			throw new RuntimeException("Multiple changeset groups");
 		}

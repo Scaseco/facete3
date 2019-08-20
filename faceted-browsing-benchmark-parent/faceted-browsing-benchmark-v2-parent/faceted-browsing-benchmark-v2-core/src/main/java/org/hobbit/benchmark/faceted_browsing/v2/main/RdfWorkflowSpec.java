@@ -20,9 +20,9 @@ import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
-import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
-import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -337,7 +337,7 @@ public class RdfWorkflowSpec {
 		return new ModelCreationImpl<Flowable<Resource>>(
 				() -> ModelCreationImpl.deriveDatasetIri(conn),
 				cacheId,
-				() -> ReactiveSparqlUtils.execPartitioned(conn, partitionedQuery).map(RDFNode::asResource),
+				() -> SparqlRx.execPartitioned(conn, partitionedQuery).map(RDFNode::asResource),
 				(cacheFile, result) -> RDFDataMgrRx.writeResources(result, cacheFile, RDFFormat.TRIG),
 				cacheFile -> RDFDataMgrRx.createFlowableResources(() -> new FileInputStream(cacheFile.toFile()), Lang.TRIG, cacheFile.toAbsolutePath().toString())
 			);

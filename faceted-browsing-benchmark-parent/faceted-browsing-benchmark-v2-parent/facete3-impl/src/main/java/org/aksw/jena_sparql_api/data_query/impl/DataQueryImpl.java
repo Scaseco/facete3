@@ -42,7 +42,6 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataMultiNode;
 import org.aksw.jena_sparql_api.data_query.api.DataNode;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
@@ -53,6 +52,7 @@ import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -772,7 +772,7 @@ public class DataQueryImpl<T extends RDFNode>
 //				return r;
 //			})
 		
-		Flowable<T> result = ReactiveSparqlUtils.execPartitioned(conn, e)
+		Flowable<T> result = SparqlRx.execPartitioned(conn, e)
 			.map(r -> r.as(resultClass));
 		
 		
@@ -967,7 +967,7 @@ public class DataQueryImpl<T extends RDFNode>
 		Entry<Node, Query> e = toConstructQuery();
 		Query query = e.getValue();
 		//		QueryExecutionUtils.countQuery(query, new QueryExecutionFactorySparqlQueryConnection(conn));
-		Single<CountInfo> result = ReactiveSparqlUtils.fetchCountQuery(conn, query, distinctItemCount, rowCount)
+		Single<CountInfo> result = SparqlRx.fetchCountQuery(conn, query, distinctItemCount, rowCount)
 				.map(range -> CountUtils.toCountInfo(range));
 		
 		return result;

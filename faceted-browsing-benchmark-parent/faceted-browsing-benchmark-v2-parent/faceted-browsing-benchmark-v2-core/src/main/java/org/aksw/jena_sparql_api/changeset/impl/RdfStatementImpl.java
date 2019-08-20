@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.changeset.impl;
 
 import org.aksw.jena_sparql_api.changeset.api.RdfStatement;
-import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
@@ -41,7 +41,7 @@ public class RdfStatementImpl
 
 	@Override
 	public Property getPredicate() {
-		Property result = ResourceUtils.tryGetPropertyValue(this, RDF.predicate, NodeMapperFactory.uriString)
+		Property result = ResourceUtils.tryGetPropertyValue(this, RDF.predicate, NodeMappers.uriString)
 			.map(r -> ResourceFactory.createProperty(r))
 			.orElse(null);
 		

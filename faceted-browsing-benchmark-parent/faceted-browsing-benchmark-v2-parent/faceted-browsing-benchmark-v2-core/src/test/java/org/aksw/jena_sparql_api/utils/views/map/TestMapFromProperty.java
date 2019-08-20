@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapper;
-import org.aksw.jena_sparql_api.utils.model.ConverterFromNodeMapperAndModel;
-import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
+import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
+import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -26,16 +26,16 @@ public class TestMapFromProperty {
 		
 		// For 1mio items, the hash map is 6x times faster than model on i7-7700HQ CPU @ 2.80GHz
 		
-		Map<RDFNode, Resource> rawMap = new MapFromProperty(s, Vocab.entry, RDFS.label);
+		Map<RDFNode, Resource> rawMap = new MapFromResource(s, Vocab.entry, RDFS.label);
 		
 		//Map<RDFNode, Resource> rawMap = new HashMap<>();
 		
 		Map<String, Resource> tmpMap = new MapFromKeyConverter<>(
 				rawMap,
-				new ConverterFromNodeMapperAndModel<>(model, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.uriString)));
+				new ConverterFromNodeMapperAndModel<>(model, RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
 
 		Map<String, String> map = new MapFromValueConverter<>(
-				tmpMap, new ConverterFromNodeMapperAndModel<>(model, Resource.class, new ConverterFromNodeMapper<>(NodeMapperFactory.uriString)));
+				tmpMap, new ConverterFromNodeMapperAndModel<>(model, Resource.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
 		
 
 		// TODO We need to extract the value attribute of the entry resource

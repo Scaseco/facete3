@@ -7,7 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.aksw.commons.collections.SinglePrefetchIterator;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
@@ -53,7 +53,7 @@ class LinkedIterator<X, T>
 	}
 	
 	@Override
-	protected void doRemove() {
+	protected void doRemove(T item) {
 		if(remove != null) {
 			remove.accept(current);
 		} else {

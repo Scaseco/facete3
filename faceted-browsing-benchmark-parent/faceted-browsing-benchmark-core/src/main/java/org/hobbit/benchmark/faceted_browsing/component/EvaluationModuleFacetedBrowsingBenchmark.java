@@ -16,8 +16,8 @@ import java.util.function.Function;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
-import org.aksw.jena_sparql_api.utils.model.SetFromLiteralPropertyValues;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.SetFromLiteralPropertyValues;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.ResultSet;

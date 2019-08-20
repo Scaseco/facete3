@@ -77,11 +77,11 @@ public class FacetedBrowsingEncodersV2 {
 
     	// Its ridiculous, but we need to encode the result set in another format
         {
-            String rawExpectedResultStr = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(result, BenchmarkVocab.expectedResult, String.class);
+            String rawExpectedResultStr = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(result, BenchmarkVocab.expectedResult, String.class);
         	ResultSet expectedRs = ResultSetFactory.fromJSON(new ByteArrayInputStream(rawExpectedResultStr.getBytes(StandardCharsets.UTF_8)));
             byte[] resultsBytes = EvaluationModuleFacetedBrowsingBenchmark.formatResultData(expectedRs);
             String expectedResultStr = RabbitMQUtils.readString(resultsBytes);        	
-            org.aksw.jena_sparql_api.utils.model.ResourceUtils.setLiteralProperty(result, BenchmarkVocab.expectedResult, expectedResultStr);
+            org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.setLiteralProperty(result, BenchmarkVocab.expectedResult, expectedResultStr);
         }
 
     	

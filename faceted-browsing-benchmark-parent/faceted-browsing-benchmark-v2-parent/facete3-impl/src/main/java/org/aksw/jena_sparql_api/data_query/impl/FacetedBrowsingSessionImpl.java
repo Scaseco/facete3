@@ -11,9 +11,9 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -128,7 +128,7 @@ public class FacetedBrowsingSessionImpl {
 		logger.info("Requesting facet value counts: " + query);
 		
 		
-		return ReactiveSparqlUtils.execSelect(() -> conn.query(query))
+		return SparqlRx.execSelectRaw(() -> conn.query(query))
 			.map(b -> Tables.immutableCell(b.get(tr.getS()), b.get(tr.getP()), Range.singleton(((Number)b.get(tr.getO()).getLiteral().getValue()).longValue())));
 
 	}

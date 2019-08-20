@@ -5,7 +5,7 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromProperty;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -32,7 +32,7 @@ public interface PathNode
 	Long getCount();
 	
 	default Map<Resource, PathNode> getTransitions() {
-		Map<RDFNode, Resource> map = new MapFromProperty(this, TRANSITIONS, PREDICATE);
+		Map<RDFNode, Resource> map = new MapFromResource(this, TRANSITIONS, PREDICATE);
 		
 		Map<Resource, Resource> m = new MapFromKeyConverter<>(map, Converter.from(r -> r.as(Resource.class), RDFNode::asResource));		
 		Map<Resource, PathNode> result = new MapFromValueConverter<>(m, Converter.from(r -> r.as(PathNode.class), RDFNode::asResource));

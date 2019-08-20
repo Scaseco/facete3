@@ -17,10 +17,10 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -143,7 +143,7 @@ public class MainFacetedQueryApi {
 //				.create();
 		}
 
-		ReactiveSparqlUtils.execSelect(() -> 
+		SparqlRx.execSelectRaw(() -> 
 			conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
 			.toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 

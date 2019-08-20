@@ -8,11 +8,11 @@ import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNodeResource;
 import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
-import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -181,8 +181,8 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 		Collection<FacetConstraint> lowLevel = list();
 
 		CollectionFromConverter<HLFacetConstraint<? extends ConstraintFacade<B>>, FacetConstraint, ?> result = new CollectionFromConverter<>(lowLevel, Converter.from(
-			hl -> hl.state(),
-			ll -> new HLFacetConstraintImpl<>(this, parent, ll)
+			ll -> new HLFacetConstraintImpl<>(this, parent, ll),
+			hl -> hl.state()
 		));
 	
 		return result;

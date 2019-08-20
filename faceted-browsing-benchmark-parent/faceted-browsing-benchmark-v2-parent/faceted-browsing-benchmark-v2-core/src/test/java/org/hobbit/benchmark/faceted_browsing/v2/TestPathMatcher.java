@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.rdf.model.Model;

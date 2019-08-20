@@ -48,10 +48,11 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
-import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFromRdfDatatype;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -62,7 +63,6 @@ import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.model.NodeMapperRdfDatatype;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -277,7 +277,7 @@ public class TaskGenerator {
 					// add scenario id
 					s.addLiteral(FacetedBrowsingVocab.scenarioId, displayId);
 
-					Integer queryId = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(s, FacetedBrowsingVocab.queryId, Integer.class); //getString();
+					Integer queryId = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(s, FacetedBrowsingVocab.queryId, Integer.class); //getString();
 					String scenarioName = "scenario" + displayId;
 
 					s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
@@ -359,7 +359,7 @@ public class TaskGenerator {
 				.getModel();		
 
 		String numericRangeQueryStr = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT DISTINCT  ?p { ?p rdfs:range [ rdfs:subClassOf* xsd:numeric ] }";
-		List<SetSummary> numericProperties = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
+		List<SetSummary> numericProperties = SparqlRx.execSelect(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
 			.map(b -> b.getResource("p").as(SetSummary.class))
 			.toList()
 			.blockingGet();
@@ -625,14 +625,14 @@ public class TaskGenerator {
 				model.listResourcesWithProperty(Vocab.min).andThen(model.listResourcesWithProperty(Vocab.max)).toSet();
 	
 		for(Resource cand : candidates) {
-			Set<Statement> stmts = org.aksw.jena_sparql_api.utils.model.ResourceUtils.listReverseProperties(cand, null).toSet();
+			Set<Statement> stmts = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.listReverseProperties(cand, null).toSet();
 			
 			for(Statement stmt : stmts) {
 				Resource s = stmt.getSubject();
 				Property p = stmt.getPredicate();
 				Resource o = stmt.getObject().asResource();
-				Number min = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(o, Vocab.min, Number.class);
-				Number max = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(o, Vocab.max, Number.class);
+				Number min = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(o, Vocab.min, Number.class);
+				Number max = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(o, Vocab.max, Number.class);
 	
 				
 				String dtypeStr = Optional.ofNullable(o.getProperty(ResourceFactory.createProperty("http://www.example.org/type"))).map(oo -> oo.getObject().asResource().getURI()).orElse(null);
@@ -648,7 +648,7 @@ public class TaskGenerator {
 					RDFNode value;
 					if(dtypeStr != null) {
 						RDFDatatype t = TypeMapper.getInstance().getTypeByName(dtypeStr);
-						Object raw = NodeMapperRdfDatatype.toJavaCore(NodeValue.makeDouble(point).asNode(), t);
+						Object raw = NodeMapperFromRdfDatatype.toJavaCore(NodeValue.makeDouble(point).asNode(), t);
 					
 					///String lex = t.unparse(raw);
 						 value = model.createTypedLiteral(raw, t);
@@ -894,7 +894,7 @@ public class TaskGenerator {
 	}
 	
 	public static String getTransitionKey(NfaTransition transition) {
-		String result = org.aksw.jena_sparql_api.utils.model.ResourceUtils.getLiteralPropertyValue(transition, Vocab.key, String.class);
+		String result = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(transition, Vocab.key, String.class);
 		return result;
 	}
 

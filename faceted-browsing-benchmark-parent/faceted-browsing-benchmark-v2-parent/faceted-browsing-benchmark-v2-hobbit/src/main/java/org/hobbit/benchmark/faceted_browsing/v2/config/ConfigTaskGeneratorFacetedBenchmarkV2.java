@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
-import org.aksw.jena_sparql_api.core.utils.RDFDataMgrRx;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.query.ResultSetFactory;

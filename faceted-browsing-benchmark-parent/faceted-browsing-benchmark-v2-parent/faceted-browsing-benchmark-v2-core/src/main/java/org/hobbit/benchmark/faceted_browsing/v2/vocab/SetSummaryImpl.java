@@ -2,7 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.vocab;
 
 import java.math.BigDecimal;
 
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.impl.ResourceImpl;

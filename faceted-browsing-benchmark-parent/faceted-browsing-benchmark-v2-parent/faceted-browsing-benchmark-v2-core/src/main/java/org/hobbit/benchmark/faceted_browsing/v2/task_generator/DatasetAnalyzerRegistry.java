@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Triple;
@@ -159,7 +159,7 @@ public class DatasetAnalyzerRegistry {
 		
 		
 		String numericRangeQueryStr = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT DISTINCT  ?p { ?p rdfs:range [ rdfs:subClassOf* xsd:numeric ] }";
-		Flowable<SetSummary> result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
+		Flowable<SetSummary> result = SparqlRx.execSelect(() -> QueryExecutionFactory.create(numericRangeQueryStr, model))
 			.map(b -> b.getResource("p").as(SetSummary.class));
 
 				 

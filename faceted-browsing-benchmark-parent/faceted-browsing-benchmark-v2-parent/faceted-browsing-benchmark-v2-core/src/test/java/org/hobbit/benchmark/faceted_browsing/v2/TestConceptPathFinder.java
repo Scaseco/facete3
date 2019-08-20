@@ -6,7 +6,7 @@ import java.util.List;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.DatasetGraphQuadsImpl;
+import org.aksw.jena_sparql_api.rx.DatasetGraphQuadsImpl;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.query.Dataset;

@@ -12,10 +12,12 @@ import org.aksw.facete.v3.api.traversal.TraversalDirNode;
 import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
 import org.aksw.facete.v3.api.traversal.TraversalNode;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.XExpr;
 import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
@@ -24,8 +26,12 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.syntax.Element;
@@ -369,7 +375,41 @@ public class VirtualPartitionedQuery {
 	}
 
 	public static void main(String[] args) {
+//CONSTRUCT { ?s ?p ?o } WHERE {?x <http://wikiba.se/ontology#claim> ?s . ?x ?p ?o }
 
+		
+		
+		if(true) {
+			List<TernaryRelation> views = Arrays.asList(
+				//new TernaryRelationImpl(Concept.parseElement("{ ?s ?p ?o }", null), Vars.s, Vars.p, Vars.o),
+				new TernaryRelationImpl(Concept.parseElement(
+						"{ ?x <http://wikiba.se/ontology#claim> ?s"
+						+ ". ?x ?p ?o }", null), Vars.s, Vars.p, Vars.o)
+			);
+					
+		//Query view = QueryFactory.create("CONSTRUCT {?s ?p ?o } { ?s ?pRaw ?o . BIND(URI(CONCAT('http://foobar', STR(?pRaw))) AS ?p) }");		
+		//PartitionedQuery1 pq = PartitionedQuery1.from(view, Vars.s);
+		//Resolver resolver = Resolvers.from(pq);
+//			FILTER(?s = <http://www.wikidata.org/prop/P299>)
+		String queryStr = "SELECT ?s ?o { ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> ; <http://www.w3.org/2000/01/rdf-schema#label> ?o . FILTER(?s = <http://www.wikidata.org/prop/P299>)}";
+			
+		Query example1 = rewrite(
+				views,
+				QueryFactory.create(queryStr));
+		System.out.println("Example 1\n" + example1);
+		
+		try(RDFConnection conn = RDFConnectionFactory.connect("https://query.wikidata.org/sparql")) {
+			
+			//example1 = DataQueryImpl.rewrite(example1, DataQueryImpl.createDefaultRewriter()::rewrite);
+			try(QueryExecution qe = conn.query(example1)) {
+				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			}
+		}
+		
+		return;
+		}
+		
+		
 		Query view = QueryFactory.create("CONSTRUCT { ?p <http://facetCount> ?c } { { SELECT ?p (COUNT(?o) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");		
 		PartitionedQuery1 pq = PartitionedQuery1.from(view, Vars.p);
 		Resolver resolver = Resolvers.from(pq);

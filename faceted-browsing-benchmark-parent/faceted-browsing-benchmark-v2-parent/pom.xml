@@ -23,6 +23,7 @@
 		<module>faceted-browsing-benchmark-v2-docker-parent</module>
 		<module>facete3-cli</module>
 		<module>facete3-debian-cli</module>
+		<module>facete3-eclipse</module>
 	</modules>
 
 </project>

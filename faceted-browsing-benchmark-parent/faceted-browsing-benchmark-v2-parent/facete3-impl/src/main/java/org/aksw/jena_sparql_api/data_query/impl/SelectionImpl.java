@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.data_query.impl;
 
 import org.aksw.jena_sparql_api.data_query.api.Selection;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Statement;
