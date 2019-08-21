@@ -12,7 +12,8 @@
 		<!-- <jena-sparql-api.version>3.7.0-1-SNAPSHOT</jena-sparql-api.version> -->
 		<jena.version>3.12.0</jena.version>
 		<jena-sparql-api.version>${jena.version}-2-SNAPSHOT</jena-sparql-api.version>
-		<spring.version>4.3.11.RELEASE</spring.version>
+<!--		<spring.version>4.3.11.RELEASE</spring.version> -->
+<!--		<spring-boot.version> -->
 		<slf4j.version>1.7.25</slf4j.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -198,7 +199,7 @@
 				<version>3.4.0</version>
 			</dependency>
 -->
-
+<!--
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot</artifactId>
@@ -216,8 +217,8 @@
 				<artifactId>spring-boot-loader</artifactId>
 				<version>1.5.7.RELEASE</version>
 			</dependency>
-
-
+-->
+<!--
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-core</artifactId>
@@ -247,7 +248,7 @@
 				<artifactId>spring-test</artifactId>
 				<version>${spring.version}</version>
 			</dependency>
-
+-->
 
 			<dependency>
 				<groupId>com.google.guava</groupId>
