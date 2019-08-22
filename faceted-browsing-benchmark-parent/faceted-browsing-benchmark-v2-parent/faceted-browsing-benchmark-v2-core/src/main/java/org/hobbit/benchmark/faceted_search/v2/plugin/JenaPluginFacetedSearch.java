@@ -22,6 +22,11 @@ public class JenaPluginFacetedSearch implements JenaSubsystemLifecycle {
 	public void stop() {
 	}
 
+//	@Override
+//	public int level() {
+//		return ;
+//	}
+	
 	public static void init() {
 		init(BuiltinPersonalities.model);
 	}

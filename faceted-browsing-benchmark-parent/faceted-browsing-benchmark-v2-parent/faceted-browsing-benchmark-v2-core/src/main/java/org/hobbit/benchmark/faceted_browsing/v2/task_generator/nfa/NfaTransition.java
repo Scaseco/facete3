@@ -14,7 +14,10 @@ public interface NfaTransition
 	
 	@Iri("eg:weight")
 	Double getWeight();
-
+	
+	@Iri("eg:preventUndo")
+	Boolean preventUndo();
+	
 	NfaTransition setSource(Resource source);
 	NfaTransition setTarget(Resource target);
 	Double setWeight(Double weight);

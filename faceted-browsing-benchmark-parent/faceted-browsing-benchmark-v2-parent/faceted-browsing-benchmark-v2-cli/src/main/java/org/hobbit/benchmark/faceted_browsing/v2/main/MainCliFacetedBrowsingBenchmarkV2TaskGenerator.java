@@ -1,40 +1,5 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import com.beust.jcommander.JCommander;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ObjectArrays;
-import com.spotify.docker.client.DockerClient;
-import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.core.RDFConnectionEx;
-import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
-import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
-import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.core.DatasetDescription;
-import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
-import org.apache.jena.sparql.resultset.ResultSetMem;
-import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
-import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
-import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
-import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
-import org.hobbit.core.component.BenchmarkVocab;
-import org.hobbit.core.service.docker.api.DockerService;
-import org.hobbit.core.service.docker.impl.docker_client.DockerServiceDockerClient;
-import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import virtuoso.jdbc4.VirtuosoDataSource;
-
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -47,6 +12,48 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.core.RDFConnectionEx;
+import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
+import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
+import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
+import org.apache.jena.sparql.resultset.ResultSetMem;
+import org.apache.jena.sys.JenaSystem;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingEncoders;
+import org.hobbit.benchmark.faceted_browsing.component.FacetedBrowsingVocab;
+import org.hobbit.benchmark.faceted_browsing.config.ComponentUtils;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
+import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
+import org.hobbit.core.component.BenchmarkVocab;
+import org.hobbit.core.service.docker.api.DockerService;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceDockerClient;
+import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.beust.jcommander.JCommander;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ObjectArrays;
+import com.spotify.docker.client.DockerClient;
+
+import virtuoso.jdbc4.VirtuosoDataSource;
 
 
 
@@ -67,6 +74,8 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 	
 	public static void main(String[] args) throws Exception {
 	
+		JenaSystem.init();
+		
 		DockerServiceSystemDockerClient dss = null;
 		DockerService ds = null;
 

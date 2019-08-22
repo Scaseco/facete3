@@ -11,6 +11,7 @@ import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.api.traversal.TraversalDirNode;
 import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
 import org.aksw.facete.v3.api.traversal.TraversalNode;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
@@ -20,9 +21,9 @@ import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.XExpr;
 import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
-import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
@@ -342,7 +343,7 @@ public class VirtualPartitionedQuery {
 		Query raw = ElementTransformTripleRewrite.transform(query, layer, true);
 		System.out.println("Raw rewritten query:\n" + raw);
 		
-		Query result = DataQueryImpl.rewrite(raw, DataQueryImpl.createDefaultRewriter()::rewrite);
+		Query result = QueryUtils.rewrite(raw, AlgebraUtils.createDefaultRewriter()::rewrite);
 
 		return result;
 	}

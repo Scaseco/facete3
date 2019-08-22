@@ -3,7 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
-import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.junit.Assert;
@@ -43,7 +43,7 @@ public class TestQueryRewrite {
 				"}");
 		
 		
-		Query actual = DataQueryImpl.rewrite(input, TransformRedundantFilterRemoval::transform);
+		Query actual = QueryUtils.rewrite(input, TransformRedundantFilterRemoval::transform);
 		
 		Assert.assertEquals("" + expected, "" + actual);
 	}
@@ -70,7 +70,7 @@ public class TestQueryRewrite {
 				"  }\n" + 
 				"}");
 		
-		Query actual = DataQueryImpl.rewrite(input, TransformRedundantFilterRemoval::transform);
+		Query actual = QueryUtils.rewrite(input, TransformRedundantFilterRemoval::transform);
 		
 		Assert.assertEquals("" + expected, "" + actual);
 	}
@@ -87,7 +87,7 @@ public class TestQueryRewrite {
 				"  }\n" + 
 				"}");
 
-		Query expected = DataQueryImpl.rewrite(QueryFactory.create("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" + 
+		Query expected = QueryUtils.rewrite(QueryFactory.create("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" + 
 				"SELECT * {\n" + 
 				"     {}\n" + 
 				"   UNION\n" + 
@@ -97,7 +97,7 @@ public class TestQueryRewrite {
 				"  }\n" + 
 				"}"), Function.identity());
 		
-		Query actual = DataQueryImpl.rewrite(input, TransformRedundantFilterRemoval::transform);
+		Query actual = QueryUtils.rewrite(input, TransformRedundantFilterRemoval::transform);
 		
 		Assert.assertEquals("" + expected, "" + actual);
 	}

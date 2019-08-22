@@ -618,7 +618,7 @@ public class TaskGenerator {
 		return result;
 	}
 
-	public static void substituteRangesWithRandomValue(Random rand, Model model) {
+	public static void substituteRangesWithRandomValues(Random rand, Model model) {
 		// List all resources with min / max attributes
 		
 		Set<Resource> candidates =
@@ -704,22 +704,6 @@ public class TaskGenerator {
 		cpToAction.put("cp13", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp13)));
 		cpToAction.put("cp14", wrapWithCommitChanges(bindActionToFocusNode(this::applyCp14)));
 
-
-//		RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
-//
-//		Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
-//
-//		Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
-//				.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
-//
-//		
-//		ScenarioConfig scenarioTemplate = configRes.as(ScenarioConfig.class);
-		
-//		Model copyModel = ModelFactory.createDefaultModel();
-//		copyModel.add(scenarioTemplate.getModel());
-//		
-//		ScenarioConfig copy = scenarioTemplate.inModel(copyModel).as(ScenarioConfig.class);
-		
 		Nfa nfa = scenarioTemplate.getNfa();
 		Collection<NfaTransition> transitions = nfa.getTransitions();
 
@@ -728,61 +712,9 @@ public class TaskGenerator {
 			String key = getTransitionKey(transition);
 			if (!cpToAction.containsKey(key)) {
 				logger.warn("Ignoring reference to action " + key + " as no implementation was registered");
-//
-//				List<Statement> stmts = org.aksw.jena_sparql_api.utils.model.ResourceUtils.listReverseProperties(transition).toList();
-//				transition.removeProperties();
-//				configModel.remove(stmts);
+				
 			}
 		}
-
-
-		
-//		Map<RDFNode, RDFNode> map = viewResourceAsMap(config.getPropertyResourceValue(Vocab.weights));
-//
-//		Map<String, RDFNode> mmm = new MapFromKeyConverter<>(map, new ConverterFromNodeMapperAndModel<>(weightModel, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.string)));
-//		//new MapFromValueConverter<>(mmm, converter);
-//
-//		Map<String, Range<Double>> xxx = Maps.transformValues(mmm, n -> n.as(RangeSpec.class).toRange(Double.class));//new MapFromValueConverter<>(mmm, new ConverterFromNode)
-//		//Map<String >
-//		//RangeUtils.
-//
-//		// Derive a concrete map
-//		Map<String, Double> concreteWeights = xxx.entrySet().stream()
-//				.map(x -> {
-//					Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
-//					double rr = r.lowerEndpoint() + rand.nextDouble() * (r.upperEndpoint() - r.lowerEndpoint());
-//					return Maps.immutableEntry(x.getKey(), rr);
-//				})
-//				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-//
-//		logger.debug("Concrete weights " + concreteWeights);
-
-		//WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
-//
-//		WeightedSelector<String> actionSelector = WeigthedSelectorDrawWithReplacement.create(concreteWeights);
-//
-//		Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
-//		int scenarioLength = (int) RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
-//		//scenarioLength = 100;
-//		logger.debug("Scenario length: " + scenarioLength);
-
-//		FacetedQuery fq = FacetedQueryImpl.create(conn);
-		//fq.connection(conn);
-
-//		List<String> chosenActions = new ArrayList<>();
-//		Stream<SparqlTaskResource> result = IntStream.range(0, scenarioLength)
-//				//.mapToObj(i -> )
-//				.peek(i -> nextAction(cpToAction, actionSelector))
-//				.mapToObj(i -> generateQuery())
-//				;
-//		
-//		for(int i = 0; i < scenarioLength; ++i) {
-//			nextAction(cpToAction, actionSelector);
-//		}
-//		
-//		System.out.println("Chosen actions: " + chosenActions);
-//		
-//		return result;
 
 		// One task can have multiple queries
 		int taskIdInScenario[] = {0};
@@ -799,17 +731,13 @@ public class TaskGenerator {
 
 		NfaState currentState[] = {config.getNfa().getStartState()};
 
-		
+
+		substituteRangesWithRandomValues(rand, config.getModel());
+		Integer scenarioLength = config.getScenarioLength();
+		Objects.requireNonNull(scenarioLength);
+
 		Supplier<Collection<SparqlTaskResource>> tmp = () -> {
 			Collection<SparqlTaskResource> r = null;
-
-			
-			
-			substituteRangesWithRandomValue(rand, config.getModel());
-			Integer scenarioLength = config.getScenarioLength();
-			Objects.requireNonNull(scenarioLength);
-			
-			
 			
 			int i = taskIdInScenario[0]++;
 			
@@ -939,8 +867,13 @@ public class TaskGenerator {
 				if (success) {
 //					// Commit any changes introduced by the action
 //					changeTracker.commitChanges();
-					logger.info("Successfully applied " + step + "");
 
+					logger.info("Successfully applied " + step + (Boolean.TRUE.equals(transition.preventUndo()) ? " and preventing undo by committing state " : ""));
+
+					if(Boolean.TRUE.equals(transition.preventUndo())) {
+						changeTracker.commitChanges();						
+					}
+					
 //					System.out.println("CAN UNDO: " + changeTracker.canUndo());
 					//chosenActions.add(step);
 					result = transition;
@@ -2185,3 +2118,74 @@ public class TaskGenerator {
 		return result;
 	}
 }
+
+
+
+
+
+//
+//List<Statement> stmts = org.aksw.jena_sparql_api.utils.model.ResourceUtils.listReverseProperties(transition).toList();
+//transition.removeProperties();
+//configModel.remove(stmts);
+
+//RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
+//
+//Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
+//
+//Resource configRes = Optional.ofNullable(configs.size() == 1 ? configs.iterator().next() : null)
+//		.orElseThrow(() -> new RuntimeException("Exactly 1 config required"));
+//
+//
+//ScenarioConfig scenarioTemplate = configRes.as(ScenarioConfig.class);
+
+//Model copyModel = ModelFactory.createDefaultModel();
+//copyModel.add(scenarioTemplate.getModel());
+//
+//ScenarioConfig copy = scenarioTemplate.inModel(copyModel).as(ScenarioConfig.class);
+
+//Map<RDFNode, RDFNode> map = viewResourceAsMap(config.getPropertyResourceValue(Vocab.weights));
+//
+//Map<String, RDFNode> mmm = new MapFromKeyConverter<>(map, new ConverterFromNodeMapperAndModel<>(weightModel, RDFNode.class, new ConverterFromNodeMapper<>(NodeMapperFactory.string)));
+////new MapFromValueConverter<>(mmm, converter);
+//
+//Map<String, Range<Double>> xxx = Maps.transformValues(mmm, n -> n.as(RangeSpec.class).toRange(Double.class));//new MapFromValueConverter<>(mmm, new ConverterFromNode)
+////Map<String >
+////RangeUtils.
+//
+//// Derive a concrete map
+//Map<String, Double> concreteWeights = xxx.entrySet().stream()
+//		.map(x -> {
+//			Range<Double> r = x.getValue().intersection(Range.closedOpen(0.0, 1.0));
+//			double rr = r.lowerEndpoint() + rand.nextDouble() * (r.upperEndpoint() - r.lowerEndpoint());
+//			return Maps.immutableEntry(x.getKey(), rr);
+//		})
+//		.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+//
+//logger.debug("Concrete weights " + concreteWeights);
+
+//WeightedSelectorMutable<String> s = WeightedSelectorMutable.create(concreteWeights);
+//
+//WeightedSelector<String> actionSelector = WeigthedSelectorDrawWithReplacement.create(concreteWeights);
+//
+//Range<Double> range = config.getPropertyResourceValue(Vocab.scenarioLength).as(RangeSpec.class).toRange(Double.class);
+//int scenarioLength = (int) RangeUtils.pickDouble(range, rand); // TODO Obtain value from config
+////scenarioLength = 100;
+//logger.debug("Scenario length: " + scenarioLength);
+
+//FacetedQuery fq = FacetedQueryImpl.create(conn);
+//fq.connection(conn);
+
+//List<String> chosenActions = new ArrayList<>();
+//Stream<SparqlTaskResource> result = IntStream.range(0, scenarioLength)
+//		//.mapToObj(i -> )
+//		.peek(i -> nextAction(cpToAction, actionSelector))
+//		.mapToObj(i -> generateQuery())
+//		;
+//
+//for(int i = 0; i < scenarioLength; ++i) {
+//	nextAction(cpToAction, actionSelector);
+//}
+//
+//System.out.println("Chosen actions: " + chosenActions);
+//
+//return result;

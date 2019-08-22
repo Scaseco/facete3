@@ -23,18 +23,19 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
-import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystem3;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.jena.graph.Node;
@@ -527,7 +528,7 @@ public class MainCliDiceBenchmark {
 //		"} GROUP BY ?p1 ?p2 ?p3 ?p4");
 
 		Query q = ElementTransformTripleRewrite.transform(query, layer, true);
-		q = DataQueryImpl.rewrite(q, DataQueryImpl.createDefaultRewriter()::rewrite);
+		q = QueryUtils.rewrite(q, AlgebraUtils.createDefaultRewriter()::rewrite);
 
 		System.out.println(q);
 		Integer count = ServiceUtils.fetchInteger(conn.query(q), Vars.c);

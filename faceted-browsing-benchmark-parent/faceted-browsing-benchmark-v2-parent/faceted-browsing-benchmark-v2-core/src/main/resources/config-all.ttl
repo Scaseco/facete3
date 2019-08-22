@@ -21,6 +21,7 @@
     o:transition [
       o:from o:state1 ;
       o:to o:state2 ;
+      o:preventUndo true ;
       o:key "cp5" ;
       o:weight [ o:min 0.6 ; o:max 1.0 ]
     ] ;
