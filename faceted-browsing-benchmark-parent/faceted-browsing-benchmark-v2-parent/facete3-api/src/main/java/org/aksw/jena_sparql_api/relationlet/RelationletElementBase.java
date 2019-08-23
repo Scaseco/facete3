@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.relationlet;
 
 import java.util.Map;
 import java.util.Set;
@@ -9,7 +9,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
 public abstract class RelationletElementBase
-	extends RelationletBaseWithFixed
+	extends RelationletBaseWithMutableFixedVars
 	implements RelationletElement
 {
 	
@@ -22,14 +22,13 @@ public abstract class RelationletElementBase
 
 	
 	@Override
-	public RelationletNested materialize() {
+	public RelationletNestedImpl materialize() {
 		Map<Var, Var> identityMap = getVarsMentioned().stream()
 				.collect(CollectorUtils.toLinkedHashMap(x -> x, x -> x));
 
 		Element el = getElement();
 		Set<Var> fixedVars = getFixedVars();
-		RelationletNested result = new RelationletNested(el, identityMap, fixedVars);
+		RelationletNestedImpl result = new RelationletNestedImpl(el, identityMap, fixedVars);
 		return result;
 	}
-	
 }

@@ -1016,25 +1016,47 @@ public class TaskGenerator {
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
 
+		boolean useNewPathFinder = true;
 		pathSearch.setMaxPathLength(3);
-		final List<SimplePath> paths =
-				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
-						p.isForward()
-				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		shuffle(paths, rand);
+
+		if(useNewPathFinder) {
+			SimplePath path = pathSearch
+					.filter(sp  -> sp.getSteps().stream().allMatch(p -> p.isForward())  && sp.getSteps().size() >= 1 )
+					.shuffle(rand)
+					.exec()
+					.firstElement()
+					.blockingGet();
+			if (path != null) {
+				fn.walk(SimplePath.toPropertyPath(path)).constraints().exists().activate();
+				//fn.fwd(node).one().constraints().exists();
+
+				// Pick one of the facet values
+				logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
+
+				result = true;
+			}
+
+		} else {
+			
+			final List<SimplePath> paths =
+					pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
+							p.isForward()
+					)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
+			shuffle(paths, rand);
+			if (!paths.isEmpty()) {
+				fn.walk(SimplePath.toPropertyPath(paths.get(0))).constraints().exists().activate();
+				//fn.fwd(node).one().constraints().exists();
+
+				// Pick one of the facet values
+				logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
+
+				result = true;
+			}
+		}
 
 //		Node node = fn.fwd().facets().pseudoRandom(pseudoRandom)
 //				.randomOrder()
 //				.limit(1).exec().firstElement().map(x -> x.asNode()).blockingGet();
-		if (!paths.isEmpty()) {
-			fn.walk(SimplePath.toPropertyPath(paths.get(0))).constraints().exists().activate();
-			//fn.fwd(node).one().constraints().exists();
-
-			// Pick one of the facet values
-			logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
-
-			result = true;
-		}
 
 		return result;
 	}
@@ -1055,16 +1077,34 @@ public class TaskGenerator {
 
 		final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
-
 		pathSearch.setMaxPathLength(3);
-		final List<SimplePath> paths =
-				pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
-						p.isForward()
-				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		shuffle(paths, rand);
 
-		if (!paths.isEmpty() && applyEqConstraintOnPathRandom(fn, paths.get(0), pseudoRandom)) {
-			result = true;
+		boolean useNewPathFinder = true;
+
+		if(useNewPathFinder) {
+			SimplePath path = pathSearch
+				.filter(sp  -> sp.getSteps().stream().allMatch(p -> p.isForward())  && sp.getSteps().size() >= 1 )
+				.shuffle(rand)
+				.exec()
+				.firstElement()
+				.blockingGet();
+	
+			if (path != null && applyEqConstraintOnPathRandom(fn, path, pseudoRandom)) {
+				result = true;
+			}
+
+		} else {
+			
+			pathSearch.setMaxPathLength(3);
+			final List<SimplePath> paths =
+					pathSearch.exec().filter(sp  -> sp.getSteps().stream().allMatch(p ->
+							p.isForward()
+					)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
+			shuffle(paths, rand);
+	
+			if (!paths.isEmpty() && applyEqConstraintOnPathRandom(fn, paths.get(0), pseudoRandom)) {
+				result = true;
+			}
 		}
 
 		return result;
@@ -1704,13 +1744,31 @@ public class TaskGenerator {
 				sourceConcept, targetConcept);
 
 		pathSearch.setMaxPathLength(maxPathLength);
-		final List<SimplePath> simplePathList = pathSearch.exec().toList().blockingGet();
-		shuffle(simplePathList, rand);
-		if (!simplePathList.isEmpty()) {
-			final SimplePath simplePath = simplePathList.get(0);
 
-			result = applyPropertyEqConstraintOnPathRandom(fn, simplePath, property, pseudoRandom);
+		boolean useNewPathFinder = true;
+
+		if(useNewPathFinder) {
+			
+			SimplePath simplePath = pathSearch
+					.shuffle(rand)
+					.exec()
+					.firstElement()
+					.blockingGet();
+
+			if(simplePath != null) {
+				result = applyPropertyEqConstraintOnPathRandom(fn, simplePath, property, pseudoRandom);
+			}			
+			
+		} else {
+			final List<SimplePath> simplePathList = pathSearch.exec().toList().blockingGet();
+			shuffle(simplePathList, rand);
+			if (!simplePathList.isEmpty()) {
+				final SimplePath simplePath = simplePathList.get(0);
+
+				result = applyPropertyEqConstraintOnPathRandom(fn, simplePath, property, pseudoRandom);
+			}			
 		}
+		
 		return result;
 	}
 
@@ -1746,16 +1804,34 @@ public class TaskGenerator {
 		final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
 
 		pathSearch.setMaxPathLength(desiredPathLength);
-		final List<SimplePath> paths =
-				pathSearch.exec().filter(sp  -> sp.getSteps().stream().anyMatch(p ->
-						!p.isForward()
-				)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
-		shuffle(paths, rand);
-
-		if (!paths.isEmpty() && applyEqConstraintOnPathRandom(fn, paths.get(0), pseudoRandom)) {
-			result = true;
+		
+		boolean useNewPathFinder = true;
+		
+		if(useNewPathFinder) {
+			SimplePath path = pathSearch
+					.filter(sp  -> sp.getSteps().stream().anyMatch(p -> !p.isForward())  && sp.getSteps().size() >= 1 )
+					.shuffle(rand)
+					.exec()
+					.firstElement()
+					.blockingGet();
+	
+			if (path != null && applyEqConstraintOnPathRandom(fn, path, pseudoRandom)) {
+				result = true;
+			}
+		} else {
+			List<SimplePath> paths =
+					pathSearch.exec().filter(sp  -> sp.getSteps().stream().anyMatch(p ->
+							!p.isForward()
+					)  && sp.getSteps().size() >= 1 ).toList().blockingGet();
+			shuffle(paths, rand);
+	
+			if (!paths.isEmpty() && applyEqConstraintOnPathRandom(fn, paths.get(0), pseudoRandom)) {
+				result = true;
+			}
 		}
 
+		
+		
 		return result;
 
 		/*

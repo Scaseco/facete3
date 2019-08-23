@@ -1,5 +1,8 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.pathlet;
 
+import org.aksw.facete.v3.api.path.NestedVarMap;
+import org.aksw.jena_sparql_api.relationlet.Relationlet;
+import org.aksw.jena_sparql_api.relationlet.RelationletForwarding;
 import org.apache.jena.sparql.core.Var;
 
 public class PathletSimple
@@ -35,5 +38,10 @@ public class PathletSimple
 	@Override
 	public String toString() {
 		return "PathletSimple [srcVar=" + srcVar + ", tgtVar=" + tgtVar + ", relationlet=" + relationlet + "]";
+	}
+
+	@Override
+	public NestedVarMap getNestedVarMap() {
+		return null;
 	}
 }

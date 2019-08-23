@@ -2,17 +2,17 @@ package org.aksw.jena_sparql_api.data_query.impl;
 
 import java.util.function.Supplier;
 
-import org.aksw.facete.v3.api.path.RelationletNested;
-import org.aksw.facete.v3.api.path.VarRefStatic;
+import org.aksw.jena_sparql_api.relationlet.RelationletNestedImpl;
+import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.graph.NodeTransform;
 
 public class NodeTransformPathletVarRefResolver
 	implements NodeTransform
 {
-	protected RelationletNested relationlet;
+	protected RelationletNestedImpl relationlet;
 	
-	public NodeTransformPathletVarRefResolver(RelationletNested relationlet) {
+	public NodeTransformPathletVarRefResolver(RelationletNestedImpl relationlet) {
 		this.relationlet = relationlet;
 	}
 

@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.relationlet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -37,8 +37,8 @@ public abstract class RelationletForwarding
 	}
 
 	@Override
-	public Relationlet setVarFixed(Var var, boolean onOrOff) {
-		return getRelationlet().setVarFixed(var, onOrOff);
+	public Relationlet setFixedVar(Var var, boolean onOrOff) {
+		return getRelationlet().setFixedVar(var, onOrOff);
 	}
 
 //	@Override
@@ -47,8 +47,8 @@ public abstract class RelationletForwarding
 //	}
 
 	@Override
-	public RelationletNested materialize() {
-		RelationletNested result = getRelationlet().materialize();
+	public RelationletNestedImpl materialize() {
+		RelationletNestedImpl result = getRelationlet().materialize();
 		return result;
 	}
 

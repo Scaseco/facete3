@@ -1,10 +1,10 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.relationlet;
 
 import java.util.Collection;
 import java.util.Set;
 
+import org.aksw.facete.v3.api.path.NestedVarMap;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.syntax.Element;
 
 /**
  * Probably Relationlet should become the new Relation class
@@ -30,7 +30,7 @@ public interface Relationlet {
 	}
 	
 	default Relationlet fix(Var var) {
-		return setVarFixed(var, true);
+		return setFixedVar(var, true);
 	}
 
 	/**
@@ -39,24 +39,25 @@ public interface Relationlet {
 	 * 
 	 * @return
 	 */
-	default Relationlet fixAll() {
+	default Relationlet fixAllVars() {
 		Set<Var> vars = getVarsMentioned();
-		Relationlet result = fixAll(vars);
+		Relationlet result = fixAllVars(vars);
 		return result;
 	}
 	
-	default Relationlet fixAll(Iterable<Var> vars) {
+	default Relationlet fixAllVars(Iterable<Var> vars) {
 		for(Var var : vars) {
-			setVarFixed(var, true);
+			setFixedVar(var, true);
 		//return setVarFixed(var, true);
 		}
 		return this;
 	}
 
 	Set<Var> getFixedVars();
-	Relationlet setVarFixed(Var var, boolean onOrOff);
+	Relationlet setFixedVar(Var var, boolean onOrOff);
 	
 //	Element getElement();
 	
-	RelationletNested materialize();
+	NestedVarMap getNestedVarMap();
+	RelationletNestedImpl materialize();
 }

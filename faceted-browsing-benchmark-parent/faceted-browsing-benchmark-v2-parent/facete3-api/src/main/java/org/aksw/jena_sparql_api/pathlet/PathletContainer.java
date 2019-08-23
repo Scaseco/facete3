@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.pathlet;
 
 /**
  * A pathlet is a relationlet with designated source and target variables plus

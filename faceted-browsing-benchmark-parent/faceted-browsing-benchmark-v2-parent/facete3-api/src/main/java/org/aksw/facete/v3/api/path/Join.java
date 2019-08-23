@@ -2,6 +2,8 @@ package org.aksw.facete.v3.api.path;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.relationlet.VarRef;
+
 public class Join {
 	protected List<VarRef> lhs;
 	protected List<VarRef> rhs;

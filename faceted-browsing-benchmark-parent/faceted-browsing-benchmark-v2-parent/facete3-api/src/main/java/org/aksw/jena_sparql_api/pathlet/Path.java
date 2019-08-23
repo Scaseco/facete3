@@ -1,4 +1,6 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.pathlet;
+
+import org.aksw.facete.v3.api.path.Step;
 
 public class Path
 	extends PathBuilder

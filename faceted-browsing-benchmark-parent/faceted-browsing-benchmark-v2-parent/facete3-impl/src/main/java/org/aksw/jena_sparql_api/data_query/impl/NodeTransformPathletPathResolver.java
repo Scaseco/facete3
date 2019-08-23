@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.data_query.impl;
 
 import java.util.function.Supplier;
 
-import org.aksw.facete.v3.api.path.Path;
-import org.aksw.facete.v3.api.path.PathletJoinerImpl;
-import org.aksw.facete.v3.api.path.VarRefStatic;
+import org.aksw.jena_sparql_api.pathlet.Path;
+import org.aksw.jena_sparql_api.pathlet.PathletJoinerImpl;
+import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.graph.NodeTransform;
 

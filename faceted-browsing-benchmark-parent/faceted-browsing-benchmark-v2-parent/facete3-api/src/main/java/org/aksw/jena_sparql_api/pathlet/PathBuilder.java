@@ -1,5 +1,6 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.pathlet;
 
+import org.aksw.facete.v3.api.path.Step;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.apache.jena.graph.Node;

@@ -1,5 +1,6 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.pathlet;
 
+import org.aksw.jena_sparql_api.relationlet.Relationlet;
 import org.apache.jena.sparql.core.Var;
 
 public interface Pathlet

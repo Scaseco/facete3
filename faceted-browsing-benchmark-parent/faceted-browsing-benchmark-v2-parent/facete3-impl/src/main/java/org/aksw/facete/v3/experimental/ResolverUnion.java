@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.aksw.facete.v3.api.path.RelationletBinary;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.api.path.ResolverBase;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.relationlet.RelationletBinary;
 import org.apache.jena.sparql.path.P_Path0;
 
 public class ResolverUnion

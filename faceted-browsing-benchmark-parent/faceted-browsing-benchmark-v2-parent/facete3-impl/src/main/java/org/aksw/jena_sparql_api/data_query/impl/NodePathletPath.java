@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.data_query.impl;
 
-import org.aksw.facete.v3.api.path.Path;
+import org.aksw.jena_sparql_api.pathlet.Path;
 
 public class NodePathletPath
 	extends NodeCustom<Path>

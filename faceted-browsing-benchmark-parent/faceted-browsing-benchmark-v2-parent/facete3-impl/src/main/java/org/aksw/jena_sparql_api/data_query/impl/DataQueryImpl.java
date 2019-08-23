@@ -17,11 +17,6 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.AliasedPath;
-import org.aksw.facete.v3.api.path.Path;
-import org.aksw.facete.v3.api.path.PathletJoinerImpl;
-import org.aksw.facete.v3.api.path.PathletSimple;
-import org.aksw.facete.v3.api.path.RelationletElementImpl;
-import org.aksw.facete.v3.api.path.RelationletNested;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.experimental.ResolverNodeImpl;
 import org.aksw.facete.v3.experimental.Resolvers;
@@ -43,6 +38,11 @@ import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.pathlet.Path;
+import org.aksw.jena_sparql_api.pathlet.PathletJoinerImpl;
+import org.aksw.jena_sparql_api.pathlet.PathletSimple;
+import org.aksw.jena_sparql_api.relationlet.RelationletElementImpl;
+import org.aksw.jena_sparql_api.relationlet.RelationletNestedImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -663,7 +663,7 @@ public class DataQueryImpl<T extends RDFNode>
 			PathletJoinerImpl pathlet = new PathletJoinerImpl(resolver);
 			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
 			// and ?s also being the connector for subsequent joins
-			pathlet.add(new PathletSimple((Var)rootVar, (Var)rootVar, new RelationletElementImpl(query.getQueryPattern()).fixAll()));
+			pathlet.add(new PathletSimple((Var)rootVar, (Var)rootVar, new RelationletElementImpl(query.getQueryPattern()).fixAllVars()));
 	
 			// Substitute all NodePathletPath objects with NodePathletVarRef objects
 			NodeTransform xform1 = new NodeTransformPathletPathResolver(pathlet);
@@ -671,7 +671,7 @@ public class DataQueryImpl<T extends RDFNode>
 	
 			// Now that all paths have been collected and added to the pathlet
 			// materalize it
-			RelationletNested rn = pathlet.materialize();
+			RelationletNestedImpl rn = pathlet.materialize();
 			
 			// Resolve all var refs against the materialized relationlet
 			NodeTransform xform2 = new NodeTransformPathletVarRefResolver(rn);

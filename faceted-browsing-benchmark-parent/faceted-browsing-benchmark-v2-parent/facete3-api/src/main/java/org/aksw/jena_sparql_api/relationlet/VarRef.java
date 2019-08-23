@@ -1,11 +1,11 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.relationlet;
 
 /**
  * Reference to a variable in a relationlet - can be based on lambdas
  * @author raven
  *
  */
-interface VarRef {
+public interface VarRef {
 //	Var getVar();
 //	RelationletEntry getEntry();
 }

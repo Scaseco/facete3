@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.relationlet;
 
 import java.util.Collection;
 
@@ -8,7 +8,7 @@ public abstract class RelationletBase
 	implements Relationlet
 {
 	@Override
-	public Relationlet setVarFixed(Var var, boolean onOrOff) {
+	public Relationlet setFixedVar(Var var, boolean onOrOff) {
 		Collection<Var> fixedVars = getFixedVars();
 		if(onOrOff) {
 			fixedVars.add(var);

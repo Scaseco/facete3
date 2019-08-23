@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jena_sparql_api.relationlet.RelationletBinary;
 import org.apache.jena.sparql.path.P_Path0;
 
 public interface Resolver {

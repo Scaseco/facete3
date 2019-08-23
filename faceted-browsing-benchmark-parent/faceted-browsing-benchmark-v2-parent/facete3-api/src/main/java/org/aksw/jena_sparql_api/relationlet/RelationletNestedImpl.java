@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.relationlet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,30 +7,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.facete.v3.api.path.NestedVarMap;
+import org.aksw.facete.v3.api.path.NestedVarMapImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
-public class RelationletNested
+public class RelationletNestedImpl
 	extends RelationletBase
 	implements RelationletElement
 {
 	protected Element el;
-	protected NestedVarMap varMap;
-	protected Map<String, RelationletNested> aliasToMember;
+	protected NestedVarMapImpl varMap;
+	protected Map<String, RelationletNestedImpl> aliasToMember;
 //	protected Map<Var, Var> exposedVarToElementVar;
 
-	public RelationletNested(
+	public RelationletNestedImpl(
 			Element el,
 			Map<Var, Var> varMap,
 			Set<Var> fixedVars) {
-		this(el, new NestedVarMap(varMap, fixedVars), Collections.emptyMap());
+		this(el, new NestedVarMapImpl(varMap, fixedVars), Collections.emptyMap());
 	}
 	
-	public RelationletNested(
+	public RelationletNestedImpl(
 			Element el,
-			NestedVarMap varMap,
-			Map<String, RelationletNested> aliasToMember) {
+			NestedVarMapImpl varMap,
+			Map<String, RelationletNestedImpl> aliasToMember) {
 		super(); //el); 
 		this.el = el;
 		this.varMap = varMap;
@@ -67,8 +69,8 @@ public class RelationletNested
 		return result;
 	}
 	
-	
-	public NestedVarMap getNestedVarMap() {
+	@Override
+	public NestedVarMapImpl getNestedVarMap() {
 		return varMap;
 	}
 	
@@ -103,7 +105,7 @@ public class RelationletNested
 	}
 //
 	@Override
-	public Relationlet setVarFixed(Var var, boolean onOrOff) {
+	public Relationlet setFixedVar(Var var, boolean onOrOff) {
 		throw new UnsupportedOperationException("Cannot mark vars as fixed on this object");
 	}
 
@@ -125,7 +127,7 @@ public class RelationletNested
 	}
 
 	@Override
-	public RelationletNested materialize() {
+	public RelationletNestedImpl materialize() {
 		return this;
 	}
 

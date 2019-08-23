@@ -1,4 +1,4 @@
-package org.aksw.facete.v3.api.path;
+package org.aksw.jena_sparql_api.pathlet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,8 +11,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.api.path.Resolver;
+import org.aksw.facete.v3.api.path.Step;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.relationlet.Relationlet;
+import org.aksw.jena_sparql_api.relationlet.RelationletBinary;
+import org.aksw.jena_sparql_api.relationlet.RelationletEntry;
+import org.aksw.jena_sparql_api.relationlet.RelationletJoinerImpl;
+import org.aksw.jena_sparql_api.relationlet.VarRef;
+import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
@@ -286,7 +294,7 @@ public class PathletJoinerImpl
 		
 		if(result == null && createIfNotExists) {
 			Pathlet childRootPathlet = newPathlet(br);
-			childRootPathlet.fixAll(fixedVars);
+			childRootPathlet.fixAllVars(fixedVars);
 			PathletJoinerImpl subContainer = new PathletJoinerImpl(subResolver, childRootPathlet, fn);
 //			RelationletBinary r = new RelationletBinary(br);
 //			//PathletMember childContainerMember = new PathletMember(childContainer, r, r.getSrcVar(), r.getTgtVar());
@@ -395,7 +403,7 @@ public class PathletJoinerImpl
 
 
 	@Override
-	public Relationlet setVarFixed(Var var, boolean onOrOff) {
+	public Relationlet setFixedVar(Var var, boolean onOrOff) {
 		// TODO Auto-generated method stub
 		return null;
 	}

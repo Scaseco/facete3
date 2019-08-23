@@ -1,5 +1,6 @@
 # Relationlets
 
+Relationlets are snippets of (references to / names of) relations.
 The term relationlet is a combination of relation and snippet, analoguous to applet (application and snippet).
 
 ## Motivation
@@ -50,6 +51,14 @@ interface Resolver {
 Direction can be forwards or backwards.
 
 
+
+## Unified API for Relations - Element and Op
+```java
+Relationlets.from(element);
+Relationlets.from(op);
+Pathlets.from(element);
+Pathlets.from(op);
+```
 
 ## Relationlet Joiner
 

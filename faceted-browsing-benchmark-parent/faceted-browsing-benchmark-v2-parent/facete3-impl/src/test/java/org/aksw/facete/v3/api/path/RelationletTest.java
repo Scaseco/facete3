@@ -6,6 +6,15 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.aksw.facete.v3.experimental.Resolvers;
+import org.aksw.jena_sparql_api.pathlet.Path;
+import org.aksw.jena_sparql_api.pathlet.PathletJoinerImpl;
+import org.aksw.jena_sparql_api.pathlet.PathletSimple;
+import org.aksw.jena_sparql_api.relationlet.Relationlet;
+import org.aksw.jena_sparql_api.relationlet.RelationletElementImpl;
+import org.aksw.jena_sparql_api.relationlet.RelationletJoinerImpl;
+import org.aksw.jena_sparql_api.relationlet.RelationletNestedImpl;
+import org.aksw.jena_sparql_api.relationlet.Relationlets;
+import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.query.Query;
@@ -23,7 +32,7 @@ public class RelationletTest {
 		RelationletJoinerImpl<Relationlet> joiner = new RelationletJoinerImpl<>();
 		
 		if(false) {
-			joiner.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).setVarFixed(Vars.s, true));
+			joiner.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).setFixedVar(Vars.s, true));
 			joiner.add("b", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDFS.label.asNode(), Vars.o)));
 			joiner.add("c", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDFS.isDefinedBy.asNode(), Vars.y)));
 			
@@ -40,10 +49,10 @@ public class RelationletTest {
 			// C.y = D.z
 			// A.w = C.y
 
-			joiner.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.w, Vars.p, Vars.o)).setVarFixed(Vars.p, true));
-			joiner.add("b", Relationlets.from(ElementUtils.createElementTriple(Vars.x, Vars.p, Vars.o)).setVarFixed(Vars.x, true));
-			joiner.add("c", Relationlets.from(ElementUtils.createElementTriple(Vars.y, Vars.p, Vars.i)).setVarFixed(Vars.p, true));
-			joiner.add("d", Relationlets.from(ElementUtils.createElementTriple(Vars.z, Vars.p, Vars.o)).setVarFixed(Vars.o, true));
+			joiner.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.w, Vars.p, Vars.o)).setFixedVar(Vars.p, true));
+			joiner.add("b", Relationlets.from(ElementUtils.createElementTriple(Vars.x, Vars.p, Vars.o)).setFixedVar(Vars.x, true));
+			joiner.add("c", Relationlets.from(ElementUtils.createElementTriple(Vars.y, Vars.p, Vars.i)).setFixedVar(Vars.p, true));
+			joiner.add("d", Relationlets.from(ElementUtils.createElementTriple(Vars.z, Vars.p, Vars.o)).setFixedVar(Vars.o, true));
 			
 			joiner.addJoin("a", Collections.singletonList(Vars.w), "b", Collections.singletonList(Vars.x));
 			joiner.addJoin("c", Collections.singletonList(Vars.y), "d", Collections.singletonList(Vars.z));
@@ -53,7 +62,7 @@ public class RelationletTest {
 
 			joiner.expose("foo", "a", "w");
 			joiner.expose("bar", "b", "x");
-			RelationletNested me = joiner.materialize();
+			RelationletNestedImpl me = joiner.materialize();
 //			System.out.println("finalVar: "  + me.getExposedVarToElementVar().get(Var.alloc("foo")));
 //			System.out.println("finalVar: "  + me.getExposedVarToElementVar());
 			System.out.println("finalVar: "  + me.getNestedVarMap());
@@ -82,7 +91,7 @@ public class RelationletTest {
 			PathletJoinerImpl pathlet = new PathletJoinerImpl(resolver);
 			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
 			// and ?s also being the connector for subsequent joins
-			pathlet.add(new PathletSimple(Vars.s, Vars.s, new RelationletElementImpl(baseQuery.getQueryPattern()).fixAll()));
+			pathlet.add(new PathletSimple(Vars.s, Vars.s, new RelationletElementImpl(baseQuery.getQueryPattern()).fixAllVars()));
 			
 			// Now add some paths
 			pathlet.resolvePath(psimple);
@@ -90,7 +99,7 @@ public class RelationletTest {
 			pathlet.resolvePath(p2);
 			Supplier<VarRefStatic> ref = pathlet.resolvePath(p2.optional().fwd(RDFS.comment));
 			
-			RelationletNested rn = pathlet.materialize();
+			RelationletNestedImpl rn = pathlet.materialize();
 			System.out.println("Materialized Element: " + rn.getElement());
 			System.out.println("Materialized Vars    : " + rn.getExposedVars());
 			
@@ -120,7 +129,7 @@ public class RelationletTest {
 		parent.add("c", Relationlets.from(new ElementOptional(ElementUtils.createElementTriple(Vars.x, RDFS.seeAlso.asNode(), Vars.y))));
 		parent.addJoin("a", Collections.singletonList(Vars.u), "c", Collections.singletonList(Vars.x));
 			
-		RelationletNested me = parent.materialize();
+		RelationletNestedImpl me = parent.materialize();
 		System.out.println("Final element:\n" + me.getElement());
 		
 //		System.out.println("finalVar: "  + me.getExposedVarToElementVar().get(Var.alloc("foo")));

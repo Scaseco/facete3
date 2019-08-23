@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.facete.v3.api.AliasedPathImpl;
-import org.aksw.facete.v3.api.path.RelationletBinary;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.api.path.ResolverBase;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
@@ -23,6 +22,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.impl.QueryFragment;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.relationlet.RelationletBinary;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
