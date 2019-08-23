@@ -294,21 +294,34 @@ public class TestFacetedQuery2 {
 
 		taskGenerator.applyCp13(node);
 
-		assertEquals("{ ?v_1      ?p                    ?o .\n" + 
-				"  ?v_2      <http://www.example.org/locatedIn>  ?v_1 .\n" + 
-				"  <http://www.example.org/Germany>\n" + 
-				"            <http://www.example.org/contains>  ?v_2\n" + 
-				"}", getQueryPattern(node));
+//		assertEquals("{ ?v_1      ?p                    ?o .\n" + 
+//				"  ?v_2      <http://www.example.org/locatedIn>  ?v_1 .\n" + 
+//				"  <http://www.example.org/Germany>\n" + 
+//				"            <http://www.example.org/contains>  ?v_2\n" + 
+//				"}", getQueryPattern(node));
 
+		assertEquals("{ ?v_1  ?p                    ?o .\n" + 
+				"  ?v_2  <http://www.example.org/locatedIn>  ?v_1 ;\n" + 
+				"        <http://www.example.org/mayor>  <http://www.example.org/BurkhardJung>\n" + 
+				"}", getQueryPattern(node));
+		
 		changeTracker.discardChanges();
+
+		assertEquals("{ ?v_1  ?p  ?o }",
+				getQueryPattern(node));
 
 		taskGenerator.applyCp13(node);
 
+//		assertEquals("{ ?v_1      ?p                    ?o .\n" + 
+//				"  ?v_2      <http://www.example.org/mayor>  ?v_1 .\n" + 
+//				"  <http://www.example.org/LorenzStadler>\n" + 
+//				"            <http://xmlns.com/foaf/0.1/based_near>  ?v_2\n" + 
+//				"}", getQueryPattern(node));
+		
 		assertEquals("{ ?v_1      ?p                    ?o .\n" + 
-				"  ?v_2      <http://www.example.org/mayor>  ?v_1 .\n" + 
-				"  <http://www.example.org/LorenzStadler>\n" + 
-				"            <http://xmlns.com/foaf/0.1/based_near>  ?v_2\n" + 
-				"}", getQueryPattern(node));
+			"  <http://www.example.org/Leipzig>\n" + 
+			"            <http://www.example.org/mayor>  ?v_1\n" + 
+			"}", getQueryPattern(node));
 	}
 
 	@Test//done
@@ -317,18 +330,30 @@ public class TestFacetedQuery2 {
 		final FacetNode node = fq.root();
 		taskGenerator.setPseudoRandom(new Random(1234L));
 		taskGenerator.applyCp12(node);
-		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
-				"  ?v_3  a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+//		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+//				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+//				"  ?v_3  a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+//				"}", getQueryPattern(node));
+
+		assertEquals("{ ?v_1  ?p                    ?o .\n" + 
+				"  ?v_2  <http://www.example.org/contains>  ?v_1 ;\n" + 
+				"        a                     <http://www.example.org/Country>\n" + 
 				"}", getQueryPattern(node));
 
+//		taskGenerator.applyCp12(node);
+//		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
+//				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
+//				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_4 .\n" +
+//				"  ?v_4  a                     <http://www.example.org/City> .\n" +
+//				"  ?v_3  a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+//				"}", getQueryPattern(node));
+
 		taskGenerator.applyCp12(node);
-		assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/based_near>  ?v_2 .\n" +
-				"  ?v_2  <http://www.example.org/mayor>  ?v_3 .\n" +
-				"  ?v_3  <http://xmlns.com/foaf/0.1/based_near>  ?v_4 .\n" +
-				"  ?v_4  a                     <http://www.example.org/City> .\n" +
-				"  ?v_3  a                     <http://xmlns.com/foaf/0.1/Person>\n" +
+		assertEquals("{ ?v_1  ?p                    ?o .\n" + 
+				"  ?v_2  <http://www.example.org/contains>  ?v_1 ;\n" + 
+				"        a                     <http://www.example.org/Country>\n" + 
 				"}", getQueryPattern(node));
+
 	}
 
 	@Test

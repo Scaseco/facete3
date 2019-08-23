@@ -1815,8 +1815,8 @@ public class TaskGenerator {
 					.firstElement()
 					.blockingGet();
 	
-			if (path != null && applyEqConstraintOnPathRandom(fn, path, pseudoRandom)) {
-				result = true;
+			if (path != null) {
+				result = applyEqConstraintOnPathRandom(fn, path, pseudoRandom);
 			}
 		} else {
 			List<SimplePath> paths =
