@@ -9,7 +9,9 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.apache.jena.sparql.core.Var;
 
-public interface NestedVarMap {
+public interface NestedVarMap
+//	extends Cloneable
+{
 	
 	Set<Var> getVarsMentioned();
 	NestedVarMap get(String alias);
@@ -17,7 +19,7 @@ public interface NestedVarMap {
 
 	Set<Var> getFixedFinalVars();
 	Map<Var, Var> getLocalToFinalVarMap();
-	Map<String, NestedVarMapImpl> getMemberVarMap();
+	Map<String, NestedVarMap> getMemberVarMap();
 
 	default NestedVarMap get(String ... aliases) {
 		NestedVarMap result = get(Arrays.asList(aliases));
@@ -51,4 +53,6 @@ public interface NestedVarMap {
 		boolean result = nvm.isFixed(v);
 		return result;
 	}
+	
+	NestedVarMap clone();// throws CloneNotSupportedException;
 }

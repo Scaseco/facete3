@@ -5,8 +5,11 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -116,6 +119,14 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 				jc.usage();
 				return;
 			}
+			
+			String tag = cmMain.getTag();
+			if(tag == null) {
+				Date now = new Date();
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
+				tag = "my-bench-" + formatter.format(now);
+			}
+			
 			
 			String configUri = cmMain.getConfig();			
 			if(configUri == null) {
@@ -277,6 +288,8 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 			
 			// Now wrap the scenario supplier with the injection of sparql update statements
 			
+			taskGenerator.setTaskPostProcessor(task -> annotateTaskWithReferenceResult(task, conn));
+
 			Callable<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
 			// TODO How can we simplify the interleaves of updates?
 			Callable<SparqlTaskResource> updateSupplier = () -> null;
@@ -308,6 +321,13 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 					int scenarioId = ResourceUtils.tryGetLiteralPropertyValue(tmp, FacetedBrowsingVocab.scenarioId, Integer.class)
 						.orElseThrow(() -> new RuntimeException("no scenario id"));
 
+					Integer transitionId = ResourceUtils.tryGetLiteralPropertyValue(tmp, FacetedBrowsingVocab.transitionId, Integer.class)
+						.orElseThrow(() -> new RuntimeException("no transition id"));
+
+					Integer queryId = ResourceUtils.tryGetLiteralPropertyValue(tmp, FacetedBrowsingVocab.queryId, Integer.class)
+						.orElseThrow(() -> new RuntimeException("no query id"));
+
+					
 					if(scenarioId != lastSeenScenario) {
 						lastSeenScenario = scenarioId;
 						++scenarioCounter;
@@ -317,16 +337,23 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 						break;
 					}
 
-
+					String scenarioName = tag + "-scenario" + scenarioId;
+					String name = "http://example.org/" + scenarioName + "-" + transitionId + "-" + queryId;
+					
 					if(scenarioCounter <= numWarmups) {
-						tmp.addLiteral(FacetedBrowsingVocab.warmup, true);						
-						tmp = org.apache.jena.util.ResourceUtils.renameResource(tmp, tmp.getURI() + "-warmup").as(SparqlTaskResource.class);
+						tmp.addLiteral(FacetedBrowsingVocab.warmup, true);
+						name += "-warmup";
+//						tmp = org.apache.jena.util.ResourceUtils.renameResource(tmp, tmp.getURI() + "-warmup").as(SparqlTaskResource.class);
 					}
+
+					tmp = org.apache.jena.util.ResourceUtils.renameResource(tmp, name)
+							.as(SparqlTaskResource.class);
+
 
 					
 					//System.out.println("GENERATED TASK: " + tmp.getURI());
 					logger.info("GENERATED TASK: " + tmp.getURI());
-					tmp.addLiteral(FacetedBrowsingVocab.sequenceId, i);
+					tmp.addLiteral(FacetedBrowsingVocab.taskId, i + 1);
 										
 					//RDFDataMgr.write(System.out, tmp.getModel(), RDFFormat.TURTLE_PRETTY);
 					//SparqlStmt stmt = SparqlTaskResource.parse(tmp);

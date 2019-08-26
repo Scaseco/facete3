@@ -15,11 +15,11 @@ import org.apache.jena.sparql.syntax.Element;
 
 public class RelationletNestedImpl
 	extends RelationletBase
-	implements RelationletElement
+	implements RelationletSimple
 {
 	protected Element el;
-	protected NestedVarMapImpl varMap;
-	protected Map<String, RelationletNestedImpl> aliasToMember;
+	protected NestedVarMap varMap;
+	protected Map<String, RelationletSimple> aliasToMember;
 //	protected Map<Var, Var> exposedVarToElementVar;
 
 	public RelationletNestedImpl(
@@ -31,26 +31,14 @@ public class RelationletNestedImpl
 	
 	public RelationletNestedImpl(
 			Element el,
-			NestedVarMapImpl varMap,
-			Map<String, RelationletNestedImpl> aliasToMember) {
+			NestedVarMap varMap,
+			Map<String, RelationletSimple> aliasToMember) {
 		super(); //el); 
 		this.el = el;
 		this.varMap = varMap;
 		this.aliasToMember = aliasToMember;
 //		this.aliasToMember = aliasToMember;
 //		this.exposedVarToElementVar = exposedVarToElementVar;
-	}
-	
-	public Var resolve(VarRefStatic varRef) {
-		List<String> labels = varRef.getLabels();
-		Var v = varRef.getV();
-		
-		NestedVarMap src = getNestedVarMap();
-		NestedVarMap tgt = src.get(labels);
-		Map<Var, Var> map = tgt.getLocalToFinalVarMap();
-		
-		Var result =  map.get(v);
-		return result;
 	}
 	
 	//@Override
@@ -70,7 +58,7 @@ public class RelationletNestedImpl
 	}
 	
 	@Override
-	public NestedVarMapImpl getNestedVarMap() {
+	public NestedVarMap getNestedVarMap() {
 		return varMap;
 	}
 	
@@ -109,17 +97,17 @@ public class RelationletNestedImpl
 		throw new UnsupportedOperationException("Cannot mark vars as fixed on this object");
 	}
 
-	@Override
-	public Relationlet getMember(String alias) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Relationlet getMember(String alias) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
-	@Override
-	public Var getInternalVar(Var var) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Var getInternalVar(Var var) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	@Override
 	public Collection<Var> getExposedVars() {
@@ -127,7 +115,7 @@ public class RelationletNestedImpl
 	}
 
 	@Override
-	public RelationletNestedImpl materialize() {
+	public RelationletSimple materialize() {
 		return this;
 	}
 

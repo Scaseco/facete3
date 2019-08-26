@@ -19,6 +19,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -137,6 +138,9 @@ public class TaskGenerator {
 	protected Random pseudoRandom;
 	protected ScenarioConfig scenarioTemplate;
 
+	
+	protected Consumer<SparqlTaskResource> taskPostProcessor = null;
+	
 //protected RdfChangeTracker state;
 
 	protected RdfChangeTrackerWrapper changeTracker;
@@ -153,6 +157,10 @@ public class TaskGenerator {
 		this.conceptPathFinder = conceptPathFinder;
 
 		resetQueryState();
+	}
+	
+	public void setTaskPostProcessor(Consumer<SparqlTaskResource> taskPostProcessor) {
+		this.taskPostProcessor = taskPostProcessor;
 	}
 
 	public void resetQueryState() {
@@ -264,7 +272,7 @@ public class TaskGenerator {
 		int scenarioIdxCounter[] = {0};
 		Callable<Callable<SparqlTaskResource>> scenarioSupplier = () -> {
 
-			int scenarioIdx = scenarioIdxCounter[0]++;
+			int scenarioId = ++scenarioIdxCounter[0];
 			Supplier<SparqlTaskResource> core = this.generateScenario();
 
 
@@ -272,16 +280,10 @@ public class TaskGenerator {
 				SparqlTaskResource s = core.get();
 				if (s != null) {
 					// Id of 0 conflicts with the eval module...
-					int displayId = scenarioIdx + 1;
+					//int displayId = scenarioIdx + 1;
 					
 					// add scenario id
-					s.addLiteral(FacetedBrowsingVocab.scenarioId, displayId);
-
-					Integer queryId = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(s, FacetedBrowsingVocab.queryId, Integer.class); //getString();
-					String scenarioName = "scenario" + displayId;
-
-					s = ResourceUtils.renameResource(s, "http://example.org/" + scenarioName + "-" + queryId)
-							.as(SparqlTaskResource.class);
+					s.addLiteral(FacetedBrowsingVocab.scenarioId, scenarioId);
 				}
 				return s;
 
@@ -722,7 +724,7 @@ public class TaskGenerator {
 		
 		// Ideally for every task the query id would start at 0,
 		// but the eval module currently only supports (scenarioId, queryId)
-		int queryIdInScenario[] = {0};
+		int transitionId[] = {0};
 
 		// Create a concrete instance of the scenario configuration template
 		ScenarioConfig config =
@@ -736,37 +738,66 @@ public class TaskGenerator {
 		Integer scenarioLength = config.getScenarioLength();
 		Objects.requireNonNull(scenarioLength);
 
+		
+		int maxRetries = 3;
+		
 		Supplier<Collection<SparqlTaskResource>> tmp = () -> {
 			Collection<SparqlTaskResource> r = null;
 			
-			int i = taskIdInScenario[0]++;
+			int i = ++taskIdInScenario[0];
 			
 			if (i < scenarioLength) {
 
-				NfaTransition transition = nextState(cpToAction, currentState[0]);
-				if(transition != null) {				
-									
-					String cpName = getTransitionKey(transition);
-				
-					// HACK to parse out the integer id of a cp
-					// Needed for compatibility with the old evaluation module
-					// FIXME Get rid of making assumptions about cp ids				
-					if (cpName != null) {
-						String cpSuffix = cpName.substring(2);
-						int cpId = Integer.parseInt(cpSuffix);
+				int attemptCount = 0;
+				int retryCount = 3;
+
+				transitionId[0]++;
+
+				while(attemptCount < retryCount) {
+
+					NfaTransition transition = nextState(cpToAction, currentState[0]);
+					if(transition != null) {
+						
+						String cpName = getTransitionKey(transition);
+					
+						// HACK to parse out the integer id of a cp
+						// Needed for compatibility with the old evaluation module
+						// FIXME Get rid of making assumptions about cp ids				
+						if (cpName != null) {
+							String cpSuffix = cpName.substring(2);
+							int cpId = Integer.parseInt(cpSuffix);
+		
+							
+							r = generateQueries(currentQuery.focus());
+
+							// Add annotations
+							for(SparqlTaskResource s : r) {
+								s
+									.addLiteral(FacetedBrowsingVocab.transitionId, transitionId[0]) //Integer.toString(i))
+									.addLiteral(FacetedBrowsingVocab.transitionType, cpId);
+							}
+
+							try {
+								for(SparqlTaskResource s : r) {
+									taskPostProcessor.accept(s);
+								}
+							} catch(Exception e) {
+								logger.warn("Task post processing failed ", e);
+								++attemptCount;
+
+								if(attemptCount > retryCount) {
+									throw new RuntimeException("Scenario failed");
+								}
+								
+								continue;
+							}
 	
-						r = generateQueries(currentQuery.focus());
-						// Add annotations
-						for(SparqlTaskResource s : r) {
-							s
-								.addLiteral(FacetedBrowsingVocab.queryId, queryIdInScenario[0]++) //Integer.toString(i))
-								.addLiteral(FacetedBrowsingVocab.chokepointId, cpId);
+							currentState[0] = transition.getTarget();
+							break;
 						}
-	//					r = generateQuery(currentQuery.focus().availableValues());
 					}
-	
-					currentState[0] = transition.getTarget();
-				}				
+				}
+
 				//RDFDataMgr.write(System.out, task.getModel(), RDFFormat.TURTLE_PRETTY);
 			}
 			return r;
@@ -786,7 +817,13 @@ public class TaskGenerator {
 			generateQuery(currentQuery.focus().availableValues().ordered().limit(1000)), // TODO Probably sort and take a limit
 			generateQuery(currentQuery.focus().fwd().facetCounts().ordered().limit(1000)),
 			generateQuery(currentQuery.focus().fwd().facetValueCounts().ordered().limit(1000)));
-			
+		
+		for(int i = 0; i < result.size(); ++i) {
+			result.get(i)
+				.addLiteral(FacetedBrowsingVocab.queryId, i + 1)
+				.addLiteral(FacetedBrowsingVocab.queryType, i + 1);
+		}
+		
 		return result;
 	}
 

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.relationlet;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -8,7 +7,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
 public class RelationletElementImpl
-	//implements Relationlet
 	extends RelationletElementBase
 {
 	protected Element el;
@@ -22,22 +20,6 @@ public class RelationletElementImpl
 		super();
 		this.el = el;
 		this.fixedVars = fixedVars;
-	}
-
-	@Override
-	public Relationlet getMember(String alias) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Var getInternalVar(Var var) {
-		return null;
-	}
-
-	@Override
-	public Collection<Var> getExposedVars() {
-		return null;
 	}
 
 	@Override
@@ -58,7 +40,6 @@ public class RelationletElementImpl
 			
 		
 		return this;
-		//return result;
 	}
 
 	@Override

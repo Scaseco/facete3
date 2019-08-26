@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
@@ -44,6 +45,28 @@ public class TestFacetedQuery {
 		fq = FacetedQueryImpl.create(facetedQuery, conn);
 
 		//FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
+	}
+
+	@Test
+	public void testNaming() {		
+		Model model = RDFDataMgr.loadModel("path-data-simple.ttl");
+		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));		
+
+		Model dataModel = ModelFactory.createDefaultModel();
+		XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
+		FacetedQueryImpl.initResource(facetedQuery);
+		
+		fq = FacetedQueryImpl.create(facetedQuery, conn);
+
+		List<FacetCount> facetCounts = fq
+				.root().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City").activate().end()
+				.root().fwd()
+					.facetCounts().exclude(RDF.type).exec().toList().blockingGet();
+
+		System.out.println("Available values: " + facetCounts);
+		
+		
+
 	}
 
 	/**

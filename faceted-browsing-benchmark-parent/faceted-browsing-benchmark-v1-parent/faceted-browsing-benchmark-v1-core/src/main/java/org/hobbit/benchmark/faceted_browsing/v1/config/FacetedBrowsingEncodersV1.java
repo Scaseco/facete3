@@ -47,7 +47,7 @@ public class FacetedBrowsingEncodersV1 {
 	        }
 
 	        for(Integer cp : cps) {
-	        	result.addLiteral(FacetedBrowsingVocab.chokepointId, cp);
+	        	result.addLiteral(FacetedBrowsingVocab.transitionType, cp);
 	        }
         }
 

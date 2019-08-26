@@ -10,7 +10,7 @@ import org.apache.jena.sparql.syntax.Element;
 
 public abstract class RelationletElementBase
 	extends RelationletBaseWithMutableFixedVars
-	implements RelationletElement
+	implements RelationletSimple
 {
 	
 	@Override
@@ -22,13 +22,13 @@ public abstract class RelationletElementBase
 
 	
 	@Override
-	public RelationletNestedImpl materialize() {
+	public RelationletSimple materialize() {
 		Map<Var, Var> identityMap = getVarsMentioned().stream()
 				.collect(CollectorUtils.toLinkedHashMap(x -> x, x -> x));
 
 		Element el = getElement();
 		Set<Var> fixedVars = getFixedVars();
-		RelationletNestedImpl result = new RelationletNestedImpl(el, identityMap, fixedVars);
+		RelationletSimple result = new RelationletNestedImpl(el, identityMap, fixedVars);
 		return result;
 	}
 }

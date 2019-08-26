@@ -154,7 +154,7 @@ public class EvaluationModuleFacetedBrowsingBenchmark
 
         
         
-        Set<Integer> cps = new SetFromLiteralPropertyValues<>(expected, FacetedBrowsingVocab.chokepointId, Integer.class);
+        Set<Integer> cps = new SetFromLiteralPropertyValues<>(expected, FacetedBrowsingVocab.transitionType, Integer.class);
         
         //seenCps.addAll(cps);
         LOGGER.info("Eval_mod task Id: "+ taskidGold);

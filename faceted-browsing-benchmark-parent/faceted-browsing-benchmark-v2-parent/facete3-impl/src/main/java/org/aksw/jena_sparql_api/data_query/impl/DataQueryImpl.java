@@ -42,7 +42,7 @@ import org.aksw.jena_sparql_api.pathlet.Path;
 import org.aksw.jena_sparql_api.pathlet.PathletJoinerImpl;
 import org.aksw.jena_sparql_api.pathlet.PathletSimple;
 import org.aksw.jena_sparql_api.relationlet.RelationletElementImpl;
-import org.aksw.jena_sparql_api.relationlet.RelationletNestedImpl;
+import org.aksw.jena_sparql_api.relationlet.RelationletSimple;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -671,7 +671,7 @@ public class DataQueryImpl<T extends RDFNode>
 	
 			// Now that all paths have been collected and added to the pathlet
 			// materalize it
-			RelationletNestedImpl rn = pathlet.materialize();
+			RelationletSimple rn = pathlet.materialize();
 			
 			// Resolve all var refs against the materialized relationlet
 			NodeTransform xform2 = new NodeTransformPathletVarRefResolver(rn);

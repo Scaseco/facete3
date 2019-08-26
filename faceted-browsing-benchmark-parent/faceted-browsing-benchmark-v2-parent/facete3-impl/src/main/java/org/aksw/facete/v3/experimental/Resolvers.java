@@ -4,9 +4,11 @@ import org.aksw.commons.jena.graph.GraphVar;
 import org.aksw.commons.jena.graph.GraphVarImpl;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -23,6 +25,13 @@ public class Resolvers {
 		return result;
 	}
 	
+	public static Resolver create() {
+		PartitionedQuery1 pq = PartitionedQuery1.from(QueryFactory.create("CONSTRUCT WHERE {}"), Vars.s);
+		Resolver result = Resolvers.from(pq);
+
+		return result;
+	}
+
 	public static Resolver from(Var viewVar, Query view) {
 		PartitionedQuery1 pq = PartitionedQuery1.from(view, viewVar);
 		Resolver result = Resolvers.from(pq);

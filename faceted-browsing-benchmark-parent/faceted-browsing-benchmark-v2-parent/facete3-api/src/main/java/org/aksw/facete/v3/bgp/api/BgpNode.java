@@ -27,7 +27,8 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
 public interface BgpNode
-	extends TraversalNode<BgpNode, BgpDirNode, BgpMultiNode>, Resource
+	extends TraversalNode<BgpNode, BgpDirNode, BgpMultiNode>,
+	Resource
 {	
 	BgpDirNode fwd();
 	BgpDirNode bwd();

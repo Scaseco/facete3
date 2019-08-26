@@ -375,18 +375,12 @@ public class PathletJoinerImpl
 	}
 
 
-	@Override
-	public Relationlet getMember(String alias) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Relationlet getMember(String alias) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
-
-	@Override
-	public Var getInternalVar(Var var) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 
 	@Override

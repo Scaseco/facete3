@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.relationlet;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.facete.v3.api.path.NestedVarMap;
@@ -15,13 +17,10 @@ import org.apache.jena.sparql.core.Var;
  * @author raven
  *
  */
-public interface Relationlet {
-	Relationlet getMember(String alias);
-	Var getInternalVar(Var var);
-
+public interface Relationlet
+{
 	Collection<Var> getExposedVars();
 	Set<Var> getVarsMentioned();
-	
 	
 	default boolean isFixed(Var var) {
 		Set<Var> fixedVars = getFixedVars();
@@ -56,8 +55,19 @@ public interface Relationlet {
 	Set<Var> getFixedVars();
 	Relationlet setFixedVar(Var var, boolean onOrOff);
 	
-//	Element getElement();
-	
+	RelationletSimple materialize();
+
 	NestedVarMap getNestedVarMap();
-	RelationletNestedImpl materialize();
+	
+	default Var resolve(VarRefStatic varRef) {
+		List<String> labels = varRef.getLabels();
+		Var v = varRef.getV();
+		
+		NestedVarMap src = getNestedVarMap();
+		NestedVarMap tgt = src.get(labels);
+		Map<Var, Var> map = tgt.getLocalToFinalVarMap();
+		
+		Var result =  map.get(v);
+		return result;
+	}
 }

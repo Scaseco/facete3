@@ -29,8 +29,8 @@ import java.io.FileInputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MainSparqlBenchmarkRunner {
-	private static final Logger logger = LoggerFactory.getLogger(MainSparqlBenchmarkRunner.class);
+public class MainCliSparqlBenchmarkRunner {
+	private static final Logger logger = LoggerFactory.getLogger(MainCliSparqlBenchmarkRunner.class);
 	
 	
 	public static void main(String[] args) throws Exception {

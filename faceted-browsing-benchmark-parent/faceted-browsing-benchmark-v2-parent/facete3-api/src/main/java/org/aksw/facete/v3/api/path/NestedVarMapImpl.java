@@ -18,7 +18,7 @@ public class NestedVarMapImpl
 	implements NestedVarMap
 {
 	protected Map<Var, Var> localToFinalVarMap;
-	protected Map<String, NestedVarMapImpl> memberVarMap;
+	protected Map<String, NestedVarMap> memberVarMap;
 	protected Set<Var> fixedFinalVars;
 	
 	
@@ -26,7 +26,7 @@ public class NestedVarMapImpl
 		this(localToFinalVarMap, fixedFinalVars, Collections.emptyMap());
 	}
 
-	public NestedVarMapImpl(Map<Var, Var> localToFinalVarMap, Set<Var> fixedFinalVars, Map<String, NestedVarMapImpl> memberVarMap) {
+	public NestedVarMapImpl(Map<Var, Var> localToFinalVarMap, Set<Var> fixedFinalVars, Map<String, NestedVarMap> memberVarMap) {
 		super();
 		this.localToFinalVarMap = localToFinalVarMap;
 		this.memberVarMap = memberVarMap;
@@ -58,7 +58,7 @@ public class NestedVarMapImpl
 	}
 
 	@Override
-	public Map<String, NestedVarMapImpl> getMemberVarMap() {
+	public Map<String, NestedVarMap> getMemberVarMap() {
 		return memberVarMap;
 	}
 	
@@ -70,7 +70,7 @@ public class NestedVarMapImpl
 			e.setValue(after);
 		}
 		
-		for(NestedVarMapImpl child : memberVarMap.values()) {
+		for(NestedVarMap child : memberVarMap.values()) {
 			child.transformValues(fn);
 		}
 		
@@ -89,7 +89,7 @@ public class NestedVarMapImpl
 	public NestedVarMapImpl clone() {
 		Map<Var, Var> cp1 = new LinkedHashMap<>(localToFinalVarMap);
 		Set<Var> cp2 = new LinkedHashSet<>(fixedFinalVars);
-		Map<String, NestedVarMapImpl> cp3 = memberVarMap.entrySet().stream()
+		Map<String, NestedVarMap> cp3 = memberVarMap.entrySet().stream()
 				.collect(CollectorUtils.toLinkedHashMap(Entry::getKey, e -> e.getValue().clone()));
 		
 		NestedVarMapImpl result = new NestedVarMapImpl(cp1, cp2, cp3);

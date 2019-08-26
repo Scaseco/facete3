@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.data_query.impl;
 
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.relationlet.RelationletNestedImpl;
+import org.aksw.jena_sparql_api.relationlet.RelationletSimple;
 import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -10,9 +10,9 @@ import org.apache.jena.sparql.graph.NodeTransform;
 public class NodeTransformPathletVarRefResolver
 	implements NodeTransform
 {
-	protected RelationletNestedImpl relationlet;
+	protected RelationletSimple relationlet;
 	
-	public NodeTransformPathletVarRefResolver(RelationletNestedImpl relationlet) {
+	public NodeTransformPathletVarRefResolver(RelationletSimple relationlet) {
 		this.relationlet = relationlet;
 	}
 

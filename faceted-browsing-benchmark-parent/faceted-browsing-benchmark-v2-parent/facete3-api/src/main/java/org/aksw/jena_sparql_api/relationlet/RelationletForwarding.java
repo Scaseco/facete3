@@ -10,17 +10,6 @@ public abstract class RelationletForwarding
 {
 	protected abstract Relationlet getRelationlet();
 	
-
-	@Override
-	public Relationlet getMember(String alias) {
-		return getRelationlet().getMember(alias);
-	}
-
-	@Override
-	public Var getInternalVar(Var var) {
-		return getRelationlet().getInternalVar(var);
-	}
-
 	@Override
 	public Collection<Var> getExposedVars() {
 		return getRelationlet().getExposedVars();
@@ -41,14 +30,9 @@ public abstract class RelationletForwarding
 		return getRelationlet().setFixedVar(var, onOrOff);
 	}
 
-//	@Override
-//	public Element getElement() {
-//		return getRelationlet().getElement();
-//	}
-
 	@Override
-	public RelationletNestedImpl materialize() {
-		RelationletNestedImpl result = getRelationlet().materialize();
+	public RelationletSimple materialize() {
+		RelationletSimple result = getRelationlet().materialize();
 		return result;
 	}
 

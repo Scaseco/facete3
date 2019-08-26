@@ -71,7 +71,7 @@ import io.reactivex.Flowable;
 											Arrays.asList("s"))))
 							.addLiteral(FacetedBrowsingVocab.scenarioId, 1)
 							.addLiteral(FacetedBrowsingVocab.queryId, 1)
-							.addLiteral(FacetedBrowsingVocab.chokepointId, 1)
+							.addLiteral(FacetedBrowsingVocab.transitionType, 1)
 				));
 			};
     	

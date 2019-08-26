@@ -347,7 +347,7 @@ public class RelationletJoinerImpl<T extends Relationlet>
 //		return labelToRe.values();
 //	}
 
-	public static VarRefStatic resolveMat(Map<String, RelationletNestedImpl> map, VarRefStatic varRef) {
+	public static VarRefStatic resolveMat(Map<String, RelationletSimple> map, VarRefStatic varRef) {
 		Entry<String, Var> e = resolveMatCore(map, varRef);
 		VarRefStatic result = new VarRefStatic(e.getKey(), e.getValue());
 		return result;
@@ -360,7 +360,7 @@ public class RelationletJoinerImpl<T extends Relationlet>
 	 * @param varRef
 	 * @return
 	 */
-	public static Entry<String, Var> resolveMatCore(Map<String, RelationletNestedImpl> map, VarRefStatic varRef) {
+	public static Entry<String, Var> resolveMatCore(Map<String, RelationletSimple> map, VarRefStatic varRef) {
 		Var v = Objects.requireNonNull(varRef.getV());
 		List<String> labels = varRef.getLabels();
 		if(labels.isEmpty()) {
@@ -369,7 +369,7 @@ public class RelationletJoinerImpl<T extends Relationlet>
 		
 		String label = labels.get(0);
 		List<String> subLabels = labels.subList(1, labels.size());
-		RelationletNestedImpl r = map.get(label);
+		Relationlet r = map.get(label);
 		NestedVarMap subMap = r.getNestedVarMap();
 		NestedVarMap tmp = subLabels.isEmpty() ? subMap : subMap.get(subLabels);
 		Map<Var, Var> varMap = tmp.getLocalToFinalVarMap();
@@ -392,10 +392,11 @@ public class RelationletJoinerImpl<T extends Relationlet>
 	 * Create a snapshot of any referenced relationlet
 	 * 
 	 */
-	public RelationletNestedImpl materialize() {
+	@Override
+	public RelationletSimple materialize() {
 		
 		// Materialize all members
-		Map<String, RelationletNestedImpl> materializedMembers = labelToRe.values().stream()
+		Map<String, RelationletSimple> materializedMembers = labelToRe.values().stream()
 				.collect(CollectorUtils.toLinkedHashMap(
 					RelationletEntry::getId,
 					e -> e.getRelationlet().materialize()));
@@ -514,7 +515,7 @@ public class RelationletJoinerImpl<T extends Relationlet>
 
 		
 //		for(RelationletEntry<T> e : getRelationletEntries()) {
-		for(Entry<String, RelationletNestedImpl> ee : materializedMembers.entrySet()) {
+		for(Entry<String, RelationletSimple> ee : materializedMembers.entrySet()) {
 			//int id = e.getId();
 			//T r = e.getRelationlet();
 			String id = ee.getKey();
@@ -568,8 +569,8 @@ public class RelationletJoinerImpl<T extends Relationlet>
 			Multimap<Var, String> varToRe = ArrayListMultimap.create();
 			for(Entry<String, Var> f : members) {
 				String label = f.getKey();
-				RelationletNestedImpl r = materializedMembers.get(label);
-				NestedVarMapImpl nvm = r.getNestedVarMap();
+				Relationlet r = materializedMembers.get(label);
+				NestedVarMap nvm = r.getNestedVarMap();
 				
 				//RelationletEntry<T> re = f.getKey();
 				//Relationlet r = re.getRelationlet();
@@ -676,11 +677,11 @@ public class RelationletJoinerImpl<T extends Relationlet>
 		
 		ElementGroup group = new ElementGroup();
 //		for(RelationletEntry<T> re : getRelationletEntries()) {
-		for(Entry<String, RelationletNestedImpl> ee : materializedMembers.entrySet()) {
+		for(Entry<String, RelationletSimple> ee : materializedMembers.entrySet()) {
 			//int id = e.getId();
 			//T r = e.getRelationlet();
 			String rid = ee.getKey();
-			RelationletNestedImpl r = ee.getValue();
+			RelationletSimple r = ee.getValue();
 			Element el = r.getElement();
 //			int rid = re.getId();
 //			Element el = re.getRelationlet().getElement();
@@ -717,10 +718,10 @@ public class RelationletJoinerImpl<T extends Relationlet>
 		// This way, a deep reference such as a.b.c.?x can yield the effective variable at this		
 
 		
-		Map<String, NestedVarMapImpl> memberToNestedVarMap = new LinkedHashMap<>();
-		for(Entry<String, RelationletNestedImpl> e : materializedMembers.entrySet()) {
+		Map<String, NestedVarMap> memberToNestedVarMap = new LinkedHashMap<>();
+		for(Entry<String, RelationletSimple> e : materializedMembers.entrySet()) {
 			String label = e.getKey();
-			NestedVarMapImpl clone = e.getValue().getNestedVarMap().clone();
+			NestedVarMap clone = e.getValue().getNestedVarMap().clone();
 			//int rid = labelToRid.get(label);
 			Map<Var, Var> memberMap = ridToVarToFinalVal.row(label);
 		
@@ -735,13 +736,13 @@ public class RelationletJoinerImpl<T extends Relationlet>
 				.flatMap(re -> re.getNestedVarMap().getFixedFinalVars().stream())
 				.collect(Collectors.toSet());
 		
-		NestedVarMapImpl nvm = new NestedVarMapImpl(resolvedExposedVar, globalFixedVars, memberToNestedVarMap);
+		NestedVarMap nvm = new NestedVarMapImpl(resolvedExposedVar, globalFixedVars, memberToNestedVarMap);
 		
 		Element finalElement = postProcessor == null
 				? group
 				: postProcessor.apply(group);
 		
-		RelationletNestedImpl result = new RelationletNestedImpl(finalElement, nvm, materializedMembers);
+		RelationletSimple result = new RelationletNestedImpl(finalElement, nvm, materializedMembers);
 		
 //		System.out.println(ridToVarToFinalVal);
 //		System.out.println(group);
