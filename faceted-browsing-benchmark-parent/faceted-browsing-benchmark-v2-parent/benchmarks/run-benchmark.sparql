@@ -1,0 +1,27 @@
+INSERT {
+  []
+    eg:time ?time ;
+    eg:size ?size ;
+    eg:precision ?precision ;
+    eg:recall ?recall ;
+    eg:tmp ?cmp .
+}
+#SELECT ?cmp
+WHERE
+{
+  ?s
+    <http://www.example.org/taskPayload> ?o ;
+    <http://www.example.org/expectedResult> ?rsExpectedStr .
+    BIND(STRDT(?rsExpectedStr, xsd:json) AS ?rsExpected)
+  BIND(CONCAT('SELECT * { SERVICE <env://REMOTE> { {', ?o, ' } } }') AS ?str)
+  ?str sys:benchmark (?time ?size ?rsActual)
+
+  BIND(sys:rscmp(?rsExpected, ?rsActual) AS ?cmp)
+  BIND(json:path(?cmp, '$.precision') AS ?precision)
+  BIND(json:path(?cmp, '$.recall') AS ?recall)
+}
+
+
+SELECT (AVG(?time) AS ?timeAvg) {
+  ?s eg:time ?time
+}

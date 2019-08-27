@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.diff.ListDiff;
-import org.aksw.jena_sparql_api.compare.QueryExecutionCompare;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -20,6 +19,7 @@ import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionMultiplex;
 import org.aksw.jena_sparql_api.core.connection.TransactionalMultiplex;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
+import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -208,7 +208,7 @@ public class MainHobbitFacetedBrowsingBenchmarkStandalone {
 				
 				ResultSet refRs = refQe.execSelect();
 
-				ListDiff<Binding> diff = QueryExecutionCompare.compareUnordered(coreRs, refRs);
+				ListDiff<Binding> diff = ResultSetUtils.compareUnordered(coreRs, refRs);
 				
 				isEqual = diff.getAdded().isEmpty() && diff.getRemoved().isEmpty();
 			}
