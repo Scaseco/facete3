@@ -280,7 +280,12 @@ public class TaskGenerator {
 
 
 			Callable<SparqlTaskResource> taskSupplier = () -> {
-				SparqlTaskResource s = core.get();
+				SparqlTaskResource s = null;
+				try {
+					s = core.get();
+				} catch(Exception e) {
+					logger.warn("Scenario aborted prematurely due to exception", e);
+				}
 				if (s != null) {
 					// Id of 0 conflicts with the eval module...
 					//int displayId = scenarioIdx + 1;
@@ -883,6 +888,8 @@ public class TaskGenerator {
 		// repeat the process and hope that due to randomness we can advance
 		int maxRandomRetries = 3;
 		for (int j = 0; j < maxRandomRetries && !s.isEmpty(); ++j) {
+			int numRetriesRemaining = maxRandomRetries - 1 - j;
+			
 			//while(!s.isEmpty()) {
 			double w = rand.nextDouble();
 			NfaTransition transition = s.sample(w);
@@ -901,7 +908,12 @@ public class TaskGenerator {
 				try {
 					success = actionFactory.call();
 				} catch (Exception e) {
-					throw new RuntimeException(e);
+					if(j < maxRandomRetries) {
+						logger.info("Retrying " + numRetriesRemaining + " more times after error applying " + step, e);
+						continue;
+					} else {
+						throw new RuntimeException(e);
+					}
 				}
 
 				if (success) {
