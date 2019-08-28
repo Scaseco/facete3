@@ -19,6 +19,7 @@
 		<module>facete3-impl</module>
 		<module>faceted-browsing-benchmark-v2-core</module>
 		<module>faceted-browsing-benchmark-v2-cli</module>
+		<module>fsbg-debian-cli</module>
 <!--		<module>faceted-browsing-benchmark-v2-hobbit</module> -->
 		<!-- <module>faceted-browsing-benchmark-v2-docker-parent</module> -->
 		<module>facete3-cli</module>

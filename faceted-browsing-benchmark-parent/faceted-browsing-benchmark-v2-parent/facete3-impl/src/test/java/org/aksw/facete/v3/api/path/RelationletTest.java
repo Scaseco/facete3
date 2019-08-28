@@ -85,7 +85,7 @@ public class RelationletTest {
 			Path commonParentPath = Path.newPath().optional().fwd("http://ex.org/parent");
 
 			Path p1 = commonParentPath.fwd("http://ex.org/child", "p1");
-			Path p2 = commonParentPath.fwd("http://ex.org/child", "p1");
+			Path p2 = commonParentPath.fwd("http://ex.org/childX", "p1");
 
 
 			PathletJoinerImpl pathlet = new PathletJoinerImpl(resolver);
@@ -133,8 +133,12 @@ public class RelationletTest {
 	@Test
 	public void test() {		
 		RelationletJoinerImpl<Relationlet> child = new RelationletJoinerImpl<>();
-		child.add("a", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).fix(Vars.s));
-		child.add("b", Relationlets.from(ElementUtils.createElementTriple(Vars.s, RDFS.label.asNode(), Vars.o)));
+		child.add("a", Relationlets.from(
+				ElementUtils.createElementTriple(Vars.s, RDF.type.asNode(), Vars.o)).fix(Vars.s));
+
+		child.add("b", Relationlets.from(
+				ElementUtils.createElementTriple(Vars.s, RDFS.label.asNode(), Vars.o)));
+
 		child.expose("u", "a", "s");
 		child.addJoin("a", Arrays.asList(Vars.s), "b", Arrays.asList(Vars.s));		
 		
