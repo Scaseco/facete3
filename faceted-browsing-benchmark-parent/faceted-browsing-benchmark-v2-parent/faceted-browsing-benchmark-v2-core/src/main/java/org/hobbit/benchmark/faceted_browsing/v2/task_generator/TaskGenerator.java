@@ -3,6 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 import static java.lang.Math.log;
 import static java.util.Collections.shuffle;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -149,6 +150,8 @@ public class TaskGenerator {
 	protected FacetedQuery currentQuery;
 
 
+	protected static Duration cpTimeout = Duration.ofSeconds(30);
+	
 	public TaskGenerator(ScenarioConfig scenarioTemplate, Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
 		this.scenarioTemplate = scenarioTemplate;
 		this.conn = conn;
@@ -1014,7 +1017,7 @@ public class TaskGenerator {
 				.limit(1)
 				.exec()
 				.firstElement()
-				.timeout(10, TimeUnit.SECONDS)
+				.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
 				.blockingGet();
 
 		if (fc != null) {
@@ -1068,7 +1071,7 @@ public class TaskGenerator {
 				//fn.fwd(node).one().constraints().exists();
 
 				// Pick one of the facet values
-				logger.info("Applying cp2) " + fn.root().availableValues().exec().toList().blockingGet());
+				logger.info("Applying cp2) ");// + fn.root().availableValues().exec().toList().blockingGet());
 
 				result = true;
 			}
@@ -1182,6 +1185,7 @@ public class TaskGenerator {
 				.only(RDF.type)
 				.exec()
 				.toMap(xk -> xk.getValue(), xv -> 1 + log(xv.getFocusCount().getCount()), LinkedHashMap::new)
+				.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
 				.blockingGet();
 
 		//})
@@ -1369,7 +1373,10 @@ public class TaskGenerator {
 							.filter(numProps)
 							//.pseudoRandom(pseudoRandom)
 							.exec()
-							.map(RDFNode::asNode).toSortedList(NodeUtils::compareRDFTerms).blockingGet();
+							.map(RDFNode::asNode)
+							.toSortedList(NodeUtils::compareRDFTerms)
+							.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
+							.blockingGet();
 				}
 
 				for (Node p : ps) {
@@ -1456,7 +1463,10 @@ public class TaskGenerator {
 						.filter(numProps)
 						.randomOrder()
 						.pseudoRandom(pseudoRandom)
-						.exec().map(n -> n.asNode()).firstElement().blockingGet();
+						.exec().map(n -> n.asNode())
+						.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
+						.firstElement()
+						.blockingGet();
 			}
 
 			if (p != null) {
@@ -1728,6 +1738,7 @@ public class TaskGenerator {
 				.exclude(RDFS.subClassOf, RDF.type)
 				.exec()
 				.firstElement()
+				.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
 				.blockingGet();
 
 		if (fwc != null) {
@@ -1815,7 +1826,9 @@ public class TaskGenerator {
 		final FacetNode typeNode = walk.fwd(property).one();
 		final Maybe<RDFNode> someclazz = typeNode.remainingValues().exclude(OWL.NS + "NamedIndividual")
 				.randomOrder().pseudoRandom(pseudoRandom).exec().firstElement();
-		final RDFNode clazzNode = someclazz.blockingGet();
+		final RDFNode clazzNode = someclazz
+				.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
+				.blockingGet();
 		if (clazzNode != null) {
 			typeNode.constraints().eq(clazzNode).activate();
 			result = true;
@@ -1935,6 +1948,7 @@ public class TaskGenerator {
 				.randomOrder().pseudoRandom(pseudoRandom)
 				.exec()
 				.toList()
+				.timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
 				.blockingGet();
 		//System.out.println(objects);
 		if (!objects.isEmpty()) {
@@ -2183,7 +2197,7 @@ public class TaskGenerator {
 
 		DataQuery<Resource> dq = new DataQueryImpl<>(conn, subClassesRelation, null, Resource.class);
 
-		final List<Resource> subClasses = dq.exec().toList().blockingGet();
+		final List<Resource> subClasses = dq.exec().toList().timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS).blockingGet();
 
 
 		logger.debug("Subclasses: " + subClasses.size());
