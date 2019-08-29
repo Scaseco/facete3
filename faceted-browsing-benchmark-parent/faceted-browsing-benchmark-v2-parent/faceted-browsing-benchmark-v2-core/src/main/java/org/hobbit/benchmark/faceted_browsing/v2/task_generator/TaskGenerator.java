@@ -824,7 +824,8 @@ public class TaskGenerator {
 		List<SparqlTaskResource> result = Arrays.asList(
 			generateQuery(currentQuery.focus().availableValues().ordered().limit(1000)), // TODO Probably sort and take a limit
 			generateQuery(currentQuery.focus().fwd().facetCounts().ordered().limit(1000)),
-			generateQuery(currentQuery.focus().fwd().facetValueCounts().ordered().limit(1000)));
+			// This order by is somewhat hacky - there is no guarantee its always ?o ...
+			generateQuery(currentQuery.focus().fwd().facetValueCounts().ordered().addOrderBy(Vars.o, Query.ORDER_ASCENDING).limit(1000)));
 		
 		for(int i = 0; i < result.size(); ++i) {
 			result.get(i)
