@@ -80,8 +80,7 @@ public class RelationletTest {
 			
 			Resolver resolver = Resolvers.from(Vars.s, baseQuery);
 			
-			Path psimple = Path.newPath().fwd(RDF.type);
-			
+			Path psimple = Path.newPath().fwd(RDF.type);			
 			Path commonParentPath = Path.newPath().optional().fwd("http://ex.org/parent");
 
 			Path p1 = commonParentPath.fwd("http://ex.org/child", "p1");
