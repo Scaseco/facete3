@@ -21,7 +21,7 @@ Here a teaser of the terminal application on [Scholarly Data](http://www.scholar
 
 ![Screenshot](doc/2019-09-25-Facete3-TerminalApp.png)
 
-And here a teaser for what the Facete3 core API looks like - based on [RxJava2](https://github.com/ReactiveX/RxJava):
+And here a teaser for what the Facete3 core API looks like - reactive streams powered by [RxJava2](https://github.com/ReactiveX/RxJava):
 
 ```java
 class TestFacetedQuery {
