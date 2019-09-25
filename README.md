@@ -55,5 +55,17 @@ class TestFacetedQuery {
 }
 ```
 
+## Building
+
+This project uses Apache Maven and is thus built with:
+
+```bash
+mvn clean install
+```
+
+Please refer to the respective Facete 3 component READMEs for details about how to use them.
 
 
+## Licence
+The source code of this repo is published under the [Apache License Version 2.0](LICENSE).
+Dependencies may be licenced under different terms. When in doubt please refer to the licences of the dependencies declared in the pom.xml files.
