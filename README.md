@@ -22,33 +22,33 @@ Here a teaser for what the Facete3 core API looks like - based on RxJava2:
 
 ```java
 class TestFacetedQuery {
-	@Test
-	public void testComplexQuery() {
+    @Test
+    public void testComplexQuery() {
         RDFConnection conn = RDFConnectionFactory.connect(someDataset);
         FacetedQuery fq = fq = FacetedQueryImpl.create(conn);
 
-		FacetValueCount fc =
-				// -- Faceted Browsing API
-				fq.root()
-				.fwd(RDF.type).one()
-					.constraints()
-						.eq(OWL.Class).activate()
-					.end()
-				.parent()
-				.fwd()
-				.facetValueCounts()	
-				// --- DataQuery API
-				//.sample()
-				.randomOrder()
-				.limit(1)
-				.exec()
-				// --- RxJava API
-				.firstElement()
-				.timeout(10, TimeUnit.SECONDS)
-				.blockingGet();
+        FacetValueCount fc =
+                // -- Faceted Browsing API
+                fq.root()
+                .fwd(RDF.type).one()
+                    .constraints()
+                        .eq(OWL.Class).activate()
+                    .end()
+                .parent()
+                .fwd()
+                .facetValueCounts()    
+                // --- DataQuery API
+                //.sample()
+                .randomOrder()
+                .limit(1)
+                .exec()
+                // --- RxJava API
+                .firstElement()
+                .timeout(10, TimeUnit.SECONDS)
+                .blockingGet();
 
-		System.out.println("FacetValueCount: " + fc);
-	}
+        System.out.println("FacetValueCount: " + fc);
+    }
 }
 ```
 
