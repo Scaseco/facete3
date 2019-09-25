@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -39,7 +40,6 @@ import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
-import org.aksw.facete.v3.impl.RDFConnectionBuilder;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -49,9 +49,7 @@ import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -63,7 +61,6 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.ext.com.google.common.base.Strings;
@@ -82,13 +79,13 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionRemoteBuilder;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +104,6 @@ import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.gui2.ActionListBox;
 import com.googlecode.lanterna.gui2.BasicWindow;
-import com.googlecode.lanterna.gui2.Border;
 import com.googlecode.lanterna.gui2.Borders;
 import com.googlecode.lanterna.gui2.Borders.StandardBorder;
 import com.googlecode.lanterna.gui2.Button;
@@ -118,12 +114,14 @@ import com.googlecode.lanterna.gui2.Interactable;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
+import com.googlecode.lanterna.gui2.TextGUIGraphics;
 import com.googlecode.lanterna.gui2.Window;
 import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogButton;
 import com.googlecode.lanterna.gui2.table.Table;
+import com.googlecode.lanterna.gui2.table.TableCellRenderer;
 import com.googlecode.lanterna.gui2.table.TableModel;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
@@ -131,6 +129,25 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
+
+
+class TableCellRenderImpl
+	implements TableCellRenderer<RDFNode>
+{
+	@Override
+	public TerminalSize getPreferredSize(Table<RDFNode> table, RDFNode cell, int columnIndex, int rowIndex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void drawCell(Table<RDFNode> table, RDFNode cell, int columnIndex, int rowIndex,
+			TextGUIGraphics textGUIGraphics) {
+		// TODO Auto-generated method stub
+		
+	}	
+}
+
 
 
 interface Paginator<T> {
@@ -435,7 +452,7 @@ public class MainCliFacete3 {
 	}
 	
 	public void updateResourceView(RDFNode n) {
-		TableModel<Node> model = resourceTable.getTableModel();
+		TableModel<RDFNode> model = resourceTable.getTableModel();
 		resourceTable.setSelectedColumn(-1);
 		resourceTable.setSelectedRow(0);
 		model.clear();
@@ -456,15 +473,15 @@ public class MainCliFacete3 {
 				
 				Property prev = null;
 				for(Property curr : predicates) {
-					Node p = null;
+					Property p = null;
 					if(prev != curr) {
-						p = curr.asNode();
+						p = curr;
 						prev = curr;
 					}
 	
 					for(RDFNode rdfNode : ResourceUtils.listPropertyValues(r, curr).toList()) {
-						Node o = rdfNode.asNode();
-						model.addRow(p, o);
+						//Node o = rdfNode.asNode();
+						model.addRow(p, rdfNode);
 					}
 				}
 			}
@@ -602,12 +619,14 @@ public class MainCliFacete3 {
 
 	ActionListBox facetList = new ActionListBox(); //new TerminalSize(30, 10));
 	CheckBoxList<FacetValueCount> facetValueList = new CheckBoxList<>();
-	Table<Node> resultTable = new Table<>("Item");
-	Table<Node> cartTable = new Table<>("Item");
+	Table<RDFNode> resultTable = new Table<>("Item");
+	Table<RDFNode> cartTable = new Table<>("Item");
 
 	CheckBoxList<HLFacetConstraint<?>> constraintList = new CheckBoxList<>();
 	Panel facetPathPanel = new Panel();
-	Border resultPanelBorder;
+	StandardBorder resourcePanelBorder;
+	StandardBorder resultPanelBorder;
+	StandardBorder facetValuePanelBorder;
 
 	
 	String facetFilter = null;
@@ -622,12 +641,10 @@ public class MainCliFacete3 {
 	
 	Node resourceTableSubject = null;
 	Label2 resourceSubjectLabel = new Label2("");
-	Table<Node> resourceTable = new Table<Node>("p", "o");
+	Table<RDFNode> resourceTable = new Table<RDFNode>("p", "o");
 	
 	
 	Panel resourcePanel = new Panel();
-
-
 	Panel itemPagePanel = new Panel();
 
 	
@@ -702,18 +719,24 @@ public class MainCliFacete3 {
 				? "(no matches)"
 				: String.format("Matches %d-%d of %d", itemStart + 1, itemEnd, count);
 		
-		((StandardBorder)resultPanelBorder).setTitle(title);
+		resultPanelBorder.setTitle(title);
 		
 		List<RDFNode> items = fq.root().availableValues()
-				.offset(itemPage[0])
+				.offset(itemStart)
 				.limit(itemsPerPage)
 				.exec().toList().blockingGet();
+
+		MainCliFacete3.<RDFNode>enrichWithLabels(items, RDFNode::asNode, labelService);
+
 		
-		TableModel<Node> model = resultTable.getTableModel();
+//		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
+
+		
+		TableModel<RDFNode> model = resultTable.getTableModel();
 		model.clear();
 		
 		for(RDFNode item : items) {
-			model.addRow(item.asNode());
+			model.addRow(item);
 		}
 		
 		if(resultTable.getSelectedRow() > model.getRowCount()) {
@@ -823,6 +846,9 @@ public class MainCliFacete3 {
 		Stopwatch sw = Stopwatch.createStarted();
 
 		if(fdn != null && selectedFacet != null) {
+			// Set the title
+			facetValuePanelBorder.setTitle("Facet Values" + " [" + selectedFacet + "]");
+			
 			
 			UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
 
@@ -872,6 +898,7 @@ public class MainCliFacete3 {
 			facetValueList.clearItems();
 			//facetValueList.addItem(null);
 			// TODO Show in the panel that the list is empty
+			facetValuePanelBorder.setTitle("Facet Values");
 		}
 		
 		logger.info("updateFacetValues: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
@@ -909,7 +936,7 @@ public class MainCliFacete3 {
 			
 			for(FacetCount fc : fcs) {
 					facetList.addItem(PseudoRunnable.from(
-							fc.getProperty(RDFS.label).getString() + " (" + fc.getDistinctValueCount().getCount() + ")",
+							toString(fc) + " (" + fc.getDistinctValueCount().getCount() + ")",
 							fc.getPredicate(),
 							() -> selectFacet(fdn, fc.getPredicate())));
 			}
@@ -1096,7 +1123,11 @@ public class MainCliFacete3 {
 	public void init(RDFConnection conn) throws Exception
 	{
 		resourceTable.setCellSelection(true);
-		resultPanelBorder = Borders.singleLine("Matches");
+		resultPanelBorder = (StandardBorder)Borders.singleLine("Matches");
+
+		facetValuePanelBorder = (StandardBorder)Borders.singleLine("Facet Values");
+
+		resourcePanelBorder = (StandardBorder)Borders.singleLine("Resource");
 
 		Stopwatch sw = Stopwatch.createStarted();
 		
@@ -1114,13 +1145,16 @@ public class MainCliFacete3 {
 		//facetList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 
 		facetList.setInputFilter((i, keyStroke) -> {
+			
+			@SuppressWarnings("unchecked")
+			PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
+			Node node = pr == null ? null : pr.getData();
+			
+//			setResourcePanelTitle(node);
+			
 			// Navigation; set the facetDirNode
 			Character c = keyStroke.getCharacter();
 			if(c != null) {
-				@SuppressWarnings("unchecked")
-				PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
-				Node node = pr.getData();
-
 				switch(c) {
 				case resourceViewKey:
 					if(node != null) {
@@ -1132,8 +1166,8 @@ public class MainCliFacete3 {
 			}
 			
 			if(KeyType.Backspace.equals(keyStroke.getKeyType())) {
-				PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
-				Node node = pr.getData();
+//				PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
+//				Node node = pr.getData();
 
 //				ses.schedule(() -> {
 					org.aksw.facete.v3.api.Direction dir = fdn.dir();
@@ -1157,6 +1191,7 @@ public class MainCliFacete3 {
 		
 		fdn = fq.focus().fwd();
 
+		
 		
 //		facetList.setInputFilter((i, keyStroke) -> {
 //			facetList.g
@@ -1219,8 +1254,9 @@ public class MainCliFacete3 {
 			Character c = keyStroke.getCharacter();
 			
 			FacetValueCount item = facetValueList.getSelectedItem();
-			
-			if(c != null) {
+//			setResourcePanelTitle(item.asNode());
+
+			if(c != null) {				
 				switch(c) {
 				case resourceViewKey:
 					if(item != null) {
@@ -1278,15 +1314,16 @@ public class MainCliFacete3 {
 			int x = resultTable.getSelectedRow();
 			int y = resultTable.getSelectedColumn();
 			
-			Node node = getCell(resultTable.getTableModel(), x, y);
+			RDFNode node = getCell(resultTable.getTableModel(), x, y);
 			//Node node = x >= 0 && y >= 0 ? resultTable.getTableModel().getCell(x, y) : null;
 			
+//			setResourcePanelTitle(node.asNode());
 			
-			if(c != null) {
+			if(c != null) {				
 				switch(c) {
 				case resourceViewKey:
 					if(node != null) { 
-						RDFNode rdfNode = fetchIfResource(node);
+						RDFNode rdfNode = fetchIfResource(node.asNode());
 						updateResourceView(rdfNode);
 					}
 				}
@@ -1306,14 +1343,15 @@ public class MainCliFacete3 {
 			int y = resourceTable.getSelectedColumn();
 			
 //			Node node = x >= 0 && y >= 0 ? resourceTable.getTableModel().getCell(x, y) : null;
-			Node node = getCell(resourceTable.getTableModel(), x, y);
+			RDFNode node = getCell(resourceTable.getTableModel(), x, y);
+//			setResourcePanelTitle(node.asNode());
+
 			
-			
-			if(c != null) {
+			if(c != null) {				
 				switch(c) {
 				case resourceViewKey:
 					if(node != null) { 
-						RDFNode rdfNode = fetchIfResource(node);
+						RDFNode rdfNode = fetchIfResource(node.asNode());
 						updateResourceView(rdfNode);
 					}
 				}
@@ -1408,7 +1446,6 @@ public class MainCliFacete3 {
 			};
 		});
 
-		
 
 
 		Panel facetPanel = new Panel();
@@ -1464,7 +1501,8 @@ public class MainCliFacete3 {
 		itemPagePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		itemPagePanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
 
-		resultTable.setRenderer(new DefaultTableRenderer2<Node>());
+		resultTable.setTableCellRenderer(new DefaultTableCellRenderer2Rdf());
+		resultTable.setRenderer(new DefaultTableRenderer2<RDFNode>());
 		resultTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 
 		resultPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
@@ -1472,7 +1510,8 @@ public class MainCliFacete3 {
 		resultPanel.addComponent(itemPagePanel);
 		resultPanel.addComponent(resultTable);
 		
-		resourceTable.setRenderer(new DefaultTableRenderer2<Node>());
+		resourceTable.setTableCellRenderer(new DefaultTableCellRenderer2Rdf());
+		resourceTable.setRenderer(new DefaultTableRenderer2<RDFNode>());
 		resourceTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 
 		resourcePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
@@ -1493,11 +1532,11 @@ public class MainCliFacete3 {
 		//mainPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.FILL, true, true, 2, 1));
 		mainPanel.setLayoutManager(new GridLayout2(2));
 		mainPanel.addComponent(facetPanel.withBorder(Borders.singleLine("Facets")));
-		mainPanel.addComponent(facetValuePanel.withBorder(Borders.singleLine("Facet Values")));
+		mainPanel.addComponent(facetValuePanel.withBorder(facetValuePanelBorder));
 		mainPanel.addComponent(constraintPanel.withBorder(Borders.singleLine("Constraints")));
 		
 		mainPanel.addComponent(resultPanel.withBorder(resultPanelBorder));
-		mainPanel.addComponent(resourcePanel.withBorder(Borders.singleLine("Resource")));
+		mainPanel.addComponent(resourcePanel.withBorder(resourcePanelBorder));
 		mainPanel.addComponent(cartPanel.withBorder(Borders.singleLine("Cart")));
 
 		
@@ -1515,8 +1554,10 @@ public class MainCliFacete3 {
 			
 			@Override
 			public void onInput(Window basePane, KeyStroke keyStroke, AtomicBoolean deliverEvent) {
+				Character c = keyStroke.getCharacter() == null ? null : Character.toLowerCase(keyStroke.getCharacter());
 				
-				if(KeyType.Escape.equals(keyStroke.getKeyType())) {
+				if(KeyType.Escape.equals(keyStroke.getKeyType()) ||
+						Character.valueOf('q').equals(c)) {
 					MessageDialogButton selected = new MessageDialogBuilder()
 						.setTitle("")
 						.setText("Close this application?")
@@ -1581,8 +1622,36 @@ public class MainCliFacete3 {
 
         window.setHints(Arrays.asList(Window.Hint.NO_POST_RENDERING, Window.Hint.EXPANDED, Window.Hint.FIT_TERMINAL_WINDOW));
 
+        
+		selectFacet(fdn, RDF.type.asNode());
+
         gui.addWindowAndWait(window);
 
+	}
+	
+	
+	public static String toString(RDFNode node) {
+		Resource r = node.isResource() ? node.asResource() : null;
+		
+		String result = r != null
+			? Optional.ofNullable(r.getProperty(RDFS.label))
+					.map(Statement::getString)
+					.orElse(r.isURIResource()
+							? MainCliFacete3.deriveLabelFromIri(r.getURI())
+							: r.getId().getLabelString())
+			: Objects.toString(Optional.ofNullable(node)
+					.map(RDFNode::asNode)
+					.orElse(null));
+				
+//				System.out.println("RESULT: " + result + " for " + node);
+		return result;
+	}
+
+	public void setResourcePanelTitle(Node node) {
+		String str = "Resource" + (node == null ? "" : " [" + node + "]");
+		
+//		System.out.println("Setting Title: " + node);
+		resourcePanelBorder.setTitle(str);
 	}
 	
 //	public static void enrichWithLabels(Collection<FacetValueCount> cs, LookupService<Node, String> labelService) {
@@ -1621,7 +1690,7 @@ public class MainCliFacete3 {
     }
 
 
-	public static <T extends Resource> void enrichWithLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
+	public static <T extends RDFNode> void enrichWithLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
 		// Replace null nodes with Node.NULL
 		// TODO Use own own constant should jena remove this deprecated symbol
 		logger.info("enrichWithLabels: Lookup of size " + cs.size());
@@ -1635,7 +1704,7 @@ public class MainCliFacete3 {
 				.collect(Collectors.toSet());
 
 		Map<Node, String> map = labelService.fetchMap(s);
-		index.forEach((k, v) -> v.addLiteral(RDFS.label,
+		index.forEach((k, v) -> v.asResource().addLiteral(RDFS.label,
 				map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
 						? "(null)"
 						: k.isURI() ? deriveLabelFromIri(k.getURI()) : k.toString())));
@@ -1656,7 +1725,15 @@ public class MainCliFacete3 {
 		};	
 		return result;
 	}
+
 	
+	public static <T> Collection<Labeled<T>> doLabel(Collection<T> cs, Function<? super T, ? extends String> itemToLabel) {
+		Collection<Labeled<T>> result = cs.stream()
+				.map(item -> new LabeledImpl<T>(item, itemToLabel.apply(item)))
+				.collect(Collectors.toList());
+
+		return result;
+	}
 
 	public static <T> Map<T, String> getLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
 		Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);

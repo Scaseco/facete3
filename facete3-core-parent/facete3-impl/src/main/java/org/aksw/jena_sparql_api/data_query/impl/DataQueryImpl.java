@@ -856,9 +856,10 @@ public class DataQueryImpl<T extends RDFNode>
 	@Override
 	public Single<CountInfo> count(Long distinctItemCount, Long rowCount) {
 		Entry<Node, Query> e = toConstructQuery();
+		Var partitionVar = (Var)e.getKey();
 		Query query = e.getValue();
 		//		QueryExecutionUtils.countQuery(query, new QueryExecutionFactorySparqlQueryConnection(conn));
-		Single<CountInfo> result = SparqlRx.fetchCountQuery(conn, query, distinctItemCount, rowCount)
+		Single<CountInfo> result = SparqlRx.fetchCountQueryPartition(conn, query, Collections.singletonList(partitionVar), distinctItemCount, rowCount)
 				.map(range -> CountUtils.toCountInfo(range));
 		
 		return result;
