@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -1207,8 +1207,10 @@ public class MainCliFacete3 {
 		
 		labelService = LookupServiceUtils
 				.createLookupService(fq.connection(), BinaryRelationImpl.create(RDFS.label))
+				.cache()
 				.mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
-				.mapValues((k, v) -> "" + v);
+				.mapValues((k, v) -> "" + v)
+				.partition(10);
 		
 		// Setup terminal and screen layers
         Terminal terminal = new DefaultTerminalFactory()
