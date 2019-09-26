@@ -65,8 +65,8 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
+import com.google.common.primitives.Ints;
 
-import avro.shaded.com.google.common.primitives.Ints;
 import io.reactivex.Flowable;
 
 public class MainCliDiceBenchmark {	
