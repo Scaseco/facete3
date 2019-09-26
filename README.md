@@ -17,7 +17,9 @@ The project comprises the following component:
 
 
 ## Teasers
-Here a teaser of the terminal application on [Scholarly Data](http://www.scholarlydata.org/)'s [SPARQL endpoint](http://www.scholarlydata.org/sparql/):
+Here are a few teasers to give you an impression of the project before you read on.
+
+A screenshot of the Facete3 terminal application on [Scholarly Data](http://www.scholarlydata.org/)'s [SPARQL endpoint](http://www.scholarlydata.org/sparql/):
 
 ![Screenshot](doc/2019-09-25-Facete3-TerminalApp.png)
 
@@ -61,6 +63,46 @@ This project uses Apache Maven and is thus built with:
 
 ```bash
 mvn clean install
+```
+
+* The Facete3 bundle is built under `facete3-bundle/target/facete3-bundle-VERSION-jar-with-dependencies.jar` with `VERSION` matching the project version. The bundles are also available for download from the [Releases Section](https://github.com/hobbit-project/faceted-browsing-benchmark/releases).
+* Debian packages are built under `facete3-core-parent/facete3-debian-cli` and `facete3-fsbg-parent/facete3-fsbg-debian-cli`. Because they share most of the code, we will combine them into a single one.
+
+
+
+## Running the bundle
+
+
+* The Facete3 Terminal App
+```
+# Show help
+java -cp facete3-bundle-VERSION-jar-with-dependencies.jar facete3 --help
+
+# Run against a local file, remote RDF document or SPARQL endpoint
+java -cp facete3-bundle-VERSION-jar-with-dependencies.jar facete3 http://www.w3.org/1999/02/22-rdf-syntax-ns#
+
+# For installation from the debian package, the command is
+facete3 --help
+```
+
+
+* Faceted Search Benchmark Generator (fsbg)
+```
+# Show help
+java -cp facete3-bundle-VERSION-jar-with-dependencies.jar fsbg --help
+
+# Generate a benchmark using default settings
+# against a given SPARQL endpoint
+java -cp facete3-bundle-VERSION-jar-with-dependencies.jar fsbg http://localhost:8890/sparql
+
+
+# Generate a benchmark using alternative config (class path or file)
+# against a given SPARQL endpoint
+# Note: config-tiny.ttl is part of the classpath
+java -cp facete3-bundle-VERSION-jar-with-dependencies.jar fsbg -c config-tiny.ttl http://localhost:8890/sparql
+
+# For installation from the debian package, the command is
+facete3-fsbg --help
 ```
 
 Please refer to the respective Facete 3 component READMEs for details about how to use them.
