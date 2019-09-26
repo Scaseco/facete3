@@ -9,10 +9,17 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
+	<scm>
+		<url>https://github.com/hobbit-project/faceted-browsing-benchmark</url>
+		<connection>scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</connection>
+		<developerConnection>scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+
 	<properties>
 		<jena-sparql-api.version>3.12.0-2-SNAPSHOT</jena-sparql-api.version>
 
-<!-- 		<docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass> -->
+		<!-- <docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass> -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -30,6 +37,9 @@
 		<module>facete3-resources-test-config</module>
 		<module>facete3-core-parent</module>
 		<module>facete3-fsbg-parent</module>
+
+		<module>facete3-bundle</module>
+		<module>facete3-dummy</module>
 	</modules>
 
 
@@ -83,17 +93,17 @@
 				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
-<!-- 			<dependency> -->
-<!-- 				<groupId>org.aksw.jena-sparql-api</groupId> -->
-<!-- 				<artifactId>jena-sparql-api-concepts</artifactId> -->
-<!-- 				<version>${jena-sparql-api.version}</version> -->
-<!-- 			</dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+			<!-- <artifactId>jena-sparql-api-concepts</artifactId> -->
+			<!-- <version>${jena-sparql-api.version}</version> -->
+			<!-- </dependency> -->
 
-<!-- 			<dependency> -->
-<!-- 				<groupId>org.aksw.jena-sparql-api</groupId> -->
-<!-- 				<artifactId>jena-sparql-api-utils</artifactId> -->
-<!-- 				<version>${jena-sparql-api.version}</version> -->
-<!-- 			</dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+			<!-- <artifactId>jena-sparql-api-utils</artifactId> -->
+			<!-- <version>${jena-sparql-api.version}</version> -->
+			<!-- </dependency> -->
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
@@ -129,6 +139,24 @@
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-sparql-ext</artifactId>
 				<version>${jena-sparql-api.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>facete3-bundle</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>facete3-cli</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>facete3-fsbg-cli</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
@@ -199,19 +227,10 @@
 			</dependency>
 
 
-<!--
-			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>hobbit-sdk-rdf</artifactId>
-				<version>${hobbit-sdk.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>hobbit-sdk-qpid7</artifactId>
-				<version>${hobbit-sdk.version}</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.hobbit</groupId> <artifactId>hobbit-sdk-rdf</artifactId> 
+				<version>${hobbit-sdk.version}</version> </dependency> <dependency> <groupId>org.hobbit</groupId> 
+				<artifactId>hobbit-sdk-qpid7</artifactId> <version>${hobbit-sdk.version}</version> 
+				</dependency> -->
 			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
@@ -312,17 +331,67 @@
 					</executions>
 				</plugin>
 
-				<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
-					<version>2.4.3</version> <configuration> < !- - filter all the META-INF files 
-					of other artifacts - - > <filters> <filter> <artifact>*:*</artifact> <excludes> 
-					<exclude>META-INF/*.SF</exclude> <exclude>META-INF/*.DSA</exclude> <exclude>META-INF/*.RSA</exclude> 
-					</excludes> </filter> </filters> <transformers> <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> 
-					<manifestEntries> <X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK> 
-					<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK> </manifestEntries> 
-					</transformer> <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" 
-					/> </transformers> </configuration> <executions> <execution> <phase>package</phase> 
-					<goals> <goal>shade</goal> </goals> </execution> </executions> </plugin> -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8.2</version>
+				</plugin>
 
+				<plugin>
+					<groupId>org.sonatype.plugins</groupId>
+					<artifactId>nexus-staging-maven-plugin</artifactId>
+					<version>1.6.8</version>
+					<extensions>true</extensions>
+					<configuration>
+						<serverId>ossrh</serverId>
+						<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+						<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					</configuration>
+				</plugin>
+
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>2.4.3</version>
+					<executions>
+						<!-- Run shade goal on package phase -->
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+							<configuration>
+								<!-- TODO Shading is currently needed for the debian packages, which 
+									is slow and causes huge deployments -->
+								<!-- The deb packaging should be modified to work similar to the 
+									dockerfile maven plugin: -->
+								<!-- Use the resource plugin to copy deps to a lib folder and adjust 
+									the bash scripts -->
+								<shadedArtifactAttached>true</shadedArtifactAttached>
+								<shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+								<filters>
+									<filter>
+										<artifact>*:*</artifact>
+										<excludes>
+											<exclude>META-INF/*.SF</exclude>
+											<exclude>META-INF/*.DSA</exclude>
+											<exclude>META-INF/*.RSA</exclude>
+										</excludes>
+									</filter>
+								</filters>
+								<transformers>
+									<transformer
+										implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+									<!-- add Main-Class to manifest file -->
+									<!-- <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> -->
+									<!-- <mainClass>com.mkyong.core.utils.App</mainClass> -->
+									<!-- </transformer> -->
+								</transformers>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
 
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
