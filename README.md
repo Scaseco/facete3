@@ -74,7 +74,8 @@ mvn clean install
 
 
 * The Facete3 Terminal App
-```
+
+```bash
 # Show help
 java -cp facete3-bundle-VERSION-jar-with-dependencies.jar facete3 --help
 
@@ -87,7 +88,8 @@ facete3 --help
 
 
 * Faceted Search Benchmark Generator (fsbg)
-```
+
+```bash
 # Show help
 java -cp facete3-bundle-VERSION-jar-with-dependencies.jar fsbg --help
 
