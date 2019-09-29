@@ -43,7 +43,6 @@ class TestFacetedQuery {
                 .fwd()
                 .facetValueCounts()    
                 // --- DataQuery API
-                //.sample()
                 .randomOrder()
                 .limit(1)
                 .exec()
