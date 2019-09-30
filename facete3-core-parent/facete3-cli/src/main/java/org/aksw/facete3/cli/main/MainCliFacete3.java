@@ -64,6 +64,7 @@ import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.ext.com.google.common.base.Strings;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
@@ -75,11 +76,14 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -392,7 +396,7 @@ public class MainCliFacete3 {
 		protected List<String> nonOptionArgs;
 
 		@Parameter(names="--bp", description="Blank node profile")
-		protected String bnodeProfile = "jena";
+		protected String bnodeProfile = "auto";
 
 		@Parameter(names = "--help", help = true)
 		protected boolean help = false;
@@ -1048,10 +1052,36 @@ public class MainCliFacete3 {
 	
 		    	if(isSparql) {
 		    		logger.info("Probe query succeeded. Connecting with bnode profile " + cm.bnodeProfile + " ...");
-		    		conn = RDFConnectionFactory.connect(str);
 
-//		    		conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, MainCliFacete3::rewriteUnionDefaultGraph);		    		
-		    		conn = wrapWithVirtualBnodeUris(conn, cm.bnodeProfile);
+		    		conn = RDFConnectionRemote.create()
+		    				//.acceptHeaderGraph(WebContent.contentTypeRDFXML)
+		    				.acceptHeaderSelectQuery(WebContent.contentTypeResultsXML)
+		    				.destination(str)
+		    				.build();
+
+		    		String bnodeProfile = cm.bnodeProfile;
+		    		if("auto".equalsIgnoreCase(bnodeProfile)) {
+		    			
+		    			Map<String, String> env = Collections.singletonMap("REMOTE", str);
+		    			Model report = ModelFactory.createDefaultModel();
+		    			RDFDataMgrEx.execSparql(report, "probe-endpoint-dbms.sparql", env::get);
+		    			Property dbmsShortName = ResourceFactory.createProperty("http://www.example.org/dbmsShortName");
+
+		    			List<String> nodes = report.listObjectsOfProperty(dbmsShortName)
+		    				.mapWith(n -> n.isLiteral() ? Objects.toString(n.asLiteral().getValue()) : null)
+		    				.toList();
+		    			String first = Iterables.getFirst(nodes, null);
+		    			
+		    			if(first != null) {
+		    				bnodeProfile = first;
+		    			}
+		    		}
+		    		
+		    		if(bnodeProfile != null) {
+		    			conn = wrapWithVirtualBnodeUris(conn, bnodeProfile);
+		    		} else {
+		    			logger.warn("No bnode profile found - bnodes are not supported");
+		    		}
 		    	}
 		    }
 		    
@@ -1071,6 +1101,10 @@ public class MainCliFacete3 {
 		    }
 
 			new MainCliFacete3().init(conn);
+	    } catch(Exception e) {
+	    	// The exception may not be visible if logging is disabled - so print it out here
+	    	e.printStackTrace();
+	    	throw new RuntimeException(e);
 	    } finally {
 	    	if(conn != null) {
 	    		conn.close();
@@ -1207,10 +1241,10 @@ public class MainCliFacete3 {
 		
 		labelService = LookupServiceUtils
 				.createLookupService(fq.connection(), BinaryRelationImpl.create(RDFS.label))
+				.partition(10)
 				.cache()
 				.mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
-				.mapValues((k, v) -> "" + v)
-				.partition(10);
+				.mapValues((k, v) -> "" + v);
 		
 		// Setup terminal and screen layers
         Terminal terminal = new DefaultTerminalFactory()
@@ -1523,10 +1557,11 @@ public class MainCliFacete3 {
 		resourcePanel.addComponent(resourceSubjectLabel);
 		resourcePanel.addComponent(resourceTable);
 
-		cartPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
-		cartPanel.setLayoutManager(new GridLayout2(1));
-		//resultPanel.addComponent(itemPagePanel);
-		cartPanel.addComponent(cartTable);
+// TODO re-enable cart panel once its working
+//		cartPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
+//		cartPanel.setLayoutManager(new GridLayout2(1));
+//		//resultPanel.addComponent(itemPagePanel);
+//		cartPanel.addComponent(cartTable);
 
 		
 
@@ -1539,7 +1574,7 @@ public class MainCliFacete3 {
 		
 		mainPanel.addComponent(resultPanel.withBorder(resultPanelBorder));
 		mainPanel.addComponent(resourcePanel.withBorder(resourcePanelBorder));
-		mainPanel.addComponent(cartPanel.withBorder(Borders.singleLine("Cart")));
+//		mainPanel.addComponent(cartPanel.withBorder(Borders.singleLine("Cart")));
 
 		
 		 // Create window to hold the panel
