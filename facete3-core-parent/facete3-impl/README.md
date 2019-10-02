@@ -19,6 +19,8 @@ facete3 --help
 
 ## Keys
 
+* **Arrow Keys** move between individual items
+* **Tab** and **Shift+Tab** jump forward / backwards between element groups
 * **Spacebar** shows the triples of the currently selected item (regardless of facet, facet value or result table list)
 * **Enter** activates facets
 * **q** or **ESC** quits (asks for confirmation)
