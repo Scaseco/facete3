@@ -1,7 +1,9 @@
 package org.aksw.facete3.cli.main;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -63,10 +65,14 @@ import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.apache.jena.JenaRuntime;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -82,7 +88,9 @@ import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -91,6 +99,7 @@ import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -992,6 +1001,9 @@ public class MainCliFacete3 {
 	 */
 	public static void main(String[] args) throws Exception {
 		
+		// Turn on legacy mode; ISSUE #8 - https://github.com/hobbit-project/faceted-browsing-benchmark/issues/8
+		JenaRuntime.isRDF11 = false;
+		
 		CommandMain cm = new CommandMain();
 		
 		// CommandCommit commit = new CommandCommit();
@@ -1098,6 +1110,7 @@ public class MainCliFacete3 {
 			    
 			    Dataset dataset = DatasetFactory.wrap(model);
 			    conn = RDFConnectionFactory.connect(dataset);
+    			conn = wrapWithVirtualBnodeUris(conn, "jena");
 		    }
 
 			new MainCliFacete3().init(conn);
@@ -1319,7 +1332,8 @@ public class MainCliFacete3 {
 			FacetValueCount item = facetValueList.getItemAt(itemIndex);
 			//System.out.println(item);
 
-			HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().constraints().eq(item.getValue());
+			Node v = item.getValue();
+			HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().constraints().eq(v);
 			tmp.setActive(checked);
 			
 			
