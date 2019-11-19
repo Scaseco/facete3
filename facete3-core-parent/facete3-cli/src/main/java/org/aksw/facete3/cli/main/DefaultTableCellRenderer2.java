@@ -19,7 +19,7 @@ public class DefaultTableCellRenderer2<V>
 {
     @Override
     public TerminalSize getPreferredSize(Table<V> table, V cell, int columnIndex, int rowIndex) {
-        String[] lines = getContent(cell);
+        String[] lines = getContent(cell, columnIndex, rowIndex);
         int maxWidth = 0;
         for(String line: lines) {
             int length = TerminalTextUtils.getColumnWidth(line);
@@ -46,26 +46,26 @@ public class DefaultTableCellRenderer2<V>
         else {
             textGUIGraphics.applyThemeStyle(themeDefinition.getNormal());
         }
-        String[] lines = getContent(cell);
+        String[] lines = getContent(cell, columnIndex, rowIndex);
         int rowCount = 0;
         for(String line: lines) {
             textGUIGraphics.putString(0, rowCount++, line);
         }
     }
 
-    protected String[] getContent(V cell) {
+    protected String[] getContent(V cell, int columnIndex, int rowIndex) {
         String[] lines;
         if(cell == null) {
             lines = new String[] { "" };
         }
         else {
-        	String str = toString(cell);
+        	String str = toString(cell, columnIndex, rowIndex);
             lines = str.split("\r?\n");
         }
         return lines;
     }
     
-    protected String toString(V cell) {
+    protected String toString(V cell, int columnIndex, int rowIndex) {
     	return cell.toString();
     }
 }

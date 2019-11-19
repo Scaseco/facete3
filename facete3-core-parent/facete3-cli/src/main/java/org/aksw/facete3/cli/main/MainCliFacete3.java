@@ -1560,7 +1560,11 @@ public class MainCliFacete3 {
 		resultPanel.addComponent(itemPagePanel);
 		resultPanel.addComponent(resultTable);
 		
-		resourceTable.setTableCellRenderer(new DefaultTableCellRenderer2Rdf());
+		resourceTable.setTableCellRenderer(new DefaultTableCellRenderer2Rdf() {
+			public String toString(RDFNode node, int columnIndex, int rowIndex) {
+				return columnIndex != 1 ? super.toString(node, columnIndex, rowIndex) : Objects.toString(node);
+			};
+		});
 		resourceTable.setRenderer(new DefaultTableRenderer2<RDFNode>());
 		resourceTable.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 
@@ -1765,9 +1769,11 @@ public class MainCliFacete3 {
 
 		String result;
 		for(;;) {
+			// Split XML returns invalid out-of-bound index for <http://dbpedia.org/resource/Ada_Apa_dengan_Cinta%3>
 			// This is what Node.getLocalName does
-			result = iriStr.substring( Util.splitNamespaceXML(iriStr));
-			if(result.isEmpty() && !iriStr.isEmpty()) {
+			int idx = Util.splitNamespaceXML(iriStr);
+			result = idx == -1 || idx > iriStr.length() ? iriStr : iriStr.substring(idx);
+			if(result.isEmpty() && !iriStr.isEmpty() && idx != -1) {
 				iriStr = iriStr.substring(0, iriStr.length() - 1);
 				continue;
 			} else {
