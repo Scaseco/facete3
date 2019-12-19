@@ -121,6 +121,13 @@
 				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
+			<!-- TODO Move to jena-sparql-api-io-hdt once the hdt support is factored out of conjure -->
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-conjure</artifactId>
+				<version>${jena-sparql-api.version}</version>
+			</dependency>
+
 <!-- 			<dependency> -->
 <!-- 				<groupId>org.aksw.jena-sparql-api</groupId> -->
 <!-- 				<artifactId>jena-sparql-api-resources</artifactId> -->
