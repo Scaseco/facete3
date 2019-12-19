@@ -398,10 +398,14 @@ public class MainCliFacete3 {
 	public static final char CHAR_DOWNWARDS_ARROW = '\u2193';
 	
 	public static final String[] sortModeLabel = { "A-Z", "0-9" };
+
+	// Mapping of ui sort directions to ui labels
 	public static final String[] sortDirLabel = { Character.toString(CHAR_DOWNWARDS_ARROW), Character.toString(CHAR_UPWARDS_ARROW) };
 
+	// Mapping of ui sort directions to jena query sort directions
 	public static final int[] sortDirMapJena = { Query.ORDER_DESCENDING, Query.ORDER_ASCENDING };
-	
+
+
 	protected PrefixMapping globalPrefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
 	
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
@@ -1274,7 +1278,7 @@ public class MainCliFacete3 {
 //						.build()
 //						.showDialog((WindowBasedTextGUI)i.getTextGUI());
 					new MessageDialogBuilder()
-						.setTitle("Facet Query with root var " + pq.getKey())
+						.setTitle("Facets rooted in " + pq.getKey())
 						.setText("" + pq.getValue())
 						.build()
 						.showDialog((WindowBasedTextGUI)i.getTextGUI());
@@ -1391,7 +1395,7 @@ public class MainCliFacete3 {
 					QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
 
 					new MessageDialogBuilder()
-						.setTitle("Facet values with root var " + pq.getKey())
+						.setTitle("Facet values rooted in " + pq.getKey())
 						.setText("" + pq.getValue())
 						.build()
 						.showDialog((WindowBasedTextGUI)i.getTextGUI());
@@ -1471,7 +1475,7 @@ public class MainCliFacete3 {
 					QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
 
 					new MessageDialogBuilder()
-						.setTitle("Matching items with root var " + pq.getKey())
+						.setTitle("Matching items rooted in " + pq.getKey())
 						.setText("" + pq.getValue())
 						.build()
 						.showDialog((WindowBasedTextGUI)i.getTextGUI());
