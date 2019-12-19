@@ -126,6 +126,7 @@ import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogButton;
+import com.googlecode.lanterna.gui2.dialogs.TextInputDialogBuilder;
 import com.googlecode.lanterna.gui2.table.Table;
 import com.googlecode.lanterna.gui2.table.TableCellRenderer;
 import com.googlecode.lanterna.gui2.table.TableModel;
@@ -624,6 +625,7 @@ public class MainCliFacete3 {
 	
 	//KeyStroke resourceViewKey = new KeyStroke(' ', false, false);
 	public static final char resourceViewKey = ' ';
+	public static final char showQueryKey = 's';
 	
 	//RDFConnection conn;
 	
@@ -698,6 +700,13 @@ public class MainCliFacete3 {
 		}
 	}
 	
+	
+	public DataQuery<RDFNode> itemsDataQuery(FacetedQuery fq) {
+		DataQuery<RDFNode> result = fq.root().availableValues();
+		return result;
+	}
+	
+	
 	long itemPage[] = {0};
 	public void updateItems(FacetedQuery fq) {
 		Stopwatch sw = Stopwatch.createStarted();
@@ -743,7 +752,7 @@ public class MainCliFacete3 {
 		
 		resultPanelBorder.setTitle(title);
 		
-		List<RDFNode> items = fq.root().availableValues()
+		List<RDFNode> items = itemsDataQuery(fq) //fq.root().availableValues()
 				.offset(itemStart)
 				.limit(itemsPerPage)
 				.exec().toList().blockingGet();
@@ -864,6 +873,32 @@ public class MainCliFacete3 {
 	}
 	
 	
+	public DataQuery<FacetValueCount> facetValuesDataQuery() {
+		UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
+
+		
+		facetValueList.setEnabled(false);
+		
+		DataQuery<FacetValueCount> base = fdn
+				.facetValueCountsWithAbsent(includeAbsent)
+				//.filter(filter)
+				.filterUsing(filter, FacetValueCountImpl_.VALUE)
+				.only(selectedFacet);
+		
+		
+		int sortDirJena = sortDirMapJena[facetValueSortDir];
+		switch(facetValueSortMode) {
+		case 0:
+			base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
+			break;
+		case 1:
+			base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
+			break;
+		}
+
+		return base;
+	}
+	
 	public void updateFacetValues() {
 		Stopwatch sw = Stopwatch.createStarted();
 		
@@ -871,28 +906,7 @@ public class MainCliFacete3 {
 			// Set the title
 			facetValuePanelBorder.setTitle("Facet Values" + " [" + selectedFacet + "]");
 			
-			
-			UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
-
-			
-			facetValueList.setEnabled(false);
-			
-			DataQuery<FacetValueCount> base = fdn
-					.facetValueCountsWithAbsent(includeAbsent)
-					//.filter(filter)
-					.filterUsing(filter, FacetValueCountImpl_.VALUE)
-					.only(selectedFacet);
-			
-			
-			int sortDirJena = sortDirMapJena[facetValueSortDir];
-			switch(facetValueSortMode) {
-			case 0:
-				base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
-				break;
-			case 1:
-				base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
-				break;
-			}
+			DataQuery<FacetValueCount> base = facetValuesDataQuery();
 
 			List<FacetValueCount> fvcs = base		
 					.exec()
@@ -938,6 +952,26 @@ public class MainCliFacete3 {
 		logger.info("updateFacetValues: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
 	}
 	
+	public DataQuery<FacetCount> facetDataQuery(FacetedQuery fq) {
+		UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
+		
+		DataQuery<FacetCount> base = fdn.facetCounts(includeAbsent)
+				.filter(filter);
+
+		int sortDirJena = sortDirMapJena[facetSortDir];
+		switch(facetSortMode) {
+		case 0:
+			base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
+			break;
+		case 1:
+			base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
+			break;
+		}
+
+		return base;
+	}
+
+	
 	public void updateFacets(FacetedQuery fq) {
 		Stopwatch sw = Stopwatch.createStarted();
 		
@@ -945,26 +979,9 @@ public class MainCliFacete3 {
 		
 			int idx = facetList.getSelectedIndex();
 			
-			
+			DataQuery<FacetCount> base = facetDataQuery(fq);
 //			facetList.setEnabled(false);
-		
-			UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
-	
-
-					
-			DataQuery<FacetCount> base = fdn.facetCounts(includeAbsent)
-					.filter(filter);
-
-			int sortDirJena = sortDirMapJena[facetSortDir];
-			switch(facetSortMode) {
-			case 0:
-				base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
-				break;
-			case 1:
-				base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
-				break;
-			}
-	
+			
 					//.addOrderBy(new NodePathletPath(Path.newPath()), Query.ORDER_ASCENDING)
 //					.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), Query.ORDER_DESCENDING)
 					
@@ -1244,6 +1261,19 @@ public class MainCliFacete3 {
 						updateResourceView(rdfNode);
 					}
 					break;
+				case showQueryKey:
+					Entry<Node, Query> pq = facetDataQuery(fq).toConstructQuery();
+//					new TextInputDialogBuilder()
+//						.setTitle("Facet Query")
+//						.setInitialContent(pq.toString())
+//						.build()
+//						.showDialog((WindowBasedTextGUI)i.getTextGUI());
+					new MessageDialogBuilder()
+						.setTitle("Facet Query with root var " + pq.getKey())
+						.setText("" + pq.getValue())
+						.build()
+						.showDialog((WindowBasedTextGUI)i.getTextGUI());
+					break;
 				}
 			}
 			
@@ -1349,6 +1379,16 @@ public class MainCliFacete3 {
 						updateResourceView(rdfNode);
 					}
 					r = false;
+					break;
+				case showQueryKey:
+					Entry<Node, Query> pq = facetValuesDataQuery().toConstructQuery();
+					new MessageDialogBuilder()
+						.setTitle("Facet values with root var " + pq.getKey())
+						.setText("" + pq.getValue())
+						.build()
+						.showDialog((WindowBasedTextGUI)i.getTextGUI());
+					r = false;
+					break;
 				}
 			}
 
@@ -1411,6 +1451,15 @@ public class MainCliFacete3 {
 						RDFNode rdfNode = fetchIfResource(node.asNode());
 						updateResourceView(rdfNode);
 					}
+					break;
+				case showQueryKey:
+					Entry<Node, Query> pq = itemsDataQuery(fq).toConstructQuery();
+					new MessageDialogBuilder()
+						.setTitle("Matching items with root var " + pq.getKey())
+						.setText("" + pq.getValue())
+						.build()
+						.showDialog((WindowBasedTextGUI)i.getTextGUI());
+					break;
 				}
 			}
 			
