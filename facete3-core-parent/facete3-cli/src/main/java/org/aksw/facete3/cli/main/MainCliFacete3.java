@@ -1,9 +1,7 @@
 package org.aksw.facete3.cli.main;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,6 +50,7 @@ import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -66,13 +65,10 @@ import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.JenaRuntime;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -88,9 +84,7 @@ import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
-import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -99,7 +93,6 @@ import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -399,6 +392,14 @@ class DirtyChecker {
 public class MainCliFacete3 {
 	private static final Logger logger = LoggerFactory.getLogger(MainCliFacete3.class);
 	
+	public static final char CHAR_UPWARDS_ARROW = '\u2191';
+	public static final char CHAR_DOWNWARDS_ARROW = '\u2193';
+	
+	public static final String[] sortModeLabel = { "A-Z", "0-9" };
+	public static final String[] sortDirLabel = { Character.toString(CHAR_DOWNWARDS_ARROW), Character.toString(CHAR_UPWARDS_ARROW) };
+
+	public static final int[] sortDirMapJena = { Query.ORDER_DESCENDING, Query.ORDER_ASCENDING };
+	
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
 	public static class CommandMain {
 		@Parameter(description = "Non option args")
@@ -652,6 +653,14 @@ public class MainCliFacete3 {
 	boolean includeAbsent = false; //true;
 	
 	
+	int facetSortMode = 1; // 0 = lexicographic, 1 = by count
+	int facetSortDir = 0;
+
+	int facetValueSortMode = 1; // 0 = lexicographic, 1 = by count
+	int facetValueSortDir = 0;
+
+	
+	
 	Node resourceTableSubject = null;
 	Label2 resourceSubjectLabel = new Label2("");
 	Table<RDFNode> resourceTable = new Table<RDFNode>("p", "o");
@@ -857,7 +866,7 @@ public class MainCliFacete3 {
 	
 	public void updateFacetValues() {
 		Stopwatch sw = Stopwatch.createStarted();
-
+		
 		if(fdn != null && selectedFacet != null) {
 			// Set the title
 			facetValuePanelBorder.setTitle("Facet Values" + " [" + selectedFacet + "]");
@@ -868,12 +877,24 @@ public class MainCliFacete3 {
 			
 			facetValueList.setEnabled(false);
 			
-			List<FacetValueCount> fvcs = fdn
+			DataQuery<FacetValueCount> base = fdn
 					.facetValueCountsWithAbsent(includeAbsent)
 					//.filter(filter)
 					.filterUsing(filter, FacetValueCountImpl_.VALUE)
-					.only(selectedFacet)
-					.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), Query.ORDER_DESCENDING)
+					.only(selectedFacet);
+			
+			
+			int sortDirJena = sortDirMapJena[facetValueSortDir];
+			switch(facetValueSortMode) {
+			case 0:
+				base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
+				break;
+			case 1:
+				base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
+				break;
+			}
+
+			List<FacetValueCount> fvcs = base		
 					.exec()
 					.toList().blockingGet();
 	
@@ -929,11 +950,25 @@ public class MainCliFacete3 {
 		
 			UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
 	
+
 					
-			List<FacetCount> fcs = fdn.facetCounts(includeAbsent)
-					.filter(filter)
-					.addOrderBy(new NodePathletPath(Path.newPath()), Query.ORDER_ASCENDING)
+			DataQuery<FacetCount> base = fdn.facetCounts(includeAbsent)
+					.filter(filter);
+
+			int sortDirJena = sortDirMapJena[facetSortDir];
+			switch(facetSortMode) {
+			case 0:
+				base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
+				break;
+			case 1:
+				base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
+				break;
+			}
+	
+					//.addOrderBy(new NodePathletPath(Path.newPath()), Query.ORDER_ASCENDING)
 //					.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), Query.ORDER_DESCENDING)
+					
+			List<FacetCount> fcs = base 
 					.exec()
 					.toList()
 					// TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup
@@ -1431,6 +1466,25 @@ public class MainCliFacete3 {
 			updateFacets(fq);
 		});
 		
+		
+		Panel facetSortPanel = new Panel();
+		Button facetSortModeToggle = new Button(sortModeLabel[facetSortMode]);
+		Button facetSortDirToggle = new Button(sortDirLabel[facetSortDir]);
+
+		
+		facetSortModeToggle.addListener(btn -> {
+			facetSortMode = (facetSortMode + 1) % 2;
+			facetSortModeToggle.setLabel(sortModeLabel[facetSortMode]);
+			updateFacets(fq);
+		});
+
+		facetSortDirToggle.addListener(btn -> {
+			facetSortDir = (facetSortDir + 1) % 2;
+			facetSortDirToggle.setLabel(sortDirLabel[facetSortDir]);
+			updateFacets(fq);
+		});
+
+		
 //		Button btnApply = new Button("Clr") {
 //			public synchronized com.googlecode.lanterna.gui2.Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
 //				if(keyStroke.getKeyType().equals(KeyType.Enter)) {
@@ -1471,9 +1525,23 @@ public class MainCliFacete3 {
 		
 		
 		Panel facetValuePanel = new Panel();
-				
-				
+		Panel facetValueSortPanel = new Panel();
+		Button facetValueSortModeToggle = new Button(sortModeLabel[facetValueSortMode]);
+		Button facetValueSortDirToggle = new Button(sortDirLabel[facetValueSortDir]);
+
 		
+		facetValueSortModeToggle.addListener(btn -> {
+			facetValueSortMode = (facetValueSortMode + 1) % 2;
+			facetValueSortModeToggle.setLabel(sortModeLabel[facetValueSortMode]);
+			updateFacetValues();
+		});
+
+		facetValueSortDirToggle.addListener(btn -> {
+			facetValueSortDir = (facetValueSortDir + 1) % 2;
+			facetValueSortDirToggle.setLabel(sortDirLabel[facetValueSortDir]);
+			updateFacetValues();
+		});
+
 		constraintList.addListener((int itemIndex, boolean checked) -> {
 			HLFacetConstraint<?> item = constraintList.getItemAt(itemIndex);
 			//System.out.println(item);
@@ -1507,10 +1575,16 @@ public class MainCliFacete3 {
 		// Component hierarchy and layouts
 		
 
+		facetSortPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		facetSortPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+		facetSortPanel.addComponent(facetSortModeToggle);
+		facetSortPanel.addComponent(facetSortDirToggle);
+
 		facetPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, false, false, 1, 1)); //.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 		facetPanel.setLayoutManager(new GridLayout2(1));
 		facetPanel.addComponent(facetFilterPanel.withBorder(Borders.singleLine("Filter")));
 		facetPanel.addComponent(facetPathPanel);
+		facetPanel.addComponent(facetSortPanel);
 		facetPanel.addComponent(facetList);
 
 		facetFilterBox.setLayoutData(GridLayout2.createHorizontallyFilledLayoutData(1));
@@ -1533,9 +1607,15 @@ public class MainCliFacete3 {
 		facetValueFilterPanel.addComponent(facetValueFilterBox);
 		facetValueFilterPanel.addComponent(facetValueFilterClearBtn);
 
+		facetValueSortPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		facetValueSortPanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+		facetValueSortPanel.addComponent(facetValueSortModeToggle);
+		facetValueSortPanel.addComponent(facetValueSortDirToggle);
+
 		facetValuePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetValuePanel.setLayoutManager(new GridLayout2(1));
-		facetValuePanel.addComponent(facetValueFilterPanel.withBorder(Borders.singleLine("Filter")));
+		facetValuePanel.addComponent(facetValueFilterPanel.withBorder(Borders.singleLine("Filter")));		
+		facetValuePanel.addComponent(facetValueSortPanel);
 		facetValuePanel.addComponent(facetValueList);
 
 
