@@ -62,6 +62,7 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.JenaRuntime;
@@ -86,6 +87,7 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -126,7 +128,6 @@ import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogButton;
-import com.googlecode.lanterna.gui2.dialogs.TextInputDialogBuilder;
 import com.googlecode.lanterna.gui2.table.Table;
 import com.googlecode.lanterna.gui2.table.TableCellRenderer;
 import com.googlecode.lanterna.gui2.table.TableModel;
@@ -400,6 +401,8 @@ public class MainCliFacete3 {
 	public static final String[] sortDirLabel = { Character.toString(CHAR_DOWNWARDS_ARROW), Character.toString(CHAR_UPWARDS_ARROW) };
 
 	public static final int[] sortDirMapJena = { Query.ORDER_DESCENDING, Query.ORDER_ASCENDING };
+	
+	protected PrefixMapping globalPrefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
 	
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
 	public static class CommandMain {
@@ -875,9 +878,6 @@ public class MainCliFacete3 {
 	
 	public DataQuery<FacetValueCount> facetValuesDataQuery() {
 		UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
-
-		
-		facetValueList.setEnabled(false);
 		
 		DataQuery<FacetValueCount> base = fdn
 				.facetValueCountsWithAbsent(includeAbsent)
@@ -906,6 +906,8 @@ public class MainCliFacete3 {
 			// Set the title
 			facetValuePanelBorder.setTitle("Facet Values" + " [" + selectedFacet + "]");
 			
+			facetValueList.setEnabled(false);
+
 			DataQuery<FacetValueCount> base = facetValuesDataQuery();
 
 			List<FacetValueCount> fvcs = base		
@@ -1263,6 +1265,9 @@ public class MainCliFacete3 {
 					break;
 				case showQueryKey:
 					Entry<Node, Query> pq = facetDataQuery(fq).toConstructQuery();
+					// TODO Make prefix support part of the DataQuery API
+					QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
+					
 //					new TextInputDialogBuilder()
 //						.setTitle("Facet Query")
 //						.setInitialContent(pq.toString())
@@ -1382,12 +1387,20 @@ public class MainCliFacete3 {
 					break;
 				case showQueryKey:
 					Entry<Node, Query> pq = facetValuesDataQuery().toConstructQuery();
+					// TODO Make prefix support part of the DataQuery API
+					QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
+
 					new MessageDialogBuilder()
 						.setTitle("Facet values with root var " + pq.getKey())
 						.setText("" + pq.getValue())
 						.build()
 						.showDialog((WindowBasedTextGUI)i.getTextGUI());
-					r = false;
+
+//					MessageDialog.showMessageDialog(
+//					(WindowBasedTextGUI)i.getTextGUI(),
+//					"Facet values with root var " + pq.getKey(),
+//					"" + pq.getValue());
+					r = true;
 					break;
 				}
 			}
@@ -1454,6 +1467,9 @@ public class MainCliFacete3 {
 					break;
 				case showQueryKey:
 					Entry<Node, Query> pq = itemsDataQuery(fq).toConstructQuery();
+					// TODO Make prefix support part of the DataQuery API
+					QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
+
 					new MessageDialogBuilder()
 						.setTitle("Matching items with root var " + pq.getKey())
 						.setText("" + pq.getValue())
