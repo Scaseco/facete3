@@ -62,6 +62,7 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
@@ -87,6 +88,10 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
+import org.apache.jena.riot.out.NodeFmtLib;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.PrefixMapFactory;
+import org.apache.jena.riot.system.PrefixMapWrapper;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -406,7 +411,7 @@ public class MainCliFacete3 {
 	public static final int[] sortDirMapJena = { Query.ORDER_DESCENDING, Query.ORDER_ASCENDING };
 
 
-	protected PrefixMapping globalPrefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
+	protected static PrefixMapping globalPrefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
 	
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
 	public static class CommandMain {
@@ -703,7 +708,7 @@ public class MainCliFacete3 {
 			
 			// TODO We should add pairs with the facet constraints together with the precomputed string
 			// then we can batch the label lookups here
-			constraintList.addItem(hlc);
+			constraintList.addItem(hlc, true);
 		}
 	}
 	
@@ -1441,8 +1446,6 @@ public class MainCliFacete3 {
 			public String getLabel(CheckBoxList<FacetValueCount> listBox, int index, FacetValueCount item) {
 	            boolean checked = listBox.isChecked(index);
 	            String check = checked ? "x" : " ";
-
-	            
 	            
 	            String text = Optional.ofNullable(item.getProperty(RDFS.label)).map(Statement::getString).orElse("(null)") + " (" + item.getFocusCount().getCount() + ")"; //item.toString();
 	            return "[" + check + "] " + text;
@@ -1912,7 +1915,11 @@ public class MainCliFacete3 {
 		index.forEach((k, v) -> v.asResource().addLiteral(RDFS.label,
 				map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
 						? "(null)"
-						: k.isURI() ? deriveLabelFromIri(k.getURI()) : k.toString())));
+						: k.isURI()
+							? deriveLabelFromIri(k.getURI())
+							: formatLiteralNode(k, globalPrefixes))));
+							//: NodeFmtLib.str(k, "", riotPrefixMap))));
+							//: k.toString())));
 	}
 
 	public static String deriveLabelFromIri(String iriStr) {
@@ -1942,15 +1949,39 @@ public class MainCliFacete3 {
 		return result;
 	}
 
+	public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
+		String result;
+		if(node.isLiteral()) {
+			String dtIri = node.getLiteralDatatypeURI();
+			String dtPart = null;
+			if(dtIri != null) {
+				Entry<String, String> prefixToIri = PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
+				dtPart = prefixToIri != null 
+					? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
+					: "<" + dtIri + ">";
+			}
+			
+			result = "\"" + node.getLiteralLexicalForm() + "\""
+					+ (dtPart == null ? "" : "^^" + dtPart); 			
+		} else {
+			result = Objects.toString(node);
+		}
+		
+		return result;
+	}
+	
 	public static <T> Map<T, String> getLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
 		Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
 		//Map<Node, T> index = Maps.uniqueIndex();
 		Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
 		Map<Node, String> map = labelService.fetchMap(s);
 		
-		//Map<T, String> result = n
-
-		Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI() ? deriveLabelFromIri(k.getURI()) : k.toString()); 
+		// TODO Avoid copying the prefix map all the time
+		Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI()
+				? deriveLabelFromIri(k.getURI())
+				: formatLiteralNode(k, globalPrefixes));
+				// : NodeFmtLib.str(k, "", riotPrefixMap));
+				//: k.toString()); 
 		
 		Map<T, String> result =
 			index.entries().stream().map(
