@@ -893,7 +893,8 @@ public class MainCliFacete3 {
 		int sortDirJena = sortDirMapJena[facetValueSortDir];
 		switch(facetValueSortMode) {
 		case 0:
-			base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
+			// base.addOrderBy(new NodePathletPath(Path.newPath()), sortDirJena);
+			base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/value")), sortDirJena);
 			break;
 		case 1:
 			base.addOrderBy(new NodePathletPath(Path.newPath().fwd("http://www.example.org/facetCount")), sortDirJena);
