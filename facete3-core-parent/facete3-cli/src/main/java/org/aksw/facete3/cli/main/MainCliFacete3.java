@@ -59,6 +59,7 @@ import org.aksw.jena_sparql_api.pathlet.Path;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
@@ -90,11 +91,13 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -439,6 +442,26 @@ public class MainCliFacete3 {
 		// Alternatively, after the PREFIX block:
 		// (PREFIX foo:<> .)
 		return queryStr;
+	}
+	
+	public static UnaryRelation parseConcept(String queryStr) {
+		Query query = SparqlQueryParserImpl.create(globalPrefixes)
+				.apply(queryStr);
+		
+		if(!query.isSelectType()) {
+			throw new RuntimeException("Select type expected, got " + queryStr);
+		}
+		
+		List<String> resultVars = query.getResultVars();
+		if(resultVars.size() != 1) {
+			throw new RuntimeException("Exactly one result var expected, got " + queryStr);
+		}
+		
+		Element el = query.getQueryPattern();
+		Var v = Var.alloc(resultVars.get(0));
+		
+		UnaryRelation result = new Concept(el, v);
+		return result;
 	}
 	
 	
@@ -1200,7 +1223,17 @@ public class MainCliFacete3 {
 		    			q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
 		    }
 		    
-			new MainCliFacete3().init(conn);
+		    UnaryRelation baseConcept = Strings.isNullOrEmpty(cm.baseConcept)
+		    		? null
+		    		: parseConcept(cm.baseConcept);
+		    
+			FacetedQuery fq = FacetedQueryImpl.create(conn);
+
+			if(baseConcept != null) {
+				fq.baseConcept(baseConcept);
+			}
+			
+			new MainCliFacete3().init(conn, fq);
 	    } catch(Exception e) {
 	    	// The exception may not be visible if logging is disabled - so print it out here
 	    	e.printStackTrace();
@@ -1254,8 +1287,10 @@ public class MainCliFacete3 {
 		return result;
 	}
 	
-	public void init(RDFConnection conn) throws Exception
+	public void init(RDFConnection conn, FacetedQuery fq) throws Exception
 	{
+		this.fq = fq;
+
 		resourceTable.setCellSelection(true);
 		resultPanelBorder = (StandardBorder)Borders.singleLine("Matches");
 
@@ -1274,7 +1309,6 @@ public class MainCliFacete3 {
 		//conn = RDFConnectionFactory.connect("http://localhost:5000/provenance");
 		
 		
-		fq = FacetedQueryImpl.create(conn);
 
 		//facetList.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1));
 
