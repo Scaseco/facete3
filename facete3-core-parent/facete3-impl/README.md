@@ -14,7 +14,28 @@ java -cp facete3-bundle-VERSION-jar-with-dependencies.jar facete3 http://www.w3.
 
 # For installation from the debian package, the command is
 facete3 --help
+
+# Browse a set of files (note: mixing triple and quad based formats is not recommended, see comments on the -u option)
+facete3 file.nt file.ttl file.rdf file.hdt
+
+# Browse a sparql endpoint
+facete3 https://databus.dbpedia.org/repo/sparql
+
 ```
+
+### Advanced invocations
+
+```bash
+# Providing a default graph and a base concept (must be a select query with exactly one result variable)
+# Note, that most of the loading time at present is due to label fetching - we intent to improve this with a better caching system.
+facete3 -g http://dbpedia.org -c 'SELECT ?s { ?s rdfs:label ?l . ?l <bif:contains> "Potter" }' http://dbpedia.org/sparql
+
+
+# Browse data in named graphs - quad based formats are sometimes used to group triples that make up an event in an RDF stream
+```
+facete3 -u observations1.trig observations2.trig
+```
+
 
 ## Features
 
