@@ -88,11 +88,8 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
-import org.apache.jena.riot.out.NodeFmtLib;
-import org.apache.jena.riot.system.PrefixMap;
-import org.apache.jena.riot.system.PrefixMapFactory;
-import org.apache.jena.riot.system.PrefixMapWrapper;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -415,16 +412,34 @@ public class MainCliFacete3 {
 	
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
 	public static class CommandMain {
-		@Parameter(description = "Non option args")
-		protected List<String> nonOptionArgs;
+		@Parameter(description="Non option args")
+		public List<String> nonOptionArgs;
 
-		@Parameter(names="--bp", description="Blank node profile")
-		protected String bnodeProfile = "auto";
+		@Parameter(names= {"-b", "--bp", "--bnode-profile"}, description="Blank node profile")
+		public String bnodeProfile = "auto";
 
-		@Parameter(names = "--help", help = true)
-		protected boolean help = false;
+		// TODO -c not yet implemented
+		@Parameter(names="-c", description="Base concept, e.g. ?s {?s a eg:Person}")
+		public String baseConcept = "";
+
+		@Parameter(names="-u", description="Union default graph mode (for quad-based formats)")
+		public boolean unionDefaultGraphMode = false;
+
+		@Parameter(names={"-h", "--help"}, help = true)
+		public boolean help = false;
 	}
 
+
+	// Normalize a short form of select sparql queries, where SELECT may be omitted
+	public static String injectSelect(String queryStr) {
+		// TODO Implement
+		// If the query does not parse as sparql, attempt to inject a SELECT before
+		// the first occurrence of a '(' or '?'
+		// i.e. SELECT ?foo and SELECT (?foo AS ?bar)
+		// Alternatively, after the PREFIX block:
+		// (PREFIX foo:<> .)
+		return queryStr;
+	}
 	
 	
 	public static void setAttr(String clazzName, Object obj, String fieldName, Object value) {
@@ -1162,21 +1177,29 @@ public class MainCliFacete3 {
 		    }
 		    
 		    if(conn == null) {
-			    Model model = ModelFactory.createDefaultModel();
+			    //Model model = ModelFactory.createDefaultModel();
+		    	Dataset dataset = DatasetFactory.create();
 			    Stopwatch sw = Stopwatch.createStarted();
 			    logger.info("Loading RDF files...");
 			    for(String file : files) {
 				    logger.info("  Attempting to loading " + file);
-			    	Model tmp = RDFDataMgr.loadModel(file);
-			    	model.add(tmp);
+			    	//Model tmp = RDFDataMgr.loadModel(file);
+			    	//model.add(tmp);
+				    RDFDataMgr.read(dataset, file);
 			    }
-			    logger.info("Done loading " + model.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
+//			    logger.info("Done loading " + ds.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
+			    logger.info("Done loading dataset in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
 			    
-			    Dataset dataset = DatasetFactory.wrap(model);
+			    //Dataset dataset = DatasetFactory.wrap(model);
 			    conn = RDFConnectionFactory.connect(dataset);
     			conn = wrapWithVirtualBnodeUris(conn, "jena");
 		    }
 
+		    if(cm.unionDefaultGraphMode) {
+		    	conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+		    			q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
+		    }
+		    
 			new MainCliFacete3().init(conn);
 	    } catch(Exception e) {
 	    	// The exception may not be visible if logging is disabled - so print it out here
