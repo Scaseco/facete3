@@ -21,6 +21,19 @@ Here are a few teasers to give you an impression of the project before you read 
 
 A screenshot of the Facete3 terminal application on [Scholarly Data](http://www.scholarlydata.org/)'s [SPARQL endpoint](http://www.scholarlydata.org/sparql/):
 
+
+### Latest Updates
+
+* Upcoming
+  * Integrated IRI retrieval / download feature
+* 2020-12-20
+  * Facete3 UI Enhancements
+    * Added HDT support
+    * Ordering facets and facet values by RDF term and counts
+    * Pressing 's' for '(s)how query' context-sensitively brings up a message dialog with the SPARQL query supplying the UI component's displayed data
+
+
+
 ![Screenshot](doc/2019-09-25-Facete3-TerminalApp.png)
 
 And here a teaser for what the Facete3 core API looks like - reactive streams powered by [RxJava2](https://github.com/ReactiveX/RxJava):

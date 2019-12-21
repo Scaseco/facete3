@@ -72,6 +72,7 @@ import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -91,6 +92,10 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Transform;
+import org.apache.jena.sparql.algebra.TransformGraphRename;
+import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -427,6 +432,9 @@ public class MainCliFacete3 {
 
 		@Parameter(names="-u", description="Union default graph mode (for quad-based formats)")
 		public boolean unionDefaultGraphMode = false;
+
+		@Parameter(names="-g", description="Default graphs (applies to quad based data sources)")
+		public List<String> defaultGraphs = new ArrayList<>();
 
 		@Parameter(names={"-h", "--help"}, help = true)
 		public boolean help = false;
@@ -1216,6 +1224,28 @@ public class MainCliFacete3 {
 			    //Dataset dataset = DatasetFactory.wrap(model);
 			    conn = RDFConnectionFactory.connect(dataset);
     			conn = wrapWithVirtualBnodeUris(conn, "jena");
+		    }
+
+		    if(!cm.defaultGraphs.isEmpty()) {
+		    	if(cm.defaultGraphs.size() > 1) {
+		    		throw new RuntimeException("Only 1 default graph supported with this version");
+		    	}
+		    	
+				Node g = NodeFactory.createURI(cm.defaultGraphs.get(0));
+
+				conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+		    			q -> {
+		    				Transform t = new TransformGraphRename(Quad.defaultGraphNodeGenerated, g) ;
+		    				
+		    				Query r = QueryUtils.applyOpTransform(q, op -> {
+		    					op = Algebra.toQuadForm(op);
+			    		        op = Transformer.transform(t, op);
+			    		        //op = AlgebraUtils.createDefaultRewriter().rewrite(op);
+			    		        return op;
+		    				});
+		    				
+		    				return r;
+		    			});
 		    }
 
 		    if(cm.unionDefaultGraphMode) {
