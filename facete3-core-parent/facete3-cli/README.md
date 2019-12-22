@@ -29,7 +29,7 @@ facete3 https://databus.dbpedia.org/repo/sparql
 # Providing a default graph and a base concept (must be a select query with exactly one result variable)
 # Note, that most of the loading time at present is due to label fetching - we intent to improve this with a better caching system.
 facete3 -g http://dbpedia.org -c 'SELECT ?s { ?s rdfs:label ?l . ?l <bif:contains> "Potter" }' http://dbpedia.org/sparql
-
+```
 
 # Browse data in named graphs - quad based formats are sometimes used to group triples that make up an event in an RDF stream
 ```
