@@ -12,7 +12,7 @@ A brief history
 The project comprises the following component:
 
 * [The core API](facete3-core-parent)
-* [A terminal application](facete3-core-parent/facete3-impl) (currently part of core, may be moved to a separate module)
+* [A terminal application](facete3-core-parent/facete3-cli) (currently part of core, may be moved to a separate module)
 * [A faceted search benchmark generator](facete3-fsbg-parent). Benchmark results are published in [this repository](https://github.com/hobbit-project/facete3-fsbg-results)!
 
 
