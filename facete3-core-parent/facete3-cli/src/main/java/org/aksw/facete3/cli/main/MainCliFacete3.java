@@ -91,6 +91,7 @@ import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformGraphRename;
@@ -416,7 +417,8 @@ public class MainCliFacete3 {
 	public static final int[] sortDirMapJena = { Query.ORDER_DESCENDING, Query.ORDER_ASCENDING };
 
 
-	protected static PrefixMapping globalPrefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
+	protected PrefixMapping globalPrefixes = new PrefixMappingImpl();
+	//.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
 	
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
 	public static class CommandMain {
@@ -427,8 +429,11 @@ public class MainCliFacete3 {
 		public String bnodeProfile = "auto";
 
 		// TODO -c not yet implemented
-		@Parameter(names="-c", description="Base concept, e.g. ?s {?s a eg:Person}")
+		@Parameter(names="-c", description="Base concept, e.g. SELECT ?s {?s a foaf:Person}")
 		public String baseConcept = "";
+
+		@Parameter(names="-p", description="Prefix Sources")
+		public List<String> prefixSources = new ArrayList<>();
 
 		@Parameter(names="-u", description="Union default graph mode (for quad-based formats)")
 		public boolean unionDefaultGraphMode = false;
@@ -452,8 +457,8 @@ public class MainCliFacete3 {
 		return queryStr;
 	}
 	
-	public static UnaryRelation parseConcept(String queryStr) {
-		Query query = SparqlQueryParserImpl.create(globalPrefixes)
+	public static UnaryRelation parseConcept(String queryStr, PrefixMapping prefixes) {
+		Query query = SparqlQueryParserImpl.create(prefixes)
 				.apply(queryStr);
 		
 		if(!query.isSelectType()) {
@@ -634,11 +639,14 @@ public class MainCliFacete3 {
 		return result;
 	}
 
-	public static String toString(HLFacetConstraint<?> constraint, LookupService<Node, String> labelService) {
+	public static String toString(
+			HLFacetConstraint<?> constraint,
+			LookupService<Node, String> labelService,
+			PrefixMapping prefixes) {
 		Expr expr = constraint.expr();
 		Set<Node> nodes = extractNodes(constraint);
 		
-		Map<Node, String> nodeToLabel = getLabels(nodes, Function.identity(), labelService);
+		Map<Node, String> nodeToLabel = getLabels(nodes, Function.identity(), labelService, prefixes);
 		
 		Map<Node, String> bgpNodeLabels = indexPaths(constraint).entrySet().stream()
 			.collect(Collectors.toMap(Entry::getKey, e -> toString(e.getValue(), nodeToLabel::get)));
@@ -815,7 +823,7 @@ public class MainCliFacete3 {
 				.limit(itemsPerPage)
 				.exec().toList().blockingGet();
 
-		MainCliFacete3.<RDFNode>enrichWithLabels(items, RDFNode::asNode, labelService);
+		MainCliFacete3.<RDFNode>enrichWithLabels(items, RDFNode::asNode, labelService, globalPrefixes);
 
 		
 //		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
@@ -892,7 +900,7 @@ public class MainCliFacete3 {
 		List<Directed<FacetNode>> path = fdn.parent().path();
 
 		Set<Node> nodes = path.stream().map(Directed::getValue).map(FacetNode::reachingPredicate).collect(Collectors.toSet());
-		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
+		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService, globalPrefixes);
 		//Map<Node, String> labelMap = labelService.fetchMap(nodes);
 
 		int n = path.size();
@@ -972,7 +980,7 @@ public class MainCliFacete3 {
 	
 			//System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 			
-			enrichWithLabels(fvcs, FacetValueCount::getValue, labelService);
+			enrichWithLabels(fvcs, FacetValueCount::getValue, labelService, globalPrefixes);
 			
 			facetValueList.clearItems();
 			for(FacetValueCount item : fvcs) {
@@ -1047,7 +1055,7 @@ public class MainCliFacete3 {
 					.exec()
 					.toList()
 					// TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup
-					.doOnSuccess(list -> enrichWithLabels(list, FacetCount::getPredicate, labelService))
+					.doOnSuccess(list -> enrichWithLabels(list, FacetCount::getPredicate, labelService, globalPrefixes))
 					.blockingGet();
 			//enrichWithLabels(fcs, FacetCount::getPredicate, labelService);
 		
@@ -1252,18 +1260,30 @@ public class MainCliFacete3 {
 		    	conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
 		    			q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
 		    }
-		    
+
+		    Iterable<String> prefixSources = Iterables.concat(
+		    		Collections.singleton("rdf-prefixes/prefix.cc.2019-12-17.jsonld"),
+		    		cm.prefixSources);
+	
+			PrefixMapping prefixes = new PrefixMappingImpl();
+	        for(String source : prefixSources) {
+	        	PrefixMapping tmp = RDFDataMgr.loadModel(source);
+	        	prefixes.setNsPrefixes(tmp);
+	        }
+
 		    UnaryRelation baseConcept = Strings.isNullOrEmpty(cm.baseConcept)
 		    		? null
-		    		: parseConcept(cm.baseConcept);
+		    		: parseConcept(cm.baseConcept, prefixes);
 		    
 			FacetedQuery fq = FacetedQueryImpl.create(conn);
 
 			if(baseConcept != null) {
 				fq.baseConcept(baseConcept);
 			}
+
 			
-			new MainCliFacete3().init(conn, fq);
+			
+			new MainCliFacete3().init(conn, prefixes, fq);
 	    } catch(Exception e) {
 	    	// The exception may not be visible if logging is disabled - so print it out here
 	    	e.printStackTrace();
@@ -1275,6 +1295,7 @@ public class MainCliFacete3 {
 	    }
 	}
 	
+
 	
 	public void setFacetDir(org.aksw.facete.v3.api.Direction dir) {
 		fdn = fdn.parent().step(dir);
@@ -1317,8 +1338,9 @@ public class MainCliFacete3 {
 		return result;
 	}
 	
-	public void init(RDFConnection conn, FacetedQuery fq) throws Exception
+	public void init(RDFConnection conn, PrefixMapping pm, FacetedQuery fq) throws Exception
 	{
+		this.globalPrefixes.setNsPrefixes(pm);
 		this.fq = fq;
 
 		resourceTable.setCellSelection(true);
@@ -1719,7 +1741,7 @@ public class MainCliFacete3 {
 	            boolean checked = listBox.isChecked(index);
 	            String check = checked ? "x" : " ";
 
-	            String text = MainCliFacete3.toString(item, labelService);
+	            String text = MainCliFacete3.toString(item, labelService, globalPrefixes);
 	            return "[" + check + "] " + text;
 			};
 		});
@@ -1985,7 +2007,10 @@ public class MainCliFacete3 {
     }
 
 
-	public static <T extends RDFNode> void enrichWithLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
+	public static <T extends RDFNode> void enrichWithLabels(
+			Collection<T> cs, Function<? super T, ? extends Node> nodeFunction,
+			LookupService<Node, String> labelService,
+			PrefixMapping prefixes) {
 		// Replace null nodes with Node.NULL
 		// TODO Use own own constant should jena remove this deprecated symbol
 		logger.info("enrichWithLabels: Lookup of size " + cs.size());
@@ -2004,7 +2029,7 @@ public class MainCliFacete3 {
 						? "(null)"
 						: k.isURI()
 							? deriveLabelFromIri(k.getURI())
-							: formatLiteralNode(k, globalPrefixes))));
+							: formatLiteralNode(k, prefixes))));
 							//: NodeFmtLib.str(k, "", riotPrefixMap))));
 							//: k.toString())));
 	}
@@ -2057,7 +2082,10 @@ public class MainCliFacete3 {
 		return result;
 	}
 	
-	public static <T> Map<T, String> getLabels(Collection<T> cs, Function<? super T, ? extends Node> nodeFunction, LookupService<Node, String> labelService) {
+	public static <T> Map<T, String> getLabels(
+			Collection<T> cs, Function<? super T, ? extends Node> nodeFunction,
+			LookupService<Node, String> labelService,
+			PrefixMapping prefixes) {
 		Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
 		//Map<Node, T> index = Maps.uniqueIndex();
 		Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
@@ -2066,7 +2094,7 @@ public class MainCliFacete3 {
 		// TODO Avoid copying the prefix map all the time
 		Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI()
 				? deriveLabelFromIri(k.getURI())
-				: formatLiteralNode(k, globalPrefixes));
+				: formatLiteralNode(k, prefixes));
 				// : NodeFmtLib.str(k, "", riotPrefixMap));
 				//: k.toString()); 
 		
