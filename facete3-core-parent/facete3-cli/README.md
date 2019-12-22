@@ -31,11 +31,10 @@ facete3 https://databus.dbpedia.org/repo/sparql
 facete3 -g http://dbpedia.org -c 'SELECT ?s { ?s rdfs:label ?l . ?l <bif:contains> "Potter" }' http://dbpedia.org/sparql
 ```
 
-# Browse data in named graphs - quad based formats are sometimes used to group triples that make up an event in an RDF stream
 ```
+# Browse data in named graphs - quad based formats are sometimes used to group triples that make up an event in an RDF stream
 facete3 -u observations1.trig observations2.trig
 ```
-
 
 ## Features
 
