@@ -423,7 +423,7 @@ public class MainCliFacete3 {
 	@Parameters(separators = "=", commandDescription = "Facete3 Options")
 	public static class CommandMain {
 		@Parameter(description="Non option args")
-		public List<String> nonOptionArgs;
+		public List<String> nonOptionArgs = new ArrayList<>();
 
 		@Parameter(names= {"-b", "--bp", "--bnode-profile"}, description="Blank node profile")
 		public String bnodeProfile = "auto";
