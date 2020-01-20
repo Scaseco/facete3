@@ -361,7 +361,7 @@ public class VirtualPartitionedQuery {
 		GenericLayer layer = GenericLayer.create(tr);
 		
 		Query raw = ElementTransformTripleRewrite.transform(query, layer, true);
-		System.out.println("Raw rewritten query:\n" + raw);
+//		System.out.println("Raw rewritten query:\n" + raw);
 		
 		Query result = QueryUtils.rewrite(raw, AlgebraUtils.createDefaultRewriter()::rewrite);
 
@@ -427,15 +427,21 @@ public class VirtualPartitionedQuery {
 
 			Triple newT = NodeTransformLib.transform(new NodeTransformRenameMap(substs), t);
 
+			Element newE;
+			if(substs.isEmpty()) {
+				newE = pattern;
+			} else {
+				ElementGroup tgt = new ElementGroup();
+				ElementUtils.copyElements(tgt, pattern);
 
-			ElementGroup tgt = new ElementGroup();
-			for(Entry<Node, Var> e : substs.entrySet()) {
-				tgt.addElement(new ElementBind(e.getValue(), NodeValue.makeNode(e.getKey())));
+				// Add the BINDs afterwards in order to get a nicer algebra:
+				// We get extend(subOp, bindings) instead of join(extend(unit, bindings), subOp)
+				for(Entry<Node, Var> e : substs.entrySet()) {
+					tgt.addElement(new ElementBind(e.getValue(), NodeValue.makeNode(e.getKey())));
+				}
+				
+				newE = tgt;
 			}
-			
-			Element newE = substs.isEmpty()
-					? pattern
-					: ElementUtils.copyElements(tgt, pattern);
 
 			
 			TernaryRelation tr = new TernaryRelationImpl(newE,

@@ -20,12 +20,11 @@ public class RDFConnectionBuilder<T, P> {
 		return result;		
 	}
 
-//	public static <T extends RDFConnection> RDFConnectionBuilder<T, ?> from(T conn) {
-////		RDFConnectionBuilder<T, ?> result = new RDFConnectionBuilder<T, Void>(null);
-////		result.setSource(conn);
-//		RDFConnectionBuilder<T, ?> result = RDFConnectionBuilder.<T, >start().setSource(conn);
-//		return result;		
-//	}
+	public static <T extends RDFConnection> RDFConnectionBuilder<T, ?> from(T conn) {
+		RDFConnectionBuilder<T, ?> result = new RDFConnectionBuilder<T, Void>(null);
+		result.setSource(conn);
+		return result;		
+	}
 	
 	public RDFConnectionBuilder(P parent) {
 		super();

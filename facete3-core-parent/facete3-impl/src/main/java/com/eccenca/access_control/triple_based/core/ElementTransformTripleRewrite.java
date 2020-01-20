@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
+import org.aksw.jena_sparql_api.concepts.RelationJoiner;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathRewriter;
@@ -131,6 +132,7 @@ public class ElementTransformTripleRewrite
 			newTripleVars[i] = tgt;
 			//relationVarMap.put(src, tgt);
     	}
+    	
     	
     	Element result = RelationUtils.renameNodes(
     			filter,
