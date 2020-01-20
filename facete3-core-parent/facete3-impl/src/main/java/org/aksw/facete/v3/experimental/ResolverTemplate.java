@@ -131,7 +131,8 @@ public class ResolverTemplate
 		tmp.addAll(resolveTemplate(step, alias));
 		
 		if(tmp.isEmpty() || !singlePathMode) {
-			tmp.addAll(resolveData(step, alias));
+			Collection<Resolver> subResolvers = resolveData(step, alias);
+			tmp.addAll(subResolvers);
 		}
 		
 		ResolverUnion result = new ResolverUnion(this, tmp);
@@ -139,6 +140,29 @@ public class ResolverTemplate
 		return result;
 	}
 	
+	
+	/**
+	 * Resolve a step within the template
+	 * @param step
+	 * @param alias
+	 * @return
+	 */
+	public ResolverTemplate resolveTemplateSimple(P_Path0 step, String alias) {
+		Var startVar = (Var)start.asNode();
+		//Collection<RDFNode> starts = Collections.singleton(root); 
+//			Property p = ResourceUtils.getProperty(step);
+		Set<RDFNode> targets = ResourceUtils.listPropertyValues(start.asResource(), step).toSet();
+		
+		if(singlePathMode && targets.size() > 1) {
+			throw new RuntimeException("Simple resolution requires at most one path; but " + start + " resolved to these multiple targets " + targets + " in pattern " + query);
+		}
+
+		ResolverTemplate result = targets.size() == 1
+				? new ResolverTemplate(this, query, targets.iterator().next(), null, null)
+				: null;
+		
+		return result;
+	}
 
 	protected Collection<Resolver> resolveTemplate(P_Path0 step, String alias) {
 		Var startVar = (Var)start.asNode();
@@ -158,7 +182,7 @@ public class ResolverTemplate
 		Collection<Resolver> result = new ArrayList<>();
 
 
-		// If an alias is given, create a copy of the partitioned query
+		// If an alias is given, create a copy/duplicate of the partitioned query
 		// with all variables renamed - save for the one being joined on
 		PartitionedQuery1 newPq = query;
 		Set<RDFNode> newTargets = targets;

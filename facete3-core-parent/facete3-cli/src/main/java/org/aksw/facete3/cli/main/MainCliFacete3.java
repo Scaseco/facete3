@@ -1935,10 +1935,9 @@ public class MainCliFacete3 {
 //                null, //new WindowShadowRenderer(),
 //        		new EmptySpace(TextColor.ANSI.BLUE));
 		
-        //window.setHints(Collections.singleton(Window.Hint.NO_POST_RENDERING));
+        // window.setHints(Collections.singleton(Window.Hint.NO_POST_RENDERING));
 
         window.setHints(Arrays.asList(Window.Hint.NO_POST_RENDERING, Window.Hint.EXPANDED, Window.Hint.FIT_TERMINAL_WINDOW));
-
         
 		selectFacet(fdn, RDF.type.asNode());
 

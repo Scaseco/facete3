@@ -29,7 +29,7 @@ public class NodeCustom<T>
 
 	@Override
 	public boolean equals(Object o) {
-		boolean result = this == o || NodeCustom.class.equals(o.getClass()) && Objects.equals(value, ((NodeCustom<?>)o).getValue());
+		boolean result = this == o || this.getClass().equals(o.getClass()) && Objects.equals(value, ((NodeCustom<?>)o).getValue());
 		return result;
 	}
 
@@ -37,7 +37,11 @@ public class NodeCustom<T>
 		return NodeValue.makeNode(this);
 	}
 
-	
+	@Override
+	public String toString() {
+		return "NodeCustom [value=" + value + "]";
+	}
+
 	public static NodeCustom<?> create(Object value) {
 		return new NodeCustom<>(value);
 	}

@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.aksw.facete.v3.api.FacetValue;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -61,6 +62,16 @@ public interface DataQuery<T extends RDFNode> {
 
 	
 	DataQuery<T> peek(Consumer<? super DataQuery<T>> consumer);
+	
+	/**
+	 * Access an attribute of the result class based on the
+	 * mapping between attributes and properties, such as using the @Iri annotation
+	 * Only works for appropriately annotated or mapped result classes
+	 * See {@link FacetValue} for an example.
+	 * 
+	 * @param attrName
+	 * @return
+	 */
 	NodePath get(String attrName);
 	
 	
@@ -70,7 +81,9 @@ public interface DataQuery<T extends RDFNode> {
 	
 	DataNode getRoot();
 	
-	DataMultiNode add(Property property);
+	//DataMultiNode add(Property property);
+	// Add an im
+	DataQuery<T> add(Property property);
 	
 	
 	// this is similar to source.joinOn(attrNames).with(relation)

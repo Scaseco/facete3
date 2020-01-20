@@ -97,6 +97,12 @@ public class PathletJoinerImpl
 		return result;
 	}
 
+	public Supplier<VarRefStatic> resolveStep(Step step) {
+		Path path = Path.newPath().appendStep(step);
+		Supplier<VarRefStatic> result = resolvePath(path);
+		return result;
+	}
+	
 	public Supplier<VarRefStatic> resolvePath(Path path) {
 		resolvePath(path, true);
 		
@@ -118,17 +124,7 @@ public class PathletJoinerImpl
 	}
 	
 	List<RelationletEntry<PathletJoinerImpl>> resolvePath(Path path, boolean createIfNotExists) {
-		List<Step> steps = new ArrayList<>();
-		Path c = path;
-		do {
-			Step step = c.getStep();
-			if(step != null) {
-				steps.add(step);
-			}
-			c = c.getParent();
-		} while(c != null);
-
-		Collections.reverse(steps);
+		List<Step> steps = Path.getSteps(path);
 
 		List<RelationletEntry<PathletJoinerImpl>> result = resolve(steps.iterator(), createIfNotExists);
 		return result;

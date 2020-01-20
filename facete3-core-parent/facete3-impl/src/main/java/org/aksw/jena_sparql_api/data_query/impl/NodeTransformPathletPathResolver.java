@@ -8,6 +8,13 @@ import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.graph.NodeTransform;
 
+/**
+ * Scan all nodes of a query for instances of NodePathletPath and
+ * add resolve the contained path against a pathletContainer
+ * 
+ * @author raven
+ *
+ */
 public class NodeTransformPathletPathResolver
 	implements NodeTransform
 {

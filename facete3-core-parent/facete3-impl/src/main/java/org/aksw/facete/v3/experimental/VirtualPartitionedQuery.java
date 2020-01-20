@@ -1,16 +1,23 @@
 package org.aksw.facete.v3.experimental;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.AliasedPathImpl;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.api.traversal.TraversalDirNode;
 import org.aksw.facete.v3.api.traversal.TraversalMultiNode;
 import org.aksw.facete.v3.api.traversal.TraversalNode;
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -23,9 +30,14 @@ import org.aksw.jena_sparql_api.concepts.XExpr;
 import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -33,9 +45,17 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementBind;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.Template;
 
 import com.eccenca.access_control.triple_based.core.ElementTransformTripleRewrite;
 import com.eccenca.access_control.triple_based.core.GenericLayer;
@@ -375,6 +395,62 @@ public class VirtualPartitionedQuery {
 		return null;
 	}
 
+	/**
+	 * Convert each triple pattern occuring in the template of a SPARQL construct query
+	 * into a ternary relation. This is a somewhat poor-man's approach to creating views over rdf data:
+	 * An improved rewriter would not treat the triple patterns in isolation, but rather take care of
+	 * doing self-join elimination if multiple triple patterns of a view match that of a query.
+	 * 
+	 * 
+	 */
+	public static Collection<TernaryRelation> toViews(Query query) {
+		if(!query.isConstructType() || query.isConstructQuad()) {
+			throw new RuntimeException("Construct query (without quads) expected");
+		}
+
+		Op op = Algebra.compile(query);
+		
+		Set<Var> visibleVars = OpVars.visibleVars(op);
+		Generator<Var> gen = VarGeneratorBlacklist.create(visibleVars);
+		
+		Collection<TernaryRelation> result = new ArrayList<>();
+		Template template = query.getConstructTemplate();
+		//BasicPattern bgp = template.getBGP();
+		//TransformReplaceConstants.transform(new OpBGP(bgp));
+		
+		
+		Element pattern = query.getQueryPattern();
+		for(Triple t : template.getTriples()) {
+			List<Node> nodes = TripleUtils.tripleToList(t);
+			Map<Node, Var> nodeToVar = new HashMap<>();
+			Map<Node, Var> substs = TransformReplaceConstants.transform(nodeToVar, nodes, gen);
+
+			Triple newT = NodeTransformLib.transform(new NodeTransformRenameMap(substs), t);
+
+
+			ElementGroup tgt = new ElementGroup();
+			for(Entry<Node, Var> e : substs.entrySet()) {
+				tgt.addElement(new ElementBind(e.getValue(), NodeValue.makeNode(e.getKey())));
+			}
+			
+			Element newE = substs.isEmpty()
+					? pattern
+					: ElementUtils.copyElements(tgt, pattern);
+
+			
+			TernaryRelation tr = new TernaryRelationImpl(newE,
+					(Var)newT.getSubject(),
+					(Var)newT.getPredicate(),
+					(Var)newT.getObject());
+			
+			result.add(tr);
+		}
+		
+		return result;
+	}
+	
+	
+	
 	public static void main(String[] args) {
 //CONSTRUCT { ?s ?p ?o } WHERE {?x <http://wikiba.se/ontology#claim> ?s . ?x ?p ?o }
 

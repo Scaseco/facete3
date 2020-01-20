@@ -138,6 +138,12 @@ public interface ConstraintFacade<B> {
 		return eq(NodeFactory.createURI(iriStr));
 	}
 
+	default HLFacetConstraint<? extends ConstraintFacade<B>> regex(String pattern) {
+		return regex(pattern, "i");
+	}
+
+	HLFacetConstraint<? extends ConstraintFacade<B>> regex(String pattern, String flags);
+
 	default HLFacetConstraint<? extends ConstraintFacade<B>> eqStr(String stringLiteral) {
 		return eq(NodeFactory.createLiteral(stringLiteral));
 	}

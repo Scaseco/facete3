@@ -21,6 +21,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_Regex;
+import org.apache.jena.sparql.expr.E_Str;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
@@ -253,6 +255,22 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	
 		HLFacetConstraint<? extends ConstraintFacade<B>> result = nodeRange(nodeRange);
 		return result;
+	}
+
+	@Override
+	public HLFacetConstraint<? extends ConstraintFacade<B>> regex(String pattern, String flags) {
+		HLFacetConstraint<? extends ConstraintFacade<B>> result;
+		
+//		if(node == null || NodeUtils.nullUriNode.equals(node)) {
+//			result = absent();
+//		} else {		
+		Expr expr = new E_Regex(new E_Str(thisAsExpr()), pattern, flags);
+		result = getOrCreateConstraint(expr);
+//		}
+
+		return result;
+
+
 	}
 
 

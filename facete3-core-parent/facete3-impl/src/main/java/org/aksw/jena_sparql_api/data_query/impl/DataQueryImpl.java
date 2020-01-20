@@ -18,7 +18,9 @@ import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.path.Resolver;
+import org.aksw.facete.v3.api.path.Step;
 import org.aksw.facete.v3.experimental.ResolverNodeImpl;
+import org.aksw.facete.v3.experimental.ResolverTemplate;
 import org.aksw.facete.v3.experimental.Resolvers;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
@@ -28,7 +30,6 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.data_query.api.DataMultiNode;
 import org.aksw.jena_sparql_api.data_query.api.DataNode;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.api.NodeAliasedPath;
@@ -47,6 +48,7 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
@@ -61,17 +63,21 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Random;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.sparql.util.VarUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -242,6 +248,7 @@ public class DataQueryImpl<T extends RDFNode>
 	protected Class<T> resultClass;
 
 	protected List<SortCondition> sortConditions = new ArrayList<>();
+	protected Set<Path> projectedPaths = new LinkedHashSet<Path>();
 	
 	public DataQueryImpl(SparqlQueryConnection conn, Node rootNode, Element baseQueryPattern, Template template, Class<T> resultClass) {
 		this(conn, new Concept(baseQueryPattern, (Var)rootNode), template, resultClass);
@@ -359,9 +366,24 @@ public class DataQueryImpl<T extends RDFNode>
 
 
 	@Override
-	public DataMultiNode add(Property property) {
-		// TODO Auto-generated method stub
-		return null;
+	public DataQuery<T> add(Property property) {
+		Path path = Path.newPath().fwd(property);
+		projectedPaths.add(path);
+		
+		return this;
+//		Var rootVar = getRootVar();
+//
+//		resolver().fwd().
+//		
+//		//Triple t = new Triple(rootVar, property.asNode(), NodePathletPath.create());
+//		
+//		template.getBGP().add(t);
+//		
+//		
+//		//resolver().fwd(property).one().		
+//		
+//		// TODO Auto-generated method stub
+//		return null;
 	}
 
 
@@ -545,6 +567,12 @@ public class DataQueryImpl<T extends RDFNode>
 //		return tmp;
 //	}
 	
+	public Var getRootVar() {
+		Node rootNode = baseRelation.getVars().get(0);
+
+		return (Var)rootNode;
+	}
+	
 	@Override
 	public Entry<Node, Query> toConstructQuery() {
 		
@@ -556,15 +584,11 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		//boolean canAsConstruct = template != null && !template.getBGP().isEmpty();
 
-		if(template != null) {
-			vars.addAll(PatternVars.vars(new ElementTriplesBlock(template.getBGP())));
-		}
+		// The query projection is set up once the effective template is created
 
 		Query query = new Query();
 		query.setQuerySelectType();
-		for(Var v : vars) {
-			query.getProject().add(v);
-		}
+		
 //		query.setQueryConstructType();
 //		query.setConstructTemplate(template);
 
@@ -590,12 +614,14 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		boolean deterministic = pseudoRandom != null;
 
+		Set<Var> allVars = new LinkedHashSet<>();
+		allVars.addAll(vars);
+		// TODO We only need the pattern vars (or more specifically only the visible vars) if
+		// sample is true or there are projected paths
+		allVars.addAll(PatternVars.vars(baseQueryPattern));
+		
+		Generator<Var> varGen = VarGeneratorBlacklist.create(allVars);
 		if(sample) {
-			Set<Var> allVars = new LinkedHashSet<>();
-			allVars.addAll(vars);
-			allVars.addAll(PatternVars.vars(baseQueryPattern));
-			
-			Generator<Var> varGen = VarGeneratorBlacklist.create(allVars);
 			Var innerRootVar = varGen.next();
 			
 //			if(baseQueryPattern instanceof ElementSubQuery) {
@@ -646,11 +672,14 @@ public class DataQueryImpl<T extends RDFNode>
 			query.addOrderBy(sc);
 		}
 		
-		
-		
+
+		// Create a copy of the template as the basis for the construction of the effective template
+		Template effectiveTemplate = template != null
+				? new Template(new BasicPattern(template.getBGP()))
+				: new Template(new BasicPattern());
+
 		// Resolve paths
 		{
-			Template effectiveTemplate = template != null ? template : new Template(new BasicPattern());
 
 			Query resolverConstruct = new Query();
 			resolverConstruct.setQueryConstructType();
@@ -658,17 +687,81 @@ public class DataQueryImpl<T extends RDFNode>
 			resolverConstruct.setQueryPattern(effectivePattern);
 			
 			Resolver resolver = Resolvers.from((Var)rootVar, resolverConstruct);
-
 			
 			PathletJoinerImpl pathlet = new PathletJoinerImpl(resolver);
 			// Add the base query to the pathlet, with variable ?s joining with the pathlet's root
 			// and ?s also being the connector for subsequent joins
 			pathlet.add(new PathletSimple((Var)rootVar, (Var)rootVar, new RelationletElementImpl(query.getQueryPattern()).fixAllVars()));
 	
+			
+			// Add all projected paths to the pathlet
+			Set<Triple> newTemplateTriples = new LinkedHashSet<Triple>();
+			//List<VarRefStatic> projectedVarRefs = new ArrayList<>();
+			for(Path path : projectedPaths) {
+				ResolverTemplate resolverTemplate = Resolvers.from((Var)rootVar, resolverConstruct);
+
+				// Register the path with the pathlet
+				pathlet.resolvePath(path);
+				
+				// Add any triples to the construct template if necessary
+				List<Step> steps = Path.getSteps(path);
+				
+				Node startNode = resolverTemplate.getStartVar();
+				for(int i = 0; i < steps.size(); ++i) {
+					Step step = steps.get(i);
+					
+					if(step.getKey() instanceof P_Path0) {
+						// Here is the case for basic steps
+
+						P_Path0 stepPath = (P_Path0)step.getKey();
+						Node p = stepPath.getNode();
+						boolean isFwd = stepPath.isForward();
+						
+						//BinaryRelation br = (BinaryRelation)step.getKey();
+						//RelationUtils.extractTriple(br);
+						String alias = step.getAlias();
+						ResolverTemplate next = resolverTemplate != null
+								? resolverTemplate.resolveTemplateSimple(stepPath, alias)
+								: null;
+
+						if(next != null) {
+							startNode = next.getStartVar();
+							resolverTemplate = next;
+						} else {
+							Path endPath = Path.newPath();
+							for(Step tmp : steps.subList(0, i)) {
+								endPath = endPath.appendStep(tmp);
+							}
+							endPath = endPath.appendStep(step);
+							Node endNode = NodePathletPath.create(endPath);
+							
+							Triple t = TripleUtils.create(
+									startNode,
+									p,
+									endNode,
+									!isFwd);
+							newTemplateTriples.add(t);
+						}
+					}
+				}
+
+				
+//				VarRefStatic varRef = pathlet.resolvePath(path).get();
+//				projectedVarRefs.add(varRef);
+			}
+			
+			BasicPattern bgp = effectiveTemplate.getBGP();
+			for(Triple t : newTemplateTriples) {
+				bgp.add(t);
+			}
+
+			
 			// Substitute all NodePathletPath objects with NodePathletVarRef objects
 			NodeTransform xform1 = new NodeTransformPathletPathResolver(pathlet);
 			query = QueryUtils.applyNodeTransform(query, xform1);
-	
+			effectiveTemplate = applyNodeTransform(effectiveTemplate, xform1);
+
+			
 			// Now that all paths have been collected and added to the pathlet
 			// materalize it
 			RelationletSimple rn = pathlet.materialize();
@@ -676,9 +769,18 @@ public class DataQueryImpl<T extends RDFNode>
 			// Resolve all var refs against the materialized relationlet
 			NodeTransform xform2 = new NodeTransformPathletVarRefResolver(rn);
 			query = QueryUtils.applyNodeTransform(query, xform2);
+			effectiveTemplate = applyNodeTransform(effectiveTemplate, xform2);
 			
 			Element e = rn.getElement();
 	
+			
+			VarUtils.addVars(vars, effectiveTemplate.getBGP());
+
+			VarExprList vel = query.getProject();
+			for(Var v : vars) {
+				vel.add(v);
+			}
+
 			query.setQueryPattern(e);
 		}
 		
@@ -696,7 +798,7 @@ public class DataQueryImpl<T extends RDFNode>
 		//}
 
 		
-		Query c = QueryUtils.selectToConstruct(query, template);
+		Query c = QueryUtils.selectToConstruct(query, effectiveTemplate);
 
 //		logger.debug("After rewrite: " + query);
 
@@ -709,6 +811,31 @@ public class DataQueryImpl<T extends RDFNode>
 		return Maps.immutableEntry((Var)rootVar, c);
 	}
 
+	public static Template applyNodeTransform(Template template, NodeTransform xform) {
+		BasicPattern before = template.getBGP();
+		BasicPattern after = NodeTransformLib.transform(xform, before);
+		Template result = new Template(after);
+		return result;
+	}
+	
+	/**
+	 * Strip a path from steps of non-basic steps, such as optional ones.
+	 * 
+	 */
+	public static List<Entry<P_Path0, String>> toSimpleSteps(Path path) {
+		List<Entry<P_Path0, String>> result = new ArrayList<>();
+		for(Step step : Path.getSteps(path)) {
+			Object key = step.getKey();
+			if(key instanceof P_Path0) {
+				String alias = step.getAlias();
+				P_Path0 p = (P_Path0)key;
+				
+				result.add(Maps.immutableEntry(p, alias));
+			}
+		}
+		
+		return result;
+	}
 
 	@Override
 	public Flowable<T> exec() {

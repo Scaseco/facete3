@@ -19,9 +19,9 @@ import org.apache.jena.sparql.syntax.Template;
 
 public class Resolvers {
 
-	public static Resolver from(PartitionedQuery1 pq) {
+	public static ResolverTemplate from(PartitionedQuery1 pq) {
 		RDFNode node = toRdfModel(pq);
-		Resolver result = new ResolverTemplate(null, pq, node, null, null);
+		ResolverTemplate result = new ResolverTemplate(null, pq, node, null, null);
 		return result;
 	}
 	
@@ -32,9 +32,9 @@ public class Resolvers {
 		return result;
 	}
 
-	public static Resolver from(Var viewVar, Query view) {
+	public static ResolverTemplate from(Var viewVar, Query view) {
 		PartitionedQuery1 pq = PartitionedQuery1.from(view, viewVar);
-		Resolver result = Resolvers.from(pq);
+		ResolverTemplate result = Resolvers.from(pq);
 
 		return result;
 	}
