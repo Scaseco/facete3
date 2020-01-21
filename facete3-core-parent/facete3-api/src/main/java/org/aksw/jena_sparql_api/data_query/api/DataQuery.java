@@ -84,6 +84,7 @@ public interface DataQuery<T extends RDFNode> {
 	//DataMultiNode add(Property property);
 	// Add an im
 	DataQuery<T> add(Property property);
+	DataQuery<T> addOptional(Property property);
 	
 	
 	// this is similar to source.joinOn(attrNames).with(relation)

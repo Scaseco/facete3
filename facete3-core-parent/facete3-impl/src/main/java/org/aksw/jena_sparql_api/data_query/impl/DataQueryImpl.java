@@ -370,6 +370,13 @@ public class DataQueryImpl<T extends RDFNode>
 		return null;
 	}
 
+	@Override
+	public DataQuery<T> addOptional(Property property) {
+		Path path = Path.newPath().optional(property).fwd(property);
+		projectedPaths.add(path);
+		
+		return this;
+	}
 
 	@Override
 	public DataQuery<T> add(Property property) {
