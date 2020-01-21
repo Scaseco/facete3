@@ -216,6 +216,12 @@ public class DataQueryImpl<T extends RDFNode>
 	
 	protected SparqlQueryConnection conn;
 	
+	/**
+	 * grouped mode (false): default semantic of construct queries
+	 * partition mode (true): each row is individually mapped to a resource, used for facet value counts
+	 */
+	protected boolean isPartitionMode = false;
+	
 //	protected Node rootVar;
 //	protected Element baseQueryPattern;
 
@@ -577,6 +583,9 @@ public class DataQueryImpl<T extends RDFNode>
 	public Entry<Node, Query> toConstructQuery() {
 		
 		Set<Var> vars = new LinkedHashSet<>();
+		
+//		System.out.println("Root vars: " + baseRelation.getVars());
+		
 		Node rootVar = baseRelation.getVars().get(0);
 		if(rootVar.isVariable()) {
 			vars.add((Var)rootVar);
@@ -880,7 +889,10 @@ public class DataQueryImpl<T extends RDFNode>
 //				return r;
 //			})
 		
-		Flowable<T> result = SparqlRx.execPartitioned(conn, e)
+		// TODO Add the toggle to SparqlRx
+		Flowable<T> result = (isPartitionMode
+				? SparqlRx.execPartitioned(conn, e)
+				: SparqlRx.execConstructGrouped(conn, e))
 			.map(r -> r.as(resultClass));
 		
 		
@@ -999,6 +1011,17 @@ public class DataQueryImpl<T extends RDFNode>
 		
 		ResolverNode result = ResolverNodeImpl.from(pq, this);
 		return result;
+	}
+
+	@Override
+	public DataQuery<T> partitionMode(boolean onOrOff) {
+		this.isPartitionMode = onOrOff;
+		return this;
+	}
+
+	@Override
+	public boolean isPartitionMode() {
+		return isPartitionMode;
 	}
 
 	

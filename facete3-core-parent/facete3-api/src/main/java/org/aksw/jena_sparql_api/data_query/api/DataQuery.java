@@ -173,6 +173,17 @@ public interface DataQuery<T extends RDFNode> {
 		return offset(offset == null ? null : offset.longValue());
 	}
 
+	/**
+	 * grouped mode (false): default semantic of construct queries
+	 * partition mode (true): each row is individually mapped to a resource, used for facet value counts
+	 *
+	 * Partition mode is there for legacy design choices and may be deprecated,
+	 * going with default semantics are strongly encouraged
+	 */
+	DataQuery<T> partitionMode(boolean onOrOff);
+	boolean isPartitionMode();
+	
+
 	DataQuery<T> sample(boolean onOrOff);
 	
 	default DataQuery<T> sample() {

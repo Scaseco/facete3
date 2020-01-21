@@ -1,15 +1,14 @@
 package com.eccenca.access_control.triple_based.core;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
-import org.aksw.jena_sparql_api.concepts.RelationJoiner;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathRewriter;
@@ -38,13 +37,16 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCleanGroupsOfOne;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformApplyElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 
 
 public class ElementTransformTripleRewrite
 	extends ElementTransformTripleBasedRewrite
 {
 	//protected Generator<Var> vargen = VarGeneratorImpl2.create("i");
-
+	// Counter that is incremented after each encountered triple pattern
+	protected int triplePatternCounter = 0;
+	
 	@Override
 	public Element applyTriplePathTransform(TriplePath tp) {
 		Path basePath = tp.getPath();
@@ -69,7 +71,23 @@ public class ElementTransformTripleRewrite
 	}
 
     public Element applyTripleTransform(Triple t) {
-        Element result = ElementTransformTripleRewrite.applyTransform(t, genericLayer.getRelation().toTernaryRelation(), null, varGen);
+    	TernaryRelation templateRelation = genericLayer.getRelation().toTernaryRelation();
+    	
+    	// Substitute all variables in the filter with the triple pattern counter
+    	int c = triplePatternCounter;
+    	Map<Var, Var> instanceMap = templateRelation.getVarsMentioned().stream()
+    		.collect(Collectors.toMap(
+    				v -> v,
+    				v -> Var.alloc("i" + c + "_" + v.getName())));
+    	
+    	TernaryRelation instanceRelation = templateRelation.applyNodeTransform(
+    			new NodeTransformSubst(instanceMap))
+    			.toTernaryRelation();
+    	
+    	triplePatternCounter++;
+
+    	
+        Element result = ElementTransformTripleRewrite.applyTransform(t, instanceRelation, null, varGen);
         return result;
     }
 
@@ -99,7 +117,7 @@ public class ElementTransformTripleRewrite
      * @return
      */
     public static Element applyTransform(Triple triple, TernaryRelation filter, ValueSetOld<Binding> valueSet, Generator<Var> varGen) {
-
+    	
     	// If the relation is a mere basic graph pattern, we can just substitute its variables with
     	// the rdf terms / variables of the triple    	
     	// However, if the relation is a query of the form 'SELECT (... AS ?x)' we cannot substitute ?x for

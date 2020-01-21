@@ -317,7 +317,9 @@ public class FacetDirNodeImpl
 		bgp.add(new Triple(tr.getS(), Vocab.facetCount.asNode(), tr.getO()));
 		Template template = new Template(bgp);
 		
-		DataQuery<FacetValueCount> result = new DataQueryImpl<>(parent.query().connection(), tr.getS(), tr.getElement(), template, FacetValueCount.class);
+		DataQuery<FacetValueCount> result = new DataQueryImpl<>(parent.query().connection(), tr.getS(), tr.getElement(), template, FacetValueCount.class)
+				.partitionMode(true);
+
 
 		return result;
 	}
