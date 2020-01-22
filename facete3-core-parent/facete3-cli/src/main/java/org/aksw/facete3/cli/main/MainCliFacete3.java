@@ -1174,102 +1174,44 @@ public class MainCliFacete3 {
 	    
 	    RDFConnection conn = null;
 	    try {
-		    
-		    if(files.size() == 1) {
-		    	logger.info("Probing argument for SPARQL endpoint");
-		    	String str = files.get(0);
-		    	boolean isSparql = isSparqlEndpoint(str);
-	
-		    	if(isSparql) {
-		    		logger.info("Probe query succeeded. Connecting with bnode profile " + cm.bnodeProfile + " ...");
+	    	conn = createConnectionFromArgs(cm.nonOptionArgs, cm.bnodeProfile);
+			
+    	    if(!cm.defaultGraphs.isEmpty()) {
+    	    	if(cm.defaultGraphs.size() > 1) {
+    	    		throw new RuntimeException("Only 1 default graph supported with this version");
+    	    	}
+    	    	
+    			Node g = NodeFactory.createURI(cm.defaultGraphs.get(0));
 
-		    		conn = RDFConnectionRemote.create()
-		    				//.acceptHeaderGraph(WebContent.contentTypeRDFXML)
-		    				.acceptHeaderSelectQuery(WebContent.contentTypeResultsXML)
-		    				.destination(str)
-		    				.build();
+    			conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+    	    			q -> {
+    	    				Transform t = new TransformGraphRename(Quad.defaultGraphNodeGenerated, g) ;
+    	    				
+    	    				Query r = QueryUtils.applyOpTransform(q, op -> {
+    	    					op = Algebra.toQuadForm(op);
+    		    		        op = Transformer.transform(t, op);
+    		    		        //op = AlgebraUtils.createDefaultRewriter().rewrite(op);
+    		    		        return op;
+    	    				});
+    	    				
+    	    				return r;
+    	    			});
+    	    }
 
-		    		String bnodeProfile = cm.bnodeProfile;
-		    		if("auto".equalsIgnoreCase(bnodeProfile)) {
-		    			
-		    			Map<String, String> env = Collections.singletonMap("REMOTE", str);
-		    			Model report = ModelFactory.createDefaultModel();
-		    			RDFDataMgrEx.execSparql(report, "probe-endpoint-dbms.sparql", env::get);
-		    			Property dbmsShortName = ResourceFactory.createProperty("http://www.example.org/dbmsShortName");
+    	    if(cm.unionDefaultGraphMode) {
+    	    	conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+    	    			q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
+    	    }
 
-		    			List<String> nodes = report.listObjectsOfProperty(dbmsShortName)
-		    				.mapWith(n -> n.isLiteral() ? Objects.toString(n.asLiteral().getValue()) : null)
-		    				.toList();
-		    			String first = Iterables.getFirst(nodes, null);
-		    			
-		    			if(first != null) {
-		    				bnodeProfile = first;
-		    			}
-		    		}
-		    		
-		    		if(bnodeProfile != null) {
-		    			conn = wrapWithVirtualBnodeUris(conn, bnodeProfile);
-		    		} else {
-		    			logger.warn("No bnode profile found - bnodes are not supported");
-		    		}
-		    	}
-		    }
-		    
-		    if(conn == null) {
-			    //Model model = ModelFactory.createDefaultModel();
-		    	Dataset dataset = DatasetFactory.create();
-			    Stopwatch sw = Stopwatch.createStarted();
-			    logger.info("Loading RDF files...");
-			    for(String file : files) {
-				    logger.info("  Attempting to loading " + file);
-			    	//Model tmp = RDFDataMgr.loadModel(file);
-			    	//model.add(tmp);
-				    RDFDataMgr.read(dataset, file);
-			    }
-//			    logger.info("Done loading " + ds.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
-			    logger.info("Done loading dataset in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
-			    
-			    //Dataset dataset = DatasetFactory.wrap(model);
-			    conn = RDFConnectionFactory.connect(dataset);
-    			conn = wrapWithVirtualBnodeUris(conn, "jena");
-		    }
+    	    Iterable<String> prefixSources = Iterables.concat(
+    	    		Collections.singleton("rdf-prefixes/prefix.cc.2019-12-17.jsonld"),
+    	    		cm.prefixSources);
 
-		    if(!cm.defaultGraphs.isEmpty()) {
-		    	if(cm.defaultGraphs.size() > 1) {
-		    		throw new RuntimeException("Only 1 default graph supported with this version");
-		    	}
-		    	
-				Node g = NodeFactory.createURI(cm.defaultGraphs.get(0));
-
-				conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
-		    			q -> {
-		    				Transform t = new TransformGraphRename(Quad.defaultGraphNodeGenerated, g) ;
-		    				
-		    				Query r = QueryUtils.applyOpTransform(q, op -> {
-		    					op = Algebra.toQuadForm(op);
-			    		        op = Transformer.transform(t, op);
-			    		        //op = AlgebraUtils.createDefaultRewriter().rewrite(op);
-			    		        return op;
-		    				});
-		    				
-		    				return r;
-		    			});
-		    }
-
-		    if(cm.unionDefaultGraphMode) {
-		    	conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
-		    			q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
-		    }
-
-		    Iterable<String> prefixSources = Iterables.concat(
-		    		Collections.singleton("rdf-prefixes/prefix.cc.2019-12-17.jsonld"),
-		    		cm.prefixSources);
-	
-			PrefixMapping prefixes = new PrefixMappingImpl();
-	        for(String source : prefixSources) {
-	        	PrefixMapping tmp = RDFDataMgr.loadModel(source);
-	        	prefixes.setNsPrefixes(tmp);
-	        }
+    		PrefixMapping prefixes = new PrefixMappingImpl();
+            for(String source : prefixSources) {
+            	PrefixMapping tmp = RDFDataMgr.loadModel(source);
+            	prefixes.setNsPrefixes(tmp);
+            }
 
 		    UnaryRelation baseConcept = Strings.isNullOrEmpty(cm.baseConcept)
 		    		? null
@@ -1281,7 +1223,7 @@ public class MainCliFacete3 {
 				fq.baseConcept(baseConcept);
 			}
 
-			
+
 			
 			new MainCliFacete3().init(conn, prefixes, fq);
 	    } catch(Exception e) {
@@ -1295,6 +1237,74 @@ public class MainCliFacete3 {
 	    }
 	}
 	
+	
+	public static RDFConnection createConnectionFromArgs(
+			Collection<String> files,
+			String bnodeProfile) {
+		
+		RDFConnection conn = null;
+	    if(files.size() == 1) {
+	    	logger.info("Probing argument for SPARQL endpoint");
+	    	String str = files.iterator().next(); //.get(0);
+	    	boolean isSparql = isSparqlEndpoint(str);
+
+	    	if(isSparql) {
+	    		logger.info("Probe query succeeded. Connecting with bnode profile " + bnodeProfile + " ...");
+
+	    		conn = RDFConnectionRemote.create()
+	    				//.acceptHeaderGraph(WebContent.contentTypeRDFXML)
+	    				.acceptHeaderSelectQuery(WebContent.contentTypeResultsXML)
+	    				.destination(str)
+	    				.build();
+
+	    		if("auto".equalsIgnoreCase(bnodeProfile)) {
+	    			
+	    			Map<String, String> env = Collections.singletonMap("REMOTE", str);
+	    			Model report = ModelFactory.createDefaultModel();
+	    			RDFDataMgrEx.execSparql(report, "probe-endpoint-dbms.sparql", env::get);
+	    			Property dbmsShortName = ResourceFactory.createProperty("http://www.example.org/dbmsShortName");
+
+	    			List<String> nodes = report.listObjectsOfProperty(dbmsShortName)
+	    				.mapWith(n -> n.isLiteral() ? Objects.toString(n.asLiteral().getValue()) : null)
+	    				.toList();
+	    			String first = Iterables.getFirst(nodes, null);
+	    			
+	    			if(first != null) {
+	    				bnodeProfile = first;
+	    			}
+	    		}
+	    		
+	    		if(bnodeProfile != null) {
+	    			conn = wrapWithVirtualBnodeUris(conn, bnodeProfile);
+	    		} else {
+	    			logger.warn("No bnode profile found - bnodes are not supported");
+	    		}
+	    	}
+	    }
+	    
+	    if(conn == null) {
+		    //Model model = ModelFactory.createDefaultModel();
+	    	Dataset dataset = DatasetFactory.create();
+		    Stopwatch sw = Stopwatch.createStarted();
+		    logger.info("Loading RDF files...");
+		    for(String file : files) {
+			    logger.info("  Attempting to loading " + file);
+		    	//Model tmp = RDFDataMgr.loadModel(file);
+		    	//model.add(tmp);
+			    RDFDataMgr.read(dataset, file);
+		    }
+//		    logger.info("Done loading " + ds.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
+		    logger.info("Done loading dataset in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
+		    
+		    //Dataset dataset = DatasetFactory.wrap(model);
+		    conn = RDFConnectionFactory.connect(dataset);
+			conn = wrapWithVirtualBnodeUris(conn, "jena");
+	    }
+
+
+
+		return conn;
+	}
 
 	
 	public void setFacetDir(org.aksw.facete.v3.api.Direction dir) {
