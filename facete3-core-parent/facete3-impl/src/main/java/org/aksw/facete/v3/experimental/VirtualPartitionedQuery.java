@@ -364,6 +364,7 @@ public class VirtualPartitionedQuery {
 		// System.out.println("Query over View: Raw rewritten query:\n" + raw);
 		
 		Query result = QueryUtils.rewrite(raw, AlgebraUtils.createDefaultRewriter()::rewrite);
+		System.out.println("Query over View: Final rewritten query:\n" + result);
 
 		return result;
 	}

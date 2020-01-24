@@ -2,13 +2,13 @@ package com.eccenca.access_control.triple_based.core;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
-import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathRewriter;
@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.ValueSetOld;
+import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
@@ -25,6 +26,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.ExprList;
@@ -188,6 +190,14 @@ public class ElementTransformTripleRewrite
     
     
     public static Query transform(Query query, GenericLayer conceptLayer, boolean cloneOnChange) {
+    	// Set the project vars
+    	query.setResultVars();
+    	//List<Var> vars = query.getProjectVars();
+    	
+    	VarExprList velCopy = VarExprListUtils.copy(new VarExprList(), query.getProject());
+    	
+    	// Set<Var> expectedVars = new LinkedHashSet<>(query.getProjectVars());
+    	
         Element oldQueryPattern = query.getQueryPattern();
         Element newQueryPattern = transform(oldQueryPattern, conceptLayer);
 
@@ -196,6 +206,9 @@ public class ElementTransformTripleRewrite
             result = query;
         } else {
             result = cloneOnChange ? query.cloneQuery() : query;
+            result.setQueryResultStar(false);
+            result.getProject().clear();
+            result.getProject().addAll(velCopy);
             result.setQueryPattern(newQueryPattern);
         }
 
