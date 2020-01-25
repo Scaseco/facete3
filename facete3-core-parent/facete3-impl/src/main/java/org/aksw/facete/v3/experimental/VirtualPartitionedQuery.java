@@ -361,7 +361,7 @@ public class VirtualPartitionedQuery {
 		GenericLayer layer = GenericLayer.create(tr);
 		
 		Query raw = ElementTransformTripleRewrite.transform(query, layer, true);
-		// System.out.println("Query over View: Raw rewritten query:\n" + raw);
+//		System.out.println("Query over View: Raw rewritten query:\n" + raw);
 		
 		Query result = QueryUtils.rewrite(raw, AlgebraUtils.createDefaultRewriter()::rewrite);
 //		System.out.println("Query over View: Final rewritten query:\n" + result);
