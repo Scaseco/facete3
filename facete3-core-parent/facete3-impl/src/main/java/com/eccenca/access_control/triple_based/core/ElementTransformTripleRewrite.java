@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.ARQConstants;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
@@ -71,7 +72,40 @@ public class ElementTransformTripleRewrite
 
 		return result;
 	}
+	
+	/**
+	 * Prefix a var name while being aware of special prefixes by the jena system.
+	 *  
+	 * For example, in the query syntax, a blank node denoted by '[]' is converted into a
+	 * variable of the form '?0'
+	 * 
+	 * @param prefix The prefix to prepend
+	 * @param name The variable name
+	 * @return A var name with a valid serialization by Jena (if the prefix was valid)
+	 */
+	public static String prefixVarName(String prefix, String name) {
+		String result;
+		if(Var.isAllocVarName(name)) {
+			result = ARQConstants.allocVarMarker +
+					prefix + name.substring(ARQConstants.allocVarMarker.length());
+		} else if(Var.isBlankNodeVarName(name)) {
+			result = ARQConstants.allocVarAnonMarker +
+					prefix + name.substring(ARQConstants.allocVarAnonMarker.length());			
+		} else if(Var.isRenamedVar(name)) {
+			result = ARQConstants.allocVarScopeHiding +
+					prefix + name.substring(ARQConstants.allocVarScopeHiding.length());			
+		} else {
+			result = name;
+		}
+		
+		return result;
+	}
 
+	public static Var prefixVar(String prefix, Var var) {
+		Var result = Var.alloc(prefixVarName(prefix, var.getName()));
+		return result;
+	}
+	
     public Element applyTripleTransform(Triple t) {
     	TernaryRelation templateRelation = genericLayer.getRelation().toTernaryRelation();
     	
@@ -80,7 +114,7 @@ public class ElementTransformTripleRewrite
     	Map<Var, Var> instanceMap = templateRelation.getVarsMentioned().stream()
     		.collect(Collectors.toMap(
     				v -> v,
-    				v -> Var.alloc("i" + c + "_" + v.getName())));
+    				v -> prefixVar("i" + c + "_", v)));
     	
     	TernaryRelation instanceRelation = templateRelation.applyNodeTransform(
     			new NodeTransformSubst(instanceMap))
