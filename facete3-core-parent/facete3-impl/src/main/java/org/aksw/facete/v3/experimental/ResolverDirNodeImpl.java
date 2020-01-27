@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
+import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
