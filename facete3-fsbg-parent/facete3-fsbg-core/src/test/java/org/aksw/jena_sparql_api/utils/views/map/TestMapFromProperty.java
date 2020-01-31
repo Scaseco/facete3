@@ -13,7 +13,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDFS;
-import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 
 import com.google.common.base.Stopwatch;
 
@@ -26,7 +25,7 @@ public class TestMapFromProperty {
 		
 		// For 1mio items, the hash map is 6x times faster than model on i7-7700HQ CPU @ 2.80GHz
 		
-		Map<RDFNode, Resource> rawMap = new MapFromResource(s, Vocab.entry, RDFS.label);
+		Map<RDFNode, Resource> rawMap = new MapFromResourceUnmanaged(s, MapVocab.entry, RDFS.label);
 		
 		//Map<RDFNode, Resource> rawMap = new HashMap<>();
 		

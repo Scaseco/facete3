@@ -12,7 +12,7 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromResourceUnmanaged;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
@@ -47,7 +47,7 @@ public class BgpNodeImpl
 	}
 
 	public Map<Resource, BgpMultiNode> createMap(Property p) {
-		Map<RDFNode, Resource> map = new MapFromResource(this, p, Vocab.property);
+		Map<RDFNode, Resource> map = new MapFromResourceUnmanaged(this, p, Vocab.property);
 
 		Map<Resource, Resource> m = new MapFromKeyConverter<>(map, Converter.from(r -> r.as(Resource.class), RDFNode::asResource));		
 		Map<Resource, BgpMultiNode> result = new MapFromValueConverter<>(m, Converter.from(r -> r.as(BgpMultiNode.class), RDFNode::asResource));

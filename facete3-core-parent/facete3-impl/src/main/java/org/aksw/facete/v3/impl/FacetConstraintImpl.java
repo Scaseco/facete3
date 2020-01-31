@@ -16,8 +16,9 @@ import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromResource2;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
+import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -100,7 +101,7 @@ public class FacetConstraintImpl
 
 	// Mapping of bnodes in the contraint expression *string* to bnodes in the model
 	public Map<Integer, Node> getBnodeMap() {
-		Map<RDFNode, RDFNode> rawMap = new MapFromResource2(this, Vocab.mapping, Vocab.key, Vocab.value);
+		Map<RDFNode, RDFNode> rawMap = new MapFromResource(this, Vocab.mapping, MapVocab.key, MapVocab.value);
 		
 		//Map<RDFNode, Resource> rawMap = new HashMap<>();
 		

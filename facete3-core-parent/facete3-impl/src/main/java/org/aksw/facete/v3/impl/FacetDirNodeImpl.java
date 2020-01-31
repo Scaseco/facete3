@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -313,7 +314,7 @@ public class FacetDirNodeImpl
 		
 		
 		BasicPattern bgp = new BasicPattern();
-		bgp.add(new Triple(tr.getS(), Vocab.value.asNode(), tr.getP()));
+		bgp.add(new Triple(tr.getS(), MapVocab.value.asNode(), tr.getP()));
 		bgp.add(new Triple(tr.getS(), Vocab.facetCount.asNode(), tr.getO()));
 		Template template = new Template(bgp);
 		

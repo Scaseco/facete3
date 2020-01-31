@@ -45,7 +45,6 @@ public class Vocab {
 	public static final Property mapping = property("mapping");
 
 	
-	public static final Property value = property("value");
 	public static final Property facetCount = property("facetCount");
 	public static final Property facetValueCount = property("facetValueCount");
 
@@ -60,8 +59,8 @@ public class Vocab {
 
 	// TODO Add minInclusive / maxInclusive
 	
-	public static final Property key = property("key");
-	public static final Property entry = property("entry");
+//	public static final Property key = property("key");
+//	public static final Property entry = property("entry");
 //	public static final Property value = property("value");
 	public static final Property weights = property("weights");
 

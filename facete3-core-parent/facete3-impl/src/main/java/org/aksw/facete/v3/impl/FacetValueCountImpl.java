@@ -8,6 +8,7 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.data_query.impl.CountUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.CountInfo;
+import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
@@ -35,7 +36,7 @@ public class FacetValueCountImpl
 
 	@Override
 	public Node getValue() {
-		return ResourceUtils.tryGetPropertyValue(this, Vocab.value)
+		return ResourceUtils.tryGetPropertyValue(this, MapVocab.value)
 				.map(RDFNode::asNode)
 				.orElse(null);
 //		return getProperty(Vocab.value).getObject().asNode();

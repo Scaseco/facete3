@@ -67,6 +67,7 @@ import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
+import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -620,8 +621,8 @@ public class TaskGenerator {
 				ElementUtils.createElementGroup(
 						ElementUtils.createElementTriple(
 								new Triple(s.asNode(), RDFS.member.asNode(), Vars.e),
-								new Triple(Vars.e, Vocab.key.asNode(), Vars.k),
-								new Triple(Vars.e, Vocab.value.asNode(), Vars.v))),
+								new Triple(Vars.e, MapVocab.key.asNode(), Vars.k),
+								new Triple(Vars.e, MapVocab.value.asNode(), Vars.v))),
 				Vars.k, Vars.v));
 
 		Map<RDFNode, RDFNode> result = MapFromMultimap.createView(multimap);
@@ -868,7 +869,7 @@ public class TaskGenerator {
 	}
 	
 	public static String getTransitionKey(NfaTransition transition) {
-		String result = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(transition, Vocab.key, String.class);
+		String result = org.aksw.jena_sparql_api.rdf.collections.ResourceUtils.getLiteralPropertyValue(transition, MapVocab.key, String.class);
 		return result;
 	}
 

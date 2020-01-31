@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
@@ -84,7 +85,7 @@ public class RdfStackImpl
 		return new LinkedIterator<Resource, RDFNode>(
 				() -> ResourceUtils.getPropertyValue(this, Vocab.last, Resource.class),
 				n -> ResourceUtils.getPropertyValue(n, Vocab.prior, Resource.class),
-				n -> ResourceUtils.getPropertyValue(n, Vocab.value),
+				n -> ResourceUtils.getPropertyValue(n, MapVocab.value),
 				null);
 	}
 	
@@ -94,7 +95,7 @@ public class RdfStackImpl
 
 		RDFNode result = null;
 		if(holder != null) {
-			result = ResourceUtils.getPropertyValue(holder, Vocab.value);
+			result = ResourceUtils.getPropertyValue(holder, MapVocab.value);
 		
 			RDFNode prior = ResourceUtils.getPropertyValue(holder, Vocab.prior);
 
@@ -116,7 +117,7 @@ public class RdfStackImpl
 //		}
 
 		Resource holder = m.createResource();
-		holder.addProperty(Vocab.value, item);
+		holder.addProperty(MapVocab.value, item);
 		
 		RDFNode prior = ResourceUtils.getPropertyValue(stack, Vocab.last);
 		ResourceUtils.setProperty(stack, Vocab.last, holder);
