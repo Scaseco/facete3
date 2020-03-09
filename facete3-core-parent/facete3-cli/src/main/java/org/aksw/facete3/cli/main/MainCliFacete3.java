@@ -16,13 +16,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.accessors.SingleValuedAccessor;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -110,8 +106,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
@@ -133,265 +127,28 @@ import com.googlecode.lanterna.gui2.Interactable;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
-import com.googlecode.lanterna.gui2.TextGUIGraphics;
 import com.googlecode.lanterna.gui2.Window;
 import com.googlecode.lanterna.gui2.WindowBasedTextGUI;
 import com.googlecode.lanterna.gui2.WindowListener;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
 import com.googlecode.lanterna.gui2.dialogs.MessageDialogButton;
 import com.googlecode.lanterna.gui2.table.Table;
-import com.googlecode.lanterna.gui2.table.TableCellRenderer;
 import com.googlecode.lanterna.gui2.table.TableModel;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
 
 
-class TableCellRenderImpl
-	implements TableCellRenderer<RDFNode>
-{
-	@Override
-	public TerminalSize getPreferredSize(Table<RDFNode> table, RDFNode cell, int columnIndex, int rowIndex) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void drawCell(Table<RDFNode> table, RDFNode cell, int columnIndex, int rowIndex,
-			TextGUIGraphics textGUIGraphics) {
-		// TODO Auto-generated method stub
-		
-	}	
-}
-
-
-
-interface Paginator<T> {
-	List<T> createPages(long numItems, long itemOffset);
-}
-
-
-//interface Page
-//	extends Resource
-//{
-//	long getPageNumber();
-//	long getPageOffset();
-//	boolean isActive();
-//
-//	void setPageOffset(long pageOffset);
-//	void setActive(boolean onOrOff);
-//	
-//	
-//	public static Page factory() {
-//		return ModelFactory.createDefaultModel().createResource().as(Page.class);
-//	}
-//}
-
-class Page {
-	long pageNumber;
-	long pageOffset;
-	boolean isActive;
-
-	public long getPageNumber() { return pageNumber; }
-	public void setPageNumber(long pageNumber) { this.pageNumber = pageNumber; }
-	public long getPageOffset() { return pageOffset; }
-	public void setPageOffset(long pageOffset) { this.pageOffset = pageOffset; }
-	public boolean isActive() { return isActive; }
-	public void setActive(boolean isActive) { this.isActive = isActive; }
-}
-
-/**
- * Item-based paginator implementation
- * 
- * @author raven
- *
- * @param <T>
- */
-abstract class PaginatorBase<T>
-	implements Paginator<T>
-{
-	public PaginatorBase(long itemsPerPage) {
-		this.itemsPerPage = itemsPerPage;
-	}
-
-	protected long itemsPerPage = 10;
-	
-	protected long showProximity = 4; // two prior / two next pages
-//	protected long showBefore = 3;
-//	protected long showAfter = 3;
-	
-	
-	// [<] [<<] [--] [-] [x] [+] [...] [>>] [>]
-	protected long visiblePages;
-// Potential further attributes (taken from jassa / angular)
-//	  boundaryLinks: false,
-//	  directionLinks: true,
-//	  firstText: 'First',
-//	  previousText: 'Previous',
-//	  nextText: 'Next',
-//	  lastText: 'Last',
-//	  rotate: true
-	
-	/**
-	 * 
-	 * 
-	 * @param numItems
-	 * @param itemOffset The page containing this offset is marked as active
-	 * @return
-	 */
-	public List<T> createPages(long numItems, long itemOffset) {
-		// Add one extra page if the devision yields a remainder
-		long numPages = numItems / itemsPerPage
-				+ Math.min(numItems % itemsPerPage, 1);
-
-		long activePage = itemOffset / itemsPerPage;
-
-		long halfProximity = showProximity / 2;
-		long extraSpace = showProximity % 2;
-
-		long showBefore = halfProximity + extraSpace;
-		long showAfter = halfProximity;
-
-		long availBefore = activePage;
-		long availAfter = numPages - activePage - 1;
-				
-
-		long beforeToAfter = Math.max(showBefore - availBefore, 0);
-		showAfter += beforeToAfter;
-		
-		long afterToBefore = Math.max(showAfter - availAfter, 0);
-		showBefore += afterToBefore;
-		
-		// Final adjustment of show before (discard any still available space)
-		showBefore = Math.min(showBefore, availBefore);
-		showAfter = Math.min(showAfter, availAfter);
-		
-		long from = activePage - showBefore;
-		long to = activePage + showAfter;
-		
-		List<T> result = new ArrayList<>();
-		for(long i = from; i <= to; ++i) {
-			long pageStart = i * itemsPerPage;
-			long pageEnd = Math.min(pageStart + itemsPerPage, numItems);
-
-			boolean isActive = itemOffset >= pageStart && itemOffset < pageEnd;
-		
-			T page = createPage(i, pageStart, pageEnd, isActive);
-			result.add(page);
-		}
-		
-		return result;
-	}
-	
-	abstract protected T createPage(long pageNumber, long pageStart, long pageEnd, boolean isActive);
-}
-
-
-class PaginatorImpl
-	extends PaginatorBase<Page>
-{
-	public PaginatorImpl(long itemsPerPage) {
-		super(itemsPerPage);
-	}
-	
-	@Override
-	protected Page createPage(long pageNumber, long pageStart, long pageEnd, boolean isActive) {
-		Page result = new Page();//Page.factory();
-		result.setPageOffset(pageStart);
-		result.setActive(isActive);
-		result.setPageNumber(pageNumber + 1);
-		return result;
-	}
-}
-
-
-// If we wanted to create an Amazon like faceted interface we'd need:
-// Ranking function over a set of values - rank(concept) -> BinaryRelation (resource, rank-value)
-// Rank is actually just a 'combine'* with a ranking attribute
-// We can then sort the binary relation by rank
-// binaryRelation.clearOrder(); binaryRelation.addOrder(binaryRelation.getTargetVar(), 1)
-// * my current term for the generalization of a sparql join on the syntax level - which isn't necessarily a join in the first place
-
-// Hack around ActionListBox to include custom data
-class PseudoRunnable<T>
-	implements Runnable
-{
-	protected String label;
-	protected Runnable runnable;
-	protected T data;
-
-	public PseudoRunnable(T data) {
-		this("" + data, data, null);
-	}
-
-	public PseudoRunnable(String label, T data, Runnable runnable) {
-		super();
-		this.label = label;
-		this.data = data;
-		this.runnable = runnable;
-	}
-
-	@Override
-	public void run() {
-		if(runnable != null) {
-			runnable.run();
-		}
-	}
-	
-	public T getData() {
-		return data;
-	}
-	
-	@Override
-	public String toString() {
-		return label;
-	}
-	
-	public static <T> PseudoRunnable<T> from(String label, T data, Runnable runnable) {
-		return new PseudoRunnable<T>(label, data, runnable);
-	}
-}
-
-// Idea for an api to allow for something similar to angularjs' dirty checking
-// - Have a DirtyChecker class to manage watch registrations
-// - There can be a public (convenience) API for type safety, which provides registration method
-//   for each number of arguments - up to some fixed limit
-//   Internally, we don't care about the types, so we can cast everything to object
-// - We can create Proxies that watch getters / setters of objects and invoke dirty checking
-class DirtyChecker {
-	
-	
-	public static <S1> Runnable watch(Supplier<S1> s1, Consumer<? super S1> action) {
-		return null;
-	}
-	
-	
-	/**
-	 * Bind a computation to a getter/setter
-	 * 
-	 * @param target
-	 * @param s1
-	 * @param fn
-	 * @return
-	 */
-	public static <T, S1> Runnable bind(
-			SingleValuedAccessor<T> target,
-			Supplier<S1> s1, 
-			Function<? super S1, ? extends T> fn) {
-		return null;
-	}
-	
-	public static <T, S1, S2> Runnable bind(
-			SingleValuedAccessor<T> target,
-			Supplier<S1> s1, Supplier<S2> s2,
-			BiFunction<? super S1, ? super S2, ? extends T> fn) {
-		return null;
-	}
-	
-}
+//If we wanted to create an Amazon like faceted interface we'd need:
+//Ranking function over a set of values - rank(concept) -> BinaryRelation (resource, rank-value)
+//Rank is actually just a 'combine'* with a ranking attribute
+//We can then sort the binary relation by rank
+//binaryRelation.clearOrder(); binaryRelation.addOrder(binaryRelation.getTargetVar(), 1)
+//* my current term for the generalization of a sparql join on the syntax level - which isn't necessarily a join in the first place
 
 /**
  * 
@@ -420,32 +177,6 @@ public class MainCliFacete3 {
 	protected PrefixMapping globalPrefixes = new PrefixMappingImpl();
 	//.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
 	
-	@Parameters(separators = "=", commandDescription = "Facete3 Options")
-	public static class CommandMain {
-		@Parameter(description="Non option args")
-		public List<String> nonOptionArgs = new ArrayList<>();
-
-		@Parameter(names= {"-b", "--bp", "--bnode-profile"}, description="Blank node profile")
-		public String bnodeProfile = "auto";
-
-		// TODO -c not yet implemented
-		@Parameter(names="-c", description="Base concept, e.g. SELECT ?s {?s a foaf:Person}")
-		public String baseConcept = "";
-
-		@Parameter(names="-p", description="Prefix Sources")
-		public List<String> prefixSources = new ArrayList<>();
-
-		@Parameter(names="-u", description="Union default graph mode (for quad-based formats)")
-		public boolean unionDefaultGraphMode = false;
-
-		@Parameter(names="-g", description="Default graphs (applies to quad based data sources)")
-		public List<String> defaultGraphs = new ArrayList<>();
-
-		@Parameter(names={"-h", "--help"}, help = true)
-		public boolean help = false;
-	}
-
-
 	// Normalize a short form of select sparql queries, where SELECT may be omitted
 	public static String injectSelect(String queryStr) {
 		// TODO Implement
@@ -1066,7 +797,7 @@ public class MainCliFacete3 {
 			
 			
 			for(FacetCount fc : fcs) {
-					facetList.addItem(PseudoRunnable.from(
+					facetList.addItem(RunnableWithLabelAndData.from(
 							toString(fc) + " (" + fc.getDistinctValueCount().getCount() + ")",
 							fc.getPredicate(),
 							() -> selectFacet(fdn, fc.getPredicate())));
@@ -1122,7 +853,7 @@ public class MainCliFacete3 {
 		// Turn on legacy mode; ISSUE #8 - https://github.com/hobbit-project/faceted-browsing-benchmark/issues/8
 		JenaRuntime.isRDF11 = false;
 		
-		CommandMain cm = new CommandMain();
+		CmdFacete3Main cm = new CmdFacete3Main();
 		
 		// CommandCommit commit = new CommandCommit();
 		JCommander jc = JCommander.newBuilder()
@@ -1377,7 +1108,7 @@ public class MainCliFacete3 {
 		facetList.setInputFilter((i, keyStroke) -> {
 			
 			@SuppressWarnings("unchecked")
-			PseudoRunnable<Node> pr = (PseudoRunnable<Node>)facetList.getSelectedItem();
+			RunnableWithLabelAndData<Node> pr = (RunnableWithLabelAndData<Node>)facetList.getSelectedItem();
 			Node node = pr == null ? null : pr.getData();
 			
 //			setResourcePanelTitle(node);
@@ -1461,7 +1192,7 @@ public class MainCliFacete3 {
 		// Setup terminal and screen layers
         Terminal terminal = new DefaultTerminalFactory()
         		.setTerminalEmulatorTitle("Facete III")
-//        		.setMouseCaptureMode(MouseCaptureMode.CLICK)
+        		.setMouseCaptureMode(MouseCaptureMode.CLICK)
         		.createTerminal();
         Screen screen = new TerminalScreen(terminal);
         screen.startScreen();
