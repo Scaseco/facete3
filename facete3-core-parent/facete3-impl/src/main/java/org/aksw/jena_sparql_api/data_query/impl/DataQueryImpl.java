@@ -47,6 +47,8 @@ import org.aksw.jena_sparql_api.relationlet.RelationletSimple;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -60,6 +62,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
@@ -71,6 +74,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
@@ -1002,10 +1006,16 @@ public class DataQueryImpl<T extends RDFNode>
 	@Override
 	public Single<CountInfo> count(Long distinctItemCount, Long rowCount) {
 		Entry<Node, Query> e = toConstructQuery();
-		Var partitionVar = (Var)e.getKey();
+		
+		Set<Var> partitionVars = new LinkedHashSet<>();
+		partitionVars.add((Var)e.getKey());
+		if(isPartitionMode) {
+			Set<Var> templateVars = QuadPatternUtils.getVarsMentioned(template.getQuads());
+			partitionVars.addAll(templateVars);
+		}
 		Query query = e.getValue();
 		//		QueryExecutionUtils.countQuery(query, new QueryExecutionFactorySparqlQueryConnection(conn));
-		Single<CountInfo> result = SparqlRx.fetchCountQueryPartition(conn, query, Collections.singletonList(partitionVar), distinctItemCount, rowCount)
+		Single<CountInfo> result = SparqlRx.fetchCountQueryPartition(conn, query, partitionVars, distinctItemCount, rowCount)
 				.map(range -> CountUtils.toCountInfo(range));
 		
 		return result;

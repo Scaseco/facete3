@@ -468,6 +468,9 @@ public class MainCliFacete3 {
 	Panel resourcePanel = new Panel();
 	Panel itemPagePanel = new Panel();
 
+
+	Panel facetValuePagePanel = new Panel();
+
 	
 	class Test<P> {
 		P value;
@@ -518,6 +521,8 @@ public class MainCliFacete3 {
 		List<Page> pages = paginator.createPages(count, itemPage[0]);
 
 		
+		// Update the paginator buttons. If one has a focus, we memorize it so
+		// we can restore it afterwards.
 		boolean refocusPage = itemPagePanel.getChildren().stream()
 				.anyMatch(child -> child instanceof Interactable && ((Interactable)child).isFocused());
 		
@@ -694,6 +699,7 @@ public class MainCliFacete3 {
 		return base;
 	}
 	
+	long facetValuePage[] = {0};
 	public void updateFacetValues() {
 		Stopwatch sw = Stopwatch.createStarted();
 		
@@ -705,7 +711,55 @@ public class MainCliFacete3 {
 
 			DataQuery<FacetValueCount> base = facetValuesDataQuery();
 
+			
+			//Long count = fdn.facetValueCounts().count().blockingGet().getCount();
+			Long count = base.count().blockingGet().getCount();
+			// Update paginator with item count
+			int itemsPerPage = 100;
+			
+			
+			Paginator<Page> paginator = new PaginatorImpl(itemsPerPage);
+			List<Page> pages = paginator.createPages(count, facetValuePage[0]);
+
+			
+			// Update the paginator buttons. If one has a focus, we memorize it so
+			// we can restore it afterwards.
+			boolean refocusPage = facetValuePagePanel.getChildren().stream()
+					.anyMatch(child -> child instanceof Interactable && ((Interactable)child).isFocused());
+			
+			facetValuePagePanel.removeAllComponents();
+			for(Page page : pages) {
+//				if(page.isActive()) {
+//					itemPagePanel.addComponent(new Label2("" + page.getPageNumber()));
+//				} else {
+					Button btn = new Button("" + page.getPageNumber(), () -> {
+						facetValuePage[0] = page.getPageOffset();
+						updateFacetValues();
+					});
+					facetValuePagePanel.addComponent(btn);
+					
+					if(page.isActive() && refocusPage) {
+						btn.takeFocus();
+					}
+//				}
+			}
+
+			
+			
+			long itemStart = facetValuePage[0];
+			long itemEnd = Math.min(itemStart + itemsPerPage, count);
+			
+			// TODO Update the title to include page info
+//			String title = count == 0
+//					? "(no matches)"
+//					: String.format("Matches %d-%d of %d", itemStart + 1, itemEnd, count);
+			
+			// resultPanelBorder.setTitle(title);		
+			
+			
 			List<FacetValueCount> fvcs = base		
+					.offset(itemStart)
+					.limit(itemsPerPage)
 					.exec()
 					.toList().blockingGet();
 	
@@ -1192,7 +1246,7 @@ public class MainCliFacete3 {
 		// Setup terminal and screen layers
         Terminal terminal = new DefaultTerminalFactory()
         		.setTerminalEmulatorTitle("Facete III")
-        		.setMouseCaptureMode(MouseCaptureMode.CLICK)
+        		.setMouseCaptureMode(MouseCaptureMode.CLICK_RELEASE)
         		.createTerminal();
         Screen screen = new TerminalScreen(terminal);
         screen.startScreen();
@@ -1535,10 +1589,14 @@ public class MainCliFacete3 {
 		facetValueSortPanel.addComponent(facetValueSortModeToggle);
 		facetValueSortPanel.addComponent(facetValueSortDirToggle);
 
+		facetValuePagePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.BEGINNING, Alignment.CENTER, true, false, 1, 1)); //GridLayout.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
+		facetValuePagePanel.setLayoutManager(new LinearLayout(Direction.HORIZONTAL));
+
 		facetValuePanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, false, 1, 1));
 		facetValuePanel.setLayoutManager(new GridLayout2(1));
 		facetValuePanel.addComponent(facetValueFilterPanel.withBorder(Borders.singleLine("Filter")));		
 		facetValuePanel.addComponent(facetValueSortPanel);
+		facetValuePanel.addComponent(facetValuePagePanel);
 		facetValuePanel.addComponent(facetValueList);
 
 
