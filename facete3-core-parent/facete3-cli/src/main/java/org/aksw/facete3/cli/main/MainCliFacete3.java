@@ -64,6 +64,7 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.JenaRuntime;
+import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
@@ -84,7 +85,9 @@ import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
@@ -1029,9 +1032,12 @@ public class MainCliFacete3 {
 		
 		RDFConnection conn = null;
 	    if(files.size() == 1) {
-	    	logger.info("Probing argument for SPARQL endpoint");
 	    	String str = files.iterator().next(); //.get(0);
-	    	boolean isSparql = isSparqlEndpoint(str);
+			boolean useStdIn = false;
+	    	useStdIn = str.equals("-");
+	    	
+	    	logger.info("Probing argument for SPARQL endpoint");
+	    	boolean isSparql = !useStdIn && isSparqlEndpoint(str);
 
 	    	if(isSparql) {
 	    		logger.info("Probe query succeeded. Connecting with bnode profile " + bnodeProfile + " ...");
@@ -1073,10 +1079,20 @@ public class MainCliFacete3 {
 		    Stopwatch sw = Stopwatch.createStarted();
 		    logger.info("Loading RDF files...");
 		    for(String file : files) {
-			    logger.info("  Attempting to loading " + file);
-		    	//Model tmp = RDFDataMgr.loadModel(file);
-		    	//model.add(tmp);
-			    RDFDataMgr.read(dataset, file);
+		    	if(file.equals("-")) {
+				    logger.info("  Attempting to load dataset from stdin");
+		    		TypedInputStream in = RDFDataMgrEx.open(null, Arrays.asList(Lang.NQUADS, Lang.TRIG));
+		    		String contentType = in.getContentType();
+		    		logger.info("Detected content type on STDIN: " + contentType);
+		    		Lang lang = RDFLanguages.contentTypeToLang(contentType);
+		    		RDFDataMgr.read(dataset, in.getInputStream(), in.getBaseURI(), lang);
+		    	} else {
+			    	
+				    logger.info("  Attempting to loading " + file);
+			    	//Model tmp = RDFDataMgr.loadModel(file);
+			    	//model.add(tmp);
+				    RDFDataMgr.read(dataset, file);
+		    	}
 		    }
 //		    logger.info("Done loading " + ds.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
 		    logger.info("Done loading dataset in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
