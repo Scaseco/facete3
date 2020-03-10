@@ -24,9 +24,12 @@ A screenshot of the Facete3 terminal application on [Scholarly Data](http://www.
 
 ### Latest Updates
 
-* Upcoming
+* Upcominga
   * Integrated IRI retrieval / download feature
-* 2020-12-20
+* 2020-03-10
+  * Support for reading from stdin, can be used like this: `./script-that-ouputs-rdf.sh | facete3 -` (- indicates to read from stdin)
+  * Improved scalability by adding paginator to facet values
+* 2019-12-20
   * Facete3 UI Enhancements
     * Added HDT support
     * Ordering facets and facet values by RDF term and counts
