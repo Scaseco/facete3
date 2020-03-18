@@ -89,6 +89,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
+import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -145,6 +146,8 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
 
+import io.reactivex.Flowable;
+
 
 //If we wanted to create an Amazon like faceted interface we'd need:
 //Ranking function over a set of values - rank(concept) -> BinaryRelation (resource, rank-value)
@@ -178,9 +181,18 @@ public class MainCliFacete3 {
 
 
 	protected PrefixMapping globalPrefixes = new PrefixMappingImpl();
+	
+	protected boolean showLabels = true;
+	
+	
+	
+	public RDFNode resourceViewActiveNode = null;
+	
+	
 	//.loadModel("rdf-prefixes/prefix.cc.2019-12-17.jsonld");
 	
 	// Normalize a short form of select sparql queries, where SELECT may be omitted
+	// Update: This is now implemented in SPARQL integrate! ~ 2020-03-18
 	public static String injectSelect(String queryStr) {
 		// TODO Implement
 		// If the query does not parse as sparql, attempt to inject a SELECT before
@@ -263,7 +275,18 @@ public class MainCliFacete3 {
 		return result;
 	}
 	
-	public void updateResourceView(RDFNode n) {
+	
+	
+	public void setResourceViewActiveNode(RDFNode n, boolean refresh) {
+		this.resourceViewActiveNode = n;
+		
+		if(refresh) {
+			updateResourceView();
+		}
+	}
+	
+	public void updateResourceView() {
+		RDFNode n = resourceViewActiveNode;
 		TableModel<RDFNode> model = resourceTable.getTableModel();
 		resourceTable.setSelectedColumn(-1);
 		resourceTable.setSelectedRow(0);
@@ -426,13 +449,18 @@ public class MainCliFacete3 {
 	//KeyStroke resourceViewKey = new KeyStroke(' ', false, false);
 	public static final char resourceViewKey = ' ';
 	public static final char showQueryKey = 's';
-	
-	//RDFConnection conn;
-	
-	//RDFConnection conn;
-	FacetedQuery fq;
-	LookupService<Node, String> labelService;
 
+	public static final char toggleLabelsKey = 'l';
+
+	FacetedQuery fq;
+	
+	LookupService<Node, String> labelService;
+	
+	
+	LookupService<Node, String> noopLabelService;
+	LookupService<Node, String> actualLabelService;
+
+	
 	ActionListBox facetList = new ActionListBox(); //new TerminalSize(30, 10));
 	CheckBoxList<FacetValueCount> facetValueList = new CheckBoxList<>();
 	Table<RDFNode> resultTable = new Table<>("Item");
@@ -1081,7 +1109,7 @@ public class MainCliFacete3 {
 		    for(String file : files) {
 		    	if(file.equals("-")) {
 				    logger.info("  Attempting to load dataset from stdin");
-		    		TypedInputStream in = RDFDataMgrEx.open(null, Arrays.asList(Lang.NQUADS, Lang.TRIG));
+		    		TypedInputStream in = RDFDataMgrEx.open("-", Arrays.asList(Lang.NQUADS, Lang.TRIG));
 		    		String contentType = in.getContentType();
 		    		logger.info("Detected content type on STDIN: " + contentType);
 		    		Lang lang = RDFLanguages.contentTypeToLang(contentType);
@@ -1190,7 +1218,7 @@ public class MainCliFacete3 {
 				case resourceViewKey:
 					if(node != null) {
 						RDFNode rdfNode = fetchIfResource(node);
-						updateResourceView(rdfNode);
+						setResourceViewActiveNode(rdfNode, true);
 					}
 					break;
 				case showQueryKey:
@@ -1252,12 +1280,22 @@ public class MainCliFacete3 {
 //			return true;			
 //		});
 		
-		labelService = LookupServiceUtils
+		actualLabelService = LookupServiceUtils
 				.createLookupService(fq.connection(), BinaryRelationImpl.create(RDFS.label))
 				.partition(10)
 				.cache()
 				.mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
 				.mapValues((k, v) -> "" + v);
+		
+		labelService = actualLabelService;
+		
+		noopLabelService = new LookupService<Node, String>() {
+			@Override
+			public Flowable<Entry<Node, String>> apply(Iterable<Node> t) {
+				return Flowable.fromIterable(t)
+					.map(n -> Maps.immutableEntry(n, NodeFmtLib.str(n)));
+			}
+		};
 		
 		// Setup terminal and screen layers
         Terminal terminal = new DefaultTerminalFactory()
@@ -1311,7 +1349,7 @@ public class MainCliFacete3 {
 					if(item != null) {
 						Node node = item.getValue();
 						RDFNode rdfNode = fetchIfResource(node);
-						updateResourceView(rdfNode);
+						setResourceViewActiveNode(rdfNode, true);
 					}
 					r = false;
 					break;
@@ -1390,7 +1428,7 @@ public class MainCliFacete3 {
 				case resourceViewKey:
 					if(node != null) { 
 						RDFNode rdfNode = fetchIfResource(node.asNode());
-						updateResourceView(rdfNode);
+						setResourceViewActiveNode(rdfNode, true);
 					}
 					break;
 				case showQueryKey:
@@ -1430,7 +1468,7 @@ public class MainCliFacete3 {
 				case resourceViewKey:
 					if(node != null) { 
 						RDFNode rdfNode = fetchIfResource(node.asNode());
-						updateResourceView(rdfNode);
+						setResourceViewActiveNode(rdfNode, true);
 					}
 				}
 			}
@@ -1710,8 +1748,15 @@ public class MainCliFacete3 {
 					default:
 						break;
 					}
+				} else if(Character.valueOf(toggleLabelsKey).equals(c)) {
+					showLabels = !showLabels;
+					
+					labelService = showLabels
+							? actualLabelService
+							: noopLabelService;
+					
+					updateAll();
 				}
-
 				//keyStroke.getCharacter()
 				
 				// TODO Auto-generated method stub
@@ -1758,6 +1803,16 @@ public class MainCliFacete3 {
 
         gui.addWindowAndWait(window);
 
+	}
+	
+	
+	public void updateAll() {
+		updateConstraints(fq);
+		updateFacetPathPanel();
+		updateFacetValues();
+		updateResourceView();
+		updateItems(fq);
+		updateFacets(fq);
 	}
 	
 	
