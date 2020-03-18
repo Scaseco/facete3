@@ -60,6 +60,7 @@ facete3 -u observations1.trig observations2.trig
 * **Spacebar** shows the triples of the currently selected item (regardless of facet, facet value or result table list)
 * **Enter** activates facets and toggles constraints
 * **Backspace** on a facet navigates along the facet
+* **l** toggles the (l)abel display mode (toggle rotation includes display of the bare IRIs)
 * **s** context-sentively (s)hows the SPARQL query that returned the currently highlighted item in the facet, facet value or result table list.
 * **q** or **ESC** quits (asks for confirmation)
 * **Ctrl+Mouse** elect a rectangle (useful to copy output of **s**)
