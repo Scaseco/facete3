@@ -738,6 +738,7 @@ public class MainCliFacete3 {
 			// Set the title
 			facetValuePanelBorder.setTitle("Facet Values" + " [" + selectedFacet + "]");
 			
+			boolean hasFocus = facetValueList.isFocused();
 			facetValueList.setEnabled(false);
 
 			DataQuery<FacetValueCount> base = facetValuesDataQuery();
@@ -818,6 +819,10 @@ public class MainCliFacete3 {
 			}
 			
 			facetValueList.setEnabled(true);
+			
+			if(hasFocus) {
+				facetValueList.takeFocus();
+			}
 
 		} else {
 //			FacetValueCountImpl fcv = (FacetValueCountImpl)ModelFactory.createDefaultModel().createResource("http://fooar").as(FacetValueCount.class);
@@ -830,6 +835,8 @@ public class MainCliFacete3 {
 			// TODO Show in the panel that the list is empty
 			facetValuePanelBorder.setTitle("Facet Values");
 		}
+		
+		
 		
 		logger.info("updateFacetValues: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0 + "s");
 	}
