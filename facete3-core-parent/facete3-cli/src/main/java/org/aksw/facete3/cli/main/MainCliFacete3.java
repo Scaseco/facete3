@@ -56,7 +56,6 @@ import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
@@ -101,7 +100,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.vocabulary.RDF;
@@ -1174,10 +1172,8 @@ public class MainCliFacete3 {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
         RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
 
-        Set<String> profiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
-        Map<String, UserDefinedFunctionDefinition> macros = UserDefinedFunctions.load(model, profiles);
-
-        ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(macros);
+        Set<String> activeProfiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
+        ExprTransformVirtualBnodeUris xform = ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);
 
 
         RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
