@@ -21,6 +21,7 @@
 		<module>facete3-cli</module>
 		<module>facete3-debian-cli</module>
 		<module>facete3-eclipse</module>
+		<module>facete3-app-vaadin</module>
 	</modules>
 
 </project>
