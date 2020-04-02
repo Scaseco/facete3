@@ -1,3 +1,5 @@
+![Develop](https://github.com/hobbit-project/facete3/workflows/Develop/badge.svg?branch=develop)
+
 # Facete3 Faceted Search Framework
 
 Facete is a faceted search framework for SPARQL-accessible data. We are working on aggregeations, so actually its becoming more of a SPARQL-based business intelligence system.
