@@ -38,6 +38,7 @@ import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
+import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -45,7 +46,11 @@ import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionBuilder;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
@@ -56,6 +61,7 @@ import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.update.FluentRDFConnectionFn;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
@@ -83,6 +89,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -1037,6 +1044,12 @@ public class MainCliFacete3 {
             UnaryRelation baseConcept = Strings.isNullOrEmpty(cm.baseConcept)
                     ? null
                     : parseConcept(cm.baseConcept, prefixes);
+
+            conn = new RDFConnectionModular(
+                    new SparqlQueryConnectionJsa(
+                            FluentQueryExecutionFactory.from(new QueryExecutionFactorySparqlQueryConnection(conn))
+                                .config().withCache(new CacheBackendMem()).end().create()),
+                    conn, conn);
 
             FacetedQuery fq = FacetedQueryImpl.create(conn);
 
