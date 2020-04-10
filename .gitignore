@@ -21,6 +21,12 @@ work
 *.iml
 *.log
 
+# Metals
+.metals
+
+# Vimspector
+.vimspector.json
+
 
 pom.xml.releaseBackup
 pom.xml.versionsBackup

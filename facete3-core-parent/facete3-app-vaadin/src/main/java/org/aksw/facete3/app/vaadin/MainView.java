@@ -3,13 +3,38 @@ package org.aksw.facete3.app.vaadin;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
+import java.util.stream.Stream;
+import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.HeaderRow;
+import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.listbox.ListBox;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.Query;
+import com.vaadin.flow.data.provider.QuerySortOrder;
+import com.vaadin.flow.data.provider.SortDirection;
+import com.vaadin.flow.data.provider.SortOrder;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.PWA;
+import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.plugin.JenaPluginFacete3;
-import org.apache.jena.query.Query;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
+import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
+import org.aksw.jena_sparql_api.pathlet.Path;
+import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -20,58 +45,19 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.applayout.AppLayout;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.listbox.ListBox;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.PWA;
-
-/**
- * A sample Vaadin view class.
- * <p>
- * To implement a Vaadin view just extend any Vaadin component and use @Route annotation to announce
- * it in a URL as a Spring managed bean. Use the @PWA annotation make the application installable on
- * phones, tablets and some desktop browsers.
- * <p>
- * A new instance of this class is created for every new user and every browser tab/window.
- */
-@SuppressWarnings("serial")
-@Route
+@Route("")
 @PWA(name = "Vaadin Application", shortName = "Vaadin App", description = "This is an example Vaadin application.",
         enableInstallPrompt = true)
 @CssImport("./styles/shared-styles.css")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 public class MainView extends AppLayout {
 
-    public static final char CHAR_UPWARDS_ARROW = '\u2191';
-    public static final char CHAR_DOWNWARDS_ARROW = '\u2193';
-
-    public static final String[] sortModeLabel = {"A-Z", "0-9"};
-
-    // Mapping of ui sort directions to ui labels
-    public static final String[] sortDirLabel =
-            {Character.toString(CHAR_DOWNWARDS_ARROW), Character.toString(CHAR_UPWARDS_ARROW)};
-
-    // Mapping of ui sort directions to jena query sort directions
-    public static final int[] sortDirMapJena = {Query.ORDER_DESCENDING, Query.ORDER_ASCENDING};
-
+    private static final long serialVersionUID = 1L;
     protected PrefixMapping globalPrefixes = new PrefixMappingImpl();
-
-    protected boolean showLabels = true;
-
     public RDFNode resourceViewActiveNode = null;
-
     protected FacetedQuery fq;
 
     public void init() {
@@ -81,133 +67,154 @@ public class MainView extends AppLayout {
         RDFConnection conn = RDFConnectionRemote
                 .create()
                 .destination("https://databus.dbpedia.org/repo/sparql")
-                // .destination("http://cord19.aksw.org/sparql")
                 .acceptHeaderQuery(WebContent.contentTypeResultsXML)
                 .build();
 
         Model dataModel = ModelFactory.createDefaultModel();
         XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
         FacetedQueryImpl.initResource(facetedQuery);
-
         fq = FacetedQueryImpl.create(facetedQuery, conn);
-
-        // fq.root()
-        // .fwd(RDF.type).one()
-        // .constraints()
-        // .eq(DCTerms.BibliographicResource).activate();
     }
 
-    public List<String> randomItems() {
+    public List<FacetValueCount> randomItems() {
         System.out.println("Complex Query");
-        List<FacetValueCount> fc =
-                // -- Faceted Browsing API
-                fq
-                        .focus()
-                        .fwd()
-                        .facetValueCounts()
-                        .exclude(RDF.type)
-                        // --- DataQuery API
-                        // .sample()
-                        .randomOrder()
-                        .limit(10)
-                        .peek(x -> System.out.println("GOT: " + x.toConstructQuery()))
-                        .exec()
-                        // --- RxJava API
-                        // .firstElement()
-                        .toList()
-                        .timeout(60, TimeUnit.SECONDS)
-                        .blockingGet();
-        List<String> items = fc
-                .stream()
-                .map(x -> (x.getValue() + ": " + x.getFocusCount()).substring(0, 16))
-                .collect(Collectors.toList());
-
-        return items;
+        List<FacetValueCount> fc = fq
+                .focus()
+                .fwd()
+                .facetValueCounts()
+                .exclude(RDF.type)
+                .randomOrder()
+                .limit(10)
+                .peek(x -> System.out.println("GOT: " + x.toConstructQuery()))
+                .exec()
+                .toList()
+                .timeout(60, TimeUnit.SECONDS)
+                .blockingGet();
+        return fc;
     }
 
-    /**
-     * Construct a new Vaadin view.
-     * <p>
-     * Build the initial UI state for the user accessing the application.
-     *
-     * @param service The message service. Automatically injected Spring managed bean.
-     */
-    public MainView(@Autowired GreetService service) {
+    public int getFacetValueCountCount() {
+        long count = fq
+                .focus()
+                .fwd()
+                .facetValueCounts()
+                .exclude(RDF.type)
+                .count()
+                .timeout(60, TimeUnit.SECONDS)
+                .blockingGet()
+                .getCount();
+        System.out.println(count);
+        int countAsInt = (int) Math.min(count, Integer.MAX_VALUE);
+        return countAsInt;
+    }
+
+    public Stream<FacetValueCount> fetchFacetValueCount(Query<FacetValueCount, Void> query) {
+        Stream<FacetValueCount> fvc = fq
+                .focus()
+                .fwd()
+                .facetValueCounts()
+                .exclude(RDF.type)
+                .randomOrder()
+                .limit(query.getLimit() - 1)
+                .offset(query.getOffset())
+                .exec()
+                .toList()
+                .timeout(60, TimeUnit.SECONDS)
+                .blockingGet()
+                .stream();
+        System.out.println(fvc);
+        return fvc;
+    }
+
+    public int getFacetCountCount(Query<FacetCount, String> query) {
+        DataQuery<FacetCount> dataQuery = fq.focus().fwd().facetCounts().exclude(RDF.type);
+        // Add filter to query
+        String filterText = query.getFilter().orElse("");
+        System.out.println("Text: " + filterText);
+        if (!filterText.isEmpty()) {
+            UnaryRelation filter = KeywordSearchUtils
+                    .createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), filterText);
+            dataQuery.filter(filter);
+        }
+        long count = dataQuery.count().timeout(60, TimeUnit.SECONDS).blockingGet().getCount();
+        int countAsInt = (int) Math.min(count, Integer.MAX_VALUE);
+        System.out.println(countAsInt);
+        return countAsInt;
+    }
+
+    public Stream<FacetCount> fetchFacetCount(Query<FacetCount, String> query) {
+
+        DataQuery<FacetCount> dataQuery = fq.focus().fwd().facetCounts().exclude(RDF.type);
+        // Add filter to query
+        String filterText = query.getFilter().orElse("");
+        System.out.println("Text: " + filterText);
+        if (!filterText.isEmpty()) {
+            UnaryRelation filter = KeywordSearchUtils
+                    .createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), filterText);
+            dataQuery.filter(filter);
+        }
+
+        List<QuerySortOrder> sortOrders = query.getSortOrders();
+        int limit = query.getLimit() - 1;
+        if (sortOrders.isEmpty()) {
+            // dataQuery.randomOrder();
+        } else {
+            // 0 = Ascending, 1 = Descending
+            SortDirection vaadiDirection = sortOrders.get(0).getDirection();
+            int sortDir = vaadiDirection == SortDirection.ASCENDING ? org.apache.jena.query.Query.ORDER_ASCENDING
+                    : org.apache.jena.query.Query.ORDER_DESCENDING;
+            System.out.println(sortDir);
+            dataQuery.addOrderBy(new NodePathletPath(Path.newPath()), sortDir);
+            // lol?
+            limit += limit;
+        }
+        List<FacetCount> facetCountsList = dataQuery
+                .limit(limit)
+                .offset(query.getOffset())
+                .exec()
+                .toList()
+                .timeout(60, TimeUnit.SECONDS)
+                .blockingGet();
+        System.out.println(facetCountsList.size() + " " + query.getLimit());
+        Stream<FacetCount> facetCounts = facetCountsList.stream();
+        return facetCounts;
+    }
+
+    public MainView() {
         init();
 
-        ListBox<String> facetList = new ListBox<>();
-        // ListBox<String> facetValueList = new ListBox<>();
-
-        facetList.setItems(randomItems());
-
-        // VerticalLayout mainPanel = new VerticalLayout();
+        HorizontalLayout mainPanel = new HorizontalLayout();
+        setContent(mainPanel);
 
         VerticalLayout facetPanel = new VerticalLayout();
-        // VerticalLayout facetValuePanel = new VerticalLayout();
-        VerticalLayout resultPanel = new VerticalLayout();
-
-        // SplitLayout mainSplit = new SplitLayout();
-        VerticalLayout mainPanel = new VerticalLayout();
-        // SplitLayout facetAndValuesSplit = new SplitLayout();
-
-        // mainSplit.setOrientation(Orientation.VERTICAL);
-
-        // facetAndValuesSplit.addToPrimary(facetPanel);
-        // facetAndValuesSplit.addToSecondary(facetValuePanel);
+        mainPanel.add(facetPanel);
+        facetPanel.add(new Label("Facets"));
 
         TextField facetSearchField = new TextField();
-        facetSearchField.setWidthFull();
-
-        facetPanel.add(new Label("Facets"));
         facetPanel.add(facetSearchField);
-        facetPanel.add(facetList);
+        facetSearchField.setWidthFull();
+        CallbackDataProvider<FacetCount, String> provider = DataProvider
+                .fromFilteringCallbacks(query -> fetchFacetCount(query), query -> getFacetCountCount(query));
+        ConfigurableFilterDataProvider<FacetCount, Void, String> wrapper = provider.withConfigurableFilter();
 
-        // facetValuePanel.add(new Label("Facet Values"));
-        // facetValuePanel.add(facetValueList);
+        Grid<FacetCount> grid = new Grid<>(FacetCount.class);
+        facetPanel.add(grid);
+        // Necessary because vaadin adds all getX methods as columns
+        grid.getColumns().forEach(grid::removeColumn);
+        grid.addColumn(FacetCount::getPredicate).setSortProperty("predicate");
+        // How to do nested ::?
+        grid.addColumn("distinctValueCount.count");
+        HeaderRow filterRow = grid.appendHeaderRow();
+        facetSearchField.addValueChangeListener(event -> {
+            String filter = event.getValue();
+            if (filter.trim().isEmpty()) {
+                // null disables filtering
+                filter = null;
+            }
 
-        TextField searchField = new TextField();
-        searchField.setWidthFull();
-        // searchField.setLabel("Find");
-
-        resultPanel.add("Results go here");
-
-        // mainPanel.setHeightFull();
-        // mainPanel.setWidthFull();
-        // mainSplit.addToPrimary(facetAndValuesSplit);
-        // mainSplit.addToSecondary(resultPanel);
-
-        mainPanel.add(searchField);
-        mainPanel.add(resultPanel);
-
-        addToNavbar(mainPanel);
-        addToDrawer(facetPanel);
-
-        setPrimarySection(Section.DRAWER);
-
-        // addToNavbar(list);
-
-        // Use TextField for standard text input
-        // TextField textField = new TextField("Your name ");
-        //
-        // // Button click listeners can be defined as lambda expressions
-        // Button button = new Button("Say hello", e -> {
-        // facetList.setItems(randomItems());
-        // Notification.show(service.greet(textField.getValue()));
-        // });
-        //
-        // // Theme variants give you predefined extra styles for components.
-        // // Example: Primary button is more prominent look.
-        // button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        //
-        // // You can specify keyboard shortcuts for buttons.
-        // // Example: Pressing enter in this view clicks the Button.
-        // button.addClickShortcut(Key.ENTER);
-        //
-        // // Use custom CSS classes to apply styling. This is defined in
-        // shared-styles.css.
-        // //addClassName("centered-content");
-        //
-        // // addToNavbar(textField, button);
+            System.out.println("Text2: " + filter);
+            wrapper.setFilter(filter);
+        });
+        grid.setDataProvider(wrapper);
     }
-
 }
