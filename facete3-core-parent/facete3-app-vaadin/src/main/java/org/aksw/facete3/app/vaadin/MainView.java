@@ -24,6 +24,9 @@ import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.plugin.JenaPluginFacete3;
+import org.aksw.facete3.app.vaadin.components.FacetComponent;
+import org.aksw.facete3.app.vaadin.components.FacetValueComponent;
+import org.aksw.facete3.app.vaadin.components.ItemComponent;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -42,6 +45,9 @@ import org.apache.jena.vocabulary.RDF;
 public class MainView extends AppLayout {
 
     private final QueryConf queryConf;
+    public final DataProvider<FacetCount, String> facetProvider;
+    public final DataProvider<FacetValueCount, String> facetValueProvider;
+    public final DataProvider<RDFNode, String> ItemProvider;
 
     private static final long serialVersionUID = 155L;
 
@@ -50,11 +56,16 @@ public class MainView extends AppLayout {
     public MainView() {
         FacetedQuery facetedQuery = getFaceteQuery();
         queryConf = new QueryConf(facetedQuery.focus().fwd(), facetedQuery, RDF.type.asNode());
+        facetProvider = new FacetCountProvider(queryConf);
+        facetValueProvider = new FacetValueCountProvider(queryConf);
+        ItemProvider = new ItemProvider(queryConf);
+
         HorizontalLayout mainPanel = new HorizontalLayout();
         setContent(mainPanel);
-        mainPanel.add(composeFacetPanel());
-        mainPanel.add(composeFacetValuePanel());
-        mainPanel.add(composeItemPanel());
+
+        mainPanel.add(new FacetComponent(this, queryConf));
+        mainPanel.add(new FacetValueComponent(this, queryConf));
+        mainPanel.add(new ItemComponent(this, queryConf));
     }
 
     private FacetedQuery getFaceteQuery() {
@@ -69,122 +80,5 @@ public class MainView extends AppLayout {
         XFacetedQuery xFacetedQuery = dataModel.createResource().as(XFacetedQuery.class);
         FacetedQueryImpl.initResource(xFacetedQuery);
         return FacetedQueryImpl.create(xFacetedQuery, conn);
-    }
-
-    private Component composeFacetPanel() {
-        VerticalLayout facetPanel = new VerticalLayout();
-        facetPanel.add(new Label("Facets"));
-
-        TextField facetSearchField = new TextField();
-        facetPanel.add(facetSearchField);
-        facetSearchField.setWidthFull();
-        DataProvider<FacetCount, String> provider = new FacetCountProvider(queryConf);
-        ConfigurableFilterDataProvider<FacetCount, Void, String> wrapper = provider.withConfigurableFilter();
-
-        Grid<FacetCount> grid = new Grid<>(FacetCount.class);
-        facetPanel.add(grid);
-        // Necessary because vaadin adds all getX methods as columns
-        grid.getColumns().forEach(grid::removeColumn);
-        grid.addColumn(FacetCount::getPredicate).setSortProperty("");
-        // How to do nested ::?
-        grid.addColumn("distinctValueCount.count").setSortProperty("facetCount");
-        facetSearchField.addValueChangeListener(event -> {
-            String filter = event.getValue();
-            if (filter.trim().isEmpty()) {
-                // null disables filtering
-                filter = null;
-            }
-
-            System.out.println("Text2: " + filter);
-            wrapper.setFilter(filter);
-        });
-        grid.setDataProvider(wrapper);
-        grid.asSingleSelect().addValueChangeListener(event -> {
-            System.out.println(event + event.getValue().toString());
-            queryConf.setSelectedFacet(event.getValue().getPredicate());
-            // facetDirNode =
-        });
-        return facetPanel;
-    }
-
-    private Component composeFacetValuePanel() {
-        VerticalLayout facetValuePanel = new VerticalLayout();
-        facetValuePanel.add(new Label("FacetsValues"));
-
-        TextField facetValueSearchField = new TextField();
-        facetValuePanel.add(facetValueSearchField);
-        facetValueSearchField.setWidthFull();
-        DataProvider<FacetValueCount, String> providerFacetValue = new FacetValueCountProvider(queryConf);
-        ConfigurableFilterDataProvider<FacetValueCount, Void, String> wrapperFacetValue =
-                providerFacetValue.withConfigurableFilter();
-
-        Grid<FacetValueCount> gridFacetValue = new Grid<>(FacetValueCount.class);
-        facetValuePanel.add(gridFacetValue);
-        // Necessary because vaadin adds all getX methods as columns
-        gridFacetValue.getColumns().forEach(gridFacetValue::removeColumn);
-        gridFacetValue.addColumn(FacetValueCount::getValue).setSortProperty("value").setAutoWidth(true);
-        gridFacetValue.addColumn("focusCount.count");
-        facetValueSearchField.addValueChangeListener(event -> {
-            String filter = event.getValue();
-            if (filter.trim().isEmpty()) {
-                // null disables filtering
-                filter = null;
-            }
-
-            System.out.println("Text2: " + filter);
-            wrapperFacetValue.setFilter(filter);
-        });
-        gridFacetValue.setDataProvider(wrapperFacetValue);
-
-        gridFacetValue.setSelectionMode(SelectionMode.MULTI);
-        gridFacetValue.asMultiSelect().addValueChangeListener(event -> {
-            String message = String.format("Selection changed from %s to %s", event.getOldValue(), event.getValue());
-            System.out.println(message);
-            setConstraints(event.getOldValue(), false);
-            setConstraints(event.getValue(), true);
-            // FacetValueCount item = facetValueList.getItemAt(itemIndex);
-            // Node node = event.getValue().getValue();
-            // HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp =
-            // queryConf.getFacetDirNode().via(item.getPredicate()).one()
-            // .constraints().eq(v);
-            // tmp.setActive(checked);
-            //
-        });
-        return facetValuePanel;
-    }
-
-
-    private void setConstraints(Set<FacetValueCount> facetValueCount, boolean active) {
-        for (FacetValueCount facet : facetValueCount) {
-            Node v = facet.getValue();
-            HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp =
-                    queryConf.getFacetDirNode().via(facet.getPredicate()).one().constraints().eq(v);
-            tmp.setActive(active);
-        }
-    }
-
-    private Component composeItemPanel() {
-        VerticalLayout facetValuePanel = new VerticalLayout();
-        facetValuePanel.add(new Label("Items"));
-
-        TextField facetValueSearchField = new TextField();
-        facetValuePanel.add(facetValueSearchField);
-        facetValueSearchField.setWidthFull();
-        DataProvider<RDFNode, String> providerFacetValue = new ItemProvider(queryConf);
-        ConfigurableFilterDataProvider<RDFNode, Void, String> wrapperFacetValue =
-                providerFacetValue.withConfigurableFilter();
-
-        Grid<RDFNode> gridFacetValue = new Grid<>(RDFNode.class);
-        facetValuePanel.add(gridFacetValue);
-        // Necessary because vaadin adds all getX methods as columns
-        gridFacetValue.getColumns().forEach(gridFacetValue::removeColumn);
-        gridFacetValue.addColumn(RDFNode::toString).setSortProperty("value").setAutoWidth(true);
-        gridFacetValue.setDataProvider(wrapperFacetValue);
-        Button button = new Button("Click Me");
-        button.addClickListener(e -> {
-            gridFacetValue.getDataProvider().refreshAll();
-        });
-        facetValuePanel.add(button);
-        return facetValuePanel;
     }
 }
