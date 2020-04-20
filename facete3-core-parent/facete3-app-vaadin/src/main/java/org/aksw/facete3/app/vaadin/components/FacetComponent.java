@@ -5,9 +5,12 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
+
 import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete3.app.vaadin.MainView;
 import org.aksw.facete3.app.vaadin.QueryConf;
+import org.apache.jena.graph.Node;
 
 public class FacetComponent extends VerticalLayout {
 
@@ -28,6 +31,9 @@ public class FacetComponent extends VerticalLayout {
         });
         add(searchField);
 
+        FacetPathComponent facetPath =new FacetPathComponent(mainView, queryConf); 
+        add(facetPath);
+
         Grid<FacetCount> grid = new Grid<>(FacetCount.class);
         grid.setDataProvider(wrapper);
         grid.getColumns().forEach(grid::removeColumn);
@@ -36,6 +42,15 @@ public class FacetComponent extends VerticalLayout {
         grid.asSingleSelect().addValueChangeListener(event -> {
             queryConf.setSelectedFacet(event.getValue().getPredicate());
             mainView.facetValueProvider.refreshAll();
+        });
+        grid.addItemDoubleClickListener(event -> {
+            org.aksw.facete.v3.api.Direction dir = queryConf.getFacetDirNode().dir();
+            Node node = event.getItem().getPredicate();
+            FacetedQuery facetedQuery = queryConf.getFacetedQuery();
+            facetedQuery.focus().step(node, dir).one().chFocus();
+            queryConf.setFacetDirNode(facetedQuery.focus().step(dir));
+            wrapper.refreshAll();
+            facetPath.refresh();
         });
         add(grid);
     }
