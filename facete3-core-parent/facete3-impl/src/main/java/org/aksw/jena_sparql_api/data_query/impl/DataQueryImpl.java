@@ -232,7 +232,19 @@ public class DataQueryImpl<T extends RDFNode>
     //protected Relation baseRelation;
     protected Element baseElement;
     protected List<Var> primaryKeyVars;
+
+    // A node of the template that acts as the root.
+    // Can be a variable but it may also be a blank node or constant.
     protected Node superRootNode;
+
+    /**
+     *
+     * filter/only affect this variable by default
+     * convenient if there is more than one primary key variable,
+     *
+     */
+    protected Var defaultVar;
+
 
     protected Template template;
 
@@ -279,7 +291,14 @@ public class DataQueryImpl<T extends RDFNode>
             Var rootVar,
             Template template,
             Class<T> resultClass) {
-        this(conn, baseQueryPattern, Arrays.asList(rootVar), rootVar, template, resultClass);
+        this(
+                conn,
+                baseQueryPattern,
+                Arrays.asList(rootVar),
+                rootVar,
+                rootVar,
+                template,
+                resultClass);
     }
 
     public DataQueryImpl(
@@ -287,6 +306,7 @@ public class DataQueryImpl<T extends RDFNode>
             Element baseElement,
             List<Var> primaryKeyVars,
             Node superRootNode,
+            Var defaultVar,
             Template template,
             Class<T> resultClass) {
         super();
@@ -297,6 +317,7 @@ public class DataQueryImpl<T extends RDFNode>
         this.baseElement = baseElement;
         this.primaryKeyVars = primaryKeyVars;
         this.superRootNode = superRootNode;
+        this.defaultVar = defaultVar;
         this.template = template;
         this.resultClass = resultClass;
     }
@@ -313,7 +334,14 @@ public class DataQueryImpl<T extends RDFNode>
     }
 
     public <U extends RDFNode> DataQuery<U> as(Class<U> clazz) {
-        return new DataQueryImpl<U>(conn, baseElement, primaryKeyVars, superRootNode, template, clazz);
+        return new DataQueryImpl<U>(
+                conn,
+                baseElement,
+                primaryKeyVars,
+                superRootNode,
+                defaultVar,
+                template,
+                clazz);
     }
 
     @Override
@@ -665,7 +693,7 @@ public class DataQueryImpl<T extends RDFNode>
 
         Element effectivePattern = filter == null
                 ? baseQueryPattern
-                : new RelationImpl(baseQueryPattern, new ArrayList<>(PatternVars.vars(baseQueryPattern))).joinOn(primaryKeyVars).with(filter).getElement()
+                : new RelationImpl(baseQueryPattern, new ArrayList<>(PatternVars.vars(baseQueryPattern))).joinOn(defaultVar).with(filter).getElement()
                 ;
 
         if(!directFilters.isEmpty()) {
@@ -763,7 +791,9 @@ public class DataQueryImpl<T extends RDFNode>
             // Add the base query to the pathlet, with variable ?s joining with the pathlet's root
             // and ?s also being the connector for subsequent joins
 
-            Var pathRoot = superRootNode instanceof Var ? (Var)superRootNode : Var.alloc("fakeRoot");
+            // TODO Each path should be relative to another var or a path
+            // and eventually the superRootNode
+            Var pathRoot = defaultVar; // superRootNode instanceof Var ? (Var)superRootNode : defaultVar;
             pathlet.add(new PathletSimple(pathRoot, pathRoot, new RelationletElementImpl(query.getQueryPattern()).pinAllVars()));
 
 

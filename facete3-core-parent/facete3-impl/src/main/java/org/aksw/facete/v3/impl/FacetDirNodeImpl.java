@@ -336,7 +336,8 @@ public class FacetDirNodeImpl
         DataQuery<FacetValueCount> result = new DataQueryImpl<>(
                 parent.query().connection(),
                 tr.getElement(),
-                Arrays.asList(tr.getP(), tr.getO()),
+                Arrays.asList(tr.getS(), tr.getP()),
+                superRoot,
                 tr.getS(),
                 template,
                 FacetValueCount.class);
