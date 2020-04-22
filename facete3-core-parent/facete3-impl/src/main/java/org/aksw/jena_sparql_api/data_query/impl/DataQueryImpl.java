@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -66,10 +67,11 @@ import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingComparator;
 import org.apache.jena.sparql.expr.E_Random;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggSample;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
@@ -985,19 +987,24 @@ public class DataQueryImpl<T extends RDFNode>
 //			})
 
         // TODO Add the toggle to SparqlRx
-        Flowable<T> result = SparqlRx.execConstructGrouped(conn, e.getQuery(), e.getPrimaryKeyVars(), e.getRootNode(), true)
-            .map(r -> r.as(resultClass));
+        Flowable<Entry<Binding, RDFNode>> rawFlow =
+                SparqlRx.execConstructGrouped(conn, e.getQuery(), e.getPrimaryKeyVars(), e.getRootNode(), true);
 
 
         boolean deterministic = pseudoRandom != null;
 
         if(deterministic && randomOrder) {
-            result = result.toList().map(l -> {
+            List<SortCondition> scs = e.getPrimaryKeyVars().stream()
+                    .map(v -> new SortCondition(v, Query.ORDER_ASCENDING))
+                    .collect(Collectors.toList());
+
+            Comparator<Binding> cmp = new BindingComparator(scs);
+
+            rawFlow = rawFlow.toList().map(l -> {
                 // Always sort the collection, so that subsequent shuffle will give the same result
                 // regardless of initial order
-                Collections.sort(l, (a, b) ->
-                    NodeValue.compareAlways(NodeValue.makeNode(a.asNode()), NodeValue.makeNode(b.asNode())));
 
+                Collections.sort(l, (a, b) -> cmp.compare(a.getKey(), b.getKey()));
                 Collections.shuffle(l, pseudoRandom);
 
                 Range<Long> available = Range.closed(0l, (long)l.size());
@@ -1006,11 +1013,16 @@ public class DataQueryImpl<T extends RDFNode>
                 long o = effective.lowerEndpoint();
                 long size = effective.upperEndpoint() - o;
 
-                List<T> subList = l.subList((int)o, (int)size);
+                return l.subList((int)o, (int)size);
 
-                return subList;
+                //return subList;
             }).toFlowable().flatMap(Flowable::fromIterable);
         }
+
+        Flowable<T> result = rawFlow
+                .map(Entry::getValue)
+                .map(r -> r.as(resultClass));
+
 
         return result;
     }
@@ -1142,5 +1154,6 @@ public class DataQueryImpl<T extends RDFNode>
     public DataQueryVarView<T> getAttr(String attrName) {
         throw new RuntimeException("not implemented yet");
     }
+
 }
 

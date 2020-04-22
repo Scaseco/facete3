@@ -766,7 +766,7 @@ public class TestFacetedQuery2 {
         //System.out.println("---");
         taskGenerator.applyCp1(node);
 
-        assertEquals( "{ ?v_1  <http://www.example.org/locatedIn>  <http://www.example.org/Germany> }" ,
+        assertEquals( "{ ?v_1  <http://www.example.org/population>  80000000 }" ,
                 getQueryPattern(node)
         );
 
