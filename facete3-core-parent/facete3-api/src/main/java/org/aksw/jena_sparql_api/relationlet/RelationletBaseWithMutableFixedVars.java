@@ -21,7 +21,7 @@ public abstract class RelationletBaseWithMutableFixedVars
 	}
 	
 	@Override
-	public Set<Var> getFixedVars() {
+	public Set<Var> getPinnedVars() {
 		return fixedVars;
 	}
 

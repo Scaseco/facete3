@@ -1,11 +1,11 @@
 package org.aksw.facete.v3.api.path;
 
-public class Step {
+public class StepImpl {
 	protected String type;
 	protected Object key;
 	protected String alias;
 
-	public Step(String type, Object key, String alias) {
+	public StepImpl(String type, Object key, String alias) {
 		super();
 		this.type = type;
 		this.key = key;
@@ -41,7 +41,7 @@ public class Step {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Step other = (Step) obj;
+		StepImpl other = (StepImpl) obj;
 		if (alias == null) {
 			if (other.alias != null)
 				return false;

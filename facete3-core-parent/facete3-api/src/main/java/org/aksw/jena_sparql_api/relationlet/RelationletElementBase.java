@@ -27,7 +27,7 @@ public abstract class RelationletElementBase
 				.collect(CollectorUtils.toLinkedHashMap(x -> x, x -> x));
 
 		Element el = getElement();
-		Set<Var> fixedVars = getFixedVars();
+		Set<Var> fixedVars = getPinnedVars();
 		RelationletSimple result = new RelationletNestedImpl(el, identityMap, fixedVars);
 		return result;
 	}
