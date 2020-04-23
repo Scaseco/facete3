@@ -254,14 +254,28 @@ public interface DataQuery<T extends RDFNode> {
      * TODO Do we need to revise the return value to allow multiple root variables? Maybe yield a Relation instance?
      * @return
      */
+    // TODO Probably we should just return a plain sparql query
+    // the other attributes can be obtained from this class (DataQuery)
     QuerySpec toConstructQueryNew();
+
+    Var getDefaultVar();
+
+    /**
+     * A node of the template from which all primary key variables are reachable by
+     * paths
+     *
+     * @return
+     */
+    Node getSuperRootNode();
+
 
     // Will be removed - but some code needs to cleaned up for this to work
     @Deprecated
     default Entry<Node, Query> toConstructQuery() {
         QuerySpec qs = toConstructQueryNew();
-        return new SimpleEntry<>(qs.getRootNode(), qs.getQuery());
+        return new SimpleEntry<>(getDefaultVar(), qs.getQuery());
     }
+
 
     default Relation baseRelation() {
         return new RelationImpl(baseElement(), primaryKeyVars());

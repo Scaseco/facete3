@@ -347,6 +347,11 @@ public class DataQueryImpl<T extends RDFNode>
     }
 
     @Override
+    public Var getDefaultVar() {
+        return defaultVar;
+    }
+
+    @Override
     public DataQuery<T> limit(Long limit) {
         this.limit = limit;
         return this;
@@ -648,6 +653,7 @@ public class DataQueryImpl<T extends RDFNode>
 //	}
 
 
+    @Override
     public Node getSuperRootNode() {
         return superRootNode;
     }
@@ -811,7 +817,7 @@ public class DataQueryImpl<T extends RDFNode>
                 // Add any triples to the construct template if necessary
                 List<StepImpl> steps = Path.getSteps(path);
 
-                Node startNode = resolverTemplate.getStartVar();
+                Node startNode = resolverTemplate.getStartNode();
                 for(int i = 0; i < steps.size(); ++i) {
                     StepImpl step = steps.get(i);
 
@@ -830,7 +836,7 @@ public class DataQueryImpl<T extends RDFNode>
                                 : null;
 
                         if(next != null) {
-                            startNode = next.getStartVar();
+                            startNode = next.getStartNode();
                             resolverTemplate = next;
                         } else {
                             Path endPath = Path.newPath();
@@ -1130,7 +1136,7 @@ public class DataQueryImpl<T extends RDFNode>
         QuerySpec e = toConstructQueryNew();
         // PartitionedQuery1 pq = PartitionedQuery1.from(e.getQuery(), e.getRootNode());
 
-        ResolverNode result = ResolverNodeImpl.from(e.getQuery(), e.getRootNode(), this);
+        ResolverNode result = ResolverNodeImpl.from(e.getQuery(), superRootNode, this);
         return result;
     }
 

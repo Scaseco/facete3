@@ -76,23 +76,25 @@ public class ResolverTemplate
 
     protected ResolverTemplate parent;
 
-    public Var getStartVar() {
-        Var result = (Var)start.asNode();
+    public Node getStartNode() {
+        Node result = start.asNode();
         return result;
     }
 
     @Override
     public Collection<RelationletBinary> getReachingRelationlet() {
-        Var tgtVar = getStartVar();
+        Node tgtNode = getStartNode();
+        Node srcNode = ((ResolverTemplate)getRoot()).getStartNode();
 
-        Var srcVar = ((ResolverTemplate)getRoot()).getStartVar();
+        Var tgtVar = tgtNode.isVariable() ? (Var)tgtNode : Vars.o;
+        Var srcVar = srcNode.isVariable() ? (Var)srcNode : Vars.s;
 
         BinaryRelation br = reachingRelationContrib == null
             ? new BinaryRelationImpl(new ElementGroup(), srcVar, tgtVar)
             : reachingRelationContrib;
 
         RelationletBinary rb = new RelationletBinary(br);
-        rb.pinVar(tgtVar);
+        rb.pinVar((Var)tgtVar);
 
         Collection<RelationletBinary> result = Collections.singleton(rb);
 
@@ -166,7 +168,8 @@ public class ResolverTemplate
     }
 
     protected Collection<Resolver> resolveTemplate(P_Path0 step, String alias) {
-        Var startVar = (Var)start.asNode();
+        //Var startVar = (Var)start.asNode();
+        Node startVar = start.asNode();
         //Collection<RDFNode> starts = Collections.singleton(root);
 //			Property p = ResourceUtils.getProperty(step);
         Set<RDFNode> targets = ResourceUtils.listPropertyValues(start.asResource(), step).toSet();
@@ -226,7 +229,7 @@ public class ResolverTemplate
                 RDFNode newN = newT == null ? oldT : m.asRDFNode(newT);
                 newTargets.add(newN);
 
-                BinaryRelation relationContrib = new BinaryRelationImpl(newQuery.getQueryPattern(), startVar, newT);
+                BinaryRelation relationContrib = new BinaryRelationImpl(newQuery.getQueryPattern(), (Var)startVar, newT);
 
                 BinaryRelation relation;
                 if(reachingRelation != null) {
