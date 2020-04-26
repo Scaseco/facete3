@@ -72,7 +72,7 @@ public class FacetPathComponent extends HorizontalLayout {
             queryConf.setFacetDirNode(tmp.step(dir));
         }
         refresh();
-        mainView.facetProvider.refreshAll();
+        // mainView.facetProvider.refreshAll();
         // updateFacets(fq);
         // updateFacetPathPanel();
     }
