@@ -4,6 +4,8 @@ import java.util.Set;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
 import org.aksw.facete.v3.api.ConstraintFacade;
@@ -42,18 +44,25 @@ public class MainView extends AppLayout {
     private static final long serialVersionUID = 7851055480070074549L;
 
     public MainView() {
-        HorizontalLayout mainPanel = new HorizontalLayout();
-        setContent(mainPanel);
         queryConf = new QueryConf();
+        SplitLayout mainPanel = new SplitLayout();
+        mainPanel.setOrientation(Orientation.VERTICAL);
+        setContent(mainPanel);
+        SplitLayout facetsPanel = new SplitLayout();
+        facetsPanel.setOrientation(Orientation.HORIZONTAL);
+        SplitLayout resultsPanel = new SplitLayout();
+        resultsPanel.setOrientation(Orientation.HORIZONTAL);
+        mainPanel.addToPrimary(facetsPanel);
+        mainPanel.addToSecondary(resultsPanel);
         facetComponent = new FacetCountComponent(this, new FacetCountProvider(queryConf));
         facetValueCountComponent =
                 new FacetValueCountComponent(this, new FacetValueCountProvider(queryConf));
         itemComponent = new ItemComponent(this, new ItemProvider(queryConf));
         resourceComponent = new ResourceComponent();
-        mainPanel.add(facetComponent);
-        mainPanel.add(facetValueCountComponent);
-        mainPanel.add(itemComponent);
-        mainPanel.add(resourceComponent);
+        facetsPanel.addToPrimary(facetComponent);
+        facetsPanel.addToSecondary(facetValueCountComponent);
+        resultsPanel.addToPrimary(itemComponent);
+        resultsPanel.addToSecondary(resourceComponent);
     }
 
     public void selectResource(Node node) {

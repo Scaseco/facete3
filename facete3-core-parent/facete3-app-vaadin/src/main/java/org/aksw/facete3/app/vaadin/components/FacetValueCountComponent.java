@@ -20,7 +20,7 @@ public class FacetValueCountComponent extends VerticalLayout {
         this.dataProvider = dataProvider;
         add(new Label("FacetValues"));
         selectedFacet = new Label();
-        add("Selected Facet:" + selectedFacet);
+        add(selectedFacet);
         TextField searchField = new TextField();
         searchField.setPlaceholder("Filter FacetValues...");
         searchField.addValueChangeListener(event -> {
@@ -53,7 +53,7 @@ public class FacetValueCountComponent extends VerticalLayout {
     }
 
     public void refresh(Node predicate) {
-        selectedFacet.setText(predicate.toString());
+        selectedFacet.setText("Selected Facet:" + predicate.toString());
         dataProvider.refreshAll();
     }
 }
