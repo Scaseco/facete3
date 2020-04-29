@@ -5,6 +5,7 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.aksw.facete3.app.vaadin.MainView;
+import org.aksw.facete3.app.vaadin.providers.FacetProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
@@ -26,7 +27,7 @@ public class ItemComponent extends VerticalLayout {
         Grid<RDFNode> grid = new Grid<>(RDFNode.class);
         grid.getColumns()
                 .forEach(grid::removeColumn);
-        grid.addColumn(RDFNode::toString)
+        grid.addColumn(item -> FacetProvider.getLabel(item))
                 .setSortProperty("value")
                 .setHeader(searchField);
         grid.setDataProvider(dataProvider);

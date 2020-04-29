@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete3.app.vaadin.MainView;
+import org.aksw.facete3.app.vaadin.providers.FacetProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.apache.jena.graph.Node;
 
@@ -31,7 +32,7 @@ public class FacetValueCountComponent extends VerticalLayout {
         grid.setDataProvider(dataProvider);
         grid.getColumns()
                 .forEach(grid::removeColumn);
-        grid.addColumn(FacetValueCount::getValue)
+        grid.addColumn(item -> FacetProvider.getLabel(item))
                 .setSortProperty("value")
                 .setHeader(searchField)
                 .setResizable(true);

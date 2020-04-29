@@ -27,9 +27,14 @@ import org.apache.jena.vocabulary.RDF;
 
 public class QueryConf {
 
+    private RDFConnection connection;
     private FacetDirNode facetDirNode;
     private FacetedQuery facetedQuery;
     private Node selectedFacet;
+
+    public RDFConnection getConnection() {
+        return connection;
+    }
 
     public FacetDirNode getFacetDirNode() {
         return facetDirNode;
@@ -43,10 +48,6 @@ public class QueryConf {
         return facetedQuery;
     }
 
-    public void setFacetedQuery(FacetedQuery facetedQuery) {
-        this.facetedQuery = facetedQuery;
-    }
-
     public Node getSelectedFacet() {
         return selectedFacet;
     }
@@ -56,28 +57,40 @@ public class QueryConf {
     }
 
     public QueryConf() {
-        JenaSystem.init();
-        JenaPluginFacete3.init();
-        RDFConnection conn = loadFile();
-        Model dataModel = ModelFactory.createDefaultModel();
-        XFacetedQuery xFacetedQuery = dataModel.createResource()
-                .as(XFacetedQuery.class);
-        FacetedQueryImpl.initResource(xFacetedQuery);
-        setFacetedQuery(FacetedQueryImpl.create(xFacetedQuery, conn));
+        initJena();
+        setConnection();
+        setFacetedQuery();
         setFacetDirNode(facetedQuery.focus()
                 .fwd());
         setSelectedFacet(RDF.type.asNode());
     }
 
-    private RDFConnection connectUrl() {
-        RDFConnection conn = RDFConnectionRemote.create()
+    private void initJena() {
+        JenaSystem.init();
+        JenaPluginFacete3.init();
+    }
+
+    private void setConnection() {
+        connectFile();
+        // connection = connectUrl();
+    }
+
+    private void setFacetedQuery() {
+        Model dataModel = ModelFactory.createDefaultModel();
+        XFacetedQuery xFacetedQuery = dataModel.createResource()
+                .as(XFacetedQuery.class);
+        FacetedQueryImpl.initResource(xFacetedQuery);
+        facetedQuery = FacetedQueryImpl.create(xFacetedQuery, connection);
+    }
+
+    private void connectUrl() {
+        connection = RDFConnectionRemote.create()
                 .destination("https://databus.dbpedia.org/repo/sparql")
                 .acceptHeaderQuery(WebContent.contentTypeResultsXML)
                 .build();
-        return conn;
     }
 
-    private RDFConnection loadFile() {
+    private void connectFile() {
         // https://www.orkg.org/orkg/sparql/
         // https://www.orkg.org/orkg/triplestore/
         // http://cord19.aksw.org/sparql
@@ -86,8 +99,7 @@ public class QueryConf {
         RDFDataMgr.read(dataset,
                 "/home/beavis/cloud/repositories/link-discovery-and-data-fusion/fusion/fused.nt");
         RDFConnection conn = RDFConnectionFactory.connect(dataset);
-        conn = wrapWithVirtualBnodeUris(conn, "jena");
-        return conn;
+        connection = wrapWithVirtualBnodeUris(conn, "jena");
     }
 
     public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String profile) {
@@ -102,3 +114,4 @@ public class QueryConf {
         return result;
     }
 }
+
