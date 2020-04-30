@@ -16,6 +16,7 @@ import org.aksw.facete3.app.vaadin.components.FacetCountComponent;
 import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
 import org.aksw.facete3.app.vaadin.components.ItemComponent;
 import org.aksw.facete3.app.vaadin.components.ResourceComponent;
+import org.aksw.facete3.app.vaadin.components.SearchComponent;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
@@ -47,7 +48,6 @@ public class MainView extends AppLayout {
         queryConf = new QueryConf();
         SplitLayout mainPanel = new SplitLayout();
         mainPanel.setOrientation(Orientation.VERTICAL);
-        setContent(mainPanel);
         SplitLayout facetsPanel = new SplitLayout();
         facetsPanel.setOrientation(Orientation.HORIZONTAL);
         SplitLayout resultsPanel = new SplitLayout();
@@ -63,6 +63,13 @@ public class MainView extends AppLayout {
         facetsPanel.addToSecondary(facetValueCountComponent);
         resultsPanel.addToPrimary(itemComponent);
         resultsPanel.addToSecondary(resourceComponent);
+       
+        SearchComponent searchComponent = new SearchComponent();
+        SplitLayout test = new SplitLayout();
+        test.setOrientation(Orientation.VERTICAL);
+        test.addToPrimary(searchComponent);
+        test.addToSecondary(mainPanel);
+        setContent(test);
     }
 
     public void selectResource(Node node) {

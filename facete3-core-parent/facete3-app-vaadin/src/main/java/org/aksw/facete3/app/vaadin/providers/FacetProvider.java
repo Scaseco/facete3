@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
@@ -43,9 +44,10 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         implements ConfigurableFilterDataProvider<T, Void, String> {
 
     private static final long serialVersionUID = 1L;
-    protected final PrefixMapping prefixes;
+    private static PrefixMapping prefixes;
     protected final QueryConf queryConf;
-    protected LookupService<Node, String> labelLookupService;
+    private Function<? super T, ? extends Node> nodeForLabelFunction;
+    private static LookupService<Node, String> labelLookupService;
     private String filter;
 
     @Override
@@ -66,17 +68,17 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
     public FacetProvider(QueryConf queryConf) {
         this.queryConf = queryConf;
         prefixes = new PrefixMappingImpl();
-        setlabelLookupService();
+        labelLookupService = getLabelLookupService();
+        nodeForLabelFunction = getNodeForLabelFunction();
     }
 
-    private void setlabelLookupService() {
+    private LookupService<Node, String> getLabelLookupService() {
         RDFConnection connection = queryConf.getConnection();
-        BinaryRelation relation = BinaryRelationImpl.create(RDFS.label);
-        LookupService<Node, List<Node>> labelLookupServices =
-                LookupServiceUtils.createLookupService(connection, relation);
-        labelLookupServices.partition(10)
-                .cache();
-        labelLookupService = labelLookupServices.mapValues(this::getLabelFromLookup);
+        BinaryRelation labelRelation = BinaryRelationImpl.create(RDFS.label);
+        return LookupServiceUtils.createLookupService(connection, labelRelation)
+                .partition(10)
+                .cache()
+                .mapValues(this::getLabelFromLookup);
     }
 
     private String getLabelFromLookup(Node node, List<Node> results) {
@@ -93,7 +95,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
 
     protected abstract DataQuery<T> translateQuery(Query<T, Void> query);
 
-    protected abstract Function<? super T, ? extends Node> getNodeFunction();
+    protected abstract Function<? super T, ? extends Node> getNodeForLabelFunction();
 
     @Override
     protected int sizeInBackEnd(Query<T, Void> query) {
@@ -131,8 +133,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
                 .offset(query.getOffset())
                 .exec()
                 .toList()
-                .doOnSuccess(item -> enrichWithLabels(item, getNodeFunction(), labelLookupService,
-                        prefixes))
+                .doOnSuccess(item -> enrichWithLabels(item, nodeForLabelFunction))
                 .blockingGet();
         Stream<T> stream = list.stream();
         return stream;
@@ -144,31 +145,40 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         return false;
     }
 
-    public static <T extends RDFNode> void enrichWithLabels(Collection<T> cs,
-            Function<? super T, ? extends Node> nodeFunction,
-            LookupService<Node, String> labelService, PrefixMapping prefixes) {
-        // Replace null nodes with Node.NULL
-        // TODO Use own own constant should jena remove this deprecated symbol
-
-        Multimap<Node, T> index =
-                Multimaps.index(cs, item -> Optional.<Node>ofNullable(nodeFunction.apply(item))
-                        .orElse(NodeUtils.nullUriNode));
-
-        // Map<Node, T> index = Maps.uniqueIndex();
+    public static <T extends RDFNode> void enrichWithLabels(Collection<T> rdfNodes,
+            Function<? super T, ? extends Node> defineNodeForLabelFunction) {
+        Multimap<Node, T> index = Multimaps.index(rdfNodes, defineNodeForLabelFunction::apply);
         Set<Node> s = index.keySet()
                 .stream()
                 .filter(Node::isURI)
                 .collect(Collectors.toSet());
-
-        Map<Node, String> map = labelService.fetchMap(s);
+        Map<Node, String> map = labelLookupService.fetchMap(s);
         index.forEach((k, v) -> v.asResource()
                 .addLiteral(RDFS.label,
                         map.getOrDefault(k,
                                 NodeUtils.nullUriNode.equals(k) ? "(null)"
                                         : k.isURI() ? deriveLabelFromIri(k.getURI())
                                                 : formatLiteralNode(k, prefixes))));
-        // : NodeFmtLib.str(k, "", riotPrefixMap))));
-        // : k.toString())));
+    }
+
+    public static <T extends RDFNode> Map<T, String> getLabels(Collection<T> rdfNodes,
+            Function<? super T, ? extends Node> defineNodeForLabelFunction) {
+        Multimap<Node, T> index = Multimaps.index(rdfNodes, defineNodeForLabelFunction::apply);
+        Set<Node> labelNodes = index.keySet()
+                .stream()
+                .filter(Node::isURI)
+                .collect(Collectors.toSet());
+        Map<Node, String> map = labelLookupService.fetchMap(labelNodes);
+
+        Function<Node, String> determineLabel = k -> map.getOrDefault(k,
+                k.isURI() ? deriveLabelFromIri(k.getURI()) : formatLiteralNode(k, prefixes));
+
+        Map<T, String> result = index.entries()
+                .stream()
+                .map(e -> Maps.immutableEntry(e.getValue(), determineLabel.apply(e.getKey())))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        return result;
     }
 
     public static String deriveLabelFromIri(String iriStr) {

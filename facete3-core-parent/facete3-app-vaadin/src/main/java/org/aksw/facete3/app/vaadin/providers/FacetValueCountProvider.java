@@ -41,7 +41,7 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
     }
 
     @Override
-    protected Function<? super FacetValueCount, ? extends Node> getNodeFunction() {
+    protected Function<? super FacetValueCount, ? extends Node> getNodeForLabelFunction() {
         return FacetValueCount::getValue;
     }
 }

@@ -40,7 +40,7 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
 
 
     @Override
-    protected Function<? super FacetCount, ? extends Node> getNodeFunction() {
+    protected Function<? super FacetCount, ? extends Node> getNodeForLabelFunction() {
         return FacetCount::getPredicate;
     }
 }

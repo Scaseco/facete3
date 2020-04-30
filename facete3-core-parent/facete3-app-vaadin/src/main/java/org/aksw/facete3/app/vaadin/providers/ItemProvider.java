@@ -24,7 +24,7 @@ public class ItemProvider extends FacetProvider<RDFNode> {
     }
 
     @Override
-    protected Function<? super RDFNode, ? extends Node> getNodeFunction() {
+    protected Function<? super RDFNode, ? extends Node> getNodeForLabelFunction() {
       return RDFNode::asNode;
     }
 }

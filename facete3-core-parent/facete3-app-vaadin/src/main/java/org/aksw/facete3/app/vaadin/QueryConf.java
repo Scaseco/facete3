@@ -17,6 +17,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
@@ -72,7 +73,7 @@ public class QueryConf {
 
     private void setConnection() {
         connectFile();
-        // connection = connectUrl();
+        // connectUrl();
     }
 
     private void setFacetedQuery() {
@@ -105,7 +106,17 @@ public class QueryConf {
     public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String profile) {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
         RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+        Set<String> activeProfiles =
+                new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
+        ExprTransformVirtualBnodeUris xform =
+                ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);
+        RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
+        return result;
+    }
 
+    public static RDFConnection wrapWithFilter(RDFConnection conn, String profile) {
+        Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
+        RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
         Set<String> activeProfiles =
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =
