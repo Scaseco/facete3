@@ -4,13 +4,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>facete3-app-vaadin</artifactId>
-	<packaging>jar</packaging>
+	<packaging>${packaging.type}</packaging>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<packaging.type>jar</packaging.type>
 
 		<vaadin.version>14.1.21</vaadin.version>
 
@@ -199,6 +200,7 @@
 			<id>production</id>
 			<properties>
 				<vaadin.productionMode>true</vaadin.productionMode>
+				<packaging.type>war</packaging.type>
 			</properties>
 
 			<dependencies>
@@ -229,6 +231,13 @@
 								<phase>compile</phase>
 							</execution>
 						</executions>
+					</plugin>
+					<plugin>
+					  <groupId>org.apache.maven.plugins</groupId>
+					  <artifactId>maven-war-plugin</artifactId>
+					  <configuration>
+					    <failOnMissingWebXml>false</failOnMissingWebXml>
+					  </configuration>
 					</plugin>
 				</plugins>
 			</build>
