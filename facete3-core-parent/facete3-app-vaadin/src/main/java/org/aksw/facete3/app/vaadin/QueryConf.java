@@ -73,7 +73,7 @@ public class QueryConf {
 
     private void setConnection() {
         connectFile();
-        // connectUrl();
+        // connectUrl("https://databus.dbpedia.org/repo/sparql");
     }
 
     private void setFacetedQuery() {
@@ -84,9 +84,9 @@ public class QueryConf {
         facetedQuery = FacetedQueryImpl.create(xFacetedQuery, connection);
     }
 
-    private void connectUrl() {
+    private void connectUrl(String url) {
         connection = RDFConnectionRemote.create()
-                .destination("https://databus.dbpedia.org/repo/sparql")
+                .destination(url)
                 .acceptHeaderQuery(WebContent.contentTypeResultsXML)
                 .build();
     }
