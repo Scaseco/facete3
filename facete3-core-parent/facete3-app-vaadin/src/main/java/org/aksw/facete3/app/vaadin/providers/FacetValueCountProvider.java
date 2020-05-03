@@ -44,4 +44,8 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
     protected Function<? super FacetValueCount, ? extends Node> getNodeForLabelFunction() {
         return FacetValueCount::getValue;
     }
+
+    public Node getSelectedFacet() {
+        return queryConf.getSelectedFacet();
+    }
 }

@@ -1,7 +1,6 @@
 package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.function.Function;
-import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.vaadin.QueryConf;

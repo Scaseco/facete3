@@ -1,33 +1,51 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
+import java.net.URI;
+import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import org.aksw.facete3.app.vaadin.NliResponse;
+import org.aksw.facete3.app.vaadin.Config;
+import org.aksw.facete3.app.vaadin.MainView;
+import org.aksw.facete3.app.vaadin.Config.Nli;
+import org.aksw.facete3.app.vaadin.domain.NliResponse;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 public class SearchComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -331380480912293631L;
+    private MainView mainView;
+    private RestTemplate restTemplate;
+    private Nli nliConfig;
 
-    // http://cord19.aksw.org/nli" --data-urlencode "query=$QUERY" --data-urlencode "limit=$LIMIT
-    public SearchComponent() {
-        WebTarget target = ClientBuilder.newClient()
-                .target("http://cord19.aksw.org/nli")
-                .queryParam("limit", "15");
+    public SearchComponent(MainView mainView, Config config) {
+        this.mainView = mainView;
+        nliConfig = config.getNli();
+        setRestTemplate();
+        addSearchField();
+    }
+
+    private void setRestTemplate() {
+        RestTemplateBuilder builder = new RestTemplateBuilder();
+        restTemplate = builder.build();
+    }
+
+    public void addSearchField() {
         TextField searchField = new TextField();
         searchField.setPlaceholder("Search for Papers...");
-        searchField.addValueChangeListener(event -> {
-            String query = event.getValue();
-            NliResponse test = target.queryParam("query", query)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get(NliResponse.class);
-            test.getResults()
-                    .forEach(i -> System.out.println(i.getId()));
-        });
+        searchField.addValueChangeListener(this::searchCallback);
         add(searchField);
     }
 
-    public void refresh() {}
+    private void searchCallback(ComponentValueChangeEvent<TextField, String> event) {
+        String query = event.getValue();
+        URI uri = UriComponentsBuilder.fromUriString(nliConfig.getEnpoint())
+                .queryParam("query", query)
+                .queryParam("limit", nliConfig.getResultLimit())
+                .build()
+                .toUri();
+        NliResponse response = restTemplate.getForObject(uri, NliResponse.class);
+        mainView.handleNliResponse(response);
+    }
 }

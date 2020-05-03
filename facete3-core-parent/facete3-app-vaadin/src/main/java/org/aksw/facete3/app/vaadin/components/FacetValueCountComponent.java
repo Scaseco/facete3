@@ -14,14 +14,14 @@ import org.apache.jena.graph.Node;
 public class FacetValueCountComponent extends VerticalLayout {
 
     private FacetValueCountProvider dataProvider;
-    private Label selectedFacet;
+    private Label selectedFacetLabel;
     private static final long serialVersionUID = 6326933457620254296L;
 
     public FacetValueCountComponent(MainView mainView, FacetValueCountProvider dataProvider) {
         this.dataProvider = dataProvider;
         add(new Label("FacetValues"));
-        selectedFacet = new Label();
-        add(selectedFacet);
+        selectedFacetLabel = new Label();
+        add(selectedFacetLabel);
         TextField searchField = new TextField();
         searchField.setPlaceholder("Filter FacetValues...");
         searchField.addValueChangeListener(event -> {
@@ -53,8 +53,9 @@ public class FacetValueCountComponent extends VerticalLayout {
         add(grid);
     }
 
-    public void refresh(Node predicate) {
-        selectedFacet.setText("Selected Facet:" + predicate.toString());
+    public void refresh() {
+        Node selectedFacet = dataProvider.getSelectedFacet();
+        selectedFacetLabel.setText("Selected Facet:" + selectedFacet);
         dataProvider.refreshAll();
     }
 }
