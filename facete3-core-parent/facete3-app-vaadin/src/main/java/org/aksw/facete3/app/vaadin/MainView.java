@@ -55,11 +55,11 @@ public class MainView extends AppLayout {
     public MainView(Config config) {
         queryConf = new QueryConf(config);
         SplitLayout mainPanel = new SplitLayout();
-        mainPanel.setOrientation(Orientation.VERTICAL);
+        mainPanel.setOrientation(Orientation.HORIZONTAL);
         SplitLayout facetsPanel = new SplitLayout();
-        facetsPanel.setOrientation(Orientation.HORIZONTAL);
+        facetsPanel.setOrientation(Orientation.VERTICAL);
         SplitLayout resultsPanel = new SplitLayout();
-        resultsPanel.setOrientation(Orientation.HORIZONTAL);
+        resultsPanel.setOrientation(Orientation.VERTICAL);
         mainPanel.addToPrimary(facetsPanel);
         mainPanel.addToSecondary(resultsPanel);
         facetCountComponent = new FacetCountComponent(this, new FacetCountProvider(queryConf));
