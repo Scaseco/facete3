@@ -18,17 +18,17 @@ public class Config {
 
     public static class Nli {
         private String endpoint;
-        private Double resultLimit;
+        private Long resultLimit;
 
         public String getEnpoint() {
             return endpoint;
         }
 
-        public Double getResultLimit() {
+        public Long getResultLimit() {
             return resultLimit;
         }
 
-        public void setResultLimit(Double resultLimit) {
+        public void setResultLimit(Long resultLimit) {
             this.resultLimit = resultLimit;
         }
 
