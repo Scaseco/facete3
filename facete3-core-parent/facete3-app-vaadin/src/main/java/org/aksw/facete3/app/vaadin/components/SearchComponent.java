@@ -23,7 +23,7 @@ public class SearchComponent extends VerticalLayout {
         this.mainView = mainView;
         nliConfig = config.getNli();
         setRestTemplate();
-        addSearchField();
+        addSearchComponent();
     }
 
     private void setRestTemplate() {
@@ -31,7 +31,7 @@ public class SearchComponent extends VerticalLayout {
         restTemplate = builder.build();
     }
 
-    public void addSearchField() {
+    private void addSearchComponent() {
         TextField searchField = new TextField();
         searchField.setPlaceholder("Search for Papers...");
         searchField.addValueChangeListener(this::searchCallback);

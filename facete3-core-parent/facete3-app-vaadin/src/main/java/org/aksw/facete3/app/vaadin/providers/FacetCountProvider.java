@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.providers;
 import java.util.function.Function;
 import com.vaadin.flow.data.provider.Query;
 import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.facete3.app.vaadin.QueryConf;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -16,8 +17,8 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
 
     private static final long serialVersionUID = 12L;
 
-    public FacetCountProvider(QueryConf queryConf) {
-        super(queryConf);
+    public FacetCountProvider(QueryConf queryConf, LabelService labelService) {
+        super(queryConf, labelService);
     }
 
 

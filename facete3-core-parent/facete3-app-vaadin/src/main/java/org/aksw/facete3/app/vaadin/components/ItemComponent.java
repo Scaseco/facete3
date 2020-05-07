@@ -34,7 +34,7 @@ public class ItemComponent extends VerticalLayout {
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
                     Node node = event.getValue().asNode();
-                    mainView.selectResource(node);
+                    mainView.viewNode(node);
                 });
         add(grid);
     }

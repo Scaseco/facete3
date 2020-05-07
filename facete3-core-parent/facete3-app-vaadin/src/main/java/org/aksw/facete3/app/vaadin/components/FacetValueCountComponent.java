@@ -40,15 +40,16 @@ public class FacetValueCountComponent extends VerticalLayout {
                 .setSortProperty("facetCount");
         grid.setSelectionMode(SelectionMode.MULTI);
         grid.asMultiSelect()
-                .addValueChangeListener(event -> {
+                .addSelectionListener(event -> {
                     String message = String.format("Selection changed from %s to %s",
                             event.getOldValue(), event.getValue());
                     System.out.println(message);
                     mainView.setConstraints(event.getValue(), event.getOldValue());
                 });
         grid.addItemClickListener(event -> {
-            Node facetCount = event.getItem().getValue();
-            mainView.selectResource(facetCount);
+            Node facetCount = event.getItem()
+                    .getValue();
+            mainView.viewNode(facetCount);
         });
         add(grid);
     }

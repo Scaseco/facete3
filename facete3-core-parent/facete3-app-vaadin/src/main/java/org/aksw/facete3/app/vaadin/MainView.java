@@ -37,6 +37,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("")
@@ -58,12 +59,19 @@ public class MainView extends AppLayout {
     @Autowired
     public MainView(Config config) {
         this.config = config;
-        queryConf = new QueryConf(config);
-        facetCountComponent = new FacetCountComponent(this, new FacetCountProvider(queryConf));
-        facetValueCountComponent =
-                new FacetValueCountComponent(this, new FacetValueCountProvider(queryConf));
+        RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(config);
+        RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
+        queryConf = new QueryConf(rdfConnection);
+        LabelService labelService = new LabelService(rdfConnection);
+
+        FacetCountProvider facetCountProvider = new FacetCountProvider(queryConf, labelService);
+        FacetValueCountProvider facetValueCountProvider =
+                new FacetValueCountProvider(queryConf, labelService);
+        ItemProvider itemProvider = new ItemProvider(queryConf, labelService);
+        facetCountComponent = new FacetCountComponent(this, facetCountProvider);
+        facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, queryConf);
-        itemComponent = new ItemComponent(this, new ItemProvider(queryConf));
+        itemComponent = new ItemComponent(this, itemProvider);
         resourceComponent = new ResourceComponent();
         setContent(getAppContent());
     }
@@ -109,7 +117,7 @@ public class MainView extends AppLayout {
         return component;
     }
 
-    public void selectResource(Node node) {
+    public void viewNode(Node node) {
         RDFNode rdfNode = fetchIfResource(node);
         resourceComponent.setNode(rdfNode);
     }

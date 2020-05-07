@@ -4,6 +4,7 @@ import java.util.function.Function;
 import com.vaadin.flow.data.provider.Query;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
+import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.facete3.app.vaadin.QueryConf;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -16,8 +17,8 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
 
     private static final long serialVersionUID = 1448114317952863859L;
 
-    public FacetValueCountProvider(QueryConf queryConf) {
-        super(queryConf);
+    public FacetValueCountProvider(QueryConf queryConf, LabelService labelService) {
+        super(queryConf, labelService);
     }
 
     @Override
@@ -36,7 +37,7 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
 
     @Override
     public Object getId(FacetValueCount facetValueCount) {
-        return facetValueCount.toString()
+        return facetValueCount.getValue()
                 .hashCode();
     }
 
