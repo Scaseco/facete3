@@ -3,9 +3,10 @@ package org.aksw.facete3.app.vaadin;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 import com.vaadin.flow.router.Route;
@@ -15,6 +16,7 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.vaadin.components.FacetCountComponent;
+import org.aksw.facete3.app.vaadin.components.FacetPathComponent;
 import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
 import org.aksw.facete3.app.vaadin.components.ItemComponent;
 import org.aksw.facete3.app.vaadin.components.ResourceComponent;
@@ -46,38 +48,65 @@ public class MainView extends AppLayout {
 
     private FacetCountComponent facetCountComponent;
     private FacetValueCountComponent facetValueCountComponent;
+    private FacetPathComponent facetPathComponent;
     private ItemComponent itemComponent;
     private ResourceComponent resourceComponent;
     private QueryConf queryConf;
+    private Config config;
     private static final long serialVersionUID = 7851055480070074549L;
 
     @Autowired
     public MainView(Config config) {
+        this.config = config;
         queryConf = new QueryConf(config);
-        SplitLayout mainPanel = new SplitLayout();
-        mainPanel.setOrientation(Orientation.HORIZONTAL);
-        SplitLayout facetsPanel = new SplitLayout();
-        facetsPanel.setOrientation(Orientation.VERTICAL);
-        SplitLayout resultsPanel = new SplitLayout();
-        resultsPanel.setOrientation(Orientation.VERTICAL);
-        mainPanel.addToPrimary(facetsPanel);
-        mainPanel.addToSecondary(resultsPanel);
         facetCountComponent = new FacetCountComponent(this, new FacetCountProvider(queryConf));
         facetValueCountComponent =
                 new FacetValueCountComponent(this, new FacetValueCountProvider(queryConf));
+        facetPathComponent = new FacetPathComponent(this, queryConf);
         itemComponent = new ItemComponent(this, new ItemProvider(queryConf));
         resourceComponent = new ResourceComponent();
-        facetsPanel.addToPrimary(facetCountComponent);
-        facetsPanel.addToSecondary(facetValueCountComponent);
-        resultsPanel.addToPrimary(itemComponent);
-        resultsPanel.addToSecondary(resourceComponent);
+        setContent(getAppContent());
+    }
 
-        SearchComponent searchComponent = new SearchComponent(this, config);
-        SplitLayout test = new SplitLayout();
-        test.setOrientation(Orientation.VERTICAL);
-        test.addToPrimary(searchComponent);
-        test.addToSecondary(mainPanel);
-        setContent(test);
+    private Component getAppContent() {
+        VerticalLayout appContent = new VerticalLayout();
+        appContent.add(getNaturalLanguageInterfaceComponent());
+        appContent.add(getFacete3Component());
+        return appContent;
+    }
+
+    private Component getNaturalLanguageInterfaceComponent() {
+        return new SearchComponent(this, config);
+    }
+
+    private Component getFacete3Component() {
+        SplitLayout component = new SplitLayout();
+        component.setSizeFull();
+        component.setOrientation(Orientation.HORIZONTAL);
+        component.setSplitterPosition(33);
+        component.addToPrimary(getFacetComponent());
+        component.addToSecondary(getResultsComponent());
+        return component;
+    }
+
+    private Component getFacetComponent() {
+        SplitLayout facetComponent = new SplitLayout();
+        facetComponent.setSizeFull();
+        facetComponent.setOrientation(Orientation.VERTICAL);
+        facetComponent.addToPrimary(facetCountComponent);
+        facetComponent.addToSecondary(facetValueCountComponent);
+        VerticalLayout component = new VerticalLayout();
+        component.add(facetPathComponent);
+        component.add(facetComponent);
+        return component;
+    }
+
+    private Component getResultsComponent() {
+        SplitLayout component = new SplitLayout();
+        component.setOrientation(Orientation.VERTICAL);
+        component.addToPrimary(itemComponent);
+        component.addToSecondary(resourceComponent);
+        return component;
     }
 
     public void selectResource(Node node) {
@@ -94,12 +123,11 @@ public class MainView extends AppLayout {
         setConstraints(enable, true);
         setConstraints(disable, false);
         itemComponent.refresh();
-        // refresh constraintspanel
+        // refresh constraintscomponent
     }
 
     public void handleNliResponse(NliResponse response) {
         List<String> ids = getPaperIds(response);
-        ids.forEach(System.out::println);
         Concept baseConcepts = createConcept(ids);
         queryConf.setBaseConcept(baseConcepts);
         refreshAll();
