@@ -21,7 +21,7 @@ import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete3.app.vaadin.MainView;
-import org.aksw.facete3.app.vaadin.QueryConf;
+import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -32,12 +32,12 @@ import org.apache.jena.sparql.expr.ExprFunction;
 
 public class ConstraintsComponent extends VerticalLayout {
 
-    private QueryConf queryConf;
+    private Facete3Wrapper facete3;
     private MainView mainView;
 
-    public ConstraintsComponent(MainView mainView, QueryConf queryConf) {
+    public ConstraintsComponent(MainView mainView, Facete3Wrapper facete3) {
 
-        this.queryConf = queryConf;
+        this.facete3 = facete3;
         this.mainView = mainView;
         // refresh();
     }
@@ -51,7 +51,7 @@ public class ConstraintsComponent extends VerticalLayout {
     // private List<HLFacetConstraint<?>> getItems() {
     // 
     //     List<HLFacetConstraint<?>> constraints = new ArrayList<HLFacetConstraint<?>>();
-    //     FacetedQuery facetedQuery = queryConf.getFacetedQuery();
+    //     FacetedQuery facetedQuery = facete3.getFacetedQuery();
     //     for (FacetConstraint c : facetedQuery.constraints()) {
     //         HLFacetConstraint<?> hlc = toHlConstraint(facetedQuery, c);
     //         // TODO We should add pairs with the facet constraints together with the

@@ -12,7 +12,7 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 import org.aksw.facete3.app.vaadin.LabelService;
-import org.aksw.facete3.app.vaadin.QueryConf;
+import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.pathlet.Path;
@@ -24,7 +24,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
 
     private static final long serialVersionUID = 1L;
     private LabelService labelService;
-    protected final QueryConf queryConf;
+    protected final Facete3Wrapper facete3;
     private Function<? super T, ? extends Node> nodeForLabelFunction;
     private String filter;
 
@@ -42,8 +42,8 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         return filter;
     }
 
-    public FacetProvider(QueryConf queryConf, LabelService labelService) {
-        this.queryConf = queryConf;
+    public FacetProvider(Facete3Wrapper facete3, LabelService labelService) {
+        this.facete3 = facete3;
         this.labelService = labelService;
         nodeForLabelFunction = getNodeForLabelFunction();
     }

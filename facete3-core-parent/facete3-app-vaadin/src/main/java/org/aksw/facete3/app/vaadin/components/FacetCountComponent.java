@@ -60,20 +60,8 @@ public class FacetCountComponent extends VerticalLayout {
     }
 
     private void addFacetToPathCallback(ItemDoubleClickEvent<FacetCount> event) {
-        // org.aksw.facete.v3.api.Direction dir = queryConf.getFacetDirNode()
-        //         .dir();
-        // Node node = event.getItem()
-        //         .getPredicate();
-        // FacetedQuery facetedQuery = queryConf.getFacetedQuery();
-        // facetedQuery.focus()
-        //         .step(node, dir)
-        //         .one()
-        //         .chFocus();
-        // queryConf.setFacetDirNode(facetedQuery.focus()
-        //         .step(dir));
-        // wrapper.refreshAll();
-        // facetPath.refresh();
-        // 
+        FacetCount facet = event.getItem();
+        mainView.addFacetToPath(facet);
     }
 
     private void searchCallback(ComponentValueChangeEvent<TextField, String> event) {

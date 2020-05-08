@@ -13,84 +13,73 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete3.app.vaadin.MainView;
-import org.aksw.facete3.app.vaadin.QueryConf;
+import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.providers.FacetProvider;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 
 public class FacetPathComponent extends HorizontalLayout {
 
-    private QueryConf queryConf;
-    private HorizontalLayout facetPath;
+    private static final long serialVersionUID = 2507846860196682616L;
+    private Facete3Wrapper facete3;
     private MainView mainView;
 
-    public FacetPathComponent(MainView mainView, QueryConf queryConf) {
-
-        this.queryConf = queryConf;
+    public FacetPathComponent(MainView mainView, Facete3Wrapper facete3) {
+        this.facete3 = facete3;
         this.mainView = mainView;
-
-        FacetDirNode facetDirNode = queryConf.getFacetDirNode();
-        Icon root = new Icon(VaadinIcon.HOME);
-        root.addClickListener(event -> changeFocus(facetDirNode.parent()
-                .root()));
-        add(root);
-
-        facetPath = new HorizontalLayout();
-        add(facetPath);
-
         refresh();
     }
 
     public void refresh() {
+        removeAll();
+        addHomeButton();
+        addFacetPathButtons();
+        addFacetDirectionButton();
+    }
 
-        facetPath.removeAll();
-        FacetDirNode facetDirNode = queryConf.getFacetDirNode();
-        // For each path element, create another button
-        List<Directed<FacetNode>> path = facetDirNode.parent()
-                .path();
-        Set<Node> nodes = path.stream()
-                .map(Directed::getValue)
-                .map(FacetNode::reachingPredicate)
-                .collect(Collectors.toSet());
-        Map<Node, String> labelMap =
-                FacetProvider.getLabels(nodes, Function.identity());
+    public void addHomeButton() {
+        Icon homeButton = new Icon(VaadinIcon.HOME);
+        homeButton.addClickListener(event -> mainView.resetPath());
+        add(homeButton);
+    }
 
+    public void addFacetPathButtons() {
+        List<Directed<FacetNode>> path = facete3.getPath();
+        List<Node> pathNodes = facete3.getPathNodes();
+        Map<Node, String> labelMap = FacetProvider.getLabels(pathNodes, Function.identity());
         int n = path.size();
         for (int i = 0; i < n; ++i) {
-            Directed<FacetNode> step = path.get(i);
-            FacetNode facetNode = step.getValue();
-            boolean isFwd = facetNode.reachingDirection()
+            FacetNode facetNode = path.get(i)
+                    .getValue();
+            boolean isForward = facetNode.reachingDirection()
                     .isForward();
-            String label = facetNode.reachingPredicate()
-                    .toString();
-            String str = (isFwd ? "" : "^") + label;
+            String label = labelMap.get(facetNode.reachingPredicate());
+            String str = (isForward ? "" : "^") + label;
             if (i + 1 == n) {
                 // Last step
-                facetPath.add(new Button(str));
+                add(new Button(str));
             } else {
-                facetPath.add(new Button(str, event -> changeFocus(facetNode)));
+                add(new Button(str, event -> mainView.changeFocus(facetNode)));
             }
         }
     }
 
-    private void changeFocus(FacetNode tmp) {
-
-        FacetDirNode facetDirNode = queryConf.getFacetDirNode();
-        org.aksw.facete.v3.api.Direction dir = tmp.reachingDirection();
-        if (dir == null) {
-            dir = facetDirNode.dir();
+    public void addFacetDirectionButton() {
+        org.aksw.facete.v3.api.Direction direction = facete3.getFacetDirNode()
+                .dir();
+        switch (direction) {
+            case FORWARD:
+                Icon rightDirButton = new Icon(VaadinIcon.ANGLE_RIGHT);
+                rightDirButton.addClickListener(event -> mainView
+                        .setFacetDirection(org.aksw.facete.v3.api.Direction.BACKWARD));
+                add(rightDirButton);
+                break;
+            case BACKWARD:
+                Icon leftDirButton = new Icon(VaadinIcon.ANGLE_LEFT);
+                leftDirButton.addClickListener(event -> mainView
+                        .setFacetDirection(org.aksw.facete.v3.api.Direction.FORWARD));
+                add(leftDirButton);
+                break;
         }
-
-        tmp.chFocus();
-
-        // For robustness ; dir should never be null
-        if (dir != null) {
-            queryConf.setFacetDirNode(tmp.step(dir));
-        }
-        refresh();
-        // mainView.facetProvider.refreshAll();
-        // updateFacets(fq);
-        // updateFacetPathPanel();
     }
-
 }

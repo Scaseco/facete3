@@ -4,7 +4,7 @@ import java.util.function.Function;
 import com.vaadin.flow.data.provider.Query;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.vaadin.LabelService;
-import org.aksw.facete3.app.vaadin.QueryConf;
+import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
@@ -17,16 +17,14 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
 
     private static final long serialVersionUID = 12L;
 
-    public FacetCountProvider(QueryConf queryConf, LabelService labelService) {
-        super(queryConf, labelService);
+    public FacetCountProvider(Facete3Wrapper facete3, LabelService labelService) {
+        super(facete3, labelService);
     }
 
 
     @Override
     protected DataQuery<FacetCount> translateQuery(Query<FacetCount, Void> query) {
-        DataQuery<FacetCount> dataQuery = queryConf.getFacetedQuery()
-                .focus()
-                .fwd()
+        DataQuery<FacetCount> dataQuery = facete3.getFacetDirNode()
                 .facetCounts()
                 .exclude(RDF.type);
         String filterText = getFilter();
