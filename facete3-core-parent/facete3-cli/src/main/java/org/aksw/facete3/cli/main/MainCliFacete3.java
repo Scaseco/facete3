@@ -150,7 +150,7 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 
 //If we wanted to create an Amazon like faceted interface we'd need:
@@ -915,7 +915,7 @@ public class MainCliFacete3 {
         try(RDFConnection conn = RDFConnectionFactory.connect(url)) {
             result = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s a ?o } LIMIT 1"))
                 .timeout(10, TimeUnit.SECONDS)
-                .limit(1)
+                .take(1)
                 .map(x -> true)
                 .onErrorReturn(e -> false)
                 .blockingSingle();

@@ -67,7 +67,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
 import com.google.common.primitives.Ints;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class MainCliDiceBenchmark {
     private static final Logger logger = LoggerFactory.getLogger(MainCliDiceBenchmark.class);

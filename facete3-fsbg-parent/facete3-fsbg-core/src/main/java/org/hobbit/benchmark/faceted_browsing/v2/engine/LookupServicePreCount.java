@@ -1,34 +1,30 @@
 package org.hobbit.benchmark.faceted_browsing.v2.engine;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class LookupServicePreCount
-	implements LookupService<Node, Range<Long>>
+    implements LookupService<Node, Range<Long>>
 {
     protected RDFConnection conn;
     protected Map<Node, BinaryRelation> facetRelationIndex;
     protected long rowLimit = 10000;
-    
-	public LookupServicePreCount(RDFConnection conn, Map<Node, BinaryRelation> facetRelationIndex, long rowLimit) {
-		super();
-		this.conn = conn;
-		this.facetRelationIndex = facetRelationIndex;
-		this.rowLimit = rowLimit;
-	}
+
+    public LookupServicePreCount(RDFConnection conn, Map<Node, BinaryRelation> facetRelationIndex, long rowLimit) {
+        super();
+        this.conn = conn;
+        this.facetRelationIndex = facetRelationIndex;
+        this.rowLimit = rowLimit;
+    }
 
 //
 //	@Override
@@ -60,18 +56,18 @@ public class LookupServicePreCount
 //        });
 //
 //        return result;
-//		
-//		
+//
+//
 //		// TODO Auto-generated method stub
 //		return null;
 //	}
 //
 
-	@Override
-	public Flowable<Entry<Node, Range<Long>>> apply(Iterable<Node> t) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Flowable<Entry<Node, Range<Long>>> apply(Iterable<Node> t) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 
 }

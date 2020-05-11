@@ -2,12 +2,12 @@ package org.hobbit.benchmark.faceted_browsing.v2.engine;
 
 import org.apache.jena.graph.Node;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class LookupService2 {
-	public static Flowable<Node> test(Flowable<Node> f) {
-		//Flowable.fromFuture
-		//f.buffer(10)
-		return null;
-	}
+    public static Flowable<Node> test(Flowable<Node> f) {
+        //Flowable.fromFuture
+        //f.buffer(10)
+        return null;
+    }
 }
