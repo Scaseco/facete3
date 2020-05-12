@@ -49,9 +49,9 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionBuilder;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.api.QuerySpec;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -61,7 +61,6 @@ import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.update.FluentRDFConnectionFn;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
@@ -151,7 +150,7 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.MouseCaptureMode;
 import com.googlecode.lanterna.terminal.Terminal;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 
 //If we wanted to create an Amazon like faceted interface we'd need:
@@ -916,7 +915,7 @@ public class MainCliFacete3 {
         try(RDFConnection conn = RDFConnectionFactory.connect(url)) {
             result = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s a ?o } LIMIT 1"))
                 .timeout(10, TimeUnit.SECONDS)
-                .limit(1)
+                .take(1)
                 .map(x -> true)
                 .onErrorReturn(e -> false)
                 .blockingSingle();
@@ -1238,9 +1237,9 @@ public class MainCliFacete3 {
                     }
                     break;
                 case showQueryKey:
-                    Entry<Node, Query> pq = facetDataQuery(fq).toConstructQuery();
+                    QuerySpec pq = facetDataQuery(fq).toConstructQueryNew();
                     // TODO Make prefix support part of the DataQuery API
-                    QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
+                    QueryUtils.optimizePrefixes(pq.getQuery(), globalPrefixes);
 
 //					new TextInputDialogBuilder()
 //						.setTitle("Facet Query")
@@ -1248,8 +1247,8 @@ public class MainCliFacete3 {
 //						.build()
 //						.showDialog((WindowBasedTextGUI)i.getTextGUI());
                     new MessageDialogBuilder()
-                        .setTitle("Facets rooted in " + pq.getKey())
-                        .setText("" + pq.getValue())
+                        .setTitle("Facets rooted in " + pq.getRootNode())
+                        .setText("" + pq.getQuery())
                         .build()
                         .showDialog((WindowBasedTextGUI)i.getTextGUI());
                     break;
@@ -1370,13 +1369,13 @@ public class MainCliFacete3 {
                     r = false;
                     break;
                 case showQueryKey:
-                    Entry<Node, Query> pq = facetValuesDataQuery().toConstructQuery();
+                    QuerySpec pq = facetValuesDataQuery().toConstructQueryNew();
                     // TODO Make prefix support part of the DataQuery API
-                    QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
+                    QueryUtils.optimizePrefixes(pq.getQuery(), globalPrefixes);
 
                     new MessageDialogBuilder()
-                        .setTitle("Facet values rooted in " + pq.getKey())
-                        .setText("" + pq.getValue())
+                        .setTitle("Facet values rooted in " + pq.getRootNode())
+                        .setText("" + pq.getQuery())
                         .build()
                         .showDialog((WindowBasedTextGUI)i.getTextGUI());
 
@@ -1448,13 +1447,13 @@ public class MainCliFacete3 {
                     }
                     break;
                 case showQueryKey:
-                    Entry<Node, Query> pq = itemsDataQuery(fq).toConstructQuery();
+                    QuerySpec pq = itemsDataQuery(fq).toConstructQueryNew();
                     // TODO Make prefix support part of the DataQuery API
-                    QueryUtils.optimizePrefixes(pq.getValue(), globalPrefixes);
+                    QueryUtils.optimizePrefixes(pq.getQuery(), globalPrefixes);
 
                     new MessageDialogBuilder()
-                        .setTitle("Matching items rooted in " + pq.getKey())
-                        .setText("" + pq.getValue())
+                        .setTitle("Matching items rooted in " + pq.getQuery())
+                        .setText("" + pq.getQuery())
                         .build()
                         .showDialog((WindowBasedTextGUI)i.getTextGUI());
                     break;

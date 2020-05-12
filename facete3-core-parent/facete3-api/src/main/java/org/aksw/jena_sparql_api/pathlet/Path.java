@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.aksw.facete.v3.api.path.Step;
+import org.aksw.facete.v3.api.path.StepImpl;
 
 public class Path
 	extends PathBuilder
 {
 	protected Path parent;
-	protected Step step;
+	protected StepImpl step;
 
 	public Path() {
 		this(null, null);
 	}
 	
-	public Path(Path parent, Step step) {
+	public Path(Path parent, StepImpl step) {
 		super();
 		this.parent = parent;
 		this.step = step;
@@ -26,12 +26,12 @@ public class Path
 		return parent;
 	}
 
-	public Step getStep() {
+	public StepImpl getStep() {
 		return step;
 	}
 
 	@Override
-	public Path appendStep(Step step) {
+	public Path appendStep(StepImpl step) {
 		return new Path(this, step);
 	}
 	
@@ -71,11 +71,11 @@ public class Path
 	}
 	
 	
-	public static List<Step> getSteps(Path path) {
-		List<Step> steps = new ArrayList<>();
+	public static List<StepImpl> getSteps(Path path) {
+		List<StepImpl> steps = new ArrayList<>();
 		Path c = path;
 		do {
-			Step step = c.getStep();
+			StepImpl step = c.getStep();
 			if(step != null) {
 				steps.add(step);
 			}

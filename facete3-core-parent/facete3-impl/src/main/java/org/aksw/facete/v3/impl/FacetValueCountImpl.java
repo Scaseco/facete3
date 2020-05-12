@@ -20,50 +20,54 @@ import com.google.common.collect.Range;
 
 @Entity // The Entity annotation causes a metamodel class for type-safe property access to become generated during build.
 public class FacetValueCountImpl
-	extends ResourceImpl
-	implements FacetValueCount
+    extends ResourceImpl
+    implements FacetValueCount
 {
 
-	public FacetValueCountImpl(Node n, EnhGraph m) {
-		super(n, m);
-	}
+    public FacetValueCountImpl(Node n, EnhGraph m) {
+        super(n, m);
+    }
 
-	@Override
-	public Node getPredicate() {
-		return this.asNode();
+    @Override
+    public Node getPredicate() {
+        return ResourceUtils.tryGetPropertyValue(this, Vocab.predicate)
+                .map(RDFNode::asNode)
+                .orElse(null);
+
+        // return this.asNode();
 //		return getProperty(RDF.predicate).getObject().asNode();
-	}
+    }
 
-	@Override
-	public Node getValue() {
-		return ResourceUtils.tryGetPropertyValue(this, MapVocab.value)
-				.map(RDFNode::asNode)
-				.orElse(null);
+    @Override
+    public Node getValue() {
+        return ResourceUtils.tryGetPropertyValue(this, MapVocab.value)
+                .map(RDFNode::asNode)
+                .orElse(null);
 //		return getProperty(Vocab.value).getObject().asNode();
-	}
+    }
 
-	@Override
-	public CountInfo getFocusCount() {
-		Long min = Optional.ofNullable(getProperty(Vocab.facetCount)).map(Statement::getLong).orElse(null);
-		Long max = min;
+    @Override
+    public CountInfo getFocusCount() {
+        Long min = Optional.ofNullable(getProperty(Vocab.facetCount)).map(Statement::getLong).orElse(null);
+        Long max = min;
 
 //		Long min = Optional.ofNullable(getProperty(OWL.minCardinality)).map(Statement::getLong).orElse(null);
 //		Long max = Optional.ofNullable(getProperty(OWL.maxCardinality)).map(Statement::getLong).orElse(null);
 
-		Range<Long> range;
-		if (min == null) {
-			throw new RuntimeException("Should not happen");
-		} else {
-			range = max == null ? Range.atLeast(min) : Range.closed(min, max);
-		}
+        Range<Long> range;
+        if (min == null) {
+            throw new RuntimeException("Should not happen");
+        } else {
+            range = max == null ? Range.atLeast(min) : Range.closed(min, max);
+        }
 
-		CountInfo result = CountUtils.toCountInfo(range);
-		return result;
-	}
-	
-	@Override
-	public String toString() {
-		return "FacetValueCountImpl [" + this.getPredicate() + ": " + getValue() + ": " + getFocusCount() + "]";
-	}
+        CountInfo result = CountUtils.toCountInfo(range);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "FacetValueCountImpl [" + this.getPredicate() + ": " + getValue() + ": " + getFocusCount() + "]";
+    }
 
 }

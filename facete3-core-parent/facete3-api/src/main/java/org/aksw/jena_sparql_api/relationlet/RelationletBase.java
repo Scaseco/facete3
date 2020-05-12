@@ -8,8 +8,8 @@ public abstract class RelationletBase
 	implements Relationlet
 {
 	@Override
-	public Relationlet setFixedVar(Var var, boolean onOrOff) {
-		Collection<Var> fixedVars = getFixedVars();
+	public Relationlet setPinnedVar(Var var, boolean onOrOff) {
+		Collection<Var> fixedVars = getPinnedVars();
 		if(onOrOff) {
 			fixedVars.add(var);
 		} else {

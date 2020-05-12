@@ -13,43 +13,38 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.syntax.Template;
 
 public class Resolvers {
 
-	public static ResolverTemplate from(PartitionedQuery1 pq) {
-		RDFNode node = toRdfModel(pq);
-		ResolverTemplate result = new ResolverTemplate(null, pq, node, null, null);
-		return result;
-	}
-	
-	public static Resolver create() {
-		PartitionedQuery1 pq = PartitionedQuery1.from(QueryFactory.create("CONSTRUCT WHERE {}"), Vars.s);
-		Resolver result = Resolvers.from(pq);
+    public static ResolverTemplate from(PartitionedQuery1 pq) {
+        ResolverTemplate result = from(pq.getQuery(), pq.getPartitionVar());
+        return result;
+    }
 
-		return result;
-	}
+    public static Resolver create() {
+        PartitionedQuery1 pq = PartitionedQuery1.from(QueryFactory.create("CONSTRUCT WHERE {}"), Vars.s);
+        Resolver result = Resolvers.from(pq);
 
-	public static ResolverTemplate from(Var viewVar, Query view) {
-		PartitionedQuery1 pq = PartitionedQuery1.from(view, viewVar);
-		ResolverTemplate result = Resolvers.from(pq);
+        return result;
+    }
 
-		return result;
-	}
-	
-	public static RDFNode toRdfModel(PartitionedQuery1 pq) {
-		Node rootNode = pq.getPartitionVar();
-		
-		Query query = pq.getQuery();
-		Template template = query.getConstructTemplate();
-		GraphVar graphVar = new GraphVarImpl(GraphFactory.createDefaultGraph());
-		GraphUtil.add(graphVar, template.getTriples());
-		Model model = ModelFactory.createModelForGraph(graphVar);
-		
-		Resource root = model.getRDFNode(rootNode).asResource();
+    public static ResolverTemplate from(Query view, Node viewVar) {
+        RDFNode node = toRdfModel(view, viewVar);
+        ResolverTemplate result = new ResolverTemplate(null, view, node, null, null);
 
-		return root;
-	}
+        return result;
+    }
+
+    public static RDFNode toRdfModel(Query query, Node rootNode) {
+        Template template = query.getConstructTemplate();
+        GraphVar graphVar = new GraphVarImpl(GraphFactory.createDefaultGraph());
+        GraphUtil.add(graphVar, template.getTriples());
+        Model model = ModelFactory.createModelForGraph(graphVar);
+
+        Resource root = model.getRDFNode(rootNode).asResource();
+
+        return root;
+    }
 }

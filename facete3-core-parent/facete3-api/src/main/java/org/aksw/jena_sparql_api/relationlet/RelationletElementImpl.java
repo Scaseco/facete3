@@ -28,12 +28,12 @@ public class RelationletElementImpl
 	}
 
 	@Override
-	public Set<Var> getFixedVars() {
+	public Set<Var> getPinnedVars() {
 		return fixedVars;
 	}
 
 	@Override
-	public Relationlet setFixedVar(Var var, boolean onOrOff) {
+	public Relationlet setPinnedVar(Var var, boolean onOrOff) {
 		boolean tmp = onOrOff
 			? fixedVars.add(var)
 			: fixedVars.remove(var);
@@ -44,7 +44,7 @@ public class RelationletElementImpl
 
 	@Override
 	public String toString() {
-		return getElement() + " (fixed " + getFixedVars() + ")";
+		return getElement() + " (fixed " + getPinnedVars() + ")";
 	}
 
 

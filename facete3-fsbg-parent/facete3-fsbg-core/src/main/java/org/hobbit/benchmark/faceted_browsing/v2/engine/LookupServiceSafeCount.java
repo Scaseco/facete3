@@ -1,28 +1,23 @@
 package org.hobbit.benchmark.faceted_browsing.v2.engine;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.utils.CountInfo;
 
 import com.google.common.collect.Range;
-import com.google.common.collect.Streams;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class LookupServiceSafeCount<K>
-	implements LookupService<K, Range<Long>>
+    implements LookupService<K, Range<Long>>
 {
-	protected LookupService<K, Range<Long>> preCountService;
-	protected LookupService<K, Range<Long>> exactCountService;
-	@Override
-	public Flowable<Entry<K, Range<Long>>> apply(Iterable<K> arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    protected LookupService<K, Range<Long>> preCountService;
+    protected LookupService<K, Range<Long>> exactCountService;
+    @Override
+    public Flowable<Entry<K, Range<Long>>> apply(Iterable<K> arg0) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 //	@Override
 //	public Flowable<Entry<K, Range<Long>>> apply(Iterable<K> items) {
@@ -32,7 +27,7 @@ public class LookupServiceSafeCount<K>
 //					.filter(e -> !CountUtils.toCountInfo(e.getValue()).isHasMoreItems())
 //					.map(Entry::getKey)
 //					.collect(Collectors.toList());
-//			
+//
 //			return exactCountService.apply(winners).toMap(Entry::getKey, Entry::getValue)
 //					.flatMap(exactMap -> {
 //					Map<K, Range<Long>> r = Streams.stream(items)
@@ -43,5 +38,5 @@ public class LookupServiceSafeCount<K>
 //		}).toFlowable();
 //	}
 
-	
+
 }

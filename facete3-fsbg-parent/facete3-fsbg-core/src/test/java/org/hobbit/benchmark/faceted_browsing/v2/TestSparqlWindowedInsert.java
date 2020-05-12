@@ -19,50 +19,50 @@ import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFa
 import org.junit.Assert;
 import org.junit.Test;
 
-import io.reactivex.processors.PublishProcessor;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 
 
 
 public class TestSparqlWindowedInsert {
-	
-	@Test
-	public void testSparqlWindowedInsert() {
-		// Set up a connection to a triple store
-		// (for the sake of the demo this is in memory, but the factory also supports remote sparql access)
-		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
 
-		// Set up a flow that transform insert requests of a collection of quads into
-		// corresponding update requests
-		PublishProcessor<Collection<Quad>> quadsInserter = PublishProcessor.create();
+    @Test
+    public void testSparqlWindowedInsert() {
+        // Set up a connection to a triple store
+        // (for the sake of the demo this is in memory, but the factory also supports remote sparql access)
+        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
 
-		// ... thereby remove old records once the data grows too large
-		int expectedModelSize = 3;
-		SimpleSparqlInsertRequestFactory insertHandler = new SimpleSparqlInsertRequestFactoryWindowedInMemory(expectedModelSize);
+        // Set up a flow that transform insert requests of a collection of quads into
+        // corresponding update requests
+        PublishProcessor<Collection<Quad>> quadsInserter = PublishProcessor.create();
 
-		quadsInserter
-			//.map(SetDatasetGraph::new)
-			.map(insertHandler::createUpdateRequest)
-			.forEach(conn::update);
-		
-		
-		// Generate some example data and put it into the pipeline
-		for(int i = 0; i < 10; ++i) {
-			Node s = NodeFactory.createURI("http://example.org/observation-" + i);
-			Collection<Quad> insertQuads = Arrays.asList(
-				new Quad(Quad.defaultGraphIRI, s, RDF.type.asNode(), OWL.Thing.asNode()));
-			
-			
-			quadsInserter.onNext(insertQuads);
-		}
-		
-		
-		// Fetch the data we have generated
-		Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
-		
-		// Output the data for convenience
-		RDFDataMgr.write(System.err, model, RDFFormat.TURTLE_PRETTY);
+        // ... thereby remove old records once the data grows too large
+        int expectedModelSize = 3;
+        SimpleSparqlInsertRequestFactory insertHandler = new SimpleSparqlInsertRequestFactoryWindowedInMemory(expectedModelSize);
 
-		int actualModelSize = (int)model.size(); 
-		Assert.assertEquals(expectedModelSize, actualModelSize);
-	}
+        quadsInserter
+            //.map(SetDatasetGraph::new)
+            .map(insertHandler::createUpdateRequest)
+            .forEach(conn::update);
+
+
+        // Generate some example data and put it into the pipeline
+        for(int i = 0; i < 10; ++i) {
+            Node s = NodeFactory.createURI("http://example.org/observation-" + i);
+            Collection<Quad> insertQuads = Arrays.asList(
+                new Quad(Quad.defaultGraphIRI, s, RDF.type.asNode(), OWL.Thing.asNode()));
+
+
+            quadsInserter.onNext(insertQuads);
+        }
+
+
+        // Fetch the data we have generated
+        Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+
+        // Output the data for convenience
+        RDFDataMgr.write(System.err, model, RDFFormat.TURTLE_PRETTY);
+
+        int actualModelSize = (int)model.size();
+        Assert.assertEquals(expectedModelSize, actualModelSize);
+    }
 }

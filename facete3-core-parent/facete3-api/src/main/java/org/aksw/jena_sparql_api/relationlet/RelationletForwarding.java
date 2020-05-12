@@ -21,13 +21,13 @@ public abstract class RelationletForwarding
 	}
 
 	@Override
-	public Set<Var> getFixedVars() {
-		return getRelationlet().getFixedVars();
+	public Set<Var> getPinnedVars() {
+		return getRelationlet().getPinnedVars();
 	}
 
 	@Override
-	public Relationlet setFixedVar(Var var, boolean onOrOff) {
-		return getRelationlet().setFixedVar(var, onOrOff);
+	public Relationlet setPinnedVar(Var var, boolean onOrOff) {
+		return getRelationlet().setPinnedVar(var, onOrOff);
 	}
 
 	@Override

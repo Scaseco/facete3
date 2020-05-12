@@ -88,12 +88,12 @@ public class RelationletNestedImpl
 //	}
 //
 	@Override
-	public Set<Var> getFixedVars() {
+	public Set<Var> getPinnedVars() {
 		return varMap.getFixedFinalVars();
 	}
 //
 	@Override
-	public Relationlet setFixedVar(Var var, boolean onOrOff) {
+	public Relationlet setPinnedVar(Var var, boolean onOrOff) {
 		throw new UnsupportedOperationException("Cannot mark vars as fixed on this object");
 	}
 
