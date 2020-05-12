@@ -5,7 +5,7 @@
 .settings
 target
 
-#bin
+bin
 
 # work directory of qpid
 work
