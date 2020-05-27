@@ -14,6 +14,8 @@ import com.vaadin.flow.server.PWA;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete3.app.vaadin.components.ConstraintsComponent;
 import org.aksw.facete3.app.vaadin.components.FacetCountComponent;
 import org.aksw.facete3.app.vaadin.components.FacetPathComponent;
 import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
@@ -40,14 +42,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 public class MainView extends AppLayout {
 
+    private static final long serialVersionUID = 7851055480070074549L;
+    private Config config;
+    private ConstraintsComponent constraintsComponent;
     private FacetCountComponent facetCountComponent;
-    private FacetValueCountComponent facetValueCountComponent;
     private FacetPathComponent facetPathComponent;
+    private FacetValueCountComponent facetValueCountComponent;
+    private Facete3Wrapper facete3;
     private ItemComponent itemComponent;
     private ResourceComponent resourceComponent;
-    private Facete3Wrapper facete3;
-    private Config config;
-    private static final long serialVersionUID = 7851055480070074549L;
 
     @Autowired
     public MainView(Config config) {
@@ -66,6 +69,7 @@ public class MainView extends AppLayout {
         facetPathComponent = new FacetPathComponent(this, facete3);
         itemComponent = new ItemComponent(this, itemProvider);
         resourceComponent = new ResourceComponent();
+        constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         setContent(getAppContent());
     }
 
@@ -98,6 +102,7 @@ public class MainView extends AppLayout {
         facetComponent.addToSecondary(facetValueCountComponent);
         VerticalLayout component = new VerticalLayout();
         component.add(facetPathComponent);
+        component.add(constraintsComponent);
         component.add(facetComponent);
         return component;
     }
@@ -115,16 +120,23 @@ public class MainView extends AppLayout {
         resourceComponent.setNode(rdfNode);
     }
 
+    public void viewNode(FacetValueCount facetValueCount) {
+        viewNode(facetValueCount.getValue());
+    }
+
     public void selectFacet(Node node) {
         facete3.setSelectedFacet(node);
         facetValueCountComponent.refresh();
     }
 
-    public void setConstraints(Set<FacetValueCount> enable, Set<FacetValueCount> disable) {
-        facete3.setConstraints(enable, true);
-        facete3.setConstraints(disable, false);
-        itemComponent.refresh();
-        // refresh constraintscomponent
+    public void activateConstraint(FacetValueCount facetValueCount) {
+        facete3.activateConstraint(facetValueCount);
+        refreshAll();
+    }
+
+    public void deactivateConstraint(FacetValueCount facetValueCount) {
+        facete3.deactivateConstraint(facetValueCount);
+        refreshAll();
     }
 
     // TODO Why the long class declaration?
@@ -135,7 +147,7 @@ public class MainView extends AppLayout {
     }
 
     public void resetPath() {
-        facete3.resetPath(); 
+        facete3.resetPath();
         facetCountComponent.refresh();
         facetPathComponent.refresh();
     }
@@ -157,7 +169,12 @@ public class MainView extends AppLayout {
         Concept baseConcepts = createConcept(ids);
         facete3.setBaseConcept(baseConcepts);
         refreshAll();
-    };
+    }
+
+    public void deactivateConstraint(HLFacetConstraint<?> constraint) {
+        constraint.deactivate();
+        refreshAll();
+    }
 
     private List<String> getPaperIds(NliResponse response) {
         List<Paper> papers = response.getResults();
@@ -182,5 +199,8 @@ public class MainView extends AppLayout {
         facetValueCountComponent.refresh();
         itemComponent.refresh();
         resourceComponent.refesh();
+        constraintsComponent.refresh();
     }
+
+
 }

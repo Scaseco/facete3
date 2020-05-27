@@ -1,17 +1,23 @@
 package org.aksw.facete3.app.vaadin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.aksw.facete.v3.api.ConstraintFacade;
+import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
+import org.aksw.facete.v3.api.FacetedQueryResource;
 import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
+import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete.v3.plugin.JenaPluginFacete3;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -64,15 +70,9 @@ public class Facete3Wrapper {
         facetedQuery = facetedQuery.baseConcept(baseConcept);
     }
 
-    private void setEmptyBaseConcept() {
-        Concept emptyConcept = ConceptUtils.createConcept();
-        facetedQuery = facetedQuery.baseConcept(emptyConcept);
-    }
-
     public Facete3Wrapper(RDFConnection connection) {
         initJena();
         initFacetedQuery(connection);
-        // TODO Change back
         setEmptyBaseConcept();
         setFacetDirNode();
         setSelectedFacet(RDF.type.asNode());
@@ -91,16 +91,25 @@ public class Facete3Wrapper {
         facetedQuery = FacetedQueryImpl.create(xFacetedQuery, connection);
     }
 
-    public void setConstraints(Set<FacetValueCount> facetValueCount, boolean isEnabled) {
-        for (FacetValueCount facet : facetValueCount) {
-            Node v = facet.getValue();
-            HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp =
-                    facetDirNode.via(facet.getPredicate())
-                            .one()
-                            .constraints()
-                            .eq(v);
-            tmp.setActive(isEnabled);
-        }
+    private void setEmptyBaseConcept() {
+        Concept emptyConcept = ConceptUtils.createConcept();
+        facetedQuery = facetedQuery.baseConcept(emptyConcept);
+    }
+
+    public void activateConstraint(FacetValueCount facetValueCount) {
+        getHLFacetConstraint(facetValueCount).setActive(true);
+    }
+
+    public void deactivateConstraint(FacetValueCount facetValueCount) {
+        getHLFacetConstraint(facetValueCount).setActive(false);
+    }
+
+    public HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> getHLFacetConstraint(
+            FacetValueCount facetValueCount) {
+        return getFacetDirNode().via(facetValueCount.getPredicate())
+                .one()
+                .constraints()
+                .eq(facetValueCount.getValue());
     }
 
     public void setFacetDirection(org.aksw.facete.v3.api.Direction direction) {
@@ -148,6 +157,33 @@ public class Facete3Wrapper {
         return facetDirNode.parent()
                 .path();
     }
+
+    public List<HLFacetConstraint<?>> getFacetConstraints() {
+        List<HLFacetConstraint<?>> constraints = new ArrayList<HLFacetConstraint<?>>();
+        for (FacetConstraint c : facetedQuery.constraints()) {
+            HLFacetConstraint<?> hlc = toHlConstraint(facetedQuery, c);
+            // TODO We should add pairs with the facet constraints together with the
+            // precomputed string
+            // then we can batch the label lookups here
+            constraints.add(hlc);
+        }
+        return constraints;
+    }
+
+    private HLFacetConstraint<?> toHlConstraint(FacetedQuery facetedQuery,
+            FacetConstraint facetConstraint) {
+        FacetedQueryResource r = facetedQuery.as(FacetedQueryResource.class);
+        // HACK FacetNodeImpl requires a bgpNode - but we don't need its value
+        // We only need it in order to set up HLFacetConstraint.pathsMentioned
+        FacetNode tmp = new FacetNodeImpl(r, HACK);
+        HLFacetConstraint<?> result = new HLFacetConstraintImpl<Void>(null, tmp, facetConstraint);
+        return result;
+    }
+
+    private BgpNode HACK = ModelFactory.createDefaultModel()
+            .createResource("should not appear anywhere")
+            .as(BgpNode.class);
+
 
     // TODO Should not be here
     public RDFNode fetchIfResource(Node node) {

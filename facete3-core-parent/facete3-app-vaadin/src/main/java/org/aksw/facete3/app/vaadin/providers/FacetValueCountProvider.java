@@ -2,10 +2,13 @@ package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.function.Function;
 import com.vaadin.flow.data.provider.Query;
+import org.aksw.facete.v3.api.ConstraintFacade;
+import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
-import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
+import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
@@ -48,5 +51,10 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
 
     public Node getSelectedFacet() {
         return facete3.getSelectedFacet();
+    }
+
+    public boolean isActive(FacetValueCount facetValueCount) {
+        return facete3.getHLFacetConstraint(facetValueCount)
+                .isActive();
     }
 }
