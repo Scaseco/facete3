@@ -20,9 +20,9 @@ import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -371,7 +371,7 @@ public class RdfWorkflowSpec {
         return new ModelCreationImpl<Model>(
                 () -> ModelCreationImpl.deriveDatasetIri(conn),
                 cacheId,
-                () -> RDFDataMgrEx.execConstruct(conn, sparqlFilenameOrUri),
+                () -> SparqlStmtMgr.execConstruct(conn, sparqlFilenameOrUri),
                 (cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),
                 cacheFile -> RDFDataMgr.loadModel(cacheFile.toUri().toString())
             );

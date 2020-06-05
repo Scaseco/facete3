@@ -3,13 +3,14 @@ package org.aksw.facete3.app.vaadin;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -64,7 +65,7 @@ public class RDFConnectionBuilder {
 
     public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String profile) {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
         Set<String> activeProfiles =
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =
@@ -75,7 +76,7 @@ public class RDFConnectionBuilder {
 
     public static RDFConnection wrapWithFilter(RDFConnection conn, String profile) {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
         Set<String> activeProfiles =
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =

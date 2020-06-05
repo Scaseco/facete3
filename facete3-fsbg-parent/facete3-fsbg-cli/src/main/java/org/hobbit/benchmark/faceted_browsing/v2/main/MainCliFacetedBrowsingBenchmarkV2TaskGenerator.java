@@ -46,6 +46,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.vocab.FacetedBrowsingVocab;
 import org.hobbit.core.service.docker.api.DockerService;
 import org.hobbit.core.service.docker.impl.docker_client.DockerServiceDockerClient;
 import org.hobbit.core.service.docker.impl.docker_client.DockerServiceSystemDockerClient;
+import org.hobbit.core.service.docker.util.ComponentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

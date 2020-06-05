@@ -60,6 +60,7 @@ import org.aksw.jena_sparql_api.pathlet.Path;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
@@ -1097,7 +1098,7 @@ public class MainCliFacete3 {
 
                     Map<String, String> env = Collections.singletonMap("REMOTE", str);
                     Model report = ModelFactory.createDefaultModel();
-                    RDFDataMgrEx.execSparql(report, "probe-endpoint-dbms.sparql", env::get);
+                    SparqlStmtMgr.execSparql(report, "probe-endpoint-dbms.sparql", env::get);
                     Property dbmsShortName = ResourceFactory.createProperty("http://www.example.org/dbmsShortName");
 
                     List<String> nodes = report.listObjectsOfProperty(dbmsShortName)
@@ -1182,7 +1183,7 @@ public class MainCliFacete3 {
         //ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(vendorLabel, bnodeLabelFn);
 
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
 
         Set<String> activeProfiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform = ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);

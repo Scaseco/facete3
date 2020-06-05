@@ -53,8 +53,8 @@ import org.aksw.jena_sparql_api.core.RDFConnectionEx;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFromRdfDatatype;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -333,7 +333,7 @@ public class TaskGenerator {
     }
 
     public static ScenarioConfig extractScenarioConfig(Model configModel) {
-        RDFDataMgrEx.execSparql(configModel, "nfa-materialize.sparql");
+        SparqlStmtMgr.execSparql(configModel, "nfa-materialize.sparql");
 
         Set<Resource> configs = configModel.listResourcesWithProperty(RDF.type, Vocab.ScenarioConfig).toSet();
 
