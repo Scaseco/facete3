@@ -3,7 +3,7 @@ package org.aksw.facete.v3.impl;
 import java.util.Collection;
 import java.util.Set;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNodeResource;
@@ -182,7 +182,7 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	public Collection<HLFacetConstraint<? extends ConstraintFacade<B>>> listHl() {
 		Collection<FacetConstraint> lowLevel = list();
 
-		CollectionFromConverter<HLFacetConstraint<? extends ConstraintFacade<B>>, FacetConstraint, ?> result = new CollectionFromConverter<>(lowLevel, Converter.from(
+		ConvertingCollection<HLFacetConstraint<? extends ConstraintFacade<B>>, FacetConstraint, ?> result = new ConvertingCollection<>(lowLevel, Converter.from(
 			ll -> new HLFacetConstraintImpl<>(this, parent, ll),
 			hl -> hl.state()
 		));
