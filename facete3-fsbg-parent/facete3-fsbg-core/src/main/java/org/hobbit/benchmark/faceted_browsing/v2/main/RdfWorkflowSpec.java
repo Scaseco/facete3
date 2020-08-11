@@ -22,7 +22,7 @@ import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;

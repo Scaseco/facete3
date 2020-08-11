@@ -10,13 +10,13 @@ import java.util.stream.IntStream;
 
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
+import org.aksw.jena_sparql_api.collection.rx.utils.views.map.MapFromResource;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.enhanced.EnhGraph;

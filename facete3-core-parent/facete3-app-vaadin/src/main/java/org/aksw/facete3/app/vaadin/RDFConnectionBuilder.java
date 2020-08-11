@@ -10,7 +10,7 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
-import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;

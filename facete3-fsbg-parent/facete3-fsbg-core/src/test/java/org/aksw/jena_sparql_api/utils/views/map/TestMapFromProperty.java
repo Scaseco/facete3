@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.collection.rx.utils.views.map.MapFromResourceUnmanaged;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;

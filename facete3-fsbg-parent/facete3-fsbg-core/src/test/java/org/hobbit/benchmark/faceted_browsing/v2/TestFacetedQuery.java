@@ -27,8 +27,6 @@ import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 public class TestFacetedQuery {
 
     protected FacetedQuery fq;

@@ -48,6 +48,7 @@ import org.aksw.jena_sparql_api.pathlet.PathletSimple;
 import org.aksw.jena_sparql_api.relationlet.RelationletElementImpl;
 import org.aksw.jena_sparql_api.relationlet.RelationletSimple;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
