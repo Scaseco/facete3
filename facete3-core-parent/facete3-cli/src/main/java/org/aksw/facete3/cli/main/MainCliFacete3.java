@@ -1125,20 +1125,20 @@ public class MainCliFacete3 {
             Stopwatch sw = Stopwatch.createStarted();
             logger.info("Loading RDF files...");
             for(String file : files) {
-                if(file.equals("-")) {
-                    logger.info("  Attempting to load dataset from stdin");
-                    TypedInputStream in = RDFDataMgrEx.open("-", Arrays.asList(Lang.NQUADS, Lang.TRIG));
-                    String contentType = in.getContentType();
-                    logger.info("Detected content type on STDIN: " + contentType);
-                    Lang lang = RDFLanguages.contentTypeToLang(contentType);
-                    RDFDataMgr.read(dataset, in.getInputStream(), in.getBaseURI(), lang);
-                } else {
+                logger.info("  Attempting to load dataset from " + (file.equals("-") ? "STDIN" : file));
 
-                    logger.info("  Attempting to loading " + file);
-                    //Model tmp = RDFDataMgr.loadModel(file);
-                    //model.add(tmp);
-                    RDFDataMgr.read(dataset, file);
-                }
+                TypedInputStream in = RDFDataMgrEx.open(file, Arrays.asList(Lang.NQUADS, Lang.TRIG));
+                String contentType = in.getContentType();
+                logger.info("Detected content type: " + contentType);
+                Lang lang = RDFLanguages.contentTypeToLang(contentType);
+                RDFDataMgr.read(dataset, in.getInputStream(), in.getBaseURI(), lang);
+//                } else {
+//
+//                    logger.info("  Attempting to loading " + file);
+//                    //Model tmp = RDFDataMgr.loadModel(file);
+//                    //model.add(tmp);
+//                    RDFDataMgr.read(dataset, file);
+//                }
             }
 //		    logger.info("Done loading " + ds.size() + " triples in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
             logger.info("Done loading dataset in " + sw.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0 + " seconds.");
