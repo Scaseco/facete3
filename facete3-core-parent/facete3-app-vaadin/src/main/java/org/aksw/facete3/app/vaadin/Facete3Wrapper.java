@@ -2,8 +2,8 @@ package org.aksw.facete3.app.vaadin;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -173,6 +173,12 @@ public class Facete3Wrapper {
     private HLFacetConstraint<?> toHlConstraint(FacetedQuery facetedQuery,
             FacetConstraint facetConstraint) {
         FacetedQueryResource r = facetedQuery.as(FacetedQueryResource.class);
+
+        BgpNode HACK = ModelFactory.createDefaultModel()
+                .createResource("should not appear anywhere")
+                .as(BgpNode.class);
+
+
         // HACK FacetNodeImpl requires a bgpNode - but we don't need its value
         // We only need it in order to set up HLFacetConstraint.pathsMentioned
         FacetNode tmp = new FacetNodeImpl(r, HACK);
@@ -180,10 +186,10 @@ public class Facete3Wrapper {
         return result;
     }
 
-    private BgpNode HACK = ModelFactory.createDefaultModel()
-            .createResource("should not appear anywhere")
-            .as(BgpNode.class);
-
+//    private BgpNode HACK = ModelFactory.createDefaultModel()
+//            .createResource("should not appear anywhere")
+//            .as(BgpNode.class);
+//
 
     // TODO Should not be here
     public RDFNode fetchIfResource(Node node) {
