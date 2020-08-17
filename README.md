@@ -82,7 +82,7 @@ This project uses Apache Maven and is thus built with:
 mvn clean install
 ```
 
-> :warning: You need to add `facte3-impl/target/generated-sources/apt` to the build path!
+> :warning: You need to add `facete3-core/facete3-impl/target/generated-sources/apt` to the build path!
 
 
 * The Facete3 bundle is built under `facete3-bundle/target/facete3-bundle-VERSION-jar-with-dependencies.jar` with `VERSION` matching the project version. The bundles are also available for download from the [Releases Section](https://github.com/hobbit-project/faceted-browsing-benchmark/releases).
