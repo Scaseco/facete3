@@ -1740,10 +1740,17 @@ public class MainCliFacete3 {
 
             @Override
             public void onInput(Window basePane, KeyStroke keyStroke, AtomicBoolean deliverEvent) {
+                Interactable interactable = window.getFocusedInteractable();
+
+                // Do not toggle if the focus is on a textbox
+                boolean isFocusOnInputComponent = interactable instanceof TextBox;
+
                 Character c = keyStroke.getCharacter() == null ? null : Character.toLowerCase(keyStroke.getCharacter());
 
+                // The Escape key always brings up the exit dialog whereas the quit-key only
+                // fires on non input elements
                 if(KeyType.Escape.equals(keyStroke.getKeyType()) ||
-                        Character.valueOf('q').equals(c)) {
+                        (!isFocusOnInputComponent && Character.valueOf('q').equals(c))) {
                     MessageDialogButton selected = new MessageDialogBuilder()
                         .setTitle("")
                         .setText("Close this application?")
@@ -1764,7 +1771,7 @@ public class MainCliFacete3 {
                     default:
                         break;
                     }
-                } else if(Character.valueOf(toggleLabelsKey).equals(c)) {
+                } else if(Character.valueOf(toggleLabelsKey).equals(c) && !isFocusOnInputComponent) {
                     showLabels = !showLabels;
 
                     labelService = showLabels
