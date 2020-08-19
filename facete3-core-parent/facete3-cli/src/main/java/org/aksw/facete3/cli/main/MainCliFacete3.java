@@ -178,10 +178,14 @@ public class MainCliFacete3 {
 
     public static final String[] sortModeLabel = { "A-Z", "0-9" };
 
-    // Mapping of ui sort directions to ui labels
+    /**
+     *  Mapping of ui sort directions to ui labels
+     */
     public static final String[] sortDirLabel = { Character.toString(CHAR_DOWNWARDS_ARROW), Character.toString(CHAR_UPWARDS_ARROW) };
 
-    // Mapping of ui sort directions to jena query sort directions
+    /**
+     *  Mapping of ui sort directions to jena query sort directions
+     */
     public static final int[] sortDirMapJena = { Query.ORDER_DESCENDING, Query.ORDER_ASCENDING };
 
 
@@ -1779,6 +1783,14 @@ public class MainCliFacete3 {
                             : noopLabelService;
 
                     updateAll();
+                }
+
+                // If there is no more component with a focus reset it to the facet filter box
+                // This is a fallback hack as each component should on update retake its focus if it had it before
+                Interactable focus = window.getFocusedInteractable();
+                if (focus == null) {
+                    facetFilterBox.takeFocus();
+                    deliverEvent.set(false);
                 }
                 //keyStroke.getCharacter()
 
