@@ -86,7 +86,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.impl.Util;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
@@ -109,6 +108,7 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -1939,22 +1939,40 @@ public class MainCliFacete3 {
     }
 
     public static String deriveLabelFromIri(String iriStr) {
-
         String result;
-        for(;;) {
-            // Split XML returns invalid out-of-bound index for <http://dbpedia.org/resource/Ada_Apa_dengan_Cinta%3>
-            // This is what Node.getLocalName does
-            int idx = Util.splitNamespaceXML(iriStr);
-            result = idx == -1 || idx > iriStr.length() ? iriStr : iriStr.substring(idx);
-            if(result.isEmpty() && !iriStr.isEmpty() && idx != -1) {
-                iriStr = iriStr.substring(0, iriStr.length() - 1);
-                continue;
-            } else {
-                break;
-            }
-        };
+
+        // There are fragments such as #this #self #me #service which are not useful as a label
+        // If there are less-than-equal n characters after a hash use a slash as the splitpoint
+        int n = 6;
+        int lastIdx = iriStr.length() - 1;
+        int slashIdx = iriStr.lastIndexOf('/');
+        int hashIdx = iriStr.lastIndexOf('#');
+        if ((lastIdx - hashIdx) <= n && slashIdx < hashIdx && slashIdx != -1) {
+            result = iriStr.substring(slashIdx + 1);
+        } else {
+            result = SplitIRI.localname(iriStr);
+        }
+
         return result;
     }
+
+//    public static String deriveLabelFromIri(String iriStr) {
+//
+//        String result;
+//        for(;;) {
+//            // Split XML returns invalid out-of-bound index for <http://dbpedia.org/resource/Ada_Apa_dengan_Cinta%3>
+//            // This is what Node.getLocalName does
+//            int idx = Util.splitNamespaceXML(iriStr);
+//            result = idx == -1 || idx > iriStr.length() ? iriStr : iriStr.substring(idx);
+//            if(result.isEmpty() && !iriStr.isEmpty() && idx != -1) {
+//                iriStr = iriStr.substring(0, iriStr.length() - 1);
+//                continue;
+//            } else {
+//                break;
+//            }
+//        };
+//        return result;
+//    }
 
 
     public static <T> Collection<Labeled<T>> doLabel(Collection<T> cs, Function<? super T, ? extends String> itemToLabel) {
