@@ -17,7 +17,7 @@ public class TestSupplierUtils {
     }
 
 
-    int iterations = 15;
+    int iterations = 1;
 
 
     @Test

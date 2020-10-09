@@ -925,7 +925,7 @@ public class MainCliFacete3 {
                 .concatMapMaybe(item -> Maybe.<Throwable>empty())
                 .onErrorReturn(e -> e)
                 .firstElement()
-                .blockingGet(null);
+                .blockingGet();
 
             result = throwable == null;
         }
