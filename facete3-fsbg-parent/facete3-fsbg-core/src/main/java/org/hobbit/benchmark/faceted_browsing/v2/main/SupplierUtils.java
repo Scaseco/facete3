@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.aksw.commons.accessors.SingleValuedAccessorDirect;
+import org.apache.poi.ss.formula.functions.T;
 
 
 /**
@@ -20,6 +21,26 @@ import org.aksw.commons.accessors.SingleValuedAccessorDirect;
  */
 public class SupplierUtils {
 
+    public static class SupplierJust<T>
+        implements Callable<T>
+    {
+        protected T next;
+
+        public SupplierJust(T next) {
+            this.next = next;
+        }
+
+        @Override
+        public T call() throws Exception {
+            T r = next;
+            next = null;
+            return r;
+        }
+    }
+
+    public static <T> Callable<T> justUsingObject(T item) {
+        return new SupplierJust<>(item);
+    }
 
     public static <T> Callable<T> just(T item) {
         Object[] next = {item};
@@ -115,12 +136,61 @@ public class SupplierUtils {
     }
 
     /**
+     * This object-based version of flatMap is significantly faster than the lambda based version
+     * that keeps state in arrays (interesting how slow lambdas can be); but
+     * detailed benchmarking would be necessary whether this one is slightly faster or slower
+     * than Stream.flatMap; it seems quite on par
+     *
+     * Update: If we skip the 'done' flag and just assume that a finished supplier keeps returning null
+     * then we can actually be faster
+     *
+     * @author raven
+     *
+     * @param <T>
+     */
+    public static class SupplierFlatMap<T>
+        implements Callable<T>
+    {
+        protected Callable<? extends Callable<? extends T>> lhs;
+        protected Callable<? extends T> rhs = null;
+
+        public SupplierFlatMap(Callable<? extends Callable<? extends T>> lhs) {
+            super();
+            this.lhs = lhs;
+        }
+
+        @Override
+        public T call() throws Exception {
+            for(;;) {
+                if (rhs == null) {
+                    rhs = lhs.call();
+                    // If we get null for the next supplier, we assume we are done
+                    if (rhs == null) {
+                        return null;
+                    }
+                }
+
+                T r = rhs.call();
+                if(r == null) {
+                    rhs = null;
+                    continue;
+                } else {
+                    return r;
+                }
+            }
+        };
+    }
+
+    public static <T> Callable<T> flatMap(Callable<? extends Callable<? extends T>> lhs) {
+        return new SupplierFlatMap<>(lhs);
+    }
+    /**
      * Flat maps a supplier of suppliers by assuming an inner supplier is finished upon returning null
      *
      * @param lhs
      * @return
      */
-    public static <T> Callable<T> flatMap(Callable<? extends Callable<? extends T>> lhs) {
+    public static <T> Callable<T> flatMapUsingLambda(Callable<? extends Callable<? extends T>> lhs) {
 
         Object[] rhs = {null};
         boolean[] done = {false};
@@ -128,11 +198,15 @@ public class SupplierUtils {
         return () -> {
             T r = null;
 
-            do {
+            for(;;) {
                 @SuppressWarnings("unchecked")
                 Callable<? extends T> current = (Callable<? extends T>)rhs[0];
 
-                if (current == null && !done[0]) {
+                if (current == null) {
+                    if (done[0]) {
+                        break;
+                    }
+
                     current = lhs.call();
                     // If we get null for the next supplier, we assume we are done
                     if (current == null) {
@@ -140,15 +214,18 @@ public class SupplierUtils {
                         break;
                     } else {
                         rhs[0] = current;
+                        continue;
                     }
-                    continue;
                 }
 
                 r = current.call();
                 if(r == null) {
                     rhs[0] = null;
+                    continue;
+                } else {
+                    break;
                 }
-            } while (r == null && !done[0]);
+            }
 
             return r;
         };
