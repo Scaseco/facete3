@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
@@ -319,6 +320,20 @@ public class MainCliFacete3 {
 
                 List<Property> predicates = r.listProperties().mapWith(Statement::getPredicate).toList()
                         .stream().distinct().collect(Collectors.toList());
+
+
+                List<Resource> toEnrich = Streams.stream(r.listProperties())
+                        .flatMap(stmt -> Stream.of(stmt.getPredicate(), stmt.getObject()))
+                        .filter(RDFNode::isResource)
+                        .map(RDFNode::asResource)
+                        .filter(node -> !r.equals(node))
+                        .distinct()
+                        .collect(Collectors.toList());
+
+
+                MainCliFacete3.enrichWithLabels(toEnrich,
+                        createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
+
 
                 // TODO Fetch all nodes and resolve their labels
 
