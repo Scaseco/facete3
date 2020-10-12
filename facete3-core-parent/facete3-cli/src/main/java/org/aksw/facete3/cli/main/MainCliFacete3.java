@@ -95,6 +95,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.out.NodeFmtLib;
+import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -192,7 +193,12 @@ public class MainCliFacete3 {
 
     protected PrefixMapping globalPrefixes = new PrefixMappingImpl();
 
+
+    protected PrefixMapping iriPrefixes;
+    protected PrefixMapping literalPrefixes;
+
     protected boolean showLabels = true;
+    protected boolean showCompactIris = false;
 
 
 
@@ -413,7 +419,7 @@ public class MainCliFacete3 {
         Expr expr = constraint.expr();
         Set<Node> nodes = extractNodes(constraint);
 
-        Map<Node, String> nodeToLabel = getLabels(nodes, Function.identity(), labelService, prefixes);
+        Map<Node, String> nodeToLabel = getLabels(nodes, Function.identity(), labelService, prefixes, prefixes);
 
         Map<Node, String> bgpNodeLabels = indexPaths(constraint).entrySet().stream()
             .collect(Collectors.toMap(Entry::getKey, e -> toString(e.getValue(), nodeToLabel::get)));
@@ -462,6 +468,9 @@ public class MainCliFacete3 {
 
     public static final char toggleLabelsKey = 'l';
 
+    /** If label mode is on IRI display then toggle whether to compact them based on the prefix mapping */
+    public static final char togglePrefixModeKey = 'p';
+
     FacetedQuery fq;
 
     LookupService<Node, String> labelService;
@@ -504,6 +513,8 @@ public class MainCliFacete3 {
     Node resourceTableSubject = null;
     Label2 resourceSubjectLabel = new Label2("");
     Table<RDFNode> resourceTable = new Table<RDFNode>("p", "o");
+
+    Label2 statusLabel = new Label2("");
 
 
     Panel resourcePanel = new Panel();
@@ -600,7 +611,8 @@ public class MainCliFacete3 {
                 .limit(itemsPerPage)
                 .exec().toList().blockingGet();
 
-        MainCliFacete3.<RDFNode>enrichWithLabels(items, RDFNode::asNode, labelService, globalPrefixes);
+        MainCliFacete3.<RDFNode>enrichWithLabels(items,
+                createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
 
 
 //		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
@@ -677,7 +689,7 @@ public class MainCliFacete3 {
         List<Directed<FacetNode>> path = fdn.parent().path();
 
         Set<Node> nodes = path.stream().map(Directed::getValue).map(FacetNode::reachingPredicate).collect(Collectors.toSet());
-        Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService, globalPrefixes);
+        Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService, iriPrefixes, literalPrefixes);
         //Map<Node, String> labelMap = labelService.fetchMap(nodes);
 
         int n = path.size();
@@ -807,7 +819,8 @@ public class MainCliFacete3 {
 
             //System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 
-            enrichWithLabels(fvcs, FacetValueCount::getValue, labelService, globalPrefixes);
+            enrichWithLabels(fvcs,
+                    createLookupServiceForLabels(FacetValueCount::getValue, labelService, iriPrefixes, literalPrefixes));
 
             facetValueList.clearItems();
             for(FacetValueCount item : fvcs) {
@@ -888,7 +901,8 @@ public class MainCliFacete3 {
                     .exec()
                     .toList()
                     // TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup
-                    .doOnSuccess(list -> enrichWithLabels(list, FacetCount::getPredicate, labelService, globalPrefixes))
+                    .doOnSuccess(list -> enrichWithLabels(list,
+                            createLookupServiceForLabels(FacetCount::getPredicate, labelService, iriPrefixes, literalPrefixes)))
                     .blockingGet();
             //enrichWithLabels(fcs, FacetCount::getPredicate, labelService);
 
@@ -1203,6 +1217,11 @@ public class MainCliFacete3 {
 
     public void init(RDFConnection conn, PrefixMapping pm, FacetedQuery fq) throws Exception
     {
+        if (showCompactIris) {
+            iriPrefixes = literalPrefixes = globalPrefixes;
+        }
+
+
         this.globalPrefixes.setNsPrefixes(pm);
         this.fq = fq;
 
@@ -1316,8 +1335,11 @@ public class MainCliFacete3 {
         noopLabelService = new LookupService<Node, String>() {
             @Override
             public Flowable<Entry<Node, String>> apply(Iterable<Node> t) {
+
+                PrefixMap pm = iriPrefixes == null ? null : new PrefixMapAdapter(iriPrefixes);
+
                 return Flowable.fromIterable(t)
-                    .map(n -> Maps.immutableEntry(n, NodeFmtLib.str(n)));
+                    .map(n -> Maps.immutableEntry(n, NodeFmtLib.str(n, null, pm)));
             }
         };
 
@@ -1625,7 +1647,7 @@ public class MainCliFacete3 {
         Panel constraintPanel = new Panel();
         Panel resultPanel = new Panel();
 
-        Panel cartPanel = new Panel();
+//        Panel cartPanel = new Panel();
 
         // Component hierarchy and layouts
 
@@ -1714,6 +1736,13 @@ public class MainCliFacete3 {
         resourcePanel.addComponent(resourceSubjectLabel);
         resourcePanel.addComponent(resourceTable);
 
+
+        Panel statusPanel = new Panel();
+        statusPanel.setLayoutData(GridLayout2.createLayoutData(GridLayout2.Alignment.FILL, GridLayout2.Alignment.BEGINNING, true, false, 2, 1));
+        statusPanel.addComponent(statusLabel);
+
+
+
 // TODO re-enable cart panel once its working
 //		cartPanel.setLayoutData(GridLayout2.createLayoutData(Alignment.FILL, Alignment.BEGINNING, true, true, 1, 1));
 //		cartPanel.setLayoutManager(new GridLayout2(1));
@@ -1733,6 +1762,7 @@ public class MainCliFacete3 {
         mainPanel.addComponent(resourcePanel.withBorder(resourcePanelBorder));
 //		mainPanel.addComponent(cartPanel.withBorder(Borders.singleLine("Cart")));
 
+        mainPanel.addComponent(statusPanel);
 
          // Create window to hold the panel
         BasicWindow window = new BasicWindow();
@@ -1782,9 +1812,27 @@ public class MainCliFacete3 {
                 } else if(Character.valueOf(toggleLabelsKey).equals(c) && !isFocusOnInputComponent) {
                     showLabels = !showLabels;
 
+                    if (showLabels) {
+                        statusLabel.setText("Label retrieval/display enabled");
+                    } else {
+                        statusLabel.setText("Label retrieval/display disabled");
+                    }
+
                     labelService = showLabels
                             ? actualLabelService
                             : noopLabelService;
+
+                    updateAll();
+                }  else if(Character.valueOf(togglePrefixModeKey).equals(c) && !isFocusOnInputComponent) {
+                    showCompactIris = !showCompactIris;
+
+                    if (showCompactIris) {
+                        literalPrefixes = iriPrefixes = globalPrefixes;
+                        statusLabel.setText("Prefix display enabled");
+                    } else {
+                        literalPrefixes = iriPrefixes = null;
+                        statusLabel.setText("Prefix display disabled");
+                    }
 
                     updateAll();
                 }
@@ -1915,31 +1963,47 @@ public class MainCliFacete3 {
     }
 
 
+    /**
+     * An wrapper for {@link #getLabels(Collection, Function, LookupService, PrefixMapping)} that attaches
+     * the obtained labels to resources
+     *
+     * @param <T>
+     * @param cs
+     * @param nodeFunction
+     * @param labelService
+     * @param prefixes
+     */
     public static <T extends RDFNode> void enrichWithLabels(
-            Collection<T> cs, Function<? super T, ? extends Node> nodeFunction,
-            LookupService<Node, String> labelService,
-            PrefixMapping prefixes) {
-        // Replace null nodes with Node.NULL
-        // TODO Use own own constant should jena remove this deprecated symbol
-        logger.info("enrichWithLabels: Lookup of size " + cs.size());
+            Collection<T> cs,
+            LookupService<T, String> labelService) {
+        Map<T, String> labelMap = labelService.fetchMap(cs);
 
-        Multimap<Node, T> index = Multimaps.index(cs, item ->
-            Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(NodeUtils.nullUriNode));
+        for (Entry<T, String> e : labelMap.entrySet()) {
+            RDFNode rdfNode = e.getKey();
+            String label = e.getValue();
+            if (rdfNode.isResource()) {
+                Resource k = rdfNode.asResource();
+                ResourceUtils.setLiteralProperty(k, RDFS.label, label);
+            }
+        }
+    }
 
-        //Map<Node, T> index = Maps.uniqueIndex();
-        Set<Node> s = index.keySet().stream()
-                .filter(Node::isURI)
-                .collect(Collectors.toSet());
 
-        Map<Node, String> map = labelService.fetchMap(s);
-        index.forEach((k, v) -> v.asResource().addLiteral(RDFS.label,
-                map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
-                        ? "(null)"
-                        : k.isURI()
-                            ? deriveLabelFromIri(k.getURI())
-                            : formatLiteralNode(k, prefixes))));
-                            //: NodeFmtLib.str(k, "", riotPrefixMap))));
-                            //: k.toString())));
+    public static String deriveLabelFromIri(String iriStr, PrefixMapping pm) {
+        String result = null;
+        if (pm != null) {
+            Entry<String, String> entry = PrefixUtils.findLongestPrefix(pm, iriStr);
+            if (entry != null) {
+                String localName = iriStr.substring(entry.getValue().length());
+                result = entry.getKey() + ":" + localName;
+            }
+        }
+
+        if (result == null) {
+            result = deriveLabelFromIri(iriStr);
+        }
+
+        return result;
     }
 
     public static String deriveLabelFromIri(String iriStr) {
@@ -1979,7 +2043,15 @@ public class MainCliFacete3 {
 //    }
 
 
-    public static <T> Collection<Labeled<T>> doLabel(Collection<T> cs, Function<? super T, ? extends String> itemToLabel) {
+    /**
+     * An alternative approach where the label is stored in a simple wrapper object
+     *
+     * @param <T>
+     * @param cs
+     * @param itemToLabel
+     * @return
+     */
+    public static <T> Collection<Labeled<T>> wrapWithLabel(Collection<T> cs, Function<? super T, ? extends String> itemToLabel) {
         Collection<Labeled<T>> result = cs.stream()
                 .map(item -> new LabeledImpl<T>(item, itemToLabel.apply(item)))
                 .collect(Collectors.toList());
@@ -1993,7 +2065,10 @@ public class MainCliFacete3 {
             String dtIri = node.getLiteralDatatypeURI();
             String dtPart = null;
             if(dtIri != null) {
-                Entry<String, String> prefixToIri = PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
+                Entry<String, String> prefixToIri = prefixMapping == null
+                    ? null
+                    : PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
+
                 dtPart = prefixToIri != null
                     ? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
                     : "<" + dtIri + ">";
@@ -2008,21 +2083,34 @@ public class MainCliFacete3 {
         return result;
     }
 
-    public static <T> Map<T, String> getLabels(
-            Collection<T> cs, Function<? super T, ? extends Node> nodeFunction,
+
+    public static <T> LookupService<T, String> createLookupServiceForLabels(
+            Function<? super T, ? extends Node> nodeFunction,
             LookupService<Node, String> labelService,
-            PrefixMapping prefixes) {
-        Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
-        //Map<Node, T> index = Maps.uniqueIndex();
+            PrefixMapping iriPrefixes,
+            PrefixMapping literalPrefixes
+    ) {
+        return cs -> Flowable.fromIterable(getLabels(cs, nodeFunction, labelService, iriPrefixes, literalPrefixes).entrySet());
+    }
+
+    public static <T> Map<T, String> getLabels(
+            Iterable<T> cs, Function<? super T, ? extends Node> nodeFunction,
+            LookupService<Node, String> labelService,
+            PrefixMapping iriPrefixes,
+            PrefixMapping literalPrefixes) {
+//        Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
+        Multimap<Node, T> index = Multimaps.index(cs, item ->
+            Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(NodeUtils.nullUriNode));
+
         Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
         Map<Node, String> map = labelService.fetchMap(s);
 
         // TODO Avoid copying the prefix map all the time
-        Function<Node, String> determineLabel = k -> map.getOrDefault(k, k.isURI()
-                ? deriveLabelFromIri(k.getURI())
-                : formatLiteralNode(k, prefixes));
-                // : NodeFmtLib.str(k, "", riotPrefixMap));
-                //: k.toString());
+        Function<Node, String> determineLabel = k -> map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
+                ? "(null)"
+                : k.isURI()
+                    ? deriveLabelFromIri(k.getURI(), iriPrefixes)
+                    : formatLiteralNode(k, literalPrefixes));
 
         Map<T, String> result =
             index.entries().stream().map(
@@ -2030,7 +2118,6 @@ public class MainCliFacete3 {
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         return result;
-        //index.forEach((k, v) -> v.addLiteral(RDFS.label, map.getOrDefault(k, k.isURI() ? k.getLocalName() : k.toString())));
     }
 
 }
