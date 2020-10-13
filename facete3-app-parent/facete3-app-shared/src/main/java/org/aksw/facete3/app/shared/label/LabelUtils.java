@@ -1,4 +1,4 @@
-package org.aksw.facete3.app.shared;
+package org.aksw.facete3.app.shared.label;
 
 import java.util.Collection;
 import java.util.Map;
