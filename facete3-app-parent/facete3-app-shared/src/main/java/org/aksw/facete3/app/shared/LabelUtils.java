@@ -1,11 +1,11 @@
-package org.aksw.facete3.cli.main;
+package org.aksw.facete3.app.shared;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
