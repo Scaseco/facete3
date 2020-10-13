@@ -43,6 +43,8 @@
 		<module>facete3-core-parent</module>
 		<module>facete3-fsbg-parent</module>
 
+		<module>facete3-app-parent</module>
+
 		<module>facete3-bundle</module>
 		<module>facete3-dummy</module>
 	</modules>

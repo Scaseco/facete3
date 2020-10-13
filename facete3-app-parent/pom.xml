@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>facete3-core-parent</artifactId>
+	<artifactId>facete3-app-parent</artifactId>
 	<packaging>pom</packaging>
 	
 	<parent>
@@ -14,13 +14,9 @@
 	</parent>
 
 	<modules>
- 		<module>data-query</module>
-		<module>facete3-vocab</module>
-		<module>facete3-api</module>
-		<module>facete3-impl</module>
-		<module>facete3-debian-cli</module>
-		<module>facete3-eclipse</module>
-		<module>facete3-app-vaadin</module>
+		<module>facete3-app-shared</module>
+		<module>facete3-app-terminal</module>
+		<!-- <module>facete3-app-vaadin</module> -->
 	</modules>
 
 </project>

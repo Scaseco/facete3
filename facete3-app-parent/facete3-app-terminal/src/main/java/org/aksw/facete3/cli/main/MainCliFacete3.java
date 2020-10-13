@@ -331,8 +331,8 @@ public class MainCliFacete3 {
                         .collect(Collectors.toList());
 
 
-                MainCliFacete3.enrichWithLabels(toEnrich,
-                        createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
+                LabelUtils.enrichWithLabels(toEnrich,
+                        LabelUtils.createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
 
 
                 // TODO Fetch all nodes and resolve their labels
@@ -434,7 +434,7 @@ public class MainCliFacete3 {
         Expr expr = constraint.expr();
         Set<Node> nodes = extractNodes(constraint);
 
-        Map<Node, String> nodeToLabel = getLabels(nodes, Function.identity(), labelService, prefixes, prefixes);
+        Map<Node, String> nodeToLabel = LabelUtils.getLabels(nodes, Function.identity(), labelService, prefixes, prefixes);
 
         Map<Node, String> bgpNodeLabels = indexPaths(constraint).entrySet().stream()
             .collect(Collectors.toMap(Entry::getKey, e -> toString(e.getValue(), nodeToLabel::get)));
@@ -626,8 +626,8 @@ public class MainCliFacete3 {
                 .limit(itemsPerPage)
                 .exec().toList().blockingGet();
 
-        MainCliFacete3.<RDFNode>enrichWithLabels(items,
-                createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
+        LabelUtils.<RDFNode>enrichWithLabels(items,
+                LabelUtils.createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
 
 
 //		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
@@ -704,7 +704,7 @@ public class MainCliFacete3 {
         List<Directed<FacetNode>> path = fdn.parent().path();
 
         Set<Node> nodes = path.stream().map(Directed::getValue).map(FacetNode::reachingPredicate).collect(Collectors.toSet());
-        Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService, iriPrefixes, literalPrefixes);
+        Map<Node, String> labelMap = LabelUtils.getLabels(nodes, Function.identity(), labelService, iriPrefixes, literalPrefixes);
         //Map<Node, String> labelMap = labelService.fetchMap(nodes);
 
         int n = path.size();
@@ -834,8 +834,8 @@ public class MainCliFacete3 {
 
             //System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 
-            enrichWithLabels(fvcs,
-                    createLookupServiceForLabels(FacetValueCount::getValue, labelService, iriPrefixes, literalPrefixes));
+            LabelUtils.enrichWithLabels(fvcs,
+                    LabelUtils.createLookupServiceForLabels(FacetValueCount::getValue, labelService, iriPrefixes, literalPrefixes));
 
             facetValueList.clearItems();
             for(FacetValueCount item : fvcs) {
@@ -916,8 +916,8 @@ public class MainCliFacete3 {
                     .exec()
                     .toList()
                     // TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup
-                    .doOnSuccess(list -> enrichWithLabels(list,
-                            createLookupServiceForLabels(FacetCount::getPredicate, labelService, iriPrefixes, literalPrefixes)))
+                    .doOnSuccess(list -> LabelUtils.enrichWithLabels(list,
+                            LabelUtils.createLookupServiceForLabels(FacetCount::getPredicate, labelService, iriPrefixes, literalPrefixes)))
                     .blockingGet();
             //enrichWithLabels(fcs, FacetCount::getPredicate, labelService);
 
@@ -1342,7 +1342,7 @@ public class MainCliFacete3 {
                 .createLookupService(fq.connection(), BinaryRelationImpl.create(RDFS.label))
                 .partition(10)
                 .cache()
-                .mapValues((k, vs) -> vs.isEmpty() ? deriveLabelFromIri(k.getURI()) : vs.iterator().next())
+                .mapValues((k, vs) -> vs.isEmpty() ? LabelUtils.deriveLabelFromIri(k.getURI()) : vs.iterator().next())
                 .mapValues((k, v) -> "" + v);
 
         labelService = actualLabelService;
@@ -1925,7 +1925,7 @@ public class MainCliFacete3 {
             ? Optional.ofNullable(r.getProperty(RDFS.label))
                     .map(Statement::getString)
                     .orElse(r.isURIResource()
-                            ? MainCliFacete3.deriveLabelFromIri(r.getURI())
+                            ? LabelUtils.deriveLabelFromIri(r.getURI())
                             : r.getId().getLabelString())
             : Objects.toString(Optional.ofNullable(node)
                     .map(RDFNode::asNode)
@@ -1977,162 +1977,5 @@ public class MainCliFacete3 {
         return result;
     }
 
-
-    /**
-     * An wrapper for {@link #getLabels(Collection, Function, LookupService, PrefixMapping)} that attaches
-     * the obtained labels to resources
-     *
-     * @param <T>
-     * @param cs
-     * @param nodeFunction
-     * @param labelService
-     * @param prefixes
-     */
-    public static <T extends RDFNode> void enrichWithLabels(
-            Collection<T> cs,
-            LookupService<T, String> labelService) {
-        Map<T, String> labelMap = labelService.fetchMap(cs);
-
-        for (Entry<T, String> e : labelMap.entrySet()) {
-            RDFNode rdfNode = e.getKey();
-            String label = e.getValue();
-            if (rdfNode.isResource()) {
-                Resource k = rdfNode.asResource();
-                ResourceUtils.setLiteralProperty(k, RDFS.label, label);
-            }
-        }
-    }
-
-
-    public static String deriveLabelFromIri(String iriStr, PrefixMapping pm) {
-        String result = null;
-        if (pm != null) {
-            Entry<String, String> entry = PrefixUtils.findLongestPrefix(pm, iriStr);
-            if (entry != null) {
-                String localName = iriStr.substring(entry.getValue().length());
-                result = entry.getKey() + ":" + localName;
-            }
-        }
-
-        if (result == null) {
-            result = deriveLabelFromIri(iriStr);
-        }
-
-        return result;
-    }
-
-    public static String deriveLabelFromIri(String iriStr) {
-        String result;
-
-        // There are fragments such as #this #self #me #service which are not useful as a label
-        // If there are less-than-equal n characters after a hash use a slash as the splitpoint
-        int n = 6;
-        int lastIdx = iriStr.length() - 1;
-        int slashIdx = iriStr.lastIndexOf('/');
-        int hashIdx = iriStr.lastIndexOf('#');
-        if ((lastIdx - hashIdx) <= n && slashIdx < hashIdx && slashIdx != -1) {
-            result = iriStr.substring(slashIdx + 1);
-        } else {
-            result = SplitIRI.localname(iriStr);
-        }
-
-        return result;
-    }
-
-//    public static String deriveLabelFromIri(String iriStr) {
-//
-//        String result;
-//        for(;;) {
-//            // Split XML returns invalid out-of-bound index for <http://dbpedia.org/resource/Ada_Apa_dengan_Cinta%3>
-//            // This is what Node.getLocalName does
-//            int idx = Util.splitNamespaceXML(iriStr);
-//            result = idx == -1 || idx > iriStr.length() ? iriStr : iriStr.substring(idx);
-//            if(result.isEmpty() && !iriStr.isEmpty() && idx != -1) {
-//                iriStr = iriStr.substring(0, iriStr.length() - 1);
-//                continue;
-//            } else {
-//                break;
-//            }
-//        };
-//        return result;
-//    }
-
-
-    /**
-     * An alternative approach where the label is stored in a simple wrapper object
-     *
-     * @param <T>
-     * @param cs
-     * @param itemToLabel
-     * @return
-     */
-    public static <T> Collection<Labeled<T>> wrapWithLabel(Collection<T> cs, Function<? super T, ? extends String> itemToLabel) {
-        Collection<Labeled<T>> result = cs.stream()
-                .map(item -> new LabeledImpl<T>(item, itemToLabel.apply(item)))
-                .collect(Collectors.toList());
-
-        return result;
-    }
-
-    public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
-        String result;
-        if(node.isLiteral()) {
-            String dtIri = node.getLiteralDatatypeURI();
-            String dtPart = null;
-            if(dtIri != null) {
-                Entry<String, String> prefixToIri = prefixMapping == null
-                    ? null
-                    : PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
-
-                dtPart = prefixToIri != null
-                    ? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
-                    : "<" + dtIri + ">";
-            }
-
-            result = "\"" + node.getLiteralLexicalForm() + "\""
-                    + (dtPart == null ? "" : "^^" + dtPart);
-        } else {
-            result = Objects.toString(node);
-        }
-
-        return result;
-    }
-
-
-    public static <T> LookupService<T, String> createLookupServiceForLabels(
-            Function<? super T, ? extends Node> nodeFunction,
-            LookupService<Node, String> labelService,
-            PrefixMapping iriPrefixes,
-            PrefixMapping literalPrefixes
-    ) {
-        return cs -> Flowable.fromIterable(getLabels(cs, nodeFunction, labelService, iriPrefixes, literalPrefixes).entrySet());
-    }
-
-    public static <T> Map<T, String> getLabels(
-            Iterable<T> cs, Function<? super T, ? extends Node> nodeFunction,
-            LookupService<Node, String> labelService,
-            PrefixMapping iriPrefixes,
-            PrefixMapping literalPrefixes) {
-//        Multimap<Node, T> index = Multimaps.index(cs, nodeFunction::apply);
-        Multimap<Node, T> index = Multimaps.index(cs, item ->
-            Optional.<Node>ofNullable(nodeFunction.apply(item)).orElse(NodeUtils.nullUriNode));
-
-        Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
-        Map<Node, String> map = labelService.fetchMap(s);
-
-        // TODO Avoid copying the prefix map all the time
-        Function<Node, String> determineLabel = k -> map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
-                ? "(null)"
-                : k.isURI()
-                    ? deriveLabelFromIri(k.getURI(), iriPrefixes)
-                    : formatLiteralNode(k, literalPrefixes));
-
-        Map<T, String> result =
-            index.entries().stream().map(
-            e -> Maps.immutableEntry(e.getValue(), determineLabel.apply(e.getKey())))
-            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-        return result;
-    }
 
 }

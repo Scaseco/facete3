@@ -4,11 +4,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>facete3-cli</artifactId>
+	<artifactId>facete3-app-terminal</artifactId>
 
 	<parent>
 		<groupId>org.hobbit</groupId>
-		<artifactId>facete3-core-parent</artifactId>
+		<artifactId>facete3-app-parent</artifactId>
 		<version>1.2.0-SNAPSHOT</version>
 	</parent>
 
