@@ -66,7 +66,7 @@ public class Facete3Wrapper {
         selectedFacet = facet;
     }
 
-    public void setBaseConcept(Concept baseConcept) {
+    public void setBaseConcept(UnaryRelation baseConcept) {
         facetedQuery = facetedQuery.baseConcept(baseConcept);
     }
 

@@ -2,7 +2,35 @@ package org.aksw.facete3.app.vaadin;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+
+import javax.annotation.PostConstruct;
+
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
+import org.aksw.facete3.app.vaadin.components.ConstraintsComponent;
+import org.aksw.facete3.app.vaadin.components.FacetCountComponent;
+import org.aksw.facete3.app.vaadin.components.FacetPathComponent;
+import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
+import org.aksw.facete3.app.vaadin.components.ItemComponent;
+import org.aksw.facete3.app.vaadin.components.ResourceComponent;
+import org.aksw.facete3.app.vaadin.components.SearchComponent;
+import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+import org.aksw.facete3.app.vaadin.providers.ItemProvider;
+import org.aksw.facete3.app.vaadin.providers.SearchProvider;
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionTransform;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -11,54 +39,42 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.HLFacetConstraint;
-import org.aksw.facete3.app.vaadin.components.ConstraintsComponent;
-import org.aksw.facete3.app.vaadin.components.FacetCountComponent;
-import org.aksw.facete3.app.vaadin.components.FacetPathComponent;
-import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
-import org.aksw.facete3.app.vaadin.components.ItemComponent;
-import org.aksw.facete3.app.vaadin.components.ResourceComponent;
-import org.aksw.facete3.app.vaadin.components.SearchComponent;
-import org.aksw.facete3.app.vaadin.domain.NliResponse;
-import org.aksw.facete3.app.vaadin.domain.Paper;
-import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("")
 @PWA(name = "Vaadin Application", shortName = "Vaadin App",
         description = "This is an example Vaadin application.", enableInstallPrompt = true)
 @CssImport("./styles/shared-styles.css")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
+@org.springframework.stereotype.Component
 public class MainView extends AppLayout {
 
-    private static final long serialVersionUID = 7851055480070074549L;
-    private Config config;
-    private ConstraintsComponent constraintsComponent;
-    private FacetCountComponent facetCountComponent;
-    private FacetPathComponent facetPathComponent;
-    private FacetValueCountComponent facetValueCountComponent;
-    private Facete3Wrapper facete3;
-    private ItemComponent itemComponent;
-    private ResourceComponent resourceComponent;
+    protected static final long serialVersionUID = 7851055480070074549L;
+//    protected Config config;
+    protected ConstraintsComponent constraintsComponent;
+    protected FacetCountComponent facetCountComponent;
+    protected FacetPathComponent facetPathComponent;
+    protected FacetValueCountComponent facetValueCountComponent;
+    protected Facete3Wrapper facete3;
+    protected ItemComponent itemComponent;
+    protected ResourceComponent resourceComponent;
+
+//    @Autowired
+    protected RDFConnection baseDataConnection;
+
+    protected SearchProvider searchProvider;
 
     @Autowired
-    public MainView(Config config) {
-        this.config = config;
-        RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(config);
-        RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
-        facete3 = new Facete3Wrapper(rdfConnection);
-        LabelService labelService = new LabelService(rdfConnection);
+    protected SearchSensitityRDFConnectionTransform searchSensitityRdfConnectionTransform;
+
+    @Autowired
+    public MainView(
+            RDFConnection baseDataConnection,
+            SearchProvider searchProvider) {
+        this.baseDataConnection = baseDataConnection;
+        this.searchProvider = searchProvider;
+
+        facete3 = new Facete3Wrapper(baseDataConnection);
+        LabelService labelService = new LabelService(baseDataConnection);
 
         FacetCountProvider facetCountProvider = new FacetCountProvider(facete3, labelService);
         FacetValueCountProvider facetValueCountProvider =
@@ -73,18 +89,24 @@ public class MainView extends AppLayout {
         setContent(getAppContent());
     }
 
-    private Component getAppContent() {
+    // Auto-wiring happens after object construction
+    // So in order to access auto-wired properties we need to use this post-construct init method
+    @PostConstruct
+    public void init() {
+    }
+
+    protected Component getAppContent() {
         VerticalLayout appContent = new VerticalLayout();
         appContent.add(getNaturalLanguageInterfaceComponent());
         appContent.add(getFacete3Component());
         return appContent;
     }
 
-    private Component getNaturalLanguageInterfaceComponent() {
-        return new SearchComponent(this, config);
+    protected Component getNaturalLanguageInterfaceComponent() {
+        return new SearchComponent(this, searchProvider);
     }
 
-    private Component getFacete3Component() {
+    protected Component getFacete3Component() {
         SplitLayout component = new SplitLayout();
         component.setSizeFull();
         component.setOrientation(Orientation.HORIZONTAL);
@@ -94,7 +116,7 @@ public class MainView extends AppLayout {
         return component;
     }
 
-    private Component getFacetComponent() {
+    protected Component getFacetComponent() {
         SplitLayout facetComponent = new SplitLayout();
         facetComponent.setSizeFull();
         facetComponent.setOrientation(Orientation.VERTICAL);
@@ -107,7 +129,7 @@ public class MainView extends AppLayout {
         return component;
     }
 
-    private Component getResultsComponent() {
+    protected Component getResultsComponent() {
         SplitLayout component = new SplitLayout();
         component.setOrientation(Orientation.VERTICAL);
         component.addToPrimary(itemComponent);
@@ -164,10 +186,16 @@ public class MainView extends AppLayout {
         facetPathComponent.refresh();
     }
 
-    public void handleNliResponse(NliResponse response) {
-        List<String> ids = getPaperIds(response);
-        Concept baseConcepts = createConcept(ids);
-        facete3.setBaseConcept(baseConcepts);
+    public void handleSearchResponse(RDFNodeSpec rdfNodeSpec) {
+        UnaryRelation baseConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
+        facete3.setBaseConcept(baseConcept);
+
+        if (searchSensitityRdfConnectionTransform != null) {
+            RDFConnectionTransform connXform = searchSensitityRdfConnectionTransform.create(rdfNodeSpec);
+            RDFConnection effectiveDataConnection = connXform.apply(baseDataConnection);
+            facete3.getFacetedQuery().connection(effectiveDataConnection);
+        }
+
         refreshAll();
     }
 
@@ -175,17 +203,17 @@ public class MainView extends AppLayout {
         constraint.deactivate();
         refreshAll();
     }
+//
+//    protected List<String> getPaperIds(NliResponse response) {
+//        List<Paper> papers = response.getResults();
+//        List<String> ids = new LinkedList<String>();
+//        for (Paper paper : papers) {
+//            ids.addAll(paper.getId());
+//        }
+//        return ids;
+//    }
 
-    private List<String> getPaperIds(NliResponse response) {
-        List<Paper> papers = response.getResults();
-        List<String> ids = new LinkedList<String>();
-        for (Paper paper : papers) {
-            ids.addAll(paper.getId());
-        }
-        return ids;
-    }
-
-    private Concept createConcept(List<String> ids) {
+    protected Concept createConcept(List<String> ids) {
         List<Node> baseConcepts = new LinkedList<Node>();
         for (String id : ids) {
             Node baseConcept = NodeFactory.createURI(id);
@@ -194,7 +222,7 @@ public class MainView extends AppLayout {
         return ConceptUtils.createConcept(baseConcepts);
     }
 
-    private void refreshAll() {
+    protected void refreshAll() {
         facetCountComponent.refresh();
         facetValueCountComponent.refresh();
         itemComponent.refresh();

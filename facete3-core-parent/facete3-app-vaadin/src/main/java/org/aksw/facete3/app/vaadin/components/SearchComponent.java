@@ -1,35 +1,26 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import java.net.URI;
+import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
+import org.aksw.facete3.app.vaadin.MainView;
+import org.aksw.facete3.app.vaadin.providers.SearchProvider;
+
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import org.aksw.facete3.app.vaadin.Config;
-import org.aksw.facete3.app.vaadin.MainView;
-import org.aksw.facete3.app.vaadin.Config.Nli;
-import org.aksw.facete3.app.vaadin.domain.NliResponse;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 public class SearchComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -331380480912293631L;
-    private MainView mainView;
-    private RestTemplate restTemplate;
-    private Nli nliConfig;
+    protected MainView mainView;
+    protected SearchProvider searchProvider;
 
-    public SearchComponent(MainView mainView, Config config) {
+    public SearchComponent(MainView mainView, SearchProvider searchProvider) {
         this.mainView = mainView;
-        nliConfig = config.getNli();
-        setRestTemplate();
+        this.searchProvider = searchProvider;
+        
         addSearchComponent();
     }
 
-    private void setRestTemplate() {
-        RestTemplateBuilder builder = new RestTemplateBuilder();
-        restTemplate = builder.build();
-    }
 
     private void addSearchComponent() {
         TextField searchField = new TextField();
@@ -40,12 +31,13 @@ public class SearchComponent extends VerticalLayout {
 
     private void searchCallback(ComponentValueChangeEvent<TextField, String> event) {
         String query = event.getValue();
-        URI uri = UriComponentsBuilder.fromUriString(nliConfig.getEnpoint())
-                .queryParam("query", query)
-                .queryParam("limit", nliConfig.getResultLimit())
-                .build()
-                .toUri();
-        NliResponse response = restTemplate.getForObject(uri, NliResponse.class);
-        mainView.handleNliResponse(response);
+        RDFNodeSpec searchResult = searchProvider.search(query);
+//        URI uri = UriComponentsBuilder.fromUriString(nliConfig.getEnpoint())
+//                .queryParam("query", query)
+//                .queryParam("limit", nliConfig.getResultLimit())
+//                .build()
+//                .toUri();
+//        NliResponse response = restTemplate.getForObject(uri, NliResponse.class);
+        mainView.handleSearchResponse(searchResult);
     }
 }

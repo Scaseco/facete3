@@ -148,6 +148,12 @@
 		<!-- <artifactId>jackson-annotations</artifactId> -->
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>facete3-app-shared</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-impl</artifactId>
