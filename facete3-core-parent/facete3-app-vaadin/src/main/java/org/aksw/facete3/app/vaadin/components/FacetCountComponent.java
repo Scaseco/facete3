@@ -53,10 +53,12 @@ public class FacetCountComponent extends VerticalLayout {
     private void selectFacetCallback(
             ComponentValueChangeEvent<Grid<FacetCount>, FacetCount> event) {
         FacetCount facetCount = event.getValue();
-        Node predicate = facetCount.getPredicate();
-        mainView.selectFacet(predicate);
-        Node node = facetCount.asNode();
-        mainView.viewNode(node);
+        if (facetCount != null) {
+            Node predicate = facetCount.getPredicate();
+            mainView.selectFacet(predicate);
+            Node node = facetCount.asNode();
+            mainView.viewNode(node);
+        }
     }
 
     private void addFacetToPathCallback(ItemDoubleClickEvent<FacetCount> event) {

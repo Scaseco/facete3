@@ -45,7 +45,7 @@ import com.vaadin.flow.server.PWA;
         description = "This is an example Vaadin application.", enableInstallPrompt = true)
 @CssImport("./styles/shared-styles.css")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
-@org.springframework.stereotype.Component
+//@org.springframework.stereotype.Component
 public class MainView extends AppLayout {
 
     protected static final long serialVersionUID = 7851055480070074549L;
@@ -91,9 +91,9 @@ public class MainView extends AppLayout {
 
     // Auto-wiring happens after object construction
     // So in order to access auto-wired properties we need to use this post-construct init method
-    @PostConstruct
-    public void init() {
-    }
+//    @PostConstruct
+//    public void init() {
+//    }
 
     protected Component getAppContent() {
         VerticalLayout appContent = new VerticalLayout();

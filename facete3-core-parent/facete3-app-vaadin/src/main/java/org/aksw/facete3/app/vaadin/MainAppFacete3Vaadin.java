@@ -12,6 +12,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
+
         // Interestingly wrapping the cxt in a try block to auto-close it
         // prevents application start up
         ConfigurableApplicationContext cxt = new SpringApplicationBuilder()

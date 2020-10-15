@@ -67,7 +67,8 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
     protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
         DataQuery<T> dataQuery = translateQuery(query);
         List<QuerySortOrder> sortOrders = query.getSortOrders();
-        int limit = query.getLimit() - 1;
+        Integer limit = query.getLimit() == Integer.MAX_VALUE ? null : query.getLimit();
+
         if (!sortOrders.isEmpty()) {
             QuerySortOrder sortOrder = sortOrders.get(0);
             // 0 = Ascending, 1 = Descending
@@ -79,9 +80,8 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
             Path path = Path.newPath();
             if (!column.isEmpty()) {
                 path = path.fwd("http://www.example.org/" + column);
-            } else {
-                limit += limit;
             }
+
             dataQuery.addOrderBy(new NodePathletPath(path), sortDir);
         }
         List<T> list = dataQuery.limit(limit)

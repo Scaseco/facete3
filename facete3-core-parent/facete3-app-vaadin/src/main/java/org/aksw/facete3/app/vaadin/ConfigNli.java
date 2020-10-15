@@ -97,7 +97,10 @@ public class ConfigNli {
             Collection<TernaryRelation> views = VirtualPartitionedQuery.toViews(view);
             views.add(new TernaryRelationImpl(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s, Vars.p, Vars.o));
 
-            QueryTransform queryTransform = query -> VirtualPartitionedQuery.rewrite(views, query);
+            QueryTransform queryTransform = query -> {
+                Query r = VirtualPartitionedQuery.rewrite(views, query);
+                return r;
+            };
 
             return conn ->
                 RDFConnectionBuilder.from(conn).addQueryTransform(queryTransform).getConnection();
