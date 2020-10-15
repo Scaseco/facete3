@@ -537,11 +537,13 @@
 			<name>University Leipzig, AKSW Maven2 Repository</name>
 			<url>http://maven.aksw.org/repository/snapshots</url>
 		</repository>
+<!--
 		<repository>
 			<id>Apache Repo</id>
 			<name>Apache Repository</name>
 			<url>https://repository.apache.org/content/repositories/releases/</url>
 		</repository>
+-->
 		<repository>
 			<id>in-project-virtjdbc</id>
 			<name>In Project Repo for VirtJDBC</name>
@@ -550,6 +552,7 @@
 
 
 		<!-- geotools repo from http://docs.geotools.org/latest/userguide/tutorial/quickstart/maven.html -->
+<!--
 		<repository>
 			<id>maven2-repository.dev.java.net</id>
 			<name>Java.net repository</name>
@@ -568,6 +571,7 @@
 			<name>Boundless Maven Repository</name>
 			<url>http://repo.boundlessgeo.com/main</url>
 		</repository>
+-->
 	</repositories>
 
 </project>
