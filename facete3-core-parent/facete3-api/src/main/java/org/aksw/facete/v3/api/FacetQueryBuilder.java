@@ -13,5 +13,5 @@ public interface FacetQueryBuilder<T extends RDFNode> {
 
 	<X extends RDFNode> FacetValueQueryBuilder<X> itemsAs(Class<X> itemClazz);
 
-	DataQuery2<T> query2();
+	FacetedDataQuery<T> query2();
 }

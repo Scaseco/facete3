@@ -9,13 +9,20 @@ A brief history
 * Facete 2 was an re-implementation based on Angular 1 (JavaScript) at around 2015
 * Facete 3 is the current iteration which finally got large parts of the API just right - this time its Java.
 
-## Factete 3 Components
+## Factete 3 High Level Components
 
 The project comprises the following component:
 
 * [The core API](facete3-core-parent)
 * [A terminal application](facete3-core-parent/facete3-cli) (currently part of core, may be moved to a separate module)
 * [A faceted search benchmark generator](facete3-fsbg-parent). Benchmark results are published in [this repository](https://github.com/hobbit-project/facete3-fsbg-results)!
+
+
+## Notable Features
+
+* Query Rewriting over Construct Views allows filtering and sorting by facets that are not in the SPARQL endpoint
+* Query Rewriting to enable access to blank nodes of remote SPARQL endpoints. See the list of supported RDF database management systems.
+* Data Query API for declaration of retrieval of hierarchical structures from remote SPARQL endpoints; somewhat akin to a programmatic GraphQL API for RDF. 
 
 
 ## Teasers

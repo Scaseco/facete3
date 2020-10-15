@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.dcat.repo.impl.fs.CatalogResolverFilesystem;
-import org.aksw.jena_sparql_api.core.RDFConnectionEx;
-import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionEx;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;

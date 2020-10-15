@@ -42,6 +42,10 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         return filter;
     }
 
+    public Facete3Wrapper getFacete3() {
+        return facete3;
+    }
+
     public FacetProvider(Facete3Wrapper facete3, LabelService labelService) {
         this.facete3 = facete3;
         this.labelService = labelService;

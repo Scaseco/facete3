@@ -45,7 +45,7 @@ import com.vaadin.flow.server.PWA;
         description = "This is an example Vaadin application.", enableInstallPrompt = true)
 @CssImport("./styles/shared-styles.css")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
-//@org.springframework.stereotype.Component
+@CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
 public class MainView extends AppLayout {
 
     protected static final long serialVersionUID = 7851055480070074549L;
@@ -64,7 +64,7 @@ public class MainView extends AppLayout {
     protected SearchProvider searchProvider;
 
     @Autowired
-    protected SearchSensitityRDFConnectionTransform searchSensitityRdfConnectionTransform;
+    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform;
 
     @Autowired
     public MainView(
@@ -86,6 +86,7 @@ public class MainView extends AppLayout {
         itemComponent = new ItemComponent(this, itemProvider);
         resourceComponent = new ResourceComponent();
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
+        constraintsComponent.setMaxHeight("40px");
         setContent(getAppContent());
     }
 
@@ -98,12 +99,15 @@ public class MainView extends AppLayout {
     protected Component getAppContent() {
         VerticalLayout appContent = new VerticalLayout();
         appContent.add(getNaturalLanguageInterfaceComponent());
+        appContent.add(constraintsComponent);
+
         appContent.add(getFacete3Component());
         return appContent;
     }
 
     protected Component getNaturalLanguageInterfaceComponent() {
-        return new SearchComponent(this, searchProvider);
+        SearchComponent result = new SearchComponent(this, searchProvider);
+        return result;
     }
 
     protected Component getFacete3Component() {
@@ -124,7 +128,7 @@ public class MainView extends AppLayout {
         facetComponent.addToSecondary(facetValueCountComponent);
         VerticalLayout component = new VerticalLayout();
         component.add(facetPathComponent);
-        component.add(constraintsComponent);
+//        component.add(constraintsComponent);
         component.add(facetComponent);
         return component;
     }
@@ -190,8 +194,8 @@ public class MainView extends AppLayout {
         UnaryRelation baseConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
         facete3.setBaseConcept(baseConcept);
 
-        if (searchSensitityRdfConnectionTransform != null) {
-            RDFConnectionTransform connXform = searchSensitityRdfConnectionTransform.create(rdfNodeSpec);
+        if (searchSensitiveRdfConnectionTransform != null) {
+            RDFConnectionTransform connXform = searchSensitiveRdfConnectionTransform.create(rdfNodeSpec);
             RDFConnection effectiveDataConnection = connXform.apply(baseDataConnection);
             facete3.getFacetedQuery().connection(effectiveDataConnection);
         }

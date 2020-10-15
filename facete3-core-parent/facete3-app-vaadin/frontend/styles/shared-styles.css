@@ -10,3 +10,12 @@
   max-width: 250px;
 }
 
+
+.compact {
+   font-size: 90%;
+}
+
+.compact vaadin-grid-cell-content {
+  padding: 0px;
+}
+

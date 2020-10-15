@@ -11,6 +11,7 @@ import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetMultiNode;
 import org.aksw.facete.v3.api.FacetNodeResource;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.FacetedDataQuery;
 import org.aksw.facete.v3.api.FacetedQueryResource;
 import org.aksw.facete.v3.bgp.api.BgpDirNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
@@ -20,8 +21,6 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.data_query.api.DataQuery;
-import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
@@ -85,7 +84,7 @@ public class FacetDirNodeImpl
     }
 
     @Override
-    public DataQuery<RDFNode> facets(boolean includeAbsent) {
+    public FacetedDataQuery<RDFNode> facets(boolean includeAbsent) {
         FacetedQueryResource facetedQuery = this.parent().query();
 
         BgpNode focus = facetedQuery.modelRoot().getFocus();
@@ -111,7 +110,7 @@ public class FacetDirNodeImpl
 //		bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
 //		Template template = new Template(bgp);
 //
-        DataQuery<RDFNode> result = new DataQueryImpl<>(
+        FacetedDataQuery<RDFNode> result = new FacetedDataQueryImpl<>(
                 parent.query().connection(),
                 concept.getElement(),
                 concept.getVar(),
@@ -154,20 +153,20 @@ public class FacetDirNodeImpl
 
 
     @Override
-    public DataQuery<FacetCount> facetCounts(boolean includeAbsent) {
-        DataQuery<FacetCount> result = facetCounts(includeAbsent, false);
+    public FacetedDataQuery<FacetCount> facetCounts(boolean includeAbsent) {
+        FacetedDataQuery<FacetCount> result = facetCounts(includeAbsent, false);
 
         return result;
     }
 
     @Override
-    public DataQuery<FacetCount> facetFocusCounts(boolean includeAbsent) {
-        DataQuery<FacetCount> result = facetCounts(includeAbsent, true);
+    public FacetedDataQuery<FacetCount> facetFocusCounts(boolean includeAbsent) {
+        FacetedDataQuery<FacetCount> result = facetCounts(includeAbsent, true);
 
         return result;
     }
 
-    public DataQuery<FacetCount> facetCounts(boolean includeAbsent, boolean focusCount) {
+    public FacetedDataQuery<FacetCount> facetCounts(boolean includeAbsent, boolean focusCount) {
         FacetedQueryResource facetedQuery = this.parent().query();
         BgpNode bgpRoot = facetedQuery.modelRoot().getBgpRoot();
 
@@ -191,7 +190,7 @@ public class FacetDirNodeImpl
         bgp.add(new Triple(br.getSourceVar(), Vocab.facetCount.asNode(), br.getTargetVar()));
         Template template = new Template(bgp);
 
-        DataQuery<FacetCount> result = new DataQueryImpl<>(
+        FacetedDataQuery<FacetCount> result = new FacetedDataQueryImpl<>(
                 parent.query().connection(),
                 br.getElement(),
                 br.getSourceVar(),
@@ -202,19 +201,19 @@ public class FacetDirNodeImpl
     }
 
     @Override
-    public DataQuery<FacetValueCount> facetValueTypeCounts() {
+    public FacetedDataQuery<FacetValueCount> facetValueTypeCounts() {
         TernaryRelation tr = createQueryGenerator()
                 .createRelationFacetValueTypeCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null, false);
-        DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+        FacetedDataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
 
         return result;
     }
 
     @Override
-    public DataQuery<FacetValueCount> facetValueCounts() {
+    public FacetedDataQuery<FacetValueCount> facetValueCounts() {
         TernaryRelation tr = createQueryGenerator()
                 .createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null, false);
-        DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+        FacetedDataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
 
         return result;
 
@@ -289,7 +288,7 @@ public class FacetDirNodeImpl
      * @param negated
      * @return
      */
-    public DataQuery<FacetValueCount> createQueryFacetValueCounts(TernaryRelation tr) { //boolean negated, boolean includeAbsent) {
+    public FacetedDataQuery<FacetValueCount> createQueryFacetValueCounts(TernaryRelation tr) { //boolean negated, boolean includeAbsent) {
 //		FacetedQueryResource facetedQuery = this.parent().query();
 //
 ////		BinaryRelation br = FacetedBrowsingSessionImpl.createQueryFacetsAndCounts(path, isReverse, pConstraint);
@@ -333,7 +332,7 @@ public class FacetDirNodeImpl
         bgp.add(new Triple(superRoot, Vocab.facetCount.asNode(), tr.getO()));
         Template template = new Template(bgp);
 
-        DataQuery<FacetValueCount> result = new DataQueryImpl<>(
+        FacetedDataQuery<FacetValueCount> result = new FacetedDataQueryImpl<>(
                 parent.query().connection(),
                 tr.getElement(),
                 Arrays.asList(tr.getS(), tr.getP()),
@@ -346,21 +345,21 @@ public class FacetDirNodeImpl
     }
 
     @Override
-    public DataQuery<FacetValueCount> nonConstrainedFacetValueCounts() {
+    public FacetedDataQuery<FacetValueCount> nonConstrainedFacetValueCounts() {
 
         TernaryRelation tr = createQueryGenerator()
                 .createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), true, null, null, false);
-        DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+        FacetedDataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
 //
 //				true, false);
         return result;
     }
 
     @Override
-    public DataQuery<FacetValueCount> facetValueCountsWithAbsent(boolean includeAbsent) {
+    public FacetedDataQuery<FacetValueCount> facetValueCountsWithAbsent(boolean includeAbsent) {
         TernaryRelation tr = createQueryGenerator()
                 .createRelationFacetValueCounts(this.parent().query().focus().state(), this.parent().state(), !this.state.isFwd(), false, null, null, includeAbsent);
-        DataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
+        FacetedDataQuery<FacetValueCount> result = createQueryFacetValueCounts(tr);
 
         return result;
     }

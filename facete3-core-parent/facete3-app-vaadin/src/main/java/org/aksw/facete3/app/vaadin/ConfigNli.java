@@ -68,7 +68,7 @@ public class ConfigNli {
 
     @Bean
     @Autowired
-    public SearchSensitityRDFConnectionTransform connectionTransformer(NliConfig nliConfig) {
+    public SearchSensitiveRDFConnectionTransform connectionTransformer(NliConfig nliConfig) {
         return rdfNodeSpec -> {
             Table table = TableFactory.create(Arrays.asList(Vars.s, Vars.o));
             for(RDFNode rdfNode : rdfNodeSpec.getCollection()) {

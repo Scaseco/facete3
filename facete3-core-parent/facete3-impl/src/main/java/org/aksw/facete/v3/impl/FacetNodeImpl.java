@@ -10,6 +10,7 @@ import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetNodeResource;
+import org.aksw.facete.v3.api.FacetedDataQuery;
 import org.aksw.facete.v3.api.FacetedQueryResource;
 import org.aksw.facete.v3.bgp.api.BgpMultiNode;
 import org.aksw.facete.v3.bgp.api.BgpNode;
@@ -17,8 +18,6 @@ import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
 import org.aksw.facete.v3.bgp.utils.PathAccessorImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.data_query.api.DataQuery;
-import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.graph.Node;
@@ -133,7 +132,7 @@ public class FacetNodeImpl
     }
 
 
-    public DataQuery<RDFNode> createValueQuery(boolean applySelfConstraints) {
+    public FacetedDataQuery<RDFNode> createValueQuery(boolean applySelfConstraints) {
         //BgpNode bgpRoot = query.modelRoot().getBgpRoot();
 
 //		FacetedQueryGenerator<BgpNode> qgen = new FacetedQueryGenerator<BgpNode>(new PathAccessorImpl(bgpRoot));
@@ -148,7 +147,7 @@ public class FacetNodeImpl
         //System.out.println("Available values: " + c);
 
         SparqlQueryConnection conn = query.connection();
-        DataQuery<RDFNode> result = new DataQueryImpl<>(
+        FacetedDataQuery<RDFNode> result = new FacetedDataQueryImpl<>(
                 conn,
                 c.getElement(),
                 c.getVar(),
@@ -160,14 +159,14 @@ public class FacetNodeImpl
     }
 
     @Override
-    public DataQuery<RDFNode> availableValues() {
-        DataQuery<RDFNode> result = createValueQuery(false);
+    public FacetedDataQuery<RDFNode> availableValues() {
+        FacetedDataQuery<RDFNode> result = createValueQuery(false);
         return result;
     }
 
     @Override
-    public DataQuery<RDFNode> remainingValues() {
-        DataQuery<RDFNode> result = createValueQuery(true);
+    public FacetedDataQuery<RDFNode> remainingValues() {
+        FacetedDataQuery<RDFNode> result = createValueQuery(true);
         return result;
     }
 

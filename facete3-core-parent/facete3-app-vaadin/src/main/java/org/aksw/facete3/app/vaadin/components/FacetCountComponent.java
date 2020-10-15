@@ -3,6 +3,8 @@ package org.aksw.facete3.app.vaadin.components;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.Grid.Column;
+import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.ItemDoubleClickEvent;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -23,23 +25,35 @@ public class FacetCountComponent extends VerticalLayout {
     public FacetCountComponent(MainView mainView, FacetCountProvider dataProvider) {
         this.dataProvider = dataProvider;
         this.mainView = mainView;
+
         addFacetCountGrid();
     }
 
     private void addFacetCountGrid() {
         Grid<FacetCount> grid = new Grid<>(FacetCount.class);
+        grid.getClassNames().add("compact");
+
         grid.setDataProvider(dataProvider);
         grid.removeAllColumns();
-        grid.addColumn(item -> FacetProvider.getLabel(item))
+        Column<FacetCount> facetColumn = grid.addColumn(item -> FacetProvider.getLabel(item))
                 .setSortProperty("")
-                .setHeader(getSearchComponent())
+                .setHeader("Facet")
+//                .setHeader(getSearchComponent())
                 .setResizable(true);
         grid.addColumn("distinctValueCount.count")
                 .setSortProperty("facetCount");
         grid.asSingleSelect()
                 .addValueChangeListener(this::selectFacetCallback);
         grid.addItemDoubleClickListener(this::addFacetToPathCallback);
+
+        HeaderRow filterRow = grid.appendHeaderRow();
+        filterRow.getCell(facetColumn).setComponent(getSearchComponent());
+
+
         add(grid);
+
+
+
     }
 
     private Component getSearchComponent() {

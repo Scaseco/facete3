@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.components;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -36,7 +37,9 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
         setDataProvider(dataProvider);
 
+        getClassNames().add("compact");
         removeAllColumns();
+
         addColumn(new ComponentRenderer<>(facetValueCount -> {
             Checkbox checkbox = new Checkbox();
             checkbox.setValue(dataProvider.isActive(facetValueCount));
@@ -48,17 +51,33 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
                 }
             });
             return checkbox;
-        }));
-        addColumn(FacetProvider::getLabel).setSortProperty("value")
-                .setHeader(getSearchField())
+        }))
+            .setHeader("Filter")
+            .setResizable(true);
+
+
+        Column<FacetValueCount> facetValueColumn = addColumn(FacetProvider::getLabel).setSortProperty("value")
+                .setHeader("Facet Value")
+                //.setHeader(getSearchField())
                 .setResizable(true);
-        addColumn("focusCount.count").setSortProperty("facetCount");
+
+        addColumn("focusCount.count")
+            .setHeader("Count")
+            .setResizable(true)
+            .setSortProperty("facetCount");
+
+
+        HeaderRow filterRow = appendHeaderRow();
+        filterRow.getCell(facetValueColumn).setComponent(getSearchField());
+
+
         addItemClickListener(event -> mainView.viewNode(event.getItem()));
     }
 
     private TextField getSearchField() {
         TextField searchField = new TextField();
         searchField.setPlaceholder("Filter FacetValues...");
+        searchField.setWidthFull();
         searchField.addValueChangeListener(event -> dataProvider.setFilter(event.getValue()));
         return searchField;
     }

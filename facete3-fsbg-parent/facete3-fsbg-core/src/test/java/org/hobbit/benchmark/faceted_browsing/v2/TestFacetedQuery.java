@@ -90,7 +90,7 @@ public class TestFacetedQuery {
 
 
     @Test
-    public void testHeteroDimensionalConstraints() {
+    public void testMultiDimensionalConstraints() {
         fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
         System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 
