@@ -3,8 +3,6 @@ package org.aksw.facete3.app.vaadin;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
@@ -33,7 +31,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
@@ -80,6 +83,8 @@ public class MainView extends AppLayout {
         FacetValueCountProvider facetValueCountProvider =
                 new FacetValueCountProvider(facete3, labelService);
         ItemProvider itemProvider = new ItemProvider(facete3, labelService);
+
+
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3);
@@ -87,6 +92,14 @@ public class MainView extends AppLayout {
         resourceComponent = new ResourceComponent();
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");
+
+
+        HorizontalLayout navbarLayout = new HorizontalLayout();
+        navbarLayout.setWidthFull();
+        navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        navbarLayout.add(new Button(new Icon(VaadinIcon.COG)));
+
+        addToNavbar(navbarLayout);
         setContent(getAppContent());
     }
 
