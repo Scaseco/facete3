@@ -141,8 +141,8 @@ public class ResourceComponent extends VerticalLayout {
     				StmtIterator it =  resource.listProperties(property);
     				while (it.hasNext()) {
     					String nextText = it.next().getString();
-    					text = nextText
-    						.concat(" ");
+    					text = text.concat(nextText);
+    					text = text.concat(" ");
     				}
     			}
     	return text;
