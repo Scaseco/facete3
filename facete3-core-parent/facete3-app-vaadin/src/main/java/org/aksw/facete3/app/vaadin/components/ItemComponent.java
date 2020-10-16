@@ -59,6 +59,13 @@ public class ItemComponent extends VerticalLayout {
         grid.getClassNames().add("compact");
         grid.getColumns()
                 .forEach(grid::removeColumn);
+       // grid.addColumn(new ComponentRenderer<>(item -> {
+       // 	Anchor anchor = new Anchor();
+       // 	anchor.setText(FacetProvider.getLabel(item));
+            //anchor.setHref(item.asResource().getProperty(linkProperty).getString());
+       // 	anchor.setHref("");
+       // 	return anchor;
+       // 	})).setSortProperty("value").setHeader(searchField);
         grid.addColumn(item -> FacetProvider.getLabel(item))
                 .setSortProperty("value")
                 .setHeader(searchField);

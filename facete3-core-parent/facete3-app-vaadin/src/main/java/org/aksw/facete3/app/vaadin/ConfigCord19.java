@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({Config.class, ConfigNli.class})
+@Import({ConfigNli.class})
 public class ConfigCord19 {
 
 }

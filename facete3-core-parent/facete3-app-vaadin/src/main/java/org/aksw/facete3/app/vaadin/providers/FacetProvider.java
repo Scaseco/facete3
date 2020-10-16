@@ -106,6 +106,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
     public static String getLabel(RDFNode node) {
         return LabelService.getLabel(node);
     }
+    
 
     public static <T> Map<T, String> getLabels(Collection<T> rdfNodes,
             Function<? super T, ? extends Node> defineNodeForLabelFunction) {

@@ -19,6 +19,11 @@
 		</dependency>
 	</dependencies>
 
+	<dependency>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-resources</artifactId>
+	</dependency>
+
 	<!-- <build> -->
 	<!-- <plugins> -->
 	<!-- <plugin> -->

@@ -49,7 +49,7 @@ public class SearchProviderNli
         List<RDFNode> resultList = new ArrayList<>();
 
         for (Paper paper : response.getResults()) {
-            for (String iri : paper.getId()) {
+            for (String iri : paper.getIds()) {
                 Double scoreValue = paper.getScore();
 
                 Resource r = ModelFactory.createDefaultModel().createResource(iri);

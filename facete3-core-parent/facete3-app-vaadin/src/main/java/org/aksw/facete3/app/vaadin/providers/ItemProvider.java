@@ -1,12 +1,14 @@
 package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.function.Function;
-import com.vaadin.flow.data.provider.Query;
-import org.aksw.facete3.app.vaadin.LabelService;
+
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
+import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
+
+import com.vaadin.flow.data.provider.Query;
 
 public class ItemProvider extends FacetProvider<RDFNode> {
 
@@ -28,4 +30,5 @@ public class ItemProvider extends FacetProvider<RDFNode> {
     protected Function<? super RDFNode, ? extends Node> getNodeForLabelFunction() {
       return RDFNode::asNode;
     }
+
 }

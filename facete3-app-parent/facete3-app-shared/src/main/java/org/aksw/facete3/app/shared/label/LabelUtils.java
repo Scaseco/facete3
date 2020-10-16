@@ -3,7 +3,6 @@ package org.aksw.facete3.app.shared.label;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -16,6 +15,8 @@ import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.out.NodeFmtLib;
+import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDFS;
@@ -27,6 +28,27 @@ import com.google.common.collect.Multimaps;
 import io.reactivex.rxjava3.core.Flowable;
 
 public class LabelUtils {
+
+    /**
+     * A method similar to {@link NodeFmtLib#displayStr(Node)} however it
+     * accepts a {@link PrefixMapping} instead of a {@link PrefixMap}.
+     *
+     * @param node
+     * @param prefixMapping
+     * @return
+     */
+    public static String str(Node node, PrefixMapping prefixMapping) {
+        PrefixMap pm = prefixMapping == null
+                ? null
+                : new PrefixMapAdapter(prefixMapping);
+
+        String result = node == null
+                ? "(null)"
+                : NodeFmtLib.str(node, pm);
+
+        return result;
+
+    }
 
     /**
      * An wrapper for {@link #getLabels(Collection, Function, LookupService, PrefixMapping)} that attaches
@@ -124,29 +146,43 @@ public class LabelUtils {
         return result;
     }
 
-    public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
-        String result;
-        if(node.isLiteral()) {
-            String dtIri = node.getLiteralDatatypeURI();
-            String dtPart = null;
-            if(dtIri != null) {
-                Entry<String, String> prefixToIri = prefixMapping == null
-                    ? null
-                    : PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
 
-                dtPart = prefixToIri != null
-                    ? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
-                    : "<" + dtIri + ">";
-            }
 
-            result = "\"" + node.getLiteralLexicalForm() + "\""
-                    + (dtPart == null ? "" : "^^" + dtPart);
-        } else {
-            result = Objects.toString(node);
-        }
-
-        return result;
-    }
+    /**
+     * Note: Returning the longest prefix is concern of the prefix map implementation.
+     * So this method was the wrong place to add this behavior
+     *
+     * Formats a node to a (parseable) string w.r.t. a given prefix mapping.
+     * This method is similar to {@link NodeFmtLib#str(Node)} however it always
+     * picks the longest prefix for the datatype IRI.
+     *
+     * @param node
+     * @param prefixMapping
+     * @return
+     */
+//    public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
+//        String result;
+//        if(node.isLiteral()) {
+//            String dtIri = node.getLiteralDatatypeURI();
+//            String dtPart = null;
+//            if(dtIri != null) {
+//                Entry<String, String> prefixToIri = prefixMapping == null
+//                    ? null
+//                    : PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
+//
+//                dtPart = prefixToIri != null
+//                    ? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
+//                    : "<" + dtIri + ">";
+//            }
+//
+//            result = "\"" + node.getLiteralLexicalForm() + "\""
+//                    + (dtPart == null ? "" : "^^" + dtPart);
+//        } else {
+//            result = Objects.toString(node);
+//        }
+//
+//        return result;
+//    }
 
 
     public static <T> LookupService<T, String> createLookupServiceForLabels(
@@ -156,6 +192,17 @@ public class LabelUtils {
             PrefixMapping literalPrefixes
     ) {
         return cs -> Flowable.fromIterable(getLabels(cs, nodeFunction, labelService, iriPrefixes, literalPrefixes).entrySet());
+    }
+
+
+    public static String deriveLabelFromNode(Node node, PrefixMapping iriPrefixes, PrefixMapping literalPrefixes) {
+        String result = node == null || NodeUtils.nullUriNode.equals(node)
+            ? "(null)"
+            : node.isURI()
+                ? deriveLabelFromIri(node.getURI(), iriPrefixes)
+                : NodeFmtLib.str(node, new PrefixMapAdapter(literalPrefixes));
+
+        return result;
     }
 
     public static <T> Map<T, String> getLabels(
@@ -170,12 +217,13 @@ public class LabelUtils {
         Set<Node> s = index.keySet().stream().filter(Node::isURI).collect(Collectors.toSet());
         Map<Node, String> map = labelService.fetchMap(s);
 
-        // TODO Avoid copying the prefix map all the time
-        Function<Node, String> determineLabel = k -> map.getOrDefault(k, NodeUtils.nullUriNode.equals(k)
-                ? "(null)"
-                : k.isURI()
-                    ? deriveLabelFromIri(k.getURI(), iriPrefixes)
-                    : formatLiteralNode(k, literalPrefixes));
+        Function<Node, String> determineLabel = k -> {
+            String r = map.get(k);
+            if (r == null) {
+                r = deriveLabelFromNode(k, iriPrefixes, literalPrefixes);
+            }
+            return r;
+        };
 
         Map<T, String> result =
             index.entries().stream().map(

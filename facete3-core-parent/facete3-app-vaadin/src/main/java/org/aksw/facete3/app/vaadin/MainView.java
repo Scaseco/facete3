@@ -27,6 +27,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.shared.PrefixMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
@@ -72,24 +73,29 @@ public class MainView extends AppLayout {
     @Autowired
     public MainView(
             RDFConnection baseDataConnection,
-            SearchProvider searchProvider) {
+            SearchProvider searchProvider,
+            PrefixMapping prefixMapping,
+            Config config) {
         this.baseDataConnection = baseDataConnection;
         this.searchProvider = searchProvider;
 
         facete3 = new Facete3Wrapper(baseDataConnection);
         LabelService labelService = new LabelService(baseDataConnection);
 
+        LabelService titleService = new LabelService(baseDataConnection, config.getAlternativeLabel());
+//        TransformService transformService = new TransformService(config.getPrefixFile());
+
         FacetCountProvider facetCountProvider = new FacetCountProvider(facete3, labelService);
         FacetValueCountProvider facetValueCountProvider =
                 new FacetValueCountProvider(facete3, labelService);
-        ItemProvider itemProvider = new ItemProvider(facete3, labelService);
+        ItemProvider itemProvider = new ItemProvider(facete3,titleService);
 
 
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3);
         itemComponent = new ItemComponent(this, itemProvider);
-        resourceComponent = new ResourceComponent();
+        resourceComponent = new ResourceComponent(prefixMapping);
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");
 
@@ -122,6 +128,7 @@ public class MainView extends AppLayout {
         SearchComponent result = new SearchComponent(this, searchProvider);
         return result;
     }
+
 
     protected Component getFacete3Component() {
         SplitLayout component = new SplitLayout();
@@ -156,7 +163,9 @@ public class MainView extends AppLayout {
 
     public void viewNode(Node node) {
         RDFNode rdfNode = facete3.fetchIfResource(node);
-        resourceComponent.setNode(rdfNode);
+        if ( rdfNode != null )
+        {  resourceComponent.setNode(rdfNode); }
+
     }
 
     public void viewNode(FacetValueCount facetValueCount) {
@@ -230,7 +239,7 @@ public class MainView extends AppLayout {
 //        return ids;
 //    }
 
-    protected Concept createConcept(List<String> ids) {
+    private Concept createConcept(List<String> ids) {
         List<Node> baseConcepts = new LinkedList<Node>();
         for (String id : ids) {
             Node baseConcept = NodeFactory.createURI(id);
