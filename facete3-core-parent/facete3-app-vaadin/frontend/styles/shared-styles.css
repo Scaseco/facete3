@@ -16,6 +16,6 @@
 }
 
 .compact vaadin-grid-cell-content {
-  padding: 0px;
+  padding: 0px 1px;
 }
 

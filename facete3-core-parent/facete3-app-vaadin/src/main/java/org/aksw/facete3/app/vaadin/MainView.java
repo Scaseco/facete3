@@ -34,6 +34,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -43,6 +44,8 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
+import com.vaadin.flow.theme.Theme;
+import com.vaadin.flow.theme.lumo.Lumo;
 
 @Route("")
 @PWA(name = "Vaadin Application", shortName = "Vaadin App",
@@ -50,6 +53,8 @@ import com.vaadin.flow.server.PWA;
 @CssImport("./styles/shared-styles.css")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 @CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
+@JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
+@Theme(Lumo.class)
 public class MainView extends AppLayout {
 
     protected static final long serialVersionUID = 7851055480070074549L;
