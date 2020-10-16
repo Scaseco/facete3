@@ -23,7 +23,7 @@ public class Paper {
         this.corpus = corpus;
     }
 
-    public List<String> getId() {
+    public List<String> getIds() {
         return id;
     }
 

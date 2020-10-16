@@ -6,6 +6,7 @@ import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 
 public class ItemProvider extends FacetProvider<RDFNode> {
@@ -28,4 +29,5 @@ public class ItemProvider extends FacetProvider<RDFNode> {
     protected Function<? super RDFNode, ? extends Node> getNodeForLabelFunction() {
       return RDFNode::asNode;
     }
+    
 }

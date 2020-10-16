@@ -2,7 +2,6 @@ package org.aksw.facete3.app.vaadin;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -31,6 +30,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,16 +59,17 @@ public class MainView extends AppLayout {
         RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
         facete3 = new Facete3Wrapper(rdfConnection);
         LabelService labelService = new LabelService(rdfConnection);
-
+        LabelService titleService = new LabelService(rdfConnection,config.getAlternativeLabel());
+        TransformService transformService = new TransformService(config.getPrefixFile());
         FacetCountProvider facetCountProvider = new FacetCountProvider(facete3, labelService);
         FacetValueCountProvider facetValueCountProvider =
                 new FacetValueCountProvider(facete3, labelService);
-        ItemProvider itemProvider = new ItemProvider(facete3, labelService);
+        ItemProvider itemProvider = new ItemProvider(facete3,titleService);
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3);
         itemComponent = new ItemComponent(this, itemProvider);
-        resourceComponent = new ResourceComponent();
+        resourceComponent = new ResourceComponent(transformService);
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         setContent(getAppContent());
     }
@@ -83,6 +84,7 @@ public class MainView extends AppLayout {
     private Component getNaturalLanguageInterfaceComponent() {
         return new SearchComponent(this, config);
     }
+   
 
     private Component getFacete3Component() {
         SplitLayout component = new SplitLayout();
@@ -117,7 +119,9 @@ public class MainView extends AppLayout {
 
     public void viewNode(Node node) {
         RDFNode rdfNode = facete3.fetchIfResource(node);
-        resourceComponent.setNode(rdfNode);
+        if ( rdfNode != null ) 
+        {  resourceComponent.setNode(rdfNode); }
+       
     }
 
     public void viewNode(FacetValueCount facetValueCount) {
@@ -175,12 +179,17 @@ public class MainView extends AppLayout {
         constraint.deactivate();
         refreshAll();
     }
+    
+    public Config getConfig() {
+    	return this.config;
+    }
 
+    // Gets currently only one id for each paper to avoid duplicates
     private List<String> getPaperIds(NliResponse response) {
         List<Paper> papers = response.getResults();
         List<String> ids = new LinkedList<String>();
         for (Paper paper : papers) {
-            ids.addAll(paper.getId());
+            ids.add(paper.getIds().get(0));
         }
         return ids;
     }

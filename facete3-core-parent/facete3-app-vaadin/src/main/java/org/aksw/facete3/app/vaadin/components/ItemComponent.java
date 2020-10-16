@@ -1,13 +1,17 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+
 import org.aksw.facete3.app.vaadin.MainView;
 import org.aksw.facete3.app.vaadin.providers.FacetProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 
 public class ItemComponent extends VerticalLayout {
@@ -27,6 +31,13 @@ public class ItemComponent extends VerticalLayout {
         Grid<RDFNode> grid = new Grid<>(RDFNode.class);
         grid.getColumns()
                 .forEach(grid::removeColumn);
+       // grid.addColumn(new ComponentRenderer<>(item -> { 
+       // 	Anchor anchor = new Anchor();
+       // 	anchor.setText(FacetProvider.getLabel(item));
+        	//anchor.setHref(item.asResource().getProperty(linkProperty).getString());
+       // 	anchor.setHref("");
+       // 	return anchor;
+       // 	})).setSortProperty("value").setHeader(searchField);
         grid.addColumn(item -> FacetProvider.getLabel(item))
                 .setSortProperty("value")
                 .setHeader(searchField);
