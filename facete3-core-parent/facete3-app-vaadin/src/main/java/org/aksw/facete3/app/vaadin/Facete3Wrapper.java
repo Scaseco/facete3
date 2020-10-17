@@ -82,7 +82,7 @@ public class Facete3Wrapper {
         setSelectedFacet(RDF.type.asNode());
     }
 
-    private void initJena() {
+    public static void initJena() {
         JenaSystem.init();
         JenaPluginFacete3.init();
         // JenaPluginConjure.init();
