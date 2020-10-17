@@ -20,9 +20,9 @@ public class FacetCountComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -331380480912293631L;
     private FacetCountProvider dataProvider;
-    private MainView mainView;
+    private FacetedBrowserView mainView;
 
-    public FacetCountComponent(MainView mainView, FacetCountProvider dataProvider) {
+    public FacetCountComponent(FacetedBrowserView mainView, FacetCountProvider dataProvider) {
         this.dataProvider = dataProvider;
         this.mainView = mainView;
 

@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.providers;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromCollection;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromCollectionImpl;
@@ -27,6 +28,7 @@ public class SearchProviderNli
 
     public SearchProviderNli(NliConfig config) {
         super();
+        Objects.requireNonNull(config);
         this.config = config;
     }
 

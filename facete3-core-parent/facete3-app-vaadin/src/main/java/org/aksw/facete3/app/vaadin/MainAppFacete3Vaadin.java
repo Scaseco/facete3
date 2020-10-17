@@ -18,7 +18,6 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
         // probably this is due to the app running in separate
         // thread
         ConfigurableApplicationContext cxt = new SpringApplicationBuilder()
-                .sources(ConfigCord19.class)
                 .sources(MainAppFacete3Vaadin.class)
                 .run(args);
     }

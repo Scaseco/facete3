@@ -24,23 +24,23 @@ import org.apache.jena.riot.WebContent;
 public class RDFConnectionBuilder {
 
     private RDFConnection connection;
-    private Config config;
+//    private Config config;
 
     public RDFConnection getRDFConnection() {
         return connection;
     }
 
-    public RDFConnectionBuilder(Config config) {
-        this.config = config;
+    public RDFConnectionBuilder(String serviceUrl) {
+//        this.config = config;
         // connectFile();
-        connectUrl();
+        connectUrl(serviceUrl);
         connectCache();
     }
 
-    private void connectUrl() {
-        String sparqlEnpoint = config.getSparqlEnpoint();
+    private void connectUrl(String sparqlEndpoint) {
+//        String sparqlEnpoint = config.getSparqlEnpoint();
         connection = RDFConnectionRemote.create()
-                .destination(sparqlEnpoint)
+                .destination(sparqlEndpoint)
                 .acceptHeaderQuery(WebContent.contentTypeResultsXML)
                 .build();
     }

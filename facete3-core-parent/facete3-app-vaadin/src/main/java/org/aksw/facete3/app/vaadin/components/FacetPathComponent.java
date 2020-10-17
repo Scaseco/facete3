@@ -22,9 +22,9 @@ public class FacetPathComponent extends HorizontalLayout {
 
     private static final long serialVersionUID = 2507846860196682616L;
     private Facete3Wrapper facete3;
-    private MainView mainView;
+    private FacetedBrowserView mainView;
 
-    public FacetPathComponent(MainView mainView, Facete3Wrapper facete3) {
+    public FacetPathComponent(FacetedBrowserView mainView, Facete3Wrapper facete3) {
         this.facete3 = facete3;
         this.mainView = mainView;
         refresh();

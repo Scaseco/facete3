@@ -1,7 +1,6 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
-import org.aksw.facete3.app.vaadin.MainView;
 import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
@@ -11,13 +10,13 @@ import com.vaadin.flow.component.textfield.TextField;
 public class SearchComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -331380480912293631L;
-    protected MainView mainView;
+    protected FacetedBrowserView mainView;
     protected SearchProvider searchProvider;
 
-    public SearchComponent(MainView mainView, SearchProvider searchProvider) {
+    public SearchComponent(FacetedBrowserView mainView, SearchProvider searchProvider) {
         this.mainView = mainView;
         this.searchProvider = searchProvider;
-        
+
         addSearchComponent();
     }
 

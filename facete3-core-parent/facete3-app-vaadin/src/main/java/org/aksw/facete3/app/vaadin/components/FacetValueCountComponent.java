@@ -19,10 +19,10 @@ import org.apache.jena.graph.Node;
 public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
     private FacetValueCountProvider dataProvider;
-    private MainView mainView;
+    private FacetedBrowserView mainView;
     private static final long serialVersionUID = 6326933457620254296L;
 
-    public FacetValueCountComponent(MainView mainView, FacetValueCountProvider dataProvider) {
+    public FacetValueCountComponent(FacetedBrowserView mainView, FacetValueCountProvider dataProvider) {
         super(FacetValueCount.class);
         this.dataProvider = dataProvider;
         this.mainView = mainView;

@@ -22,7 +22,7 @@ public class ItemComponent extends VerticalLayout {
     private ItemProvider itemProvider;
     private static final long serialVersionUID = 1848553144669545835L;
 
-    public ItemComponent(MainView mainView, ItemProvider dataProvider) {
+    public ItemComponent(FacetedBrowserView mainView, ItemProvider dataProvider) {
         this.itemProvider = dataProvider;
 
         Button btn = new Button("Available columns");
