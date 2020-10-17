@@ -325,6 +325,34 @@ public class DataQueryImpl<T extends RDFNode>
         this.resultClass = resultClass;
     }
 
+
+
+    // FIXME Add more structure to the attributes
+//    public DataQueryImpl(SparqlQueryConnection conn, Element baseElement, List<Var> primaryKeyVars, Node superRootNode,
+//			Var defaultVar, Template template, List<DataNode> dataNodes, Long limit, Long offset, UnaryRelation filter,
+//			List<Element> directFilters, boolean ordered, boolean randomOrder, boolean sample, Random pseudoRandom,
+//			Class<T> resultClass, List<SortCondition> sortConditions, Set<Path> projectedPaths) {
+//		super();
+//		this.conn = conn;
+//		this.baseElement = baseElement;
+//		this.primaryKeyVars = primaryKeyVars;
+//		this.superRootNode = superRootNode;
+//		this.defaultVar = defaultVar;
+//		this.template = template;
+//		this.dataNodes = dataNodes;
+//		this.limit = limit;
+//		this.offset = offset;
+//		this.filter = filter;
+//		this.directFilters = directFilters;
+//		this.ordered = ordered;
+//		this.randomOrder = randomOrder;
+//		this.sample = sample;
+//		this.pseudoRandom = pseudoRandom;
+//		this.resultClass = resultClass;
+//		this.sortConditions = sortConditions;
+//		this.projectedPaths = projectedPaths;
+//	}
+
     @Override
     public SparqlQueryConnection connection() {
         return conn;

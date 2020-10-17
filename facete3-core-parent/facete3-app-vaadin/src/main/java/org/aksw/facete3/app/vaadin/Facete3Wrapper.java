@@ -19,12 +19,16 @@ import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete.v3.plugin.JenaPluginFacete3;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -81,6 +85,14 @@ public class Facete3Wrapper {
     private void initJena() {
         JenaSystem.init();
         JenaPluginFacete3.init();
+        // JenaPluginConjure.init();
+
+        BuiltinPersonalities.model.add(DataRefSparqlEndpoint.class,
+                JenaPluginUtils.createImplementation(DataRefSparqlEndpoint.class, DefaultPrefixes.prefixes));
+
+        BuiltinPersonalities.model.add(ServiceStatus.class,
+                JenaPluginUtils.createImplementation(ServiceStatus.class, DefaultPrefixes.prefixes));
+
     }
 
     private void initFacetedQuery(RDFConnection connection) {

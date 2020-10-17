@@ -321,6 +321,9 @@ public interface DataQuery<T extends RDFNode> {
      */
     Node nodeForPath(Path path);
 
+
+    <U extends RDFNode> DataQuery<U> as(Class<U> clazz);
+
 //    default Node nodeForPath(Path path) {
 //        return new NodePathletPath(path);
 //    }

@@ -119,8 +119,8 @@
 					<artifactId>vaadin-core</artifactId>
 				</exclusion>
 				<exclusion>
-				  <groupId>ch.qos.logback</groupId>
-				  <artifactId>logback-classic</artifactId>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -148,6 +148,7 @@
 		<!-- <artifactId>jackson-annotations</artifactId> -->
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
+
 
 		<dependency>
 			<groupId>org.hobbit</groupId>
@@ -243,21 +244,21 @@
 						</executions>
 					</plugin>
 					<plugin>
-					  <groupId>org.apache.maven.plugins</groupId>
-					  <artifactId>maven-war-plugin</artifactId>
-					  <version>3.2.3</version>
-					  <configuration>
-					    <failOnMissingWebXml>false</failOnMissingWebXml>
-					  </configuration>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-war-plugin</artifactId>
+						<version>3.2.3</version>
+						<configuration>
+							<failOnMissingWebXml>false</failOnMissingWebXml>
+						</configuration>
 					</plugin>
 					<plugin>
-					  <groupId>org.apache.tomcat.maven</groupId>
-					  <artifactId>tomcat7-maven-plugin</artifactId>
-					  <version>2.2</version>
-					  <configuration>
-					    <server>TomcatServer</server>
-					    <path>/facete3</path>
-					  </configuration>
+						<groupId>org.apache.tomcat.maven</groupId>
+						<artifactId>tomcat7-maven-plugin</artifactId>
+						<version>2.2</version>
+						<configuration>
+							<server>TomcatServer</server>
+							<path>/facete3</path>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>

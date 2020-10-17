@@ -15,6 +15,7 @@ import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
 import org.aksw.facete3.app.vaadin.components.ItemComponent;
 import org.aksw.facete3.app.vaadin.components.ResourceComponent;
 import org.aksw.facete3.app.vaadin.components.SearchComponent;
+import org.aksw.facete3.app.vaadin.components.SparqlEndpointForm;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
@@ -28,6 +29,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sys.JenaSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
@@ -35,6 +37,7 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -56,6 +59,12 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @Theme(Lumo.class)
 public class MainView extends AppLayout {
+
+    // Ensure Jena plugins are fully loaded before
+    // beans are passed to components
+//    static { JenaSystem.init(); }
+
+
 
     protected static final long serialVersionUID = 7851055480070074549L;
 //    protected Config config;
@@ -108,7 +117,19 @@ public class MainView extends AppLayout {
         HorizontalLayout navbarLayout = new HorizontalLayout();
         navbarLayout.setWidthFull();
         navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-        navbarLayout.add(new Button(new Icon(VaadinIcon.COG)));
+
+        Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
+        navbarLayout.add(appSettingsBtn);
+
+        Dialog dialog = new Dialog();
+        SparqlEndpointForm input = new SparqlEndpointForm();
+
+        dialog.add(input);
+
+        appSettingsBtn.addClickListener(event -> {
+            dialog.open();
+//            input.focus();
+        });
 
         addToNavbar(navbarLayout);
         setContent(getAppContent());

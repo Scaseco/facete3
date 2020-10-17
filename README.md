@@ -20,6 +20,8 @@ The project comprises the following component:
 
 ## Notable Features
 
+* RDF through and through: Most if not all state is captured in Jena RDF Models and is accessed using Java domain interfaces which hide the RDF from the application layer; a pattern for which Jena provides native support.
+* Set theoretic approach to faceted search: All sets and relations involved to realize faceted search are ultimatively expressed as SPARQL queries. An RDF extensible model serves as the basis for the specification of these sets and relations.
 * Query Rewriting over Construct Views allows filtering and sorting by facets that are not in the SPARQL endpoint
 * Query Rewriting to enable access to blank nodes of remote SPARQL endpoints. See the list of supported RDF database management systems.
 * Data Query API for declaration of retrieval of hierarchical structures from remote SPARQL endpoints; somewhat akin to a programmatic GraphQL API for RDF. 
