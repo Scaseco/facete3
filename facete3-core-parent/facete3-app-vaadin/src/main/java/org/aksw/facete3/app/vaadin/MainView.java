@@ -9,6 +9,7 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
 import org.aksw.facete3.app.vaadin.components.ConstraintsComponent;
+import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.components.FacetCountComponent;
 import org.aksw.facete3.app.vaadin.components.FacetPathComponent;
 import org.aksw.facete3.app.vaadin.components.FacetValueCountComponent;
@@ -144,6 +145,9 @@ public class MainView extends AppLayout {
     protected Component getAppContent() {
         VerticalLayout appContent = new VerticalLayout();
         appContent.add(getNaturalLanguageInterfaceComponent());
+
+
+        appContent.add(new ExplorerTabs());
         appContent.add(constraintsComponent);
 
         appContent.add(getFacete3Component());
