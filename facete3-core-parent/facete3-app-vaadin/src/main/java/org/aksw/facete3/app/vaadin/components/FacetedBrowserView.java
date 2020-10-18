@@ -8,9 +8,9 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
+import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.Config;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
@@ -19,27 +19,32 @@ import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionTransform;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.context.scope.refresh.RefreshScope;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 
 public class FacetedBrowserView
     extends VerticalLayout {
+
+    protected FacetedBrowserToolbar toolbar;
 
     protected ConstraintsComponent constraintsComponent;
     protected FacetCountComponent facetCountComponent;
@@ -58,48 +63,75 @@ public class FacetedBrowserView
     @Autowired
     protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform;
 
+    @Autowired
+    protected ConfigurableApplicationContext cxt;
+
+
+
     public FacetedBrowserView(
             RDFConnection baseDataConnection,
             SearchProvider searchProvider,
             PrefixMapping prefixMapping,
+            Facete3Wrapper facete3,
+            ItemProvider itemProvider,
             Config config) {
         this.baseDataConnection = baseDataConnection;
         this.searchProvider = searchProvider;
+        this.facete3 = facete3;
 
-        facete3 = new Facete3Wrapper(baseDataConnection);
-        LabelService labelService = new LabelService(baseDataConnection);
+        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
+                baseDataConnection,
+                RDFS.label,
+                prefixMapping);
 
-        LabelService titleService = new LabelService(baseDataConnection, config.getAlternativeLabel());
 //        TransformService transformService = new TransformService(config.getPrefixFile());
 
         FacetCountProvider facetCountProvider = new FacetCountProvider(facete3, labelService);
         FacetValueCountProvider facetValueCountProvider =
                 new FacetValueCountProvider(facete3, labelService);
-        ItemProvider itemProvider = new ItemProvider(facete3,titleService);
 
 
+        toolbar = new FacetedBrowserToolbar();
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
-        facetPathComponent = new FacetPathComponent(this, facete3);
+        facetPathComponent = new FacetPathComponent(this, facete3, labelService);
         itemComponent = new ItemComponent(this, itemProvider);
         resourceComponent = new ResourceComponent(prefixMapping);
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");
 
 
-        HorizontalLayout navbarLayout = new HorizontalLayout();
-        navbarLayout.setWidthFull();
-        navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-
-        Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
-        navbarLayout.add(appSettingsBtn);
+//        HorizontalLayout navbarLayout = new HorizontalLayout();
+//        navbarLayout.setWidthFull();
+//        navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+//
+//        Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
+//        navbarLayout.add(appSettingsBtn);
 
         Dialog dialog = new Dialog();
         SparqlEndpointForm input = new SparqlEndpointForm();
 
+        Button applyBtn = new Button("Apply");
+        input.add(applyBtn);
+        applyBtn.addClickListener(event -> {
+            String urlStr = input.getServiceUrl().getValue().getEndpoint();
+            DataRefSparqlEndpoint dataRef = cxt.getBean(DataRefSparqlEndpoint.class);
+            dataRef.setServiceUrl(urlStr);
+            System.out.println("INVOKING REFRESH on " + cxt);
+            System.out.println("Updatede dataRef " + System.identityHashCode(dataRef));
+            cxt.getBean(RefreshScope.class).refreshAll();
+
+            // TODO Now all dataProviders need to refresh
+            dialog.close();
+        });
+
+
         dialog.add(input);
 
-        appSettingsBtn.addClickListener(event -> {
+        Button configBtn = new Button(new Icon(VaadinIcon.COG));
+        toolbar.add(configBtn);
+
+        configBtn.addClickListener(event -> {
             dialog.open();
 //            input.focus();
         });
@@ -117,6 +149,8 @@ public class FacetedBrowserView
 
     protected Component getAppContent() {
         VerticalLayout appContent = new VerticalLayout();
+        appContent.add(toolbar);
+
         appContent.add(getNaturalLanguageInterfaceComponent());
 
         appContent.add(constraintsComponent);

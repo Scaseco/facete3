@@ -1,26 +1,25 @@
 package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.function.Function;
-import com.vaadin.flow.data.provider.Query;
-import org.aksw.facete.v3.api.ConstraintFacade;
-import org.aksw.facete.v3.api.FacetNode;
+
 import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.vocabulary.RDFS;
+
+import com.vaadin.flow.data.provider.Query;
 
 public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
 
     private static final long serialVersionUID = 1448114317952863859L;
 
-    public FacetValueCountProvider(Facete3Wrapper facete3, LabelService labelService) {
+    public FacetValueCountProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
         super(facete3, labelService);
     }
 

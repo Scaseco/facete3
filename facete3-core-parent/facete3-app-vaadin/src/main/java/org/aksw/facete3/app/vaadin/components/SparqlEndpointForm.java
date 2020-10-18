@@ -16,6 +16,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.RDFDataMgr;
 
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
@@ -27,6 +28,10 @@ public class SparqlEndpointForm extends FormLayout {
 //            new TextField("Last name");
 //    private ComboBox<Gender> gender =
 //            new ComboBox<>("Gender");
+
+    public ComboBox<ServiceStatus> getServiceUrl() {
+        return serviceUrl;
+    }
 
     public SparqlEndpointForm() {
 
@@ -86,6 +91,8 @@ public class SparqlEndpointForm extends FormLayout {
 //        DataRefSparqlEndpoint x;
         DataRefSparqlEndpoint bean = ModelFactory.createDefaultModel().createResource().as(DataRefSparqlEndpoint.class);
         bean.setServiceUrl("http://");
+
+
 
 //        Binder<DataRefSparqlEndpoint> binder = new Binder<>(DataRefSparqlEndpoint.class);
 //        binder.setBean(bean);

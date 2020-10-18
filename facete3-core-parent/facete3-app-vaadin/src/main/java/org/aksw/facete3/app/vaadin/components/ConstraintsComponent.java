@@ -1,8 +1,10 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.HLFacetConstraint;
+import org.aksw.facete3.app.shared.label.FaceteLabelUtils;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.facete3.app.vaadin.LabelService;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.ItemClickEvent;
@@ -13,9 +15,12 @@ public class ConstraintsComponent extends Grid<HLFacetConstraint<?>> {
     private static final long serialVersionUID = -522469945728916745L;
     private Facete3Wrapper facete3;
     private FacetedBrowserView mainView;
-    private LabelService labelService;
+    private LookupService<Node, String> labelService;
 
-    public ConstraintsComponent(FacetedBrowserView mainView, Facete3Wrapper facete3, LabelService labelService) {
+    public ConstraintsComponent(
+            FacetedBrowserView mainView,
+            Facete3Wrapper facete3,
+            LookupService<Node, String> labelService) {
 
         this.facete3 = facete3;
         this.mainView = mainView;
@@ -25,13 +30,13 @@ public class ConstraintsComponent extends Grid<HLFacetConstraint<?>> {
     }
 
     public void refresh() {
-        facete3.getFacetConstraints().forEach(i -> System.out.println(labelService.toString(i)));
+        facete3.getFacetConstraints().forEach(i -> System.out.println(FaceteLabelUtils.toString(i, labelService)));
         setItems(facete3.getFacetConstraints());
     }
 
     private void init() {
         removeAllColumns();
-        addColumn(labelService::toString);
+        addColumn(constraint -> FaceteLabelUtils.toString(constraint, labelService));
         addItemClickListener(this::deactivateConstraint);
     }
 

@@ -3,8 +3,8 @@ package org.aksw.facete3.app.vaadin.providers;
 import java.util.function.Function;
 
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.facete3.app.vaadin.LabelService;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 
@@ -14,7 +14,7 @@ public class ItemProvider extends FacetProvider<RDFNode> {
 
     private static final long serialVersionUID = 587055871703757617L;
 
-    public ItemProvider(Facete3Wrapper facete3, LabelService labelService) {
+    public ItemProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
         super(facete3, labelService);
     }
 

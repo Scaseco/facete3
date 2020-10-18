@@ -1,20 +1,27 @@
 package org.aksw.facete3.app.shared.label;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
@@ -28,6 +35,39 @@ import com.google.common.collect.Multimaps;
 import io.reactivex.rxjava3.core.Flowable;
 
 public class LabelUtils {
+
+    /**
+     * A basic lookup service for labels that maps Nodes to Strings.
+     * If there is no string for a node, the resulting map will not have an entry
+     * for that node.
+     *
+     *
+     * @param conn
+     * @param labelProperty
+     * @param prefixMapping
+     * @return
+     */
+    public static LookupService<Node, String> getLabelLookupService(
+            SparqlQueryConnection conn,
+            Property labelProperty,
+            PrefixMapping prefixMapping) {
+
+        BinaryRelation labelRelation = BinaryRelationImpl.create(labelProperty);
+        return LookupServiceUtils.createLookupService(conn, labelRelation)
+              .partition(10)
+              .cache()
+              .mapValues(LabelUtils::getLabelFromLookup);
+    }
+
+    public static String getLabelFromLookup(Node node, List<Node> results) {
+        Node labelNode = !results.isEmpty()
+                ? results.get(0)
+                : node;
+
+        String  label = deriveLabelFromNode(labelNode, null, null);
+
+        return label;
+    }
 
     /**
      * A method similar to {@link NodeFmtLib#displayStr(Node)} however it
@@ -60,10 +100,12 @@ public class LabelUtils {
      * @param labelService
      * @param prefixes
      */
-    public static <T extends RDFNode> void enrichWithLabels(
-            Collection<T> cs,
-            LookupService<T, String> labelService) {
-        Map<T, String> labelMap = labelService.fetchMap(cs);
+    public static <T extends RDFNode, C extends Iterable<T>> C enrichWithLabels(
+            C cs,
+            Function<? super T, ? extends Node> nodeToLabel,
+            LookupService<Node, String> labelService) {
+        Map<T, String> labelMap = getLabels(cs, nodeToLabel, labelService);
+        // Map<T, String> labelMap = labelService.fetchMap(cs);
 
         for (Entry<T, String> e : labelMap.entrySet()) {
             RDFNode rdfNode = e.getKey();
@@ -73,6 +115,8 @@ public class LabelUtils {
                 ResourceUtils.setLiteralProperty(k, RDFS.label, label);
             }
         }
+
+        return cs;
     }
 
 
@@ -149,10 +193,11 @@ public class LabelUtils {
 
 
     /**
-     * Note: Returning the longest prefix is concern of the prefix map implementation.
-     * So this method was the wrong place to add this behavior
+     * Formats a node to a generally non-parseable string w.r.t. a given prefix mapping.
+     * For example, escaping of double quotes for literals is lost in the output
      *
-     * Formats a node to a (parseable) string w.r.t. a given prefix mapping.
+     * TODO Turn into a class; add option to show/hide language; show/hide quotes; use lexical form or Object.toString; etc
+     *
      * This method is similar to {@link NodeFmtLib#str(Node)} however it always
      * picks the longest prefix for the datatype IRI.
      *
@@ -160,29 +205,38 @@ public class LabelUtils {
      * @param prefixMapping
      * @return
      */
-//    public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
-//        String result;
-//        if(node.isLiteral()) {
-//            String dtIri = node.getLiteralDatatypeURI();
-//            String dtPart = null;
-//            if(dtIri != null) {
-//                Entry<String, String> prefixToIri = prefixMapping == null
-//                    ? null
-//                    : PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
-//
-//                dtPart = prefixToIri != null
-//                    ? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
-//                    : "<" + dtIri + ">";
-//            }
-//
-//            result = "\"" + node.getLiteralLexicalForm() + "\""
-//                    + (dtPart == null ? "" : "^^" + dtPart);
-//        } else {
-//            result = Objects.toString(node);
-//        }
-//
-//        return result;
-//    }
+    public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
+        String result;
+        if(node.isLiteral()) {
+            Object obj = node.getLiteralValue();
+            String baseStr = Objects.toString(obj);
+
+            String dtIri = node.getLiteralDatatypeURI();
+            String dtPart = null;
+
+            // Hide string / langString datatypes
+            boolean showDatatype = dtIri != null && !(obj instanceof String);
+
+            if(showDatatype) {
+                Entry<String, String> prefixToIri = prefixMapping == null
+                    ? null
+                    : PrefixUtils.findLongestPrefix(prefixMapping, dtIri);
+
+                dtPart = prefixToIri != null
+                    ? prefixToIri.getKey() + ":" + dtIri.substring(prefixToIri.getValue().length())
+                    : "<" + dtIri + ">";
+            }
+
+            result = showDatatype
+                    ? "\"" + baseStr + "\"" + (dtPart == null ? "" : "^^" + dtPart)
+                    : baseStr;
+
+        } else {
+            result = Objects.toString(node);
+        }
+
+        return result;
+    }
 
 
     public static <T> LookupService<T, String> createLookupServiceForLabels(
@@ -195,18 +249,85 @@ public class LabelUtils {
     }
 
 
+    public static String getOrDeriveLabel(RDFNode rdfNode) {
+        return getOrDeriveLabel(rdfNode, RDFS.label, null, null);
+    }
+
+
+    /**
+     * Attempt to read the label from given property. If this does not yield a label
+     * fall back to deriving a label from the given node itself.
+     *
+     * @param rdfNode
+     * @param labelProperty
+     * @param iriPrefixes
+     * @param literalPrefixes
+     * @return
+     */
+    public static String getOrDeriveLabel(
+            RDFNode rdfNode,
+            Property labelProperty,
+            PrefixMapping iriPrefixes,
+            PrefixMapping literalPrefixes) {
+
+        RDFNode tmp = rdfNode.isResource()
+                ? ResourceUtils.getPropertyValue(rdfNode.asResource(), labelProperty)
+                : null;
+
+        Node labelNode = tmp != null
+                ? tmp.asNode()
+                : rdfNode.asNode();
+
+        String result = deriveLabelFromNode(labelNode, iriPrefixes, literalPrefixes);
+
+        return result;
+    }
+
+
     public static String deriveLabelFromNode(Node node, PrefixMapping iriPrefixes, PrefixMapping literalPrefixes) {
         String result = node == null || NodeUtils.nullUriNode.equals(node)
             ? "(null)"
             : node.isURI()
                 ? deriveLabelFromIri(node.getURI(), iriPrefixes)
-                : NodeFmtLib.str(node, new PrefixMapAdapter(literalPrefixes));
+                : formatLiteralNode(node, literalPrefixes);
 
         return result;
     }
 
+
+    /**
+     * Fetch labels for the given objects (e.g. RDFNodes) by performing
+     * lookups with the corresponding Node objects.
+     *
+     *
+     * @param <T>
+     * @param cs
+     * @param nodeFunction
+     * @param labelService
+     * @return
+     */
     public static <T> Map<T, String> getLabels(
-            Iterable<T> cs, Function<? super T, ? extends Node> nodeFunction,
+            Iterable<T> cs,
+            Function<? super T, ? extends Node> nodeFunction,
+            LookupService<Node, String> labelService) {
+        return getLabels(cs, nodeFunction, labelService, null, null);
+    }
+
+    /**
+     * A variant of getLabels where in cases where no label could be obtained
+     * one is derived w.r.t. given prefixes.
+     *
+     * @param <T>
+     * @param cs
+     * @param nodeFunction
+     * @param labelService
+     * @param iriPrefixes
+     * @param literalPrefixes
+     * @return
+     */
+    public static <T> Map<T, String> getLabels(
+            Iterable<T> cs,
+            Function<? super T, ? extends Node> nodeFunction,
             LookupService<Node, String> labelService,
             PrefixMapping iriPrefixes,
             PrefixMapping literalPrefixes) {

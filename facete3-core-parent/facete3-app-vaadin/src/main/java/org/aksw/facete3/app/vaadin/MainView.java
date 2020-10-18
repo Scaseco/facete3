@@ -51,16 +51,16 @@ public class MainView extends AppLayout {
 
         Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
         navbarLayout.add(appSettingsBtn);
-
-        Dialog dialog = new Dialog();
-        SparqlEndpointForm input = new SparqlEndpointForm();
-
-        dialog.add(input);
-
-        appSettingsBtn.addClickListener(event -> {
-            dialog.open();
-//            input.focus();
-        });
+//
+//        Dialog dialog = new Dialog();
+//        SparqlEndpointForm input = new SparqlEndpointForm();
+//
+//        dialog.add(input);
+//
+//        appSettingsBtn.addClickListener(event -> {
+//            dialog.open();
+////            input.focus();
+//        });
 
         addToNavbar(navbarLayout);
         setContent(getAppContent(config));

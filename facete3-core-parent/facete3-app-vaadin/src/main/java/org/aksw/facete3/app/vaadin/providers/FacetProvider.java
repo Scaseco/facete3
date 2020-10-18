@@ -1,31 +1,32 @@
 package org.aksw.facete3.app.vaadin.providers;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.aksw.facete3.app.shared.label.LabelUtils;
+import org.aksw.facete3.app.vaadin.Facete3Wrapper;
+import org.aksw.jena_sparql_api.data_query.api.DataQuery;
+import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.pathlet.Path;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.RDFNode;
+
+import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
-import org.aksw.facete3.app.vaadin.LabelService;
-import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.jena_sparql_api.data_query.api.DataQuery;
-import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
-import org.aksw.jena_sparql_api.pathlet.Path;
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.RDFNode;
 
 public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDataProvider<T, Void>
         implements ConfigurableFilterDataProvider<T, Void, String> {
 
     private static final long serialVersionUID = 1L;
-    private LabelService labelService;
+    private LookupService<Node, String> labelService;
     protected final Facete3Wrapper facete3;
-    private Function<? super T, ? extends Node> nodeForLabelFunction;
     private String filter;
 
     @Override
@@ -46,14 +47,19 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         return facete3;
     }
 
-    public FacetProvider(Facete3Wrapper facete3, LabelService labelService) {
+    public FacetProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
         this.facete3 = facete3;
         this.labelService = labelService;
-        nodeForLabelFunction = getNodeForLabelFunction();
     }
 
     protected abstract DataQuery<T> translateQuery(Query<T, Void> query);
 
+    /**
+     * Labels of an RDFNode item may be indirectly related to it.
+     * For example, one may wish to use FacetNode::getPredicate as the label for a FacetNode object
+     *
+     * @return
+     */
     protected abstract Function<? super T, ? extends Node> getNodeForLabelFunction();
 
     @Override
@@ -63,7 +69,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
                 .timeout(60, TimeUnit.SECONDS)
                 .blockingGet()
                 .getCount();
-        int countAsInt = (int) Math.min(count, Integer.MAX_VALUE);
+        int countAsInt = Ints.saturatedCast(count);
         return countAsInt;
     }
 
@@ -88,11 +94,14 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
 
             dataQuery.addOrderBy(new NodePathletPath(path), sortDir);
         }
+
+        Function<? super T, ? extends Node> nodeToLabel = getNodeForLabelFunction();
+
         List<T> list = dataQuery.limit(limit)
                 .offset(query.getOffset())
                 .exec()
                 .toList()
-                .doOnSuccess(item -> labelService.enrichWithLabels(item, nodeForLabelFunction))
+                .doOnSuccess(items -> LabelUtils.enrichWithLabels(items, nodeToLabel, labelService))
                 .blockingGet();
         Stream<T> stream = list.stream();
         return stream;
@@ -103,13 +112,13 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         return false;
     }
 
-    public static String getLabel(RDFNode node) {
-        return LabelService.getLabel(node);
-    }
-    
+//    public static String getLabel(RDFNode node) {
+//        return LabelService.getLabel(node);
+//    }
 
-    public static <T> Map<T, String> getLabels(Collection<T> rdfNodes,
-            Function<? super T, ? extends Node> defineNodeForLabelFunction) {
-        return LabelService.getLabels(rdfNodes, defineNodeForLabelFunction);
-    }
+
+//    public static <T> Map<T, String> getLabels(Collection<T> rdfNodes,
+//            Function<? super T, ? extends Node> defineNodeForLabelFunction) {
+//        return LabelService.getLabels(rdfNodes, defineNodeForLabelFunction);
+//    }
 }

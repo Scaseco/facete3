@@ -19,6 +19,16 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 
 
+/**
+ * A tabs component with a 'New tab' button and a configurable action.
+ *
+ * This class uses an experimental setup where {@link ManagedComponent} is used
+ * instead of {@link Component}. The difference is, that the former
+ * allows for owning its own spring context which is destroyed when .close() is called.
+ *
+ * @author raven
+ *
+ */
 public class ExplorerTabs
     extends Div
 {

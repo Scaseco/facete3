@@ -2,8 +2,7 @@ package org.aksw.facete3.app.vaadin.components;
 
 import java.util.List;
 
-import org.aksw.facete3.app.vaadin.MainView;
-import org.aksw.facete3.app.vaadin.providers.FacetProvider;
+import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
@@ -66,7 +65,10 @@ public class ItemComponent extends VerticalLayout {
        // 	anchor.setHref("");
        // 	return anchor;
        // 	})).setSortProperty("value").setHeader(searchField);
-        grid.addColumn(item -> FacetProvider.getLabel(item))
+        grid.addColumn(
+                // item -> FacetProvider.getLabel(item)
+                item -> LabelUtils.getOrDeriveLabel(item)
+                )
                 .setSortProperty("value")
                 .setHeader(searchField);
         grid.setDataProvider(dataProvider);

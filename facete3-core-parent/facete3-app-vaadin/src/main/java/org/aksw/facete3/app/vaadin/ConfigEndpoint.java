@@ -1,19 +1,40 @@
 package org.aksw.facete3.app.vaadin;
 
+import org.aksw.facete3.app.vaadin.ConfigCord19.RefreshHandler;
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 
+//@ImportAutoConfiguration(RefreshAutoConfiguration.class)
 public class ConfigEndpoint {
+
+    @Bean
+    @Autowired
+    public RefreshHandler refreshHandler () {
+        return new ConfigCord19.RefreshHandler();
+    }
+
+
+    @Bean
+    public CustomScopeConfigurer servletCustomScopeConfigurer(org.springframework.cloud.context.scope.refresh.RefreshScope refreshScope) {
+        CustomScopeConfigurer customScopeConfigurer = new CustomScopeConfigurer();
+        customScopeConfigurer.addScope("refresh", refreshScope);
+        return customScopeConfigurer;
+    }
+
 
     @ConfigurationProperties("facete3")
     public static class EndpointConfig {
@@ -41,7 +62,7 @@ public class ConfigEndpoint {
             .setServiceUrl(cfg.getSparqlEndpoint());
     }
 
-//    @RefreshScope
+    @RefreshScope
     @Bean(destroyMethod = "close")
     @Autowired
     public RDFConnection getConnection(DataRefSparqlEndpoint dataRef) {
@@ -72,15 +93,15 @@ public class ConfigEndpoint {
     }
 
 
-//    @Bean
-//    @Autowired
-//    public Runnable test(RDFConnection conn) {
+    @Bean
+    @Autowired
+    public Runnable testConn(RDFConnection conn) {
 //        System.out.println("Creating runnable from connection " + conn);
-//
-//        return () -> {
-//            try (QueryExecution qe = conn.query("SELECT (COUNT(*) AS ?c) { ?s a ?o }")) {
-//                System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-//            }
-//        };
-//    }
+
+        return () -> {
+            try (QueryExecution qe = conn.query("SELECT (COUNT(*) AS ?c) { ?s a ?o }")) {
+                System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+            }
+        };
+    }
 }

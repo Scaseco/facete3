@@ -1,20 +1,14 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete3.app.shared.label.LabelUtils;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.data.renderer.NativeButtonRenderer;
-import com.vaadin.flow.data.selection.MultiSelectionEvent;
-import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete3.app.vaadin.MainView;
-import org.aksw.facete3.app.vaadin.providers.FacetProvider;
-import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.apache.jena.graph.Node;
 
 public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
@@ -56,7 +50,7 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
             .setResizable(true);
 
 
-        Column<FacetValueCount> facetValueColumn = addColumn(FacetProvider::getLabel).setSortProperty("value")
+        Column<FacetValueCount> facetValueColumn = addColumn(LabelUtils::getOrDeriveLabel).setSortProperty("value")
                 .setHeader("Facet Value")
                 //.setHeader(getSearchField())
                 .setResizable(true);

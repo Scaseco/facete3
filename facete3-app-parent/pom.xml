@@ -16,6 +16,7 @@
 	<modules>
 		<module>facete3-app-shared</module>
 		<module>facete3-app-terminal</module>
+		<module>facete3-debian-app-terminal</module>
 		<!-- <module>facete3-app-vaadin</module> -->
 	</modules>
 

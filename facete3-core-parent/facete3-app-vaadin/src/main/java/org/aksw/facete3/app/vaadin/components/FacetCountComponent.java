@@ -1,7 +1,12 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import com.vaadin.flow.component.Component;
+import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete3.app.shared.label.LabelUtils;
+import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
+import org.apache.jena.graph.Node;
+
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.HeaderRow;
@@ -9,12 +14,6 @@ import com.vaadin.flow.component.grid.ItemDoubleClickEvent;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete3.app.vaadin.MainView;
-import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.facete3.app.vaadin.providers.FacetProvider;
-import org.apache.jena.graph.Node;
-import org.apache.jena.vocabulary.RDF;
 
 public class FacetCountComponent extends VerticalLayout {
 
@@ -35,7 +34,7 @@ public class FacetCountComponent extends VerticalLayout {
 
         grid.setDataProvider(dataProvider);
         grid.removeAllColumns();
-        Column<FacetCount> facetColumn = grid.addColumn(item -> FacetProvider.getLabel(item))
+        Column<FacetCount> facetColumn = grid.addColumn(item -> LabelUtils.getOrDeriveLabel(item))
                 .setSortProperty("")
                 .setHeader("Facet")
 //                .setHeader(getSearchComponent())
