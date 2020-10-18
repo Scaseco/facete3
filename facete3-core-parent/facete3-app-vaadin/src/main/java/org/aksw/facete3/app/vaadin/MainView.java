@@ -41,6 +41,10 @@ public class MainView extends AppLayout {
 
     @Autowired
     public MainView(Config config) {
+//        VaadinSession.getCurrent().setErrorHandler(eh -> {
+//            Notification.show(ExceptionUtils.getRootCauseMessage(eh.getThrowable()));
+//        });
+
         Facete3Wrapper.initJena();
 
         HorizontalLayout navbarLayout = new HorizontalLayout();
@@ -68,7 +72,8 @@ public class MainView extends AppLayout {
         ComponentPlugin plugin = ComponentPlugin.createWithDefaultBase(
                 appBuilder -> appBuilder
                 .parent(config.context)
-                .sources(ConfigCord19.class));
+                .sources(ConfigRefresh.class)
+                .sources(ConfigFacetedBrowserViewCord.class));
 
         VerticalLayout appContent = new VerticalLayout();
         ExplorerTabs tabs = new ExplorerTabs(plugin::newComponent);

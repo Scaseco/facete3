@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
+import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 
@@ -71,7 +72,7 @@ public class ItemComponent extends VerticalLayout {
                 )
                 .setSortProperty("value")
                 .setHeader(searchField);
-        grid.setDataProvider(dataProvider);
+        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
                     Node node = event.getValue().asNode();

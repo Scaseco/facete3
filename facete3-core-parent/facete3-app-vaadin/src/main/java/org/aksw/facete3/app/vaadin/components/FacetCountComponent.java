@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.components;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
+import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
@@ -32,7 +33,7 @@ public class FacetCountComponent extends VerticalLayout {
         Grid<FacetCount> grid = new Grid<>(FacetCount.class);
         grid.getClassNames().add("compact");
 
-        grid.setDataProvider(dataProvider);
+        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
         grid.removeAllColumns();
         Column<FacetCount> facetColumn = grid.addColumn(item -> LabelUtils.getOrDeriveLabel(item))
                 .setSortProperty("")

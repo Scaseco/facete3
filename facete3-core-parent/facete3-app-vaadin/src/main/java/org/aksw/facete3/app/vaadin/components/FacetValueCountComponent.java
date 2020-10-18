@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.components;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
@@ -29,7 +30,7 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
     private void init() {
 
-        setDataProvider(dataProvider);
+        setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
 
         getClassNames().add("compact");
         removeAllColumns();

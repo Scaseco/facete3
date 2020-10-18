@@ -15,9 +15,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
-@Import(ConfigRefresh.class)
+/**
+ * A configuration that features beans for configuring a connection to a SPARQL endpoint as
+ * well as the connection itself.
+ * The configuration makes use of the @{@link RefreshScope} annotation to enable refreshing the connection on
+ * configuration change.
+ * If a context is properly setup then a refresh can be triggered manually
+ * using {@code cxt.getBean(RefreshScope.class).refreshAll()}.
+ *
+ * @author raven
+ *
+ */
 public class ConfigEndpoint {
 
 
@@ -87,8 +96,8 @@ public class ConfigEndpoint {
     }
 
 
-    @Bean
-    @Autowired
+//    @Bean
+//    @Autowired
     public Runnable testConn(RDFConnection conn) {
 //        System.out.println("Creating runnable from connection " + conn);
 
