@@ -2,12 +2,15 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
+import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEvent;
 import org.springframework.context.ApplicationEvent;
@@ -16,8 +19,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.event.EventListener;
 
-@Import({ConfigEndpoint.class})
+@Import(ConfigEndpoint.class)
 public class ConfigCord19 {
+
+    @Bean
+    @Autowired
+    public RefreshHandler refreshHandler () {
+        return new RefreshHandler();
+    }
 
     @Bean
     @Autowired
@@ -42,13 +51,16 @@ public class ConfigCord19 {
     public static class RefreshHandler
         implements ApplicationListener<RefreshScopeRefreshedEvent>
     {
-        @Autowired
-        protected ItemProvider itemProvider;
+        @Autowired protected ItemProvider itemProvider;
+        @Autowired protected FacetCountProvider facetCountProvider;
+        @Autowired protected FacetCountProvider facetValueCountProvider;
 
         @Override
         public void onApplicationEvent(RefreshScopeRefreshedEvent event) {
             System.out.println("GOT REFRESH EVENT");
             itemProvider.refreshAll();
+            facetCountProvider.refreshAll();
+            facetValueCountProvider.refreshAll();
         }
 
         //
@@ -71,13 +83,44 @@ public class ConfigCord19 {
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             Config config) {
-        //LabelService titleService = new LabelService(baseDataConnection, config.getAlternativeLabel());
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
                 baseDataConnection,
                 config.getAlternativeLabel(),
                 prefixMapping);
 
         return new ItemProvider(facetedQueryConf, labelService);
+    }
+
+    @Bean
+    @Autowired
+    public FacetCountProvider facetCountProvider(
+            RDFConnection baseDataConnection,
+            PrefixMapping prefixMapping,
+            Facete3Wrapper facetedQueryConf,
+            Config config) {
+
+        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
+                baseDataConnection,
+                RDFS.label,
+                prefixMapping);
+
+        return new FacetCountProvider(facetedQueryConf, labelService);
+    }
+
+    @Bean
+    @Autowired
+    public FacetValueCountProvider facetValueCountProvider(
+            RDFConnection baseDataConnection,
+            PrefixMapping prefixMapping,
+            Facete3Wrapper facetedQueryConf,
+            Config config) {
+
+        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
+                baseDataConnection,
+                RDFS.label,
+                prefixMapping);
+
+        return new FacetValueCountProvider(facetedQueryConf, labelService);
     }
 
 
@@ -88,6 +131,8 @@ public class ConfigCord19 {
             SearchProvider searchProvider,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
+            FacetCountProvider facetCountProvider,
+            FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
             Config config
     ) {
@@ -96,6 +141,8 @@ public class ConfigCord19 {
                 searchProvider,
                 prefixMapping,
                 facetedQueryConf,
+                facetCountProvider,
+                facetValueCountProvider,
                 itemProvider,
                 config);
     }

@@ -1,8 +1,11 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
@@ -22,6 +25,8 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionTransform;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -30,6 +35,7 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import com.vaadin.flow.component.Component;
@@ -73,6 +79,8 @@ public class FacetedBrowserView
             SearchProvider searchProvider,
             PrefixMapping prefixMapping,
             Facete3Wrapper facete3,
+            FacetCountProvider facetCountProvider,
+            FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
             Config config) {
         this.baseDataConnection = baseDataConnection;
@@ -85,10 +93,6 @@ public class FacetedBrowserView
                 prefixMapping);
 
 //        TransformService transformService = new TransformService(config.getPrefixFile());
-
-        FacetCountProvider facetCountProvider = new FacetCountProvider(facete3, labelService);
-        FacetValueCountProvider facetValueCountProvider =
-                new FacetValueCountProvider(facete3, labelService);
 
 
         toolbar = new FacetedBrowserToolbar();
@@ -117,9 +121,13 @@ public class FacetedBrowserView
             String urlStr = input.getServiceUrl().getValue().getEndpoint();
             DataRefSparqlEndpoint dataRef = cxt.getBean(DataRefSparqlEndpoint.class);
             dataRef.setServiceUrl(urlStr);
-            System.out.println("INVOKING REFRESH on " + cxt);
-            System.out.println("Updatede dataRef " + System.identityHashCode(dataRef));
-            cxt.getBean(RefreshScope.class).refreshAll();
+            System.out.println("INVOKING REFRESH");
+            System.out.println("Given cxt:\n" + toString(cxt));
+//            System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
+            RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
+
+            System.out.println("Refresh cxt:\n" + toString(ClassUtils.<ApplicationContext>forceGet(refreshScope, "context")));
+            refreshScope.refreshAll();
 
             // TODO Now all dataProviders need to refresh
             dialog.close();
@@ -140,6 +148,21 @@ public class FacetedBrowserView
         add(getAppContent());
     }
 
+
+    public static String toString(ApplicationContext cxt) {
+        Iterable<ApplicationContext> ancestors = Traverser.<ApplicationContext>forTree(c ->
+            c.getParent() == null
+                ? Collections.emptyList()
+                : Collections.singletonList(c.getParent()))
+        .depthFirstPreOrder(cxt);
+
+        String result = Streams
+            .stream(ancestors)
+            .map(Object::toString)
+            .collect(Collectors.joining("\n"));
+
+        return result;
+    }
 
     // Auto-wiring happens after object construction
     // So in order to access auto-wired properties we need to use this post-construct init method
