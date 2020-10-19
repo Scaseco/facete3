@@ -49,7 +49,7 @@ public class ExplorerTabs
         Map<Tab, ManagedComponent> tabsToPages = new HashMap<>();
         Div pages = new Div();
 
-        // Initial tab
+        // Initial tab - needed because the new tab button must not be the active tab
         {
             Tab tab = new Tab("init");
             // Component page = new VerticalLayout();

@@ -17,6 +17,7 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
+import org.aksw.jena_sparql_api.utils.model.PrefixMapAdapter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;

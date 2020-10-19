@@ -36,6 +36,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
 
@@ -91,7 +92,7 @@ public class Facete3Wrapper {
                 JenaPluginUtils.createImplementation(DataRefSparqlEndpoint.class, DefaultPrefixes.prefixes));
 
         BuiltinPersonalities.model.add(ServiceStatus.class,
-                JenaPluginUtils.createImplementation(ServiceStatus.class, DefaultPrefixes.prefixes));
+                JenaPluginUtils.createImplementation(ServiceStatus.class, PrefixMapping.Standard));
 
     }
 

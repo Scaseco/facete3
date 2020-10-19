@@ -73,17 +73,10 @@ public class ConfigFacetedBrowserView {
 
         @Override
         public void onApplicationEvent(RefreshScopeRefreshedEvent event) {
-            System.out.println("GOT REFRESH EVENT");
             itemProvider.refreshAll();
             facetCountProvider.refreshAll();
             facetValueCountProvider.refreshAll();
         }
-
-        //
-//      @EventListener
-//      public void handleRefreshScopeRefreshedEvent(RefreshScopeRefreshedEvent ev) {
-//      }
-
     }
 
     @EventListener

@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
@@ -113,28 +112,41 @@ public class FacetedBrowserView
 //        navbarLayout.add(appSettingsBtn);
 
         Dialog dialog = new Dialog();
-        SparqlEndpointForm input = new SparqlEndpointForm();
+        dialog.setWidth("50em");
 
+        VerticalLayout layout = new VerticalLayout();
+        layout.setWidthFull();
+
+        SparqlEndpointForm input = new SparqlEndpointForm();
+        input.setWidthFull();
+
+        layout.add(input);
         Button applyBtn = new Button("Apply");
-        input.add(applyBtn);
+        layout.add(applyBtn);
         applyBtn.addClickListener(event -> {
             String urlStr = input.getServiceUrl().getValue().getEndpoint();
             DataRefSparqlEndpoint dataRef = cxt.getBean(DataRefSparqlEndpoint.class);
             dataRef.setServiceUrl(urlStr);
-            System.out.println("INVOKING REFRESH");
-            System.out.println("Given cxt:\n" + toString(cxt));
+//            System.out.println("INVOKING REFRESH");
+//            System.out.println("Given cxt:\n" + toString(cxt));
 //            System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
-            RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
-
-            System.out.println("Refresh cxt:\n" + toString(ClassUtils.<ApplicationContext>forceGet(refreshScope, "context")));
-            refreshScope.refreshAll();
+            refreshAllNew();
 
             // TODO Now all dataProviders need to refresh
             dialog.close();
         });
 
 
-        dialog.add(input);
+        dialog.add(layout);
+
+
+        Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
+        refreshBtn.getElement().setProperty("title", "Refresh all data providers assigned to this view");
+        refreshBtn.addClickListener(event -> {
+            refreshAllNew();
+        });
+        toolbar.add(refreshBtn);
+
 
         Button configBtn = new Button(new Icon(VaadinIcon.COG));
         toolbar.add(configBtn);
@@ -162,6 +174,11 @@ public class FacetedBrowserView
             .collect(Collectors.joining("\n"));
 
         return result;
+    }
+
+    public void refreshAllNew() {
+        RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
+        refreshScope.refreshAll();
     }
 
     // Auto-wiring happens after object construction
@@ -307,11 +324,12 @@ public class FacetedBrowserView
     }
 
     protected void refreshAll() {
-        facetCountComponent.refresh();
-        facetValueCountComponent.refresh();
-        itemComponent.refresh();
-        resourceComponent.refesh();
-        constraintsComponent.refresh();
+        refreshAllNew();
+//        facetCountComponent.refresh();
+//        facetValueCountComponent.refresh();
+//        itemComponent.refresh();
+//        resourceComponent.refesh();
+//        constraintsComponent.refresh();
     }
 
 }

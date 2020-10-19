@@ -9,6 +9,7 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -53,6 +54,19 @@ public class MainView extends AppLayout {
 
         Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
         navbarLayout.add(appSettingsBtn);
+
+//        Span item = new Span();
+//        Span icon = new Span();
+//        icon.addClassName("color-swatch");
+//        icon.getStyle().set("background-color", "var(--lumo-success-text-color)");
+//
+//        icon.setText("");
+//        item.add(icon);
+//        item.add("online");
+//        //item.add(new Span("online"));
+//
+////        icon.getStyle().set("background-color", "var(--lumo-success-text-color)");
+//        navbarLayout.add(item);
 //
 //        Dialog dialog = new Dialog();
 //        SparqlEndpointForm input = new SparqlEndpointForm();
