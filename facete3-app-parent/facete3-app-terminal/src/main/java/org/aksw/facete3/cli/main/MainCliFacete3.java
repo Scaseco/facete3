@@ -329,7 +329,8 @@ public class MainCliFacete3 {
 
 
                 LabelUtils.enrichWithLabels(toEnrich,
-                        LabelUtils.createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
+                        RDFNode::asNode,
+                        LabelUtils.createLookupServiceForLabels(labelService, iriPrefixes, literalPrefixes));
 
 
                 // TODO Fetch all nodes and resolve their labels
@@ -623,8 +624,9 @@ public class MainCliFacete3 {
                 .limit(itemsPerPage)
                 .exec().toList().blockingGet();
 
-        LabelUtils.<RDFNode>enrichWithLabels(items,
-                LabelUtils.createLookupServiceForLabels(RDFNode::asNode, labelService, iriPrefixes, literalPrefixes));
+        LabelUtils.enrichWithLabels(items,
+                RDFNode::asNode,
+                LabelUtils.createLookupServiceForLabels(labelService, iriPrefixes, literalPrefixes));
 
 
 //		Map<Node, String> labelMap = getLabels(nodes, Function.identity(), labelService);
@@ -832,7 +834,8 @@ public class MainCliFacete3 {
             //System.out.println("Got facet values:\n" + fvcs.stream().map(x -> x.getValue()).collect(Collectors.toList()));
 
             LabelUtils.enrichWithLabels(fvcs,
-                    LabelUtils.createLookupServiceForLabels(FacetValueCount::getValue, labelService, iriPrefixes, literalPrefixes));
+                    FacetValueCount::getValue,
+                    LabelUtils.createLookupServiceForLabels(labelService, iriPrefixes, literalPrefixes));
 
             facetValueList.clearItems();
             for(FacetValueCount item : fvcs) {
@@ -914,7 +917,8 @@ public class MainCliFacete3 {
                     .toList()
                     // TODO This is still not idiomatic / we want to have a flow where we can cancel lable lookup
                     .doOnSuccess(list -> LabelUtils.enrichWithLabels(list,
-                            LabelUtils.createLookupServiceForLabels(FacetCount::getPredicate, labelService, iriPrefixes, literalPrefixes)))
+                            FacetCount::getPredicate,
+                            LabelUtils.createLookupServiceForLabels(labelService, iriPrefixes, literalPrefixes)))
                     .blockingGet();
             //enrichWithLabels(fcs, FacetCount::getPredicate, labelService);
 

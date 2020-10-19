@@ -239,13 +239,33 @@ public class LabelUtils {
     }
 
 
-    public static <T> LookupService<T, String> createLookupServiceForLabels(
-            Function<? super T, ? extends Node> nodeFunction,
+//    public static <T> LookupService<T, String> createLookupServiceForLabels(
+//            Function<? super T, ? extends Node> nodeFunction,
+//            LookupService<Node, String> labelService,
+//            PrefixMapping iriPrefixes,
+//            PrefixMapping literalPrefixes
+//    ) {
+//        return cs -> Flowable.fromIterable(getLabels(cs, nodeFunction, labelService, iriPrefixes, literalPrefixes).entrySet());
+//    }
+
+    /**
+     * Wrap a lookup service such that for every node for which no label could be obtained one
+     * is derived from the node itself.
+     *
+     * @param labelService
+     * @param iriPrefixes
+     * @param literalPrefixes
+     * @return
+     */
+    public static LookupService<Node, String> createLookupServiceForLabels(
             LookupService<Node, String> labelService,
             PrefixMapping iriPrefixes,
             PrefixMapping literalPrefixes
     ) {
-        return cs -> Flowable.fromIterable(getLabels(cs, nodeFunction, labelService, iriPrefixes, literalPrefixes).entrySet());
+        return cs -> Flowable.fromIterable(getLabels(
+                    cs, Function.identity(), labelService,
+                    iriPrefixes, literalPrefixes
+                ).entrySet());
     }
 
 
