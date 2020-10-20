@@ -110,6 +110,7 @@ public class ResourceComponent extends VerticalLayout {
                 Anchor anchor = new Anchor();
                 anchor.setText(toDisplayString(p));
                 anchor.setHref(row.getPredicate().getURI());
+                anchor.setTarget("_blank");
                 r = anchor;
             } else {
                 r = new Span("");
@@ -124,6 +125,7 @@ public class ResourceComponent extends VerticalLayout {
                 anchor.setText(displayStr);
                     anchor.setText(toDisplayString(row.getObject()));
                     anchor.setHref(row.getObject().toString());
+                    anchor.setTarget("_blank");
                 r = anchor;
             }
             else {

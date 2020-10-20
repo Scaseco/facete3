@@ -10,10 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 @ConfigurationProperties("facete3")
-@Import({ConfigNli.class})
+// @Import({ConfigNli.class})
 public class Config {
 
     protected Property alternativeLabelProperty;

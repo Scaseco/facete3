@@ -50,20 +50,6 @@ public class ConfigFacetedBrowserView {
         return new Facete3Wrapper(baseDataConnection);
     }
 
-
-
-    @Bean
-    @Autowired
-    public ApplicationListener<ApplicationEvent> genericListener () {
-        return new ApplicationListener<ApplicationEvent>() {
-            @Override
-            public void onApplicationEvent(ApplicationEvent event) {
-                System.out.println("SAW EVENT: " + event);
-            }
-        };
-    }
-
-
     public static class RefreshHandler
         implements ApplicationListener<RefreshScopeRefreshedEvent>
     {
@@ -79,10 +65,6 @@ public class ConfigFacetedBrowserView {
         }
     }
 
-    @EventListener
-    public void handleRefreshScopeRefreshedEvent(RefreshScopeRefreshedEvent ev) {
-        System.out.println("THIS REFRESH WORKED");
-    }
 
 
     @Bean
@@ -158,3 +140,21 @@ public class ConfigFacetedBrowserView {
 
 
 }
+
+
+//@Bean
+//@Autowired
+//public ApplicationListener<ApplicationEvent> genericListener () {
+//  return new ApplicationListener<ApplicationEvent>() {
+//      @Override
+//      public void onApplicationEvent(ApplicationEvent event) {
+//          System.out.println("SAW EVENT: " + event);
+//      }
+//  };
+//}
+
+//@EventListener
+//public void handleRefreshScopeRefreshedEvent(RefreshScopeRefreshedEvent ev) {
+//System.out.println("THIS REFRESH WORKED");
+//}
+

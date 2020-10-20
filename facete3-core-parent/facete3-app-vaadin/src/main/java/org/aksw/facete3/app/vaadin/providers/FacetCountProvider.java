@@ -27,8 +27,9 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
     @Override
     protected DataQuery<FacetCount> translateQuery(Query<FacetCount, Void> query) {
         DataQuery<FacetCount> dataQuery = facete3.getFacetDirNode()
-                .facetCounts()
-                .exclude(RDF.type);
+                .facetCounts();
+//                .exclude(RDF.type);
+
         String filterText = getFilter();
         if (!filterText.isEmpty()) {
             UnaryRelation filter = KeywordSearchUtils.createConceptRegexIncludeSubject(

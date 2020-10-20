@@ -34,30 +34,36 @@ public class ExplorerTabs
 {
     private static final long serialVersionUID = 1L;
 
+    protected Tabs tabs = new Tabs();
+    protected Div pages = new Div();
+
     protected Tab currentNewTab;
     protected int tabCounter = 0;
 
     protected Supplier<? extends ManagedComponent> componentSupplier;
+
+    protected Map<Tab, ManagedComponent> tabsToPages = new HashMap<>();
+
+    protected Tab initialTab;
+    protected Supplier<? extends ManagedComponent> initialPageSupplier = () -> new ManagedComponentSimple(new Div());
+
 
     // TODO The supplier is not a view-model; there should be some
     // DataProvider that provides the components
     public ExplorerTabs(Supplier<? extends ManagedComponent> componentSupplier) {
         this.componentSupplier = componentSupplier;
 
-        Tabs tabs = new Tabs();
-
-        Map<Tab, ManagedComponent> tabsToPages = new HashMap<>();
-        Div pages = new Div();
 
         // Initial tab - needed because the new tab button must not be the active tab
-        {
-            Tab tab = new Tab("init");
-            // Component page = new VerticalLayout();
-            ManagedComponent page = componentSupplier.get();
-            tabs.add(tab);
-            pages.add(page.getComponent());
-            tabsToPages.put(tab, page);
-        }
+        // Apparently Vaadin (at least in version 14) allows for the selected tab to
+        // be invisible
+        initialTab = new Tab();
+        ManagedComponent initialPage = initialPageSupplier.get();
+        tabs.add(initialTab);
+        pages.add(initialPage.getComponent());
+        tabsToPages.put(initialTab, initialPage);
+        initialTab.setVisible(false);
+        initialPage.getComponent().setVisible(false);
 
 
         // New tab button
@@ -74,56 +80,81 @@ public class ExplorerTabs
 
             Tab selectedTab = tabs.getSelectedTab();
             if (selectedTab == currentNewTab) {
-                ManagedComponent convertingPage = tabsToPages.get(selectedTab);
-//                VerticalLayout convertingComponent = (VerticalLayout)convertingPage.getComponent();
-
-                selectedTab.removeAll();
-                selectedTab.add(new Text("Foo"));
-                Button close = new Button(VaadinIcon.CLOSE.create(), click -> {
-                    int newTabIdx = tabs.indexOf(currentNewTab);
-                    int removedTabIdx = tabs.indexOf(selectedTab);
-
-                    // If the last tab is closed then its predecessor becomes the active tab
-                    // (as the successor is the 'new tab' tab)
-                    if (removedTabIdx + 1 == newTabIdx) {
-                        tabs.setSelectedIndex(removedTabIdx - 1);
-                    }
-
-                    ManagedComponent page = tabsToPages.get(selectedTab);
-                    tabs.remove(selectedTab);
-                    pages.remove(page.getComponent());
-                    tabsToPages.remove(selectedTab);
-
-                    page.close();
-                });
-                selectedTab.add(close);
-
-                currentNewTab = new Tab(new Icon(VaadinIcon.PLUS));
-                VerticalLayout newPage = new VerticalLayout();
-                tabs.add(currentNewTab);
-                newPage.setVisible(false);
-                tabsToPages.put(currentNewTab, new ManagedComponentSimple(newPage));
-                pages.add(newPage);
-
-                ManagedComponent convertedContent = newContent();
-
-
-                tabsToPages.put(selectedTab, new ManagedComponentWrapper(convertedContent) {
-                    @Override
-                    public Component getComponent() {
-                        return convertingPage.getComponent();
-                    }
-                });
-                ((VerticalLayout)convertingPage.getComponent()).add(convertedContent.getComponent());
-                // pages(convertingPage, substitute);
-
-//                convertingPage.add(new Text("Page" + tabCounter++));
+                newTab();
             }
 
             Component selectedPage = tabsToPages.get(tabs.getSelectedTab()).getComponent();
             selectedPage.setVisible(true);
         });
         add(tabs, pages);
+    }
+
+
+    /**
+     * Append a new tab instance to the tabs component
+     * This method is also invoked when the 'new tab' button is clicked
+     *
+     */
+    public void newTab() {
+        Tab selectedTab = currentNewTab;
+        ManagedComponent convertingPage = tabsToPages.get(selectedTab);
+
+        selectedTab.removeAll();
+        selectedTab.add(new Text("tab"));
+        Icon icon = VaadinIcon.CLOSE.create();
+        icon.getStyle()
+            .set("width", "1em")
+            .set("height", "1em");
+
+        Button close = new Button(icon, click -> {
+            int newTabIdx = tabs.indexOf(currentNewTab);
+            int removedTabIdx = tabs.indexOf(selectedTab);
+
+//            if (tabsToPages.size() == 2) {
+//                initialTab.setVisible(true);
+//                initialPage.getComponent().setVisible(true);
+//            }
+
+            // If the last tab is closed then its predecessor becomes the active tab
+            // (as the successor is the 'new tab' tab)
+            if (removedTabIdx + 1 == newTabIdx) {
+                tabs.setSelectedIndex(removedTabIdx - 1);
+            }
+
+            destroyTab(selectedTab);
+        });
+
+        selectedTab.add(close);
+
+        currentNewTab = new Tab(new Icon(VaadinIcon.PLUS));
+        VerticalLayout newPage = new VerticalLayout();
+        tabs.add(currentNewTab);
+        newPage.setVisible(false);
+        tabsToPages.put(currentNewTab, new ManagedComponentSimple(newPage));
+        pages.add(newPage);
+
+        ManagedComponent convertedContent = newContent();
+
+
+        tabsToPages.put(selectedTab, new ManagedComponentWrapper(convertedContent) {
+            @Override
+            public Component getComponent() {
+                return convertingPage.getComponent();
+            }
+        });
+        ((VerticalLayout)convertingPage.getComponent()).add(convertedContent.getComponent());
+        // pages(convertingPage, substitute);
+
+//        convertingPage.add(new Text("Page" + tabCounter++));
+    }
+
+    protected void destroyTab(Tab tab) {
+        ManagedComponent page = tabsToPages.get(tab);
+        tabs.remove(tab);
+        pages.remove(page.getComponent());
+        tabsToPages.remove(tab);
+
+        page.close();
     }
 
     protected ManagedComponent newContent() {

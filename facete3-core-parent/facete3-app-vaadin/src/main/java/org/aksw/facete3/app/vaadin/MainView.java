@@ -2,6 +2,10 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
+import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
@@ -87,10 +91,13 @@ public class MainView extends AppLayout {
                 appBuilder -> appBuilder
                 .parent(config.context)
                 .sources(ConfigRefresh.class)
+                //.sources(ConfigNli.class)
+                .sources(ConfigSearchProviderSparql.class)
                 .sources(ConfigFacetedBrowserViewCord.class));
 
         VerticalLayout appContent = new VerticalLayout();
         ExplorerTabs tabs = new ExplorerTabs(plugin::newComponent);
+        tabs.newTab();
         tabs.setWidthFull();
         appContent.add(tabs);
         return appContent;

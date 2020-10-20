@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionTransform;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.mapper.RootedQuery;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -31,6 +32,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
@@ -65,8 +68,8 @@ public class FacetedBrowserView
 
     protected SearchProvider searchProvider;
 
-    @Autowired
-    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform;
+    @Autowired(required = false)
+    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform = null;
 
     @Autowired
     protected ConfigurableApplicationContext cxt;
@@ -286,14 +289,33 @@ public class FacetedBrowserView
     }
 
     public void handleSearchResponse(RDFNodeSpec rdfNodeSpec) {
-        UnaryRelation baseConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
-        facete3.setBaseConcept(baseConcept);
 
+        if (rdfNodeSpec.isCollection()) {
+            UnaryRelation baseConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
+            facete3.setBaseConcept(baseConcept);
+        } else if (rdfNodeSpec.isRootedQuery()) {
+
+            // FIXME Not all possible cases are handled here
+            // We just assume that the rooted query's root node is a variable that appears in the element
+
+            RootedQuery rq = rdfNodeSpec.getRootedQuery();
+            Var var = (Var)rq.getRootNode();
+            Element element = rq.getPartitionedQuery().getElement();
+            UnaryRelation concept = new Concept(element, var);
+
+            facete3.setBaseConcept(concept);
+
+        } else {
+            throw new RuntimeException("Unknown rdfNodeSpec type "  + rdfNodeSpec);
+        }
+
+        RDFConnection effectiveDataConnection = baseDataConnection;
         if (searchSensitiveRdfConnectionTransform != null) {
             RDFConnectionTransform connXform = searchSensitiveRdfConnectionTransform.create(rdfNodeSpec);
-            RDFConnection effectiveDataConnection = connXform.apply(baseDataConnection);
-            facete3.getFacetedQuery().connection(effectiveDataConnection);
+            effectiveDataConnection = connXform.apply(effectiveDataConnection);
         }
+
+        facete3.getFacetedQuery().connection(effectiveDataConnection);
 
         refreshAll();
     }
