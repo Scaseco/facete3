@@ -146,7 +146,7 @@ public class FacetedBrowserView
 
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
-        refreshBtn.getElement().setProperty("title", "Refresh all data providers assigned to this view");
+        refreshBtn.getElement().setProperty("title", "Refresh all data in this view");
         refreshBtn.addClickListener(event -> {
             refreshAllNew();
         });
@@ -300,7 +300,7 @@ public class FacetedBrowserView
 
             RootedQuery rq = rdfNodeSpec.getRootedQuery();
             Var var = (Var)rq.getRootNode();
-            Element element = rq.getPartitionedQuery().getElement();
+            Element element = rq.getObjectQuery().getRelation().getElement();
             UnaryRelation concept = new Concept(element, var);
 
             facete3.setBaseConcept(concept);

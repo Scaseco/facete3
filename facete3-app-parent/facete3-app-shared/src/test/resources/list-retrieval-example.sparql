@@ -1,0 +1,24 @@
+INSERT DATA {
+  eg:dep1
+    eg:employees (eg:emp1 eg:emp2) .
+
+  eg:dep2
+    eg:employees (eg:emp2 eg:emp3)
+}
+
+CONSTRUCT {
+  ?dep
+    eg:employees ?emp .
+
+  ?ln
+    rdf:first ?f ;
+    rdf:rest ?r .
+} {
+  ?dep eg:employees ?emp .
+
+  ?emp rdf:rest* ?ln .
+
+  ?ln
+    rdf:first ?f ;
+    rdf:rest ?r .
+} ORDER BY ?dep ?f
