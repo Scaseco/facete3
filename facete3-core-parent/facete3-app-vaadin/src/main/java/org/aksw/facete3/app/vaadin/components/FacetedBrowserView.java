@@ -104,6 +104,8 @@ public class FacetedBrowserView
         constraintsComponent.setMaxHeight("40px");
 
 
+        toolbar.add(new SearchComponent(this, searchProvider));
+
 //        HorizontalLayout navbarLayout = new HorizontalLayout();
 //        navbarLayout.setWidthFull();
 //        navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
@@ -191,7 +193,7 @@ public class FacetedBrowserView
         VerticalLayout appContent = new VerticalLayout();
         appContent.add(toolbar);
 
-        appContent.add(getNaturalLanguageInterfaceComponent());
+//        appContent.add(getNaturalLanguageInterfaceComponent());
 
         appContent.add(constraintsComponent);
 
@@ -199,10 +201,6 @@ public class FacetedBrowserView
         return appContent;
     }
 
-    protected Component getNaturalLanguageInterfaceComponent() {
-        SearchComponent result = new SearchComponent(this, searchProvider);
-        return result;
-    }
 
 
     protected Component getFacete3Component() {

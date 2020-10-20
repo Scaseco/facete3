@@ -4,6 +4,7 @@ import org.aksw.commons.jena.graph.GraphVar;
 import org.aksw.commons.jena.graph.GraphVarImpl;
 import org.aksw.facete.v3.api.path.Resolver;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
+import org.aksw.jena_sparql_api.mapper.PartitionedQuery1Impl;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
@@ -24,7 +25,7 @@ public class Resolvers {
     }
 
     public static Resolver create() {
-        PartitionedQuery1 pq = PartitionedQuery1.from(QueryFactory.create("CONSTRUCT WHERE {}"), Vars.s);
+        PartitionedQuery1 pq = PartitionedQuery1Impl.from(QueryFactory.create("CONSTRUCT WHERE {}"), Vars.s);
         Resolver result = Resolvers.from(pq);
 
         return result;

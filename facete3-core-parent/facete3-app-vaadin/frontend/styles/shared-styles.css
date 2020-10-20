@@ -10,6 +10,11 @@
   max-width: 250px;
 }
 
+.toolbar {
+  background-color: var(--lumo-primary-color-10pct);
+  padding: 0px;
+}
+
 /* Style for circles; based on https://cdn.vaadin.com/vaadin-lumo-styles/1.0.0-beta2/demo/colors.html */
 .color-swatch {
   display: inline-block;

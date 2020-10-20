@@ -1,15 +1,15 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 public class FacetedBrowserToolbar extends HorizontalLayout {
     public FacetedBrowserToolbar() {
+        addClassName("toolbar");
         setWidthFull();
         setAlignItems(Alignment.CENTER);
         setPadding(true);
 
-        Span title = new Span("Toolbar");
+        //Span title = new Span("Toolbar");
 
 //        Button bold = new Button(new Icon(VaadinIcon.COG));
 //        Button italic = new Button(new Icon(VaadinIcon.ITALIC));
@@ -20,7 +20,7 @@ public class FacetedBrowserToolbar extends HorizontalLayout {
 //        Button justify = new Button(new Icon(VaadinIcon.ALIGN_JUSTIFY));
 //
 //        add(title, bold, italic, underline, left, center, right, justify);
-        add(title);
-        setFlexGrow(1, title);
+//        add(title);
+//        setFlexGrow(1, title);
     }
 }

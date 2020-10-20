@@ -4,6 +4,12 @@ import java.util.Collection;
 
 import org.apache.jena.rdf.model.RDFNode;
 
+/**
+ * A directly provided collection of {@link RDFNode} objects.
+ *
+ * @author raven
+ *
+ */
 public interface RDFNodeSpecFromCollection
     extends RDFNodeSpec
 {

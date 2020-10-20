@@ -1,8 +1,8 @@
 package org.aksw.facete3.app.vaadin.providers;
 
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
-import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromPartitionedQuery;
-import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromPartitionedQueryImpl;
+import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromRootedQuery;
+import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromRootedQueryImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;

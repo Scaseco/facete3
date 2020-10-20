@@ -21,6 +21,7 @@ import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.impl.QueryFragment;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
+import org.aksw.jena_sparql_api.mapper.PartitionedQuery1Impl;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.relationlet.RelationletBinary;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -262,7 +263,7 @@ public class ResolverTemplate
     protected Collection<Resolver> resolveData(P_Path0 step, String alias) {
         Collection<Resolver> result = new ArrayList<>();
         //for(RDFNode start : starts) {
-            PartitionedQuery1 tmp = new PartitionedQuery1(query, (Var)start.asNode());
+            PartitionedQuery1 tmp = new PartitionedQuery1Impl(query, (Var)start.asNode());
             Resolver item = new ResolverData(this, tmp, AliasedPathImpl.empty().subPath(Maps.immutableEntry(step, alias)), reachingRelation);
             result.add(item);
         //}

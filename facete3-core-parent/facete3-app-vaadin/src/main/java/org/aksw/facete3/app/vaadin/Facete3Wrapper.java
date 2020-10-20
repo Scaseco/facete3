@@ -44,6 +44,12 @@ public class Facete3Wrapper {
 
     private FacetDirNode facetDirNode;
     private FacetedQuery facetedQuery;
+
+
+
+
+    // FIXME The selectedFacet is specific to the facet value list component and thus
+    // belongs to the view model of that component
     private Node selectedFacet;
 
     public FacetDirNode getFacetDirNode() {

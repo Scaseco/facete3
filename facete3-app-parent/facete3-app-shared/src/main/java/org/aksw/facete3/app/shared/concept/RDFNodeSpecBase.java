@@ -15,12 +15,12 @@ public abstract class RDFNodeSpecBase
     }
 
     @Override
-    public boolean isPartitionedQuery() {
+    public boolean isRootedQuery() {
         return false;
     }
 
     @Override
-    public RDFNodeSpecFromPartitionedQuery asPartitionedQuery() {
+    public RDFNodeSpecFromRootedQuery asRootedQuery() {
         throw new UnsupportedOperationException();
     }
 }
