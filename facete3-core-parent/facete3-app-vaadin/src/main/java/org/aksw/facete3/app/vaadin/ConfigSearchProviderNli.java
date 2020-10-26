@@ -37,12 +37,13 @@ import org.springframework.context.annotation.Bean;
  * @author raven
  *
  */
-public class ConfigNli {
+public class ConfigSearchProviderNli {
+    @ConfigurationProperties("facete3.nli")
     public static class NliConfig {
         private String endpoint;
         private Long resultLimit;
 
-        public String getEnpoint() {
+        public String getEndpoint() {
             return endpoint;
         }
 
@@ -59,16 +60,17 @@ public class ConfigNli {
         }
     }
 
-    @Bean
-    @ConfigurationProperties("facete3.nli")
-    public NliConfig getNliConfig() {
-        return new NliConfig();
-    }
+//    @Bean
+//    @ConfigurationProperties("facete3.nli")
+//    public NliConfig getNliConfig() {
+//        return new NliConfig();
+//    }
 
 
     @Bean
     @Autowired
     public SearchSensitiveRDFConnectionTransform connectionTransformer(NliConfig nliConfig) {
+        System.out.println("NLI SERVICE: " + nliConfig.getEndpoint());
         return rdfNodeSpec -> {
             Table table = TableFactory.create(Arrays.asList(Vars.s, Vars.o));
             for(RDFNode rdfNode : rdfNodeSpec.getCollection()) {

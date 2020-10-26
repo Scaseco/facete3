@@ -49,10 +49,20 @@ import io.reactivex.rxjava3.core.Single;
 // Actually, this is pretty much a resource
 
 /**
+ * This object represents a query builder for exposing a correlated join between
+ * two graph-patterns based relations as partitions of rooted graph fragments.
+ *
+ * The first graph relation is referred to as the base relation. The other is the
+ * attribute extension relation (AER). The AER is initially a unit table.
+ *
+ *
  * Query builder for retrieval batch retrieval of related *optional* information for each entity of an underlying
- * relation.
+ * base relation.
  *
  * Hence, limit and offset apply to the base relation.
+ *
+ *
+ *
  *
  *
  * @author raven

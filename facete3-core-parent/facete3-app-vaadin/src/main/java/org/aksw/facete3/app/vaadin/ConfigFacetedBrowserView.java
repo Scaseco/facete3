@@ -2,13 +2,12 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
+import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.providers.SearchProvider;
-import org.aksw.facete3.app.vaadin.util.DataProviderWrapperWithCustomErrorHandler;
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -16,13 +15,8 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEvent;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.EventListener;
-
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.data.provider.DataProvider;
 
 /**
  * This is a generic context configuration which declares all DataProviders
@@ -125,7 +119,8 @@ public class ConfigFacetedBrowserView {
             FacetCountProvider facetCountProvider,
             FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
-            Config config
+            Config config,
+            ViewManager viewManager
     ) {
         return new FacetedBrowserView(
                 baseDataConnection,
@@ -135,7 +130,8 @@ public class ConfigFacetedBrowserView {
                 facetCountProvider,
                 facetValueCountProvider,
                 itemProvider,
-                config);
+                config,
+                viewManager);
     }
 
 

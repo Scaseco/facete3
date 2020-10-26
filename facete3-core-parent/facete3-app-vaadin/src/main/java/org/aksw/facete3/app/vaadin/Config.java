@@ -12,7 +12,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 @ConfigurationProperties("facete3")
-// @Import({ConfigNli.class})
 public class Config {
 
     protected Property alternativeLabelProperty;

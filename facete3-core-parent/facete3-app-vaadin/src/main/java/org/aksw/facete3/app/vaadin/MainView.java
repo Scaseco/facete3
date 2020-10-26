@@ -91,8 +91,8 @@ public class MainView extends AppLayout {
                 appBuilder -> appBuilder
                 .parent(config.context)
                 .sources(ConfigRefresh.class)
-                //.sources(ConfigNli.class)
-                .sources(ConfigSearchProviderSparql.class)
+//                .sources(ConfigSearchProviderNli.class)
+//                .sources(ConfigSearchProviderSparql.class)
                 .sources(ConfigFacetedBrowserViewCord.class));
 
         VerticalLayout appContent = new VerticalLayout();

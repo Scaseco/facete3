@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromCollection;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromCollectionImpl;
-import org.aksw.facete3.app.vaadin.ConfigNli.NliConfig;
+import org.aksw.facete3.app.vaadin.ConfigSearchProviderNli.NliConfig;
 import org.aksw.facete3.app.vaadin.domain.NliResponse;
 import org.aksw.facete3.app.vaadin.domain.Paper;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
@@ -38,7 +38,7 @@ public class SearchProviderNli
 
     @Override
     public RDFNodeSpecFromCollection search(String query) {
-        URI uri = UriComponentsBuilder.fromUriString(config.getEnpoint())
+        URI uri = UriComponentsBuilder.fromUriString(config.getEndpoint())
                 .queryParam("query", query)
                 .queryParam("limit", config.getResultLimit())
                 .build()

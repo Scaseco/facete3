@@ -26,6 +26,11 @@ import com.vaadin.flow.component.tabs.Tabs;
  * instead of {@link Component}. The difference is, that the former
  * allows for owning its own spring context which is destroyed when .close() is called.
  *
+ * TODO Instead of ManagedComponent it would also be possible to hook into
+ * {@link #addAttachListener(com.vaadin.flow.component.ComponentEventListener)}
+ * and
+ * {@link #addDetachListener(com.vaadin.flow.component.ComponentEventListener)}
+ *
  * @author raven
  *
  */

@@ -14,6 +14,7 @@ import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.Config;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
+import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
@@ -84,7 +85,8 @@ public class FacetedBrowserView
             FacetCountProvider facetCountProvider,
             FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
-            Config config) {
+            Config config,
+            ViewManager viewManager) {
         this.baseDataConnection = baseDataConnection;
         this.searchProvider = searchProvider;
         this.facete3 = facete3;
@@ -102,7 +104,7 @@ public class FacetedBrowserView
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
         itemComponent = new ItemComponent(this, itemProvider);
-        resourceComponent = new ResourceComponent(prefixMapping);
+        resourceComponent = new ResourceComponent(prefixMapping, viewManager);
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");
 
