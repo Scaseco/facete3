@@ -115,7 +115,7 @@ public class TestFacetedQuery2 {
 
 
         UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
-                Concept.parse("?s | VALUES(?s) { (<" + PLACES_NS + "FederalState>) }", PrefixMapping.Extended),
+                Concept.parse("?s { VALUES(?s) { (<" + PLACES_NS + "FederalState>) } }", PrefixMapping.Extended),
                 path,
                 classes
                 );
@@ -132,7 +132,7 @@ public class TestFacetedQuery2 {
 
         Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
 
-        UnaryRelation broadClases = Concept.parse("?s | VALUES(?s) { (eg:Foobar) }", PrefixMapping.Extended);
+        UnaryRelation broadClases = Concept.parse("?s { VALUES(?s) { (eg:Foobar) } }", PrefixMapping.Extended);
 
         UnaryRelation availableClasses = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
         UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
