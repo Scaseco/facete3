@@ -3,7 +3,10 @@ package org.aksw.facete3.app.vaadin.components;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
 
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
@@ -44,6 +47,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -56,13 +60,14 @@ public class FacetedBrowserView
     protected FacetedBrowserToolbar toolbar;
 
     protected ConstraintsComponent constraintsComponent;
+    protected SearchComponent searchComponent;
     protected FacetCountComponent facetCountComponent;
     protected FacetPathComponent facetPathComponent;
     protected FacetValueCountComponent facetValueCountComponent;
     protected Facete3Wrapper facete3;
     protected ItemComponent itemComponent;
     protected ResourceComponent resourceComponent;
-
+    protected Label connectionInfo;
 
 //  @Autowired
     protected RDFConnection baseDataConnection;
@@ -107,9 +112,15 @@ public class FacetedBrowserView
         resourceComponent = new ResourceComponent(prefixMapping, viewManager);
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");
+        connectionInfo = new Label();
+        connectionInfo.getElement().setAttribute("theme", "badge primary pill");
 
+        searchComponent = new SearchComponent(this, searchProvider);
+        toolbar.add(searchComponent);
+        toolbar.add(connectionInfo);
 
-        toolbar.add(new SearchComponent(this, searchProvider));
+        connectionInfo.addClassName("no-wrap");
+        toolbar.setFlexGrow(1, searchComponent);
 
 //        HorizontalLayout navbarLayout = new HorizontalLayout();
 //        navbarLayout.setWidthFull();
@@ -165,7 +176,10 @@ public class FacetedBrowserView
 
 
         add(getAppContent());
+
+        // onRefresh();
     }
+
 
 
     public static String toString(ApplicationContext cxt) {
@@ -182,6 +196,23 @@ public class FacetedBrowserView
 
         return result;
     }
+
+    /**
+     * Handler for refresh events
+     * Calling this method should be handled by the spring context / config class
+     * that creates this component
+     *
+     */
+    @PostConstruct
+    public void onRefresh() {
+        DataRefSparqlEndpoint endpoint = cxt.getBean(DataRefSparqlEndpoint.class);
+        String url = Optional.ofNullable(endpoint)
+                .map(DataRefSparqlEndpoint::getServiceUrl)
+                .orElse("unknown connection");
+
+        connectionInfo.setText(url);
+    }
+
 
     public void refreshAllNew() {
         RefreshScope refreshScope = cxt.getBean(RefreshScope.class);

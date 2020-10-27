@@ -32,34 +32,12 @@ import org.springframework.context.annotation.Bean;
  */
 public class ConfigFacetedBrowserView {
 
-    @Bean
-    @Autowired
-    public RefreshHandler refreshHandler () {
-        return new RefreshHandler();
-    }
 
     @Bean
     @Autowired
     public Facete3Wrapper facetedQueryConf(RDFConnection baseDataConnection) {
         return new Facete3Wrapper(baseDataConnection);
     }
-
-    public static class RefreshHandler
-        implements ApplicationListener<RefreshScopeRefreshedEvent>
-    {
-        @Autowired protected ItemProvider itemProvider;
-        @Autowired protected FacetCountProvider facetCountProvider;
-        @Autowired protected FacetCountProvider facetValueCountProvider;
-
-        @Override
-        public void onApplicationEvent(RefreshScopeRefreshedEvent event) {
-            itemProvider.refreshAll();
-            facetCountProvider.refreshAll();
-            facetValueCountProvider.refreshAll();
-        }
-    }
-
-
 
     @Bean
     @Autowired
@@ -133,6 +111,32 @@ public class ConfigFacetedBrowserView {
                 config,
                 viewManager);
     }
+
+    @Bean
+    @Autowired
+    public RefreshHandler refreshHandler () {
+        return new RefreshHandler();
+    }
+
+    public static class RefreshHandler
+        implements ApplicationListener<RefreshScopeRefreshedEvent>
+    {
+        @Autowired protected ItemProvider itemProvider;
+        @Autowired protected FacetCountProvider facetCountProvider;
+        @Autowired protected FacetCountProvider facetValueCountProvider;
+
+        @Autowired protected FacetedBrowserView facetedBrowserView;
+
+        @Override
+        public void onApplicationEvent(RefreshScopeRefreshedEvent event) {
+            itemProvider.refreshAll();
+            facetCountProvider.refreshAll();
+            facetValueCountProvider.refreshAll();
+
+            facetedBrowserView.onRefresh();
+        }
+    }
+
 
 
 }

@@ -2,10 +2,6 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
@@ -13,7 +9,6 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -27,11 +22,13 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @Route("")
 @PWA(name = "Vaadin Application", shortName = "Vaadin App",
         description = "This is an example Vaadin application.", enableInstallPrompt = true)
-@CssImport("./styles/shared-styles.css")
+@CssImport(value = "./styles/shared-styles.css", include = "lumo-badge")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 @CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @Theme(Lumo.class)
+@JsModule("@vaadin/vaadin-lumo-styles/badge.js")
+//@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
 public class MainView extends AppLayout {
 
     // Ensure Jena plugins are fully loaded before

@@ -105,7 +105,7 @@ public class ExplorerTabs
         ManagedComponent convertingPage = tabsToPages.get(selectedTab);
 
         selectedTab.removeAll();
-        selectedTab.add(new Text("tab"));
+        selectedTab.add(new Text("Unnamed tab"));
         Icon icon = VaadinIcon.CLOSE.create();
         icon.getStyle()
             .set("width", "1em")
