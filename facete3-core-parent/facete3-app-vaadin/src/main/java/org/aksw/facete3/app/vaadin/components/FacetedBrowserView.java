@@ -103,7 +103,7 @@ public class FacetedBrowserView
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
-        itemComponent = new ItemComponent(this, itemProvider);
+        itemComponent = new ItemComponent(this, itemProvider, viewManager);
         resourceComponent = new ResourceComponent(prefixMapping, viewManager);
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");

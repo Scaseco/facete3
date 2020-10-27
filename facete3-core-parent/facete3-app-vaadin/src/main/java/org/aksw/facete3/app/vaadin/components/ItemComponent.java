@@ -3,11 +3,13 @@ package org.aksw.facete3.app.vaadin.components;
 import java.util.List;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
+import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -16,14 +18,23 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 public class ItemComponent extends VerticalLayout {
 
     private ItemProvider itemProvider;
     private static final long serialVersionUID = 1848553144669545835L;
 
-    public ItemComponent(FacetedBrowserView facetedBrowserView, ItemProvider dataProvider) {
+    protected ViewManager viewManager;
+
+    public ItemComponent(
+            FacetedBrowserView facetedBrowserView,
+            ItemProvider dataProvider,
+            ViewManager viewManager) {
         this.itemProvider = dataProvider;
+
+
+        this.viewManager = viewManager;
 
         Button btn = new Button("Available columns");
         btn.addClickListener(event -> {
@@ -67,9 +78,17 @@ public class ItemComponent extends VerticalLayout {
        // 	return anchor;
        // 	})).setSortProperty("value").setHeader(searchField);
         grid.addColumn(
+                new ComponentRenderer<Component, RDFNode>(item -> {
+                    Node node = item.asNode();
+                    Component r = viewManager.getComponent(node);
+                    if (r == null) {
+                        String str = LabelUtils.getOrDeriveLabel(item);
+                        r = new Label(str);
+                    }
+                    return r;
                 // item -> FacetProvider.getLabel(item)
-                item -> LabelUtils.getOrDeriveLabel(item)
-                )
+                //item -> LabelUtils.getOrDeriveLabel(item)
+                }))
                 .setSortProperty("value")
                 .setHeader(searchField);
         grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));

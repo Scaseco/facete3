@@ -123,10 +123,10 @@ class PaperViewComponent
 
     public void display() {
 
-        String xtitle = ResourceUtils.getLiteralPropertyValue(state, Bibframe.title, String.class);
-        String xdoi = ResourceUtils.getLiteralPropertyValue(state, Bibframe.identifiedBy, String.class);
-        String xsummary = ResourceUtils.getLiteralPropertyValue(state, Bibframe.summary, String.class);
-        String xcreator = ResourceUtils.getLiteralPropertyValue(state, DCTerms.creator, String.class);
+        String xtitle = ResourceUtils.tryGetLiteralPropertyValue(state, Bibframe.title, String.class).orElse("");
+        String xdoi = ResourceUtils.tryGetLiteralPropertyValue(state, Bibframe.identifiedBy, String.class).orElse("");
+        String xsummary = ResourceUtils.tryGetLiteralPropertyValue(state, Bibframe.summary, String.class).orElse("");
+        String xcreator = ResourceUtils.tryGetLiteralPropertyValue(state, DCTerms.creator, String.class).orElse("");
 
         titleLink.setText(xtitle);
         authors.setText(xcreator);
