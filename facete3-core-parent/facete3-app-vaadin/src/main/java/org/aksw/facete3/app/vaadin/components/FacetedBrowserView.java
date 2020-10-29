@@ -66,8 +66,12 @@ public class FacetedBrowserView
     protected FacetValueCountComponent facetValueCountComponent;
     protected Facete3Wrapper facete3;
     protected ItemComponent itemComponent;
-    protected ResourceComponent resourceComponent;
     protected Label connectionInfo;
+
+//    protected ResourceComponent resourceComponent;
+
+    /** The resource browser should eventually supersede the resourceComponent */
+    protected ResourceBrowserComponent resourceBrowserComponent;
 
 //  @Autowired
     protected RDFConnection baseDataConnection;
@@ -109,7 +113,10 @@ public class FacetedBrowserView
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
         itemComponent = new ItemComponent(this, itemProvider, viewManager);
-        resourceComponent = new ResourceComponent(prefixMapping, viewManager);
+        resourceBrowserComponent = new ResourceBrowserComponent(viewManager);
+        resourceBrowserComponent.setWidthFull();
+        resourceBrowserComponent.setHeightFull();
+
         constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
         constraintsComponent.setMaxHeight("40px");
         connectionInfo = new Label();
@@ -117,7 +124,9 @@ public class FacetedBrowserView
 
         searchComponent = new SearchComponent(this, searchProvider);
         toolbar.add(searchComponent);
-        toolbar.add(connectionInfo);
+
+        Button changeConnectionBtn = new Button(connectionInfo);
+        toolbar.add(changeConnectionBtn);
 
         connectionInfo.addClassName("no-wrap");
         toolbar.setFlexGrow(1, searchComponent);
@@ -168,6 +177,10 @@ public class FacetedBrowserView
 
         Button configBtn = new Button(new Icon(VaadinIcon.COG));
         toolbar.add(configBtn);
+
+        changeConnectionBtn.addClickListener(event -> {
+            dialog.open();
+        });
 
         configBtn.addClickListener(event -> {
             dialog.open();
@@ -264,16 +277,16 @@ public class FacetedBrowserView
 
     protected Component getResultsComponent() {
         SplitLayout component = new SplitLayout();
-        component.setOrientation(Orientation.VERTICAL);
+        component.setOrientation(Orientation.HORIZONTAL);
         component.addToPrimary(itemComponent);
-        component.addToSecondary(resourceComponent);
+        component.addToSecondary(resourceBrowserComponent);
         return component;
     }
 
     public void viewNode(Node node) {
         RDFNode rdfNode = facete3.fetchIfResource(node);
         if ( rdfNode != null )
-        {  resourceComponent.setNode(rdfNode); }
+        {  resourceBrowserComponent.setNode(rdfNode); }
 
     }
 

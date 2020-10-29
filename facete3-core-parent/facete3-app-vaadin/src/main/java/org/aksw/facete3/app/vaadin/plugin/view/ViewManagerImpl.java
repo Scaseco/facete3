@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -109,7 +110,15 @@ public class ViewManagerImpl
 
     @Override
     public ViewFactory getBestViewFactory(Node node) {
+        Set<Node> classifications = getClassifications(node);
+        Node match = Iterables.getFirst(classifications, null);
+        ViewFactory result = match == null ? null : viewFactories.get(match);
 
+        return result;
+    }
+
+
+    public Set<Node> getClassifications(Node node) {
         EntityClassifier entityClassifier = buildClassifier();
         EntityGraphFragment entityGraphFragment = entityClassifier.createGraphFragment();
 
@@ -128,12 +137,8 @@ public class ViewManagerImpl
             .collect(Collectors.toSet());
 
 
-        Node match = Iterables.getFirst(classifications, null);
-        ViewFactory result = match == null ? null : viewFactories.get(match);
-
-        return result;
+        return classifications;
     }
-
 
     @Override
     public Component getComponent(Node node) {
@@ -141,28 +146,59 @@ public class ViewManagerImpl
         ViewFactory viewFactory = getBestViewFactory(node);
 
         if (viewFactory != null) {
-            EntityQueryImpl viewEntityQuery = viewFactory.getViewTemplate().getEntityQuery();
-
-            Var entityVar = Vars.s;
-            Query standardQuery = createStandardQuery(entityVar, node);
-            EntityQueryImpl entityQuery = createEntityQuery(Vars.s, standardQuery);
-
-            entityQuery.getAuxiliaryGraphPartitions().addAll(viewEntityQuery.getAuxiliaryGraphPartitions());
-            entityQuery.getOptionalJoins().addAll(viewEntityQuery.getOptionalJoins());
-
-
-            List<RDFNode> entities = EntityQueryRx.execConstructEntities(conn, entityQuery)
-                .toList().blockingGet();
-
-
-            // One result expected
-            RDFNode data = Cardinalities.expectZeroOrOne(entities.stream()).orElse(null);
+            Resource data = fetchData(node, viewFactory);
 
             if (data != null) {
-                Resource r = data.asResource();
-                result = viewFactory.createComponent(r);
+                result = viewFactory.createComponent(data);
             }
         }
+
+        return result;
+    }
+
+    public SparqlQueryConnection getConnection() {
+        return conn;
+    }
+
+
+    public Resource fetchData(Node node, ViewFactory viewFactory) {
+        EntityQueryImpl viewEntityQuery = viewFactory.getViewTemplate().getEntityQuery();
+
+        RDFNode tmp = fetchData(conn, node, viewEntityQuery);
+
+        // The RDFNode must be a resource otherwise an exception is raised
+        Resource result = tmp == null ? null : tmp.asResource();
+        return result;
+    }
+
+    public static RDFNode fetchData(SparqlQueryConnection conn, Node node, EntityQueryImpl viewEntityQuery) {
+
+
+        Var entityVar = Vars.s;
+        Query standardQuery = createStandardQuery(entityVar, node);
+        EntityQueryImpl entityQuery = createEntityQuery(Vars.s, standardQuery);
+
+        entityQuery.getAuxiliaryGraphPartitions().addAll(viewEntityQuery.getAuxiliaryGraphPartitions());
+        entityQuery.getOptionalJoins().addAll(viewEntityQuery.getOptionalJoins());
+
+
+        List<RDFNode> entities = EntityQueryRx.execConstructEntities(conn, entityQuery)
+            .toList().blockingGet();
+
+
+        // One result expected
+        RDFNode data = Cardinalities.expectZeroOrOne(entities.stream()).orElse(null);
+        return data;
+    }
+
+    @Override
+    public List<ViewFactory> getApplicableViewFactories(Node node) {
+        Set<Node> classifications = getClassifications(node);
+
+        List<ViewFactory> result = classifications.stream()
+            .map(viewFactories::get)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
         return result;
     }

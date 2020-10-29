@@ -63,6 +63,7 @@ public class ExplorerTabs
         // Apparently Vaadin (at least in version 14) allows for the selected tab to
         // be invisible
         initialTab = new Tab();
+        initialTab.setClassName("compact");
         ManagedComponent initialPage = initialPageSupplier.get();
         tabs.add(initialTab);
         pages.add(initialPage.getComponent());
@@ -74,6 +75,7 @@ public class ExplorerTabs
         // New tab button
         {
             currentNewTab = new Tab(new Icon(VaadinIcon.PLUS));
+            currentNewTab.setClassName("compact");
             Component page = new VerticalLayout();
             tabs.add(currentNewTab);
             pages.add(page);
@@ -132,6 +134,8 @@ public class ExplorerTabs
         selectedTab.add(close);
 
         currentNewTab = new Tab(new Icon(VaadinIcon.PLUS));
+        currentNewTab.setClassName("compact");
+
         VerticalLayout newPage = new VerticalLayout();
         tabs.add(currentNewTab);
         newPage.setVisible(false);

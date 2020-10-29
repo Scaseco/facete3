@@ -5,6 +5,7 @@ import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -14,6 +15,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
@@ -25,8 +27,9 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @CssImport(value = "./styles/shared-styles.css", include = "lumo-badge")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 @CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
+@CssImport(value = "./styles/vaadin-tab-styles.css", themeFor = "vaadin-tab")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
-@Theme(Lumo.class)
+@Theme(value = Lumo.class)
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
 //@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
 public class MainView extends AppLayout {
@@ -55,6 +58,18 @@ public class MainView extends AppLayout {
 
         Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
         navbarLayout.add(appSettingsBtn);
+
+
+        Button themeToggleButton = new Button(new Icon(VaadinIcon.LIGHTBULB), click -> {
+            ThemeList themeList = UI.getCurrent().getElement().getThemeList();
+            if (themeList.contains(Lumo.DARK)) {
+              themeList.remove(Lumo.DARK);
+            } else {
+              themeList.add(Lumo.DARK);
+            }
+        });
+        navbarLayout.add(themeToggleButton);
+
 
 //        Span item = new Span();
 //        Span icon = new Span();

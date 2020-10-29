@@ -137,6 +137,19 @@
 			<version>2.2.5.RELEASE</version>
 		</dependency>
 
+		<!-- PDFViewer which hower does not seem to work with flow -->
+		<!-- <dependency> -->
+		<!-- <groupId>com.whitestein.vaadin.widgets</groupId> -->
+		<!-- <artifactId>wt-pdf-viewer</artifactId> -->
+		<!-- <version>2.0.1</version> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>org.vaadin.alejandro</groupId>
+			<artifactId>pdf-browser</artifactId>
+			<version>3.0.1</version>
+		</dependency>
+
 		<!-- <dependency> -->
 		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->
 		<!-- <artifactId>jackson-core</artifactId> -->

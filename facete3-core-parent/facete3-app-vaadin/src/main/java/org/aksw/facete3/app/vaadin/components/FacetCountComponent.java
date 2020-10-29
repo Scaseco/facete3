@@ -57,7 +57,7 @@ public class FacetCountComponent extends VerticalLayout {
     }
 
     private Component getSearchComponent() {
-        add(new Label("Facets"));
+//        add(new Label("Facets"));
         TextField searchField = new TextField();
         searchField.setPlaceholder("Filter Facets...");
         searchField.addValueChangeListener(this::searchCallback);
