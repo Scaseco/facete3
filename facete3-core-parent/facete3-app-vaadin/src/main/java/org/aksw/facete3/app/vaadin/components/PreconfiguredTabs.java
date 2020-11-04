@@ -1,6 +1,7 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.Map;
 
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.Div;
@@ -22,6 +25,7 @@ public class PreconfiguredTabs
     protected Tabs tabs = new Tabs();
     protected Div pages = new Div();
 
+    protected BiMap<String, Tab> idToTab = HashBiMap.create();
     protected Map<Tab, ManagedComponent> tabsToPages = new LinkedHashMap<>();
 
     // TODO The supplier is not a view-model; there should be some
@@ -50,14 +54,21 @@ public class PreconfiguredTabs
      * This method is also invoked when the 'new tab' button is clicked
      *
      */
-    public void newTab(String name, ManagedComponent content) {
+    public void newTab(String id, String name, ManagedComponent content) {
         System.out.println("ADDING TAB " + name);
+
+        Tab priorTab = idToTab.get(id);
+        if (priorTab != null) {
+            destroyTab(priorTab);
+        }
 
         Tab newTab = new Tab(new Text(name)); //new Tab(new Icon(VaadinIcon.PLUS));
         newTab.setClassName("compact");
 
+
         Component contentComponent = content.getComponent();
 
+        idToTab.put(id, newTab);
         tabsToPages.put(newTab, content);
         tabs.add(newTab);
         pages.add(contentComponent);
@@ -68,13 +79,38 @@ public class PreconfiguredTabs
         }
     }
 
+    public String getSelectedTabId() {
+        Tab tab = tabs.getSelectedTab();
+        String id = idToTab.inverse().get(tab);
+        return id;
+    }
+
+    public void setSelectedTabId(String id) {
+        Tab tab = idToTab.get(id);
+        tabs.setSelectedTab(tab);
+    }
+
+    public Tabs getTabsComponent() {
+        return tabs;
+
+    }
+    public Collection<Tab> getAvailableTabs() {
+        return tabsToPages.keySet();
+    }
+
+    public void destroyTab(String id) {
+        Tab tab = idToTab.get(id);
+        if (tab != null) {
+            destroyTab(tab);
+        }
+    }
+
     protected void destroyTab(Tab tab) {
-
-
         ManagedComponent page = tabsToPages.get(tab);
         pages.remove(page.getComponent());
         tabs.remove(tab);
         tabsToPages.remove(tab);
+        idToTab.inverse().remove(tab);
 
         page.close();
     }

@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 import org.aksw.facete3.app.vaadin.providers.SearchProviderNli;
+import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
@@ -12,6 +13,7 @@ import org.aksw.jena_sparql_api.core.QueryTransform;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionBuilder;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Triple;
@@ -20,6 +22,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
@@ -100,7 +103,11 @@ public class ConfigSearchProviderNli {
             views.add(new TernaryRelationImpl(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s, Vars.p, Vars.o));
 
             QueryTransform queryTransform = query -> {
-                Query r = VirtualPartitionedQuery.rewrite(views, query);
+                Query raw = VirtualPartitionedQuery.rewrite(views, query);
+
+                // Evaluate 'static' parts of the query - such as operations based on OpTable - directly
+                Query r = QueryUtils.applyOpTransform(raw,
+                        op -> Transformer.transform(TransformEvalTable.create(), op));
                 return r;
             };
 

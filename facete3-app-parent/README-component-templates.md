@@ -65,7 +65,7 @@ The classifier can create a relation that maps entities to their tags, what is n
 
 An entity query uses a standard SPARQL query as a base and adds information about which sequence of variables corresponds to the key of the entities matched in the WHERE pattern. This extension to the SPARQL model allows for the specification of ordered sets of entities.
 ```
-CONSTRUCT { _:X .. } # a construct template based on the graph pattern in entities (avoids having to duplicate it if it should also participate in a construct)
+\# CONSTRUCT { _:X .. } # a construct template based on the graph pattern in entities (avoids having to duplicate it if it should also participate in a construct)
 ENTITIES ?x ?y { ?x . ?y . ?name }
 ORDER ENTITIES BY ASC(MIN(?name))
 OFFSET 5 # Start with the 5th entity - not the 5ths binding

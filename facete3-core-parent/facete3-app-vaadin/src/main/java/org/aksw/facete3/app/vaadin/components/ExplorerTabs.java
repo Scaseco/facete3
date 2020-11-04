@@ -136,25 +136,20 @@ public class ExplorerTabs
         currentNewTab = new Tab(new Icon(VaadinIcon.PLUS));
         currentNewTab.setClassName("compact");
 
+        // Remove the empty content of the 'New Tab' tab
+        pages.remove(convertingPage.getComponent());
+        convertingPage.close();
+
+        ManagedComponent convertedContent = newContent();
+        tabsToPages.put(selectedTab, convertedContent);
+        pages.add(convertedContent.getComponent());
+
+        // Add a fresh 'New Tab' button
         VerticalLayout newPage = new VerticalLayout();
         tabs.add(currentNewTab);
         newPage.setVisible(false);
         tabsToPages.put(currentNewTab, new ManagedComponentSimple(newPage));
         pages.add(newPage);
-
-        ManagedComponent convertedContent = newContent();
-
-
-        tabsToPages.put(selectedTab, new ManagedComponentWrapper(convertedContent) {
-            @Override
-            public Component getComponent() {
-                return convertingPage.getComponent();
-            }
-        });
-        ((VerticalLayout)convertingPage.getComponent()).add(convertedContent.getComponent());
-        // pages(convertingPage, substitute);
-
-//        convertingPage.add(new Text("Page" + tabCounter++));
     }
 
     protected void destroyTab(Tab tab) {

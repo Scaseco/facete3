@@ -39,10 +39,12 @@ public class ResourceComponent extends VerticalLayout {
     private Grid<Row> grid;
     private HashMap<Object,List<Property>> objectToProperty = new HashMap<>();
 
+    protected boolean enableSummary = false;
+
     /** A view manager that yield components for a summary views */
     protected ViewManager viewManager;
 
-    protected HorizontalLayout summaryArea;
+    protected HorizontalLayout summaryArea = null;
 
     public void setNode(RDFNode node) {
         this.node = node;
@@ -82,9 +84,12 @@ public class ResourceComponent extends VerticalLayout {
         subject = new Label();
         add(subject);
 
-        summaryArea = new HorizontalLayout();
-        summaryArea.setWidthFull();
-        add(summaryArea);
+
+        if (enableSummary) {
+            summaryArea = new HorizontalLayout();
+            summaryArea.setWidthFull();
+            add(summaryArea);
+        }
 
         //this.transformService = transformService;
         // ..
@@ -176,12 +181,14 @@ public class ResourceComponent extends VerticalLayout {
     public void refesh() {
         if (node != null) {
 
-            summaryArea.removeAll();
+            if (enableSummary && summaryArea != null) {
+                summaryArea.removeAll();
 
-            Component summaryContent = viewManager.getComponent(node.asNode());
+                Component summaryContent = viewManager.getComponent(node.asNode());
 
-            if (summaryContent != null) {
-                summaryArea.add(summaryContent);
+                if (summaryContent != null) {
+                    summaryArea.add(summaryContent);
+                }
             }
 
             subject.setText("Subject: " + node.toString());

@@ -4,6 +4,7 @@ import org.aksw.facete3.app.vaadin.config.ConfigViewManager;
 import org.springframework.context.annotation.Import;
 
 @Import({
+    ConfigBestLabel.class,
     ConfigEndpoint.class,
     ConfigSearchProviderNli.class,
     ConfigViewManager.class,

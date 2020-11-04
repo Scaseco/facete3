@@ -149,6 +149,17 @@
 			<artifactId>pdf-browser</artifactId>
 			<version>3.0.1</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.xdev-software</groupId>
+			<artifactId>vaadin-maps-leaflet-flow</artifactId>
+			<version>1.0.4</version>
+		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>com.vaadin</groupId> -->
+		<!-- <artifactId>leaflet4vaadin</artifactId> -->
+		<!-- <version>0.3.2</version> -->
+		<!-- </dependency> -->
 
 		<!-- <dependency> -->
 		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->

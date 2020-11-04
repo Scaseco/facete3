@@ -3,7 +3,9 @@ package org.aksw.facete3.app.vaadin.components;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -28,6 +30,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionTransform;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
 import org.aksw.jena_sparql_api.mapper.RootedQuery;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
@@ -95,7 +98,9 @@ public class FacetedBrowserView
             FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
             Config config,
-            ViewManager viewManager) {
+            ViewManager viewManagerFull,
+            ViewManager viewManagerDetails,
+            BestLiteralConfig bestLabelConfig) {
         this.baseDataConnection = baseDataConnection;
         this.searchProvider = searchProvider;
         this.facete3 = facete3;
@@ -107,13 +112,15 @@ public class FacetedBrowserView
 
 //        TransformService transformService = new TransformService(config.getPrefixFile());
 
+        Function<RDFNode, String> labelFunction = rdfNode ->
+            Objects.toString(LabelUtils.getOrDeriveLabel(rdfNode, bestLabelConfig));
 
         toolbar = new FacetedBrowserToolbar();
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
-        itemComponent = new ItemComponent(this, itemProvider, viewManager);
-        resourceBrowserComponent = new ResourceBrowserComponent(viewManager);
+        itemComponent = new ItemComponent(this, itemProvider, viewManagerFull);
+        resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction);
         resourceBrowserComponent.setWidthFull();
         resourceBrowserComponent.setHeightFull();
 
@@ -188,7 +195,14 @@ public class FacetedBrowserView
         });
 
 
-        add(getAppContent());
+        add(toolbar);
+
+//        appContent.add(getNaturalLanguageInterfaceComponent());
+
+        add(constraintsComponent);
+
+        add(getFacete3Component());
+
 
         // onRefresh();
     }
@@ -256,7 +270,7 @@ public class FacetedBrowserView
         SplitLayout component = new SplitLayout();
         component.setSizeFull();
         component.setOrientation(Orientation.HORIZONTAL);
-        component.setSplitterPosition(33);
+        component.setSplitterPosition(20);
         component.addToPrimary(getFacetComponent());
         component.addToSecondary(getResultsComponent());
         return component;
@@ -272,6 +286,8 @@ public class FacetedBrowserView
         component.add(facetPathComponent);
 //        component.add(constraintsComponent);
         component.add(facetComponent);
+
+        facetComponent.setSplitterPosition(20);
         return component;
     }
 

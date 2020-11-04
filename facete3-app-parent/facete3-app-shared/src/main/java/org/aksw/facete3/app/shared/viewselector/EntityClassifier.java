@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
+import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
 import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRx;
@@ -24,7 +24,6 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Lists;
@@ -34,10 +33,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -225,15 +222,6 @@ public class EntityClassifier {
 //    }
 //
 
-    public static Table execSelectTable(Supplier<QueryExecution> qeSupp) {
-        Table result;
-        try (QueryExecution qe = qeSupp.get()) {
-            ResultSet rs = qe.execSelect();
-            result = ResultSetUtils.resultSetToTable(rs);
-        }
-        return result;
-    }
-
 //    public static Table execSelectTable(SparqlQueryConnection conn, Relation relation) {
 //        return execSelectTable(conn, relation.toQuery());
 //    }
@@ -272,7 +260,7 @@ public class EntityClassifier {
         boolean materialize = false;
         if (materialize) {
             Query c = concept;
-            Table table = execSelectTable(() -> QueryExecutionFactory.create(c, model));
+            Table table = QueryExecutionUtils.execSelectTable(() -> QueryExecutionFactory.create(c, model));
 
             Query tmp = QueryFactory.create("SELECT DISTINCT ?s {}");
             tmp.setQueryPattern(new ElementData(table.getVars(), Lists.newArrayList(table.rows())));
@@ -293,7 +281,7 @@ public class EntityClassifier {
 
         EntityQueryImpl eq = new EntityQueryImpl();
         eq.setBaseQuery(ebq);
-        eq.getAuxiliaryGraphPartitions().add(new GraphPartitionJoin(entityGraphFragment));
+        eq.getMandatoryJoins().add(new GraphPartitionJoin(entityGraphFragment));
 
         EntityQueryBasic basic = EntityQueryRx.assembleEntityAndAttributeParts(eq);
 

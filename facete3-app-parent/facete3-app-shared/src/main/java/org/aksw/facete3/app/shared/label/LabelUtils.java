@@ -14,18 +14,26 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.mapper.AccBestLiteral;
+import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.model.PrefixMapAdapter;
+import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDFS;
 
@@ -36,6 +44,57 @@ import com.google.common.collect.Multimaps;
 import io.reactivex.rxjava3.core.Flowable;
 
 public class LabelUtils {
+
+
+    public static Node findBestLiteral(RDFNode rdfNode, BestLiteralConfig config) {
+        Node result = null;
+
+        AccBestLiteral acc = new AccBestLiteral(config);
+
+//        Context context = ARQ.getContext().copy() ;
+//        context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime()) ;
+//        FunctionEnv env = new ExecutionContext(context, null, null, null) ;
+
+        Node s = rdfNode.asNode();
+        if (rdfNode.isResource()) {
+            Resource r = rdfNode.asResource();
+
+            // If no predicates are given in best literal config then iterate
+            // all predicates of the resource
+            List<Node> preds = config.getPredicates();
+            if (preds == null) {
+                preds = r.listProperties()
+                        .mapWith(Statement::getObject)
+                        .mapWith(RDFNode::asNode)
+                        .toList();
+            }
+
+            for (Node p : config.getPredicates()) {
+                Property prop = new PropertyImpl(p, (EnhGraph)null);
+
+                List<Node> os = r.listProperties(prop)
+                        .mapWith(Statement::getObject)
+                        .mapWith(RDFNode::asNode)
+                        .toList();
+                for(Node o : os) {
+                    BindingMap binding = BindingFactory.create();
+                    binding.add(config.getSubjectVar(), s);
+                    binding.add(config.getPredicateVar(), p);
+                    binding.add(config.getObjectVar(), o);
+
+                    acc.accumulate(binding, null);
+                }
+            }
+
+            result = Optional.ofNullable(acc.getValue()).map(NodeValue::asNode).orElse(null);
+        }
+
+        if (result == null) {
+            result = s;
+        }
+
+        return result;
+    }
 
     /**
      * A basic lookup service for labels that maps Nodes to Strings.
@@ -271,7 +330,11 @@ public class LabelUtils {
 
 
     public static String getOrDeriveLabel(RDFNode rdfNode) {
-        return getOrDeriveLabel(rdfNode, RDFS.label, null, null);
+        return getOrDeriveLabel(rdfNode, BestLiteralConfig.fromProperty(RDFS.label));
+    }
+
+    public static String getOrDeriveLabel(RDFNode rdfNode, BestLiteralConfig bestLiteralConfig) {
+        return getOrDeriveLabel(rdfNode, bestLiteralConfig, null, null);
     }
 
 
@@ -287,16 +350,16 @@ public class LabelUtils {
      */
     public static String getOrDeriveLabel(
             RDFNode rdfNode,
-            Property labelProperty,
+            BestLiteralConfig bestLiteralConfig,
             PrefixMapping iriPrefixes,
             PrefixMapping literalPrefixes) {
 
-        RDFNode tmp = rdfNode.isResource()
-                ? ResourceUtils.getPropertyValue(rdfNode.asResource(), labelProperty)
+        Node tmp = rdfNode.isResource()
+                ? findBestLiteral(rdfNode, bestLiteralConfig)
                 : null;
 
         Node labelNode = tmp != null
-                ? tmp.asNode()
+                ? tmp
                 : rdfNode.asNode();
 
         String result = deriveLabelFromNode(labelNode, iriPrefixes, literalPrefixes);
