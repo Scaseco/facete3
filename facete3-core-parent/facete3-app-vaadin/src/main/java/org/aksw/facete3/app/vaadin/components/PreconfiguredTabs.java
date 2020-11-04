@@ -37,13 +37,8 @@ public class PreconfiguredTabs
         pages.setHeightFull();
 
         tabs.addSelectedChangeListener(ev -> {
-            tabsToPages.values().forEach(page -> page.getComponent().setVisible(false));
-
             Tab selectedTab = tabs.getSelectedTab();
-            if (selectedTab != null) {
-                Component selectedPage = tabsToPages.get(selectedTab).getComponent();
-                selectedPage.setVisible(true);
-            }
+            setSelectedTab(selectedTab);
         });
         add(tabs, pages);
     }
@@ -87,7 +82,16 @@ public class PreconfiguredTabs
 
     public void setSelectedTabId(String id) {
         Tab tab = idToTab.get(id);
-        tabs.setSelectedTab(tab);
+        setSelectedTab(tab);
+    }
+
+    public void setSelectedTab(Tab selectedTab) {
+        tabsToPages.values().forEach(page -> page.getComponent().setVisible(false));
+        tabs.setSelectedTab(selectedTab);
+        if (selectedTab != null) {
+            Component selectedPage = tabsToPages.get(selectedTab).getComponent();
+            selectedPage.setVisible(true);
+        }
     }
 
     public Tabs getTabsComponent() {

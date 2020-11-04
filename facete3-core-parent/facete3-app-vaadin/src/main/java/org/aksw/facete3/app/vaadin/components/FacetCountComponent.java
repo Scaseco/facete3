@@ -16,13 +16,14 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 
-public class FacetCountComponent extends VerticalLayout {
+public class FacetCountComponent extends Grid<FacetCount> {
 
     private static final long serialVersionUID = -331380480912293631L;
     private FacetCountProvider dataProvider;
     private FacetedBrowserView mainView;
 
     public FacetCountComponent(FacetedBrowserView mainView, FacetCountProvider dataProvider) {
+        super(FacetCount.class);
         this.dataProvider = dataProvider;
         this.mainView = mainView;
 
@@ -30,7 +31,8 @@ public class FacetCountComponent extends VerticalLayout {
     }
 
     private void addFacetCountGrid() {
-        Grid<FacetCount> grid = new Grid<>(FacetCount.class);
+//        Grid<FacetCount> grid = new Grid<>(FacetCount.class);
+        Grid<FacetCount> grid = this;
         grid.getClassNames().add("compact");
 
         grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
@@ -50,7 +52,7 @@ public class FacetCountComponent extends VerticalLayout {
         filterRow.getCell(facetColumn).setComponent(getSearchComponent());
 
 
-        add(grid);
+        // add(grid);
 
 
 
@@ -61,6 +63,7 @@ public class FacetCountComponent extends VerticalLayout {
         TextField searchField = new TextField();
         searchField.setPlaceholder("Filter Facets...");
         searchField.addValueChangeListener(this::searchCallback);
+        searchField.setWidthFull();
         return searchField;
     }
 
