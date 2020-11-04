@@ -271,7 +271,11 @@ public class FacetedBrowserView
         component.setSizeFull();
         component.setOrientation(Orientation.HORIZONTAL);
         component.setSplitterPosition(20);
+
+
         component.addToPrimary(getFacetComponent());
+
+
         component.addToSecondary(getResultsComponent());
         return component;
     }
