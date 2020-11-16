@@ -19,7 +19,6 @@
 		<module>facete3-api</module>
 		<module>facete3-impl</module>
 		<module>facete3-eclipse</module>
-		<module>facete3-app-vaadin</module>
 	</modules>
 
 </project>

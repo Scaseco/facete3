@@ -15,7 +15,7 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 
         // Interestingly wrapping the cxt in a try-with-resources block to ensure
         // auto-closing of it causes application start up to fail -
-        // probably this is due to the app running in separate
+        // probably this is due to the app running in a separate
         // thread
         ConfigurableApplicationContext cxt = new SpringApplicationBuilder()
                 .sources(MainAppFacete3Vaadin.class)
