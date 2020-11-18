@@ -7,14 +7,17 @@ import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
-import org.vaadin.alejandro.PdfBrowserViewer;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Iterables;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.server.StreamResource;
@@ -28,6 +31,8 @@ public class ResourceBrowserComponent
     protected PreconfiguredTabs tabs;
     protected Function<? super RDFNode, ? extends String> viewMetadataToLabel;
 
+    protected RDFNode activeRdfNode = null;
+
     public ResourceBrowserComponent(
             ViewManager viewManager,
             Function<? super RDFNode, ? extends String> viewMetadataToLabel) {
@@ -35,10 +40,49 @@ public class ResourceBrowserComponent
         this.viewMetadataToLabel = viewMetadataToLabel;
 
         tabs = new PreconfiguredTabs();
+
+
+
+        Button expand = new Button(new Icon(VaadinIcon.EXPAND_FULL));
+        expand.addClickListener(event -> {
+            Dialog dialog = new Dialog();
+
+            dialog.addDialogCloseActionListener(ev -> {
+                add(tabs);
+                dialog.close();
+            });
+
+//            dialog.setMinHeight("80%");
+//            dialog.setMinWidth("80%");
+            dialog.setHeight("calc(100vh - (2*var(--lumo-space-m)))");
+            dialog.setWidth("calc(100vw - (4*var(--lumo-space-m)))");
+            dialog.open();
+
+            ResourceBrowserComponent newBrowser = new ResourceBrowserComponent(viewManager, viewMetadataToLabel);
+            newBrowser.setWidthFull();
+            newBrowser.setHeightFull();
+
+            dialog.add(newBrowser);
+            newBrowser.setNode(getNode());
+        });
+
+        add(expand);
         add(tabs);
     }
 
-    void setNode(RDFNode rdfNode) {
+    public void resetView() {
+        // Set the node again which triggers an update of the view
+        setNode(getNode());
+    }
+
+
+    public RDFNode getNode() {
+        return activeRdfNode;
+    }
+
+    public void setNode(RDFNode rdfNode) {
+        activeRdfNode = rdfNode;
+
         String selectedTabId = tabs.getSelectedTabId();
         tabs.removeAllTabs();
 
@@ -80,11 +124,11 @@ public class ResourceBrowserComponent
 //                    });
 
             // show file in pdf viewer
-            PdfBrowserViewer pdfViewer = new PdfBrowserViewer(streamResource);
-            pdfViewer.setHeight("100%");
-            pdfViewer.setWidth("100%");
-
-            tabs.newTab("pdf", "PDF", new ManagedComponentSimple(pdfViewer));
+//            PdfBrowserViewer pdfViewer = new PdfBrowserViewer(streamResource);
+//            pdfViewer.setHeight("100%");
+//            pdfViewer.setWidth("100%");
+//
+//            tabs.newTab("pdf", "PDF", new ManagedComponentSimple(pdfViewer));
 
 
 //            MapOptions options = new DefaultMapOptions();

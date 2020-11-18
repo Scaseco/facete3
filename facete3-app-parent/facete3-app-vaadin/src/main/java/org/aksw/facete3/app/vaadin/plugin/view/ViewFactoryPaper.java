@@ -26,9 +26,8 @@ import org.apache.jena.vocabulary.RDFS;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
@@ -91,7 +90,7 @@ public class ViewFactoryPaper
 class PaperViewComponent
     extends VerticalLayout
 {
-    protected Label authors;
+    protected Span authors;
     protected Anchor titleLink;
 
     protected HorizontalLayout summaryWrapper;
@@ -102,7 +101,7 @@ class PaperViewComponent
 
     public PaperViewComponent(Resource initialState) {
         this.state = initialState;
-        authors = new Label();
+        authors = new Span();
         titleLink = new Anchor();
         summaryContent = new Paragraph();
         summaryWrapper = new HorizontalLayout();

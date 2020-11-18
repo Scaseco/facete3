@@ -21,6 +21,7 @@ import org.apache.jena.riot.RDFDataMgr;
 
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -141,7 +142,17 @@ public class SparqlEndpointForm extends FormLayout {
             return layout;
         }));
 
-        add(serviceUrl, 3);
+        FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
+        serviceUrl.setWidthFull();
+        setColspan(formItem, 3);
+//        FormItem formItem = new FormItem();
+//        Label label = new Label("Sparql Endpoint URL");
+//        label.getElement().setAttribute("slot", "label");
+//        formItem.add(label);
+//        formItem.add(serviceUrl);
+//        add(formItem, 3);
+
+//        add(serviceUrl, 3);
 
 //        DataRefSparqlEndpoint bean = ModelFactory.createDefaultModel().createResource().as(DataRefSparqlEndpoint.class);
 //        bean.setServiceUrl("http://");

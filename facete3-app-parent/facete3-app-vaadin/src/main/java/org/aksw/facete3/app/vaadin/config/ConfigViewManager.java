@@ -1,5 +1,6 @@
 package org.aksw.facete3.app.vaadin.config;
 
+import org.aksw.facete3.app.vaadin.plugin.view.ViewFactoryDoiPdfViewer;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactoryPaper;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManagerImpl;
@@ -17,6 +18,7 @@ public class ConfigViewManager
         ViewManagerImpl result = new ViewManagerImpl(conn);
 
         result.register(new ViewFactoryPaper());
+        result.register(new ViewFactoryDoiPdfViewer());
 
         return result;
     }

@@ -1,5 +1,6 @@
 package org.aksw.facete3.app.vaadin;
 
+import org.apache.jena.sys.JenaSystem;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -10,6 +11,8 @@ import org.springframework.context.ConfigurableApplicationContext;
  */
 @SpringBootApplication
 public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
+
+    static { JenaSystem.init(); }
 
     public static void main(String[] args) {
 
