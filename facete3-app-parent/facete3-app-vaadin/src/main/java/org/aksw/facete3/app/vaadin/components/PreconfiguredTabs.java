@@ -12,8 +12,11 @@ import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasComponents;
+import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 
@@ -28,19 +31,29 @@ public class PreconfiguredTabs
     protected BiMap<String, Tab> idToTab = HashBiMap.create();
     protected Map<Tab, ManagedComponent> tabsToPages = new LinkedHashMap<>();
 
+    public PreconfiguredTabs() {
+        this(new VerticalLayout());
+    }
+
     // TODO The supplier is not a view-model; there should be some
     // DataProvider that provides the components
-    public PreconfiguredTabs() {
+    public PreconfiguredTabs(Component container) {
         this.setWidthFull();
         this.setHeightFull();
         pages.setWidthFull();
         pages.setHeightFull();
 
+//        HorizontalLayout container = new HorizontalLayout();
+
         tabs.addSelectedChangeListener(ev -> {
             Tab selectedTab = tabs.getSelectedTab();
             setSelectedTab(selectedTab);
         });
-        add(tabs, pages);
+
+        ((HasSize)container).setWidthFull();
+        ((HasSize)container).setHeightFull();
+        ((HasComponents)container).add(tabs, pages);
+        add(container);
     }
 
 

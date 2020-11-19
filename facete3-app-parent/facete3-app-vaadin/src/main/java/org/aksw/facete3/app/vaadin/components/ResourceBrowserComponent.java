@@ -42,7 +42,6 @@ public class ResourceBrowserComponent
         tabs = new PreconfiguredTabs();
 
 
-
         Button expand = new Button(new Icon(VaadinIcon.EXPAND_FULL));
         expand.addClickListener(event -> {
             Dialog dialog = new Dialog();

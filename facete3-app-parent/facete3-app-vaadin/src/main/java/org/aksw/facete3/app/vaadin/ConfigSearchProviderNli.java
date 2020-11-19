@@ -6,7 +6,10 @@ import java.util.Collection;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPluginImpl;
 import org.aksw.facete3.app.vaadin.providers.SearchProviderNli;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
+import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
@@ -112,12 +115,22 @@ public class ConfigSearchProviderNli {
             views.add(new TernaryRelationImpl(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s, Vars.p, Vars.o));
 
             QueryTransform queryTransform = query -> {
+//                System.out.println("Before rewrite: " + query);
                 Query raw = VirtualPartitionedQuery.rewrite(views, query);
-System.out.println(raw);
+//                System.out.println("After rewrite: " + raw);
                 // Evaluate 'static' parts of the query - such as operations based on OpTable - directly
-                Query r = QueryUtils.applyOpTransform(raw,
+
+                Query tmp = QueryUtils.applyOpTransform(raw,
+                        FixpointIteration.createClosure(op -> Transformer.transform(new TransformDistributeJoinOverUnion(), op)));
+//                System.out.println("After join-over-junion distribution: " + tmp);
+
+                // TODO Due to a virtuoso bug with unions involving VALUES
+                // TransformEvalTable may cause loss of result bindings...
+                // Consider a workaround...
+
+                Query r = QueryUtils.applyOpTransform(tmp,
                         op -> Transformer.transform(TransformEvalTable.create(), op));
-                System.out.println(r);
+//                System.out.println("After optimization: " + r);
                 return r;
             };
 

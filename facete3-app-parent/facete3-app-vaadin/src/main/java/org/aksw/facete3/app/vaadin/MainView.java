@@ -1,5 +1,6 @@
 package org.aksw.facete3.app.vaadin;
 
+import org.aksw.facete3.app.vaadin.components.DatasetSelectorComponent;
 import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -58,6 +60,20 @@ public class MainView extends AppLayout {
 
         Button appSettingsBtn = new Button(new Icon(VaadinIcon.COG));
         navbarLayout.add(appSettingsBtn);
+
+
+
+      Dialog dialog = new Dialog();
+      DatasetSelectorComponent datasetManager = new DatasetSelectorComponent();
+
+      dialog.add(datasetManager);
+
+      appSettingsBtn.addClickListener(event -> {
+          dialog.open();
+//          input.focus();
+      });
+
+
 
 
         Button themeToggleButton = new Button(new Icon(VaadinIcon.LIGHTBULB), click -> {

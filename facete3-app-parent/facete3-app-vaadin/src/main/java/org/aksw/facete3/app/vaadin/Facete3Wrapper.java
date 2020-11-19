@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.aksw.dcat.jena.domain.api.DcatDataset;
+import org.aksw.dcat.jena.domain.api.DcatDistribution;
+import org.aksw.dcat.jena.plugin.JenaPluginDcat;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -100,6 +103,8 @@ public class Facete3Wrapper {
         BuiltinPersonalities.model.add(ServiceStatus.class,
                 JenaPluginUtils.createImplementation(ServiceStatus.class, PrefixMapping.Standard));
 
+
+        JenaPluginDcat.init(BuiltinPersonalities.model);
     }
 
     private void initFacetedQuery(RDFConnection connection) {
