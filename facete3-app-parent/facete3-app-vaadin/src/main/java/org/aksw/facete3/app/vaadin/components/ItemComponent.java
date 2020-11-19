@@ -1,9 +1,13 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
+import org.aksw.facete3.app.vaadin.providers.DataProviderWithConversion;
+import org.aksw.facete3.app.vaadin.providers.EnrichedItem;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
@@ -15,17 +19,47 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
+/**
+ * The view component for values matching the given facet constraints
+ *
+ * @author raven
+ *
+ */
 public class ItemComponent extends VerticalLayout {
 
     private ItemProvider itemProvider;
     private static final long serialVersionUID = 1848553144669545835L;
 
     protected ViewManager viewManager;
+
+
+    public List<EnrichedItem> enrich(List<RDFNode> rdfNodes) {
+        List<Node> nodes = rdfNodes.stream().map(RDFNode::asNode).collect(Collectors.toList());
+
+        //Map<Node, ViewFactory> nodeToViewFactory = viewManager.getBestViewFactories(nodes);
+        Map<Node, Component> nodeToComponent = viewManager.getComponents(nodes);
+
+        List<EnrichedItem> result = rdfNodes.stream().map(rdfNode -> {
+            Node node = rdfNode.asNode();
+            Component component = nodeToComponent.get(node);
+//        	ViewFactory viewFactory = nodeToViewFactory.get(node);
+
+            EnrichedItem<RDFNode> r = new EnrichedItem<>(rdfNode);
+            r.getClassToInstanceMap().putInstance(Component.class, component);
+            return r;
+
+        }).collect(Collectors.toList());
+
+
+        return result;
+    }
 
     public ItemComponent(
             FacetedBrowserView facetedBrowserView,
@@ -35,6 +69,12 @@ public class ItemComponent extends VerticalLayout {
 
 
         this.viewManager = viewManager;
+
+
+        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrap(
+                itemProvider, this::enrich, ei -> (RDFNode)ei.getItem());
+
+
 
         Button btn = new Button("Available columns");
         btn.addClickListener(event -> {
@@ -66,7 +106,7 @@ public class ItemComponent extends VerticalLayout {
             String filter = event.getValue();
             dataProvider.setFilter(filter);
         });
-        Grid<RDFNode> grid = new Grid<>(RDFNode.class);
+        Grid<EnrichedItem> grid = new Grid<>(EnrichedItem.class);
         grid.getClassNames().add("compact");
         grid.getColumns()
                 .forEach(grid::removeColumn);
@@ -78,12 +118,14 @@ public class ItemComponent extends VerticalLayout {
        // 	return anchor;
        // 	})).setSortProperty("value").setHeader(searchField);
         grid.addColumn(
-                new ComponentRenderer<Component, RDFNode>(item -> {
+                new ComponentRenderer<Component, EnrichedItem>(enrichedItem -> {
+                    RDFNode item = (RDFNode)enrichedItem.getItem();
                     Node node = item.asNode();
-                    Component r = viewManager.getComponent(node);
+//                    Component r = viewManager.getComponents(Collections.singleton(node)).get(node);
+                    Component r = (Component)enrichedItem.getClassToInstanceMap().getInstance(Component.class);
                     if (r == null) {
                         String str = LabelUtils.getOrDeriveLabel(item);
-                        r = new Label(str);
+                        r = new Span(str);
                     }
                     return r;
                 // item -> FacetProvider.getLabel(item)
@@ -91,10 +133,11 @@ public class ItemComponent extends VerticalLayout {
                 }))
                 .setSortProperty("value")
                 .setHeader(searchField);
-        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
+        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(effectiveDataProvider));
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
-                    Node node = event.getValue().asNode();
+//                    Node node = event.getValue().asNode();
+                    Node node = ((RDFNode)event.getValue().getItem()).asNode();
                     facetedBrowserView.viewNode(node);
                 });
         add(grid);

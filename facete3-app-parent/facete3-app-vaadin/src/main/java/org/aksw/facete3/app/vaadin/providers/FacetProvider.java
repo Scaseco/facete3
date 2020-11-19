@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.providers;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
@@ -13,6 +14,8 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.pathlet.Path;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
@@ -23,6 +26,8 @@ import com.vaadin.flow.data.provider.SortDirection;
 
 public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDataProvider<T, Void>
        implements ConfigurableFilterDataProvider<T, Void, String> {
+
+    private static final Logger logger = LoggerFactory.getLogger(FacetProvider.class);
 
     private static final long serialVersionUID = 1L;
     private LookupService<Node, String> labelService;
@@ -104,7 +109,14 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
                 .doOnSuccess(items -> LabelUtils.enrichWithLabels(items, nodeToLabel, labelService))
                 .blockingGet();
 
-        System.out.println("Requested limit: " + limit + " offset: " + query.getOffset() + "; got items: " + list.size());
+        if (list.size() > limit) {
+            logger.warn("Assertion failed: Requested limit: " + limit + " offset: " + query.getOffset() + "; got items: " + list.size());
+
+            list = list.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+        }
+
         Stream<T> stream = list.stream();
         return stream;
     }

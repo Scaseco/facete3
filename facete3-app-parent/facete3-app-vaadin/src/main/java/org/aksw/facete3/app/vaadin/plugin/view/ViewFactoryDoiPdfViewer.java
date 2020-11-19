@@ -1,11 +1,17 @@
 package org.aksw.facete3.app.vaadin.plugin.view;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
 import org.aksw.facete3.app.shared.viewselector.ViewTemplateImpl;
@@ -18,6 +24,7 @@ import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -162,12 +169,12 @@ class PaperViewComponentDoi
         Button tryLoadPdfBtn = new Button("Try to load");
 
         tryLoadPdfBtn.addClickListener(ev -> {
-            IFrame iFrame = new IFrame(scihubUrl);
-            iFrame.setWidthFull();
-            iFrame.setHeightFull();
-            add(iFrame);
-
             if (false) {
+                IFrame iFrame = new IFrame(scihubUrl);
+                iFrame.setWidthFull();
+                iFrame.setHeightFull();
+                add(iFrame);
+            } else {
                 URL url;
                 try {
                     url = new URL(scihubUrl);
@@ -175,12 +182,49 @@ class PaperViewComponentDoi
                     throw new RuntimeException(e);
                 }
 
+                byte[] rawBytes;
+                try (InputStream in = url.openStream()) {
+                    rawBytes = IOUtils.toByteArray(in); //IOUtils.toString(in, StandardCharsets.UTF_8);
+                } catch (IOException e1) {
+                    throw new RuntimeException(e1);
+                }
+
+                Callable<InputStream> inputStreamSupp;
+
+                if (rawBytes.length >= 4 && rawBytes[0] == '%' && rawBytes[1] == 'P' && rawBytes[2] == 'D' && rawBytes[3] == 'F') {
+                    inputStreamSupp = () -> new ByteArrayInputStream(rawBytes); //, StandardCharsets.UTF_8);
+                } else {
+                    String rawHtml = new String(rawBytes, StandardCharsets.UTF_8);
+
+                    Pattern pattern = Pattern.compile("<\\s*iframe\\s[^>]*src\\s*=\\s*\"([^\"]*)\"", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+                    Matcher matcher = pattern.matcher(rawHtml);
+                    if (matcher.find()) {
+                        String pdfUrlStr = matcher.group(1);
+                        URL pdfUrl;
+                        try {
+                            pdfUrl = new URL(pdfUrlStr);
+                        } catch (Exception e1) {
+                            throw new RuntimeException(e1);
+                        }
+
+                        inputStreamSupp = () -> pdfUrl.openStream();
+                    } else {
+                        inputStreamSupp = null;
+                    }
+                }
+
+                if (inputStreamSupp == null) {
+                    System.err.println("Could not obtain input stream");
+                    return;
+                }
+
+                //Callable<InputStream> finalInputStreamSupp = inputStreamSupp;
                 String fileName = finalDoi.replace('/', '-') + ".pdf";
 
                 StreamResource streamResource = new StreamResource(fileName, () -> {
                     try {
-                        return url.openStream();
-                    } catch (IOException e) {
+                        return inputStreamSupp.call();
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 });

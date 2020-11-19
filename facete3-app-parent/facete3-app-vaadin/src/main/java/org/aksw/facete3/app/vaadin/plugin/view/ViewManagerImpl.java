@@ -1,6 +1,6 @@
 package org.aksw.facete3.app.vaadin.plugin.view;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +20,9 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.ext.com.google.common.collect.Multimap;
+import org.apache.jena.ext.com.google.common.collect.Multimaps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.RDFNode;
@@ -38,7 +41,7 @@ import com.vaadin.flow.component.Component;
  *
  */
 public class ViewManagerImpl
-    implements ViewManager
+    implements ViewManagerBulk
 {
     protected Map<Node, ViewFactory> viewFactories = new LinkedHashMap<>();
 
@@ -79,11 +82,23 @@ public class ViewManagerImpl
 
 
 
+    protected Node pickBestClass(Collection<? extends Node> candidates) {
+        Node result = Iterables.getFirst(candidates, null);
+        return result;
+    }
+
     @Override
-    public ViewFactory getBestViewFactory(Node node) {
-        Set<Node> classifications = getClassifications(node);
-        Node match = Iterables.getFirst(classifications, null);
-        ViewFactory result = match == null ? null : viewFactories.get(match);
+    public Map<Node, ViewFactory> getBestViewFactories(Collection<Node> nodes) {
+        Map<Node, Set<Node>> classifications = getClassifications(nodes);
+
+        Map<Node, ViewFactory> result = classifications.entrySet().stream()
+            .collect(Collectors.toMap(
+                Entry::getKey,
+                e -> {
+                    Node bestClass = pickBestClass(e.getValue());
+                    ViewFactory r = bestClass == null ? null : viewFactories.get(bestClass);
+                    return r;
+                }));
 
         return result;
     }
@@ -100,9 +115,10 @@ public class ViewManagerImpl
     }
 
 
-    public Set<Node> getClassifications(Node node) {
-        RDFNode rdfNode = createListService().asLookupService().requestMap(Collections.singleton(node))
-            .blockingGet().get(node);
+    public Map<Node, Set<Node>> getClassifications(Iterable<Node> nodes) {
+        Map<Node, RDFNode> rdfNodeMap = createListService()
+                .asLookupService().requestMap(nodes)
+                .blockingGet(); //.get(node);
 
 //        EntityClassifier entityClassifier = buildClassifier();
 //        EntityGraphFragment entityGraphFragment = entityClassifier.createGraphFragment();
@@ -113,31 +129,64 @@ public class ViewManagerImpl
 //        List<RDFNode> results = EntityQueryRx.execConstructEntities(conn, entityQuery).toList().blockingGet();
 //
 //        // Flat collection; TODO collect into a Map<Node, Collection<Node>>
-        Set<Node> classifications = Collections.singletonList(rdfNode).stream()
-            .filter(x -> x != null)
-            .filter(RDFNode::isResource)
-            .map(RDFNode::asResource)
-            .flatMap(r -> r.listProperties(EntityClassifier.classifier).toList().stream()
-                    .map(Statement::getObject)
-                    .map(RDFNode::asNode))
-            .collect(Collectors.toSet());
-
+        Map<Node, Set<Node>> classifications = rdfNodeMap.entrySet().stream()
+//            .filter(e -> e != null)
+            .filter(e -> e.getValue() != null && e.getValue().isResource())
+            .collect(Collectors.toMap(
+                    Entry::getKey,
+                    e -> e.getValue().asResource().listProperties(EntityClassifier.classifier).toList().stream()
+                        .map(Statement::getObject)
+                        .map(RDFNode::asNode)
+                        .collect(Collectors.toSet()))
+                    );
 
         return classifications;
     }
 
     @Override
-    public Component getComponent(Node node) {
-        Component result = null;
-        ViewFactory viewFactory = getBestViewFactory(node);
+    public Map<Node, Component> getComponents(Collection<Node> nodes) {
+        Map<Node, ViewFactory> viewFactories = getBestViewFactories(nodes);
 
-        if (viewFactory != null) {
-            Resource data = fetchData(node, viewFactory);
+        // Invert the mapping such that each view factory maps to the set
+        // related nodes
+        Multimap<ViewFactory, Node> index = Multimaps.index(viewFactories.keySet(), viewFactories::get);
 
-            if (data != null) {
-                result = viewFactory.createComponent(data);
-            }
-        }
+        Map<Node, Component> result = index.asMap().entrySet().stream().flatMap(e -> {
+            ViewFactory viewFactory = e.getKey();
+            Collection<Node> clusteredNodes = e.getValue();
+
+            Map<Node, Resource> nodeToData = fetchData(clusteredNodes, viewFactory);
+            Map<Node, Component> nodeToComponent = Maps.transformValues(nodeToData, v -> {
+                Component r = v != null
+                        ? viewFactory.createComponent(v)
+                        : null;
+
+                return r;
+            });
+
+            return nodeToComponent.entrySet().stream();
+
+        }).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+
+//        Map<Node, Component> result = Maps.transformEntries(viewFactories, (k, v) -> {
+//            Component r = null;
+//            if (v != null) {
+//                Resource data = fetchData(k, v);
+//                if (data != null) {
+//                    r = v.createComponent(data);
+//                }
+//            }
+//            return r;
+//        });
+
+//        if (viewFactory != null) {
+//            Resource data = fetchData(node, viewFactory);
+//
+//            if (data != null) {
+//                result = viewFactory.createComponent(data);
+//            }
+//        }
 
         return result;
     }
@@ -147,21 +196,24 @@ public class ViewManagerImpl
     }
 
 
-    public Resource fetchData(Node node, ViewFactory viewFactory) {
+    public Map<Node, Resource> fetchData(Collection<Node> nodes, ViewFactory viewFactory) {
         EntityQueryImpl viewEntityQuery = viewFactory.getViewTemplate().getEntityQuery();
 
-        RDFNode tmp = fetchData(conn, node, viewEntityQuery);
+        Map<Node, RDFNode> tmp = fetchData(conn, nodes, viewEntityQuery);
 
         // The RDFNode must be a resource otherwise an exception is raised
-        Resource result = tmp == null ? null : tmp.asResource();
+        // Resource result = tmp == null ? null : tmp.asResource();
+        Map<Node, Resource> result = Maps.transformValues(tmp, v -> v == null ? null : v.asResource());
         return result;
     }
 
-    public static RDFNode fetchData(SparqlQueryConnection conn, Node node, EntityQueryImpl viewEntityQuery) {
+
+
+    public static Map<Node, RDFNode> fetchData(SparqlQueryConnection conn, Collection<Node> nodes, EntityQueryImpl viewEntityQuery) {
 
 
         Var entityVar = Vars.s;
-        Query standardQuery = EntityQueryImpl.createStandardQuery(entityVar, node);
+        Query standardQuery = EntityQueryImpl.createStandardQuery(entityVar, nodes);
         EntityQueryImpl entityQuery = EntityQueryImpl.createEntityQuery(Vars.s, standardQuery);
 
         entityQuery.getMandatoryJoins().addAll(viewEntityQuery.getMandatoryJoins());
@@ -171,24 +223,35 @@ public class ViewManagerImpl
         List<RDFNode> entities = EntityQueryRx.execConstructEntities(conn, entityQuery)
             .toList().blockingGet();
 
+        Map<Node, RDFNode> result = entities.stream()
+                .collect(Collectors.toMap(rdfNode -> rdfNode.asNode(), rdfNode -> rdfNode));
 
         // One result expected
-        RDFNode data = Cardinalities.expectZeroOrOne(entities.stream()).orElse(null);
-        return data;
+//        RDFNode data = Cardinalities.expectZeroOrOne(entities.stream()).orElse(null);
+        return result;
     }
 
     @Override
-    public List<ViewFactory> getApplicableViewFactories(Node node) {
-        Set<Node> classifications = getClassifications(node);
+    public Map<Node, List<ViewFactory>> getApplicableViewFactories(Collection<Node> nodes) {
+        Map<Node, Set<Node>> classifications = getClassifications(nodes);
 
-        List<ViewFactory> result = classifications.stream()
-            .map(viewFactories::get)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+        Map<Node, List<ViewFactory>> result = Maps.transformValues(classifications, v -> v.stream()
+                .map(viewFactories::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
+
+//        Map<Node, List<ViewFactory>> result = classifications.entrySet().stream()
+//            .map(viewFactories::get)
+//            .filter(Objects::nonNull)
+//            .collect(Collectors.toList());
 
         return result;
     }
 
+
+//    @Override
+//    public Map<Node, Component> getComponents(Iterable<Node> nodes) {
+//    }
 //    public ViewFactory prepare(UnaryRelation concept) {
 //
 //    }
