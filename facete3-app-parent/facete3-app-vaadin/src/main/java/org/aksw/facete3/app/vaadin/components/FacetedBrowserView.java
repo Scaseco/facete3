@@ -19,11 +19,11 @@ import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.Config;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
+import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -54,8 +54,11 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
+import com.vaadin.flow.data.provider.InMemoryDataProvider;
+import com.vaadin.flow.data.provider.Query;
 
 public class FacetedBrowserView
     extends VerticalLayout {
@@ -79,10 +82,12 @@ public class FacetedBrowserView
 //  @Autowired
     protected RDFConnection baseDataConnection;
 
-    protected SearchProvider searchProvider;
+//    protected SearchProvider searchProvider;
+    protected InMemoryDataProvider<SearchPlugin> searchPluginDataProvider;
+    protected SearchPlugin activeSearchPlugin;
 
-    @Autowired(required = false)
-    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform = null;
+//    @Autowired(required = false)
+//    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform = null;
 
     @Autowired
     protected ConfigurableApplicationContext cxt;
@@ -91,7 +96,8 @@ public class FacetedBrowserView
 
     public FacetedBrowserView(
             RDFConnection baseDataConnection,
-            SearchProvider searchProvider,
+//            SearchPlugin searchPlugin,
+            InMemoryDataProvider<SearchPlugin> searchPluginProvider,
             PrefixMapping prefixMapping,
             Facete3Wrapper facete3,
             FacetCountProvider facetCountProvider,
@@ -102,7 +108,8 @@ public class FacetedBrowserView
             ViewManager viewManagerDetails,
             BestLiteralConfig bestLabelConfig) {
         this.baseDataConnection = baseDataConnection;
-        this.searchProvider = searchProvider;
+        this.searchPluginDataProvider = searchPluginProvider;
+        this.activeSearchPlugin = searchPluginDataProvider.fetch(new Query<>()).limit(1).findFirst().orElse(null);
         this.facete3 = facete3;
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
@@ -119,7 +126,7 @@ public class FacetedBrowserView
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
-        itemComponent = new ItemComponent(this, itemProvider, viewManagerFull);
+        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
         resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction);
         resourceBrowserComponent.setWidthFull();
         resourceBrowserComponent.setHeightFull();
@@ -129,8 +136,19 @@ public class FacetedBrowserView
         connectionInfo = new Label();
         connectionInfo.getElement().setAttribute("theme", "badge primary pill");
 
-        searchComponent = new SearchComponent(this, searchProvider);
+        searchComponent = new SearchComponent(this, () -> activeSearchPlugin.getSearchProvider());
         toolbar.add(searchComponent);
+
+        Select<SearchPlugin> searchPluginSelect = new Select<>();
+        searchPluginSelect.setDataProvider(searchPluginProvider);
+        searchPluginSelect.setValue(activeSearchPlugin);
+        searchPluginSelect.setTextRenderer(item -> item.getSearchProvider().toString());
+        searchPluginSelect.addValueChangeListener(event -> {
+            activeSearchPlugin = event.getValue();
+            System.out.println("Active search plugin: " + activeSearchPlugin);
+        });
+
+        toolbar.add(searchPluginSelect);
 
         Button changeConnectionBtn = new Button(connectionInfo);
         toolbar.add(changeConnectionBtn);
@@ -376,8 +394,9 @@ public class FacetedBrowserView
         }
 
         RDFConnection effectiveDataConnection = baseDataConnection;
-        if (searchSensitiveRdfConnectionTransform != null) {
-            RDFConnectionTransform connXform = searchSensitiveRdfConnectionTransform.create(rdfNodeSpec);
+        SearchSensitiveRDFConnectionTransform connectionTransform = activeSearchPlugin.getConnectionTransform();
+        if (connectionTransform != null) {
+            RDFConnectionTransform connXform = connectionTransform.create(rdfNodeSpec);
             effectiveDataConnection = connXform.apply(effectiveDataConnection);
         }
 

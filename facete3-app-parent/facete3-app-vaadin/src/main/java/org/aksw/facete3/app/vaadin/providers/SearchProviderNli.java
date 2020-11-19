@@ -24,6 +24,12 @@ public class SearchProviderNli
 {
     public static final Property score = ResourceFactory.createProperty("http://nli.aksw.org/score");
 
+//    protected Resource metadata;
+//
+//    @Override
+//    public Resource getMetadata() {
+//    }
+
     protected NliConfig config;
 
     public SearchProviderNli(NliConfig config) {
@@ -66,4 +72,8 @@ public class SearchProviderNli
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "NLI via " + config.getEndpoint();
+    }
 }

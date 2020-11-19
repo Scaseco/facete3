@@ -22,7 +22,7 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 
 public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDataProvider<T, Void>
-        implements ConfigurableFilterDataProvider<T, Void, String> {
+       implements ConfigurableFilterDataProvider<T, Void, String> {
 
     private static final long serialVersionUID = 1L;
     private LookupService<Node, String> labelService;
@@ -103,6 +103,8 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
                 .toList()
                 .doOnSuccess(items -> LabelUtils.enrichWithLabels(items, nodeToLabel, labelService))
                 .blockingGet();
+
+        System.out.println("Requested limit: " + limit + " offset: " + query.getOffset() + "; got items: " + list.size());
         Stream<T> stream = list.stream();
         return stream;
     }

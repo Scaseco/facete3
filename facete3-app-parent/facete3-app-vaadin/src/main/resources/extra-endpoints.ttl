@@ -1,0 +1,17 @@
+@prefix schema: <https://schema.org/> .
+@prefix sd:    <http://www.w3.org/ns/sparql-service-description#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<http://localhost:8890/sparql#this>
+        a                    sd:Service ;
+        sd:endpoint          <http://localhost:8890/sparql> ;
+        schema:dateModified  "2020-10-07T13:03:58.471+00:00"^^xsd:dateTime ;
+        schema:serverStatus  schema:Online .
+
+<http://cord19.aksw.org/sparql#this>
+        a                    sd:Service ;
+        sd:endpoint          <http://cord19.aksw.org/sparql> ;
+        schema:dateModified  "2020-10-07T13:03:58.471+00:00"^^xsd:dateTime ;
+        schema:serverStatus  schema:Online .
+

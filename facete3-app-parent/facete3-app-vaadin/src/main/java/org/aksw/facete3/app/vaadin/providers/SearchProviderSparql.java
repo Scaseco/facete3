@@ -36,4 +36,8 @@ public class SearchProviderSparql
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "sparql";
+    }
 }

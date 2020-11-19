@@ -3,7 +3,8 @@ package org.aksw.facete3.app.vaadin;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.aksw.facete3.app.vaadin.providers.SearchProvider;
+import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
+import org.aksw.facete3.app.vaadin.plugin.search.SearchPluginImpl;
 import org.aksw.facete3.app.vaadin.providers.SearchProviderNli;
 import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
@@ -69,10 +70,18 @@ public class ConfigSearchProviderNli {
 //        return new NliConfig();
 //    }
 
-
     @Bean
     @Autowired
-    public SearchSensitiveRDFConnectionTransform connectionTransformer(NliConfig nliConfig) {
+    public SearchPlugin searchPlugin(NliConfig nliConfig) {
+        SearchPlugin result = new SearchPluginImpl(
+                new SearchProviderNli(nliConfig),
+                createConnectionTransformer(nliConfig));
+
+        return result;
+    }
+
+
+    public static SearchSensitiveRDFConnectionTransform createConnectionTransformer(NliConfig nliConfig) {
         System.out.println("NLI SERVICE: " + nliConfig.getEndpoint());
         return rdfNodeSpec -> {
             Table table = TableFactory.create(Arrays.asList(Vars.s, Vars.o));
@@ -104,10 +113,11 @@ public class ConfigSearchProviderNli {
 
             QueryTransform queryTransform = query -> {
                 Query raw = VirtualPartitionedQuery.rewrite(views, query);
-
+System.out.println(raw);
                 // Evaluate 'static' parts of the query - such as operations based on OpTable - directly
                 Query r = QueryUtils.applyOpTransform(raw,
                         op -> Transformer.transform(TransformEvalTable.create(), op));
+                System.out.println(r);
                 return r;
             };
 
@@ -116,10 +126,4 @@ public class ConfigSearchProviderNli {
         };
     }
 
-
-    @Bean
-    @Autowired
-    public SearchProvider searchProvider(NliConfig nliConfig) {
-        return new SearchProviderNli(nliConfig);
-    }
 }

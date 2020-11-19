@@ -44,8 +44,8 @@ public class ComponentPlugin {
         };
     }
 
-    public static Supplier<SpringApplicationBuilder> baseAppBuilderSupplier() {
-        return () -> new SpringApplicationBuilder()
+    public static SpringApplicationBuilder defaultBaseAppBuilder() {
+        return new SpringApplicationBuilder()
 //                .properties(ImmutableMap.<String, Object>builder()
 //                        .build())
                 .headless(true)
@@ -54,6 +54,6 @@ public class ComponentPlugin {
     }
 
     public static ComponentPlugin createWithDefaultBase(Function<? super SpringApplicationBuilder, ? extends SpringApplicationBuilder> appBuilderTransformer) {
-        return new ComponentPlugin(baseAppBuilderSupplier(), appBuilderTransformer);
+        return new ComponentPlugin(ComponentPlugin::defaultBaseAppBuilder, appBuilderTransformer);
     }
 }

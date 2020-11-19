@@ -6,7 +6,8 @@ import org.springframework.context.annotation.Import;
 @Import({
     ConfigBestLabel.class,
     ConfigEndpoint.class,
-    ConfigSearchProviderNli.class,
+//    ConfigSearchProviderNli.class,
+    ConfigSearchPlugin.class,
     ConfigViewManager.class,
     ConfigFacetedBrowserView.class})
 public class ConfigFacetedBrowserViewCord {

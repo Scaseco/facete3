@@ -1,5 +1,7 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import java.util.function.Supplier;
+
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
 import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 
@@ -11,9 +13,9 @@ public class SearchComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -331380480912293631L;
     protected FacetedBrowserView mainView;
-    protected SearchProvider searchProvider;
+    protected Supplier<SearchProvider> searchProvider;
 
-    public SearchComponent(FacetedBrowserView mainView, SearchProvider searchProvider) {
+    public SearchComponent(FacetedBrowserView mainView, Supplier<SearchProvider> searchProvider) {
         this.mainView = mainView;
         this.searchProvider = searchProvider;
 
@@ -23,14 +25,14 @@ public class SearchComponent extends VerticalLayout {
 
     private void addSearchComponent() {
         TextField searchField = new TextField();
-        searchField.setPlaceholder("Search for Papers...");
+        searchField.setPlaceholder("Search...");
         searchField.addValueChangeListener(this::searchCallback);
         add(searchField);
     }
 
     private void searchCallback(ComponentValueChangeEvent<TextField, String> event) {
         String query = event.getValue();
-        RDFNodeSpec searchResult = searchProvider.search(query);
+        RDFNodeSpec searchResult = searchProvider.get().search(query);
 //        URI uri = UriComponentsBuilder.fromUriString(nliConfig.getEnpoint())
 //                .queryParam("query", query)
 //                .queryParam("limit", nliConfig.getResultLimit())

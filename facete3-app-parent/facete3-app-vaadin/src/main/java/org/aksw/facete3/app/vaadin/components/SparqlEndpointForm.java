@@ -47,6 +47,7 @@ public class SparqlEndpointForm extends FormLayout {
                    new ResponsiveStep("40em", 3));
 
         Model model = RDFDataMgr.loadModel("https://raw.githubusercontent.com/SmartDataAnalytics/lodservatory/master/latest-status.ttl");
+        RDFDataMgr.read(model, "extra-endpoints.ttl");
 
         serviceUrl.addCustomValueSetListener(
                 event -> {

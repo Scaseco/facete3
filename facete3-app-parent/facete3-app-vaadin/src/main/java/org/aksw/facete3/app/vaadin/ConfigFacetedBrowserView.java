@@ -2,11 +2,11 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
+import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.facete3.app.vaadin.providers.SearchProvider;
 import org.aksw.facete3.app.vaadin.qualifier.DetailView;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
@@ -22,6 +22,8 @@ import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEven
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 
+import com.vaadin.flow.data.provider.InMemoryDataProvider;
+
 /**
  * This is a generic context configuration which declares all DataProviders
  * used by the {@link FacetedBrowserView} Vaadin component.
@@ -35,6 +37,8 @@ import org.springframework.context.annotation.Bean;
  *
  */
 public class ConfigFacetedBrowserView {
+
+
 
 
     @Bean
@@ -95,7 +99,8 @@ public class ConfigFacetedBrowserView {
     @Autowired
     public FacetedBrowserView factedBrowserView(
             RDFConnection baseDataConnection,
-            SearchProvider searchProvider,
+//            SearchPlugin searchPlugin,
+            InMemoryDataProvider<SearchPlugin> searchPluginProvider,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             FacetCountProvider facetCountProvider,
@@ -108,7 +113,8 @@ public class ConfigFacetedBrowserView {
     ) {
         return new FacetedBrowserView(
                 baseDataConnection,
-                searchProvider,
+                //searchPlugin,
+                searchPluginProvider,
                 prefixMapping,
                 facetedQueryConf,
                 facetCountProvider,
