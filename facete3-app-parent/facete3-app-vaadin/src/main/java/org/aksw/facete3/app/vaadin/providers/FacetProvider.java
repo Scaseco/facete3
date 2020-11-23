@@ -111,6 +111,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
 
         if (list.size() > limit) {
             logger.warn("Assertion failed: Requested limit: " + limit + " offset: " + query.getOffset() + "; got items: " + list.size());
+            logger.warn("Query was: " + dataQuery.toConstructQuery());
 
             list = list.stream()
                 .limit(limit)

@@ -2,12 +2,15 @@ package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.pathlet.Path;
 import org.apache.jena.rdf.model.RDFNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.Query;
@@ -17,6 +20,8 @@ import com.vaadin.flow.data.provider.SortDirection;
 public abstract class DataProviderFromDataQuerySupplier<T extends RDFNode>
     extends AbstractBackEndDataProvider<T, String> {
     //implements ConfigurableFilterDataProvider<T, Void, String> {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataProviderFromDataQuerySupplier.class);
 
     private static final long serialVersionUID = 1L;
 //    protected LabelService labelService;
@@ -102,6 +107,16 @@ public abstract class DataProviderFromDataQuerySupplier<T extends RDFNode>
                 .toList()
 //                .doOnSuccess(item -> labelService.enrichWithLabels(item, rdfNodeToLabelNode))
                 .blockingGet();
+
+        if (list.size() > limit) {
+            logger.warn("Assertion failed: Requested limit: " + limit + " offset: " + query.getOffset() + "; got items: " + list.size());
+            logger.warn("Query was: " + dataQuery.toConstructQuery());
+
+            list = list.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+        }
+
         Stream<T> stream = list.stream();
         return stream;
     }

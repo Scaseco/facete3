@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
+import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
@@ -20,6 +21,8 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
 import com.vaadin.flow.component.textfield.TextField;
@@ -119,9 +122,13 @@ class DatasetCreatorForm
         });
 
 //        rdf.setReadOnly(true);
+        add(new Icon(VaadinIcon.PLUS_SQUARE_O));
         distributionType.setWidthFull();
+        distributionType.setDataProvider(new ListDataProvider<>(Arrays.asList("Download", "Git", "DCAT Link")));
         FormItem formItem1 = addFormItem(distributionType, "DistributionType");
-        setColspan(formItem1, 3);
+
+
+        //setColspan(formItem1, 3);
 
 
         rdf.setWidthFull();
@@ -131,6 +138,16 @@ class DatasetCreatorForm
         FormItem formItem3 = addFormItem(rdf, "Generated RDF");
         setColspan(formItem3, 3);
 
+
+
+        RdfTermEditor rdfTermEditor = new RdfTermEditor();
+        add(rdfTermEditor);
+        // FormItem formItem4 = addFormItem()
+        setColspan(rdfTermEditor, 3);
+
+        //rdfTermEditor.addToComponent(this);
+
+//        this.add(rdfTermEditor);
 
 //        FormItem formItem = new FormItem();
 //        Label label = new Label("Sparql Endpoint URL");
