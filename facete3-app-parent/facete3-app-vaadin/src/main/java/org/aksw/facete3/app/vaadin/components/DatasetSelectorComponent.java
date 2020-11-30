@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.components;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
@@ -98,11 +99,12 @@ class DatasetCreatorForm
 
 
 //        TextField groupIdField = new TextField();
-
-
         binder.forField(groupIdField).bind(r -> r.as(MavenEntity.class).getGroupId(), (r, v) -> r.as(MavenEntity.class).setGroupId(v));
         binder.forField(artifactIdField).bind(r -> r.as(MavenEntity.class).getArtifactId(), (r, v) -> r.as(MavenEntity.class).setArtifactId(v));
         binder.forField(versionField).bind(r -> r.as(MavenEntity.class).getVersion(), (r, v) -> r.as(MavenEntity.class).setVersion(v));
+
+        //binder.forField(versionField).
+//        binder.forMemberField(versionField).
 
         getElement().appendChild(new Element("hr"));
 
@@ -145,6 +147,14 @@ class DatasetCreatorForm
         // FormItem formItem4 = addFormItem()
         setColspan(rdfTermEditor, 3);
 
+
+        Span span = new Span("Value");
+
+        rdfTermEditor.addValueChangeListener(ev -> {
+            span.setText("Value: " + Objects.toString(ev.getValue()));
+        });
+
+        add(span);
         //rdfTermEditor.addToComponent(this);
 
 //        this.add(rdfTermEditor);
@@ -175,6 +185,8 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
     public DatasetSelectorComponent() {
         super(new HorizontalLayout());
         this.getTabsComponent().setOrientation(Orientation.VERTICAL);
+//        super(new VerticalLayout());
+//        this.getTabsComponent().setOrientation(Orientation.HORIZONTAL);
 
         DatasetCreatorForm datasetCreator = new DatasetCreatorForm();
 //        datasetCreator.setMinWidth("300px");

@@ -10,9 +10,7 @@ import java.util.stream.Collectors;
 public class SlottedBuilderImpl<W, P>
     implements SlottedBuilder<W, P>
 {
-    /**
-     * The assembler that assembles the 'whole' from the 'parts'
-     */
+    /** The assembler that assembles the 'whole' from the 'parts' */
     protected Function<Collection<P>, ? extends W> assembler;
 
     protected Set<Slot<P>> slots = new LinkedHashSet<>();

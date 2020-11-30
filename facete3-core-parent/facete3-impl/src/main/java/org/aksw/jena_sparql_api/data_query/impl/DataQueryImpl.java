@@ -817,7 +817,7 @@ public class DataQueryImpl<T extends RDFNode>
                                     startNode,
                                     p,
                                     endNode,
-                                    !isFwd);
+                                    isFwd);
                             newTemplateTriples.add(t);
                         }
                     }

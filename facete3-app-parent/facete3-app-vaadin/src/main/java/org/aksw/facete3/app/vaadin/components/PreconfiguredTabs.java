@@ -81,10 +81,16 @@ public class PreconfiguredTabs
         tabs.add(newTab);
         pages.add(contentComponent);
 
+        contentComponent.setVisible(false);
+
         Tab selectedTab = tabs.getSelectedTab();
         if (selectedTab == null) {
-            tabs.setSelectedTab(newTab);
+            setSelectedTab(newTab);
         }
+    }
+
+    public int getTabCount() {
+        return tabsToPages.size();
     }
 
     public String getSelectedTabId() {
@@ -100,11 +106,11 @@ public class PreconfiguredTabs
 
     public void setSelectedTab(Tab selectedTab) {
         tabsToPages.values().forEach(page -> page.getComponent().setVisible(false));
-        tabs.setSelectedTab(selectedTab);
         if (selectedTab != null) {
             Component selectedPage = tabsToPages.get(selectedTab).getComponent();
             selectedPage.setVisible(true);
         }
+        tabs.setSelectedTab(selectedTab);
     }
 
     public Tabs getTabsComponent() {

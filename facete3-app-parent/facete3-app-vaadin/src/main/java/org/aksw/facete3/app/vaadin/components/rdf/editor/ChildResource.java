@@ -28,11 +28,11 @@ public interface ChildResource
     ChildResource setParent(Resource parent);
 
     @IriNs("eg")
-    String setIriValue();
-    ChildResource getIriValue(String iriValue);
+    String getIriValue();
+    ChildResource setIriValue(String iriValue);
 
     @IriNs("eg")
-    String setIriMode();
+    String getIriMode();
     ChildResource setIriMode(String iriValue);
 
 
