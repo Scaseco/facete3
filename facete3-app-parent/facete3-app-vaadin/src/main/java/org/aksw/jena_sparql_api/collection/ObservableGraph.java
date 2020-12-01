@@ -38,6 +38,10 @@ public class ObservableGraph extends GraphWrapper
     protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
 
 
+    public static ObservableGraph decorate(Graph delegate) {
+        return new ObservableGraph(delegate);
+    }
+
     public ObservableGraph(Graph delegate)
     {
         super(delegate) ;

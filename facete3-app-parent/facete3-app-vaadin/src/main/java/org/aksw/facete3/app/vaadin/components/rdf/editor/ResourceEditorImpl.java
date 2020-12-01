@@ -290,12 +290,6 @@ class ObservableResource
 
 
 
-
-class RdfBinder {
-
-}
-
-
 /**
  *
  *

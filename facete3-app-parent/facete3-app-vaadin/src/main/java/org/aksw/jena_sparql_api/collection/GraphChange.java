@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.collection;
 
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +28,38 @@ import org.apache.jena.util.iterator.WrappedIterator;
 
 import com.google.common.collect.Sets;
 
+/**
+ * A field that when setting its value removes the referred to triple
+ * and replaces it with another one
+ *
+ * @author raven
+ *
+ * @param <T>
+ */
+class RdfFieldFromExistingTriple<T>
+    implements ObservableValue<T>
+{
+    protected GraphChange graph;
+    protected Triple existingTriple;
+
+    @Override
+    public T get() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void set(T value) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Runnable addListener(PropertyChangeListener listener) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+}
 
 public class GraphChange
 //    extends GraphBase
@@ -43,7 +76,7 @@ public class GraphChange
     // protected Set<Triple> tripleDeletions;
 
 
-    protected Graph baseGraph;
+    protected ObservableGraph baseGraph;
 
     public Map<Node, Node> getRenamedNodes() {
         return renamedNodes;
@@ -237,7 +270,7 @@ public class GraphChange
         super();
         this.renamedNodes = renamedNodes;
         this.tripleReplacements = tripleReplacements;
-        this.baseGraph = baseGraph;
+        this.baseGraph = ObservableGraph.decorate(baseGraph);
     }
 
     public static <T> Collection<T> defaultToSingletonIfEmpty(Collection<T> items, T defaultItem) {

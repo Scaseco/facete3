@@ -7,7 +7,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.facete3.app.vaadin.qualifier.DetailView;
+import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -114,7 +114,7 @@ public class ConfigFacetedBrowserView {
             ItemProvider itemProvider,
             Config config,
             @FullView ViewManager viewManagerFull,
-            @DetailView ViewManager viewManagerDetail,
+            @SnippetView ViewManager viewManagerDetail,
             @DisplayLabelConfig BestLiteralConfig bestLabelConfig
     ) {
         return new FacetedBrowserView(

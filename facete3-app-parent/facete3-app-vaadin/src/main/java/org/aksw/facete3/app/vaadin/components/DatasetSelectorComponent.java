@@ -32,6 +32,9 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.dom.Element;
 
 
+
+
+
 /**
  *
  *
@@ -80,28 +83,29 @@ class DatasetCreatorForm
 //        });
 
         add(new H2("Dataset"), 3);
+//
+//        TextField groupIdField = new TextField();
+//        TextField artifactIdField = new TextField();
+//        TextField versionField = new TextField();
+//        FormItem formItemX = addFormItem(groupIdField, "Group ID");
+//        FormItem formItemY = addFormItem(artifactIdField, "Artifact ID");
+//        FormItem formItemZ = addFormItem(versionField, "Version ID");
+//
+//
+//        ComboBox<String> iriModeComboBox = new ComboBox<String>();
+//        iriModeComboBox.setDataProvider(new ListDataProvider<>(Arrays.asList("Absolute", "Prefix", "Relative")));
+//        FormItem iriModeFormItem = addFormItem(iriModeComboBox, "URL Mode");
+//
+//        TextField iriTextBox = new TextField();
+//        FormItem iriFormItem = addFormItem(iriTextBox, "URL Mode");
 
-        TextField groupIdField = new TextField();
-        TextField artifactIdField = new TextField();
-        TextField versionField = new TextField();
-        FormItem formItemX = addFormItem(groupIdField, "Group ID");
-        FormItem formItemY = addFormItem(artifactIdField, "Artifact ID");
-        FormItem formItemZ = addFormItem(versionField, "Version ID");
 
-
-        ComboBox<String> iriModeComboBox = new ComboBox<String>();
-        iriModeComboBox.setDataProvider(new ListDataProvider<>(Arrays.asList("Absolute", "Prefix", "Relative")));
-        FormItem iriModeFormItem = addFormItem(iriModeComboBox, "URL Mode");
-
-        TextField iriTextBox = new TextField();
-        FormItem iriFormItem = addFormItem(iriTextBox, "URL Mode");
-
-
+        ComponentBundleMaven cbm = new ComponentBundleMaven.Installer().install(this);
 
 //        TextField groupIdField = new TextField();
-        binder.forField(groupIdField).bind(r -> r.as(MavenEntity.class).getGroupId(), (r, v) -> r.as(MavenEntity.class).setGroupId(v));
-        binder.forField(artifactIdField).bind(r -> r.as(MavenEntity.class).getArtifactId(), (r, v) -> r.as(MavenEntity.class).setArtifactId(v));
-        binder.forField(versionField).bind(r -> r.as(MavenEntity.class).getVersion(), (r, v) -> r.as(MavenEntity.class).setVersion(v));
+        binder.forField(cbm.getGroupIdTextField()).bind(r -> r.as(MavenEntity.class).getGroupId(), (r, v) -> r.as(MavenEntity.class).setGroupId(v));
+        binder.forField(cbm.getArtifactIdTextField()).bind(r -> r.as(MavenEntity.class).getArtifactId(), (r, v) -> r.as(MavenEntity.class).setArtifactId(v));
+        binder.forField(cbm.getVersionTextField()).bind(r -> r.as(MavenEntity.class).getVersion(), (r, v) -> r.as(MavenEntity.class).setVersion(v));
 
         //binder.forField(versionField).
 //        binder.forMemberField(versionField).

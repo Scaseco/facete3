@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.shared.label.LabelUtils;
-import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.graph.Node;
@@ -20,7 +19,6 @@ import org.apache.jena.shared.PrefixMapping;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -34,7 +32,7 @@ public class ResourceComponent extends VerticalLayout {
 
     protected PrefixMapping prefixMapping;
 
-    private Label subject;
+    private Span subject;
     private RDFNode node;
     private Grid<Row> grid;
     private HashMap<Object,List<Property>> objectToProperty = new HashMap<>();
@@ -81,7 +79,7 @@ public class ResourceComponent extends VerticalLayout {
 
         this.prefixMapping = prefixMapping;
 
-        subject = new Label();
+        subject = new Span();
         add(subject);
 
 
@@ -97,7 +95,7 @@ public class ResourceComponent extends VerticalLayout {
         grid.getClassNames().add("compact");
 
         grid.setItems(getRows());
-        add(new Label("Paper Data"));
+        add(new Span("Paper Data"));
         //add(new ComponentRenderer<>(paper -> {
         grid.getColumns()
                 .forEach(grid::removeColumn);
@@ -114,7 +112,10 @@ public class ResourceComponent extends VerticalLayout {
                 r = new Span("");
             }
             return r;
-        })).setHeader("Predicate").setWidth("200px").setFlexGrow(0);
+        }))
+        .setResizable(true)
+        .setHeader("Predicate").setWidth("200px").setFlexGrow(0);
+
         grid.addColumn(new ComponentRenderer<>(row -> {
             Component r;
             String displayStr = toDisplayString(row.getObject());
@@ -128,11 +129,13 @@ public class ResourceComponent extends VerticalLayout {
             }
             else {
                 Span span = new Span(displayStr);
-                span.getStyle().set("color", "hsla(214, 40%, 16%, 0.94)");
+                // span.getStyle().set("color", "hsla(214, 40%, 16%, 0.94)");
                 r = span;
             }
             return r;
-        })).setHeader("Object").setFlexGrow(1);
+        }))
+        .setResizable(true)
+        .setHeader("Object").setFlexGrow(1);
 
         add(grid);
         refesh();

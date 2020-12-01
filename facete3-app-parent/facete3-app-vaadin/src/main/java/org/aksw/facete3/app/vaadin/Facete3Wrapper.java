@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.apache.jena.JenaRuntime;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -85,6 +86,8 @@ public class Facete3Wrapper {
     }
 
     public Facete3Wrapper(RDFConnection connection) {
+        JenaRuntime.isRDF11 = false;
+
         initJena();
         initFacetedQuery(connection);
         setEmptyBaseConcept();

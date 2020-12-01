@@ -4,6 +4,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.DataProviderWrapper;
 import com.vaadin.flow.data.provider.Query;
@@ -12,6 +15,8 @@ import com.vaadin.flow.data.provider.Query;
 public class DataProviderWrapperWithCustomErrorHandler<T, F>
     extends DataProviderWrapper<T, F, F>
 {
+    private static final Logger logger = LoggerFactory.getLogger(DataProviderWrapperWithCustomErrorHandler.class);
+
     private static final long serialVersionUID = 1L;
 
     protected Consumer<? super Throwable> customErrorHandler;
@@ -29,6 +34,7 @@ public class DataProviderWrapperWithCustomErrorHandler<T, F>
         try {
             result = super.size(t);
         } catch (Exception e) {
+            logger.warn("An unexpected exception was raised:", e);
             customErrorHandler.accept(e);
             result = 0;
         }
