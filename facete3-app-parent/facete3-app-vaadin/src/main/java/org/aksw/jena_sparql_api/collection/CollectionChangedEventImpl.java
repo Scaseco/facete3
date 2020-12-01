@@ -14,8 +14,14 @@ public class CollectionChangedEventImpl<T>
 //        super(source, propertyName, oldValue, newValue);
 //    }
 
-    public CollectionChangedEventImpl(Object source, Collection<T> additions, Collection<T> deletions, Collection<T> refreshes) {
-        super(source, "items", null, null);
+    public CollectionChangedEventImpl(Object source,
+            Collection<T> oldValue,
+            Collection<T> newValue,
+
+            Collection<T> additions,
+            Collection<T> deletions,
+            Collection<T> refreshes) {
+        super(source, "items", oldValue, newValue);
         this.additions = additions == null ? Collections.emptySet() : additions;
         this.deletions = deletions == null ? Collections.emptySet() : deletions;
         this.refreshes = refreshes == null ? Collections.emptySet() : refreshes;

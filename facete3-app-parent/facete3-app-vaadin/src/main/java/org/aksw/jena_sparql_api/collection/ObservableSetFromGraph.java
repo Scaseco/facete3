@@ -4,15 +4,16 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.update.GraphListenerBatchBase;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.GraphEventManager;
 import org.apache.jena.graph.GraphListener;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -23,7 +24,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
 import com.google.common.collect.Iterators;
-
 
 
 /**
@@ -43,15 +43,18 @@ public class ObservableSetFromGraph
     implements ObservableSet<Node>
 //    implements RdfBackedCollection<Node>
 {
-    protected Graph graph;
+    protected GraphMonitor graph;
     protected Node source;
+
+//    protected PropertySchema propertySchema;
     protected Node predicate;
     protected boolean isForward;
 
     protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     // protected Set<Consumer<CollectionChangedEvent<? super Node>>> listeners = Collections.synchronizedSet(new LinkedHashSet<>());
 
-    protected GraphListener listener;
+    // protected GraphListener listener;
+    protected PropertyChangeListener listener;
     protected Runnable unregisterListener = null;
 
 //    public SetFromGraph(
@@ -66,7 +69,7 @@ public class ObservableSetFromGraph
 //    }
 
     public ObservableSetFromGraph(
-            Graph graph, Node source, Node predicate, boolean isForward) {
+            GraphMonitor graph, Node source, Node predicate, boolean isForward) {
         super();
 
         this.graph = graph;
@@ -78,32 +81,53 @@ public class ObservableSetFromGraph
         Triple match = TripleUtils.createMatch(source, predicate, isForward);
         Function<Triple, Node> targetFn = t -> TripleUtils.getTarget(t, isForward);
 
-        listener = new GraphListenerBatchBase() {
+
+        Set<Node> self = this;
+
+        GraphListener oldListener = new GraphListenerBatchBase() {
 
             @Override
             protected void deleteEvent(Graph g, Iterator<Triple> it) {
-                System.out.println(g);
+                Set<Node> oldValue = new LinkedHashSet<>(self);
 
                 Set<Node> changes = Streams.stream(it)
                     .filter(match::matches)
-                    .filter(g::contains)
+//                    .filter(g::contains)
                     .map(targetFn)
                     .collect(Collectors.toSet());
 
-                broadcastEvent(new CollectionChangedEventImpl<>(this, null, changes, null));
+                Set<Node> newValue = Sets.difference(oldValue, changes);
+                System.out.println("Delete: " + oldValue + " -> " + newValue);
+
+                broadcastEvent(new CollectionChangedEventImpl<>(this, oldValue, newValue, null, changes, null));
             }
 
             @Override
             protected void addEvent(Graph g, Iterator<Triple> it) {
-                System.out.println(g);
+                Set<Node> oldValue = new LinkedHashSet<>(self);
 
                 Set<Node> changes = Streams.stream(it)
                         .filter(match::matches)
-                        .filter(t -> !g.contains(t))
+//                        .filter(t -> !g.contains(t))
                         .map(targetFn)
                         .collect(Collectors.toSet());
 
-                broadcastEvent(new CollectionChangedEventImpl<>(this, changes, null, null));
+                Set<Node> newValue = Sets.union(oldValue, changes);
+                System.out.println("Add: " + oldValue + " -> " + newValue);
+
+                broadcastEvent(new CollectionChangedEventImpl<>(this, oldValue, newValue, changes, null, null));
+            }
+        };
+
+        listener = rawEvent -> {
+            CollectionChangedEventImpl<Triple> ev = (CollectionChangedEventImpl<Triple>)rawEvent;
+
+            if (!ev.getAdditions().isEmpty()) {
+                oldListener.notifyAddIterator(graph, ev.getAdditions().iterator());
+            }
+
+            if (!ev.getDeletions().isEmpty()) {
+                oldListener.notifyDeleteIterator(graph, ev.getDeletions().iterator());
             }
         };
 
@@ -128,10 +152,12 @@ public class ObservableSetFromGraph
 
     protected void enableEvents() {
         if (unregisterListener == null) {
-            GraphEventManager eventManager = graph.getEventManager();
-            eventManager.register(listener);
+            Runnable actualUnregister = graph.addEventListener(listener);
+//            GraphEventManager eventManager = graph.getEventManager();
+//            eventManager.register(listener);
             unregisterListener = () -> {
-                eventManager.unregister(listener);
+                actualUnregister.run();
+//                eventManager.unregister(listener);
                 unregisterListener = null;
             };
         }
@@ -207,9 +233,14 @@ public class ObservableSetFromGraph
 
 
     public static void main(String[] args) {
-        Graph graph = GraphFactory.createDefaultGraph();
+        GraphMonitor graph = new GraphMonitor(GraphFactory.createDefaultGraph());
 
         ObservableSet<Node> set = new ObservableSetFromGraph(graph, RDF.Nodes.first, RDFS.Nodes.label, true);
+
+        ObservableValue<Node> value = ObservableValueFromObservableCollection.decorate(set);
+        value.addListener(ev -> {
+            System.out.println("Value changed: " + ev);
+        });
 
         set.addListener(event -> {
             System.out.println(event);
