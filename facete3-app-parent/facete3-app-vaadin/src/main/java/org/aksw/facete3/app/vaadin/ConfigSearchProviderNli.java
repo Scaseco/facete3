@@ -132,12 +132,12 @@ public class ConfigSearchProviderNli {
                 Query r = QueryUtils.applyOpTransform(tmp,
                         op -> Transformer.transform(TransformEvalTable.create(), op));
 
-                System.out.println("Before factorization: " + r);
+//                System.out.println("Before factorization: " + r);
 
                 r = QueryUtils.applyOpTransform(r,
                         op -> Transformer.transform(new TransformFactorizeTableColumnsToExtend(), op));
 
-                System.out.println("After optimization: " + r);
+//                System.out.println("After optimization: " + r);
                 return r;
             };
 

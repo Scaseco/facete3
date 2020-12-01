@@ -43,7 +43,7 @@ public class ObservableSetFromGraph
     implements ObservableSet<Node>
 //    implements RdfBackedCollection<Node>
 {
-    protected GraphMonitor graph;
+    protected ObservableGraph graph;
     protected Node source;
 
 //    protected PropertySchema propertySchema;
@@ -69,7 +69,7 @@ public class ObservableSetFromGraph
 //    }
 
     public ObservableSetFromGraph(
-            GraphMonitor graph, Node source, Node predicate, boolean isForward) {
+            ObservableGraph graph, Node source, Node predicate, boolean isForward) {
         super();
 
         this.graph = graph;
@@ -233,7 +233,7 @@ public class ObservableSetFromGraph
 
 
     public static void main(String[] args) {
-        GraphMonitor graph = new GraphMonitor(GraphFactory.createDefaultGraph());
+        ObservableGraph graph = new ObservableGraph(GraphFactory.createDefaultGraph());
 
         ObservableSet<Node> set = new ObservableSetFromGraph(graph, RDF.Nodes.first, RDFS.Nodes.label, true);
 

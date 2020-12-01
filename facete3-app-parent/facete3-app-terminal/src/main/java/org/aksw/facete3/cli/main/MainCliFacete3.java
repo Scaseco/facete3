@@ -743,7 +743,7 @@ public class MainCliFacete3 {
 
 
     public DataQuery<FacetValueCount> facetValuesDataQuery() {
-        UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
+        UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptExistsRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
 
         DataQuery<FacetValueCount> base = fdn
                 .facetValueCountsWithAbsent(includeAbsent)
@@ -880,7 +880,7 @@ public class MainCliFacete3 {
     }
 
     public DataQuery<FacetCount> facetDataQuery(FacetedQuery fq) {
-        UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
+        UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptExistsRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
 
         DataQuery<FacetCount> base = fdn.facetCounts(includeAbsent)
                 .filter(filter);

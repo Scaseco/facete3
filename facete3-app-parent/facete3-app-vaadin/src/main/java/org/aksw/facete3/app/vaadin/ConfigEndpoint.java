@@ -11,6 +11,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -28,6 +30,7 @@ import org.springframework.context.annotation.Bean;
  *
  */
 public class ConfigEndpoint {
+    private static final Logger logger = LoggerFactory.getLogger(ConfigEndpoint.class);
 
 
 //    @Bean
@@ -87,6 +90,12 @@ public class ConfigEndpoint {
 
         RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(serviceUrl);
         RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
+
+        rdfConnection = RDFConnectionFactoryEx.wrapWithQueryTransform(rdfConnection,
+                query -> {
+                    logger.info("Sending query:" + query);
+                    return query;
+                });
 
         rdfConnection = RDFConnectionFactoryEx.wrapWithQueryTransform(rdfConnection,
                 query -> QueryUtils.applyOpTransform(query,

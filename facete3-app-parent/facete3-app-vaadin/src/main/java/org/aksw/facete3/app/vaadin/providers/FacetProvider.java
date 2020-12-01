@@ -75,6 +75,9 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
                 .blockingGet()
                 .getCount();
         int countAsInt = Ints.saturatedCast(count);
+
+        logger.info("In context " + this.getClass().getSimpleName() + ": Backend counted " + countAsInt + " items");
+
         return countAsInt;
     }
 
@@ -118,6 +121,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
                 .collect(Collectors.toList());
         }
 
+        logger.info("In context " + this.getClass().getSimpleName() + ": Backend returned " + list.size() + " items: " + list);
         Stream<T> stream = list.stream();
         return stream;
     }

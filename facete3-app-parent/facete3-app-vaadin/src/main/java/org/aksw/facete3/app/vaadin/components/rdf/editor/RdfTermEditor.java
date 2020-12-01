@@ -159,7 +159,7 @@ public class RdfTermEditor
         langComboBox.setDataProvider(DataProviderUtils.wrapWithErrorHandler(new DataProviderFromDataQuerySupplier<Resource>() {
             @Override
             protected void applyFilter(DataQuery<Resource> dataQuery, String filterText) {
-                UnaryRelation filter = KeywordSearchUtils.createConceptRegexIncludeSubject(
+                UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
                         BinaryRelationImpl.create(RDFS.label), filterText);
                 dataQuery.filter(filter);
             }
@@ -188,7 +188,7 @@ public class RdfTermEditor
         literalTypeComboBox.setDataProvider(DataProviderUtils.wrapWithErrorHandler(new DataProviderFromDataQuerySupplier<Resource>() {
             @Override
             protected void applyFilter(DataQuery<Resource> dataQuery, String filterText) {
-                UnaryRelation filter = KeywordSearchUtils.createConceptRegexIncludeSubject(
+                UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
                         BinaryRelationImpl.create(RDFS.label), filterText);
                 dataQuery.filter(filter);
             }

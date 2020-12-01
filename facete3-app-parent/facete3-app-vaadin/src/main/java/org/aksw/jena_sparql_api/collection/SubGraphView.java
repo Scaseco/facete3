@@ -44,7 +44,7 @@ class SubGraphSet
     protected SetFromGraph items;
     protected SubGraphSpec subGraphSpec;
 
-    public SubGraphSet(GraphMonitor baseGraph) {
+    public SubGraphSet(ObservableGraph baseGraph) {
         // baseGraph.getEventManager()
 
     }

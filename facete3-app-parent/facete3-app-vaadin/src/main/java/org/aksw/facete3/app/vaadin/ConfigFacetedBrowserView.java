@@ -13,7 +13,9 @@ import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
@@ -54,6 +56,8 @@ public class ConfigFacetedBrowserView {
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             Config config) {
+//        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
+
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
                 baseDataConnection,
                 config.getAlternativeLabel(),
@@ -69,6 +73,8 @@ public class ConfigFacetedBrowserView {
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             Config config) {
+
+//        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
                 baseDataConnection,

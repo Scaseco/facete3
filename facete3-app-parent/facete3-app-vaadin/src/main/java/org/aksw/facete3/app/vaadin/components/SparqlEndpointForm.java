@@ -66,7 +66,7 @@ public class SparqlEndpointForm extends FormLayout {
         serviceUrl.setDataProvider(new DataProviderFromDataQuerySupplier<ServiceStatus>() {
             @Override
             protected void applyFilter(DataQuery<ServiceStatus> dataQuery, String filterText) {
-                UnaryRelation filter = KeywordSearchUtils.createConceptRegexLabelOnly(
+                UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexLabelOnly(
                         BinaryRelationImpl.create(ResourceFactory.createProperty("http://www.w3.org/ns/sparql-service-description#endpoint")), filterText);
                 dataQuery.filter(filter);
             }

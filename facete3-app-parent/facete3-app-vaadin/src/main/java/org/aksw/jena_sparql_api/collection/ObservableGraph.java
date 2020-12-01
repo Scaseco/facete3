@@ -28,7 +28,7 @@ import org.apache.jena.sparql.graph.GraphWrapper;
  * @author raven
  *
  */
-public class GraphMonitor extends GraphWrapper
+public class ObservableGraph extends GraphWrapper
 {
     /** Whether to see if a quad action will change the dataset - test before add for existence, test before delete for absence */
     protected boolean CheckFirst = true ;
@@ -38,7 +38,7 @@ public class GraphMonitor extends GraphWrapper
     protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
 
 
-    public GraphMonitor(Graph delegate)
+    public ObservableGraph(Graph delegate)
     {
         super(delegate) ;
     }

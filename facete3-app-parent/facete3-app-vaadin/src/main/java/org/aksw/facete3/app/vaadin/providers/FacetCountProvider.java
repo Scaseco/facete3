@@ -32,7 +32,7 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
 
         String filterText = getFilter();
         if (!filterText.isEmpty()) {
-            UnaryRelation filter = KeywordSearchUtils.createConceptRegexIncludeSubject(
+            UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
                     BinaryRelationImpl.create(RDFS.label), filterText);
             dataQuery.filter(filter);
         }

@@ -1084,7 +1084,15 @@ public class DataQueryImpl<T extends RDFNode>
     public Single<CountInfo> count(Long distinctItemCount, Long rowCount) {
         QuerySpec e = toConstructQueryNew();
 
-        Set<Var> partitionVars = new LinkedHashSet<>();
+//        Set<Var> partitionVars = new LinkedHashSet<>();
+
+        Query query = e.getQuery();
+        query.setQuerySelectType();
+        query.setDistinct(true);
+        query.setQueryResultStar(false);
+        query.getProject().clear();
+        e.getPrimaryKeyVars().forEach(query.getProject()::add);
+
 //        partitionVars.add((Var)e.getKey());
 //        if(isPartitionMode) {
 //            Set<Var> templateVars = QuadPatternUtils.getVarsMentioned(template.getQuads());
@@ -1092,7 +1100,7 @@ public class DataQueryImpl<T extends RDFNode>
 //        }
 //        Query query = e.getValue();
         //		QueryExecutionUtils.countQuery(query, new QueryExecutionFactorySparqlQueryConnection(conn));
-        Single<CountInfo> result = SparqlRx.fetchCountQueryPartition(conn, e.getQuery(), e.getPrimaryKeyVars(), distinctItemCount, rowCount)
+        Single<CountInfo> result = SparqlRx.fetchCountQueryPartition(conn, query, e.getPrimaryKeyVars(), distinctItemCount, rowCount)
                 .map(range -> CountUtils.toCountInfo(range));
 
         return result;

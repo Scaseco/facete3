@@ -25,7 +25,7 @@ public class ConfigSearchProviderSparql {
                     if ("".equals(searchString)) {
                         r = ConceptUtils.createSubjectConcept();
                     } else {
-                        r = KeywordSearchUtils.createConceptRegexIncludeSubject(
+                        r = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
                                 BinaryRelationImpl.create(property), searchString);
                     }
 
