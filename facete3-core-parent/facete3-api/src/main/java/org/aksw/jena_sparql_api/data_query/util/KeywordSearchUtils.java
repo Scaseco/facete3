@@ -176,6 +176,7 @@ public class KeywordSearchUtils {
     }
 
 
+    /** Create a FILTER (EXISTS (...)) expression that filters a set of resources down to those matching the keyword */
     public static Concept createConceptExistsRegex(BinaryRelation relation, String searchString, boolean includeSubject) {
         Concept result = includeSubject
             ? createConceptExistsRegexIncludeSubject(relation, searchString)
