@@ -4,9 +4,11 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.FormItem;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.HasValueChangeMode;
+import com.vaadin.flow.data.value.ValueChangeMode;
 
 public class ComponentBundleMaven
-    implements ComponentBundle
+    implements ComponentBundle, HasValueChangeMode
 {
     protected Component targetComponent;
 
@@ -39,19 +41,20 @@ public class ComponentBundleMaven
         public ComponentBundleMaven install(Component target) {
             FormLayout form = (FormLayout)target;
 
-            TextField groupIdField = new TextField();
-            TextField artifactIdField = new TextField();
-            TextField versionField = new TextField();
+            TextField groupIdTextField = new TextField();
+            TextField artifactIdTextField = new TextField();
+            TextField versionTextField = new TextField();
 
-            FormItem formItemX = form.addFormItem(groupIdField, "Group ID");
-            FormItem formItemY = form.addFormItem(artifactIdField, "Artifact ID");
-            FormItem formItemZ = form.addFormItem(versionField, "Version ID");
+            FormItem groupIdFormItem = form.addFormItem(groupIdTextField, "Group ID");
+            FormItem artifactIdFormItem = form.addFormItem(artifactIdTextField, "Artifact ID");
+            FormItem versionFormItem = form.addFormItem(versionTextField, "Version ID");
 
             ComponentBundleMaven result = new ComponentBundleMaven(
                     form,
-                    groupIdField, artifactIdField, versionField,
-                    formItemX, formItemY, formItemZ);
+                    groupIdTextField, artifactIdTextField, versionTextField,
+                    groupIdFormItem, artifactIdFormItem, versionFormItem);
 
+            result.setValueChangeMode(ValueChangeMode.LAZY);
             return result;
         }
     }
@@ -86,5 +89,17 @@ public class ComponentBundleMaven
 
     public FormItem getVersionFormItem() {
         return versionFormItem;
+    }
+
+    @Override
+    public ValueChangeMode getValueChangeMode() {
+        return groupIdTextField.getValueChangeMode();
+    }
+
+    @Override
+    public void setValueChangeMode(ValueChangeMode valueChangeMode) {
+        groupIdTextField.setValueChangeMode(valueChangeMode);
+        artifactIdTextField.setValueChangeMode(valueChangeMode);
+        versionTextField.setValueChangeMode(valueChangeMode);
     }
 }

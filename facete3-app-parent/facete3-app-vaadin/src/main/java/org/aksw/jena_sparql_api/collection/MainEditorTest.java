@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.collection;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
@@ -15,6 +18,8 @@ public class MainEditorTest {
 
     public static void main(String[] args) {
         GraphChange graph = new GraphChange();
+
+
 
         Model model = ModelFactory.createModelForGraph(graph.getBaseGraph());
         Resource a = model.createResource("urn:a");
@@ -49,6 +54,16 @@ public class MainEditorTest {
 //            System.out.println("c:" + c.inModel(effectiveModel).listProperties().toList());
 
         }
+
+
+        Triple t = a.getModel().listStatements(a, RDFS.label, "a").toList().get(0).asTriple();
+        ObservableValue<Node> test = graph.createFieldForExistingTriple(t, 2);
+        test.addListener(ev -> {
+            System.out.println("Got event: " + ev);
+        });
+        System.out.println(test.get());
+        test.set(NodeFactory.createLiteral("yay"));
+        System.out.println(test.get());
 
 
 //        System.out.println("b:" + b.inModel(viewModel).listProperties().toList());

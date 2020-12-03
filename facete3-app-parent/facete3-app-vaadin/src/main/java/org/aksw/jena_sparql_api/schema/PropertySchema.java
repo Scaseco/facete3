@@ -44,6 +44,15 @@ public class PropertySchema {
         return targetSchema;
     }
 
+    public boolean canMatchTriples() {
+        return true;
+    }
+
+    public boolean matchesTriple(Node source, Triple triple) {
+        Triple matcher = TripleUtils.create(source, predicate, Vars.o, isForward);
+        boolean result = matcher.matches(triple);
+        return result;
+    }
 
     public long copyMatchingValues(Node source, Collection<Node> target, Graph sourceGraph) {
         long result = streamMatchingTriples(source, sourceGraph)

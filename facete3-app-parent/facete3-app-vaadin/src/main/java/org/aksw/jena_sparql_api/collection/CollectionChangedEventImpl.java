@@ -15,8 +15,8 @@ public class CollectionChangedEventImpl<T>
 //    }
 
     public CollectionChangedEventImpl(Object source,
-            Collection<T> oldValue,
-            Collection<T> newValue,
+            Object oldValue,
+            Object newValue,
 
             Collection<T> additions,
             Collection<T> deletions,

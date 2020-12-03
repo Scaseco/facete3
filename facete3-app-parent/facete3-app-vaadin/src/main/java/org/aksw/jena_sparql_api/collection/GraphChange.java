@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,38 +29,7 @@ import org.apache.jena.util.iterator.WrappedIterator;
 
 import com.google.common.collect.Sets;
 
-/**
- * A field that when setting its value removes the referred to triple
- * and replaces it with another one
- *
- * @author raven
- *
- * @param <T>
- */
-class RdfFieldFromExistingTriple<T>
-    implements ObservableValue<T>
-{
-    protected GraphChange graph;
-    protected Triple existingTriple;
 
-    @Override
-    public T get() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void set(T value) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public Runnable addListener(PropertyChangeListener listener) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-}
 
 public class GraphChange
 //    extends GraphBase
@@ -75,8 +45,77 @@ public class GraphChange
     /** Replacing a triple with null counts as a deletion */
     // protected Set<Triple> tripleDeletions;
 
+    //protected Map<Object, RdfField> fieldKeyToField;
+    // protected Set<RdfField> fields;
+
+//    protected Multimap<Node, PropertySchema> nodeTo;
+
+    protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
+
+    /** Listeners for after changes occurred. This allows listeners to update their state */
+    protected PropertyChangeSupport postUpdateListeners = new PropertyChangeSupport(this);
+
+
+    public void triggerPostUpdate() {
+        postUpdateListeners.firePropertyChange("status", null, null);
+    }
+
+    public Runnable addPostUpdateListener(PropertyChangeListener listener) {
+        postUpdateListeners.addPropertyChangeListener(listener);
+        return () -> postUpdateListeners.removePropertyChangeListener(listener);
+    }
+
+
+    public Runnable addChangeListener(PropertyChangeListener listener) {
+        pce.addPropertyChangeListener(listener);
+        return () -> pce.removePropertyChangeListener(listener);
+    }
+
 
     protected ObservableGraph baseGraph;
+
+
+    /**
+     * Create a reference to a specific triple such that one of its components
+     * can be modified.
+     * Note that node remapping is applied after the triple remapping.
+     *
+     * - Fields that delete the original triple are NOT in conflict.
+     * - Fields that delete the target triple AFTER node remapping ARE in conflict
+     * 		I.e. the result of editing must not result in a newly added triple being immediately deleted again
+     *
+     * @param baseTriple
+     * @param componentIdx
+     * @return
+     */
+    public ObservableValue<Node> createFieldForExistingTriple(Triple baseTriple, int componentIdx) {
+        return new RdfFieldFromExistingTriple(this, baseTriple, componentIdx);
+    }
+
+    /** Create a field over a set of triples with a certain source and predicate.
+     * Setting a value corresponds to a replacement of the intensional set of triples with a specific new one.
+     *
+     */
+    public ObservableValue<Node> createFieldForPredicate(Node source, Node predicate, boolean isForward) {
+
+        return null;
+    }
+
+    /** Return a set view over the values of a given predicate.
+     * Adding items to the set creates new triples.
+     *
+     * TODO Maybe the result should not be an ObservableSet directly but a GraphNode that supports
+     * the set view and e.g. a triple based view
+     **/
+    public ObservableSet<Node> createSetForPredicate(Node source, Node predicate, boolean isForward) {
+
+        return null;
+    }
+
+
+    public Map<Triple, Triple> getTripleReplacements() {
+        return tripleReplacements;
+    }
 
     public Map<Node, Node> getRenamedNodes() {
         return renamedNodes;

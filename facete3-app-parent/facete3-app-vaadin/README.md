@@ -6,6 +6,18 @@ This project features a powerful front end for faceted search over RDF data.
 
 * A way to provide additional UI views (Vaadin components) on RDF data using separate jars
 * Add facets as columns to the table
+Roadmap
+* RDF Editor
+* Plugin System (ideally jar bundles can be loaded directly)
+* Save Session state
+* Dataset Catalog (based on DCAT-Suite + RDF data delivery system Conjure)
+* Conjunctive Facets
+* Result Set-based Views (e.g. a map showing markers for all results)
+* Automatic relationship detection
+* Configuration of new columns to result sets
+* Ordering of results by columns - e.g. search result score
+* Aggregation column values
+* Layout working on Mobile Device
 
 ## Creating custom views
 
