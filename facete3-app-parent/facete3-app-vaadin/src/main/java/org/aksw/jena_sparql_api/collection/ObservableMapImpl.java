@@ -66,7 +66,9 @@ public class ObservableMapImpl<K, V>
             removedItem = Collections.singletonMap(key, delegate.get(key));
         }
 
-        pce.firePropertyChange(new CollectionChangedEventImpl<>(this, oldValue, newValue, newItem.entrySet(), removedItem.entrySet(), Collections.emptySet()));
+        pce.firePropertyChange(new CollectionChangedEventImpl<>(
+                this, oldValue, newValue,
+                newItem.entrySet(), removedItem.entrySet(), Collections.emptySet()));
 
         return delegate.put(key, value);
     }

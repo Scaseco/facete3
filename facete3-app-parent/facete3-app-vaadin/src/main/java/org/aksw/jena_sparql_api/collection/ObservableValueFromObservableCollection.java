@@ -84,7 +84,7 @@ public class ObservableValueFromObservableCollection<T>
 
     @Override
     public Runnable addListener(PropertyChangeListener listener) {
-        return delegate.addListener(wrapListener(this, listener));
+        return delegate.addPropertyChangeListener(wrapListener(this, listener));
     }
 
     public static <T> ObservableValue<T> decorate(ObservableCollection<T> delegate) {

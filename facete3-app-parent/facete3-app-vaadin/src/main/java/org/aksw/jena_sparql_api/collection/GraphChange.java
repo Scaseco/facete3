@@ -23,6 +23,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.WrappedIterator;
@@ -30,6 +31,11 @@ import org.apache.jena.util.iterator.WrappedIterator;
 import com.google.common.collect.Sets;
 
 
+class FieldId {
+}
+
+class FieldState {
+}
 
 public class GraphChange
 //    extends GraphBase
@@ -41,6 +47,13 @@ public class GraphChange
 
     /** Mapping of original triples to their edited versions */
     protected Map<Triple, Triple> tripleReplacements;
+
+
+    // protected Table<Node, RdfField, Change> sourceToFieldIdToChanges;
+    //protected Table<Node, FieldId, FieldState> sourceToFieldIdToFieldState;
+    protected Multimap<Node, RdfField> sourceNodeToField = HashMultimap.create();
+
+    //protected Map<Node, > ;
 
     /** Replacing a triple with null counts as a deletion */
     // protected Set<Triple> tripleDeletions;
@@ -72,7 +85,7 @@ public class GraphChange
     }
 
 
-    protected ObservableGraph baseGraph;
+    protected ObservableGraphImpl baseGraph;
 
 
     /**
@@ -97,9 +110,16 @@ public class GraphChange
      *
      */
     public ObservableValue<Node> createFieldForPredicate(Node source, Node predicate, boolean isForward) {
+        return createFieldForPredicate(source, predicate, isForward, null);
+    }
+
+    public ObservableValue<Node> createFieldForPredicate(Node source, Node predicate, boolean isForward, Expr targetCondidion) {
+
+
 
         return null;
     }
+
 
     /** Return a set view over the values of a given predicate.
      * Adding items to the set creates new triples.
@@ -309,7 +329,7 @@ public class GraphChange
         super();
         this.renamedNodes = renamedNodes;
         this.tripleReplacements = tripleReplacements;
-        this.baseGraph = ObservableGraph.decorate(baseGraph);
+        this.baseGraph = ObservableGraphImpl.decorate(baseGraph);
     }
 
     public static <T> Collection<T> defaultToSingletonIfEmpty(Collection<T> items, T defaultItem) {

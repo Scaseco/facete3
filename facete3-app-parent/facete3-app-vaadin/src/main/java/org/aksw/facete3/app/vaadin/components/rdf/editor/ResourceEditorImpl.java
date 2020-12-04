@@ -38,11 +38,7 @@ import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.sparql.core.DatasetChanges;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphMonitor;
-import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
@@ -116,68 +112,7 @@ interface PropertyValueRef {
     Object bind(Node source);
 }
 
-/**
- * A predicate that can be evaluated over individual triples.
- * The sparql expression allows obtaining the set of matching triples
- * for any a local or remote RDF graph.
- *
- */
-interface TripleConstraint
-    extends Predicate<Triple>
-{
-    /**
-     * A possibly (less selective) representation of the constraint as a match triple suitable for
-     * pre-filtering using {@link Graph#find(Triple)}
-     * @return
-     */
-    Triple getMatchTriple();
 
-    /**
-     * True if {@link #getMatchTriple()} matchs the same set of triples as {@link #getExpr()}.
-     */
-    boolean isMatchTripleExhaustive();
-
-    /** An expression which only allows a subset of the variables ?s ?p and ?o */
-    Expr getExpr();
-}
-
-class TripleConstraintImpl
-    implements TripleConstraint
-{
-    protected Expr expr;
-
-    public TripleConstraintImpl(Expr expr) {
-        super();
-        this.expr = expr;
-    }
-
-    public static TripleConstraint create(Expr expr) {
-        return new TripleConstraintImpl(expr);
-    }
-
-    @Override
-    public boolean test(Triple t) {
-        Binding b = TripleUtils.tripleToBinding(t);
-        NodeValue nv = ExprUtils.eval(expr, b);
-        boolean result = nv.getBoolean();
-        return result;
-    }
-
-    @Override
-    public Triple getMatchTriple() {
-        return null;
-    }
-
-    @Override
-    public boolean isMatchTripleExhaustive() {
-        return false;
-    }
-
-    @Override
-    public Expr getExpr() {
-        return expr;
-    }
-}
 
 
 //class NodeSchema {
@@ -497,7 +432,7 @@ class CollectionEditorBase
 
         snapshot = new ArrayList<>(collection);
 
-        unregister = collection.addListener(event -> {
+        unregister = collection.addPropertyChangeListener(event -> {
             Collection<Node> deletions = null;
 
             for (Node node : deletions) {
