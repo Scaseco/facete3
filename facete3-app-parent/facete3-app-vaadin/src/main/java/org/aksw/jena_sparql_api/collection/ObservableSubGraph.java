@@ -12,6 +12,19 @@ import com.google.common.collect.Sets;
 
 
 
+/**
+ * This is a mutable graph view based on filtering a delegate {@link ObservableGraph}'s triples.
+ * Listeners registered on this class are wrapped with a filtering listener that gets registered
+ * on the delegate.
+ *
+ * All access and modification methods (add/delete/remove/find/clear) only affect the set of triples
+ * that match the given {@link TripleConstraint}.
+ * Addition of triples for which the predicate tests to false are silently discarded.
+ *
+ *
+ * @author raven
+ *
+ */
 public class ObservableSubGraph
     extends GraphWithFilter
     implements ObservableGraph

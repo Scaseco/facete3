@@ -1,45 +1,18 @@
 package org.aksw.jena_sparql_api.schema;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.collection.NodeGraphView;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
+public interface NodeSchema {
+    PropertySchema createPropertySchema(Node predicate, boolean isForward);
 
-public class NodeSchema {
-    /** Mapping of specific predicates */
-    protected Table<Node, Boolean, PropertySchema> predicateViews = HashBasedTable.create();
-
-    /** Generic triple triple patterns where the predicate may be a variable */
-    protected Set<DirectedFilteredTriplePattern> triplePatterns = new LinkedHashSet<>();
-
-
-    public PropertySchema addPredicate(Node predicate, boolean isForward) {
-        PropertySchema spec = new PropertySchema(predicate, isForward);
-        predicateViews.put(predicate, isForward, spec);
-
-        return spec;
-    }
-
-    public Set<DirectedFilteredTriplePattern> getGenericPatterns() {
-        return triplePatterns;
-    }
-
-
-    public Collection<PropertySchema> getPredicateSchemas() {
-        return predicateViews.values();
-    }
-
-    public NodeGraphView instantiate(Node node) {
-        // return new NodeGraphView(graph, source, this);
-        return null;
-    }
-
+    Set<DirectedFilteredTriplePattern> getGenericPatterns();
+    Collection<PropertySchema> getPredicateSchemas();
+//    NodeGraphView instantiate(Node node);
 
     /**
      * Copy triples that match the predicate specification from the source graph into
@@ -48,8 +21,10 @@ public class NodeSchema {
      * @param target
      * @param source
      */
-    public long copyMatchingTriples(Node source, Graph targetGraph, Graph sourceGraph) {
+    default long copyMatchingTriples(Node source, Graph targetGraph, Graph sourceGraph) {
         long result = 0;
+
+        // TODO Handle the generic patterns
 
         for (PropertySchema predicateSchema : getPredicateSchemas()) {
             long contrib = predicateSchema.copyMatchingTriples(source, targetGraph, sourceGraph);
@@ -58,5 +33,4 @@ public class NodeSchema {
 
         return result;
     }
-
 }

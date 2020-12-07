@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.schema;
 
+import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.expr.ExprList;
 
@@ -19,11 +22,23 @@ public class DirectedFilteredTriplePattern {
      */
     protected boolean isForward;
 
-    public DirectedFilteredTriplePattern(Triple triple, ExprList exprs, boolean isForward) {
+    public DirectedFilteredTriplePattern(Triple triplePattern, ExprList exprs, boolean isForward) {
         super();
-        this.triplePattern = triple;
+        this.triplePattern = triplePattern;
         this.exprs = exprs;
         this.isForward = isForward;
+    }
+
+    public static DirectedFilteredTriplePattern create(Node source, Node predicate, boolean isForward) {
+        return new DirectedFilteredTriplePattern(Triple.create(source, predicate, Vars.o), null, isForward);
+    }
+
+    public Node getSource() {
+        return TripleUtils.getSource(triplePattern, isForward);
+    }
+
+    public Node getTarget() {
+        return TripleUtils.getTarget(triplePattern, isForward);
     }
 
     public Triple getTriplePattern() {

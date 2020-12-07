@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
@@ -23,7 +24,6 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
-import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.WrappedIterator;
@@ -45,7 +45,11 @@ public class GraphChange
 
     protected Map<Node, Node> renamedNodes;
 
-    /** Mapping of original triples to their edited versions */
+    /** Mapping of original triples to their edited versions.
+     *  The nodes of the target triple are subject to renaming: If some
+     *  source node in a triple gets specifically set to another node, and that other node
+     *  is mapped to a new target node
+     *  then it seems reasonable to rename the source node to the target one. */
     protected Map<Triple, Triple> tripleReplacements;
 
 
@@ -85,7 +89,7 @@ public class GraphChange
     }
 
 
-    protected ObservableGraphImpl baseGraph;
+    protected ObservableGraph baseGraph;
 
 
     /**
@@ -109,15 +113,20 @@ public class GraphChange
      * Setting a value corresponds to a replacement of the intensional set of triples with a specific new one.
      *
      */
-    public ObservableValue<Node> createFieldForPredicate(Node source, Node predicate, boolean isForward) {
-        return createFieldForPredicate(source, predicate, isForward, null);
+//    public ObservableValue<Node> createFieldForPredicate(Node source, Node predicate, boolean isForward) {
+//        return createFieldForPredicate(source, predicate, isForward, null);
+//    }
+
+    public ObservableValue<Node> createValueField(Node sourceNode, DirectedFilteredTriplePattern dftp) {
+        ObservableCollection<Node> set = createSetField(sourceNode, dftp);
+        ObservableValue<Node> result = ObservableValueFromObservableCollection.decorate(set);
+        return result;
     }
 
-    public ObservableValue<Node> createFieldForPredicate(Node source, Node predicate, boolean isForward, Expr targetCondidion) {
+    public ObservableCollection<Node> createSetField(Node sourceNode, DirectedFilteredTriplePattern dftp) {
 
-
-
-        return null;
+        ObservableCollection<Node> set = SetOfNodesFromGraph.create(baseGraph, dftp);
+        return set;
     }
 
 
@@ -127,9 +136,9 @@ public class GraphChange
      * TODO Maybe the result should not be an ObservableSet directly but a GraphNode that supports
      * the set view and e.g. a triple based view
      **/
-    public ObservableSet<Node> createSetForPredicate(Node source, Node predicate, boolean isForward) {
-
-        return null;
+    public ObservableCollection<Node> createSetForPredicate(Node source, Node predicate, boolean isForward) {
+        DirectedFilteredTriplePattern dftp = DirectedFilteredTriplePattern.create(source, predicate, isForward);
+        return createSetField(source, dftp);
     }
 
 

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.collection;
 
 import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraint;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraintImpl;
+import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -9,51 +10,15 @@ import org.apache.jena.graph.Triple;
 import com.google.common.base.Converter;
 
 
-class ConverterTripleToNode
-    extends Converter<Triple, Node>
-{
-    protected Node source;
-    protected Node predicate;
-    protected boolean isForward;
-
-    public ConverterTripleToNode(Node source, Node predicate, boolean isForward) {
-        super();
-        this.source = source;
-        this.predicate = predicate;
-        this.isForward = isForward;
-    }
-
-    public Node getSource() {
-        return source;
-    }
-
-    public Node getPredicate() {
-        return predicate;
-    }
-
-    public boolean isForward() {
-        return isForward;
-    }
-
-    @Override
-    protected Node doForward(Triple a) {
-        Node result = TripleUtils.getTarget(a, isForward);
-        return result;
-    }
-
-    @Override
-    protected Triple doBackward(Node b) {
-        Triple result = TripleUtils.create(source, predicate, b, isForward);
-        return result;
-    }
-
-}
-
 public class SetOfNodesFromGraph {
 //    extends AbstractSet<Node>
 //    implements ObservableSet<Node> {
 
-    public static ObservableCollection<Node> create(ObservableGraph graph, Node source, Node predicate, boolean isForward) {
+    public static ObservableCollection<Node> create(ObservableGraph graph, DirectedFilteredTriplePattern dftp) {
+        Node source = dftp.getSource();
+        Node predicate = dftp.getTriplePattern().getPredicate();
+        boolean isForward = dftp.isForward();
+
         TripleConstraint tripleConstraint = TripleConstraintImpl.create(TripleUtils.createMatch(source, predicate, isForward));
         ObservableSubGraph subGraph = ObservableSubGraph.decorate(graph, tripleConstraint);
 
@@ -62,6 +27,12 @@ public class SetOfNodesFromGraph {
         ObservableCollection<Node> nodeSet = new ObservableConvertingCollection<>(tripleSet, converter);
 
         return nodeSet;
+
+    }
+
+    public static ObservableCollection<Node> create(ObservableGraph graph, Node sourceNode, Node predicate, boolean isForward) {
+        DirectedFilteredTriplePattern dftp = DirectedFilteredTriplePattern.create(sourceNode, predicate, isForward);
+        return create(graph, dftp);
     }
 
 //    protected ObservableGraph graph;

@@ -191,6 +191,11 @@
 			</exclusions>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-shacl</artifactId>
+			<version>3.16.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.hobbit</groupId>

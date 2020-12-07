@@ -63,7 +63,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
                 Collection<F> oldValue = this;
                 Collection<F> newValue = CollectionFromIterable.wrap(() -> Iterators.filter(
                         oldValue.iterator(),
-                        PredicateDiscard.create(HashMultiset.create(removedItem))::test));
+                        PredicateFromMultisetOfDiscardedItems.create(HashMultiset.create(removedItem))::test));
 
                 pcs.firePropertyChange(new CollectionChangedEventImpl<>(
                         this, oldValue, newValue,

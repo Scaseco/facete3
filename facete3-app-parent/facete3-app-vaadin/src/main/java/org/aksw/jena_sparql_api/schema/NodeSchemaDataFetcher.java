@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -19,12 +18,10 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -38,6 +35,8 @@ import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -50,6 +49,8 @@ import com.google.common.collect.Multimap;
  *
  */
 public class NodeSchemaDataFetcher {
+
+    private static final Logger logger = LoggerFactory.getLogger(NodeSchemaDataFetcher.class);
 
     public static Query toQuery(Multimap<NodeSchema, Node> schemaAndNodes) {
 
@@ -96,7 +97,7 @@ public class NodeSchemaDataFetcher {
         Graph graph = GraphFactory.createDefaultGraph();
 
         Query unionQuery = toQuery(schemaAndNodes);
-        System.out.println(unionQuery);
+        logger.debug("Union Query: " + unionQuery);
 
         SparqlRx.execConstructTriples(conn, unionQuery).forEach(graph::add);
 
@@ -106,24 +107,25 @@ public class NodeSchemaDataFetcher {
 
             for (Node node : nodes) {
 
-                Graph tmp = GraphFactory.createDefaultGraph();
-                schema.copyMatchingTriples(node, tmp, graph);
+//                Graph tmp = GraphFactory.createDefaultGraph();
+                schema.copyMatchingTriples(node, target, graph);
 
-                RDFDataMgr.write(System.out, ModelFactory.createModelForGraph(tmp), RDFFormat.TURTLE_PRETTY);
+//                RDFDataMgr.write(System.out, ModelFactory.createModelForGraph(tmp), RDFFormat.TURTLE_PRETTY);
 
                 for (PropertySchema predicateSchema : schema.getPredicateSchemas()) {
                     // Get the set of matching values so that we can perform a nested lookup with them
                     Set<Node> subGraphNodes = new LinkedHashSet<Node>();
-                    predicateSchema.copyMatchingValues(node, subGraphNodes, tmp);
+                    predicateSchema.copyMatchingValues(node, subGraphNodes, target);
 
-                    System.out.println("Next nodes for " + predicateSchema.getPredicate() + ": " + subGraphNodes);
+//                    System.out.println("Next nodes for " + predicateSchema.getPredicate() + ": " + subGraphNodes);
 
                     NodeSchema targetSchema = predicateSchema.getTargetSchema();
-
-                    for (Node targetNode : subGraphNodes) {
-                        if (!done.containsEntry(targetSchema, targetNode)) {
-                            done.put(targetSchema, targetNode);
-                            next.put(targetSchema, targetNode);
+                    if (targetSchema != null) {
+                        for (Node targetNode : subGraphNodes) {
+                            if (!done.containsEntry(targetSchema, targetNode)) {
+                                done.put(targetSchema, targetNode);
+                                next.put(targetSchema, targetNode);
+                            }
                         }
                     }
                 }
@@ -135,7 +137,6 @@ public class NodeSchemaDataFetcher {
 
 
     public static Query immediateSchemaToSparql(NodeSchema schema) {
-
         Set<Expr> fwdDisjunction = new LinkedHashSet<>();
         Set<Expr> bwdDisjunction = new LinkedHashSet<>();
         for (PropertySchema predicateSchema : schema.getPredicateSchemas()) {
@@ -203,12 +204,12 @@ public class NodeSchemaDataFetcher {
 
 
     public static void main(String [] args) {
-        NodeSchema schema = new NodeSchema();
-        PropertySchema pgs = schema.addPredicate(RDF.type.asNode(), true);
-        PropertySchema pgs2 = schema.addPredicate(DCTerms.identifier.asNode(), true);
-        PropertySchema pgs3 = schema.addPredicate(DCAT.distribution.asNode(), true);
+        NodeSchema schema = new NodeSchemaImpl();
+        PropertySchema pgs = schema.createPropertySchema(RDF.type.asNode(), true);
+        PropertySchema pgs2 = schema.createPropertySchema(DCTerms.identifier.asNode(), true);
+        PropertySchema pgs3 = schema.createPropertySchema(DCAT.distribution.asNode(), true);
 
-        pgs3.getTargetSchema().addPredicate(DCAT.downloadURL.asNode(), true);
+        pgs3.getTargetSchema().createPropertySchema(DCAT.downloadURL.asNode(), true);
 
         Multimap<NodeSchema, Node> roots = HashMultimap.create();
         roots.put(schema, NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04"));

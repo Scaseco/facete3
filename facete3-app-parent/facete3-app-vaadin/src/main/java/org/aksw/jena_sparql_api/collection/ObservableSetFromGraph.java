@@ -79,47 +79,4 @@ public class ObservableSetFromGraph
         });
     }
 
-
-    public static void main(String[] args) {
-        ObservableGraphImpl graph = new ObservableGraphImpl(GraphFactory.createDefaultGraph());
-
-        //  t -> t.getSubject().matches(RDF.Nodes.first
-        ObservableGraph subGraph = ObservableSubGraph.decorate(graph,
-                TripleConstraintImpl.create(RDF.Nodes.first, null, null));
-
-        subGraph.addPropertyChangeListener(ev -> System.out.println("Got subgraph event: " + ev));
-
-        ObservableCollection<Node> test = SetOfNodesFromGraph.create(graph, RDF.Nodes.first, RDFS.Nodes.label, true);
-        test.addPropertyChangeListener(ev -> System.out.println("Set view: " + ev));
-
-
-        // , RDF.Nodes.first, RDFS.Nodes.label, true
-        ObservableSet<Triple> set = new ObservableSetFromGraph(subGraph);
-
-        ObservableValue<Triple> value = ObservableValueFromObservableCollection.decorate(set);
-        value.addListener(ev -> {
-            System.out.println("Value changed: " + ev);
-        });
-
-        set.addPropertyChangeListener(event -> {
-            System.out.println(event);
-        });
-
-
-        graph.add(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
-        graph.add(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
-        graph.delete(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
-        graph.delete(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
-
-        graph.add(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("Cheers")));
-
-        graph.add(new Triple(RDF.Nodes.rest, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
-
-//        Model m;
-//        m.register(new ModelChangedListenero)
-
-//        graph.getEventManager().register(listener)
-        System.out.println("Items: " + test);
-    }
-
 }

@@ -4,9 +4,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.rx.GraphFactoryEx;
+import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Difference;
 import org.apache.jena.graph.compose.Union;
@@ -40,7 +44,7 @@ public class ObservableGraphImpl
     /** Whether to record a no-op (maybe as a comment) */
     protected boolean RecordNoAction = true ;
 
-    protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
+    protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
 
     public static ObservableGraphImpl decorate(Graph delegate) {
@@ -96,22 +100,41 @@ public class ObservableGraphImpl
         super.delete(quad) ;
     }
 
+    @Override
+    public void remove(Node s, Node p, Node o) {
+        deleteAny(this, Triple.createMatch(s, p, o), pcs);
+    }
+
+//    @Override
+//    public void clear() {
+//        deleteAny(this, Triple.createMatch(null, null, null), pcs);
+//    }
 
     private static int SLICE = 1000 ;
 
-//    @Override
-//    public void deleteAny(Node s, Node p, Node o)
-//    {
-//        while (true)
-//        {
-//            Iterator<Triple> iter = find(s, p, o) ;
-//            // Materialize - stops possible ConcurrentModificationExceptions
-//            List<Triple> some = take(iter, SLICE) ;
-//            for (Triple q : some)
-//                delete$(q) ;
-//            if (some.size() < SLICE) break ;
-//        }
-//    }
+    // @Override
+    public static void deleteAny(
+            Graph graph,
+            Triple pattern,
+            PropertyChangeSupport pcs
+            )
+    {
+        int n;
+        do {
+            Iterator<Triple> iter = graph.find(pattern) ;
+
+            Graph deletions = GraphFactoryEx.createInsertOrderPreservingGraph();
+
+            for (n = 0; n < SLICE & iter.hasNext(); ++n) {
+                Triple t = iter.next();
+                deletions.add(t);
+            }
+
+            pcs.firePropertyChange(new CollectionChangedEventImpl<Triple>(graph,
+                    graph, new Difference(graph, deletions),
+                    Collections.emptySet(), new SetFromGraph(deletions), null));
+        } while (n >= SLICE);
+    }
 
     private void record(QuadAction action, Triple t)
     {
@@ -127,7 +150,7 @@ public class ObservableGraphImpl
             tmp = GraphFactory.createDefaultGraph();
             tmp.add(t);
 
-            pce.firePropertyChange(new CollectionChangedEventImpl<Triple>(this,
+            pcs.firePropertyChange(new CollectionChangedEventImpl<Triple>(this,
                     this, new Union(this, tmp),
                     additions, deletions, null));
             break;
@@ -138,7 +161,7 @@ public class ObservableGraphImpl
             tmp = GraphFactory.createDefaultGraph();
             tmp.add(t);
 
-            pce.firePropertyChange(new CollectionChangedEventImpl<Triple>(this,
+            pcs.firePropertyChange(new CollectionChangedEventImpl<Triple>(this,
                     this, new Difference(this, tmp), additions, deletions, null));
             break;
         default:
@@ -148,8 +171,8 @@ public class ObservableGraphImpl
     }
 
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
-        pce.addPropertyChangeListener(listener);
-        return () -> pce.removePropertyChangeListener(listener);
+        pcs.addPropertyChangeListener(listener);
+        return () -> pcs.removePropertyChangeListener(listener);
     }
 
 //    @Override
