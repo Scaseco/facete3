@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
+import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
@@ -23,6 +24,7 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -43,6 +45,8 @@ public class GraphChange
     /** A set of blank that were newly created and must thus not clash with existing resources */
     // protected Set<Node> newNodes;
 
+
+
     protected Map<Node, Node> renamedNodes;
 
     /** Mapping of original triples to their edited versions.
@@ -54,8 +58,29 @@ public class GraphChange
 
 
     // protected Table<Node, RdfField, Change> sourceToFieldIdToChanges;
-    //protected Table<Node, FieldId, FieldState> sourceToFieldIdToFieldState;
+    // protected Table<Node, FieldId, FieldState> sourceToFieldIdToFieldState;
     protected Multimap<Node, RdfField> sourceNodeToField = HashMultimap.create();
+
+    public boolean isDeleted(Triple triple) {
+
+        for (int i = 0; i < 2; ++i) {
+            Node sourceNode = i == 0 ? triple.getSubject() : triple.getObject();
+            boolean fwd = i == 0;
+
+            // Find all fields that would match the triple
+            sourceNodeToField.get(sourceNode).stream()
+                .filter(field -> field.getSourceNode().equals(sourceNode) && field.getPropertySchema().isForward() == fwd);
+
+            // Check whether the field is marked as deleted
+
+
+
+        }
+        // Collection<RdfField> rdfFields = source
+
+//    	triple.getSubject()
+        return false;
+    }
 
     //protected Map<Node, > ;
 
@@ -89,8 +114,17 @@ public class GraphChange
     }
 
 
+    protected ObservableGraph delta;
+
     protected ObservableGraph baseGraph;
 
+
+
+    /** Explicitly added triples - does not include the values of {@link #renamedNodes} */
+    protected ObservableGraph additionGraph;
+
+    // Do we need a deletion graph?
+//    protected ObservableGraph deletionGraph;
 
     /**
      * Create a reference to a specific triple such that one of its components
@@ -123,6 +157,13 @@ public class GraphChange
         return result;
     }
 
+    public RdfField createSetField(Node sourceNode, Node predicate, boolean isForward) {
+        DirectedFilteredTriplePattern dftp = DirectedFilteredTriplePattern.create(sourceNode, predicate, isForward);
+        RdfField result = new RdfFieldForSubGraph(this, dftp);
+
+        return result;
+    }
+
     public ObservableCollection<Node> createSetField(Node sourceNode, DirectedFilteredTriplePattern dftp) {
 
         ObservableCollection<Node> set = SetOfNodesFromGraph.create(baseGraph, dftp);
@@ -150,12 +191,31 @@ public class GraphChange
         return renamedNodes;
     }
 
-    public Graph getBaseGraph() {
+    public ObservableGraph getBaseGraph() {
         return baseGraph;
     }
 
+    public Delta getDelta() {
+        Delta d = (Delta)((ObservableGraphImpl)delta).get();
+        return d;
+    }
+
+    public ObservableGraph getObservableDelta() {
+        return delta;
+    }
+
+//
+//    public ObservableGraph getDeletionGraph() {
+//		return deletionGraph;
+//	}
+
+    public ObservableGraph getAdditionGraph() {
+        return additionGraph;
+    }
+
     public GraphChange() {
-        this(new HashMap<>(), new HashMap<>(), GraphFactory.createDefaultGraph());
+        this(new HashMap<>(), new HashMap<>(), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
+        //new Delta(GraphFactory.createPlainGraph()));
     }
 
 
@@ -166,9 +226,8 @@ public class GraphChange
     }
 
     /**
-     * A graph view of the final state.
-     *
-     * Nodes that were renamed are no longer visible.
+     * A graph view of the final state:
+     * - Nodes that were renamed are no longer visible.
      *
      * @return
      */
@@ -334,11 +393,14 @@ public class GraphChange
         };
     }
 
-    public GraphChange(Map<Node, Node> renamedNodes, Map<Triple, Triple> tripleReplacements, Graph baseGraph) {
+    public GraphChange(Map<Node, Node> renamedNodes, Map<Triple, Triple> tripleReplacements, ObservableGraph baseGraph) {
         super();
         this.renamedNodes = renamedNodes;
         this.tripleReplacements = tripleReplacements;
-        this.baseGraph = ObservableGraphImpl.decorate(baseGraph);
+        this.baseGraph = baseGraph;
+        this.delta = ObservableGraphImpl.decorate(new DeltaWithFixedIterator(this.baseGraph));
+        //this.effectiveGraph = ObservableGraph
+        this.additionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
     }
 
     public static <T> Collection<T> defaultToSingletonIfEmpty(Collection<T> items, T defaultItem) {

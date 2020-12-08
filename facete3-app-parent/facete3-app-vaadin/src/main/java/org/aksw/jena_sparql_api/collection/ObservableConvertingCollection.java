@@ -19,7 +19,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
     extends ConvertingCollection<F, B, C>
     implements ObservableCollection<F>
 {
-    protected PropertyChangeSupport pcs;
+    protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public ObservableConvertingCollection(C backend, Converter<B, F> converter) {
         super(backend, converter);

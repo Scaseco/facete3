@@ -295,8 +295,10 @@ public class RdfTermEditor
     public void nodeToState(Node node) {
         if (node.isURI()) {
             rdfTermType = RdfTermType.IRI;
+            resourceTextField.setValue(node.getURI());
         } else if (node.isBlank()) {
             rdfTermType = RdfTermType.BNODE;
+            resourceTextField.setValue(node.getURI());
         } else if (node.isLiteral()) {
             rdfTermType = RdfTermType.LITERAL;
 
@@ -462,8 +464,12 @@ public class RdfTermEditor
         Node oldValue = this.value;
         if (!Objects.equals(oldValue, value)) {
             this.value = value;
+
             valueChangeListerens.forEach(listener ->
                 listener.valueChanged(new ComponentValueChangeEvent<>(this, this, oldValue, false)));
+
+            nodeToState(value);
+            redraw();
         }
     }
 

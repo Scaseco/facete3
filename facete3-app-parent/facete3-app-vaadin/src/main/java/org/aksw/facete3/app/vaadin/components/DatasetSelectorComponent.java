@@ -11,6 +11,7 @@ import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
+import org.aksw.vaadin.datashape.form.ShaclForm;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -192,13 +193,16 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 //        super(new VerticalLayout());
 //        this.getTabsComponent().setOrientation(Orientation.HORIZONTAL);
 
-        DatasetCreatorForm datasetCreator = new DatasetCreatorForm();
+//        DatasetCreatorForm datasetCreator = new DatasetCreatorForm();
 //        datasetCreator.setMinWidth("300px");
 //        datasetCreator.setMinHeight("300px");
 //        datasetCreator.add(new Span("World"));
 
+        ShaclForm shaclForm = new ShaclForm();
+
         this.newTab("catalog", "Browse Catalog", new ManagedComponentSimple(new Span("Hello")));
-        this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(datasetCreator));
+        // this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(datasetCreator));
+         this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(shaclForm));
     }
 
 

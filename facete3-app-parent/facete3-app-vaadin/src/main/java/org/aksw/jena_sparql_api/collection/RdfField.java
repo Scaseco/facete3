@@ -4,6 +4,7 @@ import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
+
 /**
  * A field is a reference to a set of triples.
  *
@@ -31,6 +32,17 @@ public interface RdfField {
      * @return
      */
     boolean isIntensional();
+    void setIntensional(boolean onOrOff);
+
+    void setDeleted(boolean onOrOff);
+    boolean isDeleted();
+
+    ObservableCollection<Node> getBaseAsSet();
+    ObservableCollection<Node> getAddedAsSet();
+
+    ObservableCollection<Node> getEffectiveAsSet();
+
+
 
 
     default boolean matchesTriple(Triple t) {

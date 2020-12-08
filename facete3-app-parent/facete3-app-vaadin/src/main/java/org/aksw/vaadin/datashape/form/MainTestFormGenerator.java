@@ -1,12 +1,16 @@
 package org.aksw.vaadin.datashape.form;
 
+import org.aksw.jena_sparql_api.collection.GraphChange;
+import org.aksw.jena_sparql_api.collection.ObservableCollection;
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
+import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
@@ -59,15 +63,54 @@ public class MainTestFormGenerator {
 
         RDFConnection conn = RDFConnectionFactory.connect(ds);
 
+        Graph graph = null;
         for (int i = 0; i < 1; ++i) {
 
             NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
-            Graph graph = GraphFactory.createDefaultGraph();
+            graph = GraphFactory.createDefaultGraph();
             dataFetcher.sync(graph, roots, conn);
 
             System.out.println("Fetching complete:");
             RDFDataMgr.write(System.out, ModelFactory.createModelForGraph(graph), RDFFormat.TURTLE_PRETTY);
         }
+
+
+        Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
+
+        GraphChange graphEditorModel = new GraphChange();
+        GraphUtil.addInto(graphEditorModel.getBaseGraph(), graph);
+//        ObservableCollection<Node> dists = graphEditorModel.createSetForPredicate(sourceNode, DCAT.distribution.asNode(), true);
+//
+//        dists.addPropertyChangeListener(ev -> System.out.println("Got event: " + ev));
+//
+//        dists.add(NodeFactory.createBlankNode());
+
+
+
+        RdfField rdfField = graphEditorModel.createSetField(sourceNode, DCAT.distribution.asNode(), true);
+
+        rdfField.setDeleted(true);
+        rdfField.setIntensional(true);
+
+        // rdfField.repl
+
+        // rdfField.clear();
+
+
+        ObservableCollection<Node> oldDists = rdfField.getEffectiveAsSet();
+        System.out.println("Dists: " + oldDists);
+        oldDists.clear();
+        System.out.println("Dists: " + oldDists);
+        System.out.println("Deleted Dists: " + graphEditorModel.getDelta().getDeletions());
+
+
+
+
+        // rdfField.
+
+        ObservableCollection<Node> newDists = rdfField.getAddedAsSet();
+        newDists.add(NodeFactory.createURI("urn:newDist1"));
+        System.out.println("NewDists: " + newDists);
 
 //        for (SHPropertyShape ps : ns.getPropertyShapes()) {
 //            System.out.println(ps.getPath() + " " + ps.getMinCount() + " " + ps.getMaxCount() + " " + ps.getOrder() + " " + ps.getClassOrDatatype());
