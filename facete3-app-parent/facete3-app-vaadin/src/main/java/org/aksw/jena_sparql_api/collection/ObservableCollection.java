@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
 import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -14,6 +15,8 @@ public interface ObservableCollection<T>
 //    boolean isEnableEvents();
 
 //    Runnable addListener(Consumer<CollectionChangedEvent<? super T>> listener);
+
+    Runnable addVetoableChangeListener(VetoableChangeListener listener);
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
 

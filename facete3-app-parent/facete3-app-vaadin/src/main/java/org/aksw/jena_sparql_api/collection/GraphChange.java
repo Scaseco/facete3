@@ -54,7 +54,7 @@ public class GraphChange
      *  source node in a triple gets specifically set to another node, and that other node
      *  is mapped to a new target node
      *  then it seems reasonable to rename the source node to the target one. */
-    protected Map<Triple, Triple> tripleReplacements;
+    protected ObservableMap<Triple, Triple> tripleReplacements;
 
 
     // protected Table<Node, RdfField, Change> sourceToFieldIdToChanges;
@@ -95,20 +95,20 @@ public class GraphChange
     protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
 
     /** Listeners for after changes occurred. This allows listeners to update their state */
-    protected PropertyChangeSupport postUpdateListeners = new PropertyChangeSupport(this);
+//    protected PropertyChangeSupport postUpdateListeners = new PropertyChangeSupport(this);
 
 
-    public void triggerPostUpdate() {
-        postUpdateListeners.firePropertyChange("status", null, null);
-    }
+//    public void triggerPostUpdate() {
+//        postUpdateListeners.firePropertyChange("status", null, null);
+//    }
+//
+//    public Runnable addPostUpdateListener(PropertyChangeListener listener) {
+//        postUpdateListeners.addPropertyChangeListener(listener);
+//        return () -> postUpdateListeners.removePropertyChangeListener(listener);
+//    }
 
-    public Runnable addPostUpdateListener(PropertyChangeListener listener) {
-        postUpdateListeners.addPropertyChangeListener(listener);
-        return () -> postUpdateListeners.removePropertyChangeListener(listener);
-    }
 
-
-    public Runnable addChangeListener(PropertyChangeListener listener) {
+    public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         pce.addPropertyChangeListener(listener);
         return () -> pce.removePropertyChangeListener(listener);
     }
@@ -183,7 +183,7 @@ public class GraphChange
     }
 
 
-    public Map<Triple, Triple> getTripleReplacements() {
+    public ObservableMap<Triple, Triple> getTripleReplacements() {
         return tripleReplacements;
     }
 
@@ -214,7 +214,7 @@ public class GraphChange
     }
 
     public GraphChange() {
-        this(new HashMap<>(), new HashMap<>(), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
+        this(new HashMap<>(), ObservableMapImpl.decorate(new HashMap<>()), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
         //new Delta(GraphFactory.createPlainGraph()));
     }
 
@@ -393,7 +393,7 @@ public class GraphChange
         };
     }
 
-    public GraphChange(Map<Node, Node> renamedNodes, Map<Triple, Triple> tripleReplacements, ObservableGraph baseGraph) {
+    public GraphChange(Map<Node, Node> renamedNodes, ObservableMap<Triple, Triple> tripleReplacements, ObservableGraph baseGraph) {
         super();
         this.renamedNodes = renamedNodes;
         this.tripleReplacements = tripleReplacements;

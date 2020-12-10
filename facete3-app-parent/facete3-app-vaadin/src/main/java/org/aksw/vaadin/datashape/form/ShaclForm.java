@@ -1,5 +1,7 @@
 package org.aksw.vaadin.datashape.form;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map.Entry;
 
@@ -7,6 +9,7 @@ import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.jena_sparql_api.collection.GraphChange;
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
+import org.aksw.jena_sparql_api.collection.ObservableValue;
 import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
@@ -16,6 +19,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -32,11 +36,14 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.shared.Registration;
 
 public class ShaclForm
     extends FormLayout
@@ -61,7 +68,7 @@ public class ShaclForm
         Multimap<Node, NodeSchema> roots = ArrayListMultimap.create();
 
         Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
-        sourceNode = NodeFactory.createURI("http://test.org");
+//        sourceNode = NodeFactory.createURI("http://test.org");
 
         roots.put(sourceNode, baseSchema);
 
@@ -83,6 +90,16 @@ public class ShaclForm
         GraphChange graphEditorModel = new GraphChange();
         GraphUtil.addInto(graphEditorModel.getBaseGraph(), graph);
 
+        TextArea status = new TextArea();
+        addFormItem(status, "Status");
+
+        graphEditorModel.getObservableDelta().addPropertyChangeListener(ev -> {
+            Model m = ModelFactory.createModelForGraph((Graph)ev.getNewValue());
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            RDFDataMgr.write(out, m, RDFFormat.TURTLE_PRETTY);
+            String str = new String(out.toByteArray(), StandardCharsets.UTF_8);
+            status.setValue(str);
+        });
 
 
         for (Entry<Node, Collection<NodeSchema>> e : roots.asMap().entrySet()) {
@@ -108,21 +125,49 @@ public class ShaclForm
 
 
                     Button addValueButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
+                    addValueButton.addClickListener(ev -> {
+
+                    });
                     addFormItem(addValueButton, ps.getPredicate().getURI());
 
 
                     for (Node existingValue : existingValues) {
 
+                        Triple t = Triple.create(root, ps.getPredicate(), existingValue);
+                        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, 2);
+
                         RdfTermEditor rdfTermEditor = new RdfTermEditor();
                         FormItem formItem = addFormItem(rdfTermEditor, ps.getPredicate().getURI());
-                        rdfTermEditor.setValue(existingValue);
+//                        rdfTermEditor.setValue(existingValue);
                         System.out.println("Added: " + sourceNode + " " + ps.getPredicate() + " " + existingValue);
                         setColspan(formItem, 3);
+
+                        bind(rdfTermEditor, value);
                     }
 
                 }
             }
         }
 
+    }
+
+    public static <V> Runnable bind(HasValue<?, V> hasValue, ObservableValue<V> store) {
+        V value = store.get();
+        hasValue.setValue(value);
+
+        Runnable deregister1 = store.addListener(ev -> {
+            V newValue = (V)ev.getNewValue();
+            hasValue.setValue(newValue);
+        });
+
+        Registration deregister2 = hasValue.addValueChangeListener(ev -> {
+            V newValue = ev.getValue();
+            store.set(newValue);
+        });
+
+        return () -> {
+            deregister1.run();
+            deregister2.remove();
+        };
     }
 }

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
 import java.util.AbstractSet;
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,6 +39,31 @@ public class ObservableSetUnion<T>
         // Return a runnable that deregister both listeners
         return () -> { a.run(); b.run(); };
     }
+
+
+    @Override
+    public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+        Runnable a = lhs.addVetoableChangeListener(convertListener(this, rhs, listener));
+        Runnable b = rhs.addVetoableChangeListener(convertListener(this, lhs, listener));
+
+        // Return a runnable that deregister both listeners
+        return () -> { a.run(); b.run(); };
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public static <T> VetoableChangeListener convertListener(
+            Object self, Set<T> other,
+            VetoableChangeListener listener) {
+
+        return ev -> {
+            CollectionChangedEventImpl<T> newEv = convertEvent(self, (CollectionChangedEventImpl<T>)ev, other);
+            if (newEv.hasChanges()) {
+                listener.vetoableChange(newEv);
+            }
+        };
+    }
+
 
     @SuppressWarnings("unchecked")
     public static <T> PropertyChangeListener convertListener(
@@ -106,5 +132,6 @@ public class ObservableSetUnion<T>
         b.remove("Hello"); // expect event
 
     }
+
 }
 

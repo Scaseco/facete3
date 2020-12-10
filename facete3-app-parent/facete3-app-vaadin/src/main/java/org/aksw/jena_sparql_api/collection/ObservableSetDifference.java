@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
 import java.util.AbstractSet;
 import java.util.Collections;
 import java.util.Iterator;
@@ -26,16 +27,38 @@ public class ObservableSetDifference<T>
     }
 
     @Override
+    public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+        Runnable a = lhs.addVetoableChangeListener(convertVetoableChangeListener(this, rhs, listener));
+        Runnable b = rhs.addVetoableChangeListener(convertVetoableChangeListener(this, lhs, listener));
+
+        // Return a runnable that deregister both listeners
+        return () -> { a.run(); b.run(); };
+    }
+
+    @Override
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
-        Runnable a = lhs.addPropertyChangeListener(convertListener(this, rhs, listener));
-        Runnable b = rhs.addPropertyChangeListener(convertListener(this, lhs, listener));
+        Runnable a = lhs.addPropertyChangeListener(convertPropertyChangeListener(this, rhs, listener));
+        Runnable b = rhs.addPropertyChangeListener(convertPropertyChangeListener(this, lhs, listener));
 
         // Return a runnable that deregister both listeners
         return () -> { a.run(); b.run(); };
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> PropertyChangeListener convertListener(
+    public static <T> VetoableChangeListener convertVetoableChangeListener(
+            Object self, Set<T> other,
+            VetoableChangeListener listener) {
+
+        return ev -> {
+            CollectionChangedEventImpl<T> newEv = convertEvent(self, (CollectionChangedEventImpl<T>)ev, other);
+            if (newEv.hasChanges()) {
+                listener.vetoableChange(newEv);
+            }
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> PropertyChangeListener convertPropertyChangeListener(
             Object self, Set<T> other,
             PropertyChangeListener listener) {
 
@@ -51,6 +74,25 @@ public class ObservableSetDifference<T>
     protected static <T> Set<T> nullSafeDifference(Set<T> set, Set<T> other) {
         return set == null ? Collections.emptySet() : Sets.difference((Set<T>)set, other);
     }
+
+
+//    @SuppressWarnings("unchecked")
+//    public static <T> CollectionChangedEventImpl<T> convertVetoableChangeEvent(Object self,
+//            CollectionChangedEventImpl<T> ev, Set<T> other) {
+//
+//        // Added items that already exist in the 'other' set are substracted
+//        Set<T> effectiveAdditions = nullSafeDifference((Set<T>)ev.getAdditions(), other);
+//        // Deletions that already exist in the other set are also substracted
+//        Set<T> effectiveDeletions = nullSafeDifference((Set<T>)ev.getDeletions(), other);
+//
+//        return new CollectionChangedEventImpl<T>(
+//            self, self,
+//            Sets.union(Sets.difference((Set<T>)self, effectiveDeletions), effectiveAdditions),
+//            effectiveAdditions,
+//            effectiveDeletions,
+//            // Refreshes are just passed through
+//            nullSafeDifference((Set<T>)ev.getRefreshes(), other));
+//    }
 
     @SuppressWarnings("unchecked")
     public static <T> CollectionChangedEventImpl<T> convertEvent(Object self,

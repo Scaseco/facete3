@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.collection;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.VetoableChangeListener;
+import java.beans.VetoableChangeSupport;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -44,8 +46,8 @@ public class ObservableGraphImpl
     /** Whether to record a no-op (maybe as a comment) */
     protected boolean RecordNoAction = true ;
 
+    protected VetoableChangeSupport vcs = new VetoableChangeSupport(this);
     protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-
 
     public static ObservableGraphImpl decorate(Graph delegate) {
         return new ObservableGraphImpl(delegate);
@@ -70,8 +72,8 @@ public class ObservableGraphImpl
     {
         if ( CheckFirst && contains(quad) )
         {
-            if ( RecordNoAction )
-                record(QuadAction.NO_ADD, quad) ;
+//            if ( RecordNoAction )
+//                recordVetoable(QuadAction.NO_ADD, quad) ;
             return ;
         }
         add$(quad) ;
@@ -79,16 +81,17 @@ public class ObservableGraphImpl
 
     private void add$(Triple quad)
     {
-        record(QuadAction.ADD, quad) ;
+        recordVetoable(QuadAction.ADD, quad) ;
         super.add(quad) ;
+        record(QuadAction.ADD, quad);
     }
 
     @Override public void delete(Triple quad)
     {
         if ( CheckFirst && ! contains(quad) )
         {
-            if ( RecordNoAction )
-                record(QuadAction.NO_DELETE, quad) ;
+//            if ( RecordNoAction )
+//                recordVetoable(QuadAction.NO_DELETE, quad) ;
             return ;
         }
         delete$(quad) ;
@@ -96,8 +99,9 @@ public class ObservableGraphImpl
 
     private void delete$(Triple quad)
     {
-        record(QuadAction.DELETE, quad) ;
+        recordVetoable(QuadAction.DELETE, quad) ;
         super.delete(quad) ;
+        record(QuadAction.DELETE, quad);
     }
 
     @Override
@@ -136,6 +140,49 @@ public class ObservableGraphImpl
         } while (n >= SLICE);
     }
 
+    private void recordVetoable(QuadAction action, Triple t)
+    {
+        Set<Triple> additions;
+        Set<Triple> deletions;
+
+        Graph tmp;
+        switch (action) {
+        case ADD:
+            additions = Collections.singleton(t);
+            deletions = Collections.emptySet();
+
+            tmp = GraphFactory.createDefaultGraph();
+            tmp.add(t);
+
+            try {
+                vcs.fireVetoableChange(new CollectionChangedEventImpl<Triple>(this,
+                        this, new Union(this, tmp),
+                        additions, deletions, null));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            break;
+        case DELETE:
+            additions = Collections.emptySet();
+            deletions = Collections.singleton(t);
+
+            tmp = GraphFactory.createDefaultGraph();
+            tmp.add(t);
+
+            try {
+                vcs.fireVetoableChange(new CollectionChangedEventImpl<Triple>(this,
+                        this, new Difference(this, tmp), additions, deletions, null));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            break;
+        default:
+            // nothing to do
+            break;
+        }
+    }
+
+
     private void record(QuadAction action, Triple t)
     {
         Set<Triple> additions;
@@ -151,8 +198,8 @@ public class ObservableGraphImpl
             tmp.add(t);
 
             pcs.firePropertyChange(new CollectionChangedEventImpl<Triple>(this,
-                    this, new Union(this, tmp),
-                    additions, deletions, null));
+                    new Difference(this, tmp), this,
+                    additions, deletions, Collections.emptySet()));
             break;
         case DELETE:
             additions = Collections.emptySet();
@@ -162,12 +209,16 @@ public class ObservableGraphImpl
             tmp.add(t);
 
             pcs.firePropertyChange(new CollectionChangedEventImpl<Triple>(this,
-                    this, new Difference(this, tmp), additions, deletions, null));
+                    new Union(this, tmp), this, additions, deletions, Collections.emptySet()));
             break;
         default:
             // nothing to do
             break;
         }
+    }
+    public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+        vcs.addVetoableChangeListener(listener);
+        return () -> vcs.removeVetoableChangeListener(listener);
     }
 
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {

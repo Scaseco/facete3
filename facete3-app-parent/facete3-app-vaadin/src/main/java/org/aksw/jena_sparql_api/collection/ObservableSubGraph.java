@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -67,14 +68,24 @@ public class ObservableSubGraph
     }
 
     @Override
+    public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+        return get().addVetoableChangeListener(ev -> {
+            CollectionChangedEventImpl<Triple> newEv = filter(this, (CollectionChangedEventImpl<Triple>)ev, predicate);
+
+            if (newEv.hasChanges()) {
+                listener.vetoableChange(newEv);
+            }
+        });
+
+    }
+
+
+    @Override
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         return get().addPropertyChangeListener(ev -> {
             CollectionChangedEventImpl<Triple> newEv = filter(this, (CollectionChangedEventImpl<Triple>)ev, predicate);
-            boolean isChange = !newEv.getAdditions().isEmpty()
-                    || !newEv.getDeletions().isEmpty()
-                    || !newEv.getRefreshes().isEmpty();
 
-            if (isChange) {
+            if (newEv.hasChanges()) {
                 listener.propertyChange(newEv);
             }
         });

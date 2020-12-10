@@ -2,6 +2,9 @@ package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
+import java.beans.VetoableChangeSupport;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -11,7 +14,6 @@ import org.aksw.commons.collections.ConvertingCollection;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
 
@@ -19,6 +21,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
     extends ConvertingCollection<F, B, C>
     implements ObservableCollection<F>
 {
+    protected VetoableChangeSupport vcs = new VetoableChangeSupport(this);
     protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public ObservableConvertingCollection(C backend, Converter<B, F> converter) {
@@ -37,14 +40,29 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
 
         if (isDuplicateAwareBackend() || !backend.contains(item)) {
             Collection<F> newItem = Collections.singleton(value);
-            Collection<F> oldValue = this;
-            Collection<F> newValue = CollectionFromIterable.wrap(Iterables.concat(this, newItem));
+            {
+                Collection<F> oldValue = this;
+                Collection<F> newValue = ObservableCollectionBase.smartUnion(this, newItem);// CollectionFromIterable.wrap(Iterables.concat(this, newItem));
 
-            pcs.firePropertyChange(new CollectionChangedEventImpl<>(
-                    this, oldValue, newValue,
-                    newItem, Collections.emptySet(), Collections.emptySet()));
+                try {
+                    vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
+                            this, oldValue, newValue,
+                            newItem, Collections.emptySet(), Collections.emptySet()));
+                } catch (PropertyVetoException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
             result = backend.add(item);
+
+            {
+                Collection<F> oldValue = ObservableCollectionBase.smartDifference(this, newItem);
+                Collection<F> newValue = this;
+
+                pcs.firePropertyChange(new CollectionChangedEventImpl<>(
+                        this, oldValue, newValue,
+                        newItem, Collections.emptySet(), Collections.emptySet()));
+            }
         }
 
         return result;
@@ -60,16 +78,34 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
 
             if (isDuplicateAwareBackend() || backend.contains(backendItem)) {
                 Collection<F> removedItem = Collections.singleton(frontendItem);
-                Collection<F> oldValue = this;
-                Collection<F> newValue = CollectionFromIterable.wrap(() -> Iterators.filter(
-                        oldValue.iterator(),
-                        PredicateFromMultisetOfDiscardedItems.create(HashMultiset.create(removedItem))::test));
 
-                pcs.firePropertyChange(new CollectionChangedEventImpl<>(
-                        this, oldValue, newValue,
-                        Collections.emptySet(), removedItem, Collections.emptySet()));
+                {
+                    Collection<F> oldValue = this;
+                    Collection<F> newValue = CollectionFromIterable.wrap(() -> Iterators.filter(
+                            oldValue.iterator(),
+                            PredicateFromMultisetOfDiscardedItems.create(HashMultiset.create(removedItem))::test));
+
+                    try {
+                        vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
+                                this, oldValue, newValue,
+                                Collections.emptySet(), removedItem, Collections.emptySet()));
+                    } catch (PropertyVetoException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }
 
                 result = backend.remove(backendItem);
+
+                {
+                    Collection<F> oldValue = ObservableCollectionBase.smartUnion(this, removedItem);
+                    Collection<F> newValue = this;
+
+                    pcs.firePropertyChange(new CollectionChangedEventImpl<>(
+                            this, oldValue, newValue,
+                            removedItem, Collections.emptySet(), Collections.emptySet()));
+                }
+
             }
 
         } catch(ClassCastException e) {
@@ -96,17 +132,26 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
     }
 
     @Override
+    public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+        return getBackend().addVetoableChangeListener(ev -> {
+            CollectionChangedEventImpl<F> newEv = convertEvent(this, (CollectionChangedEventImpl<B>)ev, converter);
+
+            if (newEv.hasChanges()) {
+                listener.vetoableChange(newEv);
+            }
+        });
+    }
+
+    @Override
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         return getBackend().addPropertyChangeListener(ev -> {
             CollectionChangedEventImpl<F> newEv = convertEvent(this, (CollectionChangedEventImpl<B>)ev, converter);
-            boolean isChange = !newEv.getAdditions().isEmpty()
-                    || !newEv.getDeletions().isEmpty()
-                    || !newEv.getRefreshes().isEmpty();
 
-            if (isChange) {
+            if (newEv.hasChanges()) {
                 listener.propertyChange(newEv);
             }
         });
     }
+
 
 }

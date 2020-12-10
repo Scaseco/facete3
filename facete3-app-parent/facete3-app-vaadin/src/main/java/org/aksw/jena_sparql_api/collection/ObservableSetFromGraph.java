@@ -2,16 +2,11 @@ package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
 
-import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraintImpl;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 
 
 /**
@@ -66,6 +61,19 @@ public class ObservableSetFromGraph
             oldEvent.getRefreshes()
         );
     }
+
+
+    /**
+    *
+    * @return A Runnable that de-registers the listener upon calling .run()
+    */
+   @Override
+   public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+       return getGraph().addVetoableChangeListener(ev -> {
+           PropertyChangeEvent newEvent = convertEvent(ev);
+           listener.vetoableChange(newEvent);
+       });
+   }
 
     /**
      *

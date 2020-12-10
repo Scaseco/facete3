@@ -1,8 +1,9 @@
 package org.aksw.jena_sparql_api.collection;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.List;
+import java.util.Map;
 
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Node;
@@ -22,30 +23,17 @@ public class RdfFieldFromExistingTriple
     protected GraphChange graph;
     protected Triple existingTriple;
     protected int componentIdx; // s p or o
-    // protected PropertySchema propertySchema;
-
-    protected Node cachedValue;
-
-    protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
 
     public RdfFieldFromExistingTriple(GraphChange graph, Triple existingTriple, int componentIdx) {
         super();
         this.graph = graph;
         this.existingTriple = existingTriple;
         this.componentIdx = componentIdx;
-
-        cachedValue = getLatestValue();
-
-        graph.addPostUpdateListener(ev -> {
-            // TODO Trap potential endless loop by introducing a flag when we change the value
-            // in response to an event
-            set(getLatestValue());
-        });
     }
 
 
-    public Node getLatestValue() {
-        Triple baseTriple = graph.getTripleReplacements().getOrDefault(existingTriple, existingTriple);
+    public Node getLatestValue(Map<Triple, Triple> map) {
+        Triple baseTriple = map.getOrDefault(existingTriple, existingTriple);
         List<Node> nodes = TripleUtils.tripleToList(baseTriple);
         Node result = nodes.get(componentIdx);
         return result;
@@ -54,7 +42,8 @@ public class RdfFieldFromExistingTriple
 
     @Override
     public Node get() {
-        return cachedValue;
+        // return cachedValue;
+        return getLatestValue(graph.getTripleReplacements());
     }
 
 
@@ -68,14 +57,32 @@ public class RdfFieldFromExistingTriple
 
         graph.getTripleReplacements().put(existingTriple, newTriple);
 
-        pce.firePropertyChange("value", cachedValue, value);
-        this.cachedValue = getLatestValue();
+//        pce.firePropertyChange("value", cachedValue, value);
     }
 
     @Override
     public Runnable addListener(PropertyChangeListener listener) {
-        pce.addPropertyChangeListener(listener);
-        return () -> pce.removePropertyChangeListener(listener);
+        return graph.getTripleReplacements().addListener(ev -> {
+            Map<Triple, Triple> oldMap = (Map<Triple, Triple>)ev.getOldValue();
+            Map<Triple, Triple> newMap = (Map<Triple, Triple>)ev.getNewValue();
+
+            Node oldValue = getLatestValue(oldMap);
+            Node newValue = getLatestValue(newMap);
+
+            listener.propertyChange(new PropertyChangeEvent(this, "value", oldValue, newValue));
+        });
+
+//        return graph.addPostUpdateListener(ev -> {
+//            Node oldNode = (Node)ev.getOldValue();
+//            Node newNode = (Node)ev.getNewValue();
+//            listener.propertyChange(new PropertyChangeEvent(this, "value", oldNode, newNode));
+//            // TODO Trap potential endless loop by introducing a flag when we change the value
+//            // in response to an event
+//            set(getLatestValue());
+//        });
+
+//        pce.addPropertyChangeListener(listener);
+//        return () -> pce.removePropertyChangeListener(listener);
     }
 
 }
