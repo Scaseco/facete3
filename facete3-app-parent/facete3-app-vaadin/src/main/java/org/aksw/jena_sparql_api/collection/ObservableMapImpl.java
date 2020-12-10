@@ -3,8 +3,11 @@ package org.aksw.jena_sparql_api.collection;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.VetoableChangeListener;
+import java.beans.VetoableChangeSupport;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -15,6 +18,8 @@ import java.util.Set;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 
+import com.github.jsonldjava.shaded.com.google.common.collect.Sets;
+import com.google.common.collect.ForwardingSet;
 import com.google.common.collect.Maps;
 
 /**
@@ -38,7 +43,8 @@ public class ObservableMapImpl<K, V>
     implements ObservableMap<K, V>
 {
     protected Map<K, V> delegate;
-    protected PropertyChangeSupport pce = new PropertyChangeSupport(this);
+    protected VetoableChangeSupport vcs = new VetoableChangeSupport(this);
+    protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public ObservableMapImpl(Map<K, V> delegate) {
         super();
@@ -50,27 +56,55 @@ public class ObservableMapImpl<K, V>
     }
 
     @Override
-    public Runnable addListener(PropertyChangeListener listener) {
-        pce.addPropertyChangeListener(listener);
-        return () -> pce.removePropertyChangeListener(listener);
+    public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+        vcs.addVetoableChangeListener(listener);
+        return () -> vcs.removeVetoableChangeListener(listener);
+    }
+
+    @Override
+    public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+        return () -> pcs.removePropertyChangeListener(listener);
     }
 
     @Override
     public V put(K key, V value) {
         Map<K, V> newItem = Collections.singletonMap(key, value);
         Map<K, V> removedItem = Collections.emptyMap();
-        Map<K, V> oldValue = this;
-        Map<K, V> newValue = MapUtils.union(oldValue, newItem);
 
         if (delegate.containsKey(key)) {
             removedItem = Collections.singletonMap(key, delegate.get(key));
         }
 
-        pce.firePropertyChange(new CollectionChangedEventImpl<>(
-                this, oldValue, newValue,
-                newItem.entrySet(), removedItem.entrySet(), Collections.emptySet()));
+        {
+            Map<K, V> oldValue = this;
+            Map<K, V> newValue = MapUtils.union(oldValue, newItem);
 
-        return delegate.put(key, value);
+            try {
+                vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
+                        this, oldValue, newValue,
+                        newItem.entrySet(), removedItem.entrySet(), Collections.emptySet()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        V result = delegate.put(key, value);
+
+        {
+            // FIXME The following line breaks the semantics of Map.containsKey
+            // when the key of the removedItem was not present before
+            Map<K, V> oldValue = removedItem.isEmpty()
+                    ? Maps.filterKeys(this, k -> !Objects.equals(k, key))
+                    : MapUtils.union(this, removedItem);
+
+            Map<K, V> newValue = this;
+
+            pcs.firePropertyChange(new CollectionChangedEventImpl<>(
+                    this, oldValue, newValue,
+                    newItem.entrySet(), removedItem.entrySet(), Collections.emptySet()));
+        }
+        return result;
     }
 
     @Override
@@ -80,26 +114,39 @@ public class ObservableMapImpl<K, V>
             V v = delegate.get(key);
             @SuppressWarnings("unchecked")
             K k = (K)key;
-            notifyRemoveItem(k, v);
-
-            result = delegate.remove(key);
+            doRemoveEntry(k, v);
         }
 
         return result;
     }
 
 
-    protected void notifyRemoveItem(K key, V v) {
+    protected V doRemoveEntry(K key, V v) {
         Map<K, V> removedItem = Collections.singletonMap(key, v);
 
-        Map<K, V> oldValue = this;
-        Map<K, V> newValue = Maps.filterKeys(delegate, k -> !Objects.equals(k, key));
+        {
+            Map<K, V> oldValue = this;
+            Map<K, V> newValue = Maps.filterKeys(delegate, k -> !Objects.equals(k, key));
+            try {
+                vcs.fireVetoableChange(new CollectionChangedEventImpl<>(this, oldValue, newValue, Collections.emptySet(), removedItem.entrySet(), Collections.emptySet()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-        pce.firePropertyChange(new CollectionChangedEventImpl<>(this, oldValue, newValue, Collections.emptySet(), removedItem.entrySet(), Collections.emptySet()));
+        V result = delegate.remove(key);
+
+        {
+            Map<K, V> oldValue = MapUtils.union(this, removedItem);
+            Map<K, V> newValue = this;
+            pcs.firePropertyChange(new CollectionChangedEventImpl<>(this, oldValue, newValue, Collections.emptySet(), removedItem.entrySet(), Collections.emptySet()));
+        }
+
+        return result;
     }
 
     protected void notifyClear() {
-        pce.firePropertyChange(new CollectionChangedEventImpl<>(this,
+        pcs.firePropertyChange(new CollectionChangedEventImpl<>(this,
                 this, Collections.emptyMap(),
                 Collections.emptySet(), this.entrySet(), Collections.emptySet()));
     }
@@ -180,7 +227,7 @@ public class ObservableMapImpl<K, V>
                     }
 
                     protected void doRemove(Entry<K, V> item) {
-                        notifyRemoveItem(item.getKey(), item.getValue());
+                        doRemoveEntry(item.getKey(), item.getValue());
                         baseIt.remove();
                     }
                 };
@@ -194,10 +241,79 @@ public class ObservableMapImpl<K, V>
         };
     }
 
+//    public static
+
+    public class ObservableKeySet
+        extends ForwardingSet<K>
+        implements ObservableSet<K>
+    {
+        @Override
+        protected Set<K> delegate() {
+            return delegate.keySet();
+        }
+
+        public CollectionChangedEventImpl<K> convertEvent(PropertyChangeEvent event) {
+            CollectionChangedEventImpl<Entry<K, V>> ev = (CollectionChangedEventImpl<Entry<K, V>>)event;
+
+//            Set<Entry<K, V>> additions = (Set<Entry<K, V>>)ev.getAdditions();
+//            Set<Entry<K, V>> deletions = (Set<Entry<K, V>>)ev.getDeletions();
+
+            @SuppressWarnings("unchecked")
+            Set<K> oldKeySet = ((Map<K, V>)ev.getOldValue()).keySet();
+            @SuppressWarnings("unchecked")
+            Set<K> newKeySet = ((Map<K, V>)ev.getNewValue()).keySet();
+
+            CollectionChangedEventImpl<K> result = new CollectionChangedEventImpl<>(
+                    this,
+                    oldKeySet,
+                    newKeySet,
+                    Sets.difference(newKeySet, oldKeySet),
+                    Sets.difference(oldKeySet, newKeySet),
+                    Collections.emptySet());
+
+            return result;
+        }
+
+        @Override
+        public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
+            return ObservableMapImpl.this.addVetoableChangeListener(event -> {
+                CollectionChangedEventImpl<K> newEv = convertEvent(event);
+                if (newEv.hasChanges()) {
+                    listener.vetoableChange(newEv);
+                }
+            });
+        }
+
+        @Override
+        public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
+            return ObservableMapImpl.this.addPropertyChangeListener(event -> {
+                CollectionChangedEventImpl<K> newEv = convertEvent(event);
+                if (newEv.hasChanges()) {
+                    listener.propertyChange(newEv);
+                }
+            });
+        }
+    }
+
+    @Override
+    public ObservableSet<K> keySet() {
+        return new ObservableKeySet();
+    }
+
+
+    @Override
+    public Collection<V> values() {
+        return super.values();
+    }
+
 
     public static void main(String[] args) {
         ObservableMap<String, String> map = ObservableMapImpl.decorate(new LinkedHashMap<>());
-        map.addListener(event -> {
+        ObservableSet<String> set = map.keySet();
+
+        set.addPropertyChangeListener(ev -> System.out.println("KeySet changed: " + ev));
+
+        map.addPropertyChangeListener(event -> {
             CollectionChangedEventImpl<Entry<String, String>> ev = (CollectionChangedEventImpl<Entry<String, String>>)event;
             System.out.println("Change:");
             System.out.println("  Old Value:" + ev.getOldValue());

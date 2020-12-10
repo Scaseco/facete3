@@ -47,6 +47,6 @@ public class CollectionChangedEventImpl<T>
     @Override
     public String toString() {
         return "CollectionChangedEventImpl [additions=" + additions + ", deletions=" + deletions + ", refreshes="
-                + refreshes + "]";
+                + refreshes + ", newValue= " + getNewValue() + ", oldValue=" + getOldValue() + "]";
     }
 }

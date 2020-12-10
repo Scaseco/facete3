@@ -55,16 +55,10 @@ public class TestObservableGraph {
 
         graph.add(new Triple(RDF.Nodes.rest, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
 
-//        Model m;
-//        m.register(new ModelChangedListenero)
 
-//        graph.getEventManager().register(listener)
         System.out.println("Items: " + test);
-
         subGraph.clear();
-
         System.out.println("Items: " + test);
-
 
         graph.find().forEachRemaining(t -> System.out.println("remaining triple: " + t));
     }
