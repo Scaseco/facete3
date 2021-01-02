@@ -2,27 +2,37 @@ package org.aksw.jena_sparql_api.collection;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 
 /**
  * Getter/setter view over an observable collection.
  * If that collection has a single item then {@link #get()} method returns it. Otherwise, if there are
  * no or multiple items then the method returns null.
- *
+ * 
  * @author raven
  *
  * @param <T>
  */
-public class ObservableValueFromObservableCollection<T>
+public class ObservableValueFromObservableCollection<T, U>
     implements ObservableValue<T>
 {
-    protected ObservableCollection<T> delegate;
+    protected ObservableCollection<U> delegate;
+    protected Function<? super Collection<? extends U>, ? extends T> xform;
+    protected Function<? super T, ? extends U> valueToItem;
 
-    public ObservableValueFromObservableCollection(ObservableCollection<T> delegate) {
+    public ObservableValueFromObservableCollection(
+    		ObservableCollection<U> delegate,
+    		Function<? super Collection<? extends U>, ? extends T> xform,
+    		Function<? super T, ? extends U> valueToItem) {
         super();
         this.delegate = delegate;
+        this.xform = xform;
+        this.valueToItem = valueToItem;
     }
 
     public static <T> T getOnlyElementOrNull(Iterable<T> iterable) {
@@ -43,7 +53,7 @@ public class ObservableValueFromObservableCollection<T>
      */
     @Override
     public T get() {
-        T result = getOnlyElementOrNull(delegate);
+        T result = xform.apply(delegate);
         return result;
     }
 
@@ -58,22 +68,30 @@ public class ObservableValueFromObservableCollection<T>
      */
     @Override
     public void set(T value) {
-        delegate.clear();
-        if (value != null) {
-            delegate.add(value);
-        }
+    	T oldValue = get();
+    	if (!Objects.equals(oldValue, value)) {    	
+	        delegate.clear();
+	        U item = valueToItem.apply(value);
+	        if (item != null) {
+	        	delegate.add(item);
+	        }
+    	}
     }
 
     /** Wrap the listener so that the set-based property change event is
      * converted to a single value based on */
-    public static PropertyChangeListener wrapListener(Object self, PropertyChangeListener listener) {
+    public static <T, U> PropertyChangeListener wrapListener(
+    		Object self, PropertyChangeListener listener,
+    		Function<? super Collection<? extends U>, ? extends T> xform
+    		) {
         return ev -> {
-            Object oldValue = Optional.ofNullable(((Iterable<?>)ev.getOldValue()))
-                    .map(ObservableValueFromObservableCollection::getOnlyElementOrNull)
+            T oldValue = Optional.ofNullable((Collection<U>)ev.getOldValue())
+//                    .map(ObservableValueFromObservableCollection::getOnlyElementOrNull)
+                    .map(xform)
                     .orElse(null);
 
-            Object newValue = Optional.ofNullable(((Iterable<?>)ev.getNewValue()))
-                    .map(ObservableValueFromObservableCollection::getOnlyElementOrNull)
+            T newValue = Optional.ofNullable(((Collection<U>)ev.getNewValue()))
+                    .map(xform)
                     .orElse(null);
 
             PropertyChangeEvent newEv = new PropertyChangeEvent(
@@ -83,12 +101,12 @@ public class ObservableValueFromObservableCollection<T>
     }
 
     @Override
-    public Runnable addListener(PropertyChangeListener listener) {
-        return delegate.addPropertyChangeListener(wrapListener(this, listener));
+    public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
+        return delegate.addPropertyChangeListener(wrapListener(this, listener, xform));
     }
 
     public static <T> ObservableValue<T> decorate(ObservableCollection<T> delegate) {
-        return new ObservableValueFromObservableCollection<T>(delegate);
+        return new ObservableValueFromObservableCollection<T, T>(delegate, ObservableValueFromObservableCollection::getOnlyElementOrNull, x -> x);
     }
 
 }

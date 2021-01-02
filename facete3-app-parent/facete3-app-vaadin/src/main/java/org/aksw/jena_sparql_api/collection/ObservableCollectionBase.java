@@ -11,14 +11,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.aksw.commons.collections.CollectionFromIterable;
 import org.aksw.commons.collections.ConvertingCollection;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Sets;
 import com.google.common.base.Converter;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 
 public class ObservableCollectionBase<T, C extends Collection<T>>
     extends AbstractCollection<T>
@@ -49,7 +44,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
             {
                 Set<T> newItem = Collections.singleton(value);
                 Collection<T> oldValue = this;
-                Collection<T> newValue = smartUnion(backend, newItem);
+                Collection<T> newValue = ObservableCollections.smartUnion(backend, newItem);
 
                 try {
                     vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
@@ -64,7 +59,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
 
             {
                 Set<T> newItem = Collections.singleton(value);
-                Collection<T> oldValue = smartDifference(backend, newItem);
+                Collection<T> oldValue = ObservableCollections.smartDifference(backend, newItem);
                 Collection<T> newValue = this;
 
                 try {
@@ -77,41 +72,6 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
             }
 
         }
-
-        return result;
-    }
-
-
-    public static <T> Collection<T> unionCore(Collection<T> a, Collection<T> b) {
-        return CollectionFromIterable.wrap(Iterables.concat(a, b));
-    }
-
-    public static <T> Collection<T> differenceCore(Collection<T> base, T removedItem) {
-        Collection<T> result = differenceCore(base, Collections.singleton(removedItem));
-        return result;
-    }
-
-    public static <T> Collection<T> differenceCore(Collection<T> base, Collection<T> removedItems) {
-        Collection<T> result = CollectionFromIterable.wrap(() -> Iterators.filter(
-                base.iterator(),
-                PredicateFromMultisetOfDiscardedItems.create(HashMultiset.create(removedItems))::test));
-
-        return result;
-    }
-
-
-    public static <T> Collection<T> smartDifference(Collection<T> base, Collection<T> removedItem) {
-        Collection<T> result = base instanceof Set && removedItem instanceof Set
-                ? Sets.difference((Set<T>)base, (Set<T>)removedItem)
-                : differenceCore(base, removedItem);
-
-        return result;
-    }
-
-    public static <T> Collection<T> smartUnion(Collection<T> base, Collection<T> addedItems) {
-        Collection<T> result = base instanceof Set && addedItems instanceof Set
-                ? Sets.union((Set<T>)base, (Set<T>)addedItems)
-                : unionCore(base, addedItems);
 
         return result;
     }
@@ -133,7 +93,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
             {
                 Set<T> removedItem = Collections.singleton(item);
                 Collection<T> oldValue = backend;
-                Collection<T> newValue = smartDifference(backend, removedItem);
+                Collection<T> newValue = ObservableCollections.smartDifference(backend, removedItem);
 
                 try {
                     vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
@@ -148,7 +108,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
 
             {
                 Set<T> removedItem = Collections.singleton(item);
-                Collection<T> oldValue = smartUnion(backend, removedItem);
+                Collection<T> oldValue = ObservableCollections.smartUnion(backend, removedItem);
                 Collection<T> newValue = backend;
 
                 pcs.firePropertyChange(new CollectionChangedEventImpl<>(

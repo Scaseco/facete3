@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.rx.GraphFactoryEx;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.apache.jena.graph.Graph;
@@ -19,6 +20,8 @@ import org.apache.jena.graph.compose.Union;
 import org.apache.jena.sparql.core.QuadAction;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.GraphWrapper;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
 
 
 /**
@@ -226,6 +229,34 @@ public class ObservableGraphImpl
         return () -> pcs.removePropertyChangeListener(listener);
     }
 
+    //public static <T> ExtendedIterator<T> wrapWithClose()
+
+    @Override
+    public ExtendedIterator<Triple> find(Node s, Node p, Node o) {
+    	// Wrap iterator such that the remove method fires deletion events
+    	ExtendedIterator<Triple> it = super.find(s, p, o);
+    	
+    	return WrappedIterator.create(new SinglePrefetchClosableIterator<Triple>() {
+			@Override
+			protected Triple prefetch() throws Exception {
+				Triple result = it.hasNext() ? it.next() : finish();
+				return result;
+			}
+			
+			@Override
+			protected void doRemove(Triple item) {
+				recordVetoable(QuadAction.DELETE, item);
+				it.remove();
+				record(QuadAction.DELETE, item);
+			}
+    		
+			@Override
+			public void close() {
+				it.close();
+			}
+		});
+    }
+    
 //    @Override
 //    public void sync() {
 //        SystemARQ.syncObject(monitor) ;

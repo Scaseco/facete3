@@ -103,6 +103,7 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformGraphRename;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.optimize.TransformExpandOneOf;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -949,7 +950,7 @@ public class MainCliFacete3 {
     public static boolean isSparqlEndpoint(String url) {
         boolean result = false;
         try(RDFConnection conn = RDFConnectionFactory.connect(url)) {
-            Throwable throwable = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s a ?o } LIMIT 1"))
+            Throwable throwable = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s <http://foo.bar/baz> <http://foo.bar/baz> } LIMIT 1"))
                 .timeout(10, TimeUnit.SECONDS)
                 .take(1)
                 .concatMapMaybe(item -> Maybe.<Throwable>empty())
@@ -1067,6 +1068,12 @@ public class MainCliFacete3 {
             if(cm.unionDefaultGraphMode) {
                 conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
                         q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
+            }
+
+            // expand one-of for use with ontop
+            if (true) {
+                conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+                        q -> QueryUtils.applyOpTransform(q, op -> Transformer.transform(new TransformExpandOneOf(), op)));
             }
 
             Iterable<String> prefixSources = Iterables.concat(

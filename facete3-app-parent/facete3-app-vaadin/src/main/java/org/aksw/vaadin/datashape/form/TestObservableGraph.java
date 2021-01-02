@@ -35,7 +35,7 @@ public class TestObservableGraph {
         ObservableSet<Triple> set = new ObservableSetFromGraph(subGraph);
 
         ObservableValue<Triple> value = ObservableValueFromObservableCollection.decorate(set);
-        value.addListener(ev -> {
+        value.addPropertyChangeListener(ev -> {
             System.out.println("Value changed: " + ev);
         });
 

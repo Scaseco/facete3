@@ -17,6 +17,10 @@ import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SinglePrefetchIterator;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Sets;
 import com.google.common.collect.ForwardingSet;
@@ -308,23 +312,42 @@ public class ObservableMapImpl<K, V>
 
 
     public static void main(String[] args) {
-        ObservableMap<String, String> map = ObservableMapImpl.decorate(new LinkedHashMap<>());
-        ObservableSet<String> set = map.keySet();
+        if (false) {
+            ObservableMap<String, String> map = ObservableMapImpl.decorate(new LinkedHashMap<>());
+            ObservableSet<String> set = map.keySet();
 
-        set.addPropertyChangeListener(ev -> System.out.println("KeySet changed: " + ev));
+            set.addPropertyChangeListener(ev -> System.out.println("KeySet changed: " + ev));
 
-        map.addPropertyChangeListener(event -> {
-            CollectionChangedEventImpl<Entry<String, String>> ev = (CollectionChangedEventImpl<Entry<String, String>>)event;
-            System.out.println("Change:");
-            System.out.println("  Old Value:" + ev.getOldValue());
-            System.out.println("  New Value:" + ev.getNewValue());
-            System.out.println("  Added: " + ev.getAdditions() + " Removed: " + ev.getDeletions());
-        });
+            map.addPropertyChangeListener(event -> {
+                CollectionChangedEventImpl<Entry<String, String>> ev = (CollectionChangedEventImpl<Entry<String, String>>)event;
+                System.out.println("Change:");
+                System.out.println("  Old Value:" + ev.getOldValue());
+                System.out.println("  New Value:" + ev.getNewValue());
+                System.out.println("  Added: " + ev.getAdditions() + " Removed: " + ev.getDeletions());
+            });
 
 
-        map.put("a", "hello");
-        map.put("b", "world");
-        map.put("a", "hey");
-        map.clear();
+            map.put("a", "hello");
+            map.put("b", "world");
+            map.put("a", "hey");
+            map.clear();
+        }
+
+        if (true) {
+            ObservableSet<Triple> a = ObservableSetFromGraph.decorate(GraphFactory.createPlainGraph());
+            ObservableMap<Triple, Triple> map =  ObservableMapImpl.decorate(new LinkedHashMap<Triple, Triple>());
+            ObservableSet<Triple> b = map.keySet();
+
+            ObservableSet<Triple> effectiveTriples = ObservableSets.union(a, b);
+            effectiveTriples.addPropertyChangeListener(ev -> System.out.println(ev));
+
+            Triple t1 = new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type);
+            Triple t2 = new Triple(RDFS.Nodes.label, RDFS.Nodes.label, RDFS.Nodes.label);
+
+            a.add(t1);
+            map.put(t2, t2);
+            map.remove(t2);
+        }
+
     }
 }

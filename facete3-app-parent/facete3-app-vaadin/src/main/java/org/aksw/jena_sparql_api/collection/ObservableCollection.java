@@ -20,14 +20,28 @@ public interface ObservableCollection<T>
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
 
-    default ObservableCollection<T> filter(Predicate<T> predicate) {
-        return null;
+    default ObservableCollection<T> filter(Predicate<Object> predicate) {
+        return new FilteredObservableCollection<>(this, predicate);
     }
 
     default <U> ObservableCollection<T> map(Function<? super T, ? extends U> predicate) {
         return null;
     }
 
+    default ObservableValue<T> mapToValue() {
+    	return ObservableValueFromObservableCollection.decorate(this);
+    }
+
+    default <O> ObservableValue<O> mapToValue(
+    		Function<? super Collection<? extends T>, O> xform,
+    		Function<? super O, ? extends T> valueToItem) {
+    	return new ObservableValueFromObservableCollection<>(this, xform, valueToItem);
+    }
+    
+//    default <U> ObservableValue<U> mapToValue(Function<? super Collection<? super T>, ? extends U> fn) {
+//    	return new ObservableValueFromObservableCollection<>(this);
+//    }
+    
 //    default ObservableCollection<T> mapToSet(Predicate<T> predicate) {
 //    	return null;
 //    }

@@ -12,6 +12,11 @@ public class ManagedComponentSimple
         this.component = component;
     }
 
+    public static ManagedComponentSimple wrap(Component component) {
+    	return new ManagedComponentSimple(component);
+    }
+    
+    
     @Override
     public Component getComponent() {
         return component;

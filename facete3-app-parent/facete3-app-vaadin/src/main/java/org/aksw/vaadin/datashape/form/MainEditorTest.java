@@ -60,7 +60,7 @@ public class MainEditorTest {
 
         Triple t = a.getModel().listStatements(a, RDFS.label, "a").toList().get(0).asTriple();
         ObservableValue<Node> test = graph.createFieldForExistingTriple(t, 2);
-        test.addListener(ev -> {
+        test.addPropertyChangeListener(ev -> {
             System.out.println("Got event: " + ev);
         });
         System.out.println(test.get());

@@ -70,10 +70,11 @@ public class RdfFieldForSubGraph
 
     @Override
     public ObservableCollection<Node> getEffectiveAsSet() {
-        ObservableGraph baseGraph = graph.getObservableDelta();
-        ObservableCollection<Node> result = SetOfNodesFromGraph.create(baseGraph, dftp);
-
-        return result;
+        throw new RuntimeException("not implemented");
+//        ObservableGraph baseGraph = graph.getObservableDelta();
+//        ObservableCollection<Node> result = SetOfNodesFromGraph.create(baseGraph, dftp);
+//
+//        return result;
     }
 
 //    public ObservableCollection<Node> getDeletedAsSet() {

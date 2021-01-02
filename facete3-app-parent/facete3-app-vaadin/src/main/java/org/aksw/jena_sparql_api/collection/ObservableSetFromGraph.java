@@ -37,17 +37,17 @@ public class ObservableSetFromGraph
         return (ObservableGraph)super.getGraph();
     }
 
-    @Override
-    public boolean add(Triple t) {
-//        Triple t = createTriple(node);
-
-        boolean result = !graph.contains(t);
-
-        if (result) {
-            graph.add(t);
-        }
-        return result;
-     }
+//    @Override
+//    public boolean add(Triple t) {
+////        Triple t = createTriple(node);
+//
+//        boolean result = !graph.contains(t);
+//
+//        if (result) {
+//            graph.add(t);
+//        }
+//        return result;
+//    }
 
     protected PropertyChangeEvent convertEvent(PropertyChangeEvent ev) {
         CollectionChangedEventImpl<Triple> oldEvent = (CollectionChangedEventImpl<Triple>)ev;
@@ -85,6 +85,13 @@ public class ObservableSetFromGraph
             PropertyChangeEvent newEvent = convertEvent(ev);
             listener.propertyChange(newEvent);
         });
+    }
+
+
+    public static ObservableSetFromGraph decorate(Graph graph) {
+        ObservableGraph tmp = ObservableGraphImpl.decorate(graph);
+        ObservableSetFromGraph result = new ObservableSetFromGraph(tmp);
+        return result;
     }
 
 }

@@ -101,7 +101,7 @@ public class MainTestFormGenerator {
         System.out.println("Dists: " + oldDists);
         oldDists.clear();
         System.out.println("Dists: " + oldDists);
-        System.out.println("Deleted Dists: " + graphEditorModel.getDelta().getDeletions());
+//        System.out.println("Deleted Dists: " + graphEditorModel.getDelta().getDeletions());
 
 
 

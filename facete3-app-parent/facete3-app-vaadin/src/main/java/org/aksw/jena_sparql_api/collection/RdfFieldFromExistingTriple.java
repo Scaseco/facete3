@@ -61,7 +61,7 @@ public class RdfFieldFromExistingTriple
     }
 
     @Override
-    public Runnable addListener(PropertyChangeListener listener) {
+    public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         return graph.getTripleReplacements().addPropertyChangeListener(ev -> {
             Map<Triple, Triple> oldMap = (Map<Triple, Triple>)ev.getOldValue();
             Map<Triple, Triple> newMap = (Map<Triple, Triple>)ev.getNewValue();

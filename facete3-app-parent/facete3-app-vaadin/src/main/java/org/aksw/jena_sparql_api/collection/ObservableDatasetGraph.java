@@ -3,17 +3,11 @@ package org.aksw.jena_sparql_api.collection;
 import java.beans.PropertyChangeListener;
 import java.beans.VetoableChangeListener;
 
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.DatasetGraph;
 
-public interface ObservableGraph
-    extends Graph
+public interface ObservableDatasetGraph
+	extends DatasetGraph
 {
     Runnable addVetoableChangeListener(VetoableChangeListener listener);
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
-
-
-    default ObservableSet<Triple> asSet() {
-    	return new ObservableSetFromGraph(this);
-    }
 }

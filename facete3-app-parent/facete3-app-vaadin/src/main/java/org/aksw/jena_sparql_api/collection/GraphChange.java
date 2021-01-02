@@ -5,9 +5,13 @@ import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -15,7 +19,7 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
-import org.aksw.jena_sparql_api.utils.DeltaWithFixedIterator;
+import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
@@ -24,7 +28,6 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -47,7 +50,7 @@ public class GraphChange
 
 
 
-    protected Map<Node, Node> renamedNodes;
+    protected ObservableMap<Node, Node> renamedNodes;
 
     /** Mapping of original triples to their edited versions.
      *  The nodes of the target triple are subject to renaming: If some
@@ -60,6 +63,65 @@ public class GraphChange
     // protected Table<Node, RdfField, Change> sourceToFieldIdToChanges;
     // protected Table<Node, FieldId, FieldState> sourceToFieldIdToFieldState;
     protected Multimap<Node, RdfField> sourceNodeToField = HashMultimap.create();
+
+
+//    protected ObservableGraph delta;
+
+    protected ObservableGraph baseGraph;
+
+    /** Explicitly added triples - does not include the values of {@link #renamedNodes} */
+    protected ObservableGraph additionGraph;
+
+    /** Explicitly deleted triples */
+    protected ObservableGraph deletionGraph;
+
+
+
+    /** Effective deletions:
+     * The set of triples w.r.t. the base graph that are known to be deleted.
+     * This set is the union of the triples that occur in
+     * - the base graph that are intensionally deleted by fields
+     * - the deletion graph
+     * - the key set of the renamed triples
+     *
+     */
+    protected ObservableGraph effectiveDeletionGraph;
+
+    protected ObservableGraph effectiveAdditionGraph;
+
+    public GraphChange() {
+        this(ObservableMapImpl.decorate(new HashMap<>()), ObservableMapImpl.decorate(new HashMap<>()), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
+        //new Delta(GraphFactory.createPlainGraph()));
+    }
+
+    public GraphChange(ObservableMap<Node, Node> renamedNodes, ObservableMap<Triple, Triple> tripleReplacements, ObservableGraph baseGraph) {
+        super();
+        this.renamedNodes = renamedNodes;
+        this.tripleReplacements = tripleReplacements;
+        this.baseGraph = baseGraph;
+//        this.delta = ObservableGraphImpl.decorate(new DeltaWithFixedIterator(this.baseGraph));
+        //this.effectiveGraph = ObservableGraph
+        this.additionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
+        this.deletionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
+
+
+        this.effectiveAdditionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
+        this.effectiveDeletionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
+
+
+        tripleReplacements.addPropertyChangeListener(ev -> refreshDeletions());
+        additionGraph.addPropertyChangeListener(ev -> refreshDeletions());
+        deletionGraph.addPropertyChangeListener(ev -> refreshDeletions());
+        baseGraph.addPropertyChangeListener(ev -> refreshDeletions());
+    }
+
+    public ObservableGraph getEffectiveAdditionGraph() {
+        return effectiveAdditionGraph;
+    }
+
+    public ObservableGraph getEffectiveDeletionGraph() {
+        return effectiveDeletionGraph;
+    }
 
     public boolean isDeleted(Triple triple) {
 
@@ -113,15 +175,6 @@ public class GraphChange
         return () -> pce.removePropertyChangeListener(listener);
     }
 
-
-    protected ObservableGraph delta;
-
-    protected ObservableGraph baseGraph;
-
-
-
-    /** Explicitly added triples - does not include the values of {@link #renamedNodes} */
-    protected ObservableGraph additionGraph;
 
     // Do we need a deletion graph?
 //    protected ObservableGraph deletionGraph;
@@ -187,7 +240,7 @@ public class GraphChange
         return tripleReplacements;
     }
 
-    public Map<Node, Node> getRenamedNodes() {
+    public ObservableMap<Node, Node> getRenamedNodes() {
         return renamedNodes;
     }
 
@@ -195,14 +248,14 @@ public class GraphChange
         return baseGraph;
     }
 
-    public Delta getDelta() {
-        Delta d = (Delta)((ObservableGraphImpl)delta).get();
-        return d;
-    }
+//    public Delta getDelta() {
+//        Delta d = (Delta)((ObservableGraphImpl)delta).get();
+//        return d;
+//    }
 
-    public ObservableGraph getObservableDelta() {
-        return delta;
-    }
+//    public ObservableGraph getObservableDelta() {
+//        return delta;
+//    }
 
 //
 //    public ObservableGraph getDeletionGraph() {
@@ -213,10 +266,10 @@ public class GraphChange
         return additionGraph;
     }
 
-    public GraphChange() {
-        this(new HashMap<>(), ObservableMapImpl.decorate(new HashMap<>()), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
-        //new Delta(GraphFactory.createPlainGraph()));
+    public ObservableGraph getDeletionGraph() {
+        return deletionGraph;
     }
+
 
 
     public static <T> Collection<T> nullableSingleton(T item) {
@@ -393,14 +446,73 @@ public class GraphChange
         };
     }
 
-    public GraphChange(Map<Node, Node> renamedNodes, ObservableMap<Triple, Triple> tripleReplacements, ObservableGraph baseGraph) {
-        super();
-        this.renamedNodes = renamedNodes;
-        this.tripleReplacements = tripleReplacements;
-        this.baseGraph = baseGraph;
-        this.delta = ObservableGraphImpl.decorate(new DeltaWithFixedIterator(this.baseGraph));
-        //this.effectiveGraph = ObservableGraph
-        this.additionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
+
+    protected void refreshDeletions() {
+        Set<Triple> additions = new LinkedHashSet<>();
+        Set<Triple> deletions = new LinkedHashSet<>();
+//        SetDiff<Triple> diff = new SetDiff<>(new HashSet<>(), new HashSet<>());
+
+        deletionGraph.find().forEachRemaining(deletions::add);
+
+        {
+            Iterator<Triple> itTriple = baseGraph.find();
+            while (itTriple.hasNext()) {
+                Triple t = itTriple.next();
+
+                for (RdfField field : sourceNodeToField.values()) {
+                    if (field.isIntensional() && field.isDeleted()) {
+                        if (field.matchesTriple(t)) {
+                            deletions.add(t);
+                        }
+                    }
+                }
+            }
+        }
+
+        Set<Triple> keys = tripleReplacements.keySet();
+        deletions.addAll(keys);
+
+        Set<Triple> valueSet = new HashSet<>(tripleReplacements.values());
+        deletions.removeAll(valueSet);
+
+
+        additionGraph.find().forEachRemaining(additions::add);
+        valueSet.stream()
+            .filter(item -> item != null && !baseGraph.contains(item))
+            .forEach(additions::add);
+
+        makeSetEqual(new SetFromGraph(effectiveDeletionGraph), deletions);
+        makeSetEqual(new SetFromGraph(effectiveAdditionGraph), additions);
+
+
+//        {
+//            NodeTransform xform = new NodeTransformRenameMap(renamedNodes);
+//            Iterator<Triple> itTriple = baseGraph.find();
+//            while (itTriple.hasNext()) {
+//                Triple t = itTriple.next();
+//                Triple remapped = NodeTransformLib.transform(xform, t);
+//
+//
+//
+//
+//            }
+//        }
+//
+//        Collection<Triple> values = tripleReplacements.values();
+//        values.stream().filter(Objects::nonNull).forEach(delta::add);
+
+    }
+
+    /** Make the set of items contained in target equal to those contained in reference
+     *  thereby calling .add() and .remove() only on items that differ.
+     *  I.e. this method does NOT perform target.clear() followed by target.addAll(reference)
+     *  */
+    public static <T> void makeSetEqual(Set<T> target, Set<T> reference) {
+        Set<T> deletions = new HashSet<>(Sets.difference(target, reference));
+        Set<T> additions = new HashSet<>(Sets.difference(reference, target));
+
+        target.removeAll(deletions);
+        target.addAll(additions);
     }
 
     public static <T> Collection<T> defaultToSingletonIfEmpty(Collection<T> items, T defaultItem) {

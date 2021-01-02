@@ -37,7 +37,7 @@ public class ObservableValueImpl<T>
     }
 
     @Override
-    public Runnable addListener(PropertyChangeListener listener) {
+    public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         pce.addPropertyChangeListener(listener);
         return () -> pce.removePropertyChangeListener(listener);
     }

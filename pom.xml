@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<jena-sparql-api.version>3.16.0-2-SNAPSHOT</jena-sparql-api.version>
+		<jena-sparql-api.version>3.17.0-1-SNAPSHOT</jena-sparql-api.version>
 		<!-- <jackson.version>2.8.8</jackson.version> -->
 		<jackson.version>2.10.3</jackson.version>
 		<jmh.version>1.25.2</jmh.version>
