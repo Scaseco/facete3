@@ -44,7 +44,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
             {
                 Set<T> newItem = Collections.singleton(value);
                 Collection<T> oldValue = this;
-                Collection<T> newValue = ObservableCollections.smartUnion(backend, newItem);
+                Collection<T> newValue = CollectionOps.smartUnion(backend, newItem);
 
                 try {
                     vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
@@ -59,7 +59,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
 
             {
                 Set<T> newItem = Collections.singleton(value);
-                Collection<T> oldValue = ObservableCollections.smartDifference(backend, newItem);
+                Collection<T> oldValue = CollectionOps.smartDifference(backend, newItem);
                 Collection<T> newValue = this;
 
                 try {
@@ -93,7 +93,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
             {
                 Set<T> removedItem = Collections.singleton(item);
                 Collection<T> oldValue = backend;
-                Collection<T> newValue = ObservableCollections.smartDifference(backend, removedItem);
+                Collection<T> newValue = CollectionOps.smartDifference(backend, removedItem);
 
                 try {
                     vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
@@ -108,7 +108,7 @@ public class ObservableCollectionBase<T, C extends Collection<T>>
 
             {
                 Set<T> removedItem = Collections.singleton(item);
-                Collection<T> oldValue = ObservableCollections.smartUnion(backend, removedItem);
+                Collection<T> oldValue = CollectionOps.smartUnion(backend, removedItem);
                 Collection<T> newValue = backend;
 
                 pcs.firePropertyChange(new CollectionChangedEventImpl<>(

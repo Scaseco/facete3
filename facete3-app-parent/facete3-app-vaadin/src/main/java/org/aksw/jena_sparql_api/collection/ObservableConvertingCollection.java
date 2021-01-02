@@ -42,7 +42,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
             Collection<F> newItem = Collections.singleton(value);
             {
                 Collection<F> oldValue = this;
-                Collection<F> newValue = ObservableCollections.smartUnion(this, newItem);// CollectionFromIterable.wrap(Iterables.concat(this, newItem));
+                Collection<F> newValue = CollectionOps.smartUnion(this, newItem);// CollectionFromIterable.wrap(Iterables.concat(this, newItem));
 
                 try {
                     vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
@@ -56,7 +56,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
             result = backend.add(item);
 
             {
-                Collection<F> oldValue = ObservableCollections.smartDifference(this, newItem);
+                Collection<F> oldValue = CollectionOps.smartDifference(this, newItem);
                 Collection<F> newValue = this;
 
                 pcs.firePropertyChange(new CollectionChangedEventImpl<>(
@@ -98,7 +98,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
                 result = backend.remove(backendItem);
 
                 {
-                    Collection<F> oldValue = ObservableCollections.smartUnion(this, removedItem);
+                    Collection<F> oldValue = CollectionOps.smartUnion(this, removedItem);
                     Collection<F> newValue = this;
 
                     pcs.firePropertyChange(new CollectionChangedEventImpl<>(

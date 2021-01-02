@@ -15,7 +15,7 @@ public class FilteredObservableCollection<T>
 	implements ObservableCollection<T>
 	//extends ObservableCollectionBase<T, Collection<T>>
 {
-	public FilteredObservableCollection(ObservableCollection<T> backend, Predicate<Object> predicate) {
+	public FilteredObservableCollection(ObservableCollection<T> backend, Predicate<? super T> predicate) {
 		super(backend, predicate);
 	}
 	
@@ -25,7 +25,7 @@ public class FilteredObservableCollection<T>
 //	}
 
     @SuppressWarnings("unchecked")
-	public static <T> CollectionChangedEventImpl<T> filter(Object self, CollectionChangedEventImpl<T> event, Predicate<Object> predicate) {
+	public static <T> CollectionChangedEventImpl<T> filter(Object self, CollectionChangedEventImpl<T> event, Predicate<? super T> predicate) {
 		return new CollectionChangedEventImpl<>(self,
     			Collections2.filter((Collection<T>)event.getOldValue(), predicate::test),
     			Collections2.filter((Collection<T>)event.getNewValue(), predicate::test),

@@ -11,7 +11,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 
-public class ObservableCollections {
+public class CollectionOps {
 
     public static <T> Collection<T> unionCore(Collection<T> a, Collection<T> b) {
         return CollectionFromIterable.wrap(Iterables.concat(a, b));

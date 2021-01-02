@@ -10,13 +10,13 @@ import com.vaadin.flow.data.provider.DataProvider;
 public class ListView<T>
 	extends VerticalLayout
 {
-	protected ListBinder<T> listBindingSupport;
+	protected ListBindingSupport<T> listBindingSupport;
 	
 	public ListView(DataProvider<T, String> dataProvider,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			Function<? super T, ?> itemToKey) {
 		super();
-		listBindingSupport = ListBinder.create(dataProvider, itemToComponent, this);
+		listBindingSupport = ListBindingSupport.create(dataProvider, itemToComponent, this);
 	}
 
 

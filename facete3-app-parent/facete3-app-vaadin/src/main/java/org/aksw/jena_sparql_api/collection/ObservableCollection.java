@@ -20,7 +20,7 @@ public interface ObservableCollection<T>
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
 
-    default ObservableCollection<T> filter(Predicate<Object> predicate) {
+    default ObservableCollection<T> filter(Predicate<? super T> predicate) {
         return new FilteredObservableCollection<>(this, predicate);
     }
 

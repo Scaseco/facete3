@@ -2,42 +2,59 @@ package org.aksw.vaadin.datashape.form;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
+import org.aksw.jena_sparql_api.mapper.proxy.ResourceProxyBase;
+import org.apache.jena.rdf.model.Resource;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasOrderedComponents;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.shared.Registration;
 
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
+
 /**
  * A class that keeps a list of items and a list of components created from these items in sync
  * upon calling .refresh().
+ * 
+ * This variant would track changes to a target layout's HTML element using glibc proxy mechanism.
+ * This means that one item can be linked to multiple components.
  * 
  * @author raven
  *
  * @param <T>
  */
-public class ListBinder<T> {
+/*
+public class ListBindingSupport2<T, L extends HasComponents> {
 	protected List<T> currentItems;
-	protected Map<Object, ManagedComponent> keyToView = new LinkedHashMap<>();
+	
+	protected ListMultimap<Object, ManagedComponent> keyToView = ArrayListMultimap.create();
 	
 	protected DataProvider<T, String> dataProvider;
 	
 	protected Function<? super T, ?> itemToKey;
-	protected Function<? super T, ? extends ManagedComponent> itemToComponent;
+	//protected Function<? super T, ? extends ManagedComponent> itemToComponent;
+	
+	protected BiConsumer<? super T, ? super L> itemRenderer;
 	
 	
-	protected HasOrderedComponents<?> targetLayout;
+	// protected HasOrderedComponents<?> targetLayout;
+	protected L targetLayout;
 	
 	protected Registration dataProviderRegistration;
 	
-	public ListBinder(
+	public ListBindingSupport2(
 			DataProvider<T, String> dataProvider,
 			Function<? super T, ?> itemToKey,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
@@ -63,17 +80,17 @@ public class ListBinder<T> {
 		}
 	}
 
-	public static <T> ListBinder<T> create(
+	public static <T> ListBindingSupport2<T> create(
 			DataProvider<T, String> dataProvider,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			Function<? super T, ?> itemToKey,
 			HasOrderedComponents<?> targetLayout) {
 
-		return new ListBinder<T>(dataProvider, itemToKey, itemToComponent, targetLayout);
+		return new ListBindingSupport2<T>(dataProvider, itemToKey, itemToComponent, targetLayout);
 	}
 
-	/** Constructor where items serve directly as keys */
-	public static <T> ListBinder<T> create(
+	/** Constructor where items serve directly as keys * /
+	public static <T> ListBindingSupport2<T> create(
 			DataProvider<T, String> dataProvider,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			HasOrderedComponents<?> targetLayout) {
@@ -82,7 +99,7 @@ public class ListBinder<T> {
 	}
 	
 
-	public void refresh() {
+	public synchronized void refresh() {
 		Query<T, String> query = new Query<>();
 		List<T> newItems = dataProvider.fetch(query).collect(Collectors.toList());
 		
@@ -117,4 +134,27 @@ public class ListBinder<T> {
 		
 		currentItems = newItems;
 	}
+	
+	
+	public static void createProxy(Class<? extends HasComponents> clazz) {
+        Enhancer enhancer = new Enhancer();
+        if(clazz.isInterface()) {
+        } else {
+            enhancer.setSuperclass(clazz);
+        }
+        
+        HasComponents.class.getMethod("add", null);
+        
+        enhancer.setCallback(new MethodInterceptor() {
+            public Object intercept(Object obj, java.lang.reflect.Method method, Object[] args,
+                    MethodProxy proxy) throws Throwable {
+            
+            	
+            	if (method.equals(args))
+            }
+        });
+
+        o = enhancer.create(argTypes, argValues);
+	}
 }
+*/
