@@ -22,6 +22,12 @@ public interface ObservableMap<K, V>
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
 
+    /**
+     * Observe a key's value
+     * 
+     * @param key
+     * @return
+     */
     default ObservableValue<V> observeKey(K key) {
         return new ObservableValue<V>() {
             // protected K k = key;

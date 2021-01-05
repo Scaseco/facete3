@@ -41,6 +41,7 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.HasValue.ValueChangeEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.charts.model.Select;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout.FormItem;
 import com.vaadin.flow.component.icon.Icon;
@@ -102,7 +103,8 @@ public class RdfTermEditor
     protected Button iriToggle;
     protected Button bnodeToggle;
     protected Button literalToggle;
-
+	protected Select termTypeSelect;
+	
     protected TextField resourceTextField;
     protected TextArea literalTextArea;
 
@@ -149,10 +151,10 @@ public class RdfTermEditor
         return result;
     }
 
-    public void redraw() {
-
-        langComboBox.setItemLabelGenerator(s -> Optional.ofNullable(s.getURI()).orElse("(null)"));
+    public void init() {
+        langComboBox.setItemLabelGenerator(s -> ResourceUtils.tryGetLiteralPropertyValue(s, RDFS.label, String.class).orElse("(null)"));
         langComboBox.setAllowCustomValue(true);
+        // langComboBox.
         langComboBox.addCustomValueSetListener(event -> {
             event.getSource().setValue(getOrCreateLang(event.getDetail(), langModel));
         });
@@ -168,7 +170,7 @@ public class RdfTermEditor
             protected DataQuery<Resource> getDataQuery() {
                 DataQuery<Resource> dq = FacetedQueryBuilder.builder()
                         .configDataConnection()
-                            .setSource(typeModel)
+                            .setSource(langModel)
                         .end()
                         .create()
                         //.baseConcept(ConceptUtils.createForRdfType(OWL..getURI()))
@@ -183,7 +185,7 @@ public class RdfTermEditor
         literalTypeComboBox.setItemLabelGenerator(s -> Optional.ofNullable(s.getURI()).orElse("(null)"));
         literalTypeComboBox.setAllowCustomValue(true);
         literalTypeComboBox.addCustomValueSetListener(event -> {
-            event.getSource().setValue(getOrCreateRdfDatatype(event.getDetail(), langModel));
+            event.getSource().setValue(getOrCreateRdfDatatype(event.getDetail(), typeModel));
         });
         literalTypeComboBox.setDataProvider(DataProviderUtils.wrapWithErrorHandler(new DataProviderFromDataQuerySupplier<Resource>() {
             @Override
@@ -208,6 +210,10 @@ public class RdfTermEditor
                 return dq;
             }
         }));
+
+    }
+    
+    public void redraw() {
 
         iriToggle.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
         bnodeToggle.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -419,9 +425,10 @@ public class RdfTermEditor
 
         addToComponent(this);
 
+        init();
         redraw();
 
-        setValueChangeMode(ValueChangeMode.TIMEOUT);
+        setValueChangeMode(ValueChangeMode.LAZY);
         registerEventListeners();
     }
 

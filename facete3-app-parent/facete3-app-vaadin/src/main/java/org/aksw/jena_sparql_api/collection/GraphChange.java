@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.ext.com.google.common.collect.HashMultimap;
@@ -27,9 +28,13 @@ import org.apache.jena.ext.com.google.common.collect.Multimaps;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.WrappedIterator;
 
@@ -89,6 +94,21 @@ public class GraphChange
 
     protected ObservableGraph effectiveAdditionGraph;
 
+    
+    /** The set of newly added nodes which should be blank nodes only. These new nodes can
+     *  participate in triples and can be renamed. */
+    protected ObservableSet<Node> newNodes = new ObservableSetImpl<Node>(new LinkedHashSet<>());
+    
+    public ObservableSet<Node> getNewNodes() {
+		return newNodes;
+	}
+    
+    public Node freshNode() {
+    	Node result = NodeFactory.createBlankNode();
+    	newNodes.add(result);
+    	return result;
+    }
+    
     public GraphChange() {
         this(ObservableMapImpl.decorate(new HashMap<>()), ObservableMapImpl.decorate(new HashMap<>()), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
         //new Delta(GraphFactory.createPlainGraph()));
@@ -113,6 +133,7 @@ public class GraphChange
         additionGraph.addPropertyChangeListener(ev -> refreshDeletions());
         deletionGraph.addPropertyChangeListener(ev -> refreshDeletions());
         baseGraph.addPropertyChangeListener(ev -> refreshDeletions());
+        renamedNodes.addPropertyChangeListener(ev -> refreshDeletions());
     }
 
     public ObservableGraph getEffectiveAdditionGraph() {
@@ -480,6 +501,12 @@ public class GraphChange
         valueSet.stream()
             .filter(item -> item != null && !baseGraph.contains(item))
             .forEach(additions::add);
+        
+        NodeTransform xform = n -> { 
+        	Node r = renamedNodes.get(n);
+        	return r == null ? n : r;
+        };
+        additions = additions.stream().map(t -> NodeTransformLib.transform(xform, t)).collect(Collectors.toSet());
 
         makeSetEqual(new SetFromGraph(effectiveDeletionGraph), deletions);
         makeSetEqual(new SetFromGraph(effectiveAdditionGraph), additions);
