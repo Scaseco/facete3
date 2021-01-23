@@ -1,5 +1,7 @@
 package org.aksw.vaadin.datashape.form;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
@@ -10,24 +12,26 @@ import com.vaadin.flow.component.HasComponents;
 public class ComponentControls {
 
 	
-	public static <T, C> ComponentControl<C> create(Class<C> parentContainerClass, T item, Consumer<ComponentControlModular<C>> builder) {
+	public static <T, C> ComponentControl<T, C> create(T item, Consumer<ComponentControlModular<T, C>> builder) {
 		
-		ComponentControlModular<C> result = new ComponentControlModular<C>();
+		ComponentControlModular<T, C> result = new ComponentControlModular<T, C>();
 		
 		builder.accept(result);
 		
 		return result;
 	}
 	
-	public static class ComponentControlSimple<C>
-		implements ComponentControl<C>
+	public static class ComponentControlSimple<T, C>
+		implements ComponentControl<T, C>
 	{
 
 		protected Component component;
+		protected Runnable updateAction;
 		
-		public ComponentControlSimple(Component component) {
+		public ComponentControlSimple(Component component, Runnable updateAction) {
 			super();
 			this.component = component;
+			this.updateAction = updateAction;
 		}
 
 		public Component getComponent() {
@@ -36,6 +40,11 @@ public class ComponentControls {
 		
 		@Override
 		public void detach() {
+			Component parent = component.getParent().orElse(null);
+			
+			if (parent != null && parent instanceof HasComponents) {
+				((HasComponents)parent).remove(component);				
+			}
 		}
 
 		@Override
@@ -44,22 +53,33 @@ public class ComponentControls {
 		}
 
 		@Override
-		public void refresh() {
+		public void refresh(T state) {
+			// updateAction.accept(state);
+			if (updateAction != null) {
+				updateAction.run();
+			}
 		}
 
 		@Override
 		public void close() {
+			detach();
 			// ((HasComponents)target).add(component);
 			// component.de
-		}			
+		}
+
+		@Override
+		public Map<Object, ComponentControl<?, ?>> getChildren() {
+			/// return Collections.singletonMap(null, this);
+			return Collections.emptyMap();
+		}
 	};
 	
-	public static <C> ComponentControl<C> wrap(Component component) {
-		return new ComponentControlSimple<C>(component);
+	public static <T, C> ComponentControl<T, C> wrap(Component component) {
+		return new ComponentControlSimple<T, C>(component, null);
 	}
 
 	
-	public static <C> ComponentControl<C> wrap(Class<C> parentContainer, ManagedComponent managedComponent) {
+	public static <T, C> ComponentControl<T, C> wrap(Class<C> parentContainer, ManagedComponent managedComponent) {
 		// managedComponent.getComponent().getParent().get().
 		// HasComponents x;
 		//x.remove(managedComponent.getComponent());
@@ -70,8 +90,8 @@ public class ComponentControls {
 //	}
 
 	
-	public static class ComponentControlWrapper<C, T>
-		implements ComponentControl<T>
+	public static class ComponentControlWrapper<T, C>
+		implements ComponentControl<T, C>
 	{
 		protected Component wrappedComponent;
 		
@@ -80,15 +100,20 @@ public class ComponentControls {
 		}
 
 		@Override
-		public void attach(T target) {
+		public void attach(C target) {
 		}
 
 		@Override
-		public void refresh() {
+		public void refresh(T state) {
 		}
 
 		@Override
 		public void close() {
+		}
+
+		@Override
+		public Map<Object, ComponentControl<?, ?>> getChildren() {
+			return null;
 		}		
 	}
 	

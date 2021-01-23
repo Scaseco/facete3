@@ -12,7 +12,7 @@ public class ListView<T>
 {
 	protected ListBindingSupport<T> listBindingSupport;
 	
-	public ListView(DataProvider<T, String> dataProvider,
+	public ListView(DataProvider<T, ?> dataProvider,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			Function<? super T, ?> itemToKey) {
 		super();
@@ -21,7 +21,7 @@ public class ListView<T>
 
 
 	public static <T> ListView<T> create(
-			DataProvider<T, String> dataProvider,
+			DataProvider<T, ?> dataProvider,
 			Function<T, ManagedComponent> itemToComponent) {
 		return new ListView<T>(dataProvider, itemToComponent, item -> item);
 	}

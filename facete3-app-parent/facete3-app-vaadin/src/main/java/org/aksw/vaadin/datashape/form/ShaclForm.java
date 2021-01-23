@@ -37,7 +37,6 @@ import org.topbraid.shacl.model.SHFactory;
 import org.topbraid.shacl.model.SHNodeShape;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.vaadin.flow.component.HasValue;
@@ -80,15 +79,21 @@ public class ShaclForm
         SHNodeShape ns = shapeModel.createResource(DCAT.Dataset.getURI()).as(SHNodeShape.class);
         // SHNodeShape nodeShape = shapeModel.createResource()
 
+        
+        Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
+
+        NodeSchema userSchema = new NodeSchemaFromNodeShape(
+        		ModelFactory.createDefaultModel().createResource().as(SHNodeShape.class));
+        roots.put(sourceNode, userSchema);
+        
         NodeSchema baseSchema = new NodeSchemaFromNodeShape(ns);
+        roots.put(sourceNode, baseSchema);
 
 
         // Multimap<NodeSchema, Node> roots = HashMultimap.create();
 
-        Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
 //        sourceNode = NodeFactory.createURI("http://test.org");
 
-        roots.put(sourceNode, baseSchema);
 
 
         dataFetcher = new NodeSchemaDataFetcher();
@@ -105,7 +110,7 @@ public class ShaclForm
         RDFConnection conn = RDFConnectionFactory.connect(ds);
     	
         Graph graph = GraphFactory.createDefaultGraph();
-        Multimap<NodeSchema, Node> schemaToNodes = Multimaps.invertFrom(roots, HashMultimap.create());
+        Multimap<NodeSchema, Node> schemaToNodes = Multimaps.invertFrom(roots, ArrayListMultimap.create());
         dataFetcher.sync(graph, schemaToNodes, conn);
 
         System.out.println("Fetching complete:");
@@ -201,19 +206,28 @@ public class ShaclForm
         Button addPropertyButton = new Button("ADD NEW PROPERTY");
         target.add(addPropertyButton);
 
-        ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, FormLayout> lbs = new ListBindingSupport2<>(
-        		target, new ListDataProvider<NodeSchema>(schemas), schema -> schema.getPredicateSchemas().size(), schema ->
-        			ComponentControls.create(FormLayout.class, schema, s -> {
-        			
+        ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, FormLayout> lbs = ListBindingSupport2.create(
+        		target, schemas, schema -> schema.getPredicateSchemas(), (schema, s) -> {
         				Span schemaSpan = new Span("Schema: ");
-        				s.add(schemaSpan);
+        				s.add(schemaSpan, xspan -> xspan.setText("Schema: " + schema.getPredicateSchemas().size()));
         				
-        				s.add(propertyList(schema, graphEditorModel, root, target));
+        				// s.add(span).withUpdate((span, schema) -> 
+        				// s.addUpdate(() -> span.setText("Schema: someSchema"))
         				
-//        				protected List<Component> components = new ArrayList<>();
+        				
+//ComponentControlModular<NodeSchema, FormLayout> x = s;
 
-        				
-        			}));
+        				//ListBindingSupport2.create(target, schema.getPredicateSchemas(), (propertySchma, cb) -> {});
+
+//        				Component x;
+//        				x.addAttachListener(ev -> ev.);
+//        				x.addAttachListener(null)
+        				s.add(propertyList(schema, graphEditorModel, root, target)
+        						.withAdapter(NodeSchema::getPredicateSchemas));
+
+        				System.out.println("Created schema ui part");
+//        				protected List<Component> components = new ArrayList<>();
+        			});
 
 //        ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, FormLayout> lbs = new ListBindingSupport2<>(
 //        		target, new ListDataProvider<NodeSchema>(schemas), schema -> schema, schema ->
@@ -269,15 +283,16 @@ public class ShaclForm
     public ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, FormLayout> propertyList(NodeSchema schema, GraphChange graphEditorModel, Node root, FormLayout target) {
     	
 		ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, FormLayout> lbs2 =
-				new ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, FormLayout>(
-						target,
-						new ListDataProvider<PropertySchema>(schema.getPredicateSchemas()), x -> x,
-						ps -> ComponentControls.create(FormLayout.class, ps, newComponent -> {
+				ListBindingSupport2.create(
+						target, schema.getPredicateSchemas(),
+						(ps, newComponent) -> {
 //							    getElement().appendChild(new Element("hr"));
 //							    Span propertySpan = new Span(ps.getPredicate().getURI());
 //							    add(propertySpan);
 			    // FormItem formItem = addFormItem(span);
 
+//							ComponentControlModular<PropertySchema, FormLayout> x = newComponent;
+							
 			    RdfField rdfField = graphEditorModel.createSetField(root, ps.getPredicate(), true);
 
 			    ObservableCollection<Node> existingValues = rdfField.getBaseAsSet();
@@ -292,12 +307,12 @@ public class ShaclForm
 			    propertySpan.add(addValueButton);
 			    // target.addFormItem(addValueButton, ps.getPredicate().getURI());
 
-			    
+
 			    ListView<Node> view = ListView.create(new DataProviderFromField(rdfField),
 			    		item -> {
 			    			VerticalLayout tmp = new VerticalLayout();
 			    			
-			    			RdfTermEditor ed = new RdfTermEditor();                			
+			    			RdfTermEditor ed = new RdfTermEditor();       			
 			    			ObservableValue<Node> remapped = graphEditorModel.getRenamedNodes().observeKey(item);
 			    			
 			    			bind(ed, remapped);
@@ -311,6 +326,10 @@ public class ShaclForm
 			    			tmp.add(btn);
 			    			return ManagedComponentSimple.wrap(tmp);
 			    		});
+			    
+			    view.getStyle().set("border-left", "thin solid");
+			    view.getStyle().set("padding-left", "10px");
+			    
 			    // FormItem fi = target.addFormItem(view, "List");
 			    
 //							    target.add(propertySpan);
@@ -344,7 +363,11 @@ public class ShaclForm
 
 			    NodeSchema targetSchema = ps.getTargetSchema();
 
-			    for (Node existingValue : existingValues) {
+			    // for (Node existingValue : existingValues) {
+			    ListView<Node> existingView = ListView.create(new ListDataProvider<Node>(existingValues),
+			    		existingValue -> {
+
+			    			VerticalLayout newC = new VerticalLayout();
 
 			        Triple t = Triple.create(root, ps.getPredicate(), existingValue);
 			        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, 2);
@@ -384,12 +407,48 @@ public class ShaclForm
 			        	// renderRoot(graphEditorModel, existingValue, s, target);
 			        }
 
-			        newComponent.add(rdfTermEditor, (tgt, rte) -> tgt.setColspan(rte, maxCols - 1));
-			        newComponent.add(markAsDeleted, (tgt, mad) -> tgt.add(mad, 1));
-			    }			
+//			        newComponent.add(rdfTermEditor, (tgt, rte) -> tgt.setColspan(rte, maxCols - 1));
+//			        newComponent.add(markAsDeleted, (tgt, mad) -> tgt.add(mad, 1));
+			        newC.add(rdfTermEditor);
+			        newC.add(markAsDeleted);
+			        
+			        
+			        
+			        // newComponent.add
+			        Node predicate = ps.getPredicate();
+			        boolean isForward = ps.isForward();
+
+			        Multimap<Node, NodeSchema> childState = ArrayListMultimap.create();
+			        NodeSchema userSchema = new NodeSchemaFromNodeShape(
+			        		ModelFactory.createDefaultModel().createResource().as(SHNodeShape.class));
+
+			        childState.put(existingValue, userSchema);
+
+			        if (targetSchema != null) {
+			        	childState.put(existingValue, targetSchema);
+			        }
+			        
+			        
+			        FormLayout childLayout = new FormLayout();
+			        newC.add(childLayout);
+			        
+			        Button childToggleBtn = new Button("Show child");
+			        childToggleBtn.addClickListener(ev -> {
+			        	renderRoot(graphEditorModel, existingValue, s, childLayout);
+			        });
+//			        
+			        newC.add(childToggleBtn);
+			        return new ManagedComponentSimple(newC);
+			    });
+			    
+			    existingView.getStyle().set("border-left", "thin solid");
+			    existingView.getStyle().set("padding-left", "10px");
+
+			    newComponent.add(existingView, (tgt, v)-> tgt.setColspan(v, maxCols));
+
 			}
 								
-		));
+		);
 		
 		return lbs2;
     }

@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -16,6 +15,7 @@ import org.aksw.jena_sparql_api.data_query.impl.FactoryWithModel;
 import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
@@ -40,7 +40,6 @@ import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.checkerframework.checker.units.qual.C;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.ExprPath;
 
 import com.google.common.collect.HashBasedTable;
@@ -133,7 +132,7 @@ public class MainFacetedBenchmark2 {
 
 
         Model m = ModelFactory.createDefaultModel();
-        RDFDataMgr.read(m, new MetaBZip2CompressorInputStream(ClassLoader.getSystemClassLoader().getResourceAsStream("sensor-data.sample.nt.bz2")), null, Lang.NTRIPLES);
+        RDFDataMgr.read(m, new BZip2CompressorInputStream(ClassLoader.getSystemClassLoader().getResourceAsStream("sensor-data.sample.nt.bz2"), true), null, Lang.NTRIPLES);
 
         System.out.println("Triples in model: " + m.size());
 

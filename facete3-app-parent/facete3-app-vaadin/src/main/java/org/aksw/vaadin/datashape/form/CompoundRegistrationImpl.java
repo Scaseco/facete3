@@ -2,6 +2,7 @@ package org.aksw.vaadin.datashape.form;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import com.vaadin.flow.shared.Registration;
@@ -18,7 +19,7 @@ public class CompoundRegistrationImpl
 {
 	private static final long serialVersionUID = 1L;
 
-	private Set<Registration> registrations;
+	protected Set<Registration> registrations;
 
     public CompoundRegistrationImpl(Registration... registrations) {
         this.registrations = new LinkedHashSet<>(Arrays.asList(registrations));
@@ -26,8 +27,10 @@ public class CompoundRegistrationImpl
 
     @Override
     public void add(Registration registration) {
-        if (registration != null)
-            registrations.add(registration);
+    	Objects.requireNonNull(registration, "Cannot add because registration has already been removed");
+    	
+        // if (registration != null)
+        registrations.add(registration);
     }
 
     @Override

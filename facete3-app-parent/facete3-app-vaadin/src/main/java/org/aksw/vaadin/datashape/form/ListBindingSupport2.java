@@ -1,21 +1,71 @@
 package org.aksw.vaadin.datashape.form;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
-import org.aksw.jena_sparql_api.schema.PropertySchema;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasOrderedComponents;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.provider.Query;
+import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
+
+interface ListComponentControl<T, C>
+	extends ComponentControl<Collection<T>, C>
+{
+	
+}
+
+class ComponentControlTransform<I, O, C>
+	implements ComponentControl<I, C>
+{
+	protected ComponentControl<O, C> delegate;
+	protected Function<? super I, ? extends O> convertState;
+	
+	public ComponentControlTransform(ComponentControl<O, C> delegate, Function<? super I, ? extends O> convertState) {
+		super();
+		this.delegate = delegate;
+		this.convertState = convertState;
+	}
+
+	@Override
+	public Map<Object, ComponentControl<?, ?>> getChildren() {
+		return delegate.getChildren();
+	}
+
+	@Override
+	public void detach() {
+		delegate.detach();
+	}
+
+	@Override
+	public void attach(C target) {
+		delegate.attach(target);
+	}
+
+	@Override
+	public void refresh(I state) {
+		O actualState = convertState.apply(state);
+		delegate.refresh(actualState);
+	}
+
+	@Override
+	public void close() {
+		delegate.close();
+	}	
+}
+
 
 /**
  * A class that keeps a list of items and a list of components created from these items in sync
@@ -29,7 +79,7 @@ import com.vaadin.flow.shared.Registration;
  * @param <T>
  */
 public class ListBindingSupport2<T, F, C>
-	implements ComponentControl<C>
+	implements ListComponentControl<T, C>
 {
 	
 //	public static class ItemState<C> {
@@ -52,24 +102,66 @@ public class ListBindingSupport2<T, F, C>
 //		}
 //	}
 
-
-	protected List<T> currentItems;
-	protected Map<Object, ComponentControl<C>> keyToState = new LinkedHashMap<>();
+//	protected S source;
+//	protected Function<? super S, ? extends Collection<? extends T>> itemSupplier;
+	
+	protected Collection<T> currentItems;
+	protected Map<Object, ComponentControl<T, C>> keyToState = new LinkedHashMap<>();
 	
 	protected DataProvider<T, F> dataProvider;
 	
 	protected Function<? super T, ?> itemToKey;
-	protected Function<? super T, ? extends ComponentControl<C>> itemToAction;
+	protected Function<? super T, ? extends ComponentControl<T, C>> itemToAction;
 	
 	protected C targetLayout;
 	
 	protected Registration dataProviderRegistration;
 	
+	
+//	public static <T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
+//			C target,
+//			Supplier<Collection<T>> items, BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
+//
+//		return create(target, items, item -> item, componentBuilder);
+//	}
+
+//	public static <S, T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
+//			C target,
+//			S source,
+//			Function<S, Collection<T>> items, BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
+//
+//		return create(target, items, item -> item, componentBuilder);
+//	}
+
+	
+	public static <T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
+			C target,
+			Collection<T> items, BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
+
+		return create(target, items, item -> item, componentBuilder);
+	}
+
+
+	public static <T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
+			C target,
+			Collection<T> items, Function<? super T, ?> itemToKey, BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
+		
+        ListBindingSupport2<T, SerializablePredicate<T>, C> result = new ListBindingSupport2<>(
+        		target, new ListDataProvider<T>(items), itemToKey, item -> {
+        			ComponentControlModular<T, C> tmp = new ComponentControlModular<>();
+        			componentBuilder.accept(item, tmp);
+        			return tmp;
+        			// ComponentControls.create(item, componentBuilder));
+				});
+        
+        return result;
+	}
+	
 	public ListBindingSupport2(
 			C targetLayout,
 			DataProvider<T, F> dataProvider,
 			Function<? super T, ?> itemToKey,
-			Function<? super T, ? extends ComponentControl<C>> itemToAction) {
+			Function<? super T, ? extends ComponentControl<T, C>> itemToAction) {
 		super();
 		this.targetLayout = targetLayout;
 		this.dataProvider = dataProvider;
@@ -78,6 +170,11 @@ public class ListBindingSupport2<T, F, C>
 		
 		refresh();
 		enableSync(true);
+	}
+	
+	@Override
+	public Map<Object, ComponentControl<?, ?>> getChildren() {
+		return (Map)keyToState;
 	}
 
 
@@ -109,7 +206,46 @@ public class ListBindingSupport2<T, F, C>
 
 		return create(dataProvider, itemToComponent, item -> item, targetLayout);
 	}
+
 	
+	
+	public void refresh(Collection<T> newItems) {
+		Set<Object> newKeys = newItems.stream().map(itemToKey).collect(Collectors.toSet());
+		
+		// Remove components not among the new items
+		for (Entry<Object, ComponentControl<T, C>> e : keyToState.entrySet()) {
+			Object key = e.getKey();
+			ComponentControl<T, C> componentControl = e.getValue();
+			if (!newKeys.contains(key)) {
+				componentControl.close();
+				keyToState.remove(key);
+			}
+		}
+		
+		// Detach components that are out of order
+		// FIXME Right now we simply detach all
+		for (ComponentControl<T, C> componentControl : keyToState.values()) {
+			componentControl.detach();
+		}
+		
+		
+		// Add the new items at the appropriate indices ; create new items as needed
+//		int i = 0;
+		for (T item : newItems) {
+			Object key = itemToKey.apply(item);
+			ComponentControl<T, C> componentControl = keyToState.get(key);
+			if (componentControl == null) {
+				componentControl = itemToAction.apply(item);
+				keyToState.put(key, componentControl);
+			}
+			
+			componentControl.refresh(item);
+			componentControl.attach(targetLayout);
+//			++i;
+		}
+		
+		currentItems = newItems;
+	}
 
 	/**
 	 * Perform dirty checking and update as needed.
@@ -121,41 +257,7 @@ public class ListBindingSupport2<T, F, C>
 		Query<T, F> query = new Query<>();
 		List<T> newItems = dataProvider.fetch(query).collect(Collectors.toList());
 		
-		Set<Object> keys = newItems.stream().map(itemToKey).collect(Collectors.toSet());
-		
-		// Remove components not among the new items
-		for (Entry<Object, ComponentControl<C>> e : keyToState.entrySet()) {
-			Object key = e.getKey();
-			ComponentControl<C> componentControl = e.getValue();
-			if (!keys.contains(key)) {
-				componentControl.close();
-				keyToState.remove(key);
-			}
-		}
-		
-		// Detach components that are out of order
-		// FIXME Right now we simply detach all
-		for (ComponentControl<C> componentControl : keyToState.values()) {
-			componentControl.detach();
-		}
-		
-		
-		// Add the new items at the appropriate indices ; create new items as needed
-//		int i = 0;
-		for (T item : newItems) {
-			Object key = itemToKey.apply(item);
-			ComponentControl<C> componentControl = keyToState.get(key);
-			if (componentControl == null) {
-				componentControl = itemToAction.apply(item);
-				keyToState.put(key, componentControl);
-			}
-			
-			componentControl.refresh();
-			componentControl.attach(targetLayout);
-//			++i;
-		}
-		
-		currentItems = newItems;
+		refresh(newItems);
 	}
 
 
@@ -167,8 +269,17 @@ public class ListBindingSupport2<T, F, C>
 
 	@Override
 	public void attach(C target) {
-		// TODO Auto-generated method stub
-		for (ComponentControl<C> cc : keyToState.values()) {
+		
+		Component ctgt = (Component)target;
+		HasComponents tgt = (HasComponents)target;
+
+		List<Component> children = ctgt.getChildren().collect(Collectors.toList());
+		int currentIdx = 0;
+		
+		for (ComponentControl<T, C> cc : keyToState.values()) {
+			// TODO For each key we need the current list of components and the new one
+			
+			
 			cc.attach(target);
 		}
 		
@@ -177,7 +288,7 @@ public class ListBindingSupport2<T, F, C>
 
 	@Override
 	public void close() {
-		for (ComponentControl<C> cc : keyToState.values()) {
+		for (ComponentControl<T, C> cc : keyToState.values()) {
 			cc.close();
 		}
 	}

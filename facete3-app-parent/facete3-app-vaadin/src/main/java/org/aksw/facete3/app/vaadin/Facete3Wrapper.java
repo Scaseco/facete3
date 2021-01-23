@@ -1,11 +1,10 @@
 package org.aksw.facete3.app.vaadin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.aksw.dcat.jena.domain.api.DcatDataset;
-import org.aksw.dcat.jena.domain.api.DcatDistribution;
 import org.aksw.dcat.jena.plugin.JenaPluginDcat;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
@@ -22,6 +21,8 @@ import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete.v3.plugin.JenaPluginFacete3;
+import org.aksw.facete3.table.mapping.domain.ColumnMapping;
+import org.aksw.facete3.table.mapping.domain.TableMapping;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -40,6 +41,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
@@ -100,6 +103,7 @@ public class Facete3Wrapper {
         JenaPluginFacete3.init();
         // JenaPluginConjure.init();
 
+        // FIXME Move to separate domain view plugin init method
         BuiltinPersonalities.model.add(DataRefSparqlEndpoint.class,
                 JenaPluginUtils.createImplementation(DataRefSparqlEndpoint.class, DefaultPrefixes.prefixes));
 
@@ -107,6 +111,24 @@ public class Facete3Wrapper {
                 JenaPluginUtils.createImplementation(ServiceStatus.class, PrefixMapping.Standard));
 
 
+        // FIXME Move to separate domain view plugin init method
+        BuiltinPersonalities.model.add(TableMapping.class,
+                JenaPluginUtils.createImplementation(TableMapping.class, PrefixMapping.Extended));
+
+        BuiltinPersonalities.model.add(ColumnMapping.class,
+                JenaPluginUtils.createImplementation(ColumnMapping.class, PrefixMapping.Extended));
+
+        
+        Model tmModel = ModelFactory.createDefaultModel();
+        TableMapping tm = tmModel.createResource().as(TableMapping.class);
+        tm.getOrCreateColumnMapping(Arrays.asList("urn:foo", "urn:bar"));
+        
+        RDFDataMgr.write(System.out, tmModel, RDFFormat.TURTLE_PRETTY);
+        System.out.println("TODO Remove prior test and its output");
+        
+        
+        
+        
         JenaPluginDcat.init(BuiltinPersonalities.model);
     }
 

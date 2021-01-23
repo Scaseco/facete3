@@ -46,6 +46,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout.FormItem;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.HasValueChangeMode;
@@ -92,7 +93,8 @@ interface RdfTermModel {
 
 
 public class RdfTermEditor
-    extends FormItem
+    // extends FormItem
+	extends HorizontalLayout
     implements HasValue<ValueChangeEvent<Node>, Node>, HasValueChangeMode
 {
 
@@ -388,13 +390,19 @@ public class RdfTermEditor
         literalToggle = new Button(new Icon(VaadinIcon.FILE_TEXT_O));
 
         resourceTextField = new TextField();
+//        resourceTextField.setWidthFull();
 
+        
         literalTextArea = new TextArea();
+//        literalTextArea.setWidthFull();
 
         langOrDtypeToggle = new Button(new Icon(VaadinIcon.AT)); // VaadinIcon.CHAT
 
         literalTypeComboBox = new ComboBox<Resource>();
+//        literalTypeComboBox.setWidthFull();
+
         langComboBox = new ComboBox<Resource>();
+//        literalTypeComboBox.setWidthFull();
 
         langOrDtypeToggle.addClickListener(event -> {
             literalMode = LiteralMode.DTYPE.equals(literalMode)
@@ -438,7 +446,16 @@ public class RdfTermEditor
     }
 
     public void addToComponent(HasComponents target) {
-        target.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
+    	HorizontalLayout tmp = this; //new HorizontalLayout();
+    	tmp.setWidthFull();
+
+        tmp.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
+        tmp.setFlexGrow(2, resourceTextField, literalTextArea);
+        tmp.setFlexGrow(1, literalTypeComboBox, langComboBox);
+
+    	// target.add(tmp);
+
+        // target.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
     }
 
     protected void handleEvent(ValueChangeEvent<?> event) {

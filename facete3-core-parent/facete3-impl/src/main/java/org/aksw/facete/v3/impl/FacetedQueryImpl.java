@@ -1,5 +1,8 @@
 package org.aksw.facete.v3.impl;
 
+import java.util.Collection;
+import java.util.function.Supplier;
+
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetNodeResource;
@@ -10,16 +13,12 @@ import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
-
-import java.util.Collection;
-import java.util.function.Supplier;
 
 
 public class FacetedQueryImpl
@@ -113,8 +112,7 @@ public class FacetedQueryImpl
 
 	@Override
 	public Concept toConcept() {
-		// TODO Auto-generated method stub
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package org.aksw.vaadin.datashape.form;
 
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Interface for controlling a (compound) component's life cycle after it has been created.
@@ -10,14 +12,21 @@ package org.aksw.vaadin.datashape.form;
  *
  * @param <C>
  */
-public interface ComponentControl<C>
+public interface ComponentControl<T, C>
 	extends AutoCloseable
-{
+{	
+	Map<Object, ComponentControl<?, ?>> getChildren();
+	
 	void detach();
 	void attach(C target);
-	void refresh();
+	void refresh(T state);
 	
 	@Override
 	void close();
+	
+	
+	default <I> ComponentControl<I, C> withAdapter(Function<? super I, ? extends T> converter) {
+		return new ComponentControlTransform<>(this, converter);
+	}
 }
 

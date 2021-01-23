@@ -13,7 +13,6 @@ import org.aksw.jena_sparql_api.utils.NodeHolder;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -140,13 +139,13 @@ public class ConstraintFacadeImpl<B extends FacetNodeResource>
 	@Override
 	public HLFacetConstraint<ConstraintFacade<B>> gt(Node node) {
 		// TODO Auto-generated method stub
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
 	public HLFacetConstraint<ConstraintFacade<B>> neq(Node node) {
 		// TODO Auto-generated method stub
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override

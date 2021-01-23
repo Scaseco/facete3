@@ -28,7 +28,7 @@ public class ListBindingSupport<T> {
 	protected List<T> currentItems;
 	protected Map<Object, ManagedComponent> keyToView = new LinkedHashMap<>();
 	
-	protected DataProvider<T, String> dataProvider;
+	protected DataProvider<T, ?> dataProvider;
 	
 	protected Function<? super T, ?> itemToKey;
 	protected Function<? super T, ? extends ManagedComponent> itemToComponent;
@@ -39,7 +39,7 @@ public class ListBindingSupport<T> {
 	protected Registration dataProviderRegistration;
 	
 	public ListBindingSupport(
-			DataProvider<T, String> dataProvider,
+			DataProvider<T, ?> dataProvider,
 			Function<? super T, ?> itemToKey,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			HasComponents targetLayout) {
@@ -65,7 +65,7 @@ public class ListBindingSupport<T> {
 	}
 
 	public static <T> ListBindingSupport<T> create(
-			DataProvider<T, String> dataProvider,
+			DataProvider<T, ?> dataProvider,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			Function<? super T, ?> itemToKey,
 			HasOrderedComponents<?> targetLayout) {
@@ -75,7 +75,7 @@ public class ListBindingSupport<T> {
 
 	/** Constructor where items serve directly as keys */
 	public static <T> ListBindingSupport<T> create(
-			DataProvider<T, String> dataProvider,
+			DataProvider<T, ?> dataProvider,
 			Function<? super T, ? extends ManagedComponent> itemToComponent,
 			HasOrderedComponents<?> targetLayout) {
 
@@ -84,8 +84,9 @@ public class ListBindingSupport<T> {
 	
 
 	public synchronized void refresh() {
-		Query<T, String> query = new Query<>();
-		List<T> newItems = dataProvider.fetch(query).collect(Collectors.toList());
+//	    Query<T, ?> query = new Query<>();
+		Query query = new Query();
+		List<T> newItems = (List<T>)dataProvider.fetch(query).collect(Collectors.toList());
 		
 		Set<Object> keys = newItems.stream().map(itemToKey).collect(Collectors.toSet());
 		

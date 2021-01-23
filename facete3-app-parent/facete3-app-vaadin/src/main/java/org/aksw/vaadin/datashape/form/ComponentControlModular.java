@@ -4,25 +4,28 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.aksw.vaadin.datashape.form.ComponentControls.ComponentControlSimple;
+import org.apache.jena.shacl.sys.C;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.shared.Registration;
 
-public class ComponentControlModular<C>
-	implements ComponentControl<C>
+public class ComponentControlModular<T, C>
+	implements ComponentControl<T, C>
 {
 	protected CompoundRegistration registration = new CompoundRegistrationImpl();
 	protected CompoundConsumer<C> attach = new CompoundConsumerImpl<C>();
 	
+	// protected CompoundRunnable updaters = 
 
 	/** The list of concrete components that will be attached to the component passed as argument to attach */
 	//protected ObservableCollection<Function<C, Component>> attachers = new ObservableCollectionBase<>(new ArrayList<>());
 	
 	
 	//protected Set<Component> components = new LinkedHashSet<>();
-	protected Map<ComponentControl<C>, BiConsumer<C, ?>> componentToAttacher = new LinkedHashMap<>();
+	protected Map<ComponentControl<T, C>, BiConsumer<C, ?>> componentToAttacher = new LinkedHashMap<>();
 	
 	
 	public void add(Component component) {
@@ -30,13 +33,21 @@ public class ComponentControlModular<C>
 		add(ComponentControls.wrap(component));
 	}
 
-	public void add(ComponentControl<C> component) {
+	public void add(ComponentControl<T, C> component) {
 		componentToAttacher.put(component, null);
 	}
 
 	
-	public <T extends Component> void add(T component, BiConsumer<C, T> attacher) {
-		componentToAttacher.put(new ComponentControlSimple<C>(component), attacher);
+	public <X extends Component> void add(X component, BiConsumer<C, X> attacher) {
+		componentToAttacher.put(new ComponentControlSimple<T, C>(component, null), attacher);
+	}
+
+	public <X extends Component> void add(X component, Consumer<X> updater) {
+		componentToAttacher.put(new ComponentControlSimple<T, C>(component, () -> updater.accept(component)), null);
+	}
+
+	public <X extends Component> void add(X component, Consumer<X> updater, BiConsumer<C, X> attacher) {
+		componentToAttacher.put(new ComponentControlSimple<T, C>(component, () -> updater.accept(component)), attacher);
 	}
 
 //	public <T> void add(ComponentControl<C> component, BiConsumer<C, T> attacher) {
@@ -44,7 +55,7 @@ public class ComponentControlModular<C>
 //	}
 
 	public void add(Registration registration) {
-		this.getRegistration().add(getRegistration());
+		this.getRegistration().add(registration);
 	}
 
 	
@@ -64,12 +75,18 @@ public class ComponentControlModular<C>
 //		return componentToAttacher.keySet();
 //	}
 
-	public Map<ComponentControl<C>, BiConsumer<C, ?>> getComponentToAttacher() {
+	public Map<ComponentControl<T, C>, BiConsumer<C, ?>> getComponentToAttacher() {
 		return componentToAttacher;
 	}
 	
 	@Override
 	public void detach() {
+		for (Entry<ComponentControl<T, C>, BiConsumer<C, ?>> e : componentToAttacher.entrySet()) {
+			ComponentControl<T, C> cc = e.getKey();
+
+			cc.detach();
+		}		
+
 //		HasComponents parent;
 //		for (Component c : components) {
 //			parent.remove(c);
@@ -79,8 +96,8 @@ public class ComponentControlModular<C>
 	@Override
 	public void attach(C target) {
 		// FIXME Call the attacher
-		for (Entry<ComponentControl<C>, BiConsumer<C, ?>> e : componentToAttacher.entrySet()) {
-			ComponentControl<C> cc = e.getKey();
+		for (Entry<ComponentControl<T, C>, BiConsumer<C, ?>> e : componentToAttacher.entrySet()) {
+			ComponentControl<T, C> cc = e.getKey();
 			
 			BiConsumer bc = e.getValue();
 			
@@ -93,13 +110,34 @@ public class ComponentControlModular<C>
 		}
 	}
 
-	@Override
-	public void refresh() {
-		
-	}
+//	@Override
+//	public void refresh(T state) {
+//		
+//	}
 
 	@Override
 	public void close() {
 		registration.remove();
+
+		for (Entry<ComponentControl<T, C>, BiConsumer<C, ?>> e : componentToAttacher.entrySet()) {
+			ComponentControl<T, C> cc = e.getKey();
+			
+			cc.close();
+		}		
+	}
+
+	@Override
+	public Map<Object, ComponentControl<?, ?>> getChildren() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void refresh(T state) {
+		for (Entry<ComponentControl<T, C>, BiConsumer<C, ?>> e : componentToAttacher.entrySet()) {
+			ComponentControl<T, C> cc = e.getKey();
+
+			cc.refresh(state);
+		}		
 	}
 }
