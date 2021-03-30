@@ -28,6 +28,12 @@
 			<artifactId>jena-sparql-api-algebra</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<!-- <build> -->
