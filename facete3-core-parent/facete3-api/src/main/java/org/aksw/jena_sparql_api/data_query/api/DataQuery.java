@@ -186,7 +186,7 @@ public interface DataQuery<T extends RDFNode> {
     }
 
     default DataQuery<T> only(String ... iris) {
-        return only(NodeUtils.convertToNodes(Arrays.asList(iris)));
+        return only(NodeUtils.convertToListNodes(Arrays.asList(iris)));
     }
 
 
@@ -205,7 +205,7 @@ public interface DataQuery<T extends RDFNode> {
     }
 
     default DataQuery<T> exclude(String ... iris) {
-        return exclude(NodeUtils.convertToNodes(Arrays.asList(iris)));
+        return exclude(NodeUtils.convertToListNodes(Arrays.asList(iris)));
     }
 
     DataQuery<T> limit(Long limit);

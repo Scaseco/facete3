@@ -102,6 +102,7 @@ import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformGraphRename;
+import org.apache.jena.sparql.algebra.TransformUnionQuery;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.TransformExpandOneOf;
 import org.apache.jena.sparql.core.Quad;
@@ -1067,7 +1068,7 @@ public class MainCliFacete3 {
 
             if(cm.unionDefaultGraphMode) {
                 conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
-                        q -> QueryUtils.applyOpTransform(q, Algebra::unionDefaultGraph));
+                        q -> QueryUtils.applyOpTransform(q, TransformUnionQuery::transform /* Algebra::unionDefaultGraph */));
             }
 
             // expand one-of for use with ontop
