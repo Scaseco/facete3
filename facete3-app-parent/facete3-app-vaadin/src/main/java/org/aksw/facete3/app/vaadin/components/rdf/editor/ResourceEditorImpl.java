@@ -12,8 +12,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.aksw.facete3.app.shared.concept.SlottedBuilder;
-import org.aksw.facete3.app.shared.concept.SlottedBuilderImpl;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
 import org.aksw.jena_sparql_api.collection.ObservableCollection;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -26,7 +24,7 @@ import org.apache.jena.graph.GraphListener;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.impl.GraphBase;
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.rdf.listeners.StatementListener;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -34,15 +32,12 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
-import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.sparql.core.DatasetChanges;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphMonitor;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.update.UpdateRequest;
-import org.apache.jena.util.iterator.ExtendedIterator;
 
-import com.google.common.collect.Multimap;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasValue;
@@ -499,19 +494,19 @@ public class ResourceEditorImpl
 
 
     public static Map<Node, String> allocateIris(Resource r) {
-        IRIResolver iriResolver = IRIResolver.create();
+        IRIxResolver iriResolver = IRIxResolver.create().noBase().allowRelative(true).build();
         Map<Node, String> result = allocateIris(r, iriResolver);
         return result;
     }
 
-    public static Map<Node, String> allocateIris(Resource r, IRIResolver iriResolver) {
+    public static Map<Node, String> allocateIris(Resource r, IRIxResolver iriResolver) {
         Map<Node, String> result = new LinkedHashMap<>();
         allocateIris(r, iriResolver, result, new HashSet<>());
 
         return result;
     }
 
-    public static String allocateIris(Resource r, IRIResolver iriResolver, Map<Node, String> map, Set<Node> seen) {
+    public static String allocateIris(Resource r, IRIxResolver iriResolver, Map<Node, String> map, Set<Node> seen) {
         Node node = r.asNode();
 
         String result;

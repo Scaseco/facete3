@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.io.util.UriToPathUtils;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.dcat.repo.impl.fs.CatalogResolverFilesystem;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
@@ -257,7 +258,7 @@ class ModelCreationImpl<T>
         Path cacheFile = null;
         if(allowCacheRead) {
             String d = datasetIri.get();
-            Path relPath = CatalogResolverFilesystem
+            Path relPath = UriToPathUtils
                     .resolvePath(d)
     //				.resolve(graphsHash)
                     .resolve(cacheId);

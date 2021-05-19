@@ -176,22 +176,15 @@
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
 
+		<!-- The topbraid implementation is used because it uses jena's polymorphism system -->
 		<dependency>
 			<groupId>org.topbraid</groupId>
 			<artifactId>shacl</artifactId>
-			<version>1.3.2</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.jena</groupId>
-					<artifactId>jena-arq</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-shacl</artifactId>
-			<version>3.16.0</version>
 		</dependency>
 
 		<dependency>
@@ -209,6 +202,14 @@
 			<artifactId>commons-codec</artifactId>
 			<version>1.14</version>
 		</dependency>
+
+		<!-- Overrides an old cglib version of vaadin -->
+                <dependency>
+                        <groupId>cglib</groupId>
+                        <artifactId>cglib-nodep</artifactId>
+			<version>3.3.0</version>
+                </dependency>
+
 
 		<dependency>
 			<groupId>com.vaadin</groupId>

@@ -19,7 +19,9 @@
 	</scm>
 
 	<properties>
-		<jena-sparql-api.version>4.0.0-1-SNAPSHOT</jena-sparql-api.version>
+		<jena.version>4.0.0</jena.version>
+		<jena-sparql-api.subversion>1-SNAPSHOT</jena-sparql-api.subversion>
+		<jena-sparql-api.version>${jena.version}-${jena-sparql-api.subversion}</jena-sparql-api.version>
 		<!-- <jackson.version>2.8.8</jackson.version> -->
 		<jackson.version>2.10.3</jackson.version>
 		<jmh.version>1.25.2</jmh.version>
@@ -29,10 +31,7 @@
 		<!-- <docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass> -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!--
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		-->
+		<!-- <maven.compiler.source>1.8</maven.compiler.source> <maven.compiler.target>1.8</maven.compiler.target> -->
 
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- <maven.compiler.source>9</maven.compiler.source> -->
@@ -109,7 +108,7 @@
 			<dependency>
 				<groupId>org.aksw.dcat-suite</groupId>
 				<artifactId>dcat-suite-binding-ckan</artifactId>
-				<version>1.0.0-SNAPSHOT</version>
+				<version>1.1.1-SNAPSHOT</version>
 				<!-- <scope>test</scope> -->
 			</dependency>
 
@@ -123,6 +122,24 @@
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-log4j12</artifactId>
 				<version>1.7.24</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.topbraid</groupId>
+				<artifactId>shacl</artifactId>
+				<version>1.3.2</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.apache.jena</groupId>
+						<artifactId>jena-arq</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.jena</groupId>
+				<artifactId>jena-shacl</artifactId>
+				<version>${jena.version}</version>
 			</dependency>
 
 			<dependency>
@@ -363,11 +380,8 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.0</version>
 					<configuration>
-<!--
-						<source>${maven.compiler.source}</source>
-						<target>${maven.compiler.target}</target>
--->
-	<release>${maven.compiler.release}</release>
+						<!-- <source>${maven.compiler.source}</source> <target>${maven.compiler.target}</target> -->
+						<release>${maven.compiler.release}</release>
 						<compilerArgument>-proc:none</compilerArgument>
 						<!-- https://discourse.hibernate.org/t/metamodel-usage-with-maven-and-intellij/487 -->
 						<annotationProcessorPaths>
@@ -376,23 +390,18 @@
 								<artifactId>hibernate-jpamodelgen</artifactId>
 								<version>5.4.30.Final</version>
 							</path>
-            <path>
-                <groupId>javax.xml.bind</groupId>
-                <artifactId>jaxb-api</artifactId>
-                <version>${javax.xml.version}</version>
-            </path>
-<path>
-						<groupId>javax.annotation</groupId>
-						<artifactId>javax.annotation-api</artifactId>
-						<version>1.3.1</version>
-					</path>
-<!--
-                        <path>
-                                <groupId>com.sun.xml.bind</groupId>
-                                <artifactId>jaxb-impl</artifactId>
-                                <version>2.3.1</version>
-                        </path>
--->
+							<path>
+								<groupId>javax.xml.bind</groupId>
+								<artifactId>jaxb-api</artifactId>
+								<version>${javax.xml.version}</version>
+							</path>
+							<path>
+								<groupId>javax.annotation</groupId>
+								<artifactId>javax.annotation-api</artifactId>
+								<version>1.3.1</version>
+							</path>
+							<!-- <path> <groupId>com.sun.xml.bind</groupId> <artifactId>jaxb-impl</artifactId> 
+								<version>2.3.1</version> </path> -->
 
 
 							<!-- <path> -->
@@ -429,18 +438,18 @@
 							<artifactId>hibernate-jpamodelgen</artifactId>
 							<version>5.3.6.Final</version>
 						</dependency>
-						
+
 						<dependency>
-                <groupId>javax.xml.bind</groupId>
-                <artifactId>jaxb-api</artifactId>
-                <version>${javax.xml.version}</version>
+							<groupId>javax.xml.bind</groupId>
+							<artifactId>jaxb-api</artifactId>
+							<version>${javax.xml.version}</version>
 						</dependency>
 						<dependency>
 
-						<groupId>javax.annotation</groupId>
-						<artifactId>javax.annotation-api</artifactId>
-						<version>1.3.1</version>
-												</dependency>
+							<groupId>javax.annotation</groupId>
+							<artifactId>javax.annotation-api</artifactId>
+							<version>1.3.1</version>
+						</dependency>
 
 
 					</dependencies>
