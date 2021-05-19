@@ -5,10 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>facete3-app-vaadin</artifactId>
 	<packaging>${packaging.type}</packaging>
-
 	<properties>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<packaging.type>jar</packaging.type>

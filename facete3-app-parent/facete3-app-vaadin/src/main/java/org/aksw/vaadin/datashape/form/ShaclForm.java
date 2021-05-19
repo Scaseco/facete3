@@ -40,6 +40,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.vaadin.flow.component.HasValue;
+import com.vaadin.flow.component.HasValue.ValueChangeEvent;
+import com.vaadin.flow.component.HasValue.ValueChangeListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -471,10 +473,13 @@ public class ShaclForm
             hasValue.setValue(newValue);
         });
 
-        Registration deregister2 = hasValue.addValueChangeListener(ev -> {
+        
+        // Extra variable because of https://stackoverflow.com/questions/55532055/java-casting-java-11-throws-lambdaconversionexception-while-1-8-does-not
+        ValueChangeListener<ValueChangeEvent<V>> listener = ev -> {
             V newValue = ev.getValue();
             store.set(newValue);
-        });
+        };
+        Registration deregister2 = hasValue.addValueChangeListener(listener);
 
         return () -> {
             deregister1.run();
