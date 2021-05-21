@@ -21,7 +21,7 @@ public interface ObservableMap<K, V>
     Runnable addVetoableChangeListener(VetoableChangeListener listener);
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
-
+    
     /**
      * Observe a key's value
      * 
@@ -29,24 +29,38 @@ public interface ObservableMap<K, V>
      * @return
      */
     default ObservableValue<V> observeKey(K key) {
+    	return observeKey(key, null);
+    }
+
+    /**
+     * Observe a key's value. Yield a default value if the key does not exist or its value is null.
+     * 
+     * @param key
+     * @return
+     */
+    default ObservableValue<V> observeKey(K key, V defaultValue) {
         return new ObservableValue<V>() {
             // protected K k = key;
 
             @Override
             public V get() {
-                return ObservableMap.this.get(key);
+                return ObservableMap.this.getOrDefault(key, defaultValue);
             }
 
             @Override
             public void set(V value) {
-                ObservableMap.this.put(key, value);
+            	if (value == null) {
+                    ObservableMap.this.remove(key);            		
+            	} else {
+            		ObservableMap.this.put(key, value);
+            	}
             }
 
             @Override
             public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
                 return ObservableMap.this.addPropertyChangeListener(ev -> {
-                    V oldValue = ((Map<K, V>)ev.getOldValue()).get(key);
-                    V newValue = ((Map<K, V>)ev.getNewValue()).get(key);
+                    V oldValue = ((Map<K, V>)ev.getOldValue()).getOrDefault(key, defaultValue);
+                    V newValue = ((Map<K, V>)ev.getNewValue()).getOrDefault(key, defaultValue);
 
                     if (oldValue != null && newValue != null && !Objects.equals(oldValue, newValue)) {
                         listener.propertyChange(new PropertyChangeEvent(this, "value", oldValue, newValue));

@@ -133,6 +133,19 @@ public class ListBindingSupport2<T, F, C>
 //		return create(target, items, item -> item, componentBuilder);
 //	}
 
+	public static <T, F, C> ListBindingSupport2<T, F, C> create(
+			C target,
+			DataProvider<T, F> dataProvider,
+			BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
+
+		return new ListBindingSupport2<T, F, C>(target, dataProvider, item -> item, item -> {
+			ComponentControlModular<T, C> tmp = new ComponentControlModular<>();
+			componentBuilder.accept(item, tmp);
+			return tmp;
+			// ComponentControls.create(item, componentBuilder));
+		});
+	}
+
 	
 	public static <T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
 			C target,

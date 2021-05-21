@@ -25,7 +25,7 @@ public class FilteredObservableCollection<T>
 //	}
 
     @SuppressWarnings("unchecked")
-	public static <T> CollectionChangedEventImpl<T> filter(Object self, CollectionChangedEventImpl<T> event, Predicate<? super T> predicate) {
+	public static <T> CollectionChangedEvent<T> filter(Object self, CollectionChangedEvent<T> event, Predicate<? super T> predicate) {
 		return new CollectionChangedEventImpl<>(self,
     			Collections2.filter((Collection<T>)event.getOldValue(), predicate::test),
     			Collections2.filter((Collection<T>)event.getNewValue(), predicate::test),
@@ -39,7 +39,7 @@ public class FilteredObservableCollection<T>
     @Override
     public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
         return getBackend().addVetoableChangeListener(event -> {
-            CollectionChangedEventImpl<T> newEv = filter(this, (CollectionChangedEventImpl<T>)event, predicate);
+            CollectionChangedEvent<T> newEv = filter(this, (CollectionChangedEvent<T>)event, predicate);
             if (newEv.hasChanges()) {
                 listener.vetoableChange(newEv);
             }
@@ -49,7 +49,7 @@ public class FilteredObservableCollection<T>
     @Override
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         return getBackend().addPropertyChangeListener(event -> {
-            CollectionChangedEventImpl<T> newEv = filter(this, (CollectionChangedEventImpl<T>)event, predicate);
+            CollectionChangedEvent<T> newEv = filter(this, (CollectionChangedEvent<T>)event, predicate);
             if (newEv.hasChanges()) {
                 listener.propertyChange(newEv);
             }

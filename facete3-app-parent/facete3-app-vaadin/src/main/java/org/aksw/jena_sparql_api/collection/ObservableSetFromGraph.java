@@ -50,7 +50,7 @@ public class ObservableSetFromGraph
 //    }
 
     protected PropertyChangeEvent convertEvent(PropertyChangeEvent ev) {
-        CollectionChangedEventImpl<Triple> oldEvent = (CollectionChangedEventImpl<Triple>)ev;
+        CollectionChangedEvent<Triple> oldEvent = (CollectionChangedEvent<Triple>)ev;
 
         return new CollectionChangedEventImpl<Triple>(
             this,

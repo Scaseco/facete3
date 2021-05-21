@@ -56,8 +56,8 @@ public class ObservableSubGraph
         return set == null ? null : Sets.filter(set, predicate::test);
     }
 
-    public static CollectionChangedEventImpl<Triple> filter(Object self,
-            CollectionChangedEventImpl<Triple> ev, TripleConstraint tripleConstraint) {
+    public static CollectionChangedEvent<Triple> filter(Object self,
+            CollectionChangedEvent<Triple> ev, TripleConstraint tripleConstraint) {
         return new CollectionChangedEventImpl<>(
             self,
             new GraphWithFilter((Graph)ev.getOldValue(), tripleConstraint),
@@ -70,7 +70,7 @@ public class ObservableSubGraph
     @Override
     public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
         return get().addVetoableChangeListener(ev -> {
-            CollectionChangedEventImpl<Triple> newEv = filter(this, (CollectionChangedEventImpl<Triple>)ev, predicate);
+            CollectionChangedEvent<Triple> newEv = filter(this, (CollectionChangedEvent<Triple>)ev, predicate);
 
             if (newEv.hasChanges()) {
                 listener.vetoableChange(newEv);
@@ -83,7 +83,7 @@ public class ObservableSubGraph
     @Override
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         return get().addPropertyChangeListener(ev -> {
-            CollectionChangedEventImpl<Triple> newEv = filter(this, (CollectionChangedEventImpl<Triple>)ev, predicate);
+            CollectionChangedEvent<Triple> newEv = filter(this, (CollectionChangedEvent<Triple>)ev, predicate);
 
             if (newEv.hasChanges()) {
                 listener.propertyChange(newEv);

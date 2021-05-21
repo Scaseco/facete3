@@ -256,8 +256,8 @@ public class ObservableMapImpl<K, V>
             return delegate.keySet();
         }
 
-        public CollectionChangedEventImpl<K> convertEvent(PropertyChangeEvent event) {
-            CollectionChangedEventImpl<Entry<K, V>> ev = (CollectionChangedEventImpl<Entry<K, V>>)event;
+        public CollectionChangedEvent<K> convertEvent(PropertyChangeEvent event) {
+            CollectionChangedEvent<Entry<K, V>> ev = (CollectionChangedEvent<Entry<K, V>>)event;
 
 //            Set<Entry<K, V>> additions = (Set<Entry<K, V>>)ev.getAdditions();
 //            Set<Entry<K, V>> deletions = (Set<Entry<K, V>>)ev.getDeletions();
@@ -267,7 +267,7 @@ public class ObservableMapImpl<K, V>
             @SuppressWarnings("unchecked")
             Set<K> newKeySet = ((Map<K, V>)ev.getNewValue()).keySet();
 
-            CollectionChangedEventImpl<K> result = new CollectionChangedEventImpl<>(
+            CollectionChangedEvent<K> result = new CollectionChangedEventImpl<>(
                     this,
                     oldKeySet,
                     newKeySet,
@@ -281,7 +281,7 @@ public class ObservableMapImpl<K, V>
         @Override
         public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
             return ObservableMapImpl.this.addVetoableChangeListener(event -> {
-                CollectionChangedEventImpl<K> newEv = convertEvent(event);
+                CollectionChangedEvent<K> newEv = convertEvent(event);
                 if (newEv.hasChanges()) {
                     listener.vetoableChange(newEv);
                 }
@@ -291,7 +291,7 @@ public class ObservableMapImpl<K, V>
         @Override
         public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
             return ObservableMapImpl.this.addPropertyChangeListener(event -> {
-                CollectionChangedEventImpl<K> newEv = convertEvent(event);
+                CollectionChangedEvent<K> newEv = convertEvent(event);
                 if (newEv.hasChanges()) {
                     listener.propertyChange(newEv);
                 }
@@ -319,7 +319,7 @@ public class ObservableMapImpl<K, V>
             set.addPropertyChangeListener(ev -> System.out.println("KeySet changed: " + ev));
 
             map.addPropertyChangeListener(event -> {
-                CollectionChangedEventImpl<Entry<String, String>> ev = (CollectionChangedEventImpl<Entry<String, String>>)event;
+                CollectionChangedEvent<Entry<String, String>> ev = (CollectionChangedEvent<Entry<String, String>>)event;
                 System.out.println("Change:");
                 System.out.println("  Old Value:" + ev.getOldValue());
                 System.out.println("  New Value:" + ev.getNewValue());

@@ -120,8 +120,8 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
     }
 
     @SuppressWarnings("unchecked")
-    public static <F, B, C extends Collection<B>> CollectionChangedEventImpl<F> convertEvent(Object self,
-            CollectionChangedEventImpl<B> ev, Converter<B, F> converter) {
+    public static <F, B, C extends Collection<B>> CollectionChangedEvent<F> convertEvent(Object self,
+            CollectionChangedEvent<B> ev, Converter<B, F> converter) {
         return new CollectionChangedEventImpl<F>(
             self,
             convert((Collection<B>)ev.getOldValue(), converter),
@@ -134,7 +134,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
     @Override
     public Runnable addVetoableChangeListener(VetoableChangeListener listener) {
         return getBackend().addVetoableChangeListener(ev -> {
-            CollectionChangedEventImpl<F> newEv = convertEvent(this, (CollectionChangedEventImpl<B>)ev, converter);
+            CollectionChangedEvent<F> newEv = convertEvent(this, (CollectionChangedEvent<B>)ev, converter);
 
             if (newEv.hasChanges()) {
                 listener.vetoableChange(newEv);
@@ -145,7 +145,7 @@ public class ObservableConvertingCollection<F, B, C extends ObservableCollection
     @Override
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         return getBackend().addPropertyChangeListener(ev -> {
-            CollectionChangedEventImpl<F> newEv = convertEvent(this, (CollectionChangedEventImpl<B>)ev, converter);
+            CollectionChangedEvent<F> newEv = convertEvent(this, (CollectionChangedEvent<B>)ev, converter);
 
             if (newEv.hasChanges()) {
                 listener.propertyChange(newEv);

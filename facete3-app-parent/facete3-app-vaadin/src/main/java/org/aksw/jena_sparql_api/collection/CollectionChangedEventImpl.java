@@ -39,11 +39,6 @@ public class CollectionChangedEventImpl<T>
         return refreshes;
     }
 
-    public boolean hasChanges() {
-        boolean result = !(getAdditions().isEmpty() && getDeletions().isEmpty() && getRefreshes().isEmpty());
-        return result;
-    }
-
     @Override
     public String toString() {
         return "CollectionChangedEventImpl [additions=" + additions + ", deletions=" + deletions + ", refreshes="

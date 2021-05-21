@@ -6,7 +6,7 @@ import org.apache.jena.graph.Triple;
 
 
 /**
- * A field is a reference to a set of triples.
+ * An RdfField is a reference to a set of triples based on a source node and a PropertySchema..
  *
  * @author raven
  *
@@ -14,10 +14,16 @@ import org.apache.jena.graph.Triple;
 public interface RdfField {
     /**
      * Returns the schema of the field. The schema allows testing for whether a specific
-     * triple matches
+     * triple matches it.
      */
     PropertySchema getPropertySchema();
 
+    /**
+     * A field is based on a specific node in the RDF graph.
+     * Depending on the property schema the values are obtained from ingoing and/or outgoing triples (or quads).
+     * 
+     * @return
+     */
     Node getSourceNode();
 
     /**

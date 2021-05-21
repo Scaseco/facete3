@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,7 +20,6 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
-import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.ext.com.google.common.collect.HashMultimap;
@@ -34,7 +34,6 @@ import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
-import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.WrappedIterator;
 
@@ -136,6 +135,25 @@ public class GraphChange
         renamedNodes.addPropertyChangeListener(ev -> refreshDeletions());
     }
 
+    /**
+     * Puts an entry into the rename map with the following extra rule:
+     * If both arguments are equal (a rename of a node to itself) then the rename entry is removed.
+     * 
+     * @param before
+     * @param after
+     * @return
+     */
+    public GraphChange putRename(Node before, Node after) {
+    	Map<Node, Node> renames = getRenamedNodes();
+    	if (Objects.equals(before, after)) {
+    		renames.remove(before);
+    	} else {
+    		renames.put(before, after);
+    	}
+    	
+    	return this;
+    }
+    
     public ObservableGraph getEffectiveAdditionGraph() {
         return effectiveAdditionGraph;
     }

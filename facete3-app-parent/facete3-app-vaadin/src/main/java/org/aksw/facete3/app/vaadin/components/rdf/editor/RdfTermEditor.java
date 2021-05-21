@@ -41,14 +41,15 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.HasValue.ValueChangeEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.charts.model.Select;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.formlayout.FormLayout.FormItem;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.HasValueChangeMode;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
@@ -105,7 +106,7 @@ public class RdfTermEditor
     protected Button iriToggle;
     protected Button bnodeToggle;
     protected Button literalToggle;
-	protected Select termTypeSelect;
+	protected Select<RdfTermType> termTypeSelect;
 	
     protected TextField resourceTextField;
     protected TextArea literalTextArea;
@@ -128,7 +129,7 @@ public class RdfTermEditor
 
     protected Set<ValueChangeListener<? super ValueChangeEvent<Node>>> valueChangeListerens = new LinkedHashSet<>();
 
-    protected RdfTermType rdfTermType = RdfTermType.IRI;
+//    protected RdfTermType rdfTermType = RdfTermType.IRI;
     protected LiteralMode literalMode = LiteralMode.LANG;
 
     protected Model typeModel = createTypeModel();
@@ -241,10 +242,13 @@ public class RdfTermEditor
 
         // langOrDtypeTextField.setVisible(false);
 
+        // termTypeSelect.setValue(rdfTermType);
+        RdfTermType rdfTermType = getRdfTermType();
+        
         switch (rdfTermType) {
         case IRI:
             iriToggle.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            resourceTextField.setVisible(true);
+            resourceTextField.setVisible(true);            
             break;
         case BNODE:
             bnodeToggle.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -302,18 +306,20 @@ public class RdfTermEditor
 
     public void nodeToState(Node node) {
         if (node.isURI()) {
-            rdfTermType = RdfTermType.IRI;
+            setRdfTermType(RdfTermType.IRI);
             resourceTextField.setValue(node.getURI());
         } else if (node.isBlank()) {
-            rdfTermType = RdfTermType.BNODE;
-            resourceTextField.setValue(node.getURI());
+        	setRdfTermType(RdfTermType.BNODE);
+            resourceTextField.setValue(node.getBlankNodeLabel());
         } else if (node.isLiteral()) {
-            rdfTermType = RdfTermType.LITERAL;
+        	setRdfTermType(RdfTermType.LITERAL);
 
-            literalMode = NodeUtils.isLangString(node)
+            LiteralMode literalMode = NodeUtils.isLangString(node)
                 ? LiteralMode.LANG
                 : LiteralMode.DTYPE;
 
+            setLiteralMode(literalMode);
+            
             String lex = node.getLiteralLexicalForm();
 
             literalTextArea.setValue(lex);
@@ -335,10 +341,12 @@ public class RdfTermEditor
 
         } else {
             throw new RuntimeException("Unkown node type: " + node);
-        }
+        }        
     }
 
     public Node calcValueFromUiState() {
+    	RdfTermType rdfTermType = termTypeSelect.getValue();
+
         Node result;
         switch (rdfTermType) {
         case IRI:
@@ -389,6 +397,20 @@ public class RdfTermEditor
         bnodeToggle = new Button(new Icon(VaadinIcon.CIRCLE_THIN));
         literalToggle = new Button(new Icon(VaadinIcon.FILE_TEXT_O));
 
+        termTypeSelect = new Select<>();
+        termTypeSelect.setItems(RdfTermType.IRI, RdfTermType.LITERAL, RdfTermType.BNODE);
+        termTypeSelect.setValue(RdfTermType.IRI);
+        termTypeSelect.setRenderer(new ComponentRenderer<>(item -> {
+        	Component r;
+        	switch(item) {
+        	case IRI: r = new Icon(VaadinIcon.CODE); break;
+        	case LITERAL: r = new Icon(VaadinIcon.FILE_TEXT_O); break;
+        	case BNODE: r = new Icon(VaadinIcon.CIRCLE_THIN); break;
+        	default: r = new Span(Objects.toString(item)); break;
+        	}
+        	return r;
+        }));
+        
         resourceTextField = new TextField();
 //        resourceTextField.setWidthFull();
 
@@ -415,19 +437,27 @@ public class RdfTermEditor
         //langTextField = new TextField();
 //        langOrDtypeTextField = new TextField();
 
+//        termTypeSelect.addValueChangeListener(vce -> {
+//        	rdfTermType = vce.getHasValue().getValue();
+//            calcValueFromUiState();
+//            redraw();
+//        });
 
         iriToggle.addClickListener(event -> {
-            rdfTermType = RdfTermType.IRI;
+            setRdfTermType(RdfTermType.IRI);
+            calcValueFromUiState();
             redraw();
         });
 
         bnodeToggle.addClickListener(event -> {
-            rdfTermType = RdfTermType.BNODE;
+        	setRdfTermType(RdfTermType.BNODE);
+            calcValueFromUiState();
             redraw();
         });
 
         literalToggle.addClickListener(event -> {
-            rdfTermType = RdfTermType.LITERAL;
+        	setRdfTermType(RdfTermType.LITERAL);
+            calcValueFromUiState();
             redraw();
         });
 
@@ -439,7 +469,24 @@ public class RdfTermEditor
         setValueChangeMode(ValueChangeMode.LAZY);
         registerEventListeners();
     }
+    
 
+    public void setRdfTermType(RdfTermType termType) {
+    	termTypeSelect.setValue(termType);
+    }
+    
+    public RdfTermType getRdfTermType() {
+    	return termTypeSelect.getValue();
+    }
+
+    
+    public void setLiteralMode(LiteralMode literalMode) {
+		this.literalMode = literalMode;
+	}
+    
+    public LiteralMode getLiteralMode() {
+		return literalMode;
+	}
 
     public Component[] getAllComponents() {
         return new Component[] {iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox };
@@ -449,7 +496,9 @@ public class RdfTermEditor
     	HorizontalLayout tmp = this; //new HorizontalLayout();
     	tmp.setWidthFull();
 
-        tmp.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
+        // tmp.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
+        tmp.add(termTypeSelect, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
+        tmp.setFlexGrow(0, termTypeSelect);
         tmp.setFlexGrow(2, resourceTextField, literalTextArea);
         tmp.setFlexGrow(1, literalTypeComboBox, langComboBox);
 
@@ -466,6 +515,7 @@ public class RdfTermEditor
     protected Registration registerEventListeners() {
 
         List<Registration> registrations = Arrays.asList(
+        		termTypeSelect.addValueChangeListener(this::handleEvent),
                 resourceTextField.addValueChangeListener(this::handleEvent),
                 literalTextArea.addValueChangeListener(this::handleEvent),
                 literalTypeComboBox.addValueChangeListener(this::handleEvent),

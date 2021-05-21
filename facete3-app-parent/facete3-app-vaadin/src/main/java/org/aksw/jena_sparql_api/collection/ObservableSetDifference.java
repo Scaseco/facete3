@@ -50,7 +50,7 @@ public class ObservableSetDifference<T>
             VetoableChangeListener listener) {
 
         return ev -> {
-            CollectionChangedEventImpl<T> newEv = convertEvent(self, (CollectionChangedEventImpl<T>)ev, other);
+            CollectionChangedEvent<T> newEv = convertEvent(self, (CollectionChangedEvent<T>)ev, other);
             if (newEv.hasChanges()) {
                 listener.vetoableChange(newEv);
             }
@@ -63,7 +63,7 @@ public class ObservableSetDifference<T>
             PropertyChangeListener listener) {
 
         return ev -> {
-            CollectionChangedEventImpl<T> newEv = convertEvent(self, (CollectionChangedEventImpl<T>)ev, other);
+            CollectionChangedEvent<T> newEv = convertEvent(self, (CollectionChangedEvent<T>)ev, other);
             if (newEv.hasChanges()) {
                 listener.propertyChange(newEv);
             }
@@ -95,8 +95,8 @@ public class ObservableSetDifference<T>
 //    }
 
     @SuppressWarnings("unchecked")
-    public static <T> CollectionChangedEventImpl<T> convertEvent(Object self,
-            CollectionChangedEventImpl<T> ev, Set<T> other) {
+    public static <T> CollectionChangedEvent<T> convertEvent(Object self,
+            CollectionChangedEvent<T> ev, Set<T> other) {
 
         // Added items that already exist in the 'other' set are substracted
         Set<T> effectiveAdditions = nullSafeDifference((Set<T>)ev.getAdditions(), other);
