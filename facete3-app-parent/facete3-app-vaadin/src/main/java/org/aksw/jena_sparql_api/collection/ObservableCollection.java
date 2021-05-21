@@ -25,7 +25,7 @@ public interface ObservableCollection<T>
     }
 
     default <U> ObservableCollection<T> map(Function<? super T, ? extends U> predicate) {
-        return null;
+        throw new UnsupportedOperationException("not implemented yet");
     }
 
     default ObservableValue<T> mapToValue() {

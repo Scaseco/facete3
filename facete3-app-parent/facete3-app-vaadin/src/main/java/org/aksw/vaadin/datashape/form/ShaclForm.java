@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
+import org.aksw.jena_sparql_api.schema.NodeSchemaImpl;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -354,6 +355,12 @@ public class ShaclForm
 			    //f Parts flagged with //f were used for the form layout attempt
 			    //f target.setColspan(propertySpan, 3);
 			    
+			    Button collapseButton = new Button(new Icon(VaadinIcon.ANGLE_DOWN));
+			    collapseButton.getElement().setProperty("title", "Hide/show values for this property");
+			    collapseButton.setThemeName("tertiary-inline");
+
+			    
+			    propertySpan.add(collapseButton);
 			    propertySpan.add(ps.getPredicate().getURI());
 
 			    Button addValueButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
@@ -395,7 +402,24 @@ public class ShaclForm
 			    			
 			    			tmp.add(btn);
 			    			//return ManagedComponentSimple.wrap(new ListItem(tmp));
-			    			newComponent2.add(new ListItem(tmp));
+			    			
+			    			
+					        UnorderedList childLayout = new UnorderedList();
+//					        childLayout.getStyle().set("border-left", "thin solid");
+//					        childLayout.getStyle().set("padding-left", "10px");
+					        childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
+
+					        
+					        Button childToggleBtn = new Button("Show child");
+					        childToggleBtn.addClickListener(ev -> {
+					        	renderRoot(graphEditorModel, item, Collections.singleton(new NodeSchemaImpl()), childLayout, depth + 1);
+					        });
+//					        
+
+					        ListItem listItem = new ListItem(tmp, childLayout, childToggleBtn);
+
+					        
+			    			newComponent2.add(listItem);
 			    		});
 
 			    
@@ -525,7 +549,7 @@ public class ShaclForm
 			    });
 			    
 			    valueList.getStyle().set("border-left", "thin solid");
-			    valueList.getStyle().set("padding-left", "10px");
+			    // valueList.getStyle().set("padding-left", "10px");
 			    valueList.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
 
 			    ListItem listItem = new ListItem();

@@ -1,0 +1,7 @@
+[part="toggle-button"]::before {
+    content: none;
+}
+
+[part="input-field"] {
+	border-bottom: none;
+}
