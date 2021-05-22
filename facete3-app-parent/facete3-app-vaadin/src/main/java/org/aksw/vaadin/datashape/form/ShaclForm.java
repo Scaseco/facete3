@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ import org.apache.jena.vocabulary.DCAT;
 import org.topbraid.shacl.model.SHFactory;
 import org.topbraid.shacl.model.SHNodeShape;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -62,6 +64,60 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
 
+class QuadStep {
+	protected Node predicate;
+	protected Node value;
+	protected boolean isForward;
+
+	protected Node graph;
+	
+	public QuadStep(Node predicate, Node value, boolean isForward, Node graph) {
+		super();
+		this.predicate = predicate;
+		this.value = value;
+		this.isForward = isForward;
+		this.graph = graph;
+	}
+}
+
+class QuadPath {
+	protected Node root;
+	protected List<QuadStep> steps;
+}
+
+
+class Headed<T> {
+	protected boolean isForward;
+	protected T value;
+	
+	public Headed(boolean isForward, T value) {
+		super();
+		this.isForward = isForward;
+		this.value = value;
+	}
+
+	public boolean isForward() {
+		return isForward;
+	}
+
+	public T getValue() {
+		return value;
+	}
+}
+
+interface NodeDirState {
+	ObservableValue<Boolean> isOpen();
+	ObservableCollection<NodeState> getChildren();
+	
+}
+
+interface NodeState {
+	QuadPath getKey();
+	
+}
+
+
+
 public class ShaclForm
     extends FormLayout
 {
@@ -73,6 +129,7 @@ public class ShaclForm
     int maxCols = 3; // TODO Get this using a method?
     
     public ShaclForm() {
+    	
 //        setResponsiveSteps(
 //                new ResponsiveStep("25em", 1),
 //                new ResponsiveStep("32em", 2),
@@ -191,6 +248,7 @@ public class ShaclForm
     // TODO Add feature to (un-)collapse resources
     // TODO Add feature to show name clashes with existing resources
     
+        
     public void renderRoot(
     		GraphChange graphEditorModel,
     		Node root,
@@ -234,8 +292,10 @@ public class ShaclForm
         	editIriBtn.addClickListener(ev -> {
         		nodeIdTextField.setVisible(!nodeIdTextField.isVisible());
         	});
-        	nodeIdTextField.setVisible(false);
         	
+        	
+        	target.add(nodeIdTextField);
+        	nodeIdTextField.setVisible(false);
         	// Fill up the row
             //target.setColspan(resetNodeIdButton, 2);
         } else {
@@ -247,6 +307,7 @@ public class ShaclForm
 //        Button addPropertyButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
         Button addPropertyButton = new Button("ADD NEW PROPERTY");
         target.add(addPropertyButton);
+
 
         ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, Component> lbs = ListBindingSupport2.create(
         		(Component)target,
@@ -313,6 +374,7 @@ public class ShaclForm
 //        				
 //    			});
     
+        
         int i[] = {0};
         addPropertyButton.addClickListener(ev -> {
         	NodeSchema x = schemas.iterator().next();
@@ -332,10 +394,30 @@ public class ShaclForm
     		Component target,
     		int depth) {
     	
+        TextField propertyFilter = new TextField();
+        propertyFilter.setPlaceholder("Filter");
+        propertyFilter.setValueChangeMode(ValueChangeMode.LAZY);
+
+        ((HasComponents)target).add(propertyFilter);
+
+//		.filter(i -> {
+//			String v = propertyFilter.getValue();
+//			boolean r = Strings.isNullOrEmpty(v)
+//				? true
+//				: i.getPredicate().getURI().contains(v);
+//			System.out.println("Filter " + i + ": " + r);
+//			return r;
+//		})
+//		.collect(Collectors.toList()),
+
+        
+        
+        ListDataProvider<PropertySchema> dataProvider = new ListDataProvider<>(schema.getPredicateSchemas());
+    	
 		ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, Component> lbs2 =
 				ListBindingSupport2.create(
 						target,
-						schema.getPredicateSchemas(),
+						dataProvider,
 						(ps, newComponent) -> {
 //							    getElement().appendChild(new Element("hr"));
 //							    Span propertySpan = new Span(ps.getPredicate().getURI());
@@ -364,6 +446,7 @@ public class ShaclForm
 			    propertySpan.add(ps.getPredicate().getURI());
 
 			    Button addValueButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
+			    addValueButton.addClassName("parent-hover-show");
 			    addValueButton.getElement().setProperty("title", "Add a new value to this property");
 			    addValueButton.setThemeName("tertiary-inline");
 			    propertySpan.add(addValueButton);
@@ -379,6 +462,7 @@ public class ShaclForm
 			    		new DataProviderFromField(rdfField),
 			    		(item, newComponent2) -> {
 			    			VerticalLayout tmp = new VerticalLayout();
+			    			
 			    			// UnorderedList tmp = new UnorderedList();
 			    			
 			    			RdfTermEditor ed = new RdfTermEditor();       			
@@ -466,7 +550,11 @@ public class ShaclForm
 			    		new ListDataProvider<Node>(existingValues),
 			    		(existingValue, newC) -> {
 
-			    	ListItem listItem = new ListItem();
+					ListItem listItem = new ListItem();
+
+			    	// ListItem listItem = new ListItem();
+			    	HorizontalLayout itemRow = new HorizontalLayout();
+			    	itemRow.setWidthFull();
 			    			//VerticalLayout newC = new VerticalLayout();
 
 			        Triple t = Triple.create(root, ps.getPredicate(), existingValue);
@@ -507,10 +595,16 @@ public class ShaclForm
 			        	// renderRoot(graphEditorModel, existingValue, s, target);
 			        }
 
+				    Button collapseChildrenBtn = new Button(new Icon(VaadinIcon.ANGLE_DOWN));
+				    collapseChildrenBtn.getElement().setProperty("title", "Hide/show properties of this RDF term");
+				    collapseChildrenBtn.setThemeName("tertiary-inline");
+	    			
+				    itemRow.add(collapseChildrenBtn);
+
 //			        newComponent.add(rdfTermEditor, (tgt, rte) -> tgt.setColspan(rte, maxCols - 1));
 //			        newComponent.add(markAsDeleted, (tgt, mad) -> tgt.add(mad, 1));
-			        listItem.add(rdfTermEditor);
-			        listItem.add(markAsDeleted);
+			        itemRow.add(rdfTermEditor);
+			        itemRow.add(markAsDeleted);
 			        
 			        
 			        
@@ -528,6 +622,10 @@ public class ShaclForm
 			        	childState.put(existingValue, targetSchema);
 			        }
 			        
+			        //Button childToggleBtn = new Button("Show child");
+//			        
+			        //itemRow.add(childToggleBtn);
+
 			        
 			        // FormLayout childLayout = new FormLayout();
 			        UnorderedList childLayout = new UnorderedList();
@@ -535,14 +633,12 @@ public class ShaclForm
 //			        childLayout.getStyle().set("padding-left", "10px");
 			        childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
 
-			        listItem.add(childLayout);
-			        
-			        Button childToggleBtn = new Button("Show child");
-			        childToggleBtn.addClickListener(ev -> {
+			        collapseChildrenBtn.addClickListener(ev -> {
 			        	renderRoot(graphEditorModel, existingValue, s, childLayout, depth + 1);
 			        });
-//			        
-			        listItem.add(childToggleBtn);
+
+			        listItem.add(itemRow);
+			        listItem.add(childLayout);
 			        
 			        newC.add(listItem);
 			        // return new ManagedComponentSimple(newC);
@@ -561,6 +657,22 @@ public class ShaclForm
 			}
 								
 		);
+
+		
+        propertyFilter.addValueChangeListener(ev -> {
+        	System.out.println("Refreshing property list");
+        	dataProvider.setFilter(i -> {
+        		String v = propertyFilter.getValue();
+        			boolean r = Strings.isNullOrEmpty(v)
+        					? true
+        					: i.getPredicate().getURI().contains(v);
+        			return r;
+        	});
+        	
+        	// lbs2.refresh();
+        });
+
+
 		
 		return lbs2;
     }

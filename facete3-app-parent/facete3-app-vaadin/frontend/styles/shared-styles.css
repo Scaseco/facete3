@@ -47,3 +47,10 @@
 .compact vaadin-tab {
   padding: 0px 1px;
 }
+
+
+/* Generic show-child-on-hover-over-parent mechanism */
+/* Usage: <parent><child class="parent-hover-show" /></parent> */
+*:not(:hover) > .parent-hover-show {
+    visibility: hidden;
+}

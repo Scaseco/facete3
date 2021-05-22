@@ -1,6 +1,7 @@
 package org.aksw.vaadin.datashape.form;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,10 @@ public class ListBindingSupport2<T, F, C>
 	protected Registration dataProviderRegistration;
 	
 	
+//	public ConfigurableFilterDataProvider<T, F> getDataProvider() {
+//		return (ConfigurableFilterDataProvider<T, F>)dataProvider;
+//	}
+	
 //	public static <T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
 //			C target,
 //			Supplier<Collection<T>> items, BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
@@ -157,10 +162,14 @@ public class ListBindingSupport2<T, F, C>
 
 	public static <T, C> ListBindingSupport2<T, SerializablePredicate<T>, C> create(
 			C target,
-			Collection<T> items, Function<? super T, ?> itemToKey, BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
+			Collection<T> items,
+			Function<? super T, ?> itemToKey,
+			BiConsumer<T, ComponentControlModular<T, C>> componentBuilder) {
 		
         ListBindingSupport2<T, SerializablePredicate<T>, C> result = new ListBindingSupport2<>(
-        		target, new ListDataProvider<T>(items), itemToKey, item -> {
+        		target,
+        		new ListDataProvider<T>(items),
+        		itemToKey, item -> {
         			ComponentControlModular<T, C> tmp = new ComponentControlModular<>();
         			componentBuilder.accept(item, tmp);
         			return tmp;
@@ -226,12 +235,16 @@ public class ListBindingSupport2<T, F, C>
 		Set<Object> newKeys = newItems.stream().map(itemToKey).collect(Collectors.toSet());
 		
 		// Remove components not among the new items
-		for (Entry<Object, ComponentControl<T, C>> e : keyToState.entrySet()) {
+		Iterator<Entry<Object, ComponentControl<T, C>>> it = keyToState.entrySet().iterator();
+		//for (Entry<Object, ComponentControl<T, C>> e : keyToState.entrySet()) {
+		while (it.hasNext()) {
+			Entry<Object, ComponentControl<T, C>> e = it.next();
 			Object key = e.getKey();
 			ComponentControl<T, C> componentControl = e.getValue();
 			if (!newKeys.contains(key)) {
 				componentControl.close();
-				keyToState.remove(key);
+				// keyToState.remove(key);
+				it.remove();
 			}
 		}
 		

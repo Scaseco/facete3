@@ -12,8 +12,8 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
 public interface PropertySchema {
-    Node getPredicate();
 
+    Node getPredicate();
     boolean isForward();
 
     NodeSchema getTargetSchema();

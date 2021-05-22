@@ -92,7 +92,17 @@ interface RdfTermModel {
 //}
 
 
-
+/**
+ * A widget for editing RDF terms.
+ * 
+ * Comprises a select input for term type selection, a text (area) input for the lexical form, and a toggle for
+ * typed or language-tagged literals with the corresponding input field.
+ * 
+ * [ term type v] [ lexical form input ] [ lang/type toggle] [ lang/type input ]
+ * 
+ * @author raven
+ *
+ */
 public class RdfTermEditor
     // extends FormItem
 	extends HorizontalLayout
@@ -494,7 +504,7 @@ public class RdfTermEditor
 
     public void addToComponent(HasComponents target) {
     	HorizontalLayout tmp = this; //new HorizontalLayout();
-    	tmp.setWidthFull();
+    	// tmp.setWidthFull();
 
         // tmp.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
         tmp.add(termTypeSelect, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
