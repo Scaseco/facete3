@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
@@ -14,6 +15,7 @@ import org.aksw.jena_sparql_api.collection.ObservableCollection;
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
 import org.aksw.jena_sparql_api.collection.ObservableValue;
+import org.aksw.jena_sparql_api.collection.ObservableValueImpl;
 import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
@@ -243,10 +245,11 @@ public class ShaclForm
     // TODO Add feature to add schemas (sets of predicates)
     // TODO Add feature to delete resources recursively according to schema
     //      This most likely needs extra options such as only remove if orphaned; i.e. there must not be another resource that references the one to delete with a forward link
-    // TOOD Add feature to show count of values for each property
+    // TODO Add feature to show count of values for each property
     // TODO Add feature to paginate over a property's values
     // TODO Add feature to (un-)collapse resources
     // TODO Add feature to show name clashes with existing resources
+    // TODO Add feature to toggle between viewing the old or new resource's properties
     
         
     public void renderRoot(
@@ -462,10 +465,11 @@ public class ShaclForm
 			    		new DataProviderFromField(rdfField),
 			    		(item, newComponent2) -> {
 			    			VerticalLayout tmp = new VerticalLayout();
-			    			
+			    			tmp.setWidthFull();
 			    			// UnorderedList tmp = new UnorderedList();
 			    			
-			    			RdfTermEditor ed = new RdfTermEditor();       			
+			    			RdfTermEditor ed = new RdfTermEditor();   
+			    			ed.setWidthFull();
 			    			ObservableValue<Node> remapped = graphEditorModel.getRenamedNodes().observeKey(item, item);
 			    			
 			    			Registration newValueRenameRegistration = bind(ed, remapped);
@@ -550,6 +554,8 @@ public class ShaclForm
 			    		new ListDataProvider<Node>(existingValues),
 			    		(existingValue, newC) -> {
 
+			    	ObservableValue<Boolean> collapseChildState = ObservableValueImpl.create(false);
+			    			
 					ListItem listItem = new ListItem();
 
 			    	// ListItem listItem = new ListItem();
@@ -634,9 +640,23 @@ public class ShaclForm
 			        childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
 
 			        collapseChildrenBtn.addClickListener(ev -> {
-			        	renderRoot(graphEditorModel, existingValue, s, childLayout, depth + 1);
+			        	collapseChildState.set(!collapseChildState.get());
 			        });
 
+			        Consumer<Boolean> updateState = state -> {
+			        	if (Boolean.TRUE.equals(state)) {
+				        	collapseChildrenBtn.setIcon(new Icon(VaadinIcon.ANGLE_DOWN));
+
+				        	renderRoot(graphEditorModel, existingValue, s, childLayout, depth + 1);			        		
+			        	} else {
+				        	collapseChildrenBtn.setIcon(new Icon(VaadinIcon.ANGLE_RIGHT));			        		
+			        	}
+			        };
+			        
+			        updateState.accept(collapseChildState.get());
+			        collapseChildState.addValueChangeListener(ev -> updateState.accept(ev.getNewValue()));
+			        
+			        
 			        listItem.add(itemRow);
 			        listItem.add(childLayout);
 			        

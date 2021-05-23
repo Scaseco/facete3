@@ -504,7 +504,7 @@ public class RdfTermEditor
 
     public void addToComponent(HasComponents target) {
     	HorizontalLayout tmp = this; //new HorizontalLayout();
-    	// tmp.setWidthFull();
+    	tmp.setWidthFull();
 
         // tmp.add(iriToggle, bnodeToggle, literalToggle, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);
         tmp.add(termTypeSelect, resourceTextField, literalTextArea, langOrDtypeToggle, literalTypeComboBox, langComboBox);

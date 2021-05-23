@@ -11,6 +11,10 @@ public interface ObservableValue<T>
 {
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
+    /** Type-safe variant. Uses {@link #addPropertyChangeListener(PropertyChangeListener)} and casts. */
+    default Runnable addValueChangeListener(ValueChangeListener<T> listener) {
+    	return addPropertyChangeListener(ev -> listener.propertyChange(ValueChangeEvent.<T>adapt(ev)));
+    }
 
     default <X> ObservableValue<X> convert(Converter<T, X> converter) {
         return new ObservableConvertingValue<>(this, converter);

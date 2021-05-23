@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import org.aksw.commons.accessors.SingleValuedAccessor;
+import org.aksw.commons.accessors.SingleValuedAccessorDirect;
 
 /**
  * Decorates a {@link SingleValuedAccessor} (a getter+setter interface) with property change support.
@@ -40,5 +41,9 @@ public class ObservableValueImpl<T>
     public Runnable addPropertyChangeListener(PropertyChangeListener listener) {
         pce.addPropertyChangeListener(listener);
         return () -> pce.removePropertyChangeListener(listener);
+    }
+    
+    public static <T> ObservableValue<T> create(T initialValue) {
+    	return new ObservableValueImpl<>(new SingleValuedAccessorDirect<>(initialValue));
     }
 }

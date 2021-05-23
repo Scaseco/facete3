@@ -28,6 +28,13 @@ public interface ObservableCollection<T>
         throw new UnsupportedOperationException("not implemented yet");
     }
 
+    /** 
+     * Return a view of this collection as a scalar value:
+     * If the collection contains a single item then this item becomes the view's value.
+     * Otherwise the view's value is null.
+     * 
+     * @return
+     */
     default ObservableValue<T> mapToValue() {
     	return ObservableValueFromObservableCollection.decorate(this);
     }
