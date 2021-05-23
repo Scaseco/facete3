@@ -58,6 +58,10 @@ public class ComponentControlModular<T, C>
 		this.getRegistration().add(registration);
 	}
 
+	public void add(Runnable registration) {
+		this.getRegistration().add(registration);
+	}
+
 	
 	public CompoundRegistration getRegistration() {
 		return registration;

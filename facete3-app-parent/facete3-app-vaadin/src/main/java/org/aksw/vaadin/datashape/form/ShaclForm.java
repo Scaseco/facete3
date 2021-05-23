@@ -6,9 +6,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.jena_sparql_api.collection.GraphChange;
 import org.aksw.jena_sparql_api.collection.ObservableCollection;
@@ -17,6 +19,8 @@ import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
 import org.aksw.jena_sparql_api.collection.ObservableValue;
 import org.aksw.jena_sparql_api.collection.ObservableValueImpl;
 import org.aksw.jena_sparql_api.collection.RdfField;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
@@ -29,6 +33,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -37,6 +42,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.vocabulary.DCAT;
+import org.apache.jena.vocabulary.RDFS;
 import org.topbraid.shacl.model.SHFactory;
 import org.topbraid.shacl.model.SHNodeShape;
 
@@ -148,6 +154,13 @@ public class ShaclForm
         Model shapeModel = ModelFactory.createModelForGraph(shapeGraph);
         SHNodeShape ns = shapeModel.createResource(DCAT.Dataset.getURI()).as(SHNodeShape.class);
         // SHNodeShape nodeShape = shapeModel.createResource()
+
+        
+        // Setup a dummy label service
+        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
+        LookupService<Node, String> labelService = LabelUtils
+        		.getLabelLookupService(conn, RDFS.label, DefaultPrefixes.prefixes);
+       
 
         
         Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
@@ -572,13 +585,19 @@ public class ShaclForm
 			        System.out.println("Added: " + root + " " + ps.getPredicate() + " " + existingValue);
 
 			        // new Button(new Icon(VaadinIcon.TRASH));
+			        Button resetValueBtn = new Button(new Icon(VaadinIcon.EXIT_O));
+			        resetValueBtn.getElement().setProperty("title", "Reset this field to its original value");
+			        			        
+			        
 			        Checkbox markAsDeleted = new Checkbox(false); 
+			        markAsDeleted.getElement().setProperty("title", "Mark the original value as deleted");
 			        //target.addFormItem(markAsDeleted, "Delete");
 			        
 			        ObservableValue<Boolean> isDeleted = graphEditorModel.getDeletionGraph().asSet()
 			        		.filter(c -> c.equals(t))
 			        		.mapToValue(c -> !c.isEmpty(), b -> b ? null : t);
 			        
+
 			        newC.add(bind(markAsDeleted, isDeleted));
 			        
 			        
@@ -592,8 +611,21 @@ public class ShaclForm
 			        }));
 			        
 			        // graphEditorModel.getDeletionGraph().tr
+
+			        Node originalValue = value.get();
+		        	resetValueBtn.setVisible(false);			        
+			        newC.add(value.addValueChangeListener(ev -> {
+			        	boolean newValueDiffersFromOriginal = !Objects.equals(originalValue, ev.getNewValue());
 			        
+			        	resetValueBtn.setVisible(newValueDiffersFromOriginal);
+			        }));
 			        newC.add(bind(rdfTermEditor, value));
+
+			        
+			        resetValueBtn.addClickListener(ev -> {
+			        	value.set(originalValue);
+			        });
+
 			        
 			        Collection<NodeSchema> s = targetSchema == null ? Collections.emptyList() : Collections.singletonList(targetSchema);
 			        
@@ -606,10 +638,12 @@ public class ShaclForm
 				    collapseChildrenBtn.setThemeName("tertiary-inline");
 	    			
 				    itemRow.add(collapseChildrenBtn);
-
+				    
+				    
 //			        newComponent.add(rdfTermEditor, (tgt, rte) -> tgt.setColspan(rte, maxCols - 1));
 //			        newComponent.add(markAsDeleted, (tgt, mad) -> tgt.add(mad, 1));
 			        itemRow.add(rdfTermEditor);
+				    itemRow.add(resetValueBtn);
 			        itemRow.add(markAsDeleted);
 			        
 			        
