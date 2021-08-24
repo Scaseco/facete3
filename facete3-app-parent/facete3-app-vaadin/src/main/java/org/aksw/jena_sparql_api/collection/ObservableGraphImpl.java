@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.aksw.commons.collection.observable.CollectionChangedEventImpl;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.rx.GraphFactoryEx;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;

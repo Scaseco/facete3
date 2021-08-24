@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.collection;
 
+import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableSet;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.apache.jena.graph.Node;

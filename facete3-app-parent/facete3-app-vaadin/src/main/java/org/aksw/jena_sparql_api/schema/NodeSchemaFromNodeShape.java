@@ -30,6 +30,11 @@ public class NodeSchemaFromNodeShape
         super();
         this.nodeShape = nodeShape;
     }
+    
+    /** Return the underlying shacl shape */
+    public SHNodeShape getNodeShape() {
+		return nodeShape;
+	}
 
     protected Stream<PropertySchema> getPropertySchemas(Node predicate, boolean isForward) {
         return getPredicateSchemas().stream()

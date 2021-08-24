@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.collection.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableCollection;
 
 import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.AbstractDataProvider;

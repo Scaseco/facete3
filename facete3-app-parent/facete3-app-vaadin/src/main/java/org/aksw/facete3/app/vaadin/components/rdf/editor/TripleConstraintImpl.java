@@ -40,12 +40,16 @@ public class TripleConstraintImpl
     @Override
     public boolean test(Triple t) {
         boolean result;
-        if (expr == null) {
-            result = true;
+        Binding b = TripleUtils.tripleToBinding(pattern, t);
+        if (b == null) {
+            result = false;
         } else {
-            Binding b = TripleUtils.tripleToBinding(t);
-            NodeValue nv = ExprUtils.eval(expr, b);
-            result = nv.getBoolean();
+            if (expr == null) {
+                result = true;
+            } else {
+                NodeValue nv = ExprUtils.eval(expr, b);
+                result = nv.getBoolean();
+            }
         }
         return result;
     }

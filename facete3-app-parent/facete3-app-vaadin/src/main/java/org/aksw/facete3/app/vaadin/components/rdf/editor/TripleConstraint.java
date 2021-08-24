@@ -7,7 +7,14 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.expr.Expr;
 
 /**
- * A predicate that can be evaluated over individual triples.
+ * This class captures a single triple pattern with a filter expression
+ * which in algebraic terms corresponds to OpFilter(OpTriple(?s ?p ?o), expr).
+ * The expression may only refer to variables mentioned in the pattern.
+ * The pattern may make use of variables and concrete rdf terms. Hence, semantically equivalent constraints
+ * can be expressed in different ways - e.g. { ?s ?p ?o . FILTER (?p = CONST) } == { ?s CONST ?o }
+ *
+ * This class can act as a predicate that can be evaluated for given individual
+ * (concrete) triples.
  * The sparql expression allows obtaining the set of matching triples
  * for any a local or remote RDF graph.
  *

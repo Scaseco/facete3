@@ -3,10 +3,21 @@ package org.aksw.jena_sparql_api.collection;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.VetoableChangeListener;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
+import org.aksw.commons.collection.observable.CollectionChangedEvent;
+import org.aksw.commons.collection.observable.CollectionChangedEventImpl;
+import org.aksw.commons.collection.observable.ObservableMap;
+import org.aksw.commons.collection.observable.ObservableMapImpl;
+import org.aksw.commons.collection.observable.ObservableSet;
+import org.aksw.commons.collection.observable.ObservableSets;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 
 /**
@@ -94,4 +105,44 @@ public class ObservableSetFromGraph
         return result;
     }
 
+
+    public static void main(String[] args) {
+        if (false) {
+            ObservableMap<String, String> map = ObservableMapImpl.decorate(new LinkedHashMap<>());
+            ObservableSet<String> set = map.keySet();
+
+            set.addPropertyChangeListener(ev -> System.out.println("KeySet changed: " + ev));
+
+            map.addPropertyChangeListener(event -> {
+                CollectionChangedEvent<Entry<String, String>> ev = (CollectionChangedEvent<Entry<String, String>>)event;
+                System.out.println("Change:");
+                System.out.println("  Old Value:" + ev.getOldValue());
+                System.out.println("  New Value:" + ev.getNewValue());
+                System.out.println("  Added: " + ev.getAdditions() + " Removed: " + ev.getDeletions());
+            });
+
+
+            map.put("a", "hello");
+            map.put("b", "world");
+            map.put("a", "hey");
+            map.clear();
+        }
+
+        if (true) {
+            ObservableSet<Triple> a = ObservableSetFromGraph.decorate(GraphFactory.createPlainGraph());
+            ObservableMap<Triple, Triple> map =  ObservableMapImpl.decorate(new LinkedHashMap<Triple, Triple>());
+            ObservableSet<Triple> b = map.keySet();
+
+            ObservableSet<Triple> effectiveTriples = ObservableSets.union(a, b);
+            effectiveTriples.addPropertyChangeListener(ev -> System.out.println(ev));
+
+            Triple t1 = new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type);
+            Triple t2 = new Triple(RDFS.Nodes.label, RDFS.Nodes.label, RDFS.Nodes.label);
+
+            a.add(t1);
+            map.put(t2, t2);
+            map.remove(t2);
+        }
+
+    }
 }

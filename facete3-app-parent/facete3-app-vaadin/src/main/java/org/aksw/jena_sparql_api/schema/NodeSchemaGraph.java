@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.schema;
 
 import org.aksw.commons.accessors.SingleValuedAccessor;
+import org.aksw.commons.collection.observable.ObservableSet;
+import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.facete3.app.shared.concept.NodeSpec;
-import org.aksw.jena_sparql_api.collection.ObservableSet;
-import org.aksw.jena_sparql_api.collection.ObservableValue;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;

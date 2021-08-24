@@ -17,6 +17,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableMap;
+import org.aksw.commons.collection.observable.ObservableMapImpl;
+import org.aksw.commons.collection.observable.ObservableSet;
+import org.aksw.commons.collection.observable.ObservableSetImpl;
+import org.aksw.commons.collection.observable.ObservableValue;
+import org.aksw.commons.collection.observable.ObservableValueFromObservableCollection;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;

@@ -2,9 +2,9 @@ package org.aksw.facete.v3.impl;
 
 import java.util.Optional;
 
+import org.aksw.commons.util.range.CountInfo;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.jena_sparql_api.data_query.impl.CountUtils;
-import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Statement;

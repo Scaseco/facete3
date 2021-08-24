@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.schema;
 
+import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraint;
+import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraintImpl;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -15,6 +18,10 @@ import org.apache.jena.sparql.expr.ExprList;
  */
 public class DirectedFilteredTriplePattern {
     protected Triple triplePattern;
+
+    /**
+     * A conjunction of expressions
+     */
     protected ExprList exprs;
 
     /** If isForward is true then the subject acts as the source and the object as the target.
@@ -51,6 +58,28 @@ public class DirectedFilteredTriplePattern {
 
     public boolean isForward() {
         return isForward;
+    }
+
+    /**
+     * Convert this object to a slightly simplified representation which loses the 'direction' information.
+     *
+     * @return
+     */
+    public TripleConstraint toConstraint() {
+        Triple pattern = TripleUtils.create(getSource(), getTarget(), getSource(), isForward());
+        TripleConstraint result = TripleConstraintImpl.create(pattern, exprs == null ? null : ExprUtils.andifyBalanced(exprs));
+        return result;
+    }
+
+    /** A convenience shorthand for toConstraint().test(triple) */
+    public boolean matches(Triple triple) {
+        TripleConstraint c = toConstraint();
+        boolean result = c.test(triple);
+        return result;
+//        Triple pattern = TripleUtils.create(getSource(), getTarget(), getSource(), isForward());
+//        Binding binding = TripleUtils.tripleToBinding(pattern, triple);
+//        boolean result = ExprListUtils.evalEffectiveBoolean(exprs, binding);
+//        return result;
     }
 }
 

@@ -10,14 +10,14 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableValue;
+import org.aksw.commons.collection.observable.ObservableValueImpl;
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.jena_sparql_api.collection.GraphChange;
-import org.aksw.jena_sparql_api.collection.ObservableCollection;
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
-import org.aksw.jena_sparql_api.collection.ObservableValue;
-import org.aksw.jena_sparql_api.collection.ObservableValueImpl;
 import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -272,6 +272,8 @@ public class ShaclForm
     		HasComponents target,
     		int depth) {
 
+    	// ComponentControlModular<Object, Component> result = new ComponentControlModular<>();
+    	
     	System.out.println("Rendering " + root);
     	
 //        Node root = e.getKey();
@@ -600,6 +602,15 @@ public class ShaclForm
 
 			        newC.add(bind(markAsDeleted, isDeleted));
 			        
+			        
+			        // Red background for resources marked as deleted
+			        newC.add(isDeleted.addValueChangeListener(ev -> {
+			        	if (Boolean.TRUE.equals(ev.getNewValue())) {
+			        		itemRow.getStyle().set("background-color", "var(--lumo-error-color-50pct)");
+			        	} else {
+			        		itemRow.getStyle().set("background-color", null);
+			        	}
+			        }));
 			        
 			        newC.add(markAsDeleted.addValueChangeListener(event -> {
 			        	Boolean state = event.getValue();

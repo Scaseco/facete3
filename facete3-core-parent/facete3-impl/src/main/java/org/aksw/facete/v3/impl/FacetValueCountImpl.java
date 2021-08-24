@@ -4,10 +4,10 @@ import java.util.Optional;
 
 import javax.persistence.Entity;
 
+import org.aksw.commons.util.range.CountInfo;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.jena_sparql_api.data_query.impl.CountUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;

@@ -48,6 +48,12 @@ public interface FacetedQuery
 	SparqlQueryConnection connection();
 	
 	
+	/** Create a copy of this FacetedQuery where the base concept has been materialized into
+	 *  a SPARQL VALUES graph pattern.
+	 */
+	
+	// FacetedQuery materializeBaseConcept();
+	
 	/**
 	 * Lookup a facet node by id
 	 * @param id

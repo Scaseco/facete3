@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.collection;
 
+import org.aksw.commons.collection.observable.ObservableSet;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 

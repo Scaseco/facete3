@@ -52,6 +52,18 @@ public class NodeSchemaDataFetcher {
 
     private static final Logger logger = LoggerFactory.getLogger(NodeSchemaDataFetcher.class);
 
+    /**
+     * Build the query that retrieves the information that matches the schemas for the given nodes.
+     *
+     * This method does not perform any optimizations:
+     * If the same node occurs under multiple schemas with overlapping properties then
+     * needless amounts of data are accessed.
+     * In principle a preprocessing step could be applied that optimizes the 'schemaAndNodes' argument.
+     * TODO Whenever we provide such a preprocessing implementation link to it from here
+     *
+     * @param schemaAndNodes
+     * @return
+     */
     public static Query toQuery(Multimap<NodeSchema, Node> schemaAndNodes) {
 
         Set<Query> unionMembers = new LinkedHashSet<>();

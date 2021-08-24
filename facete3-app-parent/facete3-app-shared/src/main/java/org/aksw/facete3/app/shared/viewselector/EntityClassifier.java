@@ -285,7 +285,7 @@ public class EntityClassifier {
 
         EntityQueryBasic basic = EntityQueryRx.assembleEntityAndAttributeParts(eq);
 
-        EntityQueryRx.execConstructEntitiesNg(conn, basic).forEach(quad -> System.out.println(quad));
+        EntityQueryRx.execConstructEntitiesNg(conn::query, basic).forEach(quad -> System.out.println(quad));
 
 
         //System.out.println(entityGraphFragment);

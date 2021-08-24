@@ -1,6 +1,6 @@
 package org.aksw.facete.v3.api;
 
-import org.aksw.jena_sparql_api.utils.CountInfo;
+import org.aksw.commons.util.range.CountInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 

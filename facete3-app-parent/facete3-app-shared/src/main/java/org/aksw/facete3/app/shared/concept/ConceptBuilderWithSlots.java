@@ -2,6 +2,9 @@ package org.aksw.facete3.app.shared.concept;
 
 import java.util.Arrays;
 
+import org.aksw.commons.util.slot.Slot;
+import org.aksw.commons.util.slot.SlottedBuilder;
+import org.aksw.commons.util.slot.SlottedBuilderImpl;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;

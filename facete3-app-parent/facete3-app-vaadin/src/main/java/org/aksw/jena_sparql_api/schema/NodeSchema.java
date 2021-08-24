@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.schema;
 import java.util.Collection;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.collection.NodeGraphView;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 

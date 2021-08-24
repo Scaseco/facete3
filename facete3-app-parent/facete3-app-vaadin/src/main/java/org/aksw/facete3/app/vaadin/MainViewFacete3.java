@@ -24,19 +24,20 @@ import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 
 @Route("")
-@PWA(name = "Vaadin Application", shortName = "Vaadin App",
+@PWA(name = "Facete3 Vaadin Application", shortName = "Facete3",
         description = "This is an example Vaadin application.", enableInstallPrompt = true)
 @CssImport(value = "./styles/shared-styles.css", include = "lumo-badge")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 @CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
 @CssImport(value = "./styles/vaadin-tab-styles.css", themeFor = "vaadin-tab")
 @CssImport(value = "./styles/vaadin-select-text-field-styles.css", themeFor = "vaadin-select-text-field")
+@CssImport(value = "./styles/vaadin-select-styles.css", themeFor = "vaadin-select")
 @CssImport(value = "./styles/vaadin-text-area-styles.css", themeFor = "vaadin-text-area")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @Theme(value = Lumo.class)
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
 //@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
-public class MainView extends AppLayout {
+public class MainViewFacete3 extends AppLayout {
 
     // Ensure Jena plugins are fully loaded before
     // beans are passed to components
@@ -49,7 +50,7 @@ public class MainView extends AppLayout {
 
 
     @Autowired
-    public MainView(Config config) {
+    public MainViewFacete3(Config config) {
 //        VaadinSession.getCurrent().setErrorHandler(eh -> {
 //            Notification.show(ExceptionUtils.getRootCauseMessage(eh.getThrowable()));
 //        });

@@ -5,6 +5,8 @@ import java.beans.VetoableChangeListener;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.aksw.commons.collection.observable.CollectionChangedEvent;
+import org.aksw.commons.collection.observable.CollectionChangedEventImpl;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraint;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;

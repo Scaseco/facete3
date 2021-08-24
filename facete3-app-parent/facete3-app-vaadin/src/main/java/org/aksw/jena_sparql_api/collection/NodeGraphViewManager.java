@@ -7,6 +7,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditor;
 import java.util.Set;
 
+import org.aksw.commons.collection.observable.ObservableSet;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;

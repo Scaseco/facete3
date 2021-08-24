@@ -1,6 +1,6 @@
 package org.aksw.facete3.app.vaadin.components.rdf.editor;
 
-import org.aksw.jena_sparql_api.collection.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableCollection;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 

@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.core.LookupServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.AccBestLiteral;
 import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
@@ -267,9 +267,12 @@ public class LabelUtils {
      */
     public static String formatLiteralNode(Node node, PrefixMapping prefixMapping) {
         String result;
-        if(node.isLiteral()) {
+        if (node.isLiteral()) {
             Object obj = node.getLiteralValue();
-            String baseStr = Objects.toString(obj);
+
+        	String baseStr = obj instanceof Number
+        			? Objects.toString(obj)
+        			: node.getLiteralLexicalForm();
 
             String dtIri = node.getLiteralDatatypeURI();
             String dtPart = null;

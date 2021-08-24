@@ -12,6 +12,13 @@ import org.apache.jena.shacl.sys.C;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.shared.Registration;
 
+/**
+ * 
+ * @author raven
+ *
+ * @param <T> The type of data items
+ * @param <C> The parent component any components on this class are attached to
+ */
 public class ComponentControlModular<T, C>
 	implements ComponentControl<T, C>
 {

@@ -14,10 +14,10 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.topbraid.shacl.model.SHNodeShape;
 import org.topbraid.shacl.model.SHPropertyShape;
 
+
 public class PropertySchemaFromPropertyShape
     implements PropertySchema
 {
-
     protected SHPropertyShape propertyShape;
 
     public PropertySchemaFromPropertyShape(SHPropertyShape propertyShape) {

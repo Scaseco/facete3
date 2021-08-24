@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;

@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.collection;
 
+import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableConvertingCollection;
+import org.aksw.commons.collection.observable.ObservableSet;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraint;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraintImpl;
 import org.aksw.jena_sparql_api.schema.DirectedFilteredTriplePattern;
@@ -19,8 +22,8 @@ public class SetOfNodesFromGraph {
         Node predicate = dftp.getTriplePattern().getPredicate();
         boolean isForward = dftp.isForward();
 
-        TripleConstraint tripleConstraint = TripleConstraintImpl.create(TripleUtils.createMatch(source, predicate, isForward));
-        ObservableSubGraph subGraph = ObservableSubGraph.decorate(graph, tripleConstraint);
+        // TripleConstraint tripleConstraint = TripleConstraintImpl.create(TripleUtils.createMatch(source, predicate, isForward));
+        ObservableSubGraph subGraph = ObservableSubGraph.decorate(graph, dftp.toConstraint());
 
         Converter<Triple, Node> converter = new ConverterTripleToNode(source, predicate, isForward);
         ObservableSet<Triple> tripleSet = new ObservableSetFromGraph(subGraph);

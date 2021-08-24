@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.aksw.commons.util.range.CountInfo;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
-import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 

@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.lookup.ListServiceEntityQuery;
 import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRx;
+import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRxBuilder;
 import org.aksw.jena_sparql_api.rx.entity.model.AttributeGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
@@ -110,7 +111,7 @@ public class ViewManagerImpl
         AttributeGraphFragment attrPart = new AttributeGraphFragment();
         attrPart.getMandatoryJoins().add(new GraphPartitionJoin(entityGraphFragment));
 
-        ListServiceEntityQuery result = new ListServiceEntityQuery(conn, attrPart);
+        ListServiceEntityQuery result = new ListServiceEntityQuery(conn::query, attrPart);
         return result;
     }
 
@@ -220,7 +221,9 @@ public class ViewManagerImpl
         entityQuery.getOptionalJoins().addAll(viewEntityQuery.getOptionalJoins());
 
 
-        List<RDFNode> entities = EntityQueryRx.execConstructEntities(conn, entityQuery)
+        List<RDFNode> entities = EntityQueryRxBuilder.create()
+        			.setQueryExecutionFactory(conn).setQuery(entityQuery)
+        			.build()
             .toList().blockingGet();
 
         Map<Node, RDFNode> result = entities.stream()

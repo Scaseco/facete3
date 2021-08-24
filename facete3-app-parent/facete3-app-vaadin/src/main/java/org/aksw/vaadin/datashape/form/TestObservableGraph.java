@@ -1,14 +1,14 @@
 package org.aksw.vaadin.datashape.form;
 
+import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableSet;
+import org.aksw.commons.collection.observable.ObservableValue;
+import org.aksw.commons.collection.observable.ObservableValueFromObservableCollection;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.TripleConstraintImpl;
-import org.aksw.jena_sparql_api.collection.ObservableCollection;
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
-import org.aksw.jena_sparql_api.collection.ObservableSet;
 import org.aksw.jena_sparql_api.collection.ObservableSetFromGraph;
 import org.aksw.jena_sparql_api.collection.ObservableSubGraph;
-import org.aksw.jena_sparql_api.collection.ObservableValue;
-import org.aksw.jena_sparql_api.collection.ObservableValueFromObservableCollection;
 import org.aksw.jena_sparql_api.collection.SetOfNodesFromGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

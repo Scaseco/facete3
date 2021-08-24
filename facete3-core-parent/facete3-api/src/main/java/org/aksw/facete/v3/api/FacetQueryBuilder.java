@@ -3,15 +3,19 @@ package org.aksw.facete.v3.api;
 import org.apache.jena.rdf.model.RDFNode;
 
 public interface FacetQueryBuilder<T extends RDFNode> {
-	FacetDirNode parent();
-	FacetQueryBuilder<T> withCounts(boolean onOrOff);
-	
-	
-	default FacetQueryBuilder<T> withCounts() {
-		return withCounts(true);
-	}
+    FacetDirNode parent();
+    FacetQueryBuilder<T> withFocusCounts(boolean onOrOff);
+    FacetQueryBuilder<T> withDistinctValueCounts(boolean onOrOff);
 
-	<X extends RDFNode> FacetValueQueryBuilder<X> itemsAs(Class<X> itemClazz);
+    default FacetQueryBuilder<T> withFocusCounts() {
+        return withFocusCounts(true);
+    }
 
-	FacetedDataQuery<T> query2();
+    default FacetQueryBuilder<T> withDistinctValueCounts() {
+        return withFocusCounts(true);
+    }
+
+    <X extends RDFNode> FacetValueQueryBuilder<X> itemsAs(Class<X> itemClazz);
+
+    FacetedDataQuery<T> query2();
 }
