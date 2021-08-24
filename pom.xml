@@ -184,6 +184,12 @@
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-mapper-core</artifactId>
 				<version>${jena-sparql-api.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.aksw.spring</groupId>
+						<artifactId>spring-json-core</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<dependency>

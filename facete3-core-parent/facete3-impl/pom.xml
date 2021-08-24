@@ -18,11 +18,20 @@
 			<artifactId>facete3-api</artifactId>
 		</dependency>
 
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-mapper-core</artifactId>
 		</dependency>
 
+
+<!--
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>javax.persistence</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+-->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-algebra</artifactId>
