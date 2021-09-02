@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.schema;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
-import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -14,18 +14,19 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.topbraid.shacl.model.SHNodeShape;
 import org.topbraid.shacl.model.SHPropertyShape;
 
+import com.google.common.collect.Streams;
 
-public class PropertySchemaFromPropertyShape
-    implements PropertySchema
+
+@ResourceView
+public interface PropertySchemaFromPropertyShape
+    extends PropertySchema, Resource
 {
-    protected SHPropertyShape propertyShape;
-
-    public PropertySchemaFromPropertyShape(SHPropertyShape propertyShape) {
-        super();
-        this.propertyShape = propertyShape;
+    default SHPropertyShape getPropertyShape() {
+        return as(SHPropertyShape.class);
     }
 
-    public Node getPredicate() {
+    default Node getPredicate() {
+        SHPropertyShape propertyShape = getPropertyShape();
         Resource r = propertyShape.getPath();
         Resource p;
         if (r.hasProperty(SHACLM.inversePath)) {
@@ -40,28 +41,31 @@ public class PropertySchemaFromPropertyShape
         //return predicate;
     }
 
-    public boolean isForward() {
+    default boolean isForward() {
+        SHPropertyShape propertyShape = getPropertyShape();
         Resource r = propertyShape.getPath();
         boolean result = !r.hasProperty(SHACLM.inversePath);
         return result;
     }
 
-    public NodeSchema getTargetSchema() {
-        NodeSchema result = null;
+    default NodeSchemaFromNodeShape getTargetSchema() {
+        SHPropertyShape propertyShape = getPropertyShape();
+
+        NodeSchemaFromNodeShape result = null;
         Resource targetRes = propertyShape.getClassOrDatatype();
 
         if (targetRes != null) {
             SHNodeShape targetShape = targetRes.canAs(SHNodeShape.class) ? targetRes.as(SHNodeShape.class) : null;
-            result = targetShape == null ? null : new NodeSchemaFromNodeShape(targetShape);
+            result = targetShape == null ? null : targetShape.as(NodeSchemaFromNodeShape.class); // new NodeSchemaFromNodeShape(targetShape);
         }
         return result;
     }
 
-    public boolean canMatchTriples() {
+    default boolean canMatchTriples() {
         return true;
     }
 
-    public Triple createMatchTriple(Node source) {
+    default Triple createMatchTriple(Node source) {
         boolean isForward = isForward();
         Node predicate = getPredicate();
 
@@ -69,14 +73,14 @@ public class PropertySchemaFromPropertyShape
         return result;
     }
 
-    public boolean matchesTriple(Node source, Triple triple) {
+    default boolean matchesTriple(Node source, Triple triple) {
 
         Triple matcher = createMatchTriple(source);
         boolean result = matcher.matches(triple);
         return result;
     }
 
-    public long copyMatchingValues(Node source, Collection<Node> target, Graph sourceGraph) {
+    default long copyMatchingValues(Node source, Collection<Node> target, Graph sourceGraph) {
         boolean isForward = isForward();
 
         long result = streamMatchingTriples(source, sourceGraph)
@@ -95,7 +99,7 @@ public class PropertySchemaFromPropertyShape
      * @param sourceGraph
      * @return
      */
-    public Stream<Triple> streamMatchingTriples(Node source, Graph sourceGraph) {
+    default Stream<Triple> streamMatchingTriples(Node source, Graph sourceGraph) {
         Triple matcher = createMatchTriple(source);
 
         ExtendedIterator<Triple> it = sourceGraph.find(matcher);
@@ -112,7 +116,7 @@ public class PropertySchemaFromPropertyShape
      * @param target
      * @param source
      */
-    public long copyMatchingTriples(Node source, Graph targetGraph, Graph sourceGraph) {
+    default long copyMatchingTriples(Node source, Graph targetGraph, Graph sourceGraph) {
         long result = streamMatchingTriples(source, sourceGraph)
                 .peek(targetGraph::add)
                 .count();
@@ -120,28 +124,28 @@ public class PropertySchemaFromPropertyShape
         return result;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((propertyShape == null) ? 0 : propertyShape.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        PropertySchemaFromPropertyShape other = (PropertySchemaFromPropertyShape) obj;
-        if (propertyShape == null) {
-            if (other.propertyShape != null)
-                return false;
-        } else if (!propertyShape.equals(other.propertyShape))
-            return false;
-        return true;
-    }
+//    @Override
+//    public int hashCode() {
+//        final int prime = 31;
+//        int result = 1;
+//        result = prime * result + ((propertyShape == null) ? 0 : propertyShape.hashCode());
+//        return result;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj)
+//            return true;
+//        if (obj == null)
+//            return false;
+//        if (getClass() != obj.getClass())
+//            return false;
+//        PropertySchemaFromPropertyShape other = (PropertySchemaFromPropertyShape) obj;
+//        if (propertyShape == null) {
+//            if (other.propertyShape != null)
+//                return false;
+//        } else if (!propertyShape.equals(other.propertyShape))
+//            return false;
+//        return true;
+//    }
 }

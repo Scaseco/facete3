@@ -35,7 +35,7 @@ public interface ResourceMetamodel
 
     @Iri("eg:knownOutgoingPredicates")
     @IriType
-    Set<Node> getKnownOutgoingPredicateIris();
+    Set<String> getKnownOutgoingPredicateIris();
 
     @IriNs("eg")
     boolean isAllOutgoingPredicatesKnown();
@@ -62,6 +62,30 @@ public interface ResourceMetamodel
     Map<Node, PredicateStats> getIngoingPredicateStats();
 
 
+    default Map<Node, PredicateStats> getPredicateStats(boolean isForward) {
+        Map<Node, PredicateStats> result = isForward
+            ? getOutgoingPredicateStats()
+            : getIngoingPredicateStats();
+        return result;
+    }
+
+    default Set<Node> getKnownPredicates(boolean isForward) {
+        Set<Node> result = isForward
+                ? getKnownOutgoingPredicates()
+                : getKnownIngoingPredicates();
+
+        return result;
+    }
+
+    default Set<String> getKnownPredicateIris(boolean isForward) {
+        Set<String> result = isForward
+                ? getKnownOutgoingPredicateIris()
+                : getKnownIngoingPredicateIris();
+
+        return result;
+    }
+
+
     default PredicateStats getOrCreateOutgoingPredicateStats(String key) {
         return getOrCreateOutgoingPredicateStats(NodeFactory.createURI(key));
     }
@@ -84,4 +108,22 @@ public interface ResourceMetamodel
 
         return result;
     }
+
+
+    default PredicateStats getOrCreatePredicateStats(Node key, boolean isForward) {
+        PredicateStats result = isForward
+                ? getOrCreateOutgoingPredicateStats(key)
+                : getOrCreateIngoingPredicateStats(key);
+
+        return result;
+    }
+
+    default PredicateStats getOrCreatePredicateStats(String key, boolean isForward) {
+        PredicateStats result = isForward
+                ? getOrCreateOutgoingPredicateStats(key)
+                : getOrCreateIngoingPredicateStats(key);
+
+        return result;
+    }
+
 }

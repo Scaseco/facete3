@@ -2,6 +2,7 @@ package org.aksw.vaadin.datashape.form;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,6 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.RDFS;
 import org.topbraid.shacl.model.SHFactory;
-import org.topbraid.shacl.model.SHNodeShape;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
@@ -73,55 +73,55 @@ import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
 
 class QuadStep {
-	protected Node predicate;
-	protected Node value;
-	protected boolean isForward;
+    protected Node predicate;
+    protected Node value;
+    protected boolean isForward;
 
-	protected Node graph;
-	
-	public QuadStep(Node predicate, Node value, boolean isForward, Node graph) {
-		super();
-		this.predicate = predicate;
-		this.value = value;
-		this.isForward = isForward;
-		this.graph = graph;
-	}
+    protected Node graph;
+
+    public QuadStep(Node predicate, Node value, boolean isForward, Node graph) {
+        super();
+        this.predicate = predicate;
+        this.value = value;
+        this.isForward = isForward;
+        this.graph = graph;
+    }
 }
 
 class QuadPath {
-	protected Node root;
-	protected List<QuadStep> steps;
+    protected Node root;
+    protected List<QuadStep> steps;
 }
 
 
 class Headed<T> {
-	protected boolean isForward;
-	protected T value;
-	
-	public Headed(boolean isForward, T value) {
-		super();
-		this.isForward = isForward;
-		this.value = value;
-	}
+    protected boolean isForward;
+    protected T value;
 
-	public boolean isForward() {
-		return isForward;
-	}
+    public Headed(boolean isForward, T value) {
+        super();
+        this.isForward = isForward;
+        this.value = value;
+    }
 
-	public T getValue() {
-		return value;
-	}
+    public boolean isForward() {
+        return isForward;
+    }
+
+    public T getValue() {
+        return value;
+    }
 }
 
 interface NodeDirState {
-	ObservableValue<Boolean> isOpen();
-	ObservableCollection<NodeState> getChildren();
-	
+    ObservableValue<Boolean> isOpen();
+    ObservableCollection<NodeState> getChildren();
+
 }
 
 interface NodeState {
-	QuadPath getKey();
-	
+    QuadPath getKey();
+
 }
 
 
@@ -135,9 +135,9 @@ public class ShaclForm
     protected NodeSchemaDataFetcher dataFetcher;
 
     int maxCols = 3; // TODO Get this using a method?
-    
+
     public ShaclForm() {
-    	
+
 //        setResponsiveSteps(
 //                new ResponsiveStep("25em", 1),
 //                new ResponsiveStep("32em", 2),
@@ -146,30 +146,30 @@ public class ShaclForm
                 new ResponsiveStep("25em", 1),
                 new ResponsiveStep("32em", 1),
                 new ResponsiveStep("40em", 1));
-        
+
         SHFactory.ensureInited();
 
         ObservableGraph shapeGraph = ObservableGraphImpl.decorate(RDFDataMgr.loadGraph("dcat-ap.shapes.ttl"));
         shapeGraph.addPropertyChangeListener(ev -> System.out.println("Event: " + ev));
         Model shapeModel = ModelFactory.createModelForGraph(shapeGraph);
-        SHNodeShape ns = shapeModel.createResource(DCAT.Dataset.getURI()).as(SHNodeShape.class);
+        NodeSchemaFromNodeShape ns = shapeModel.createResource(DCAT.Dataset.getURI()).as(NodeSchemaFromNodeShape.class);
         // SHNodeShape nodeShape = shapeModel.createResource()
 
-        
+
         // Setup a dummy label service
         RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
         LookupService<Node, String> labelService = LabelUtils
-        		.getLabelLookupService(conn, RDFS.label, DefaultPrefixes.prefixes);
-       
+                .getLabelLookupService(conn, RDFS.label, DefaultPrefixes.prefixes);
 
-        
+
+
         Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
 
-        NodeSchema userSchema = new NodeSchemaFromNodeShape(
-        		ModelFactory.createDefaultModel().createResource().as(SHNodeShape.class));
+        NodeSchema userSchema =
+                ModelFactory.createDefaultModel().createResource().as(NodeSchemaFromNodeShape.class);
         roots.put(sourceNode, userSchema);
-        
-        NodeSchema baseSchema = new NodeSchemaFromNodeShape(ns);
+
+        NodeSchema baseSchema = ns;
         roots.put(sourceNode, baseSchema);
 
 
@@ -183,15 +183,15 @@ public class ShaclForm
         // NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
         // Graph graph = GraphFactory.createDefaultGraph();
 
-        
+
 
         refresh();
     }
-    
+
     public void refresh() {
         Dataset ds = RDFDataMgr.loadDataset("linkedgeodata-2018-04-04.dcat.ttl");
         RDFConnection conn = RDFConnectionFactory.connect(ds);
-    	
+
         Graph graph = GraphFactory.createDefaultGraph();
         Multimap<NodeSchema, Node> schemaToNodes = Multimaps.invertFrom(roots, ArrayListMultimap.create());
         dataFetcher.sync(graph, schemaToNodes, conn);
@@ -214,40 +214,40 @@ public class ShaclForm
                 Model deletions = ModelFactory.createModelForGraph(graphEditorModel.getEffectiveDeletionGraph());
 
                 String renameStr = graphEditorModel.getRenamedNodes().entrySet().stream()
-                    	.map(e -> e.getKey() + " -> " + e.getValue())
-                    	.collect(Collectors.joining("\n"));
+                        .map(e -> e.getKey() + " -> " + e.getValue())
+                        .collect(Collectors.joining("\n"));
 
                 String str = "Added:\n" + toString(additions, RDFFormat.TURTLE_PRETTY) + "\n"
                         + "Removed:\n" + toString(deletions, RDFFormat.TURTLE_PRETTY) + "\n"
                         + "Renamed:\n" + renameStr;
-                
-                
+
+
                 status.setValue(str);
         };
-        
-        graphEditorModel.getEffectiveAdditionGraph().addPropertyChangeListener(ev -> {
-        	update.run();
-        });
-        
-        graphEditorModel.getEffectiveDeletionGraph().addPropertyChangeListener(ev -> {
-    		update.run();
-    	});
 
-        
+        graphEditorModel.getEffectiveAdditionGraph().addPropertyChangeListener(ev -> {
+            update.run();
+        });
+
+        graphEditorModel.getEffectiveDeletionGraph().addPropertyChangeListener(ev -> {
+            update.run();
+        });
+
+
         ListDataProvider<Node> rootList = new ListDataProvider<>(roots.keys());
-        
+
         // ListView<Node> rootListView = ListView.create(rootList, item -> renderRoot(graphEditorModel, item, this));
- 
+
         // HasOrderedComponents<?> test = this;
 
         UnorderedList content = new UnorderedList();
         // Example nested list demo: https://www.cssscript.com/demo/tree-view-nested-list/
         content.getStyle().set("list-style", "none"); // TODO create css class listtree
-        
+
         this.add(content);
         for (Entry<Node, Collection<NodeSchema>> e : roots.asMap().entrySet()) {
-        	Collection<NodeSchema> schemas = roots.asMap().get(e.getKey());
-        	renderRoot(graphEditorModel, e.getKey(), schemas, content, 0);
+            Collection<NodeSchema> schemas = roots.asMap().get(e.getKey());
+            renderRoot(graphEditorModel, e.getKey(), schemas, content, 0);
         }
 
     }
@@ -263,63 +263,63 @@ public class ShaclForm
     // TODO Add feature to (un-)collapse resources
     // TODO Add feature to show name clashes with existing resources
     // TODO Add feature to toggle between viewing the old or new resource's properties
-    
-        
-    public void renderRoot(
-    		GraphChange graphEditorModel,
-    		Node root,
-    		Collection<NodeSchema> schemas,
-    		HasComponents target,
-    		int depth) {
 
-    	// ComponentControlModular<Object, Component> result = new ComponentControlModular<>();
-    	
-    	System.out.println("Rendering " + root);
-    	
+
+    public void renderRoot(
+            GraphChange graphEditorModel,
+            Node root,
+            Collection<NodeSchema> schemas,
+            HasComponents target,
+            int depth) {
+
+        // ComponentControlModular<Object, Component> result = new ComponentControlModular<>();
+
+        System.out.println("Rendering " + root);
+
 //        Node root = e.getKey();
         Span nodeSpan = new Span("Root: " + root);
         target.add(nodeSpan);
 
         if (root.isURI()) {
-        	Button editIriBtn = new Button(new Icon(VaadinIcon.EDIT));
-        	editIriBtn.setThemeName("tertiary-inline");
-        	nodeSpan.add(editIriBtn);
+            Button editIriBtn = new Button(new Icon(VaadinIcon.EDIT));
+            editIriBtn.setThemeName("tertiary-inline");
+            nodeSpan.add(editIriBtn);
 
-        	
-        	// Create the area for changing the IRI
-	        TextField nodeIdTextField = new TextField();
-	        nodeIdTextField.setValueChangeMode(ValueChangeMode.LAZY);
-	        nodeIdTextField.setPrefixComponent(new Span("IRI"));
-	        //FormItem nodeIdFormItem = target.addFormItem(nodeIdTextField, "IRI");
-	        
-	        // FIXME Do we have to pre-register a mapping for th node being edited in order for the system to work???
-	        // graphEditorModel.getRenamedNodes().put(root, root);
-	
-	        Button resetNodeIdButton = new Button("Reset");
-	        resetNodeIdButton.addClickListener(ev -> {
-	            graphEditorModel.putRename(root, root);
-	        });
-        
-        	nodeIdTextField.setSuffixComponent(resetNodeIdButton);
 
-        	bind(nodeIdTextField, graphEditorModel
-        			.getRenamedNodes()
-        			.observeKey(root, root)
-        			.convert(NodeMappers.uriString.asConverter()));
+            // Create the area for changing the IRI
+            TextField nodeIdTextField = new TextField();
+            nodeIdTextField.setValueChangeMode(ValueChangeMode.LAZY);
+            nodeIdTextField.setPrefixComponent(new Span("IRI"));
+            //FormItem nodeIdFormItem = target.addFormItem(nodeIdTextField, "IRI");
 
-        	editIriBtn.addClickListener(ev -> {
-        		nodeIdTextField.setVisible(!nodeIdTextField.isVisible());
-        	});
-        	
-        	
-        	target.add(nodeIdTextField);
-        	nodeIdTextField.setVisible(false);
-        	// Fill up the row
+            // FIXME Do we have to pre-register a mapping for th node being edited in order for the system to work???
+            // graphEditorModel.getRenamedNodes().put(root, root);
+
+            Button resetNodeIdButton = new Button("Reset");
+            resetNodeIdButton.addClickListener(ev -> {
+                graphEditorModel.putRename(root, root);
+            });
+
+            nodeIdTextField.setSuffixComponent(resetNodeIdButton);
+
+            bind(nodeIdTextField, graphEditorModel
+                    .getRenamedNodes()
+                    .observeKey(root, root)
+                    .convert(NodeMappers.uriString.asConverter()));
+
+            editIriBtn.addClickListener(ev -> {
+                nodeIdTextField.setVisible(!nodeIdTextField.isVisible());
+            });
+
+
+            target.add(nodeIdTextField);
+            nodeIdTextField.setVisible(false);
+            // Fill up the row
             //target.setColspan(resetNodeIdButton, 2);
         } else {
-        	//target.setColspan(nodeSpan, maxCols);
+            //target.setColspan(nodeSpan, maxCols);
         }
-        
+
 
         /* Controls for adding new properties and schemas */
 //        Button addPropertyButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
@@ -328,30 +328,31 @@ public class ShaclForm
 
 
         ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, Component> lbs = ListBindingSupport2.create(
-        		(Component)target,
-        		schemas,
-        		schema -> schema.getPredicateSchemas(),
-        		(schema, s) -> {
-        				Span schemaSpan = new Span("Schema: ");
-        				s.add(schemaSpan, xspan -> xspan.setText("Schema: " + schema.getPredicateSchemas().size()));
-        				
-        				// s.add(span).withUpdate((span, schema) -> 
-        				// s.addUpdate(() -> span.setText("Schema: someSchema"))
-        				
-        				
+                (Component)target,
+                schemas,
+                schema -> schema.getPredicateSchemas(),
+                (schema, s) -> {
+                        Span schemaSpan = new Span("Schema: ");
+                        s.add(schemaSpan, xspan -> xspan.setText("Schema: " + schema.getPredicateSchemas().size()));
+
+                        // s.add(span).withUpdate((span, schema) ->
+                        // s.addUpdate(() -> span.setText("Schema: someSchema"))
+
+
 //ComponentControlModular<NodeSchema, FormLayout> x = s;
 
-        				//ListBindingSupport2.create(target, schema.getPredicateSchemas(), (propertySchma, cb) -> {});
+                        //ListBindingSupport2.create(target, schema.getPredicateSchemas(), (propertySchma, cb) -> {});
 
 //        				Component x;
 //        				x.addAttachListener(ev -> ev.);
 //        				x.addAttachListener(null)
-        				s.add(propertyList(schema, graphEditorModel, root, (Component)target, depth)
-        						.withAdapter(NodeSchema::getPredicateSchemas));
+                        s.add(propertyList(schema, graphEditorModel, root, (Component)target, depth)
+                                .withAdapter(nodeSchema -> new ArrayList<>(nodeSchema.getPredicateSchemas())));
+                                //.withAdapter(NodeSchema::getPredicateSchemas));
 
-        				System.out.println("Created schema ui part");
+                        System.out.println("Created schema ui part");
 //        				protected List<Component> components = new ArrayList<>();
-        			});
+                    });
 
 //        ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, FormLayout> lbs = new ListBindingSupport2<>(
 //        		target, new ListDataProvider<NodeSchema>(schemas), schema -> schema, schema ->
@@ -360,7 +361,7 @@ public class ShaclForm
 //        				protected Span schemaSpan = new Span("Schema: ");
 //        				protected List<Component> components = new ArrayList<>();
 //						protected List<Function<FormLayout, Component>> newComponents = new ArrayList<>();
-//        				
+//
 //						@Override
 //						public void detach() {
 //							// target
@@ -373,45 +374,45 @@ public class ShaclForm
 //						@Override
 //						public void refresh() {
 //
-//														
+//
 //	//							for (PropertySchema ps : schema.getPredicateSchemas()) {
-//	//   
+//	//
 //	//				            for (Component c : components) {
 //	//				            	target.remove(c);
 //	//				            }
-//	//				            
+//	//
 //	//				            components = newComponents.stream().map(f -> f.apply(target)).collect(Collectors.toList());
 ////									});
 ////						}
 //					}
-//						
+//
 //					@Override
 //					public void close() {
-//						
+//
 //					}
-//        				
+//
 //    			});
-    
-        
+
+
         int i[] = {0};
         addPropertyButton.addClickListener(ev -> {
-        	NodeSchema x = schemas.iterator().next();
-        	String str = "http://foo" + (++i[0]);
-        	x.createPropertySchema(NodeFactory.createURI(str), true);
-        	lbs.refresh();
+            NodeSchema x = schemas.iterator().next();
+            String str = "http://foo" + (++i[0]);
+            x.createPropertySchema(NodeFactory.createURI(str), true);
+            lbs.refresh();
         });
-        
-    }
-    
 
-    
+    }
+
+
+
     public ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, Component> propertyList(
-    		NodeSchema schema,
-    		GraphChange graphEditorModel,
-    		Node root,
-    		Component target,
-    		int depth) {
-    	
+            NodeSchema schema,
+            GraphChange graphEditorModel,
+            Node root,
+            Component target,
+            int depth) {
+
         TextField propertyFilter = new TextField();
         propertyFilter.setPlaceholder("Filter");
         propertyFilter.setValueChangeMode(ValueChangeMode.LAZY);
@@ -428,320 +429,321 @@ public class ShaclForm
 //		})
 //		.collect(Collectors.toList()),
 
-        
-        
-        ListDataProvider<PropertySchema> dataProvider = new ListDataProvider<>(schema.getPredicateSchemas());
-    	
-		ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, Component> lbs2 =
-				ListBindingSupport2.create(
-						target,
-						dataProvider,
-						(ps, newComponent) -> {
+
+
+        ListDataProvider<PropertySchema> dataProvider = new ListDataProvider<>(
+                new ArrayList<PropertySchema>(schema.getPredicateSchemas()));
+
+        ListBindingSupport2<PropertySchema, SerializablePredicate<PropertySchema>, Component> lbs2 =
+                ListBindingSupport2.create(
+                        target,
+                        dataProvider,
+                        (ps, newComponent) -> {
 //							    getElement().appendChild(new Element("hr"));
 //							    Span propertySpan = new Span(ps.getPredicate().getURI());
 //							    add(propertySpan);
-			    // FormItem formItem = addFormItem(span);
+                // FormItem formItem = addFormItem(span);
 
 //							ComponentControlModular<PropertySchema, FormLayout> x = newComponent;
-				
-			    RdfField rdfField = graphEditorModel.createSetField(root, ps.getPredicate(), true);
 
-			    ObservableCollection<Node> existingValues = rdfField.getBaseAsSet();
-			    ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
+                RdfField rdfField = graphEditorModel.createSetField(root, ps.getPredicate(), true);
 
-
-			    HorizontalLayout propertySpan = new HorizontalLayout();
-			    
-			    //f Parts flagged with //f were used for the form layout attempt
-			    //f target.setColspan(propertySpan, 3);
-			    
-			    Button collapseButton = new Button(new Icon(VaadinIcon.ANGLE_DOWN));
-			    collapseButton.getElement().setProperty("title", "Hide/show values for this property");
-			    collapseButton.setThemeName("tertiary-inline");
-
-			    
-			    propertySpan.add(collapseButton);
-			    propertySpan.add(ps.getPredicate().getURI());
-
-			    Button addValueButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
-			    addValueButton.addClassName("parent-hover-show");
-			    addValueButton.getElement().setProperty("title", "Add a new value to this property");
-			    addValueButton.setThemeName("tertiary-inline");
-			    propertySpan.add(addValueButton);
-			    // target.addFormItem(addValueButton, ps.getPredicate().getURI());
+                ObservableCollection<Node> existingValues = rdfField.getBaseAsSet();
+                ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
 
 
-			    UnorderedList valueList = new UnorderedList();
+                HorizontalLayout propertySpan = new HorizontalLayout();
 
-			    
-			    // ListView<Node> view = ListView.create(new DataProviderFromField(rdfField),
-			    ListBindingSupport2.create(
-			    		valueList,
-			    		new DataProviderFromField(rdfField),
-			    		(item, newComponent2) -> {
-			    			VerticalLayout tmp = new VerticalLayout();
-			    			tmp.setWidthFull();
-			    			// UnorderedList tmp = new UnorderedList();
-			    			
-			    			RdfTermEditor ed = new RdfTermEditor();   
-			    			ed.setWidthFull();
-			    			ObservableValue<Node> remapped = graphEditorModel.getRenamedNodes().observeKey(item, item);
-			    			
-			    			Registration newValueRenameRegistration = bind(ed, remapped);
-			    			tmp.add(ed);
+                //f Parts flagged with //f were used for the form layout attempt
+                //f target.setColspan(propertySpan, 3);
 
-			    			Button btn = new Button("" + item);
-			    			btn.addClickListener(ev -> {
-			    				// Removing a newly created node also clears all information about it
-			    				// This comprises renames and manually added triples
+                Button collapseButton = new Button(new Icon(VaadinIcon.ANGLE_DOWN));
+                collapseButton.getElement().setProperty("title", "Hide/show values for this property");
+                collapseButton.setThemeName("tertiary-inline");
 
-			    				// TODO Ask for confirmation in case data has been manually added
-			    				
-			    				newValueRenameRegistration.remove();
-			    				
-			    				graphEditorModel.getRenamedNodes().remove(item);
-			    				rdfField.getAddedAsSet().remove(item);
-			    			});
-			    			
-			    			tmp.add(btn);
-			    			//return ManagedComponentSimple.wrap(new ListItem(tmp));
-			    			
-			    			
-					        UnorderedList childLayout = new UnorderedList();
+
+                propertySpan.add(collapseButton);
+                propertySpan.add(ps.getPredicate().getURI());
+
+                Button addValueButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
+                addValueButton.addClassName("parent-hover-show");
+                addValueButton.getElement().setProperty("title", "Add a new value to this property");
+                addValueButton.setThemeName("tertiary-inline");
+                propertySpan.add(addValueButton);
+                // target.addFormItem(addValueButton, ps.getPredicate().getURI());
+
+
+                UnorderedList valueList = new UnorderedList();
+
+
+                // ListView<Node> view = ListView.create(new DataProviderFromField(rdfField),
+                ListBindingSupport2.create(
+                        valueList,
+                        new DataProviderFromField(rdfField),
+                        (item, newComponent2) -> {
+                            VerticalLayout tmp = new VerticalLayout();
+                            tmp.setWidthFull();
+                            // UnorderedList tmp = new UnorderedList();
+
+                            RdfTermEditor ed = new RdfTermEditor();
+                            ed.setWidthFull();
+                            ObservableValue<Node> remapped = graphEditorModel.getRenamedNodes().observeKey(item, item);
+
+                            Registration newValueRenameRegistration = bind(ed, remapped);
+                            tmp.add(ed);
+
+                            Button btn = new Button("" + item);
+                            btn.addClickListener(ev -> {
+                                // Removing a newly created node also clears all information about it
+                                // This comprises renames and manually added triples
+
+                                // TODO Ask for confirmation in case data has been manually added
+
+                                newValueRenameRegistration.remove();
+
+                                graphEditorModel.getRenamedNodes().remove(item);
+                                rdfField.getAddedAsSet().remove(item);
+                            });
+
+                            tmp.add(btn);
+                            //return ManagedComponentSimple.wrap(new ListItem(tmp));
+
+
+                            UnorderedList childLayout = new UnorderedList();
 //					        childLayout.getStyle().set("border-left", "thin solid");
 //					        childLayout.getStyle().set("padding-left", "10px");
-					        childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
+                            childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
 
-					        
-					        Button childToggleBtn = new Button("Show child");
-					        childToggleBtn.addClickListener(ev -> {
-					        	renderRoot(graphEditorModel, item, Collections.singleton(new NodeSchemaImpl()), childLayout, depth + 1);
-					        });
-//					        
 
-					        ListItem listItem = new ListItem(tmp, childLayout, childToggleBtn);
+                            Button childToggleBtn = new Button("Show child");
+                            childToggleBtn.addClickListener(ev -> {
+                                renderRoot(graphEditorModel, item, Collections.singleton(new NodeSchemaImpl()), childLayout, depth + 1);
+                            });
+//
 
-					        
-			    			newComponent2.add(listItem);
-			    		});
+                            ListItem listItem = new ListItem(tmp, childLayout, childToggleBtn);
 
-			    
-			    
+
+                            newComponent2.add(listItem);
+                        });
+
+
+
 //			    listItem.getStyle().set("border-left", "thin solid");
 //			    listItem.getStyle().set("padding-left", "10px");
-			    
-			    // FormItem fi = target.addFormItem(view, "List");
-			    
+
+                // FormItem fi = target.addFormItem(view, "List");
+
 //							    target.add(propertySpan);
 //							    target.add(view);
 //							    target.setColspan(view, maxCols);
-			    //f newComponent.add(listItem, (tgt, v)-> tgt.setColspan(view, maxCols));
-			    // newComponent.add(listItem);
-			    
-			    newComponent.add(addValueButton.addClickListener(ev -> {
-			        // Node newNode = NodeFactory.createBlankNode();
-			    	Node newNode = graphEditorModel.freshNode();
-			        addedValues.add(newNode);
-			    }));
+                //f newComponent.add(listItem, (tgt, v)-> tgt.setColspan(view, maxCols));
+                // newComponent.add(listItem);
 
-			    
+                newComponent.add(addValueButton.addClickListener(ev -> {
+                    // Node newNode = NodeFactory.createBlankNode();
+                    Node newNode = graphEditorModel.freshNode();
+                    addedValues.add(newNode);
+                }));
+
+
 //							    for (Node addedValue : addedValues) {
-			//
+            //
 //							        Triple t = Triple.create(root, ps.getPredicate(), addedValue);
 //							        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, 2);
-			//
+            //
 //							        RdfTermEditor rdfTermEditor = new RdfTermEditor();
 //							        FormItem formItem = addFormItem(rdfTermEditor, ps.getPredicate().getURI());
 ////							        rdfTermEditor.setValue(existingValue);
 //							        System.out.println("Added: " + sourceNode + " " + ps.getPredicate() + " " + addedValue);
 //							        setColspan(formItem, 3);
-			//
+            //
 //							        bind(rdfTermEditor, value);
 //							    }
 
 
-			    NodeSchema targetSchema = ps.getTargetSchema();
+                NodeSchema targetSchema = ps.getTargetSchema();
 
-			    // for (Node existingValue : existingValues) {
-			    // ListView<Node> existingView = ListView.create(new ListDataProvider<Node>(existingValues),
-			    ListBindingSupport2.create(
-			    		valueList,
-			    		new ListDataProvider<Node>(existingValues),
-			    		(existingValue, newC) -> {
+                // for (Node existingValue : existingValues) {
+                // ListView<Node> existingView = ListView.create(new ListDataProvider<Node>(existingValues),
+                ListBindingSupport2.create(
+                        valueList,
+                        new ListDataProvider<Node>(existingValues),
+                        (existingValue, newC) -> {
 
-			    	ObservableValue<Boolean> collapseChildState = ObservableValueImpl.create(false);
-			    			
-					ListItem listItem = new ListItem();
+                    ObservableValue<Boolean> collapseChildState = ObservableValueImpl.create(false);
 
-			    	// ListItem listItem = new ListItem();
-			    	HorizontalLayout itemRow = new HorizontalLayout();
-			    	itemRow.setWidthFull();
-			    			//VerticalLayout newC = new VerticalLayout();
+                    ListItem listItem = new ListItem();
 
-			        Triple t = Triple.create(root, ps.getPredicate(), existingValue);
-			        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, 2);
+                    // ListItem listItem = new ListItem();
+                    HorizontalLayout itemRow = new HorizontalLayout();
+                    itemRow.setWidthFull();
+                            //VerticalLayout newC = new VerticalLayout();
 
-			        RdfTermEditor rdfTermEditor = new RdfTermEditor();
-			        // FormItem formItem = target.addFormItem(rdfTermEditor, ps.getPredicate().getURI());
+                    Triple t = Triple.create(root, ps.getPredicate(), existingValue);
+                    ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, 2);
+
+                    RdfTermEditor rdfTermEditor = new RdfTermEditor();
+                    // FormItem formItem = target.addFormItem(rdfTermEditor, ps.getPredicate().getURI());
 //							        rdfTermEditor.setValue(existingValue);
-			        System.out.println("Added: " + root + " " + ps.getPredicate() + " " + existingValue);
+                    System.out.println("Added: " + root + " " + ps.getPredicate() + " " + existingValue);
 
-			        // new Button(new Icon(VaadinIcon.TRASH));
-			        Button resetValueBtn = new Button(new Icon(VaadinIcon.EXIT_O));
-			        resetValueBtn.getElement().setProperty("title", "Reset this field to its original value");
-			        			        
-			        
-			        Checkbox markAsDeleted = new Checkbox(false); 
-			        markAsDeleted.getElement().setProperty("title", "Mark the original value as deleted");
-			        //target.addFormItem(markAsDeleted, "Delete");
-			        
-			        ObservableValue<Boolean> isDeleted = graphEditorModel.getDeletionGraph().asSet()
-			        		.filter(c -> c.equals(t))
-			        		.mapToValue(c -> !c.isEmpty(), b -> b ? null : t);
-			        
+                    // new Button(new Icon(VaadinIcon.TRASH));
+                    Button resetValueBtn = new Button(new Icon(VaadinIcon.EXIT_O));
+                    resetValueBtn.getElement().setProperty("title", "Reset this field to its original value");
 
-			        newC.add(bind(markAsDeleted, isDeleted));
-			        
-			        
-			        // Red background for resources marked as deleted
-			        newC.add(isDeleted.addValueChangeListener(ev -> {
-			        	if (Boolean.TRUE.equals(ev.getNewValue())) {
-			        		itemRow.getStyle().set("background-color", "var(--lumo-error-color-50pct)");
-			        	} else {
-			        		itemRow.getStyle().set("background-color", null);
-			        	}
-			        }));
-			        
-			        newC.add(markAsDeleted.addValueChangeListener(event -> {
-			        	Boolean state = event.getValue();
-			        	if (Boolean.TRUE.equals(state)) {
-			        		graphEditorModel.getDeletionGraph().add(t);
-			        	} else {
-			        		graphEditorModel.getDeletionGraph().delete(t);
-			        	}
-			        }));
-			        
-			        // graphEditorModel.getDeletionGraph().tr
 
-			        Node originalValue = value.get();
-		        	resetValueBtn.setVisible(false);			        
-			        newC.add(value.addValueChangeListener(ev -> {
-			        	boolean newValueDiffersFromOriginal = !Objects.equals(originalValue, ev.getNewValue());
-			        
-			        	resetValueBtn.setVisible(newValueDiffersFromOriginal);
-			        }));
-			        newC.add(bind(rdfTermEditor, value));
+                    Checkbox markAsDeleted = new Checkbox(false);
+                    markAsDeleted.getElement().setProperty("title", "Mark the original value as deleted");
+                    //target.addFormItem(markAsDeleted, "Delete");
 
-			        
-			        resetValueBtn.addClickListener(ev -> {
-			        	value.set(originalValue);
-			        });
+                    ObservableValue<Boolean> isDeleted = graphEditorModel.getDeletionGraph().asSet()
+                            .filter(c -> c.equals(t))
+                            .mapToValue(c -> !c.isEmpty(), b -> b ? null : t);
 
-			        
-			        Collection<NodeSchema> s = targetSchema == null ? Collections.emptyList() : Collections.singletonList(targetSchema);
-			        
-			        if (!s.isEmpty()) {
-			        	// renderRoot(graphEditorModel, existingValue, s, target);
-			        }
 
-				    Button collapseChildrenBtn = new Button(new Icon(VaadinIcon.ANGLE_DOWN));
-				    collapseChildrenBtn.getElement().setProperty("title", "Hide/show properties of this RDF term");
-				    collapseChildrenBtn.setThemeName("tertiary-inline");
-	    			
-				    itemRow.add(collapseChildrenBtn);
-				    
-				    
+                    newC.add(bind(markAsDeleted, isDeleted));
+
+
+                    // Red background for resources marked as deleted
+                    newC.add(isDeleted.addValueChangeListener(ev -> {
+                        if (Boolean.TRUE.equals(ev.getNewValue())) {
+                            itemRow.getStyle().set("background-color", "var(--lumo-error-color-50pct)");
+                        } else {
+                            itemRow.getStyle().set("background-color", null);
+                        }
+                    }));
+
+                    newC.add(markAsDeleted.addValueChangeListener(event -> {
+                        Boolean state = event.getValue();
+                        if (Boolean.TRUE.equals(state)) {
+                            graphEditorModel.getDeletionGraph().add(t);
+                        } else {
+                            graphEditorModel.getDeletionGraph().delete(t);
+                        }
+                    }));
+
+                    // graphEditorModel.getDeletionGraph().tr
+
+                    Node originalValue = value.get();
+                    resetValueBtn.setVisible(false);
+                    newC.add(value.addValueChangeListener(ev -> {
+                        boolean newValueDiffersFromOriginal = !Objects.equals(originalValue, ev.getNewValue());
+
+                        resetValueBtn.setVisible(newValueDiffersFromOriginal);
+                    }));
+                    newC.add(bind(rdfTermEditor, value));
+
+
+                    resetValueBtn.addClickListener(ev -> {
+                        value.set(originalValue);
+                    });
+
+
+                    Collection<NodeSchema> s = targetSchema == null ? Collections.emptyList() : Collections.singletonList(targetSchema);
+
+                    if (!s.isEmpty()) {
+                        // renderRoot(graphEditorModel, existingValue, s, target);
+                    }
+
+                    Button collapseChildrenBtn = new Button(new Icon(VaadinIcon.ANGLE_DOWN));
+                    collapseChildrenBtn.getElement().setProperty("title", "Hide/show properties of this RDF term");
+                    collapseChildrenBtn.setThemeName("tertiary-inline");
+
+                    itemRow.add(collapseChildrenBtn);
+
+
 //			        newComponent.add(rdfTermEditor, (tgt, rte) -> tgt.setColspan(rte, maxCols - 1));
 //			        newComponent.add(markAsDeleted, (tgt, mad) -> tgt.add(mad, 1));
-			        itemRow.add(rdfTermEditor);
-				    itemRow.add(resetValueBtn);
-			        itemRow.add(markAsDeleted);
-			        
-			        
-			        
-			        // newComponent.add
-			        Node predicate = ps.getPredicate();
-			        boolean isForward = ps.isForward();
+                    itemRow.add(rdfTermEditor);
+                    itemRow.add(resetValueBtn);
+                    itemRow.add(markAsDeleted);
 
-			        Multimap<Node, NodeSchema> childState = ArrayListMultimap.create();
-			        NodeSchema userSchema = new NodeSchemaFromNodeShape(
-			        		ModelFactory.createDefaultModel().createResource().as(SHNodeShape.class));
 
-			        childState.put(existingValue, userSchema);
 
-			        if (targetSchema != null) {
-			        	childState.put(existingValue, targetSchema);
-			        }
-			        
-			        //Button childToggleBtn = new Button("Show child");
-//			        
-			        //itemRow.add(childToggleBtn);
+                    // newComponent.add
+                    Node predicate = ps.getPredicate();
+                    boolean isForward = ps.isForward();
 
-			        
-			        // FormLayout childLayout = new FormLayout();
-			        UnorderedList childLayout = new UnorderedList();
+                    Multimap<Node, NodeSchema> childState = ArrayListMultimap.create();
+                    NodeSchema userSchema =
+                            ModelFactory.createDefaultModel().createResource().as(NodeSchemaFromNodeShape.class);
+
+                    childState.put(existingValue, userSchema);
+
+                    if (targetSchema != null) {
+                        childState.put(existingValue, targetSchema);
+                    }
+
+                    //Button childToggleBtn = new Button("Show child");
+//
+                    //itemRow.add(childToggleBtn);
+
+
+                    // FormLayout childLayout = new FormLayout();
+                    UnorderedList childLayout = new UnorderedList();
 //			        childLayout.getStyle().set("border-left", "thin solid");
 //			        childLayout.getStyle().set("padding-left", "10px");
-			        childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
+                    childLayout.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
 
-			        collapseChildrenBtn.addClickListener(ev -> {
-			        	collapseChildState.set(!collapseChildState.get());
-			        });
+                    collapseChildrenBtn.addClickListener(ev -> {
+                        collapseChildState.set(!collapseChildState.get());
+                    });
 
-			        Consumer<Boolean> updateState = state -> {
-			        	if (Boolean.TRUE.equals(state)) {
-				        	collapseChildrenBtn.setIcon(new Icon(VaadinIcon.ANGLE_DOWN));
+                    Consumer<Boolean> updateState = state -> {
+                        if (Boolean.TRUE.equals(state)) {
+                            collapseChildrenBtn.setIcon(new Icon(VaadinIcon.ANGLE_DOWN));
 
-				        	renderRoot(graphEditorModel, existingValue, s, childLayout, depth + 1);			        		
-			        	} else {
-				        	collapseChildrenBtn.setIcon(new Icon(VaadinIcon.ANGLE_RIGHT));			        		
-			        	}
-			        };
-			        
-			        updateState.accept(collapseChildState.get());
-			        collapseChildState.addValueChangeListener(ev -> updateState.accept(ev.getNewValue()));
-			        
-			        
-			        listItem.add(itemRow);
-			        listItem.add(childLayout);
-			        
-			        newC.add(listItem);
-			        // return new ManagedComponentSimple(newC);
-			    });
-			    
-			    valueList.getStyle().set("border-left", "thin solid");
-			    // valueList.getStyle().set("padding-left", "10px");
-			    valueList.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
+                            renderRoot(graphEditorModel, existingValue, s, childLayout, depth + 1);
+                        } else {
+                            collapseChildrenBtn.setIcon(new Icon(VaadinIcon.ANGLE_RIGHT));
+                        }
+                    };
 
-			    ListItem listItem = new ListItem();
-			    listItem.add(propertySpan);
-			    listItem.add(valueList);
+                    updateState.accept(collapseChildState.get());
+                    collapseChildState.addValueChangeListener(ev -> updateState.accept(ev.getNewValue()));
 
-			    //f newComponent.add(existingView, (tgt, v)-> tgt.setColspan(v, maxCols));
-			    newComponent.add(listItem);
-			}
-								
-		);
 
-		
+                    listItem.add(itemRow);
+                    listItem.add(childLayout);
+
+                    newC.add(listItem);
+                    // return new ManagedComponentSimple(newC);
+                });
+
+                valueList.getStyle().set("border-left", "thin solid");
+                // valueList.getStyle().set("padding-left", "10px");
+                valueList.getStyle().set("list-style", "none"); // TODO create css class listtree-submenu
+
+                ListItem listItem = new ListItem();
+                listItem.add(propertySpan);
+                listItem.add(valueList);
+
+                //f newComponent.add(existingView, (tgt, v)-> tgt.setColspan(v, maxCols));
+                newComponent.add(listItem);
+            }
+
+        );
+
+
         propertyFilter.addValueChangeListener(ev -> {
-        	System.out.println("Refreshing property list");
-        	dataProvider.setFilter(i -> {
-        		String v = propertyFilter.getValue();
-        			boolean r = Strings.isNullOrEmpty(v)
-        					? true
-        					: i.getPredicate().getURI().contains(v);
-        			return r;
-        	});
-        	
-        	// lbs2.refresh();
+            System.out.println("Refreshing property list");
+            dataProvider.setFilter(i -> {
+                String v = propertyFilter.getValue();
+                    boolean r = Strings.isNullOrEmpty(v)
+                            ? true
+                            : i.getPredicate().getURI().contains(v);
+                    return r;
+            });
+
+            // lbs2.refresh();
         });
 
 
-		
-		return lbs2;
+
+        return lbs2;
     }
-    
+
 
     // TODO Move to ModelUtils
     public static String toString(Model model, RDFFormat rdfFormat) {
@@ -760,7 +762,7 @@ public class ShaclForm
             hasValue.setValue(newValue);
         });
 
-        
+
         // Extra variable because of https://stackoverflow.com/questions/55532055/java-casting-java-11-throws-lambdaconversionexception-while-1-8-does-not
         ValueChangeListener<ValueChangeEvent<V>> listener = ev -> {
             V newValue = ev.getValue();

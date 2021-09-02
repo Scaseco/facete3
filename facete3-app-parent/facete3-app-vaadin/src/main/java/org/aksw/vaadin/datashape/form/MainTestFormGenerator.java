@@ -39,10 +39,10 @@ public class MainTestFormGenerator {
         ObservableGraph shapeGraph = ObservableGraphImpl.decorate(RDFDataMgr.loadGraph("dcat-ap.shapes.ttl"));
         shapeGraph.addPropertyChangeListener(ev -> System.out.println("Event: " + ev));
         Model shapeModel = ModelFactory.createModelForGraph(shapeGraph);
-        SHNodeShape ns = shapeModel.createResource(DCAT.Dataset.getURI()).as(SHNodeShape.class);
+        NodeSchemaFromNodeShape schema = shapeModel.createResource(DCAT.Dataset.getURI()).as(NodeSchemaFromNodeShape.class);
         // SHNodeShape nodeShape = shapeModel.createResource()
 
-        NodeSchema schema = new NodeSchemaFromNodeShape(ns);
+        // NodeSchema schema = new NodeSchemaFromNodeShape(ns);
         // schema.createPropertySchema(RDFS.Nodes.label, false);
         PropertySchema ppp = schema.createPropertySchema(DCAT.distribution.asNode(), true);
         System.out.println("Target schema for distribution: " + ppp.getTargetSchema());

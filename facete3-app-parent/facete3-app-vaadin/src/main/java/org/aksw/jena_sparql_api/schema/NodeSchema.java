@@ -10,7 +10,7 @@ public interface NodeSchema {
     PropertySchema createPropertySchema(Node predicate, boolean isForward);
 
     Set<DirectedFilteredTriplePattern> getGenericPatterns();
-    Collection<PropertySchema> getPredicateSchemas();
+    Collection<? extends PropertySchema> getPredicateSchemas();
 //    NodeGraphView instantiate(Node node);
 
     /**

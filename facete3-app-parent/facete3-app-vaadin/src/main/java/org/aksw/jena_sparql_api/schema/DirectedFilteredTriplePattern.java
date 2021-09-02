@@ -11,6 +11,8 @@ import org.apache.jena.sparql.expr.ExprList;
 
 /**
  * A single triple pattern combined with a filter and a direction.
+ * Corresponds to a specification of a set of triples which can be executed via
+ * {@code Stream.stream(graph.find(triplePattern)).filter(filter::test)}.
  *
  *
  * @author raven
