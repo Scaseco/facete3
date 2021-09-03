@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Implementation of the {@link Path} interface for {@link java.nio.file.Path}.
- * Use {@link #wrapInternal(java.nio.file.Path)} to create an instance of this class.
+ * Use {@link #wrap(java.nio.file.Path)} to create an instance of this class.
  *
  * @author Claus Stadler
  *
