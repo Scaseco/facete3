@@ -1,0 +1,76 @@
+# Query for computing a resource's metamodel.
+# The metamodel captures the set of ingoing and outgoing predicates together
+# with the number of distinct values per graph
+# This information can be used to control fetching of property values when
+# browsing resources. All properties with few values may be fetched eagerly
+# in order to reduce the amount of necessary requests.
+# Conversely, for browsing a property with e.g. millions of values
+# (such as inverse rdf:type for the dbo:Person class) it is typcially not
+# desired to load all values at once
+CONSTRUCT {
+    ?root <urn:hasResource> ?src .
+
+    ?src
+      <urn:knownOutPredicate> ?outP ;
+      <urn:outgoingKnownPredicateStats> ?outPStats .
+
+    ?outPStats
+      <urn:predicateStat> ?outP ;
+      <urn:graphPredicateStats> ?outPgStats .
+
+    ?outPgStats
+      <urn:graph> ?outG ;
+      <urn:distinctValueCount> ?outPgDvc .
+
+    ?src
+      <urn:knownInPredicate> ?inP ;
+      <urn:ingoinKnownPredicateStats> ?inPStats .
+
+    ?inPStats
+      <urn:predicateStat> ?inP ;
+      <urn:graphPredicateStats> ?inPgStats .
+
+    ?inPgStats
+      <urn:graph> ?inG ;
+      <urn:distinctValueCount> ?inPgDvc .
+
+}
+WHERE {
+
+  BIND(<urn:root> AS ?root)
+
+SERVICE <https://dbpedia.org/sparql> { {
+
+SELECT ?src ?outP ?outG ?outPgDvc ?inP ?inG ?inPgDvc {
+   { SELECT ?src ?outP ?outG (COUNT(DISTINCT ?outTgt) AS ?outPgDvc) {
+     GRAPH ?outG { ?src ?outP ?outTgt
+       FILTER(?src = <http://dbpedia.org/resource/Leipzig>)
+       # FILTER(?src = <http://dbpedia.org/ontology/Person>)
+       # SERVICE <var:srcFilter> { {} }
+     }
+   } GROUP BY ?src ?outP ?outG }
+   UNION
+   { SELECT ?src ?inP ?inG (COUNT(DISTINCT ?inTgt) AS ?inPgDvc) {
+     GRAPH ?inG { ?inTgt ?inP ?src
+       FILTER(?src = <http://dbpedia.org/resource/Leipzig>)
+       # FILTER(?src = <http://dbpedia.org/ontology/Person>)
+       # SERVICE <var:srcFilter> { {} }
+     }
+   } GROUP BY ?src ?inP ?inG }
+}
+
+} }
+
+  BIND(CONCAT(STR(?root), '/', STR(?src), '/', STR(?outP)) AS ?outPStatsKey)
+  BIND(CONCAT(?outPStatsKey, '/', STR(?outG)) AS ?outPgStatsKey)
+
+  BIND(IRI(CONCAT('urn:', ?outPStatsKey)) AS ?outPStats)
+  BIND(IRI(CONCAT('urn:', ?outPgStatsKey)) AS ?outPgStats)
+
+  BIND(CONCAT(STR(?root), '/', STR(?src), '/', STR(?inP)) AS ?inPStatsKey)
+  BIND(CONCAT(?inPStatsKey, '/', STR(?inG)) AS ?inPgStatsKey)
+
+  BIND(IRI(CONCAT('urn:', ?inPStatsKey)) AS ?inPStats)
+  BIND(IRI(CONCAT('urn:', ?inPgStatsKey)) AS ?inPgStats)
+
+}

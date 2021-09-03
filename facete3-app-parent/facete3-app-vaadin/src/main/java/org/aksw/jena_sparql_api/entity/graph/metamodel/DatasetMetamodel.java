@@ -5,7 +5,6 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.KeyIri;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
-import org.aksw.jena_sparql_api.mapper.annotation.ValueIri;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -25,15 +24,15 @@ public interface DatasetMetamodel
     @IriNs("eg")
     @KeyIri("urn:resource")
     // @ValueIri("urn:value")
-    Map<Node, ResourceMetamodel> getResourceMetamodels();
+    Map<Node, ClassMetamodel> getResourceMetamodels();
 
-    default ResourceMetamodel getOrCreateResourceMetamodel(String iri) {
+    default ClassMetamodel getOrCreateResourceMetamodel(String iri) {
         return getOrCreateResourceMetamodel(NodeFactory.createURI(iri));
     }
 
-    default ResourceMetamodel getOrCreateResourceMetamodel(Node key) {
-        ResourceMetamodel result = getResourceMetamodels()
-                .computeIfAbsent(key, k -> getModel().createResource().as(ResourceMetamodel.class));
+    default ClassMetamodel getOrCreateResourceMetamodel(Node key) {
+        ClassMetamodel result = getResourceMetamodels()
+                .computeIfAbsent(key, k -> getModel().createResource().as(ClassMetamodel.class));
 
         return result;
     }

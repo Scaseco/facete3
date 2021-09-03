@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
@@ -34,6 +35,67 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
+
+/*
+
+SELECT * {
+
+SERVICE <https://dbpedia.org/sparql> { {
+
+SELECT ?src ?p ?fwd ?g ?dvc {
+   { SELECT ?src ?p ?g (COUNT(DISTINCT ?outTgt) AS ?dvc) (true AS ?fwd) {
+     GRAPH ?g { ?src ?p ?outTgt
+       # FILTER(?src = <http://dbpedia.org/resource/Leipzig>)
+       FILTER(?src = <http://dbpedia.org/ontology/Person>)
+     }
+   } GROUP BY ?src ?p ?g }
+   UNION
+   { SELECT ?src ?p ?g (COUNT(DISTINCT ?inTgt) AS ?dvc) (false AS ?fwd) {
+     GRAPH ?g { ?inTgt ?p ?src
+       # FILTER(?src = <http://dbpedia.org/resource/Leipzig>)
+       FILTER(?src = <http://dbpedia.org/ontology/Person>)
+     }
+   } GROUP BY ?src ?p ?g }
+ }
+
+} }
+}
+*/
+
+/**
+ * Resource Metamodel generation:
+ *
+ * - For a resource retrieve the number of out/ingoing properties and their number of distinct values per graph
+ * The stats are used to decide which set of properties to fetch eagerly and which ones to process lazily.
+ *
+ * Requesting the values of a lazy property always creates new requests.
+ * For eager properties all values are prefetched - so iteration of the values can operate from memory.
+ *
+ *
+ *
+ *
+ * Ideas for improved robustness for Resource Metamodel generation:
+ *
+ * Given a set of resources:
+ * - Thresholded count over the total number of triples:
+ *     <pre>
+ *     SELECT ?s ?inCount ?outCount {
+ *       { SELECT ?s (COUNT(*) AS ?outCount) {
+ *         SELECT * { ?s ?op ?oo FILTER(?s = <http://dbpedia.org/resource/Leipzig>) } LIMIT 1000 } }
+ *       { SELECT ?s (COUNT(*) AS ?inCount) {
+ *         SELECT * { ?io ?ip ?s FILTER(?s = <http://dbpedia.org/resource/Leipzig>) } LIMIT 1000 } }
+ *     }
+ *     </pre>
+ * - If the thresholds are not exceeded then all triples can be fetched
+ * - Otherwise: One or more predicates have a high number of values
+ *     (e.g. a class with rdf:type in inversion direction may be linked to billions of instances)
+ *     Try whether fetching the distinct predicates works (the db may have an index for that)
+ *     If that fails then there is probably no easy / certain way to get all properties.
+ *     Maybe we could try to fetch distinct properties within a chuck and then
+ *     do repeated requests with those already seen properties excluded (only works if the db can skip index entries)
+ *
+ */
+
 public class MainPlaygroundResourceMetamodel {
     public static void main(String[] args) {
         JenaSystem.init();
@@ -43,9 +105,24 @@ public class MainPlaygroundResourceMetamodel {
                 NodeSchemaFromNodeShape.class,
                 PropertySchemaFromPropertyShape.class,
                 DatasetMetamodel.class,
-                ResourceMetamodel.class,
+                ClassMetamodel.class,
                 PredicateStats.class,
-                GraphPredicateStats.class);
+                GraphPredicateStats.class,
+
+                ClassRelationModel.class,
+                ClassMetamodel.class
+                );
+
+        ConceptManager cm = new ConceptManagerImpl();
+        Node name = cm.getOrCreate(Concept.parse("?s { ?s a <Person> }"));
+
+        Node name2 = cm.getOrCreate(Concept.parse("?s { ?s a <Person> }"));
+
+
+
+        System.out.println(name);
+        System.out.println(name2);
+
 
 
         testAnalyzeResources();
@@ -53,7 +130,7 @@ public class MainPlaygroundResourceMetamodel {
 
     public static void testCreateModel() {
         DatasetMetamodel dsm = ModelFactory.createDefaultModel().createResource().as(DatasetMetamodel.class);
-        ResourceMetamodel m = dsm.getOrCreateResourceMetamodel("urn:my-resource-1");
+        ClassMetamodel m = dsm.getOrCreateResourceMetamodel("urn:my-resource-1");
 
         m.getKnownIngoingPredicateIris().add("http://foo.bar/baz");
 
@@ -138,7 +215,7 @@ public class MainPlaygroundResourceMetamodel {
 
     public static void fillModel(DatasetMetamodel dsm, Graph dataGraph,
             NodeSchema nodeSchema, Node node) {
-        ResourceMetamodel rmm = dsm.getOrCreateResourceMetamodel(node);
+        ClassMetamodel rmm = dsm.getOrCreateResourceMetamodel(node);
         // rmm.getOutgoingPredicateStats().get(Node.ANY).getGraphToPredicateStats().get(Node.ANY).get
         for (PropertySchema propertySchema : nodeSchema.getPredicateSchemas()) {
             boolean isForward = propertySchema.isForward();

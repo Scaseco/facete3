@@ -13,13 +13,14 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;
 
 /**
- * Information about
+ * Information about the ingoing/outgoing properties of a set of resources.
+ * The set can be a singleton set
  *
  * @author raven
  *
  */
 @ResourceView
-public interface ResourceMetamodel
+public interface ClassMetamodel
     extends Resource
 {
 //  Capture the total number of predicates? Probably its more useful to have to concrete list of known predicates from
@@ -39,7 +40,7 @@ public interface ResourceMetamodel
 
     @IriNs("eg")
     boolean isAllOutgoingPredicatesKnown();
-    ResourceMetamodel setAllOutgoingPredicatesKnown(boolean noOrYes);
+    ClassMetamodel setAllOutgoingPredicatesKnown(boolean noOrYes);
 
     @IriNs("eg")
     @KeyIri("urn:predicate")
@@ -55,7 +56,7 @@ public interface ResourceMetamodel
 
     @IriNs("eg")
     boolean isAllIngoingPredicatesKnown();
-    ResourceMetamodel setAllIngoingPredicatesKnown(boolean noOrYes);
+    ClassMetamodel setAllIngoingPredicatesKnown(boolean noOrYes);
 
     @IriNs("eg")
     @KeyIri("urn:predicate")
