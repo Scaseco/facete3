@@ -8,7 +8,7 @@ import java.util.List;
  *
  * This enables the use of all the
  * path operations in different contexts, such as
- * for use as keys in hierarchical data providers in Vaadin grids.
+ * for use as keys in hierarchical representations of RDF data (e.g. TreeGrids).
  *
  * @author Claus Stadler
  *

@@ -4,10 +4,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathNode;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
 
@@ -82,9 +82,9 @@ public class ResourceTraversals {
         System.out.println( Paths.get("/tmp").relativize(Paths.get("/tmp/foo")) );
         System.out.println( Paths.get("/tmp/foo").relativize(Paths.get("/tmp")) );
 
-        Path<Node> r = PathOpsNode.get().newRoot();
+        PathNode r = PathOpsNode.get().newRoot();
 
-        Path<Node> path = r.resolve(RDF.Nodes.type).resolve(RDF.Nodes.first).resolve(NodeValue.makeInteger(1).asNode());
+        PathNode path = r.resolve(RDF.type).resolve(RDF.first).resolve(NodeValue.makeInteger(1).asNode());
 
         System.out.println(path);
 
