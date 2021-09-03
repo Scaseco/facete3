@@ -191,6 +191,11 @@ public class PathBase<T, P extends Path<T>>
     }
 
     @Override
+    public P resolve(String other) {
+        return resolve(getPathOps().fromString(other));
+    }
+
+    @Override
     public P resolve(Path<T> other) {
         P result;
         if (other.isAbsolute()) {
@@ -206,7 +211,7 @@ public class PathBase<T, P extends Path<T>>
 
     @Override
     public P relativize(Path<T> other) {
-        return newPath(isAbsolute, relativize(this.segments, toList(other), getPathOps().getParentToken()));
+        return newPath(false, relativize(this.segments, toList(other), getPathOps().getParentToken()));
     }
 
 //	protected String getParentToken() {
@@ -312,7 +317,7 @@ public class PathBase<T, P extends Path<T>>
         }
 
         // Add the elements of b starting with index i
-        result.addAll(b.subList(i, bs - 1));
+        result.addAll(b.subList(i, bs));
         return result;
     }
 
@@ -321,10 +326,17 @@ public class PathBase<T, P extends Path<T>>
         return segmentsView;
     }
 
+
     @Override
     public P resolve(T other) {
         return resolve(getPathOps().newPath(other));
     }
+
+    @Override
+    public P resolveSibling(String other) {
+        return resolveSibling(getPathOps().fromString(other));
+    }
+
 
     @Override
     public P resolveSibling(T other) {

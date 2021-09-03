@@ -1,11 +1,14 @@
 package org.aksw.jena_sparql_api.entity.graph.metamodel;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.riot.system.RiotLib;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -76,10 +79,25 @@ public class ResourceTraversals {
 
     public static void main(String[] args) {
 
+        System.out.println( Paths.get("/tmp").relativize(Paths.get("/tmp/foo")) );
+        System.out.println( Paths.get("/tmp/foo").relativize(Paths.get("/tmp")) );
+
         Path<Node> r = PathOpsNode.get().newRoot();
 
-        Path<Node> path = r.resolve(RDF.Nodes.type).resolve(RDF.Nodes.first);
+        Path<Node> path = r.resolve(RDF.Nodes.type).resolve(RDF.Nodes.first).resolve(NodeValue.makeInteger(1).asNode());
+
         System.out.println(path);
+
+        Path<Node> rel = r.relativize(path);
+        String relStr = rel.toString();
+        System.out.println(relStr);
+        path = r.resolve(relStr);
+        System.out.println("Recovered from string: " + path);
+
+        System.out.println(path.relativize(r));
+
+        // String str = r.toString();
+
 
         path = path.resolve(PathOpsNode.PARENT).normalize();
         System.out.println(path);
