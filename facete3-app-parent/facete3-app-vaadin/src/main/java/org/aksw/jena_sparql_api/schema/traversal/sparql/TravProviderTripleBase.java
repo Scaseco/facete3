@@ -24,26 +24,26 @@ public abstract class TravProviderTripleBase<V>
 
     @Override
     public TravDirection<V> toDirection(TravValues<V> from, Node value) {
-        Path<Node> next = from.getPath().resolve(value);
+        Path<Node> next = from.path().resolve(value);
         return new TravDirection<>(this, next, from);
     }
 
     @Override
     public TravProperty<V> toProperty(TravDirection<V> from, boolean isFwd) {
         Node segment = isFwd ? TravDirection.FWD : TravDirection.BWD;
-        Path<Node> next = from.getPath().resolve(segment);
+        Path<Node> next = from.path().resolve(segment);
         return new TravProperty<>(this, next, from);
     }
 
     @Override
     public TravAlias<V> toAlias(TravProperty<V> from, Node property) {
-        Path<Node> next = from.getPath().resolve(property);
+        Path<Node> next = from.path().resolve(property);
         return new TravAlias<>(this, next, from);
     }
 
     @Override
     public TravValues<V> toValues(TravAlias<V> from, Node alias) {
-        Path<Node> next = from.getPath().resolve(alias);
+        Path<Node> next = from.path().resolve(alias);
         return new TravValues<>(this, next, from);
     }
 }

@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
+import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
@@ -25,38 +27,69 @@ public class TravProviderTripleSparql
 
     @Override
     public QueryBuilder computeValue(TravValues<QueryBuilder> node) {
-        QueryBuilder result;
-        if (node.getPath().getNameCount() == 0) {
-            result = new QueryBuilderImpl(rootConcept);
+        UnaryRelation rel;
+        if (node.path().getNameCount() == 0) {
+            rel = rootConcept;
         } else {
-            Relation tmp = Concept.parse("?s { VALUES (?s) { <urn:fwd> <urn:bwd> } }");
-            result = new QueryBuilderImpl(tmp);
+
+            Node s = node.parent().parent().parent().reachingSource();
+            boolean isFwd = node.parent().parent().reachedByFwd();
+            Node p = node.parent().reachingPredicate();
+
+            // TODO The alias should affect variable naming
+
+            rel = isFwd
+                    ? RelationUtils.createTernaryRelation(s, p, Node.ANY).project(Vars.o).toUnaryRelation()
+                    : RelationUtils.createTernaryRelation(Node.ANY, p, s).project(Vars.o).toUnaryRelation();
+
         }
+
+        QueryBuilder result = new QueryBuilderImpl(rel);
+
         return result;
     }
 
     @Override
     public QueryBuilder computeValue(TravDirection<QueryBuilder> node) {
-        QueryBuilder qb = computeValue(node.getParent());
-        UnaryRelation ur = qb.getBaseRelation().toUnaryRelation();
-        UnaryRelation ur2 = ur.joinOn(ur.getVar()).with(RelationUtils.SPO, Vars.s).project(Vars.s).toUnaryRelation();
-        return new QueryBuilderImpl(ur2);
+        Relation tmp = Concept.parse("?s { VALUES ?s { <urn:fwd> <urn:bwd> } }");
+        QueryBuilder result = new QueryBuilderImpl(tmp);
+        return result;
+//
+//        QueryBuilder qb = computeValue(node.getParent());
+//        UnaryRelation ur = qb.getBaseRelation().toUnaryRelation();
+//        UnaryRelation ur2 = ur.joinOn(ur.getVar()).with(RelationUtils.SPO, Vars.s).project(Vars.s).toUnaryRelation();
+//        return new QueryBuilderImpl(ur2);
     }
 
     @Override
     public QueryBuilder computeValue(TravProperty<QueryBuilder> node) {
-        QueryBuilder qb = computeValue(node.getParent().getParent());
-        UnaryRelation ur = qb.getBaseRelation().toUnaryRelation();
+        // Path<Node> path = node.getParent().getParent().getPath();
+        // UnaryRelation s = node.getParent().getParent().getValue().getBaseRelation().toUnaryRelation();
 
-        Node p = Iterables.getLast(node.getParent().getPath().getSegments());
+        Node s = node.parent().path().getFileName().toSegment();
+        Node dir = node.path().getFileName().toSegment();
+        boolean isFwd = dir.equals(TravDirection.FWD);
 
-        UnaryRelation ur2 = ur.joinOn(ur.getVar()).with(RelationUtils.SPO, Vars.s).project(Vars.s).toUnaryRelation();
+        QueryBuilder qb = computeValue(node.parent().parent());
+//        UnaryRelation ur = qb.getBaseRelation().toUnaryRelation();
+//
+//        Node p = Iterables.getLast(node.getParent().getPath().getSegments());
+//
+        UnaryRelation ur2;
+
+        if (isFwd) {
+            ur2 = RelationUtils.createTernaryRelation(s, Node.ANY, Node.ANY).project(Vars.p).toUnaryRelation();
+        } else {
+            ur2 = RelationUtils.createTernaryRelation(Node.ANY, Node.ANY, s).project(Vars.p).toUnaryRelation();
+        }
+
+
         return new QueryBuilderImpl(ur2);
     }
 
     @Override
     public QueryBuilder computeValue(TravAlias<QueryBuilder> node) {
-        UnaryRelation tmp = Concept.parse("?s { VALUES (?s) { <urn:default> }");
+        UnaryRelation tmp = Concept.parse("?s { VALUES ?s { '' } }");
         return new QueryBuilderImpl(tmp);
     }
 

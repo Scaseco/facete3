@@ -39,4 +39,15 @@ public interface Path<T> {
     Path<T> resolveSibling(Path<T> other);
 
     Path<T> relativize(Path<T> other);
+
+
+    default T toSegment() {
+        List<T> segments = getSegments();
+        if (segments.size() != 1) {
+            throw new IllegalStateException("toSegment() only allowed for paths with exactly one segment");
+        }
+
+        T result = segments.iterator().next();
+        return result;
+    }
 }

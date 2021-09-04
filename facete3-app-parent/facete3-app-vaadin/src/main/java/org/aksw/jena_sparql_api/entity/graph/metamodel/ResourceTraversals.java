@@ -16,6 +16,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -114,9 +115,18 @@ public class ResourceTraversals {
 
         TravValues<QueryBuilder> root = provider.root();
 
-        System.out.println(root.getValue());
+        System.out.println(root.payload());
 
-        System.out.println(root.traverse(RDF.first.asNode()).getValue());
+        System.out.println(root.goTo(RDF.first).payload());
+
+        System.out.println(root.goTo(RDF.first).fwd().payload());
+
+        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).payload());
+
+        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).dft().payload());
+
+        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).dft().goTo("urn:foo").payload());
+
     }
 
     public static void exampleDraft() {
