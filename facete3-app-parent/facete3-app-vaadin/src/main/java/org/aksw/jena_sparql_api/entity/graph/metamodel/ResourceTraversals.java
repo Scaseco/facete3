@@ -3,9 +3,15 @@ package org.aksw.jena_sparql_api.entity.graph.metamodel;
 import java.nio.file.Paths;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathNode;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.QueryBuilder;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTriple;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTripleSparql;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -79,6 +85,7 @@ public class ResourceTraversals {
 
     public static void main(String[] args) {
 
+
         System.out.println( Paths.get("/tmp").relativize(Paths.get("/tmp/foo")) );
         System.out.println( Paths.get("/tmp/foo").relativize(Paths.get("/tmp")) );
 
@@ -102,6 +109,14 @@ public class ResourceTraversals {
         path = path.resolve(PathOpsNode.PARENT).normalize();
         System.out.println(path);
 
+        UnaryRelation ur = Concept.parse("?s { ?s a <urn:Person> }");
+        TravProviderTriple<QueryBuilder> provider = new TravProviderTripleSparql(ur);
+
+        TravValues<QueryBuilder> root = provider.root();
+
+        System.out.println(root.getValue());
+
+        System.out.println(root.traverse(RDF.first.asNode()).getValue());
     }
 
     public static void exampleDraft() {

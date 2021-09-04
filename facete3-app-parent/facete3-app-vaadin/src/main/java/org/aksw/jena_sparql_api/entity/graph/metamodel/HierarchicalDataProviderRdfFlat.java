@@ -10,9 +10,25 @@ import org.apache.jena.graph.Node;
  * Data provider where ingoing and outgoing predicates are at the same
  * level of nesting:
  *
- * The schema of a resource traversal path is comprised of the following constituents:
+ * The schema of a triple-based resource traversal path is comprised of the following constituents:
  *
  * ${value}/${direction}/${property}/${alias}/${value}/...
+ *   Bob   /    fwd     /   job     /   x    / Artist
+ *
+ *
+ * For quads, a graph component is included:
+ *
+ * ${value}/${direction}/${property}/${alias}/${graph}/${value}/...
+ *   Bob   /    fwd     /   job     /   x    /  old   / Artist
+ *   Bob   /    fwd     /   job     /   x    /  new   / Architect
+ *
+ * Interpretation: Followng the predicate 'job' in forward direction starting from 'Bob'
+ * leads to a set of graphs, each of which contains a certain set of values.
+ *
+ *
+ *
+ *
+ *
  *
  * One can navigate from a value (a Node) to the set of related nodes
  *
