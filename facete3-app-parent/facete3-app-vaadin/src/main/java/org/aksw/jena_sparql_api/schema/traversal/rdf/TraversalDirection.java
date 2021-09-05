@@ -18,10 +18,10 @@ public interface TraversalDirection<P, D extends TraversalProperty<P>>
     D fwd();
     D bwd();
 
-    @Override
-    default TraversalDirection<P, D> traverse(Path<Node> path) {
-        return null;
-    }
+//    @Override
+//    default TraversalDirection<P, D> traverse(Path<Node> path) {
+//        return null;
+//    }
 
 
     // Convenience shortcuts

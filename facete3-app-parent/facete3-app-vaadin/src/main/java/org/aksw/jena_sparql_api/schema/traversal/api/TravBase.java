@@ -20,23 +20,23 @@ public class TravBase<S, V>
     }
 
     @Override
-    public Trav<S, V> back() {
+    public Trav<S, V> parent() {
         return parent;
     }
 
     @Override
-    public Path<S> getPath() {
+    public Path<S> path() {
         return path;
     }
     @Override
-    public V getValue() {
+    public V state() {
         return value;
     }
 
-    @Override
-    public Trav<S, V> traverse(Path<S> path) {
-        return provider.traverse(parent, path);
-    }
+//    @Override
+//    public Trav<S, V> traverse(Path<S> path) {
+//        return provider.traverse(parent, path);
+//    }
 
     @Override
     public Trav<S, V> traverse(S segment) {

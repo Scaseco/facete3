@@ -18,17 +18,22 @@ import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.PropertySchemaFromPropertyShape;
+import org.aksw.jena_sparql_api.schema.traversal.api.Trav;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.QueryBuilder;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTriple;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTripleImpl;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravDirection;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravProperty;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTriple;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleStateComputer;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleVisitorSparql;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.different.Traversals5.Traversal5A;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3A;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3B;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3C;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3Provider;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -111,6 +116,15 @@ public class ResourceTraversals {
     }
 
 
+    public static void fun(String[] args) {
+        Traversal5A<Node, Object, Boolean, Byte, Character, Short, Integer> test = null;
+
+        // fun.traverse(Node.ANY).
+        test.traverse(Node.ANY).traverse(null).parent().state();
+
+    }
+
+
     public static void main(String[] args) {
         JenaSystem.init();
         SHFactory.ensureInited();
@@ -179,13 +193,18 @@ public class ResourceTraversals {
                 .as(SHNodeShape.class);
 
 
-        TravProviderTriple<Set<RDFNode>> shaclProvider = createSimpleShaclTraverser(sourceNode);
+        if (false) {
+            TravProviderTriple<Set<RDFNode>> shaclProvider = createSimpleShaclTraverser(sourceNode);
+            dfs(shaclProvider.root(), 0, 9);
+        }
 
 
-        dfs(shaclProvider.root(), 0, 9);
+        Trav3Provider<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> myProvider = createSimpleShaclTraverser3(sourceNode);
+        dfs(myProvider.newRoot(PathOpsNode.get().newRoot()), 0, 9);
+
     }
 
-    public static void dfs(TravTriple<Set<RDFNode>> trav, int depth, int maxDepth) {
+    public static void dfs(Trav<Node, Set<RDFNode>> trav, int depth, int maxDepth) {
 
         if (depth >= maxDepth) {
             return;
@@ -196,7 +215,8 @@ public class ResourceTraversals {
 
             // The class or property itself - rather than the shape
 
-            RDFNode target;
+            RDFNode target = null;
+            /*
             switch (trav.type()) {
             case VALUES:
                 target = Optional.ofNullable(item.asResource().getProperty(SH.targetClass))
@@ -209,6 +229,7 @@ public class ResourceTraversals {
                 target = item;
                 break;
             }
+            */
 
 
             RDFNode shape = ResourceUtils.asBasicRdfNode(item);
@@ -217,9 +238,103 @@ public class ResourceTraversals {
             System.out.println("ITEM at depth " + depth + ": " + trav.path() + ": " + tgt + " (" + shape + ")");
 
             Node node = item.asNode();
-            TravTriple<Set<RDFNode>> next = trav.traverse(node);
+            Trav<Node, Set<RDFNode>> next = trav.traverse(node);
             dfs(next, depth + 1, maxDepth);
         }
+    }
+
+
+
+    public static Trav3Provider<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> createSimpleShaclTraverser3(SHNodeShape rootShape) {
+
+        Trav3Provider<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> provider = new Trav3Provider<>() {
+
+            @Override
+            public Set<RDFNode> mkRoot() {
+                return Collections.singleton(rootShape);
+            }
+
+            @Override
+            public Set<RDFNode> toB(Trav3A<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> a, Node segment) {
+                Set<RDFNode> result = new LinkedHashSet<>();
+                result.add(ModelUtils.convertGraphNodeToRDFNode(TravDirection.FWD, rootShape.getModel()));
+                result.add(ModelUtils.convertGraphNodeToRDFNode(TravDirection.BWD, rootShape.getModel()));
+                return result;
+            }
+
+            @Override
+            public Set<RDFNode> toC(Trav3B<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> b, Node segment) {
+              Set<RDFNode> nodeShapes = b.parent().state();
+              // Node reachingSegment = b.parent().reachingSegment();
+              boolean isFwd = segment.equals(TravDirection.FWD);
+
+              Set<RDFNode> propertyShapes = new LinkedHashSet<>();
+              for (RDFNode nodeShape : nodeShapes) {
+                  SHNodeShape ns = nodeShape.as(SHNodeShape.class);
+                  List<RDFNode> list = ns.getPropertyShapes().stream()
+                          .filter(ps ->  {
+                              // TODO This does not deal with all paths
+                              // If dir is backwards (false) then the path has to start with an inversePath
+                              return !isFwd
+                                      ? Optional.ofNullable(ps.getPath())
+                                              .map(p -> p.equals(SHACLM.inversePath))
+                                              .orElse(false)
+                                      : true;
+                          })
+                          .collect(Collectors.toList());
+
+                  propertyShapes.addAll(list);
+              }
+
+              return propertyShapes;
+            }
+
+            @Override
+            public Set<RDFNode> toA(Trav3C<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> c, Node segment) {
+
+              Node filterProperty = segment;
+
+              //boolean isFwd = from.reachedByFwd();
+              // Set<RDFNode> propertyShapes = from.parent().state();
+
+              // We don't need the prior set of computed property shapes
+              // We just need property shape that matches the reaching node
+              Collection<RDFNode> propertyShapes = Collections.singleton(
+                      rootShape.getModel().wrapAsResource(filterProperty)
+              );
+
+
+              // Map each property shape to its  sh:class's shapes
+              Set<RDFNode> targetNodeShapes = propertyShapes.stream()
+                      .map(p -> p.as(SHPropertyShape.class))
+//                      .filter(ps -> {
+//                          boolean r = ps.asNode().equals(filterProperty);
+//                          return r;
+//                          boolean r = Optional.ofNullable(ps.getPath()).map(pa -> {
+//                              return pa.asNode().equals(filterProperty);
+//                          }).orElse(false);
+//                          return r;
+//                      })
+                      .map(ps -> ps.getPropertyResourceValue(SH.class_))
+                      .filter(shClassValue -> shClassValue != null)
+                      .flatMap(shClassValue -> {
+                          Set<RDFNode> nodeShapes = ResourceUtils.listReverseProperties(shClassValue, SH.targetClass)
+                                  .mapWith(Statement::getSubject)
+                                  .mapWith(x -> (RDFNode)x)
+                                  .toSet();
+                          return nodeShapes.stream();
+                      })
+                      // .map(RDFNode::asResource)
+                      .collect(Collectors.toSet());
+
+          return targetNodeShapes;
+       }
+
+
+        };
+
+
+        return provider;
     }
 
 
