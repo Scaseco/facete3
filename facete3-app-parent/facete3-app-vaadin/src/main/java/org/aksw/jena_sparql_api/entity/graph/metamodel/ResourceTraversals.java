@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.entity.graph.metamodel;
 
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -181,7 +182,7 @@ public class ResourceTraversals {
         TravProviderTriple<Set<RDFNode>> shaclProvider = createSimpleShaclTraverser(sourceNode);
 
 
-        dfs(shaclProvider.root(), 0, 7);
+        dfs(shaclProvider.root(), 0, 9);
     }
 
     public static void dfs(TravTriple<Set<RDFNode>> trav, int depth, int maxDepth) {
@@ -212,7 +213,8 @@ public class ResourceTraversals {
 
             RDFNode shape = ResourceUtils.asBasicRdfNode(item);
             RDFNode tgt = ResourceUtils.asBasicRdfNode(target);
-            System.out.println("ITEM at depth " + depth + ": "+ tgt + "(" + shape + ")");
+//            System.out.println("ITEM at depth " + depth + ": " + tgt + " (" + shape + ")");
+            System.out.println("ITEM at depth " + depth + ": " + trav.path() + ": " + tgt + " (" + shape + ")");
 
             Node node = item.asNode();
             TravTriple<Set<RDFNode>> next = trav.traverse(node);
@@ -272,16 +274,33 @@ public class ResourceTraversals {
                 Set<RDFNode> targetNodeShapes;
                 if (TravAlias.DEFAULT_ALIAS.equals(alias)) {
 
+                    Node filterProperty = from.reachingPredicate();
+
                     //boolean isFwd = from.reachedByFwd();
-                    Set<RDFNode> propertyShapes = from.parent().state();
+                    // Set<RDFNode> propertyShapes = from.parent().state();
+
+                    // We don't need the prior set of computed property shapes
+                    // We just need property shape that matches the reaching node
+                    Collection<RDFNode> propertyShapes = Collections.singleton(
+                            rootShape.getModel().wrapAsResource(filterProperty)
+                    );
+
 
                     // Map each property shape to its  sh:class's shapes
                     targetNodeShapes = propertyShapes.stream()
                             .map(p -> p.as(SHPropertyShape.class))
-                            .map(ps -> ps.getClassOrDatatype())
-                            .filter(cod -> cod != null)
-                            .flatMap(cod -> {
-                                Set<RDFNode> nodeShapes = ResourceUtils.listReverseProperties(cod, SH.targetClass)
+//                            .filter(ps -> {
+//                                boolean r = ps.asNode().equals(filterProperty);
+//                                return r;
+//                                boolean r = Optional.ofNullable(ps.getPath()).map(pa -> {
+//                                    return pa.asNode().equals(filterProperty);
+//                                }).orElse(false);
+//                                return r;
+//                            })
+                            .map(ps -> ps.getPropertyResourceValue(SH.class_))
+                            .filter(shClassValue -> shClassValue != null)
+                            .flatMap(shClassValue -> {
+                                Set<RDFNode> nodeShapes = ResourceUtils.listReverseProperties(shClassValue, SH.targetClass)
                                         .mapWith(Statement::getSubject)
                                         .mapWith(x -> (RDFNode)x)
                                         .toSet();
