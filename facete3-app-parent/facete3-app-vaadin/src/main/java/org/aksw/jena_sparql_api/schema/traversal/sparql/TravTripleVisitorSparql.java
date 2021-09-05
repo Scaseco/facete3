@@ -1,32 +1,34 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
-import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravDirection;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravProperty;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 
-public class TravProviderTripleSparql
-    extends TravProviderTripleBase<QueryBuilder>
+public class TravTripleVisitorSparql
+    // extends TravProviderTripleBase<Void>
+    implements TravTripleVisitor<QueryBuilder>
 {
     protected UnaryRelation rootConcept;
 
-    public TravProviderTripleSparql(UnaryRelation rootConcept) {
-        super(PathOpsNode.get().newRoot());
+    public TravTripleVisitorSparql(UnaryRelation rootConcept) {
+        // super(PathOpsNode.get().newRoot());
         this.rootConcept = rootConcept;
     }
 
+    public static TravTripleVisitor<QueryBuilder> create(UnaryRelation rootConcept) {
+        return new TravTripleVisitorSparql(rootConcept);
+    }
+
     @Override
-    public QueryBuilder computeValue(TravValues<QueryBuilder> node) {
+    public QueryBuilder visit(TravValues<?> node) {
         UnaryRelation rel;
         if (node.path().getNameCount() == 0) {
             rel = rootConcept;
@@ -50,7 +52,7 @@ public class TravProviderTripleSparql
     }
 
     @Override
-    public QueryBuilder computeValue(TravDirection<QueryBuilder> node) {
+    public QueryBuilder visit(TravDirection<?> node) {
         Relation tmp = Concept.parse("?s { VALUES ?s { <urn:fwd> <urn:bwd> } }");
         QueryBuilder result = new QueryBuilderImpl(tmp);
         return result;
@@ -62,7 +64,7 @@ public class TravProviderTripleSparql
     }
 
     @Override
-    public QueryBuilder computeValue(TravProperty<QueryBuilder> node) {
+    public QueryBuilder visit(TravProperty<?> node) {
         // Path<Node> path = node.getParent().getParent().getPath();
         // UnaryRelation s = node.getParent().getParent().getValue().getBaseRelation().toUnaryRelation();
 
@@ -70,7 +72,7 @@ public class TravProviderTripleSparql
         Node dir = node.path().getFileName().toSegment();
         boolean isFwd = dir.equals(TravDirection.FWD);
 
-        QueryBuilder qb = computeValue(node.parent().parent());
+        QueryBuilder qb = visit(node.parent().parent());
 //        UnaryRelation ur = qb.getBaseRelation().toUnaryRelation();
 //
 //        Node p = Iterables.getLast(node.getParent().getPath().getSegments());
@@ -88,7 +90,7 @@ public class TravProviderTripleSparql
     }
 
     @Override
-    public QueryBuilder computeValue(TravAlias<QueryBuilder> node) {
+    public QueryBuilder visit(TravAlias<?> node) {
         UnaryRelation tmp = Concept.parse("?s { VALUES ?s { '' } }");
         return new QueryBuilderImpl(tmp);
     }

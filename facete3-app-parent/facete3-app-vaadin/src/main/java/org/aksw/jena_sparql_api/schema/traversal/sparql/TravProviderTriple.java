@@ -16,17 +16,17 @@ import org.apache.jena.graph.Node;
  *
  * @param <V>
  */
-public interface TravProviderTriple<V>
+public interface TravProviderTriple<S>
 {
-    TravValues<V> root();
+    TravValues<S> root();
 
-    TravDirection<V> toDirection(TravValues<V> from, Node value);
-    TravProperty<V> toProperty(TravDirection<V> from, boolean isFwd);
-    TravAlias<V> toAlias(TravProperty<V> from, Node property);
-    TravValues<V> toValues(TravAlias<V> from, Node alias);
+    TravDirection<S> toDirection(TravValues<S> from, Node value);
+    TravProperty<S> toProperty(TravDirection<S> from, boolean isFwd);
+    TravAlias<S> toAlias(TravProperty<S> from, Node property);
+    TravValues<S> toValues(TravAlias<S> from, Node alias);
 
-    V computeValue(TravValues<V> node);
-    V computeValue(TravDirection<V> node);
-    V computeValue(TravProperty<V> node);
-    V computeValue(TravAlias<V> node);
+//    V computeValue(TravValues<V, S> node);
+//    V computeValue(TravDirection<V, S> node);
+//    V computeValue(TravProperty<V, S> node);
+//    V computeValue(TravAlias<V, S> node);
 }

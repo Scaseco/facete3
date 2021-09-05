@@ -10,8 +10,10 @@ import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathNode;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.QueryBuilder;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTriple;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTripleSparql;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTripleImpl;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleVisitorSparql;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -111,21 +113,26 @@ public class ResourceTraversals {
         System.out.println(path);
 
         UnaryRelation ur = Concept.parse("?s { ?s a <urn:Person> }");
-        TravProviderTriple<QueryBuilder> provider = new TravProviderTripleSparql(ur);
+        // TravProviderTriple<QueryBuilder> provider = new TravProviderTripleSparql(ur);
 
-        TravValues<QueryBuilder> root = provider.root();
+        TravProviderTriple<Void> provider = TravProviderTripleImpl.create();
+        // TravValues<QueryBuilder, ?> root = provider.root();
 
-        System.out.println(root.payload());
+        TravTripleVisitor<QueryBuilder> gen = TravTripleVisitorSparql.create(ur);
 
-        System.out.println(root.goTo(RDF.first).payload());
+        TravValues<Void> root = provider.root();
 
-        System.out.println(root.goTo(RDF.first).fwd().payload());
+        System.out.println(root.accept(gen));
 
-        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).payload());
+        System.out.println(root.goTo(RDF.first).accept(gen));
 
-        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).dft().payload());
+        System.out.println(root.goTo(RDF.first).fwd().accept(gen));
 
-        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).dft().goTo("urn:foo").payload());
+        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).accept(gen));
+
+        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).dft().accept(gen));
+
+        System.out.println(root.goTo(RDF.first).fwd(RDFS.label).dft().goTo("urn:foo").accept(gen));
 
     }
 

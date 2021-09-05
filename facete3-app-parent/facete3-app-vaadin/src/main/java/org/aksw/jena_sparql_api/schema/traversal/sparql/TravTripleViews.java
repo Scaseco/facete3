@@ -8,39 +8,56 @@ import org.apache.jena.rdf.model.Resource;
 
 public class TravTripleViews {
 
-    public interface TravTripleVisitor<V> {
-        <T> T visit(TravValues<V> trav);
-        <T> T visit(TravDirection<V> trav);
-        <T> T visit(TravProperty<V> trav);
-        <T> T visit(TravAlias<V> trav);
+    public interface TravTripleStateVisitor<T, S> {
+        T visit(TravValues<S> trav);
+        T visit(TravDirection<S> trav);
+        T visit(TravProperty<S> trav);
+        T visit(TravAlias<S> trav);
     }
 
-    public interface TravTriple<V> {
+    public interface TravTripleVisitor<T> {
+        T visit(TravValues<?> trav);
+        T visit(TravDirection<?> trav);
+        T visit(TravProperty<?> trav);
+        T visit(TravAlias<?> trav);
+    }
+
+
+    public interface TravTriple<S> {
         Path<Node> path();
-        TravTriple<V> parent();
+        TravTriple<S> parent();
+        S state();
 
-        TravProviderTriple<V> provider();
-        TravTriple<V> traverse(Node segment);
-        V payload();
+        TravProviderTriple<S> provider();
+        TravTriple<S> traverse(Node segment);
+        // V payload();
 
-        <T> T accept(TravTripleVisitor<V> visitor);
+        <T> T accept(TravTripleVisitor<T> visitor);
+        <T> T accept(TravTripleStateVisitor<T, S> visitor);
     }
 
-    public static abstract class TravTripleBase<V>
-        implements TravTriple<V>
+    public static abstract class TravTripleBase<S>
+        implements TravTriple<S>
         // extends TravViewBase<V, StateTriple<V>>
     {
-        protected TravProviderTriple<V> provider;
+        protected TravProviderTriple<S> provider;
         protected Path<Node> path;
+        protected S state;
 
-        public TravTripleBase(TravProviderTriple<V> provider, Path<Node> path) {
+        public TravTripleBase(TravProviderTriple<S> provider, Path<Node> path, S state) {
             super();
             this.provider = provider;
             this.path = path;
+            this.state = state;
+        }
+
+        /** Providers may use this field to directly put information into instances of this class*/
+        public S state() {
+            return state;
         }
 
         @Override
-        public TravProviderTriple<V> provider() {
+        public TravProviderTriple<S> provider() {
             return provider;
         }
 
@@ -49,13 +66,16 @@ public class TravTripleViews {
         }
     }
 
-    public static class TravValues<V>
-        extends TravTripleBase<V>
-    {
-        protected TravAlias<V> parent;
 
-        public TravValues(TravProviderTriple<V> provider, Path<Node> path, TravAlias<V> parent) {
-            super(provider, path);
+
+    public static class TravValues<S>
+        extends TravTripleBase<S>
+        // implements TravV<V>
+    {
+        protected TravAlias<S> parent;
+
+        public TravValues(TravProviderTriple<S> provider, Path<Node> path, TravAlias<S> parent, S state) {
+            super(provider, path, state);
             this.parent = parent;
         }
 
@@ -68,55 +88,55 @@ public class TravTripleViews {
         }
 
         @Override
-        public TravAlias<V> parent() {
+        public TravAlias<S> parent() {
             return parent;
         }
 
         /** The domain alias for 'going to' a certain value - delegates to traverse */
-        public TravDirection<V> goTo(String iri) {
+        public TravDirection<S> goTo(String iri) {
             return goTo(NodeFactory.createURI(iri));
         }
 
         /** The domain alias for 'going to' a certain value - delegates to traverse */
-        public TravDirection<V> goTo(Resource r) {
+        public TravDirection<S> goTo(Resource r) {
             return goTo(r.asNode());
         }
 
         /** The domain alias for 'going to' a certain value - delegates to traverse */
-        public TravDirection<V> goTo(Node value) {
+        public TravDirection<S> goTo(Node value) {
             return traverse(value);
         }
 
 
         @Override
-        public TravDirection<V> traverse(Node segment) {
+        public TravDirection<S> traverse(Node segment) {
             return provider.toDirection(this, segment);
         }
 
         @Override
-        public V payload() {
-            return provider.computeValue(this);
-        }
-
-        @Override
-        public <T> T accept(TravTripleVisitor<V> visitor) {
+        public <T> T accept(TravTripleVisitor<T> visitor) {
             T result = visitor.visit(this);
             return result;
         }
 
+        @Override
+        public <T> T accept(TravTripleStateVisitor<T, S> visitor) {
+            T result = visitor.visit(this);
+            return result;
+        }
     }
 
 
-    public static class TravDirection<V>
-        extends TravTripleBase<V>
+    public static class TravDirection<S>
+        extends TravTripleBase<S>
     {
         public static final Node FWD = NodeFactory.createURI("urn:fwd"); // NodeValue.TRUE.asNode();
         public static final Node BWD = NodeFactory.createURI("urn:bwd"); // NodeValue.FALSE.asNode();
 
-        protected TravValues<V> parent;
+        protected TravValues<S> parent;
 
-        public TravDirection(TravProviderTriple<V> provider, Path<Node> path, TravValues<V> parent) {
-            super(provider, path);
+        public TravDirection(TravProviderTriple<S> provider, Path<Node> path, TravValues<S> parent, S state) {
+            super(provider, path, state);
             this.parent = parent;
         }
 
@@ -128,43 +148,43 @@ public class TravTripleViews {
 
 
         @Override
-        public TravValues<V> parent() {
+        public TravValues<S> parent() {
             return parent;
         }
 
-        public TravProperty<V> fwd() {
+        public TravProperty<S> fwd() {
             return provider.toProperty(this, true);
         }
 
-        public TravProperty<V> bwd() {
+        public TravProperty<S> bwd() {
             return provider.toProperty(this, false);
         }
 
         /* short hands */
 
-        public TravAlias<V> fwd(String predicateIri) {
+        public TravAlias<S> fwd(String predicateIri) {
             return fwd().via(predicateIri);
         }
 
-        public TravAlias<V> fwd(Resource property) {
+        public TravAlias<S> fwd(Resource property) {
             return fwd().via(property);
         }
 
-        public TravAlias<V> fwd(Node node) {
+        public TravAlias<S> fwd(Node node) {
             return fwd().via(node);
         }
 
 
 
-        public TravAlias<V> bwd(String predicateIri) {
+        public TravAlias<S> bwd(String predicateIri) {
             return bwd().via(predicateIri);
         }
 
-        public TravAlias<V> bwd(Resource property) {
+        public TravAlias<S> bwd(Resource property) {
             return bwd().via(property);
         }
 
-        public TravAlias<V> bwd(Node node) {
+        public TravAlias<S> bwd(Node node) {
             return bwd().via(node);
         }
 
@@ -172,8 +192,8 @@ public class TravTripleViews {
 
 
         @Override
-        public TravProperty<V> traverse(Node segment) {
-            TravProperty<V> result;
+        public TravProperty<S> traverse(Node segment) {
+            TravProperty<S> result;
 
             if (FWD.equals(segment)) {
                 result = fwd();
@@ -186,32 +206,34 @@ public class TravTripleViews {
             return result;
         }
 
+
         @Override
-        public V payload() {
-            return provider.computeValue(this);
+        public <T> T accept(TravTripleVisitor<T> visitor) {
+            T result = visitor.visit(this);
+            return result;
         }
 
         @Override
-        public <T> T accept(TravTripleVisitor<V> visitor) {
+        public <T> T accept(TravTripleStateVisitor<T, S> visitor) {
             T result = visitor.visit(this);
             return result;
         }
     }
 
-    public static class TravProperty<V>
-        extends TravTripleBase<V>
+    public static class TravProperty<S>
+        extends TravTripleBase<S>
         // implements TraversalProperty<TravViewAlias<V>>
     {
 
-        protected TravDirection<V> parent;
+        protected TravDirection<S> parent;
 
-        public TravProperty(TravProviderTriple<V> provider, Path<Node> path, TravDirection<V> parent) {
-            super(provider, path);
+        public TravProperty(TravProviderTriple<S> provider, Path<Node> path, TravDirection<S> parent, S state) {
+            super(provider, path, state);
             this.parent = parent;
         }
 
         @Override
-        public TravDirection<V> parent() {
+        public TravDirection<S> parent() {
             return parent;
         }
 
@@ -224,56 +246,58 @@ public class TravTripleViews {
 
 
         /** The domain alias for traversial via a predicate */
-        public TravAlias<V> via(String iri) {
+        public TravAlias<S> via(String iri) {
             return via(NodeFactory.createURI(iri));
         }
 
         /** The domain alias for 'going to' a certain value - delegates to traverse */
-        public TravAlias<V> via(Resource r) {
+        public TravAlias<S> via(Resource r) {
             return via(r.asNode());
         }
 
         /** The domain alias for 'going to' a certain value - delegates to traverse */
-        public TravAlias<V> via(Node predicate) {
+        public TravAlias<S> via(Node predicate) {
             return traverse(predicate);
         }
 
 
 
         @Override
-        public TravAlias<V> traverse(Node segment) {
+        public TravAlias<S> traverse(Node segment) {
             return provider.toAlias(this, segment);
         }
 
+
         @Override
-        public V payload() {
-            return provider.computeValue(this);
+        public <T> T accept(TravTripleVisitor<T> visitor) {
+            T result = visitor.visit(this);
+            return result;
         }
 
         @Override
-        public <T> T accept(TravTripleVisitor<V> visitor) {
+        public <T> T accept(TravTripleStateVisitor<T, S> visitor) {
             T result = visitor.visit(this);
             return result;
         }
 
     }
 
-    public static class TravAlias<V>
-        extends TravTripleBase<V>
+    public static class TravAlias<S>
+        extends TravTripleBase<S>
     {
         public static final Node DEFAULT_ALIAS = NodeFactory.createLiteral(""); // NodeValue.TRUE.asNode();
 
-        protected TravProperty<V> parent;
+        protected TravProperty<S> parent;
 
 
-        public TravAlias(TravProviderTriple<V> provider, Path<Node> path, TravProperty<V> parent) {
-            super(provider, path);
+        public TravAlias(TravProviderTriple<S> provider, Path<Node> path, TravProperty<S> parent, S state) {
+            super(provider, path, state);
             this.parent = parent;
         }
 
 
         @Override
-        public TravProperty<V> parent() {
+        public TravProperty<S> parent() {
             return parent;
         }
 
@@ -289,26 +313,32 @@ public class TravTripleViews {
 
 
         /** default alias */
-        public TravValues<V> dft() {
+        public TravValues<S> dft() {
             return traverse(DEFAULT_ALIAS);
         }
 
-        public TravValues<V> alias(String alias) {
+        public TravValues<S> alias(String alias) {
             return traverse(NodeFactory.createLiteral(alias));
         }
 
         @Override
-        public TravValues<V> traverse(Node segment) {
+        public TravValues<S> traverse(Node segment) {
             return provider.toValues(this, segment);
         }
 
+//        @Override
+//        public V payload() {
+//            return provider.computeValue(this);
+//        }
+
         @Override
-        public V payload() {
-            return provider.computeValue(this);
+        public <T> T accept(TravTripleVisitor<T> visitor) {
+            T result = visitor.visit(this);
+            return result;
         }
 
         @Override
-        public <T> T accept(TravTripleVisitor<V> visitor) {
+        public <T> T accept(TravTripleStateVisitor<T, S> visitor) {
             T result = visitor.visit(this);
             return result;
         }
