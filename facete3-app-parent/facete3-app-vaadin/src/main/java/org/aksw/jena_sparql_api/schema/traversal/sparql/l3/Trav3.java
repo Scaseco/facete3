@@ -125,7 +125,7 @@ public class Trav3 {
         public Trav3C<T, S, A, B, C> traverse(T segment) {
             Path<T> nextPath = path.resolve(segment);
             C c = provider.toC(this, segment);
-            return new Trav3C<T, S, A, B, C>(provider, nextPath, c, this);
+            return new Trav3C<T, S, A, B, C>(provider, nextPath, this, c);
         }
 
         @Override
@@ -145,8 +145,8 @@ public class Trav3 {
         protected Trav3B<T, S, A, B, C> parent;
         protected C state;
 
-        public Trav3C(Trav3Provider<T, S, A, B, C> provider, Path<T> path, C state,
-                Trav3B<T, S, A, B, C> parent) {
+        public Trav3C(Trav3Provider<T, S, A, B, C> provider, Path<T> path, Trav3B<T, S, A, B, C> parent,
+                C state) {
             super(provider, path);
             this.state = state;
             this.parent = parent;
