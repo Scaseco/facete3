@@ -56,6 +56,40 @@ public class TravTripleViews {
     }
 
 
+    public static enum TravTripleType {
+        VALUES,
+        DIRECTION,
+        PROPERTY,
+        ALIAS
+    }
+
+    public static class TravTripleVisitorClassify
+        implements TravTripleVisitor<TravTripleType>
+    {
+        public static final TravTripleVisitorClassify INSTANCE = new TravTripleVisitorClassify();
+
+        @Override
+        public TravTripleType visit(TravValues<?> trav) {
+            return TravTripleType.VALUES;
+        }
+
+        @Override
+        public TravTripleType visit(TravDirection<?> trav) {
+            return TravTripleType.DIRECTION;
+        }
+
+        @Override
+        public TravTripleType visit(TravProperty<?> trav) {
+            return TravTripleType.PROPERTY;
+        }
+
+        @Override
+        public TravTripleType visit(TravAlias<?> trav) {
+            return TravTripleType.ALIAS;
+        }
+
+    }
+
     public interface TravTriple<S> {
         Path<Node> path();
         TravTriple<S> parent();
@@ -67,6 +101,10 @@ public class TravTripleViews {
 
         <T> T accept(TravTripleVisitor<T> visitor);
         <T> T accept(TravTripleStateVisitor<T, S> visitor);
+
+        default TravTripleType type() {
+            return accept(TravTripleVisitorClassify.INSTANCE);
+        }
     }
 
     public static abstract class TravTripleBase<S>
