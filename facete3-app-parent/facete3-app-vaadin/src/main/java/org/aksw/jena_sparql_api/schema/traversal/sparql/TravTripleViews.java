@@ -8,6 +8,39 @@ import org.apache.jena.rdf.model.Resource;
 
 public class TravTripleViews {
 
+    public interface TravTripleStateComputer<S> {
+        S nextState(TravValues<S> from, Node value);
+        S nextState(TravDirection<S> from, boolean isFwd);
+        S nextState(TravProperty<S> from, Node property);
+        S nextState(TravAlias<S> from, Node alias);
+    }
+
+    public static class TravTripleStateComputerAlwaysNull<S>
+        implements TravTripleStateComputer<S>
+    {
+        @Override
+        public S nextState(TravValues<S> from, Node value) {
+            return null;
+        }
+
+        @Override
+        public S nextState(TravDirection<S> from, boolean isFwd) {
+            return null;
+        }
+
+        @Override
+        public S nextState(TravProperty<S> from, Node property) {
+            return null;
+        }
+
+        @Override
+        public S nextState(TravAlias<S> from, Node alias) {
+            return null;
+        }
+    }
+
+
+
     public interface TravTripleStateVisitor<T, S> {
         T visit(TravValues<S> trav);
         T visit(TravDirection<S> trav);
