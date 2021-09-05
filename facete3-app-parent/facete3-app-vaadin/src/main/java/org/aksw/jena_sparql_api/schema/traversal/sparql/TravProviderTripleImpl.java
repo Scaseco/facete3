@@ -35,6 +35,14 @@ public class TravProviderTripleImpl<S>
         return new TravProviderTripleImpl<>(() -> null, new TravTripleStateComputerAlwaysNull<Void>());
     }
 
+    public static <S> TravProviderTriple<S> create(S rootState, TravTripleStateComputer<S> stateComputer) {
+        return new TravProviderTripleImpl<>(() -> rootState, stateComputer);
+    }
+
+    public static <S> TravProviderTriple<S> create(Supplier<S> rootStateSupp, TravTripleStateComputer<S> stateComputer) {
+        return new TravProviderTripleImpl<>(rootStateSupp, stateComputer);
+    }
+
     @Override
     public TravValues<S> root() {
         Path<Node> rootPath = PathOpsNode.get().newRoot();
