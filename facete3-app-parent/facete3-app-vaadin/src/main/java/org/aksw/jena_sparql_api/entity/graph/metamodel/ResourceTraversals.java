@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.entity.graph.metamodel;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
@@ -45,13 +47,17 @@ import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3B;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3C;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3Provider;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l5.Traversals5.Traversal5A;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shacl.vocabulary.SHACLM;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.OWL;
@@ -137,20 +143,23 @@ public class ResourceTraversals {
     }
 
     public static void main(String[] args) {
-        PathPE expected = PathOpsPE.newAbsolutePath()
-            .resolveSegment("<urn:test>")
-            .resolveSegment("?x IN (<urn:yay>)");
+        JenaSystem.init();
+//        PathPE expected = PathOpsPE.newAbsolutePath()
+//            .resolveSegment("<urn:test>")
+//            .resolveSegment("?x IN (<urn:yay>)");
+//
+//        String str = expected.toString();
+//        System.out.println(expected);
+//
+//        PathPE actual = PathOpsPE.newAbsolutePath().resolve(str);
+//
+//        System.out.println(expected.equals(actual));
+//
+//
+//
+//        mainShacl(args);
 
-        String str = expected.toString();
-        System.out.println(expected);
-
-        PathPE actual = PathOpsPE.newAbsolutePath().resolve(str);
-
-        System.out.println(expected.equals(actual));
-
-
-
-        mainShacl(args);
+        mainRelationGen(args);
     }
 
     public static void mainRelationGen(String[] args) {
@@ -191,17 +200,39 @@ public class ResourceTraversals {
 
 
 
-        Relation r = RelationUtils.SPO;
+        Relation r = createShaclRelation();
+        System.out.println(r);
 
         RelationGeneratorSimple gen = RelationGeneratorSimple.create(r);
 
 
-        Relation rel = gen.process(tgt);
+        PathPE exprs = PathOpsPE.newAbsolutePath()
+                .resolveAll().resolveSegment("<urn:fwd>").resolve(RDFS.label); //.resolve(RDF.type).resolve(OWL.hasValue);
+
+
+        System.out.println(exprs);
+        Relation rel = gen.process(exprs);
+
 
         System.out.println(rel);
 
+        Query qp = QueryUtils.applyOpTransform(rel.toQuery(), AlgebraUtils.createDefaultRewriter()::rewrite);
+        System.out.println(qp);
     }
 
+
+    public static Relation createShaclRelation() {
+
+        Query query;
+        try {
+            query = SparqlStmtMgr.loadQuery("shacl-relation.rq");
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+        Relation result = RelationUtils.fromQuery(query);
+
+        return result;
+    }
 
 
 

@@ -8,23 +8,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
+import org.aksw.jena_sparql_api.concepts.UnaryXExpr;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsPE;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathPE;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprLib;
-import org.apache.jena.sparql.expr.ExprVar;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.BaseEncoding;
 
 /** */
 public abstract class RelationGeneratorBase
 //    implements Trav1Provider<Node, RelationBuilder>
 {
+
+    /** The current relation */
     protected Relation relation;
 
     // A hash updated upon requesting a new relation; hash is based on the seen path segments
@@ -43,14 +42,14 @@ public abstract class RelationGeneratorBase
      * Once it covers all columns of the relation it is used to compute the
      * next context hash
      */
-    protected Path<Node> relationStartAbsPath;
+    protected PathPE relationStartAbsPath;
 
 
     /**
      * The relative path of segments seen for the current relation
      * Connects to relationStartPath
      */
-    protected Path<Node> relPath;
+    protected PathPE relPath;
 
     /** The path segments seen for the current relation. */
     // protected List<Node> segments = new ArrayList<>();
@@ -85,7 +84,7 @@ public abstract class RelationGeneratorBase
         return hashCode.toString(); // BaseEncoding.base64Url().encode(contextHash.asBytes());
     }
 
-    public Relation process(Path<Node> path) {
+    public Relation process(PathPE path) {
         if (path.isAbsolute()) {
             reset();
         }
@@ -95,7 +94,7 @@ public abstract class RelationGeneratorBase
 
         Relation result = relation;
 
-        for (Node segment : path.getSegments()) {
+        for (UnaryXExpr segment : path.getSegments()) {
             result = process(segment);
         }
 
@@ -106,8 +105,8 @@ public abstract class RelationGeneratorBase
         setHashCode(null);
         relation = null;
         columnIdx = 0;
-        relationStartAbsPath = PathOpsNode.newAbsolutePath();
-        relPath = PathOpsNode.newRelativePath();
+        relationStartAbsPath = PathOpsPE.newAbsolutePath();
+        relPath = PathOpsPE.newRelativePath();
         updateHash();
     }
 
@@ -121,7 +120,7 @@ public abstract class RelationGeneratorBase
             relation = nextInstance();
 
             relationStartAbsPath = relationStartAbsPath.resolve(relPath);
-            relPath = PathOpsNode.newRelativePath();
+            relPath = PathOpsPE.newRelativePath();
 
             List<Var> vars = relation.getVars();
             if (vars.size() <= 1) {
@@ -136,23 +135,23 @@ public abstract class RelationGeneratorBase
 
             Var firstVar = vars.get(0);
 
-            Map<Var, Node> remap = vars.stream()
+            Map<Var, Node> remap = relation.getVarsMentioned().stream()
                     .collect(Collectors.toMap(
                             v -> v,
                             node -> {
-                                Node r = null;
+                                Node r;
                                 if (node.isVariable()) {
                                     String prefix = node.equals(firstVar)
                                             ? oldHash
                                             : contextHashStr;
                                     r = Var.alloc(prefix + "_" + node.getName());
                                 } else {
-                                    r = null;
+                                    r = node;
                                 }
                                 return r;
                             }));
 
-            relation = relation.applyNodeTransform(remap::get);
+            relation = relation.applyNodeTransform(v -> remap.getOrDefault(v, v));
 
             columnIdx = 0;
         }
@@ -165,14 +164,14 @@ public abstract class RelationGeneratorBase
     }
 
 
-    protected HashCode computeNextHash(HashCode currentHash, Path<Node> relationStartAbsPath, Path<Node> relPath) {
+    protected HashCode computeNextHash(HashCode currentHash, PathPE relationStartAbsPath, PathPE relPath) {
         HashCode contrib = Hashing.murmur3_32().hashString(relPath.toString(), StandardCharsets.UTF_8);
 
         HashCode result = currentHash == null ? contrib : Hashing.combineOrdered(Arrays.asList(currentHash, contrib));
         return result;
     }
 
-    public Relation process(Node segment) {
+    public Relation process(UnaryXExpr segment) {
 
         ensureInit();
 
@@ -183,8 +182,14 @@ public abstract class RelationGeneratorBase
         Var v = vars.get(columnIdx);
         ++ columnIdx;
 
-        Expr expr = new E_Equals(new ExprVar(v), ExprLib.nodeToExpr(segment));
-        conditions.add(expr);
+        if (!segment.isAlwaysTrue()) {
+
+            // Substitute the only variable in the expression with that of the relation instance
+            Expr expr = segment.getExpr().applyNodeTransform(x -> x.isVariable() ? v : x);
+
+
+            conditions.add(expr);
+        }
 
         Relation r = relation.filter(conditions);
 
