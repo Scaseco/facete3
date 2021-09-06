@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathNode;
@@ -19,6 +21,7 @@ import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.PropertySchemaFromPropertyShape;
 import org.aksw.jena_sparql_api.schema.traversal.api.Trav;
+import org.aksw.jena_sparql_api.schema.traversal.relgen.RelationGeneratorSimple;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.QueryBuilder;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTriple;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTripleImpl;
@@ -29,11 +32,17 @@ import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTrip
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleVisitorSparql;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.different.Traversals5.Traversal5A;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2A;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2B;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2Provider;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2ProviderBase;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2Visitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3A;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3B;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3C;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3Provider;
+import org.aksw.jena_sparql_api.schema.traversal.sparql.l5.Traversals5.Traversal5A;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -43,6 +52,7 @@ import org.apache.jena.shacl.vocabulary.SHACLM;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.topbraid.shacl.model.SHFactory;
@@ -124,8 +134,119 @@ public class ResourceTraversals {
 
     }
 
-
     public static void main(String[] args) {
+
+        PathNode path = PathOpsNode.newAbsolutePath();
+        PathNode tgt = path.resolve(RDF.first).resolve(RDF.rest).resolve(RDFS.label).resolve(RDF.type).resolve(OWL.hasValue);
+
+        XRelationTree tree = new XRelationTree();
+        TreeNode2<Node, XRelationNode, XAliasNode> node = tree.resolve(tgt);
+
+        TreeNode2Visitor<String, XRelationNode, XAliasNode> visitor = new TreeNode2Visitor<String, XRelationNode, XAliasNode>() {
+            @Override
+            public String visitA(XRelationNode a) {
+                return "" + a.getRelation();
+            }
+
+            @Override
+            public String visitB(XAliasNode b) {
+                return b.getAlias();
+            }
+        };
+
+        System.out.println("CHILDREN: " + tree.root().childKeys().collect(Collectors.toList()));
+
+        System.out.println("GOT: " + node.accept(visitor));
+
+        if (node.isA()) {
+            XRelationNode relNode = node.asA();
+            System.out.println(relNode.getRelation());
+        } else if (node.isB()) {
+            XAliasNode alNode = node.asB();
+            System.out.println(alNode.getAlias());
+        }
+
+
+
+        Relation r = RelationUtils.SPO;
+
+        RelationGeneratorSimple gen = RelationGeneratorSimple.create(r);
+
+
+        Relation rel = gen.process(tgt);
+
+        System.out.println(rel);
+
+    }
+
+
+    static class XRelationTree
+        extends TreeNode2ProviderBase<Node, XRelationNode, XAliasNode>
+    {
+
+        @Override
+        public XRelationNode mkRoot() {
+            return new XRelationNode(PathOpsNode.newAbsolutePath(), this, null, RelationUtils.SPO);
+        }
+
+        @Override
+        public XAliasNode toB(XRelationNode a, Node segment) {
+            String alias = segment.toString();
+            return new XAliasNode(a.path().resolve(segment), this, a, alias);
+        }
+
+        @Override
+        public XRelationNode toA(XAliasNode b, Node segment) {
+            return new XRelationNode(b.path().resolve(segment), this, b, RelationUtils.SPO);
+        }
+    }
+
+    static class XAliasNode
+        extends TreeNode2B<Node, XRelationNode, XAliasNode>
+    {
+        protected String alias;
+
+        public XAliasNode(Path<Node> path, TreeNode2Provider<Node, XRelationNode, XAliasNode> provider,
+                XRelationNode parent, String alias) {
+            super(path, provider, parent);
+            this.alias = alias;
+        }
+
+        public String getAlias() {
+            return alias;
+        }
+
+        @Override
+        protected XRelationNode sendSelfToProvider(Node key) {
+            return provider.toA(this, key);
+        }
+    }
+
+    static class XRelationNode
+        extends TreeNode2A<Node, XRelationNode, XAliasNode>
+    {
+        protected Relation relation;
+
+        public XRelationNode(Path<Node> path, TreeNode2Provider<Node, XRelationNode, XAliasNode> provider,
+                XAliasNode parent, Relation relation) {
+            super(path, provider, parent);
+            this.relation = relation;
+        }
+
+        public Relation getRelation() {
+            return relation;
+        }
+
+        @Override
+        protected XAliasNode sendSelfToProvider(Node key) {
+            return provider.toB(this, key);
+        }
+    }
+
+
+
+
+    public static void mainShacl(String[] args) {
         JenaSystem.init();
         SHFactory.ensureInited();
 

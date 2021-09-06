@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.schema.traversal.sparql.different;
+package org.aksw.jena_sparql_api.schema.traversal.sparql.l5;
 
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
 import org.aksw.jena_sparql_api.schema.traversal.api.Trav;

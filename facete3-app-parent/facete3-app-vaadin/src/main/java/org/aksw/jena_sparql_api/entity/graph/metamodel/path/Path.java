@@ -14,7 +14,9 @@ import java.util.List;
  *
  * @param <T> The types of segments in the path
  */
-public interface Path<T> {
+public interface Path<T>
+    extends Iterable<Path<T>>
+{
     Path<T> toAbsolutePath();
     boolean isAbsolute();
     List<T> getSegments();

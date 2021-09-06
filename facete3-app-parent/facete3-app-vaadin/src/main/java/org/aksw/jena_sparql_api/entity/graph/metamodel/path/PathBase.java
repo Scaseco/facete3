@@ -214,30 +214,6 @@ public class PathBase<T, P extends Path<T>>
         return newPath(false, relativize(this.segments, toList(other), getPathOps().getParentToken()));
     }
 
-//	protected String getParentToken() {
-//		return "..";
-//	}
-
-//	@Override
-//	public URI toUri() {
-//
-//		// getFileSystem().
-//		// new URI(schema, authority, path, qury, fragment);
-//	}
-
-//	@Override
-//	public Path toAbsolutePath() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
-//	@Override
-//	public Path toRealPath(LinkOption... options) throws IOException {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
-
     // @Override
     public int compareTo(Path<T> other) {
         int result;
@@ -349,5 +325,14 @@ public class PathBase<T, P extends Path<T>>
         @SuppressWarnings("unchecked")
         P result = (P)(parent == null ? other : parent.resolve(other));
         return result;
+    }
+
+    @Override
+    public Iterator<Path<T>> iterator() {
+        // Not ideal having to wrap each segment with a new path object
+        return segmentsView.stream()
+                .map(segment -> getPathOps().newPath(false, Collections.singletonList(segment)))
+                .map(item -> (Path<T>)item)
+                .iterator();
     }
 }

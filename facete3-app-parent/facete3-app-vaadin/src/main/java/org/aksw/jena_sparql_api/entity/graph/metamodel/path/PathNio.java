@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.entity.graph.metamodel.path;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 /**
  * Implementation of the {@link Path} interface for {@link java.nio.file.Path}.
@@ -113,6 +115,15 @@ public class PathNio implements Path<String>
     @Override
     public Path<String> relativize(Path<String> other) {
         return wrapInternal(getDelegate().relativize(((PathNio)other).getDelegate()));
+    }
+
+    @Override
+    public Iterator<Path<String>> iterator() {
+        Iterable<java.nio.file.Path> iterable = () -> getDelegate().iterator();
+        return StreamSupport.stream(iterable.spliterator(), false)
+            .map(this::wrapInternal)
+            .map(item -> (Path<String>)item)
+            .iterator();
     }
 
 }

@@ -12,7 +12,7 @@ import org.aksw.jena_sparql_api.schema.traversal.api.Trav;
  * @param <S> The state object of this traversal
  * @param <V> The base class of all values involved in the traversal. May be simply Object.
  */
-public class Trav2 {
+public class Travs2 {
 
 
     public interface Trav2StateVisitor<X, T, A, B> { // <T, S, A extends S, B extends S> {
@@ -25,10 +25,10 @@ public class Trav2 {
         X visit(Trav2B<?, ?, ?, ?> trav);
     }
 
-    public static abstract class Trav2Base<
-        T,
-        S,
-        A extends S, B extends S>
+
+    //public interface Trav2<>
+
+    public static abstract class Trav2Base<T, S, A extends S, B extends S>
         implements Trav<T, S>
     {
         protected Trav2Provider<T, S, A, B> provider;
