@@ -7,13 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.concepts.UnaryXExpr;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsPE;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathPE;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.syntax.Element;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -22,6 +26,10 @@ import com.google.common.hash.Hashing;
 public abstract class RelationGeneratorBase
 //    implements Trav1Provider<Node, RelationBuilder>
 {
+
+    /** Relations that have been traversed by the path -
+     *  does not include the current relation */
+    protected List<Relation> pastRelations = new ArrayList<>();
 
     /** The current relation */
     protected Relation relation;
@@ -74,16 +82,6 @@ public abstract class RelationGeneratorBase
         reset();
     }
 
-
-    protected void setHashCode(HashCode hashCode) {
-         contextHash = hashCode;
-         contextHashStr = hashCode == null ? null : encodeHashCode(hashCode);
-    }
-
-    protected String encodeHashCode(HashCode hashCode) {
-        return hashCode.toString(); // BaseEncoding.base64Url().encode(contextHash.asBytes());
-    }
-
     public Relation process(PathPE path) {
         if (path.isAbsolute()) {
             reset();
@@ -108,6 +106,7 @@ public abstract class RelationGeneratorBase
         relationStartAbsPath = PathOpsPE.newAbsolutePath();
         relPath = PathOpsPE.newRelativePath();
         updateHash();
+        pastRelations.clear();
     }
 
     public void ensureInit() {
@@ -116,6 +115,10 @@ public abstract class RelationGeneratorBase
             String oldHash = contextHashStr;
             updateHash();
 
+            if (relation != null) {
+                Relation pastItem = relation.filter(conditions);
+                pastRelations.add(pastItem);
+            }
 
             relation = nextInstance();
 
@@ -153,23 +156,12 @@ public abstract class RelationGeneratorBase
 
             relation = relation.applyNodeTransform(v -> remap.getOrDefault(v, v));
 
-            columnIdx = 0;
+            // If we joined the last column of the previous relation with the first
+            // column of the next one, then jump over that first column
+            columnIdx = pastRelations.isEmpty() ? 0 : 1;
         }
     }
 
-
-    protected void updateHash() {
-        HashCode nextHashCode = computeNextHash(contextHash, relationStartAbsPath, relPath);
-        setHashCode(nextHashCode);
-    }
-
-
-    protected HashCode computeNextHash(HashCode currentHash, PathPE relationStartAbsPath, PathPE relPath) {
-        HashCode contrib = Hashing.murmur3_32().hashString(relPath.toString(), StandardCharsets.UTF_8);
-
-        HashCode result = currentHash == null ? contrib : Hashing.combineOrdered(Arrays.asList(currentHash, contrib));
-        return result;
-    }
 
     public Relation process(UnaryXExpr segment) {
 
@@ -180,7 +172,7 @@ public abstract class RelationGeneratorBase
 
         List<Var> vars = relation.getVars();
         Var v = vars.get(columnIdx);
-        ++ columnIdx;
+        ++columnIdx;
 
         if (!segment.isAlwaysTrue()) {
 
@@ -193,7 +185,59 @@ public abstract class RelationGeneratorBase
 
         Relation r = relation.filter(conditions);
 
+        ensureInit();
+
         return r;
+    }
+
+
+    public Var getCurrentVar() {
+        return relation.getVars().get(columnIdx);
+    }
+
+    public List<Relation> getPastRelations() {
+        return pastRelations;
+    }
+
+
+    public UnaryRelation getCurrentConcept() {
+        return new Concept(assemble(), getCurrentVar());
+    }
+
+    /** Assemble the complete element */
+    public Element assemble() {
+        List<Element> elts = pastRelations.stream()
+                .flatMap(r -> r.getElements().stream())
+                .collect(Collectors.toList());
+
+        if (relation != null) {
+            elts.add(relation.filter(conditions).getElement());
+        }
+
+        Element elt = ElementUtils.groupIfNeeded(elts);
+        return elt;
+    }
+
+
+    protected void updateHash() {
+        HashCode nextHashCode = computeNextHash(contextHash, relationStartAbsPath, relPath);
+        setHashCode(nextHashCode);
+    }
+
+    protected void setHashCode(HashCode hashCode) {
+        contextHash = hashCode;
+        contextHashStr = hashCode == null ? null : encodeHashCode(hashCode);
+    }
+
+    protected String encodeHashCode(HashCode hashCode) {
+        return hashCode.toString(); // BaseEncoding.base64Url().encode(contextHash.asBytes());
+    }
+
+    protected HashCode computeNextHash(HashCode currentHash, PathPE relationStartAbsPath, PathPE relPath) {
+        HashCode contrib = Hashing.murmur3_32().hashString(relPath.toString(), StandardCharsets.UTF_8);
+
+        HashCode result = currentHash == null ? contrib : Hashing.combineOrdered(Arrays.asList(currentHash, contrib));
+        return result;
     }
 
 }

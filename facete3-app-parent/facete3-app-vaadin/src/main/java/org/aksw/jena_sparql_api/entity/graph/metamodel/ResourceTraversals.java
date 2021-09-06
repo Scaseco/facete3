@@ -50,16 +50,21 @@ import org.aksw.jena_sparql_api.schema.traversal.sparql.l5.Traversals5.Traversal
 import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shacl.vocabulary.SHACLM;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -164,6 +169,12 @@ public class ResourceTraversals {
 
     public static void mainRelationGen(String[] args) {
 
+        Dataset m = RDFDataMgr.loadDataset("dcat-ap_2.0.0_shacl_shapes.ttl");
+        Node root = NodeFactory.createURI("http://data.europa.eu/r5r#Catalog_Shape");
+
+        RDFConnection conn = RDFConnectionFactory.connect(m);
+
+
         PathNode path = PathOpsNode.newAbsolutePath();
         PathNode tgt = path.resolve(RDF.first).resolve(RDF.rest).resolve(RDFS.label).resolve(RDF.type).resolve(OWL.hasValue);
 
@@ -203,21 +214,37 @@ public class ResourceTraversals {
         Relation r = createShaclRelation();
         System.out.println(r);
 
+
         RelationGeneratorSimple gen = RelationGeneratorSimple.create(r);
 
 
         PathPE exprs = PathOpsPE.newAbsolutePath()
-                .resolveAll().resolveSegment("<urn:fwd>").resolve(RDFS.label); //.resolve(RDF.type).resolve(OWL.hasValue);
+                .resolve(root)
+                .resolveSegment("<urn:fwd>")
+                .resolve(DCAT.dataset)
+                .resolveAll()
+                .resolveSegment("<urn:fwd>")
+                .resolve(DCAT.distribution)
+                .resolveAll()
+                .resolveSegment("<urn:fwd>")
+                ;   ;//.resolve(RDFS.label).resolveAll().resolveSegment("<urn:fwd>");
 
 
         System.out.println(exprs);
-        Relation rel = gen.process(exprs);
+        gen.process(exprs);
 
+        Query q = gen.getCurrentConcept().toQuery();
+        q.setDistinct(true);
 
-        System.out.println(rel);
+//        System.out.println(q);
 
-        Query qp = QueryUtils.applyOpTransform(rel.toQuery(), AlgebraUtils.createDefaultRewriter()::rewrite);
-        System.out.println(qp);
+        //System.out.println(rel);
+
+         Query qp = QueryUtils.applyOpTransform(q, AlgebraUtils.createDefaultRewriter()::rewrite);
+         System.out.println(qp);
+
+         System.out.println("Result set:");
+         conn.querySelect(qp, row -> System.out.println(row));
     }
 
 
