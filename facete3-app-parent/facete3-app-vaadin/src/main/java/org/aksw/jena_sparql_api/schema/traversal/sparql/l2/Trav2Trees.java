@@ -130,7 +130,7 @@ public class Trav2Trees {
         }
 
         @Override
-        public TreeNode<T> child(T key) {
+        public B child(T key) {
             return childMap.get(key);
         }
 

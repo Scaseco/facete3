@@ -16,6 +16,8 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathNode;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsPE;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathPE;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
@@ -135,12 +137,33 @@ public class ResourceTraversals {
     }
 
     public static void main(String[] args) {
+        PathPE expected = PathOpsPE.newAbsolutePath()
+            .resolveSegment("<urn:test>")
+            .resolveSegment("?x IN (<urn:yay>)");
+
+        String str = expected.toString();
+        System.out.println(expected);
+
+        PathPE actual = PathOpsPE.newAbsolutePath().resolve(str);
+
+        System.out.println(expected.equals(actual));
+
+
+
+        mainShacl(args);
+    }
+
+    public static void mainRelationGen(String[] args) {
 
         PathNode path = PathOpsNode.newAbsolutePath();
         PathNode tgt = path.resolve(RDF.first).resolve(RDF.rest).resolve(RDFS.label).resolve(RDF.type).resolve(OWL.hasValue);
 
         XRelationTree tree = new XRelationTree();
         TreeNode2<Node, XRelationNode, XAliasNode> node = tree.resolve(tgt);
+
+        String alias = tree.root().child(RDF.Nodes.first).child(RDF.Nodes.rest).child(RDFS.Nodes.label).getAlias();
+        System.out.println("ALIAS IS " + alias);
+
 
         TreeNode2Visitor<String, XRelationNode, XAliasNode> visitor = new TreeNode2Visitor<String, XRelationNode, XAliasNode>() {
             @Override
@@ -178,6 +201,8 @@ public class ResourceTraversals {
         System.out.println(rel);
 
     }
+
+
 
 
     static class XRelationTree
@@ -242,6 +267,8 @@ public class ResourceTraversals {
             return provider.toB(this, key);
         }
     }
+
+
 
 
 
@@ -366,6 +393,30 @@ public class ResourceTraversals {
 
 
 
+    /***
+     * Model: /${direction}/${property}$
+     *
+     * Note: Immediate backward traversals should be filtered out?!
+     *
+     * Property shape is usually the bnode id!
+     *
+     *
+     * @param rootShape
+     * @return
+     */
+
+
+
+
+    /***
+     * Model: /${nodeShape}/${direction}/${propertyShape}/${nodeSape}
+     *
+     * Property shape is usually the bnode id!
+     *
+     *
+     * @param rootShape
+     * @return
+     */
     public static Trav3Provider<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> createSimpleShaclTraverser3(SHNodeShape rootShape) {
 
         Trav3Provider<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> provider = new Trav3Provider<>() {
