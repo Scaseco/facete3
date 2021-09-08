@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
+import org.aksw.commons.path.core.Path;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravDirection;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravProperty;

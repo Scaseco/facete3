@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.schema;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Graph;
@@ -13,6 +15,7 @@ import org.apache.jena.shacl.vocabulary.SHACLM;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.topbraid.shacl.model.SHNodeShape;
 import org.topbraid.shacl.model.SHPropertyShape;
+import org.topbraid.shacl.vocabulary.SH;
 
 import com.google.common.collect.Streams;
 
@@ -48,15 +51,22 @@ public interface PropertySchemaFromPropertyShape
         return result;
     }
 
-    default NodeSchemaFromNodeShape getTargetSchema() {
-        SHPropertyShape propertyShape = getPropertyShape();
+    @Iri(SH.NS + "class")
+    SHAnnotatedClass getSHClass();
 
-        NodeSchemaFromNodeShape result = null;
-        Resource targetRes = propertyShape.getClassOrDatatype();
+    // FIXME This is wrong: A property shape may have a class attribute whose value is related to a set of NodeShapes
+    // This indirection is missing here
+    @Override
+    default Set<NodeSchemaFromNodeShape> getTargetSchemas() {
+        // SHPropertyShape propertyShape = getPropertyShape();
 
+        SHAnnotatedClass targetRes = getSHClass();
+
+        Set<NodeSchemaFromNodeShape> result = null;
         if (targetRes != null) {
-            SHNodeShape targetShape = targetRes.canAs(SHNodeShape.class) ? targetRes.as(SHNodeShape.class) : null;
-            result = targetShape == null ? null : targetShape.as(NodeSchemaFromNodeShape.class); // new NodeSchemaFromNodeShape(targetShape);
+            result = targetRes.getNodeShapes();
+            // SHNodeShape targetShape = targetRes.canAs(SHNodeShape.class) ? targetRes.as(SHNodeShape.class) : null;
+            //result = targetShape == null ? null : targetShape.as(NodeSchemaFromNodeShape.class); // new NodeSchemaFromNodeShape(targetShape);
         }
         return result;
     }

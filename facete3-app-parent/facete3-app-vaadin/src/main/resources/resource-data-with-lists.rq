@@ -1,0 +1,27 @@
+# A query that whenever ?tgt is a list property retrieves all its nodes
+# This allows for directly attaching all triples of the involved lists to ?src
+# The purpose is NOT to resolve blank nodes (it would only work if all members non-blank):
+# For blank nodes the query rewriting system should be used that allows accessing them as IRIs
+SELECT ?graph ?src ?dir ?p ?tgt ?ln ?f ?r
+{
+    {
+      BIND (<urn:fwd> AS ?dir)
+      GRAPH ?graph {
+        ?src ?p ?tgt
+        OPTIONAL {
+          ?tgt rdf:rest* ?ln .
+          ?ln rdf:first ?f ; rdf:rest ?r .
+        }
+      }
+    }
+  UNION
+    {
+      BIND (<urn:bwd> AS ?dir)
+      GRAPH ?graph {
+        ?tgt ?p ?src
+      }
+    }
+
+  FILTER(?src = dbr:Leipzig)
+}
+

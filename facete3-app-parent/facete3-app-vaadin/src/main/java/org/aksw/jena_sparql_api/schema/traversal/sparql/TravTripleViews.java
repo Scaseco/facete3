@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
 
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
-import org.aksw.jena_sparql_api.schema.traversal.api.Trav;
+import org.aksw.commons.path.core.Path;
+import org.aksw.commons.path.trav.api.Trav;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Resource;

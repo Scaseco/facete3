@@ -22,6 +22,9 @@
 		<jena.version>4.1.0</jena.version>
 		<jena-sparql-api.subversion>1-SNAPSHOT</jena-sparql-api.subversion>
 		<jena-sparql-api.version>${jena.version}-${jena-sparql-api.subversion}</jena-sparql-api.version>
+
+		<aksw-commons.version>0.9.1-SNAPSHOT</aksw-commons.version>
+
 		<!-- <jackson.version>2.8.8</jackson.version> -->
 		<jackson.version>2.10.3</jackson.version>
 		<jmh.version>1.25.2</jmh.version>
@@ -102,6 +105,12 @@
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>subgraph-isomorphism-index-jgrapht</artifactId>
 				<version>1.4.0-1</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-paths</artifactId>
+				<version>${jena-sparql-api.version}</version>
 			</dependency>
 
 

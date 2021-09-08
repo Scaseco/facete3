@@ -12,7 +12,8 @@ CONSTRUCT {
 
     ?src
       <urn:knownOutPredicate> ?outP ;
-      <urn:outgoingKnownPredicateStats> ?outPStats .
+      <urn:outgoingKnownPredicateStats> ?outPStats ;
+      <urn:allOutgoingPredicatesKnown> true .
 
     ?outPStats
       <urn:predicateStat> ?outP ;
@@ -24,7 +25,9 @@ CONSTRUCT {
 
     ?src
       <urn:knownInPredicate> ?inP ;
-      <urn:ingoinKnownPredicateStats> ?inPStats .
+      <urn:ingoinKnownPredicateStats> ?inPStats ;
+      <urn:allIngoingPredicatesKnown> true .
+
 
     ?inPStats
       <urn:predicateStat> ?inP ;
@@ -61,13 +64,13 @@ SELECT ?src ?outP ?outG ?outPgDvc ?inP ?inG ?inPgDvc {
 
 } }
 
-  BIND(CONCAT(STR(?root), '/', STR(?src), '/', STR(?outP)) AS ?outPStatsKey)
+  BIND(CONCAT(STR(?root), '/', STR(?src), '/out/', STR(?outP)) AS ?outPStatsKey)
   BIND(CONCAT(?outPStatsKey, '/', STR(?outG)) AS ?outPgStatsKey)
 
   BIND(IRI(CONCAT('urn:', ?outPStatsKey)) AS ?outPStats)
   BIND(IRI(CONCAT('urn:', ?outPgStatsKey)) AS ?outPgStats)
 
-  BIND(CONCAT(STR(?root), '/', STR(?src), '/', STR(?inP)) AS ?inPStatsKey)
+  BIND(CONCAT(STR(?root), '/', STR(?src), '/in/', STR(?inP)) AS ?inPStatsKey)
   BIND(CONCAT(?inPStatsKey, '/', STR(?inG)) AS ?inPgStatsKey)
 
   BIND(IRI(CONCAT('urn:', ?inPStatsKey)) AS ?inPStats)

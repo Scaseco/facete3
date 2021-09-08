@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.schema;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.TripleUtils;
@@ -25,13 +27,13 @@ public class PropertySchemaImpl
     protected boolean isForward;
 
     /** The schema of the values reachable via this property spec */
-    protected NodeSchema targetSchema;
+    protected Set<NodeSchema> targetSchemas;
 
     public PropertySchemaImpl(Node predicate, boolean isForward) {
         super();
         this.predicate = predicate;
         this.isForward = isForward;
-        this.targetSchema = new NodeSchemaImpl();
+        this.targetSchemas = new HashSet<NodeSchema>();
     }
 
     public Node getPredicate() {
@@ -42,9 +44,10 @@ public class PropertySchemaImpl
         return isForward;
     }
 
-    public NodeSchema getTargetSchema() {
-        return targetSchema;
+    public Set<NodeSchema> getTargetSchemas() {
+        return targetSchemas;
     }
+
 
     public boolean canMatchTriples() {
         return true;

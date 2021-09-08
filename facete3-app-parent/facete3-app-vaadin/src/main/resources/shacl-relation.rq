@@ -1,3 +1,7 @@
+# Relation which captures pairs of NodeShapes linked by properties
+# !IMPORTANT! This query does not directly support property path expressions
+# A preprocessing step that assembles the property paths into a single column
+# seems most worthwhile
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT ?src ?dir ?p ?tgt {
     {

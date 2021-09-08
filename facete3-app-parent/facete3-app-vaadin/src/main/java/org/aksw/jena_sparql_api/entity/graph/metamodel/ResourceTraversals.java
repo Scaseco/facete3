@@ -1,31 +1,42 @@
 package org.aksw.jena_sparql_api.entity.graph.metamodel;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.path.core.Path;
+import org.aksw.commons.path.trav.api.Trav;
+import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2;
+import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2A;
+import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2B;
+import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2Provider;
+import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2ProviderBase;
+import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2Visitor;
+import org.aksw.commons.path.trav.l3.Trav3.Trav3A;
+import org.aksw.commons.path.trav.l3.Trav3.Trav3B;
+import org.aksw.commons.path.trav.l3.Trav3.Trav3C;
+import org.aksw.commons.path.trav.l3.Trav3Provider;
+import org.aksw.commons.path.trav.l5.Traversals5.Traversal5A;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.Path;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathNode;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsNode;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathOpsPE;
-import org.aksw.jena_sparql_api.entity.graph.metamodel.path.node.PathPE;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.path.core.PathNode;
+import org.aksw.jena_sparql_api.path.core.PathOpsNode;
+import org.aksw.jena_sparql_api.path.core.PathOpsPE;
+import org.aksw.jena_sparql_api.path.core.PathPE;
+import org.aksw.jena_sparql_api.path.relgen.RelationGeneratorSimple;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.PropertySchemaFromPropertyShape;
-import org.aksw.jena_sparql_api.schema.traversal.api.Trav;
-import org.aksw.jena_sparql_api.schema.traversal.relgen.RelationGeneratorSimple;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.QueryBuilder;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTriple;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravProviderTripleImpl;
@@ -36,17 +47,6 @@ import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTrip
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleVisitorSparql;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2A;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2B;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2Provider;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2ProviderBase;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l2.Trav2Trees.TreeNode2Visitor;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3A;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3B;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3.Trav3C;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l3.Trav3Provider;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.l5.Traversals5.Traversal5A;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
@@ -55,13 +55,14 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shacl.vocabulary.SHACLM;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.DCAT;
@@ -72,6 +73,9 @@ import org.topbraid.shacl.model.SHFactory;
 import org.topbraid.shacl.model.SHNodeShape;
 import org.topbraid.shacl.model.SHPropertyShape;
 import org.topbraid.shacl.vocabulary.SH;
+
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -170,9 +174,29 @@ public class ResourceTraversals {
     public static void mainRelationGen(String[] args) {
 
         Dataset m = RDFDataMgr.loadDataset("dcat-ap_2.0.0_shacl_shapes.ttl");
-        Node root = NodeFactory.createURI("http://data.europa.eu/r5r#Catalog_Shape");
+        Node rootShape = NodeFactory.createURI("http://data.europa.eu/r5r#Catalog_Shape");
+        UnaryRelation rootRel = Concept.createNodes(rootShape);
+
+
+
 
         RDFConnection conn = RDFConnectionFactory.connect(m);
+
+        Relation shaclRelation = createShaclRelation();
+        Table<Boolean, Node, Set<Resource>> pToDirToTgtShape = getShaclTransitions(rootRel, conn);
+
+
+        System.out.println(pToDirToTgtShape);
+
+
+
+        RelationGeneratorSimple gen = RelationGeneratorSimple.create(shaclRelation);
+
+        // PathPE exprs = PathOpsPE.newAbsolutePath().resolveAll();
+
+
+
+
 
 
         PathNode path = PathOpsNode.newAbsolutePath();
@@ -215,11 +239,10 @@ public class ResourceTraversals {
         System.out.println(r);
 
 
-        RelationGeneratorSimple gen = RelationGeneratorSimple.create(r);
 
 
         PathPE exprs = PathOpsPE.newAbsolutePath()
-                .resolve(root)
+                .resolve(rootShape)
                 .resolveSegment("<urn:fwd>")
                 .resolve(DCAT.dataset)
                 .resolveAll()
@@ -248,14 +271,44 @@ public class ResourceTraversals {
     }
 
 
+    /**
+     * From a given start concept matching a set of source
+     * shacl NodeShapes, return a table target node shapes via
+     * predicate and direction.
+     *
+     * @param rootRel
+     * @param conn
+     * @return
+     */
+    public static Table<Boolean, Node, Set<Resource>> getShaclTransitions(UnaryRelation rootRel, RDFConnection conn) {
+
+        Relation shaclRelation = createShaclRelation();
+
+        List<Var> vars = shaclRelation.getVars();
+        Relation filtered = shaclRelation.prependOn(vars.get(0)).with(rootRel);
+
+        System.out.println("Filtered: " + filtered);
+
+
+        Table<Boolean, Node, Set<Resource>> pToDirToTgtShape = HashBasedTable.create();
+        conn.querySelect(filtered.toQuery(), row -> {
+            Node p = row.get("p").asNode();
+            Resource tgt = row.getResource("tgt");
+            boolean isFwd = row.getResource("dir").getURI().equals("urn:fwd");
+            System.out.println("" + p + "  " + isFwd + " " + tgt);
+            Set<Resource> tgtShapes = pToDirToTgtShape.row(isFwd).computeIfAbsent(p, k -> new HashSet());
+
+            if (tgt != null) {
+                tgtShapes.add(tgt);
+            }
+        });
+        return pToDirToTgtShape;
+    }
+
+
     public static Relation createShaclRelation() {
 
-        Query query;
-        try {
-            query = SparqlStmtMgr.loadQuery("shacl-relation.rq");
-        } catch (IOException | ParseException e) {
-            throw new RuntimeException(e);
-        }
+        Query query = SparqlStmtMgr.loadQuery("shacl-relation.rq");
         Relation result = RelationUtils.fromQuery(query);
 
         return result;
@@ -339,12 +392,12 @@ public class ResourceTraversals {
                 NodeSchemaFromNodeShape.class,
                 PropertySchemaFromPropertyShape.class,
                 DatasetMetamodel.class,
-                ClassMetamodel.class,
+                ResourceGraphMetamodel.class,
                 PredicateStats.class,
                 GraphPredicateStats.class,
 
                 ClassRelationModel.class,
-                ClassMetamodel.class
+                ResourceGraphMetamodel.class
                 );
 
 
@@ -360,7 +413,7 @@ public class ResourceTraversals {
         Path<Node> rel = r.relativize(path);
         String relStr = rel.toString();
         System.out.println(relStr);
-        path = r.resolve(relStr);
+        path = r.resolveStr(relStr);
         System.out.println("Recovered from string: " + path);
 
         System.out.println(path.relativize(r));

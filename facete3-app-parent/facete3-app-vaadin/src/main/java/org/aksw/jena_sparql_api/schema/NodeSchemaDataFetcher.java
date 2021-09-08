@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -18,10 +19,13 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -32,9 +36,6 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
-import org.apache.jena.vocabulary.DCAT;
-import org.apache.jena.vocabulary.DCTerms;
-import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,12 +132,14 @@ public class NodeSchemaDataFetcher {
 
 //                    System.out.println("Next nodes for " + predicateSchema.getPredicate() + ": " + subGraphNodes);
 
-                    NodeSchema targetSchema = predicateSchema.getTargetSchema();
-                    if (targetSchema != null) {
-                        for (Node targetNode : subGraphNodes) {
-                            if (!done.containsEntry(targetSchema, targetNode)) {
-                                done.put(targetSchema, targetNode);
-                                next.put(targetSchema, targetNode);
+                    Set<? extends NodeSchema> targetSchemas = predicateSchema.getTargetSchemas();
+                    if (targetSchemas != null) {
+                        for (NodeSchema targetSchema : targetSchemas) {
+                            for (Node targetNode : subGraphNodes) {
+                                if (!done.containsEntry(targetSchema, targetNode)) {
+                                    done.put(targetSchema, targetNode);
+                                    next.put(targetSchema, targetNode);
+                                }
                             }
                         }
                     }
@@ -216,12 +219,21 @@ public class NodeSchemaDataFetcher {
 
 
     public static void main(String [] args) {
-        NodeSchema schema = new NodeSchemaImpl();
-        PropertySchema pgs = schema.createPropertySchema(RDF.type.asNode(), true);
-        PropertySchema pgs2 = schema.createPropertySchema(DCTerms.identifier.asNode(), true);
-        PropertySchema pgs3 = schema.createPropertySchema(DCAT.distribution.asNode(), true);
+        MainPlaygroundResourceMetamodel.init();
+//        NodeSchema schema = new NodeSchemaImpl();
+//        PropertySchema pgs = schema.createPropertySchema(RDF.type.asNode(), true);
+//        PropertySchema pgs2 = schema.createPropertySchema(DCTerms.identifier.asNode(), true);
+//        PropertySchema pgs3 = schema.createPropertySchema(DCAT.distribution.asNode(), true);
+//
+//
+//        NodeSchema schema2 = new NodeSchemaImpl();
+//        schema2.createPropertySchema(DCAT.downloadURL.asNode(), true);
+//        // pgs3.getTargetSchemas().add(schema2);
 
-        pgs3.getTargetSchema().createPropertySchema(DCAT.downloadURL.asNode(), true);
+
+        Model shaclModel = RDFDataMgr.loadModel("dcat-ap_2.0.0_shacl_shapes.ttl");
+        NodeSchema schema = shaclModel.createResource("http://data.europa.eu/r5r#Dataset_Shape").as(NodeSchemaFromNodeShape.class);
+
 
         Multimap<NodeSchema, Node> roots = HashMultimap.create();
         roots.put(schema, NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04"));
@@ -237,6 +249,8 @@ public class NodeSchemaDataFetcher {
         Graph graph = GraphFactory.createDefaultGraph();
         dataFetcher.sync(graph, roots, conn);
 
+        Model m = ModelFactory.createModelForGraph(graph);
+        RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
     }
 
 }

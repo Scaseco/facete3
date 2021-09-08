@@ -1,22 +1,19 @@
 package org.aksw.jena_sparql_api.schema;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.utils.TripleUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.util.iterator.ExtendedIterator;
 
 public interface PropertySchema {
 
     Node getPredicate();
     boolean isForward();
 
-    NodeSchema getTargetSchema();
+    Set<? extends NodeSchema> getTargetSchemas();
 
     boolean canMatchTriples();
 
