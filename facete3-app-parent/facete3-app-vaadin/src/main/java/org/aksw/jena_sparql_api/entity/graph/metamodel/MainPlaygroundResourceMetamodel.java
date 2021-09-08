@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxt;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.MapperProxyUtils;
@@ -22,23 +23,17 @@ import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.aksw.jena_sparql_api.schema.PropertySchemaFromPropertyShape;
+import org.aksw.jena_sparql_api.schema.ResourceExplorer;
 import org.aksw.jena_sparql_api.schema.SHAnnotatedClass;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -183,21 +178,25 @@ public class MainPlaygroundResourceMetamodel {
 //    }
 
     public static Flowable<ResourceMetamodel> computeCriticalMetamodel(SparqlQueryConnection conn, List<Node> nodes) {
-        Query query = SparqlStmtMgr.loadQuery("resource-criticalmodel.rq");
-        QueryUtils.injectFilter(query, ExprUtils.oneOf("src", nodes));
+//        Query query = SparqlStmtMgr.loadQuery("resource-criticalmodel.rq");
+//        QueryUtils.injectFilter(query, ExprUtils.oneOf("src", nodes));
+//
+//
+//        System.out.println(query);
+//
+//        Model m;
+//        try (QueryExecution qe = conn.query(query)) {
+//            m = qe.execConstruct();
+//        }
+//
+//        // RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+//
+//        Property p = ResourceFactory.createProperty("http://www.example.org/targetResource");
+//        Set<ResourceMetamodel> tmp = m.listSubjectsWithProperty(p).mapWith(r -> r.as(ResourceMetamodel.class)).toSet();
+//
 
-
-        System.out.println(query);
-
-        Model m;
-        try (QueryExecution qe = conn.query(query)) {
-            m = qe.execConstruct();
-        }
-
-        // RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
-
-        Property p = ResourceFactory.createProperty("http://www.example.org/targetResource");
-        Set<ResourceMetamodel> tmp = m.listSubjectsWithProperty(p).mapWith(r -> r.as(ResourceMetamodel.class)).toSet();
+        LookupService<Node, ResourceMetamodel> lookupService = ResourceExplorer.createMetamodelLookup(conn);
+        List<ResourceMetamodel> tmp = lookupService.fetchList(nodes);
 
 
         System.out.println("Results:");
@@ -245,11 +244,11 @@ public class MainPlaygroundResourceMetamodel {
 
         }
 
-
-        System.out.println("SKOLEMIZED:");
-        RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
-
-        tmp = m.listSubjectsWithProperty(p).mapWith(r -> r.as(ResourceMetamodel.class)).toSet();
+//
+//        System.out.println("SKOLEMIZED:");
+//        RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+//
+//        tmp = m.listSubjectsWithProperty(p).mapWith(r -> r.as(ResourceMetamodel.class)).toSet();
 
 
         Flowable<ResourceMetamodel> result = Flowable.fromIterable(tmp);
