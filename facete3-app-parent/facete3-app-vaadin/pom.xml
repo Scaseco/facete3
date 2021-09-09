@@ -134,6 +134,12 @@
 			<version>2.2.5.RELEASE</version>
 		</dependency>
 
+
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>aksw-commons-index</artifactId>
+		</dependency>
+
 		<!-- PDFViewer which hower does not seem to work with flow -->
 		<!-- <dependency> -->
 		<!-- <groupId>com.whitestein.vaadin.widgets</groupId> -->
@@ -146,7 +152,7 @@
 			<artifactId>pdf-browser</artifactId>
 			<version>3.0.1</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.xdev-software</groupId>
 			<artifactId>vaadin-maps-leaflet-flow</artifactId>
@@ -176,7 +182,8 @@
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
 
-		<!-- The topbraid implementation is used because it uses jena's polymorphism system -->
+		<!-- The topbraid implementation is used because it uses jena's polymorphism 
+			system -->
 		<dependency>
 			<groupId>org.topbraid</groupId>
 			<artifactId>shacl</artifactId>
@@ -209,11 +216,11 @@
 		</dependency>
 
 		<!-- Overrides an old cglib version of vaadin -->
-                <dependency>
-                        <groupId>cglib</groupId>
-                        <artifactId>cglib-nodep</artifactId>
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib-nodep</artifactId>
 			<version>3.3.0</version>
-                </dependency>
+		</dependency>
 
 
 		<dependency>

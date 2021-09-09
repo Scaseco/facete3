@@ -133,6 +133,13 @@
 				<version>1.7.24</version>
 			</dependency>
 
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-index</artifactId>
+				<version>${aksw-commons.version}</version>
+			</dependency>
+
 			<dependency>
 				<groupId>org.topbraid</groupId>
 				<artifactId>shacl</artifactId>

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.entity.graph.metamodel;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.DCAT;
 import org.topbraid.shacl.model.SHFactory;
@@ -334,10 +334,11 @@ public class MainPlaygroundResourceMetamodel {
                 ResourceExplorer.createMetamodelLookup(conn).cache();
 
 
-        Graph dataGraph = GraphFactory.createDefaultGraph();
-        dataFetcher.sync(dataGraph, schemaToNodes, conn, metaModelService);
+        //Graph dataGraph = GraphFactory.createDefaultGraph();
+        Map<Node, ResourceState> resourceCache = new HashMap<>();
+        dataFetcher.sync(schemaToNodes, conn, metaModelService, resourceCache);
 
-        fillMetamodel(dsm, schemaToNodes, dataGraph);
+        // fillMetamodel(dsm, schemaToNodes, dataGraph);
 
 
 

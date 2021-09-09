@@ -1,0 +1,70 @@
+# Query for computing a resource's critical metamodel.
+# The is the set of ingoing / outgoing predicates with a value count
+# that exceeds a threshold
+#
+# For each outgoing predicate this query also counts the number of list nodes
+# (values with the rdf:list vocab)
+#
+
+PREFIX : <http://www.example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+CONSTRUCT  {
+  ?r
+    :isGraphComplete true ; # all graphs with critical predicates seen
+    :targetResource ?src ;
+    :byGraph ?rg .
+
+  ?rg
+    :graph <urn:x-arq:DefaultGraph> ;
+    ?dir   ?rgd .
+
+  ?rgd
+    :isPredicateComplete true ; # all critical predicates within the graph in that direction seen
+    :predicateStats ?rgdp .
+
+
+  ?rgdp
+    :predicate ?p ;
+    :valueCount ?vc ;
+    :listItemCount ?lic .
+}
+WHERE {
+
+  { SELECT ?src ?dir ?p ?vc ?lic {
+    {
+      { SELECT ?src ?p (COUNT(DISTINCT ?outTgt) AS ?vc) (COUNT(?ln) AS ?lic) {
+          ?src ?p ?outTgt
+          OPTIONAL {
+            ?outTgt rdf:rest* ?ln .
+            ?ln rdf:first ?f ; rdf:rest ?r .
+          }
+      } GROUP BY ?src ?p }
+      BIND(<urn:fwd> AS ?dir) # Because of Virtuoso this is last
+    }
+  UNION
+    {
+      { SELECT ?src ?p (COUNT(DISTINCT ?inTgt) AS ?vc) {
+          ?inTgt ?p ?src
+      } GROUP BY ?src ?p }
+      BIND(<urn:bwd> AS ?dir)
+    }
+
+    FILTER(?vc > 1000 || ?lic > 1000)
+  } }
+
+
+  BIND("root" AS ?rootKey)
+
+  BIND(CONCAT(?rootKey, '/', STR(?src)) AS ?rKey)
+  BIND(CONCAT(?rKey, '/', 'urn:x-arq:DefaultGraph') AS ?rgKey)
+  BIND(CONCAT(?rgKey, '/', STR(?dir)) AS ?rgdKey)
+  BIND(CONCAT(?rgdKey, '/', STR(?p)) AS ?rgdpKey)
+
+
+  BIND(BNODE(?rKey) AS ?r)
+  BIND(BNODE(?rgKey) AS ?rg)
+  BIND(BNODE(?rgdKey) AS ?rgd)
+  BIND(BNODE(?rgdpKey) AS ?rgdp)
+
+} # ORDER BY ?src # Ordering by src allows streaming of the response
+

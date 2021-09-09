@@ -32,7 +32,7 @@ public class ResourceExplorer
 
 
     public static LookupService<Node, ResourceMetamodel> createMetamodelLookup(SparqlQueryConnection conn) {
-        Query query = SparqlStmtMgr.loadQuery("resource-criticalmodel.rq");
+        Query query = SparqlStmtMgr.loadQuery("resource-criticalmodel-defaultgraph.rq");
         Var var = Var.alloc("src");
 
 
