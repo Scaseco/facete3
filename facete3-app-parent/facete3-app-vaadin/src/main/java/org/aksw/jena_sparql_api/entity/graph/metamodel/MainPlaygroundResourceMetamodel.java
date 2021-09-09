@@ -330,8 +330,12 @@ public class MainPlaygroundResourceMetamodel {
 
         NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
 
+        LookupService<Node, ResourceMetamodel> metaModelService =
+                ResourceExplorer.createMetamodelLookup(conn).cache();
+
+
         Graph dataGraph = GraphFactory.createDefaultGraph();
-        dataFetcher.sync(dataGraph, schemaToNodes, conn);
+        dataFetcher.sync(dataGraph, schemaToNodes, conn, metaModelService);
 
         fillMetamodel(dsm, schemaToNodes, dataGraph);
 

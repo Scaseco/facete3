@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 
 @ResourceView
@@ -21,6 +22,9 @@ public interface PredicateStats
     @IriType
     @Iri("http://www.example.org/predicate")
     String getPredicateIri();
+
+    @Iri("http://www.example.org/predicate")
+    Node getPredicateNode();
 
 
     @IriNs("eg")

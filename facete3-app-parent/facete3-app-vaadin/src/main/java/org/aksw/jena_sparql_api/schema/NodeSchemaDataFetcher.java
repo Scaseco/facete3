@@ -4,14 +4,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.PredicateStats;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -39,8 +46,11 @@ import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Table;
 
 /**
  * A class to retrieve the triples that correspond to a set of RDF resources w.r.t.
@@ -85,13 +95,15 @@ public class NodeSchemaDataFetcher {
     public void sync(Graph target,
             // NodeGraphSchema schema,
             Multimap<NodeSchema, Node> schemaAndNodes,
-            SparqlQueryConnection conn) {
+            SparqlQueryConnection conn,
+            LookupService<Node, ResourceMetamodel> metaDataService
+            ) {
 
         Multimap<NodeSchema, Node> done = HashMultimap.create();
 
         Multimap<NodeSchema, Node> next = schemaAndNodes;
         while (!next.isEmpty()) {
-            Multimap<NodeSchema, Node> tmp = step(target, next, conn, done);
+            Multimap<NodeSchema, Node> tmp = step(target, next, conn, done, metaDataService);
             next = tmp;
         }
 
@@ -102,15 +114,141 @@ public class NodeSchemaDataFetcher {
             // NodeGraphSchema schema,
             Multimap<NodeSchema, Node> schemaAndNodes,
             SparqlQueryConnection conn,
-            Multimap<NodeSchema, Node> done) {
+            Multimap<NodeSchema, Node> done,
+            LookupService<Node, ResourceMetamodel> metaDataService) {
 
         // The map for what to fetch in the next breadth
         Multimap<NodeSchema, Node> next = HashMultimap.create();
 
         Graph graph = GraphFactory.createDefaultGraph();
 
-        Query unionQuery = toQuery(schemaAndNodes);
+
+        List<Node> allNodes = schemaAndNodes.values().stream().distinct().collect(Collectors.toList());
+        Map<Node, ResourceMetamodel> metaData = metaDataService.fetchMap(allNodes);
+
+        System.out.println("Showing " + metaData.size() + " metadata items:");
+        metaData.entrySet().forEach(System.out::println);
+
+        // Create a table of requested predicates and their target schemas
+        // This is an inverted index
+        Table<Boolean, Node, Set<NodeSchema>> dirToPToTgts = HashBasedTable.create();
+
+        for (NodeSchema ns : schemaAndNodes.keySet()) {
+            for (PropertySchema ps : ns.getPredicateSchemas()) {
+                boolean isFwd = ps.isForward();
+                Node p = ps.getPredicate();
+
+                Set<NodeSchema> nss = dirToPToTgts.get(isFwd, p);
+                if (nss == null) {
+                    nss = new LinkedHashSet<>();
+                    dirToPToTgts.put(isFwd, p, nss);
+                }
+                nss.add(ns);
+            }
+        }
+
+        // Map each source to the set of demanded predicates according to the schemas
+        Table<Boolean, Node, Set<Node>> dirToSrcToP = HashBasedTable.create();
+        for (Entry<NodeSchema, Collection<Node>> e : schemaAndNodes.asMap().entrySet()) {
+            NodeSchema ns = e.getKey();
+
+            for (PropertySchema ps : ns.getPredicateSchemas()) {
+                boolean isFwd = ps.isForward();
+                Node p = ps.getPredicate();
+
+                for (Node src : e.getValue()) {
+
+                    Set<Node> preds = dirToSrcToP.get(isFwd, src);
+                    if (preds == null) {
+                        preds = new LinkedHashSet<>();
+                        dirToSrcToP.put(isFwd, src, preds);
+                    }
+                    preds.add(p);
+                }
+            }
+        }
+
+        long valueCountThreshold = 1000;
+
+
+        Var ip = Var.alloc("ip");
+        Var io = Var.alloc("io");
+
+        Triple fwdTriplePattern = Triple.create(Vars.s, Vars.p, Vars.o);
+        Triple bwdTriplePattern = Triple.create(io, ip, Vars.s);
+        List<Triple> tps = new ArrayList<>(2);
+
+        List<Element> tgtElts = new ArrayList<>();
+
+        // Map each src to the predicates that need to be fetched for it
+        // From that set remove blacklisted predicates and already loaded ones
+        for (int i = 0; i < 2; ++i) {
+            boolean isFwd = i == 0;
+            Map<Node, Set<Node>> srcToPreds = dirToSrcToP.row(isFwd);
+
+            for (Entry<Node, Set<Node>> e : srcToPreds.entrySet()) {
+                Node src = e.getKey();
+                Set<Node> preds = e.getValue();
+
+                // TODO Remove already loaded predicates
+
+
+                ResourceMetamodel mm = metaData.get(src);
+                Node g = Node.ANY; // TODO Provide graph in some context
+                Stream<PredicateStats> statsStream = mm == null ? null : mm.find(g, isFwd, Node.ANY);
+                // We queried for the metamodel before so null stats should not happen!
+                if (statsStream != null) {
+                    List<PredicateStats> stats = statsStream.collect(Collectors.toList());
+                    for (PredicateStats stat : stats) {
+                        Node p = stat.getPredicateNode();
+                        Long valueCount = stat.getValueCount();
+
+                        if (valueCount != null && valueCount >= valueCountThreshold) {
+                            preds.remove(p);
+                        }
+                    }
+                }
+            }
+
+
+            // We now know for each src the effective predicates
+            // Group srcs by predicates
+            Multimap<Set<Node>, Node> predsToSrcs = Multimaps.invertFrom(Multimaps.forMap(srcToPreds), HashMultimap.create());
+
+            if (!predsToSrcs.isEmpty()) {
+
+                Triple t = isFwd ? fwdTriplePattern : bwdTriplePattern;
+                tps.add(t);
+                Var srcVar = (Var)t.getSubject();
+                Element tp = ElementUtils.createElementTriple(t);
+
+
+                for (Entry<Set<Node>, Collection<Node>> e : predsToSrcs.asMap().entrySet()) {
+                    Collection<Node> preds = e.getKey();
+                    Collection<Node> srcs = e.getValue();
+
+                    Element elt = ElementUtils.createElementGroup(
+                        tp,
+                        new ElementFilter(ExprUtils.oneOf(srcVar, srcs)),
+                        new ElementFilter(ExprUtils.oneOf(Vars.p, preds)));
+
+                    tgtElts.add(elt);
+                }
+            }
+        }
+
+        Query unionQuery = new Query();
+        unionQuery.setQueryConstructType();
+        unionQuery.setConstructTemplate(new Template(BasicPattern.wrap(tps)));
+        unionQuery.setQueryPattern(ElementUtils.unionIfNeeded(tgtElts));
+
+
+
+
+
+        // Query unionQuery = toQuery(schemaAndNodes);
         logger.debug("Union Query: " + unionQuery);
+        // System.out.println(unionQuery);
 
         SparqlRx.execConstructTriples(conn, unionQuery).forEach(graph::add);
 
@@ -245,9 +383,11 @@ public class NodeSchemaDataFetcher {
 
         RDFConnection conn = RDFConnectionFactory.connect(ds);
 
+        LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(conn);
+
         NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
         Graph graph = GraphFactory.createDefaultGraph();
-        dataFetcher.sync(graph, roots, conn);
+        dataFetcher.sync(graph, roots, conn, metaDataService);
 
         Model m = ModelFactory.createModelForGraph(graph);
         RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
