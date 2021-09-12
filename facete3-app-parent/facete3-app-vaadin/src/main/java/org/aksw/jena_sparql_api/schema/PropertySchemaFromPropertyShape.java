@@ -12,8 +12,10 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shacl.vocabulary.SHACLM;
+import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_ReverseLink;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.topbraid.shacl.model.SHNodeShape;
 import org.topbraid.shacl.model.SHPropertyShape;
 import org.topbraid.shacl.vocabulary.SH;
 
@@ -48,6 +50,22 @@ public interface PropertySchemaFromPropertyShape
         SHPropertyShape propertyShape = getPropertyShape();
         Resource r = propertyShape.getPath();
         boolean result = !r.hasProperty(SHACLM.inversePath);
+        return result;
+    }
+
+
+    default Path getPath() {
+        Path result;
+
+        boolean isFwd = isForward();
+        Node p = getPredicate();
+
+        if (isFwd) {
+            result = new P_Link(p);
+        } else {
+            result = new P_ReverseLink(p);
+        }
+
         return result;
     }
 

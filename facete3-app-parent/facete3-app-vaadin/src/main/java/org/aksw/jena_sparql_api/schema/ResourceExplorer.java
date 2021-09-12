@@ -20,10 +20,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.Template;
 
-class ResourceCache {
-
-}
-
 
 
 public class ResourceExplorer

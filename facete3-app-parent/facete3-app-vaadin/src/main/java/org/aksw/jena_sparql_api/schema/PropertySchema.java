@@ -7,11 +7,14 @@ import java.util.stream.Stream;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.path.Path;
 
 public interface PropertySchema {
 
     Node getPredicate();
     boolean isForward();
+
+    Path getPath();
 
     Set<? extends NodeSchema> getTargetSchemas();
 

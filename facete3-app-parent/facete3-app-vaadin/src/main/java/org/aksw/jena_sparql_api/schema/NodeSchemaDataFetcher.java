@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.schema;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +27,12 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -40,6 +41,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
@@ -50,8 +52,11 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Range;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
+
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * A class to retrieve the triples that correspond to a set of RDF resources w.r.t.
@@ -98,7 +103,7 @@ public class NodeSchemaDataFetcher {
             Multimap<NodeSchema, Node> schemaAndNodes,
             SparqlQueryConnection conn,
             LookupService<Node, ResourceMetamodel> metaDataService,
-            Map<Node, ResourceState> graphToResourceState
+            ResourceCache graphToResourceState
             ) {
 
         Multimap<NodeSchema, Node> done = HashMultimap.create();
@@ -118,7 +123,7 @@ public class NodeSchemaDataFetcher {
             SparqlQueryConnection conn,
             Multimap<NodeSchema, Node> done,
             LookupService<Node, ResourceMetamodel> metaDataService,
-            Map<Node, ResourceState> graphToResourceState) {
+            ResourceCache graphToResourceState) {
 
         // The map for what to fetch in the next breadth
         Multimap<NodeSchema, Node> next = HashMultimap.create();
@@ -197,7 +202,8 @@ public class NodeSchemaDataFetcher {
                 Set<Node> preds = e.getValue();
 
                 // TODO Remove already loaded predicates
-                ResourceState rs = graphToResourceState.computeIfAbsent(src, ss -> new ResourceState(ss));
+
+                ResourceState rs = graphToResourceState.getOrCreate(src);
                 Set<Node> seenPreds = rs.getSeenPredicates(isFwd);
                 preds.removeAll(seenPreds);
 
@@ -437,8 +443,10 @@ public class NodeSchemaDataFetcher {
         NodeSchema schema = shaclModel.createResource("http://data.europa.eu/r5r#Dataset_Shape").as(NodeSchemaFromNodeShape.class);
 
 
+        Node datasetNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
+
         Multimap<NodeSchema, Node> roots = HashMultimap.create();
-        roots.put(schema, NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04"));
+        roots.put(schema, datasetNode);
 
         Dataset ds = RDFDataMgr.loadDataset("linkedgeodata-2018-04-04.dcat.ttl");
 
@@ -450,12 +458,35 @@ public class NodeSchemaDataFetcher {
         LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(conn);
 
         NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
-        // Graph graph = GraphFactory.createDefaultGraph();
-        Map<Node, ResourceState> resourceCache = new HashMap<>();
+        // Map<Node, ResourceState> resourceCache = new HashMap<>();
+        ResourceCache resourceCache = new ResourceCache();
         dataFetcher.sync(roots, conn, metaDataService, resourceCache);
 
-        // Model m = ModelFactory.createModelForGraph(graph);
-        // RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+
+        Graph graph = GraphFactory.createDefaultGraph();
+
+        resourceCache.getMap().values().stream().flatMap(ResourceState::streamCachedTriples)
+            .forEach(graph::add);
+
+
+
+        // Traverser.forGraph(s -> resourceCache.get(s).find )
+
+         Model m = ModelFactory.createModelForGraph(graph);
+         RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+
+         ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
+         Map<Path, ShapedProperty> spm = sn.getShapedProperties();
+
+         for (ShapedProperty sp : spm.values()) {
+             Range<Long> cnt = sp.getValues().fetchCount(null, null, null).blockingGet();
+             if (!Range.closedOpen(0l, 0l).equals(cnt)) {
+
+                 System.out.println("Path: " + sp.getPath());
+                 System.out.println(cnt);
+             }
+         }
+
     }
 
 }
