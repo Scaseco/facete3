@@ -59,7 +59,7 @@ public class ShapedProperty {
     protected Set<Node> getCachedValues() {
         ResourceCache resourceCache = src.getResourceCache();
         ResourceState rs = resourceCache.get(src.getSourceNode());
-        Set<Node> cachedValues = rs.getFromCache(path);
+        Set<Node> cachedValues = rs == null ? null : rs.getFromCache(path);
 
         return cachedValues;
     }
@@ -117,6 +117,7 @@ public class ShapedProperty {
             TriplePath tp = new TriplePath(src.getSourceNode(), path, Vars.o);
             Query query = new Query();
             query.setQuerySelectType();
+            query.getProject().add(Vars.o);
             query.setQueryPattern(ElementUtils.createElement(tp));
 
             core = new MapServiceSparqlQuery(src.getConnection(), query, Vars.o);

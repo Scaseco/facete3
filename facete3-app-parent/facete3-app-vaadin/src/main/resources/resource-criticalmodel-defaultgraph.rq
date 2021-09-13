@@ -10,7 +10,7 @@ PREFIX : <http://www.example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 CONSTRUCT  {
   ?r
-    :isGraphComplete true ; # all graphs with critical predicates seen
+    :graphComplete true ; # all graphs with critical predicates seen
     :targetResource ?src ;
     :byGraph ?rg .
 
@@ -19,7 +19,7 @@ CONSTRUCT  {
     ?dir   ?rgd .
 
   ?rgd
-    :isPredicateComplete true ; # all critical predicates within the graph in that direction seen
+    :predicateComplete true ; # all critical predicates within the graph in that direction seen
     :predicateStats ?rgdp .
 
 

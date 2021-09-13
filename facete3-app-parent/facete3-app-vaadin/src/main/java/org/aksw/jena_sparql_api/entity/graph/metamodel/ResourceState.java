@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.entity.graph.metamodel;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -105,8 +105,8 @@ public class ResourceState {
 
     public Set<Node> getTargets(boolean isFwd, Node p) {
         Set<Node> result = isFwd
-                ? fwdStore.getOrDefault(p, Collections.emptyMap()).keySet()
-                : bwdStore.getOrDefault(p, Collections.emptyMap()).keySet();
+                ? Optional.ofNullable(fwdStore.get(p)).map(Map::keySet).orElse(null)
+                : Optional.ofNullable(bwdStore.get(p)).map(Map::keySet).orElse(null);
 
         return result;
     }

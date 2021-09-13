@@ -43,9 +43,11 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.vocabulary.DCAT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,8 +202,7 @@ public class NodeSchemaDataFetcher {
                 Node src = e.getKey();
                 Set<Node> preds = e.getValue();
 
-                // TODO Remove already loaded predicates
-
+                // Remove already loaded predicates
                 ResourceState rs = resourceCache.getOrCreate(src);
                 Set<Node> seenPreds = rs.getSeenPredicates(isFwd);
                 preds.removeAll(seenPreds);
@@ -291,12 +292,12 @@ public class NodeSchemaDataFetcher {
 
             ResourceState rs = resourceCache.get(src);
             for (Node pred : preds) {
+                System.out.println("Declaring seen: " + pred);
                 rs.declarePredicateSeen(isFwd, pred);
             }
         }
 
-        //
-
+        // Set up the next iteration
 
         for (Entry<NodeSchema, Collection<Node>> e : schemaAndNodes.asMap().entrySet()) {
             NodeSchema ns = e.getKey();
@@ -313,11 +314,12 @@ public class NodeSchemaDataFetcher {
                         for (Node src : e.getValue()) {
                             ResourceState rs = resourceCache.get(src);
                             Set<Node> targets = rs.getTargets(isFwd, p);
-
-                            for (Node targetNode : targets) {
-                                if (!done.containsEntry(targetSchema, targetNode)) {
-                                    done.put(targetSchema, targetNode);
-                                    next.put(targetSchema, targetNode);
+                            if (targets != null) {
+                                for (Node targetNode : targets) {
+                                    if (!done.containsEntry(targetSchema, targetNode)) {
+                                        done.put(targetSchema, targetNode);
+                                        next.put(targetSchema, targetNode);
+                                    }
                                 }
                             }
                         }
@@ -326,34 +328,7 @@ public class NodeSchemaDataFetcher {
             }
         }
 
-        /*
-//                Graph tmp = GraphFactory.createDefaultGraph();
-                //x schema.copyMatchingTriples(node, target, graph);
 
-//                RDFDataMgr.write(System.out, ModelFactory.createModelForGraph(tmp), RDFFormat.TURTLE_PRETTY);
-
-                for (PropertySchema predicateSchema : schema.getPredicateSchemas()) {
-                    // Get the set of matching values so that we can perform a nested lookup with them
-                    Set<Node> subGraphNodes = new LinkedHashSet<Node>();
-                    //x predicateSchema.copyMatchingValues(node, subGraphNodes, target);
-
-//                    System.out.println("Next nodes for " + predicateSchema.getPredicate() + ": " + subGraphNodes);
-
-                    Set<? extends NodeSchema> targetSchemas = predicateSchema.getTargetSchemas();
-                    if (targetSchemas != null) {
-                        for (NodeSchema targetSchema : targetSchemas) {
-                            for (Node targetNode : subGraphNodes) {
-                                if (!done.containsEntry(targetSchema, targetNode)) {
-                                    done.put(targetSchema, targetNode);
-                                    next.put(targetSchema, targetNode);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-*/
         return next;
     }
 
@@ -475,6 +450,13 @@ public class NodeSchemaDataFetcher {
          RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
 
          ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
+
+         ShapedProperty sp = sn.getShapedProperties().get(PathFactory.pathLink(DCAT.distribution.asNode()));
+
+         System.out.println("Is in memory: " + sp.isInMemory());
+         // System.out.println("Value: " + sp.getValues().fetchData(null, RangeUtils.rangeStartingWithZero));
+         // sp.getValues();
+
          printShapedNode(sn);
     }
 
