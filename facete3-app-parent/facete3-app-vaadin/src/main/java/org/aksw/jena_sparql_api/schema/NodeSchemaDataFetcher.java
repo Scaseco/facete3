@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.util.range.RangeUtils;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.PredicateStats;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
@@ -55,8 +56,6 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Range;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
-
-import io.reactivex.rxjava3.core.Single;
 
 /**
  * A class to retrieve the triples that correspond to a set of RDF resources w.r.t.
@@ -123,7 +122,7 @@ public class NodeSchemaDataFetcher {
             SparqlQueryConnection conn,
             Multimap<NodeSchema, Node> done,
             LookupService<Node, ResourceMetamodel> metaDataService,
-            ResourceCache graphToResourceState) {
+            ResourceCache resourceCache) {
 
         // The map for what to fetch in the next breadth
         Multimap<NodeSchema, Node> next = HashMultimap.create();
@@ -179,7 +178,7 @@ public class NodeSchemaDataFetcher {
             }
         }
 
-        long valueCountThreshold = 1000;
+        long valueCountThreshold = 10;
 
 
         Var ip = Var.alloc("ip");
@@ -203,7 +202,7 @@ public class NodeSchemaDataFetcher {
 
                 // TODO Remove already loaded predicates
 
-                ResourceState rs = graphToResourceState.getOrCreate(src);
+                ResourceState rs = resourceCache.getOrCreate(src);
                 Set<Node> seenPreds = rs.getSeenPredicates(isFwd);
                 preds.removeAll(seenPreds);
 
@@ -279,7 +278,7 @@ public class NodeSchemaDataFetcher {
             Node p = isFwd ? np : nip;
             Node o = isFwd ? no : nio;
 
-            ResourceState rs = graphToResourceState.get(src);
+            ResourceState rs = resourceCache.get(src);
             rs.add(isFwd, p, o);
         });
 
@@ -290,7 +289,7 @@ public class NodeSchemaDataFetcher {
             Node src = cell.getColumnKey();
             Set<Node> preds = cell.getValue();
 
-            ResourceState rs = graphToResourceState.get(src);
+            ResourceState rs = resourceCache.get(src);
             for (Node pred : preds) {
                 rs.declarePredicateSeen(isFwd, pred);
             }
@@ -312,7 +311,7 @@ public class NodeSchemaDataFetcher {
 
 
                         for (Node src : e.getValue()) {
-                            ResourceState rs = graphToResourceState.get(src);
+                            ResourceState rs = resourceCache.get(src);
                             Set<Node> targets = rs.getTargets(isFwd, p);
 
                             for (Node targetNode : targets) {
@@ -476,17 +475,29 @@ public class NodeSchemaDataFetcher {
          RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
 
          ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
-         Map<Path, ShapedProperty> spm = sn.getShapedProperties();
+         printShapedNode(sn);
+    }
 
-         for (ShapedProperty sp : spm.values()) {
-             Range<Long> cnt = sp.getValues().fetchCount(null, null, null).blockingGet();
-             if (!Range.closedOpen(0l, 0l).equals(cnt)) {
+    public static void printShapedNode(ShapedNode sn) {
+        System.out.println("Visisted: " + sn.getSourceNode());
+        Map<Path, ShapedProperty> spm = sn.getShapedProperties();
 
-                 System.out.println("Path: " + sp.getPath());
-                 System.out.println(cnt);
-             }
-         }
+        for (ShapedProperty sp : spm.values()) {
+            Long cnt = sp.getValues().fetchCount().blockingGet();
+            if (cnt != null) {
 
+                System.out.println("Path: " + sp.getPath());
+                System.out.println("Is in memory: " + sp.isInMemory());
+                System.out.println("Is empty: " + sp.isEmpty());
+                System.out.println(cnt);
+
+                Map<Node, ShapedNode> map = sp.getValues().fetchData(null, RangeUtils.rangeStartingWithZero);
+                for (ShapedNode tgt : map.values()) {
+                    printShapedNode(tgt);
+                }
+
+            }
+        }
     }
 
 }

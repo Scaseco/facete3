@@ -89,4 +89,9 @@ public class ShapedNode {
         return result;
     }
 
+
+    @Override
+    public String toString() {
+        return "ShapedNode [" + src + "]";
+    }
 }

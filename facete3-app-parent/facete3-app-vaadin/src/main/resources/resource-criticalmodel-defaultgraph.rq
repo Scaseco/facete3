@@ -49,7 +49,9 @@ WHERE {
       BIND(<urn:bwd> AS ?dir)
     }
 
-    FILTER(?vc > 1000 || ?lic > 1000)
+#    FILTER(?vc > 1000 || ?lic > 1000)
+    FILTER(?vc > 10 || ?lic > 10)
+
   } }
 
 

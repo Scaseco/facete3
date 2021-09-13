@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.range.RangeUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceState;
 import org.aksw.jena_sparql_api.lookup.ListService;
@@ -55,10 +56,32 @@ public class ShapedProperty {
         return ShapedNode.create(tgt, nodeSchemas, src.getResourceCache(), src.getConnection());
     }
 
-    public MapService<Concept, Node, ShapedNode> getValues() {
+    protected Set<Node> getCachedValues() {
         ResourceCache resourceCache = src.getResourceCache();
         ResourceState rs = resourceCache.get(src.getSourceNode());
         Set<Node> cachedValues = rs.getFromCache(path);
+
+        return cachedValues;
+    }
+
+    protected boolean isInMemory() {
+        boolean result = getCachedValues() != null;
+        return result;
+    }
+
+    protected boolean isEmpty() {
+        Set<Node> cachedValues = getCachedValues();
+        boolean result = cachedValues != null
+                ? cachedValues.isEmpty()
+                : getValues().streamData(null, RangeUtils.rangeStartingWithZero).isEmpty().blockingGet();
+
+        return result;
+    }
+
+    public MapService<Concept, Node, ShapedNode> getValues() {
+        ResourceCache resourceCache = src.getResourceCache();
+//        ResourceState rs = resourceCache.get(src.getSourceNode());
+        Set<Node> cachedValues = getCachedValues();
         SparqlQueryConnection conn = src.getConnection();
 
 
