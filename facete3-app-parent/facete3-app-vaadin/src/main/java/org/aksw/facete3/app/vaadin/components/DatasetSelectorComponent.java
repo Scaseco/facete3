@@ -3,23 +3,42 @@ package org.aksw.facete3.app.vaadin.components;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
+import org.aksw.commons.path.core.Path;
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
+import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.ListServiceFromList;
+import org.aksw.jena_sparql_api.lookup.MapServiceFromListService;
+import org.aksw.jena_sparql_api.schema.NodeSchema;
+import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
+import org.aksw.jena_sparql_api.schema.ResourceCache;
+import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
 import org.aksw.vaadin.datashape.form.ShaclForm;
+import org.aksw.vaadin.datashape.provider.HierarchicalDataProviderForShacl;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.path.PathWriter;
 
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
@@ -28,8 +47,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.dom.Element;
 
 
@@ -193,6 +214,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 //        super(new VerticalLayout());
 //        this.getTabsComponent().setOrientation(Orientation.HORIZONTAL);
 
+        this.setSizeFull();
 //        DatasetCreatorForm datasetCreator = new DatasetCreatorForm();
 //        datasetCreator.setMinWidth("300px");
 //        datasetCreator.setMinHeight("300px");
@@ -200,9 +222,48 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
         ShaclForm shaclForm = new ShaclForm();
 
+        Model shaclModel = RDFDataMgr.loadModel("dcat-ap_2.0.0_shacl_shapes.ttl");
+        NodeSchema schema = shaclModel.createResource("http://data.europa.eu/r5r#Dataset_Shape").as(NodeSchemaFromNodeShape.class);
+        Node datasetNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
+        Dataset ds = RDFDataMgr.loadDataset("linkedgeodata-2018-04-04.dcat.ttl");
+        ResourceCache resourceCache = new ResourceCache();
+        SparqlQueryConnection conn = RDFConnectionFactory.connect(ds);
+        ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
+        ListService<Concept, ShapedNode> ls = new ListServiceFromList<>(Collections.singletonList(sn), (k, v) -> true);
+        MapServiceFromListService<Concept, ShapedNode, Node, ShapedNode> ms = new MapServiceFromListService<>(ls, ShapedNode::getSourceNode, x -> x);
+
+
+        TreeGrid<Path<Node>> treeGrid = new TreeGrid<>();
+        HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms);
+        treeGrid.setDataProvider(dataProvider);
+        treeGrid.setHeight("500px");
+        treeGrid.setWidth("1000px");
+        Column<?> hierarchyColumn = treeGrid.addHierarchyColumn(path -> {
+            // System.out.println(path);
+            // return "" + Optional.ofNullable(path).map(Path::getFileName).map(Object::toString).orElse("");
+            Node node = path.getFileName().toSegment();
+            String r = null;
+            if (node.isLiteral()) {
+                Object o = node.getLiteralValue();
+                if (o instanceof org.apache.jena.sparql.path.Path) {
+                    r = PathWriter.asString((org.apache.jena.sparql.path.Path)o);
+                }
+            }
+
+            if (r == null) {
+                r = LabelUtils.deriveLabelFromNode(node, null, null);
+            }
+
+            return r;
+            // return path.toString();
+        });
+        hierarchyColumn.setResizable(true);
+        hierarchyColumn.setFrozen(true);
+
         this.newTab("catalog", "Browse Catalog", new ManagedComponentSimple(new Span("Hello")));
+        this.newTab("test", "Test", new ManagedComponentSimple(treeGrid));
         // this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(datasetCreator));
-         this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(shaclForm));
+        this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(shaclForm));
     }
 
 

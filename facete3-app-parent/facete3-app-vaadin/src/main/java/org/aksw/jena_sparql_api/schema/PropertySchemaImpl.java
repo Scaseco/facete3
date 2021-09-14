@@ -11,6 +11,9 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_ReverseLink;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
 /**
@@ -99,5 +102,10 @@ public class PropertySchemaImpl
                 .count();
 
         return result;
+    }
+
+    @Override
+    public Path getPath() {
+        return isForward ? new P_Link(predicate) : new P_ReverseLink(predicate);
     }
 }

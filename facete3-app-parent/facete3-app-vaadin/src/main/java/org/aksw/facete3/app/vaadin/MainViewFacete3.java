@@ -70,6 +70,7 @@ public class MainViewFacete3 extends AppLayout {
       DatasetSelectorComponent datasetManager = new DatasetSelectorComponent();
 
       dialog.add(datasetManager);
+      dialog.setSizeFull();
 
       appSettingsBtn.addClickListener(event -> {
           dialog.open();

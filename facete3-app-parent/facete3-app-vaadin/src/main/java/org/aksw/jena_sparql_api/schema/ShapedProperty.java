@@ -69,7 +69,7 @@ public class ShapedProperty {
         return result;
     }
 
-    protected boolean isEmpty() {
+    public boolean isEmpty() {
         Set<Node> cachedValues = getCachedValues();
         boolean result = cachedValues != null
                 ? cachedValues.isEmpty()
@@ -88,12 +88,7 @@ public class ShapedProperty {
         MapService<Concept, Node, Table> core;
         // core = ListServiceFromList.wrap(cachedValues, null);
 
-        Collection<NodeSchema> tgtNodeSchemas = propertySchemas.stream()
-                .map(PropertySchema::getTargetSchemas)
-                .filter(Objects::nonNull)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
-
+        Set<NodeSchema> tgtNodeSchemas = getTargetNodeSchemas();
 
         if (cachedValues != null) {
             List<Node> items = new ArrayList<>(cachedValues);
@@ -135,6 +130,15 @@ public class ShapedProperty {
         });
 
         return result;
+    }
+
+    public Set<NodeSchema> getTargetNodeSchemas() {
+        Set<NodeSchema> tgtNodeSchemas = propertySchemas.stream()
+                .map(PropertySchema::getTargetSchemas)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        return tgtNodeSchemas;
     }
 
     /*

@@ -336,7 +336,7 @@ public class MainPlaygroundResourceMetamodel {
 
         //Graph dataGraph = GraphFactory.createDefaultGraph();
         Map<Node, ResourceState> resourceCache = new HashMap<>();
-        dataFetcher.sync(schemaToNodes, conn, metaModelService, resourceCache);
+        // dataFetcher.sync(schemaToNodes, conn, metaModelService, resourceCache);
 
         // fillMetamodel(dsm, schemaToNodes, dataGraph);
 

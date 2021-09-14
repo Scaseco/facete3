@@ -194,7 +194,7 @@ public class ShaclForm
 
         Graph graph = GraphFactory.createDefaultGraph();
         Multimap<NodeSchema, Node> schemaToNodes = Multimaps.invertFrom(roots, ArrayListMultimap.create());
-        dataFetcher.sync(graph, schemaToNodes, conn);
+        // FIXME dataFetcher.sync(graph, schemaToNodes, conn);
 
         System.out.println("Fetching complete:");
         RDFDataMgr.write(System.out, ModelFactory.createModelForGraph(graph), RDFFormat.TURTLE_PRETTY);
@@ -562,7 +562,7 @@ public class ShaclForm
 //							    }
 
 
-                NodeSchema targetSchema = ps.getTargetSchema();
+                NodeSchema targetSchema = null; // FIXME ps.getTargetSchema();
 
                 // for (Node existingValue : existingValues) {
                 // ListView<Node> existingView = ListView.create(new ListDataProvider<Node>(existingValues),

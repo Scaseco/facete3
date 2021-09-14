@@ -45,11 +45,11 @@ public class MainTestFormGenerator {
         // NodeSchema schema = new NodeSchemaFromNodeShape(ns);
         // schema.createPropertySchema(RDFS.Nodes.label, false);
         PropertySchema ppp = schema.createPropertySchema(DCAT.distribution.asNode(), true);
-        System.out.println("Target schema for distribution: " + ppp.getTargetSchema());
+        System.out.println("Target schema for distribution: " + ppp.getTargetSchemas());
 
-        for (PropertySchema ps : ppp.getTargetSchema().getPredicateSchemas()) {
-            System.out.println(ps.getPredicate() + " " + ps.isForward());
-        }
+//        for (PropertySchema ps : ppp.getTargetSchemas().getPredicateSchemas()) {
+//            System.out.println(ps.getPredicate() + " " + ps.isForward());
+//        }
 
 
 
@@ -68,7 +68,7 @@ public class MainTestFormGenerator {
 
             NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
             graph = GraphFactory.createDefaultGraph();
-            dataFetcher.sync(graph, roots, conn);
+//            dataFetcher.sync(graph, roots, conn);
 
             System.out.println("Fetching complete:");
             RDFDataMgr.write(System.out, ModelFactory.createModelForGraph(graph), RDFFormat.TURTLE_PRETTY);

@@ -473,7 +473,7 @@ public class NodeSchemaDataFetcher {
                 System.out.println("Is empty: " + sp.isEmpty());
                 System.out.println(cnt);
 
-                Map<Node, ShapedNode> map = sp.getValues().fetchData(null, RangeUtils.rangeStartingWithZero);
+                Map<Node, ShapedNode> map = sp.getValues().fetchData(null, Range.closedOpen(0l, 3l));
                 for (ShapedNode tgt : map.values()) {
                     printShapedNode(tgt);
                 }

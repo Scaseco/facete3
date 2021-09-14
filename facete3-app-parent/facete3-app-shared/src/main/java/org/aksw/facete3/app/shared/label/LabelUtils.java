@@ -270,9 +270,9 @@ public class LabelUtils {
         if (node.isLiteral()) {
             Object obj = node.getLiteralValue();
 
-        	String baseStr = obj instanceof Number
-        			? Objects.toString(obj)
-        			: node.getLiteralLexicalForm();
+            String baseStr = obj instanceof Number
+                    ? Objects.toString(obj)
+                    : node.getLiteralLexicalForm();
 
             String dtIri = node.getLiteralDatatypeURI();
             String dtPart = null;

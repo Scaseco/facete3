@@ -94,4 +94,10 @@ public class ShapedNode {
     public String toString() {
         return "ShapedNode [" + src + "]";
     }
+
+    public ShapedProperty getShapedProperty(Path path) {
+        Map<Path, ShapedProperty> map = getShapedProperties();
+        ShapedProperty result = map.get(path);
+        return result;
+    }
 }
