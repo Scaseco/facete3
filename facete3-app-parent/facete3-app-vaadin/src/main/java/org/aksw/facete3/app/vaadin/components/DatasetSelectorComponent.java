@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import org.aksw.commons.path.core.Path;
 import org.aksw.dcat.jena.domain.api.DcatDataset;
@@ -36,15 +37,18 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.path.PathWriter;
 
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid.Column;
+import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
@@ -260,8 +264,23 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         hierarchyColumn.setResizable(true);
         hierarchyColumn.setFrozen(true);
 
+        VerticalLayout v = new VerticalLayout();
+        v.setSizeFull();
+        v.add(treeGrid);
+        treeGrid.setSelectionMode(SelectionMode.SINGLE);
+        Button expandAllBtn = new Button("Expand all");
+        expandAllBtn.addClickListener(ev -> {
+            // PathOpsNode.newAbsolutePath()
+            Set<Path<Node>> selectedItems = treeGrid.getSelectedItems();
+            System.out.println("Selected items: " + selectedItems);
+            treeGrid.expandRecursively(selectedItems, 5);
+        });
+
+        v.add(expandAllBtn);
+
+
         this.newTab("catalog", "Browse Catalog", new ManagedComponentSimple(new Span("Hello")));
-        this.newTab("test", "Test", new ManagedComponentSimple(treeGrid));
+        this.newTab("test", "Test", new ManagedComponentSimple(v));
         // this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(datasetCreator));
         this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(shaclForm));
     }

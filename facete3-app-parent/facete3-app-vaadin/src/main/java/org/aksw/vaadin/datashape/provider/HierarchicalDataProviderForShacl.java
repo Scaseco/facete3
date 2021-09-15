@@ -12,7 +12,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.path.core.PathOpsNode;
-import org.aksw.jena_sparql_api.schema.RDFDatatypePath;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePath;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.schema.ShapedProperty;
 import org.apache.jena.graph.Node;
