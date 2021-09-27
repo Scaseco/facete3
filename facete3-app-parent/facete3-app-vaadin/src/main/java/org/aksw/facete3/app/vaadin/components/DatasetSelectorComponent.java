@@ -15,12 +15,16 @@ import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceFromList;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.MapServiceFromListService;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
+import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.ResourceCache;
+import org.aksw.jena_sparql_api.schema.ResourceExplorer;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
 import org.aksw.vaadin.datashape.form.ShaclForm;
@@ -35,8 +39,12 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathWriter;
+import org.apache.jena.vocabulary.RDFS;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -228,13 +236,29 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
         Model shaclModel = RDFDataMgr.loadModel("dcat-ap_2.0.0_shacl_shapes.ttl");
         NodeSchema schema = shaclModel.createResource("http://data.europa.eu/r5r#Dataset_Shape").as(NodeSchemaFromNodeShape.class);
+
+        // Delete the dcat:distribution property shape
+
         Node datasetNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
         Dataset ds = RDFDataMgr.loadDataset("linkedgeodata-2018-04-04.dcat.ttl");
         ResourceCache resourceCache = new ResourceCache();
         SparqlQueryConnection conn = RDFConnectionFactory.connect(ds);
         ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
+        LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(conn);
+
+        Multimap<NodeSchema, Node> mm = HashMultimap.create();
+        mm.put(schema, datasetNode);
+
+        NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
+        dataFetcher.sync(mm, conn, metaDataService, resourceCache);
+
         ListService<Concept, ShapedNode> ls = new ListServiceFromList<>(Collections.singletonList(sn), (k, v) -> true);
         MapServiceFromListService<Concept, ShapedNode, Node, ShapedNode> ms = new MapServiceFromListService<>(ls, ShapedNode::getSourceNode, x -> x);
+
+
+        Model prefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.ttl");
+        LookupService<Node, String> labelService =
+                LabelUtils.createLookupServiceForLabels(LabelUtils.getLabelLookupService(conn, RDFS.label, prefixes), prefixes, prefixes).cache();
 
 
         TreeGrid<Path<Node>> treeGrid = new TreeGrid<>();
@@ -250,12 +274,23 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
             if (node.isLiteral()) {
                 Object o = node.getLiteralValue();
                 if (o instanceof org.apache.jena.sparql.path.Path) {
-                    r = PathWriter.asString((org.apache.jena.sparql.path.Path)o);
+                    org.apache.jena.sparql.path.Path p = (org.apache.jena.sparql.path.Path)o;
+
+                    if (p instanceof P_Path0) {
+                        P_Path0 p0 = (P_Path0)p;
+                        Node n = p0.getNode();
+                        boolean isFwd = p0.isForward();
+                        r = (isFwd ? "" : "^") + labelService.fetchItem(n);
+
+                    } else {
+                        r = PathWriter.asString(p);
+                    }
                 }
             }
 
             if (r == null) {
-                r = LabelUtils.deriveLabelFromNode(node, null, null);
+                // r = LabelUtils.deriveLabelFromNode(node, null, null);
+                r = labelService.fetchItem(node);
             }
 
             return r;

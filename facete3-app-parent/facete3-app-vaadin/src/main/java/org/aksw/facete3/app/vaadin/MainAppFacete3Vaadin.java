@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.sys.JenaSystem;
+import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -66,6 +67,7 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
         // probably this is due to the app running in a separate
         // thread
         ConfigurableApplicationContext cxt = new SpringApplicationBuilder()
+                .bannerMode(Mode.OFF)
                 .sources(MainAppFacete3Vaadin.class)
                 .run(args);
     }

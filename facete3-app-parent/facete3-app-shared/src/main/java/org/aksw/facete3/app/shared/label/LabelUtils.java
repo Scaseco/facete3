@@ -31,8 +31,8 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDFS;
@@ -77,10 +77,11 @@ public class LabelUtils {
                         .mapWith(RDFNode::asNode)
                         .toList();
                 for(Node o : os) {
-                    BindingMap binding = BindingFactory.create();
-                    binding.add(config.getSubjectVar(), s);
-                    binding.add(config.getPredicateVar(), p);
-                    binding.add(config.getObjectVar(), o);
+                    Binding binding = BindingFactory.builder()
+                        .add(config.getSubjectVar(), s)
+                        .add(config.getPredicateVar(), p)
+                        .add(config.getObjectVar(), o)
+                        .build();
 
                     acc.accumulate(binding, null);
                 }

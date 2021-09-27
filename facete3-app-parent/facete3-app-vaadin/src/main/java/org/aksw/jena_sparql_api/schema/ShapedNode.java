@@ -7,11 +7,14 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceState;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.path.Path;
 
 public class ShapedNode {
     protected Node src;
+    protected Resource res;
+
     protected ResourceCache resourceCache;
     protected Collection<NodeSchema> nodeSchemas;
     protected SparqlQueryConnection conn;

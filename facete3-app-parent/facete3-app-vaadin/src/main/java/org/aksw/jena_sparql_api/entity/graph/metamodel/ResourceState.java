@@ -28,6 +28,7 @@ public class ResourceState {
     // TODO Implement
     // protected Map<Path, Map<Node, Triple>> pathStore;
 
+
     boolean isFwdComplete;
     boolean isBwdComplete;
 

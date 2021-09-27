@@ -10,7 +10,6 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUni
 import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFactorizeTableColumnsToExtend;
 import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
-import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
@@ -34,8 +33,8 @@ import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.Template;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * The config class sets up a connection to the aksw/cord natural language interface (nli)
@@ -45,28 +44,10 @@ import org.springframework.context.annotation.Bean;
  * @author raven
  *
  */
+@Configuration
 public class ConfigSearchProviderNli {
-    @ConfigurationProperties("facete3.nli")
-    public static class NliConfig {
-        private String endpoint;
-        private Long resultLimit;
 
-        public String getEndpoint() {
-            return endpoint;
-        }
-
-        public Long getResultLimit() {
-            return resultLimit;
-        }
-
-        public void setResultLimit(Long resultLimit) {
-            this.resultLimit = resultLimit;
-        }
-
-        public void setEndpoint(String endpoint) {
-            this.endpoint = endpoint;
-        }
-    }
+    
 
 //    @Bean
 //    @ConfigurationProperties("facete3.nli")

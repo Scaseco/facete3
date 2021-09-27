@@ -56,6 +56,7 @@ public interface NodeSchemaFromNodeShape
     }
 
 
+    /** Scan all property schemas for one that matches the predicate and direction - runs in O(n) */
     default Stream<PropertySchemaFromPropertyShape> getPropertySchemas(Node predicate, boolean isForward) {
         return getPredicateSchemas().stream()
             .filter(item -> Objects.equals(item.getPredicate(), predicate) && item.isForward() == isForward);

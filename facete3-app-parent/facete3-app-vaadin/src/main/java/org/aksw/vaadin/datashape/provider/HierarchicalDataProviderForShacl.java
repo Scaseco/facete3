@@ -1,9 +1,11 @@
 package org.aksw.vaadin.datashape.provider;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,6 +17,7 @@ import org.aksw.jena_sparql_api.path.core.PathOpsNode;
 import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePath;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.schema.ShapedProperty;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
@@ -115,8 +118,10 @@ public class HierarchicalDataProviderForShacl
         }
 
         List<Path<Node>> tmp = result.collect(Collectors.toList());
-System.out.println("Data provider for path " + basePath + ": " + tmp);
+
+        // System.out.println("Data provider for path " + basePath + ": " + tmp);
         return tmp.stream();
     }
+
 
 }

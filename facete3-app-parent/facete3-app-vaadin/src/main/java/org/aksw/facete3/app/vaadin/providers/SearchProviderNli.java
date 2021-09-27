@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromCollection;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpecFromCollectionImpl;
-import org.aksw.facete3.app.vaadin.ConfigSearchProviderNli.NliConfig;
+import org.aksw.facete3.app.vaadin.NliConfig;
 import org.aksw.facete3.app.vaadin.domain.NliResponse;
 import org.aksw.facete3.app.vaadin.domain.Paper;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
