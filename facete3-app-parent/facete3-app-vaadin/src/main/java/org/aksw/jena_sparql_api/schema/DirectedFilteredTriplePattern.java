@@ -68,7 +68,7 @@ public class DirectedFilteredTriplePattern {
      * @return
      */
     public TripleConstraint toConstraint() {
-        Triple pattern = TripleUtils.create(getSource(), getTarget(), getSource(), isForward());
+        Triple pattern = TripleUtils.create(getSource(), triplePattern.getPredicate(), getTarget(), isForward());
         TripleConstraint result = TripleConstraintImpl.create(pattern, exprs == null ? null : ExprUtils.andifyBalanced(exprs));
         return result;
     }

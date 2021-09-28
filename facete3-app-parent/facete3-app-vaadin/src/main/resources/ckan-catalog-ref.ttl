@@ -1,0 +1,16 @@
+
+
+# Reference to a ckan catalog
+:CkanCatalogRef_Shape
+    a sh:NodeShape ;
+    sh:name "CKAN Catalog Ref"@en ;
+    sh:property [
+        sh:path eg:url ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 1 ;
+    ], [
+        sh:path eg:apiToken ;
+        sh:nodeKind sh:Literal ;
+        sh:maxCount 1 ;
+    ]
+    .

@@ -68,6 +68,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
@@ -234,6 +236,10 @@ public class ShaclForm
         });
 
 
+        // HierarchicalDataProvider<Node, Expr> treeDataProvider = new Hiera
+        TreeData<Node> treeData = new TreeData<>();
+
+
         ListDataProvider<Node> rootList = new ListDataProvider<>(roots.keys());
 
         // ListView<Node> rootListView = ListView.create(rootList, item -> renderRoot(graphEditorModel, item, this));
@@ -325,6 +331,8 @@ public class ShaclForm
 //        Button addPropertyButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
         Button addPropertyButton = new Button("ADD NEW PROPERTY");
         target.add(addPropertyButton);
+
+
 
 
         ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, Component> lbs = ListBindingSupport2.create(

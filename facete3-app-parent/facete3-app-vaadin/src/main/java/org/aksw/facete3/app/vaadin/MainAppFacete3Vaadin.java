@@ -22,7 +22,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 @SpringBootApplication
 public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 
-    static { JenaSystem.init(); }
+//    static { JenaSystem.init(); }
 
     public static void main(String[] args) {
 

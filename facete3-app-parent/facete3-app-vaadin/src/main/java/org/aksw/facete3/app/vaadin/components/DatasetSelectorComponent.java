@@ -4,15 +4,20 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.commons.path.core.Path;
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
 import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
+import org.aksw.jena_sparql_api.collection.GraphChange;
+import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
@@ -20,6 +25,7 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceFromList;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.MapServiceFromListService;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePath;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
@@ -27,10 +33,12 @@ import org.aksw.jena_sparql_api.schema.ResourceCache;
 import org.aksw.jena_sparql_api.schema.ResourceExplorer;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.vaadin.datashape.form.ShaclForm;
 import org.aksw.vaadin.datashape.provider.HierarchicalDataProviderForShacl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -46,24 +54,30 @@ import org.apache.jena.vocabulary.RDFS;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.dom.Element;
+import com.vaadin.flow.shared.Registration;
 
 
 
@@ -262,11 +276,305 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
 
         TreeGrid<Path<Node>> treeGrid = new TreeGrid<>();
-        HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms);
+        GraphChange graphEditorModel = new GraphChange();
+
+
+        HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms, graphEditorModel);
+
+        graphEditorModel.getAdditionGraph().addPropertyChangeListener(ev -> {
+            dataProvider.refreshAll();
+        });
+
+        graphEditorModel.addPropertyChangeListener(ev -> {
+            dataProvider.refreshAll();
+        });
+
+
         treeGrid.setDataProvider(dataProvider);
-        treeGrid.setHeight("500px");
-        treeGrid.setWidth("1000px");
-        Column<?> hierarchyColumn = treeGrid.addHierarchyColumn(path -> {
+//        treeGrid.setHeight("500px");
+//        treeGrid.setWidth("1000px");
+        treeGrid.setSizeFull();
+
+        Column<?> hierarchyColumn;
+
+
+
+        // hierarchyColumn = createViewerHierarchyColumn(labelService, treeGrid);
+        hierarchyColumn = createEditorHierarchyColumn(graphEditorModel, treeGrid, labelService);
+        // hierarchyColumn.setWidth("100%");
+        hierarchyColumn.setFlexGrow(1);
+        hierarchyColumn.setResizable(true);
+        hierarchyColumn.setFrozen(true);
+
+        VerticalLayout v = new VerticalLayout();
+        v.setSizeFull();
+        v.add(treeGrid);
+        treeGrid.setSelectionMode(SelectionMode.SINGLE);
+        Button expandAllBtn = new Button("Expand all");
+        expandAllBtn.addClickListener(ev -> {
+            // PathOpsNode.newAbsolutePath()
+            Set<Path<Node>> selectedItems = treeGrid.getSelectedItems();
+            System.out.println("Selected items: " + selectedItems);
+            treeGrid.expandRecursively(selectedItems, 5);
+        });
+
+        v.add(expandAllBtn);
+
+
+        this.newTab("catalog", "Browse Catalog", new ManagedComponentSimple(new Span("Hello")));
+        this.newTab("test", "Test", new ManagedComponentSimple(v));
+        // this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(datasetCreator));
+        this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(shaclForm));
+
+
+
+        VerticalLayout catalogMgmtPanel = new VerticalLayout();
+        catalogMgmtPanel.setSizeFull();
+        Button showAddCatalogBtn = new Button("Add Catalog");
+
+
+        Dialog addCatalogDialog = new Dialog();
+
+
+        ShaclForm addCatalogForm = new ShaclForm();
+        addCatalogDialog.add(addCatalogForm);
+        addCatalogDialog.setSizeFull();
+
+        showAddCatalogBtn.addClickListener(event -> {
+            addCatalogDialog.open();
+//            input.focus();
+        });
+
+        catalogMgmtPanel.add(showAddCatalogBtn);
+
+
+        this.newTab("manage-catalog", "Manage Catalogs", new ManagedComponentSimple(catalogMgmtPanel));
+    }
+
+    public Column<?> createEditorHierarchyColumn(
+            GraphChange graphEditorModel,
+            TreeGrid<Path<Node>> treeGrid, LookupService<Node, String> labelService) {
+
+        Column<?> hierarchyColumn;
+        hierarchyColumn = treeGrid.addComponentHierarchyColumn(path -> {
+
+            List<Node> segments = path.getSegments();
+            int pathLength = path.getNameCount();
+
+            boolean isResourcePath = pathLength % 2 == 1;
+            boolean isPropertyPath = !isResourcePath;
+
+            P_Path0 p0 = null;
+
+            // System.out.println(path);
+            // return "" + Optional.ofNullable(path).map(Path::getFileName).map(Object::toString).orElse("");
+            Node node = path.getFileName().toSegment();
+            String str = null;
+            org.apache.jena.sparql.path.Path p = RDFDatatypePath.extractPath(node);
+            if (p != null) {
+                if (p instanceof P_Path0) {
+                    p0 = (P_Path0)p;
+                    Node n = p0.getNode();
+                    boolean isFwd = p0.isForward();
+                    str = (isFwd ? "" : "^") + labelService.fetchItem(n);
+
+                } else {
+                    str = PathWriter.asString(p);
+                }
+            }
+
+            if (str == null) {
+                // r = LabelUtils.deriveLabelFromNode(node, null, null);
+                str = labelService.fetchItem(node);
+            }
+
+
+            VerticalLayout r = new VerticalLayout();
+
+            if (isResourcePath) {
+                Node valueNode = path.getFileName().toSegment();
+
+
+
+                // RdfField rdfField = graphEditorModel.createSetField(node, ps.getPredicate(), true);
+
+//                ObservableCollection<Node> existingValues = rdfField.getBaseAsSet();
+//                ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
+
+                RdfTermEditor rdfTermEditor = new RdfTermEditor();
+                rdfTermEditor.setWidthFull();
+                // ShaclForm
+
+                // RdfTermEditor.s
+                // rdfTermEditor.setValue(valueNode);
+                r.add(rdfTermEditor);
+
+
+                if (pathLength >= 3) {
+                    Node srcNode = pathLength < 3 ? null : segments.get(pathLength - 3);
+
+                    Node pNode = segments.get(pathLength - 2);
+                    p0 = (P_Path0)RDFDatatypePath.extractPath(pNode);
+
+
+                    RdfField rdfField = graphEditorModel.createSetField(srcNode, p0.getNode(), p0.isForward());
+                    ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
+
+                    if (addedValues.contains(valueNode)) {
+                        Button btn = new Button("Remove");
+                        r.add(btn);
+                        btn.addClickListener(ev -> {
+                            // Removing a newly created node also clears all information about it
+                            // This comprises renames and manually added triples
+
+                            // TODO Ask for confirmation in case data has been manually added
+
+                            // newValueRenameRegistration.remove();
+
+                            graphEditorModel.getRenamedNodes().remove(valueNode);
+                            addedValues.remove(valueNode);
+                        });
+
+                    } else {
+                        Triple t = TripleUtils.create(srcNode, p0.getNode(), valueNode, p0.isForward());
+
+
+                        Button resetValueBtn = new Button(new Icon(VaadinIcon.ROTATE_LEFT));
+                        resetValueBtn.getElement().setProperty("title", "Reset this field to its original value");
+
+                        r.add(resetValueBtn);
+
+                        Checkbox markAsDeleted = new Checkbox(false);
+                        markAsDeleted.getElement().setProperty("title", "Mark the original value as deleted");
+                        //target.addFormItem(markAsDeleted, "Delete");
+
+                        r.add(markAsDeleted);
+
+                        ObservableValue<Boolean> isDeleted = graphEditorModel.getDeletionGraph().asSet()
+                                .filter(c -> c.equals(t))
+                                .mapToValue(c -> !c.isEmpty(), b -> b ? null : t);
+
+
+                        //newC.add(bind(markAsDeleted, isDeleted));
+
+
+                        // Red background for resources marked as deleted
+                        isDeleted.addValueChangeListener(ev -> {
+                            if (Boolean.TRUE.equals(ev.getNewValue())) {
+                                rdfTermEditor.setEnabled(false);
+                                r.getStyle().set("background-color", "var(--lumo-error-color-50pct)");
+                            } else {
+                                rdfTermEditor.setEnabled(true);
+                                r.getStyle().set("background-color", null);
+                            }
+                        });
+
+                        markAsDeleted.addValueChangeListener(event -> {
+                            Boolean state = event.getValue();
+                            if (Boolean.TRUE.equals(state)) {
+                                graphEditorModel.getDeletionGraph().add(t);
+                            } else {
+                                graphEditorModel.getDeletionGraph().delete(t);
+                            }
+                        });
+
+                        // graphEditorModel.getDeletionGraph().tr
+
+                        int component = p0.isForward() ? 2 : 0;
+                        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, component);
+
+                        Node originalValue = value.get();
+                        resetValueBtn.setVisible(false);
+                        value.addValueChangeListener(ev -> {
+                            boolean newValueDiffersFromOriginal = !Objects.equals(originalValue, ev.getNewValue());
+
+                            resetValueBtn.setVisible(newValueDiffersFromOriginal);
+                            markAsDeleted.setVisible(!newValueDiffersFromOriginal);
+                        });
+                        ShaclForm.bind(rdfTermEditor, value);
+
+
+                        resetValueBtn.addClickListener(ev -> {
+                            value.set(originalValue);
+                        });
+                    }
+                } else {
+                    rdfTermEditor.setValue(valueNode);
+                }
+
+                // Show the filter / paginator controls
+                HorizontalLayout filterPanel = new HorizontalLayout();
+                TextField propertyFilter = new TextField();
+                propertyFilter.setPlaceholder("Filter");
+                propertyFilter.setValueChangeMode(ValueChangeMode.LAZY);
+
+                Select<Integer> itemsPerPage = new Select<>();
+                itemsPerPage.setItems(5, 10, 25, 50, 100);
+
+                filterPanel.add(propertyFilter, itemsPerPage);
+                filterPanel.setVisible(false);
+                r.add(new Hr());
+                r.add(filterPanel);
+
+                Registration exp = treeGrid.addExpandListener(ev -> {
+                    if (ev.getItems().contains(path)) {
+                        filterPanel.setVisible(true);
+                    }
+                });
+                Registration col = treeGrid.addCollapseListener(ev -> {
+                    if (ev.getItems().contains(path)) {
+                        filterPanel.setVisible(false);
+                    }
+                });
+//
+//                r.addDetachListener(ev -> {
+//
+//                });
+            } else if (isPropertyPath && p0 != null) {
+                Node srcNode = segments.get(pathLength - 2);
+
+                // Node propertyNode = p0.getNode();
+
+                RdfField rdfField = graphEditorModel.createSetField(srcNode, p0.getNode(), p0.isForward());
+                ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
+
+
+                HorizontalLayout hl = new HorizontalLayout();
+                hl.add(str);
+                Button addValueButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE_O));
+                addValueButton.addClassName("parent-hover-show");
+                addValueButton.getElement().setProperty("title", "Add a new value to this property");
+                addValueButton.setThemeName("tertiary-inline");
+                hl.add(addValueButton);
+
+
+                addValueButton.addClickListener(ev -> {
+                    // Node newNode = NodeFactory.createBlankNode();
+                    Node newNode = graphEditorModel.freshNode();
+                    addedValues.add(newNode);
+                });
+
+                r.add(hl);
+
+            } else {
+                r.add(str);
+            }
+
+            return r;
+            // return path.toString();
+        });
+
+//        treeGrid.addExpandListener(ev -> {
+//        	ev.get
+//        });
+
+        return hierarchyColumn;
+    }
+
+    public Column<?> createViewerHierarchyColumn(LookupService<Node, String> labelService,
+            TreeGrid<Path<Node>> treeGrid) {
+        Column<?> hierarchyColumn;
+        hierarchyColumn = treeGrid.addHierarchyColumn(path -> {
             // System.out.println(path);
             // return "" + Optional.ofNullable(path).map(Path::getFileName).map(Object::toString).orElse("");
             Node node = path.getFileName().toSegment();
@@ -296,28 +604,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
             return r;
             // return path.toString();
         });
-        hierarchyColumn.setResizable(true);
-        hierarchyColumn.setFrozen(true);
-
-        VerticalLayout v = new VerticalLayout();
-        v.setSizeFull();
-        v.add(treeGrid);
-        treeGrid.setSelectionMode(SelectionMode.SINGLE);
-        Button expandAllBtn = new Button("Expand all");
-        expandAllBtn.addClickListener(ev -> {
-            // PathOpsNode.newAbsolutePath()
-            Set<Path<Node>> selectedItems = treeGrid.getSelectedItems();
-            System.out.println("Selected items: " + selectedItems);
-            treeGrid.expandRecursively(selectedItems, 5);
-        });
-
-        v.add(expandAllBtn);
-
-
-        this.newTab("catalog", "Browse Catalog", new ManagedComponentSimple(new Span("Hello")));
-        this.newTab("test", "Test", new ManagedComponentSimple(v));
-        // this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(datasetCreator));
-        this.newTab("new-dataset", "New Dataset", new ManagedComponentSimple(shaclForm));
+        return hierarchyColumn;
     }
 
 
