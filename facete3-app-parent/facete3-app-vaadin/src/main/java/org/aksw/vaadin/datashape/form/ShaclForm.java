@@ -333,8 +333,6 @@ public class ShaclForm
         target.add(addPropertyButton);
 
 
-
-
         ListBindingSupport2<NodeSchema, SerializablePredicate<NodeSchema>, Component> lbs = ListBindingSupport2.create(
                 (Component)target,
                 schemas,

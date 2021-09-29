@@ -41,7 +41,7 @@ public interface ObservableGraph
         return set;
     }
 
-    default ObservableCollection<Node> createSetForPredicate(Node source, Node predicate, boolean isForward) {
+    default ObservableCollection<Node> createSetField(Node source, Node predicate, boolean isForward) {
         DirectedFilteredTriplePattern dftp = DirectedFilteredTriplePattern.create(source, predicate, isForward);
         return createSetField(source, dftp);
     }

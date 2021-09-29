@@ -18,7 +18,6 @@ import org.aksw.commons.path.core.Path;
 import org.aksw.jena_sparql_api.collection.GraphChange;
 import org.aksw.jena_sparql_api.collection.ObservableGraph;
 import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
-import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.lookup.MapService;
@@ -228,10 +227,11 @@ public class HierarchicalDataProviderForShacl
 
             P_Path0 p0 = (P_Path0)path;
 
-            RdfField rdfField = graphEditorModel.createSetField(s, p0.getNode(), p0.isForward());
+            // RdfField rdfField =
+            ObservableCollection<Node> addedValues = graphEditorModel.getAdditionGraph().createSetField(s, p0.getNode(), p0.isForward());
 
             // ObservableCollection<Node> existingValues = rdfField.getBaseAsSet();
-            ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
+            //ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
 
             addedPaths = addedValues.stream().map(basePath::resolve).collect(Collectors.toList());
 

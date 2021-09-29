@@ -77,6 +77,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
@@ -281,9 +282,52 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                 LabelUtils.createLookupServiceForLabels(LabelUtils.getLabelLookupService(conn, RDFS.label, prefixes), prefixes, prefixes).cache();
 
 
+
         TreeGrid<Path<Node>> treeGrid = new TreeGrid<>();
         GraphChange graphEditorModel = new GraphChange();
 
+
+        TextArea status = new TextArea();
+        status.setWidthFull();
+        // FormItem statusFormItem = addFormItem(status, "Status");
+        // setColspan(statusFormItem, 3);
+
+        Runnable update = () -> {
+                Model additions = ModelFactory.createModelForGraph(graphEditorModel.getAdditionGraph());
+                Model deletions = ModelFactory.createModelForGraph(graphEditorModel.getDeletionGraph());
+
+                String renameStr = graphEditorModel.getRenamedNodes().entrySet().stream()
+                        .map(e -> e.getKey() + " -> " + e.getValue())
+                        .collect(Collectors.joining("\n"));
+
+                String replaceStr = graphEditorModel.getTripleReplacements().entrySet().stream()
+                        .map(e -> e.getKey() + " -> " + e.getValue())
+                        .collect(Collectors.joining("\n"));
+
+                String str = "Added:\n" + ShaclForm.toString(additions, RDFFormat.TURTLE_BLOCKS) + "\n"
+                        + "Removed:\n" + ShaclForm.toString(deletions, RDFFormat.TURTLE_BLOCKS) + "\n"
+                        + "Renamed:\n" + renameStr + "\n"
+                        + "Replaced:\n" + replaceStr + "\n";
+
+
+                status.setValue(str);
+        };
+
+        graphEditorModel.getAdditionGraph().addPropertyChangeListener(ev -> {
+            update.run();
+        });
+
+        graphEditorModel.getDeletionGraph().addPropertyChangeListener(ev -> {
+            update.run();
+        });
+
+        graphEditorModel.getRenamedNodes().addPropertyChangeListener(ev -> {
+            update.run();
+        });
+
+        graphEditorModel.getTripleReplacements().addPropertyChangeListener(ev -> {
+            update.run();
+        });
 
         // HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms, graphEditorModel);
 
@@ -348,6 +392,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         VerticalLayout v = new VerticalLayout();
         v.setSizeFull();
         v.add(treeGrid);
+        v.add(status);
         treeGrid.setSelectionMode(SelectionMode.SINGLE);
         Button expandAllBtn = new Button("Expand all");
         expandAllBtn.addClickListener(ev -> {
@@ -483,8 +528,8 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
                 RdfTermEditor rdfTermEditor = new RdfTermEditor();
                 rdfTermEditor.setWidthFull();
-                // ShaclForm
 
+                // ShaclForm
                 // RdfTermEditor.s
                 // rdfTermEditor.setValue(valueNode);
                 r.add(rdfTermEditor);
@@ -511,12 +556,22 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
                             // newValueRenameRegistration.remove();
 
-                            graphEditorModel.getRenamedNodes().remove(valueNode);
                             addedValues.remove(valueNode);
+                            graphEditorModel.getRenamedNodes().remove(valueNode);
                         });
+                        Triple t = TripleUtils.create(srcNode, p0.getNode(), valueNode, p0.isForward());
+                        int component = p0.isForward() ? 2 : 0;
+                        //ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, component);
+                        ObservableValue<Node> remapped = graphEditorModel.getRenamedNodes().observeKey(valueNode, valueNode);
+
+                        // Registration newValueRenameRegistration = bind(ed, remapped);
+
+                        ShaclForm.bind(rdfTermEditor, remapped);
 
                     } else {
                         Triple t = TripleUtils.create(srcNode, p0.getNode(), valueNode, p0.isForward());
+                        int component = p0.isForward() ? 2 : 0;
+                        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, component);
 
 
                         Button resetValueBtn = new Button(new Icon(VaadinIcon.ROTATE_LEFT));
@@ -560,8 +615,6 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
                         // graphEditorModel.getDeletionGraph().tr
 
-                        int component = p0.isForward() ? 2 : 0;
-                        ObservableValue<Node> value = graphEditorModel.createFieldForExistingTriple(t, component);
 
                         Node originalValue = value.get();
                         resetValueBtn.setVisible(false);
@@ -583,6 +636,11 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                 }
 
                 // Show the filter / paginator controls
+                Button showFilterPanelBtn = new Button(new Icon(VaadinIcon.FILTER));
+                r.add(showFilterPanelBtn);
+
+
+
                 HorizontalLayout filterPanel = new HorizontalLayout();
                 TextField propertyFilter = new TextField();
                 propertyFilter.setPlaceholder("Filter");
@@ -604,6 +662,11 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                 filterPanel.setVisible(treeGrid.isExpanded(path) || isFilterSet);
                 r.add(new Hr());
                 r.add(filterPanel);
+
+                showFilterPanelBtn.addClickListener(ev -> {
+                    filterPanel.setVisible(!filterPanel.isVisible());
+                });
+
 
                 Registration exp = treeGrid.addExpandListener(ev -> {
                     if (ev.getItems().contains(path)) {
