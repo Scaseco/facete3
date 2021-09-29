@@ -31,7 +31,8 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePath;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePPath;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePathNode;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.JenaRuntime;
@@ -105,7 +106,8 @@ public class Facete3Wrapper {
         JenaSystem.init();
         JenaPluginFacete3.init();
 
-        TypeMapper.getInstance().registerDatatype(new RDFDatatypePath());
+        TypeMapper.getInstance().registerDatatype(new RDFDatatypePPath());
+        TypeMapper.getInstance().registerDatatype(new RDFDatatypePathNode());
 
         // JenaPluginConjure.init();
 

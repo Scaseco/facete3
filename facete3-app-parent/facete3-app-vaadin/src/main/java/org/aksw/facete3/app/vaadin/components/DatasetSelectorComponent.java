@@ -4,10 +4,15 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.aksw.commons.collection.observable.CollectionChangedEvent;
 import org.aksw.commons.collection.observable.ObservableCollection;
 import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.commons.path.core.Path;
@@ -25,7 +30,8 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceFromList;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.MapServiceFromListService;
-import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePath;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePPath;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
@@ -36,6 +42,7 @@ import org.aksw.jena_sparql_api.utils.ModelUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.vaadin.datashape.form.ShaclForm;
 import org.aksw.vaadin.datashape.provider.HierarchicalDataProviderForShacl;
+import org.aksw.vaadin.datashape.provider.HierarchicalDataProviderForShacl.NodeState;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -74,7 +81,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.shared.Registration;
@@ -279,15 +285,48 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         GraphChange graphEditorModel = new GraphChange();
 
 
-        HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms, graphEditorModel);
+        // HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms, graphEditorModel);
 
-        graphEditorModel.getAdditionGraph().addPropertyChangeListener(ev -> {
-            dataProvider.refreshAll();
+        HierarchicalDataProviderForShacl dataProvider = new HierarchicalDataProviderForShacl(ms, graphEditorModel);
+
+        Set<Path<Node>> expandedPaths = Collections.synchronizedSet(new HashSet<>());
+        treeGrid.addExpandListener(ev -> expandedPaths.addAll(ev.getItems()));
+        treeGrid.addCollapseListener(ev -> expandedPaths.addAll(ev.getItems()));
+
+        graphEditorModel.getAdditionGraph().asSet().addPropertyChangeListener(ev -> {
+            CollectionChangedEvent<Triple> e = (CollectionChangedEvent<Triple>)ev;
+
+            Set<Node> affectedNodes = Stream.concat(e.getAdditions().stream(), e.getDeletions().stream())
+                    .flatMap(t -> Stream.of(t.getSubject(), t.getObject()))
+                    .collect(Collectors.toSet());
+
+            Set<Path<Node>> affectedPaths = expandedPaths.stream()
+                    .filter(ep -> {
+                        Node a = ep.getFileName().toSegment();
+                        Node b = Optional.ofNullable(ep.getParent()).map(Path::getFileName).map(Path::toSegment).orElse(null);
+
+                        return affectedNodes.contains(a) || affectedNodes.contains(b);
+                    })
+                    .collect(Collectors.toSet());
+
+            affectedPaths.forEach(p -> dataProvider.refreshItem(p, true));
+            // treeGrid.
+            // paths.forEach(p -> dataProvider.refreshItem(p, true));
         });
 
-        graphEditorModel.addPropertyChangeListener(ev -> {
-            dataProvider.refreshAll();
-        });
+
+//        HierarchicalDataProviderForShacl.NodeState.adept(graphEditorModel.getAdditionGraph(), nodes -> {
+//            treeGrid.
+//            // paths.forEach(p -> dataProvider.refreshItem(p, true));
+//        });
+
+//        graphEditorModel.getAdditionGraph().addPropertyChangeListener(ev -> {
+//            dataProvider.refreshAll();
+//        });
+//
+//        graphEditorModel.addPropertyChangeListener(ev -> {
+//            dataProvider.refreshAll();
+//        });
 
 
         treeGrid.setDataProvider(dataProvider);
@@ -300,7 +339,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
 
         // hierarchyColumn = createViewerHierarchyColumn(labelService, treeGrid);
-        hierarchyColumn = createEditorHierarchyColumn(graphEditorModel, treeGrid, labelService);
+        hierarchyColumn = createEditorHierarchyColumn(graphEditorModel, treeGrid, dataProvider.getNodeState(), labelService);
         // hierarchyColumn.setWidth("100%");
         hierarchyColumn.setFlexGrow(1);
         hierarchyColumn.setResizable(true);
@@ -353,10 +392,13 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
     public Column<?> createEditorHierarchyColumn(
             GraphChange graphEditorModel,
-            TreeGrid<Path<Node>> treeGrid, LookupService<Node, String> labelService) {
+            TreeGrid<Path<Node>> treeGrid,
+            NodeState nodeState,
+            LookupService<Node, String> labelService) {
 
         Column<?> hierarchyColumn;
         hierarchyColumn = treeGrid.addComponentHierarchyColumn(path -> {
+            System.out.println("REFRESH");
 
             List<Node> segments = path.getSegments();
             int pathLength = path.getNameCount();
@@ -370,7 +412,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
             // return "" + Optional.ofNullable(path).map(Path::getFileName).map(Object::toString).orElse("");
             Node node = path.getFileName().toSegment();
             String str = null;
-            org.apache.jena.sparql.path.Path p = RDFDatatypePath.extractPath(node);
+            org.apache.jena.sparql.path.Path p = RDFDatatypePPath.extractPath(node);
             if (p != null) {
                 if (p instanceof P_Path0) {
                     p0 = (P_Path0)p;
@@ -394,7 +436,45 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
             if (isResourcePath) {
                 Node valueNode = path.getFileName().toSegment();
 
+                if (valueNode.isURI()) {
+                    Button editIriBtn = new Button(new Icon(VaadinIcon.EDIT));
+                    editIriBtn.setThemeName("tertiary-inline");
+                    r.add(editIriBtn);
 
+
+                    // Create the area for changing the IRI
+                    TextField nodeIdTextField = new TextField();
+                    nodeIdTextField.setValueChangeMode(ValueChangeMode.LAZY);
+                    nodeIdTextField.setPrefixComponent(new Span("IRI"));
+                    //FormItem nodeIdFormItem = target.addFormItem(nodeIdTextField, "IRI");
+
+                    // FIXME Do we have to pre-register a mapping for th node being edited in order for the system to work???
+                    // graphEditorModel.getRenamedNodes().put(root, root);
+
+                    Button resetNodeIdButton = new Button("Reset");
+                    resetNodeIdButton.addClickListener(ev -> {
+                        graphEditorModel.putRename(valueNode, valueNode);
+                    });
+
+                    nodeIdTextField.setSuffixComponent(resetNodeIdButton);
+
+                    ShaclForm.bind(nodeIdTextField, graphEditorModel
+                            .getRenamedNodes()
+                            .observeKey(valueNode, valueNode)
+                            .convert(NodeMappers.uriString.asConverter()));
+
+                    editIriBtn.addClickListener(ev -> {
+                        nodeIdTextField.setVisible(!nodeIdTextField.isVisible());
+                    });
+
+
+                    r.add(nodeIdTextField);
+                    nodeIdTextField.setVisible(false);
+                    // Fill up the row
+                    //target.setColspan(resetNodeIdButton, 2);
+                } else {
+                    //target.setColspan(nodeSpan, maxCols);
+                }
 
                 // RdfField rdfField = graphEditorModel.createSetField(node, ps.getPredicate(), true);
 
@@ -414,7 +494,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                     Node srcNode = pathLength < 3 ? null : segments.get(pathLength - 3);
 
                     Node pNode = segments.get(pathLength - 2);
-                    p0 = (P_Path0)RDFDatatypePath.extractPath(pNode);
+                    p0 = (P_Path0)RDFDatatypePPath.extractPath(pNode);
 
 
                     RdfField rdfField = graphEditorModel.createSetField(srcNode, p0.getNode(), p0.isForward());
@@ -508,11 +588,20 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                 propertyFilter.setPlaceholder("Filter");
                 propertyFilter.setValueChangeMode(ValueChangeMode.LAZY);
 
+                ObservableValue<String> filterField = nodeState.getFilter(path);
+                String filterValue = filterField.get();
+                if (filterValue == null) {
+                    filterField.set("");
+                }
+                boolean isFilterSet = !filterField.get().isBlank();
+
+                ShaclForm.bind(propertyFilter, filterField);
+
                 Select<Integer> itemsPerPage = new Select<>();
                 itemsPerPage.setItems(5, 10, 25, 50, 100);
 
                 filterPanel.add(propertyFilter, itemsPerPage);
-                filterPanel.setVisible(false);
+                filterPanel.setVisible(treeGrid.isExpanded(path) || isFilterSet);
                 r.add(new Hr());
                 r.add(filterPanel);
 
@@ -552,6 +641,8 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                     // Node newNode = NodeFactory.createBlankNode();
                     Node newNode = graphEditorModel.freshNode();
                     addedValues.add(newNode);
+
+                    treeGrid.expand(Collections.singleton(path));
                 });
 
                 r.add(hl);

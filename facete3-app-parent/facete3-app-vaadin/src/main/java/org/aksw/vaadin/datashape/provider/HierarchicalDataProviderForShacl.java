@@ -2,25 +2,37 @@ package org.aksw.vaadin.datashape.provider;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collection.observable.CollectionChangedEvent;
 import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.commons.path.core.Path;
 import org.aksw.jena_sparql_api.collection.GraphChange;
+import org.aksw.jena_sparql_api.collection.ObservableGraph;
+import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
 import org.aksw.jena_sparql_api.collection.RdfField;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.path.core.PathNode;
 import org.aksw.jena_sparql_api.path.core.PathOpsNode;
-import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePath;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePPath;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePathNode;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.schema.ShapedProperty;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.path.P_Path0;
 
 import com.google.common.collect.Range;
@@ -33,6 +45,67 @@ public class HierarchicalDataProviderForShacl
 {
     private static final long serialVersionUID = 1L;
 
+
+    /**
+     * Track filter and pagination for tree grid nodes
+     *
+     * @author raven
+     *
+     */
+    public static class NodeState {
+        public static final Node FILTER = NodeFactory.createURI("urn:filter");
+
+        protected ObservableGraph state = new ObservableGraphImpl(GraphFactory.createGraphMem());
+
+
+        public ObservableValue<String> getFilter(Path<Node> path) {
+            if (path == null) {
+                path = PathOpsNode.newAbsolutePath();
+            }
+            Node s = RDFDatatypePathNode.createNode(path);
+            return state.createValueField(s, FILTER, true).convert(NodeMappers.string.asConverter());
+        }
+
+        public static Runnable adept(ObservableGraph observableGraph, Consumer<Set<PathNode>> listener) {
+            return observableGraph.addPropertyChangeListener(ev -> {
+                CollectionChangedEvent<Triple> e = (CollectionChangedEvent<Triple>)ev;
+                Set<Node> modified = new LinkedHashSet<>();
+                e.getAdditions().stream().map(Triple::getSubject).forEach(modified::add);
+                e.getDeletions().stream().map(Triple::getSubject).forEach(modified::add);
+
+                Set<PathNode> tmp = modified.stream()
+                        .map(RDFDatatypePathNode::extractPath)
+                        // .map(p -> PathOpsNode.newAbsolutePath().equals(p) ? null : p)
+                        .collect(Collectors.toSet());
+                listener.accept(tmp);
+            });
+        }
+
+        public Runnable addPathListener(Consumer<Set<PathNode>> listener) {
+            return state.addPropertyChangeListener(ev -> {
+                CollectionChangedEvent<Triple> e = (CollectionChangedEvent<Triple>)ev;
+                Set<Node> modified = new LinkedHashSet<>();
+                e.getAdditions().stream().map(Triple::getSubject).forEach(modified::add);
+                e.getDeletions().stream().map(Triple::getSubject).forEach(modified::add);
+
+                Set<PathNode> tmp = modified.stream()
+                        .map(RDFDatatypePathNode::extractPath)
+                        .map(p -> PathOpsNode.newAbsolutePath().equals(p) ? null : p)
+                        .collect(Collectors.toSet());
+                listener.accept(tmp);
+            });
+        }
+
+
+        public ObservableGraph getState() {
+            return state;
+        }
+
+        // public void put(Path<Node>,)
+        // protected ObservableMap<Path<Node>, >
+    }
+
+
     // protected ShapedNode rootNode;
     protected MapService<Concept, Node, ShapedNode> root;
     // protected Set<NodeSchema> rootSchemas;
@@ -42,6 +115,7 @@ public class HierarchicalDataProviderForShacl
 
     protected GraphChange graphEditorModel;
 
+    protected NodeState nodeState;
 
 //    public HierarchicalDataProviderForShacl(MapService<Concept, Node, ShapedNode> root) {
 //        this(root, null);
@@ -51,6 +125,21 @@ public class HierarchicalDataProviderForShacl
         super();
         this.root = root;
         this.graphEditorModel = graphEditorModel;
+        this.nodeState = new NodeState();
+
+
+        nodeState.addPathListener(paths -> {
+            for (PathNode path : paths) {
+                //this.refreshItem(path, true);
+            }
+//            Object o = ev.getNewValue();
+//            System.out.println("NEW VALUE: " + o);
+//            this.refreshAll();
+        });
+    }
+
+    public NodeState getNodeState() {
+        return nodeState;
     }
 
 
@@ -65,13 +154,17 @@ public class HierarchicalDataProviderForShacl
     public boolean hasChildren(Path<Node> item) {
         HierarchicalQuery<Path<Node>, String> hq = new HierarchicalQuery<>(0, 1, Collections.emptyList(), null, null, item);
 
-        boolean result = fetchChildrenFromBackEnd(hq).findAny().isPresent();
+        boolean result = fetchChildrenFromBackEnd(hq, true).findAny().isPresent();
         return result;
     }
 
 
     @Override
     protected Stream<Path<Node>> fetchChildrenFromBackEnd(HierarchicalQuery<Path<Node>, String> query) {
+        return fetchChildrenFromBackEnd(query, false);
+    }
+
+    protected Stream<Path<Node>> fetchChildrenFromBackEnd(HierarchicalQuery<Path<Node>, String> query, boolean excludeFilter) {
 
 
         Range<Long> range = Range.closedOpen((long)query.getOffset(), (long)(query.getOffset() + query.getLimit()));
@@ -117,7 +210,7 @@ public class HierarchicalDataProviderForShacl
                     result = map.entrySet().stream()
                                 .filter(e -> showEmptyProperties || !e.getValue().isEmpty()) // Filter out empty properties
                                 .map(Entry::getKey)
-                                .map(p -> NodeFactory.createLiteralByValue(p, RDFDatatypePath.INSTANCE))
+                                .map(p -> NodeFactory.createLiteralByValue(p, RDFDatatypePPath.INSTANCE))
                                 .map(basePath::resolve);
 
                 }
@@ -158,6 +251,14 @@ public class HierarchicalDataProviderForShacl
 
         List<Path<Node>> tmp = result.collect(Collectors.toList());
         tmp = Stream.concat(addedPaths.stream(), tmp.stream()).collect(Collectors.toList());
+
+        if (!excludeFilter) {
+            String filter = nodeState.getFilter(basePath).get();
+            if (filter != null && !filter.isBlank()) {
+                tmp = tmp.stream().filter(p -> p.getFileName().toString().contains(filter)).collect(Collectors.toList());
+            }
+        }
+
 
         // System.out.println("Data provider for path " + basePath + ": " + tmp);
         return tmp.stream();
