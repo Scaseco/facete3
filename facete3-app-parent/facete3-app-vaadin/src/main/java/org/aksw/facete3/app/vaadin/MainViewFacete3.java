@@ -33,6 +33,8 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @CssImport(value = "./styles/vaadin-select-text-field-styles.css", themeFor = "vaadin-select-text-field")
 @CssImport(value = "./styles/vaadin-select-styles.css", themeFor = "vaadin-select")
 @CssImport(value = "./styles/vaadin-text-area-styles.css", themeFor = "vaadin-text-area")
+@CssImport(value = "./styles/flow-component-renderer-styles.css", themeFor = "flow-component-renderer")
+@CssImport(value = "./styles/vaadin-grid-tree-toggle-styles.css", themeFor = "vaadin-grid-tree-toggle")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @Theme(value = Lumo.class)
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")

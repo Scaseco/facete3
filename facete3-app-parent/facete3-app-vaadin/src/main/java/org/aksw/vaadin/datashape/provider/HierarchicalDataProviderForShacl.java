@@ -28,6 +28,7 @@ import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePathNode;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.schema.ShapedProperty;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -45,6 +46,9 @@ public class HierarchicalDataProviderForShacl
     private static final long serialVersionUID = 1L;
 
 
+    /** A node that is returned as a child if the parent's filter condition yields no matches */
+    public static final Node NO_MATCH = NodeFactory.createBlankNode("NO_MATCH");
+
     /**
      * Track filter and pagination for tree grid nodes
      *
@@ -54,7 +58,8 @@ public class HierarchicalDataProviderForShacl
     public static class NodeState {
         public static final Node FILTER = NodeFactory.createURI("urn:filter");
 
-        protected ObservableGraph state = new ObservableGraphImpl(GraphFactory.createGraphMem());
+        protected Graph graph = GraphFactory.createGraphMem();
+        protected ObservableGraph state = new ObservableGraphImpl(graph);
 
 
         public ObservableValue<String> getFilter(Path<Node> path) {
@@ -62,7 +67,18 @@ public class HierarchicalDataProviderForShacl
                 path = PathOpsNode.newAbsolutePath();
             }
             Node s = RDFDatatypePathNode.createNode(path);
-            return state.createValueField(s, FILTER, true).convert(NodeMappers.string.asConverter());
+
+            ObservableValue<String> result = state.createValueField(s, FILTER, true).convert(NodeMappers.string.asConverter());
+
+            if (result.get() == null) {
+                graph.add(s, FILTER, NodeFactory.createLiteral(""));
+                System.out.println("getFilter: qCreated filter: " + path + ": " + result.get());
+            }
+            System.out.println("getFilter: " + path + ": " + result.get());
+
+
+
+            return result;
         }
 
         public static Runnable adept(ObservableGraph observableGraph, Consumer<Set<PathNode>> listener) {
@@ -129,7 +145,8 @@ public class HierarchicalDataProviderForShacl
 
         nodeState.addPathListener(paths -> {
             for (PathNode path : paths) {
-                //this.refreshItem(path, true);
+                System.out.println("Refreshing " + path);
+                this.refreshItem(path, true);
             }
 //            Object o = ev.getNewValue();
 //            System.out.println("NEW VALUE: " + o);
@@ -153,7 +170,7 @@ public class HierarchicalDataProviderForShacl
     public boolean hasChildren(Path<Node> item) {
         HierarchicalQuery<Path<Node>, String> hq = new HierarchicalQuery<>(0, 1, Collections.emptyList(), null, null, item);
 
-        boolean result = fetchChildrenFromBackEnd(hq, true).findAny().isPresent();
+        boolean result = fetchChildrenFromBackEnd(hq, false).findAny().isPresent();
         return result;
     }
 
@@ -171,6 +188,12 @@ public class HierarchicalDataProviderForShacl
         Stream<Path<Node>> result = null;
 
         Path<Node> basePath = query.getParent();
+
+
+        if (basePath != null && basePath.getNameCount() > 0 && NO_MATCH.equals(basePath.getFileName().toSegment())) {
+            return Stream.empty();
+        }
+
         MapService<Concept, Node, ShapedNode> current = root;
 
 
@@ -236,7 +259,7 @@ public class HierarchicalDataProviderForShacl
             addedPaths = addedValues.stream().map(basePath::resolve).collect(Collectors.toList());
 
 
-            System.out.println("Added paths: " + addedPaths);
+            // System.out.println("Added paths: " + addedPaths);
             int m = addedValues.size();
 
 
@@ -252,11 +275,17 @@ public class HierarchicalDataProviderForShacl
         List<Path<Node>> tmp = result.collect(Collectors.toList());
         tmp = Stream.concat(addedPaths.stream(), tmp.stream()).collect(Collectors.toList());
 
-        if (!excludeFilter) {
+        if (!excludeFilter && !tmp.isEmpty()) {
             String filter = nodeState.getFilter(basePath).get();
+            System.out.println("Got filter: " + basePath + ": " + filter);
             if (filter != null && !filter.isBlank()) {
                 tmp = tmp.stream().filter(p -> p.getFileName().toString().contains(filter)).collect(Collectors.toList());
+
+                if (tmp.isEmpty()) {
+                    tmp = Collections.singletonList(basePath.resolve(NO_MATCH));
+                }
             }
+            System.out.println("Filtered to " + tmp.stream().map(Object::toString).collect(Collectors.joining("\n")));
         }
 
 

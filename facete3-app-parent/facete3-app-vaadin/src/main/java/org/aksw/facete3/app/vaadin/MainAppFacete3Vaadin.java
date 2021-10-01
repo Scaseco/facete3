@@ -1,15 +1,9 @@
 package org.aksw.facete3.app.vaadin;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.sys.JenaSystem;
+import org.aksw.jena_sparql_api.path.core.PathNode;
+import org.aksw.jena_sparql_api.path.core.PathOpsNode;
+import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePathNode;
+import org.apache.jena.graph.Node;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -26,6 +20,15 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
 
+        PathNode a = PathOpsNode.get().fromString("/<http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04> \"<http://www.w3.org/ns/dcat#distribution>\"^^<http://jsa.aksw.org/dt/sparql/path> _:BB6a59d0a7XX2D8cc7XX2D4394XX2Db07cXX2D3c0e4df72a96");
+        PathNode b = PathOpsNode.get().fromString("/<http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04> \"<http://www.w3.org/ns/dcat#distribution>\"^^<http://jsa.aksw.org/dt/sparql/path> _:BB6a59d0a7XX2D8cc7XX2D4394XX2Db07cXX2D3c0e4df72a96");
+
+        Node x = RDFDatatypePathNode.createNode(a);
+        Node y = RDFDatatypePathNode.createNode(b);
+
+
+        System.out.println("path test: " + a.equals(b));
+        System.out.println("path test as node: " + x.equals(y));
 //        String urlStr = "https://sci-hub.se/10.1016/j.tetlet.2016.07.001";
 //
 //        URL url;

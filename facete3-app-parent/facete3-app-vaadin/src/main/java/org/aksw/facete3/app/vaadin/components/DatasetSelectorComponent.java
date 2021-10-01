@@ -2,13 +2,16 @@ package org.aksw.facete3.app.vaadin.components;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,6 +63,7 @@ import org.apache.jena.vocabulary.RDFS;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -68,7 +72,6 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -84,6 +87,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.dom.Element;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.shared.Registration;
 
 
@@ -376,18 +380,23 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         treeGrid.setDataProvider(dataProvider);
 //        treeGrid.setHeight("500px");
 //        treeGrid.setWidth("1000px");
-        treeGrid.setSizeFull();
 
         Column<?> hierarchyColumn;
 
 
 
         // hierarchyColumn = createViewerHierarchyColumn(labelService, treeGrid);
+        treeGrid.setSizeFull();
         hierarchyColumn = createEditorHierarchyColumn(graphEditorModel, treeGrid, dataProvider.getNodeState(), labelService);
         // hierarchyColumn.setWidth("100%");
-        hierarchyColumn.setFlexGrow(1);
-        hierarchyColumn.setResizable(true);
-        hierarchyColumn.setFrozen(true);
+        // hierarchyColumn.setFlexGrow(1);
+        hierarchyColumn.setWidth("100%");
+        // hierarchyColumn.setFlexGrow(1);
+        // hierarchyColumn.setAutoWidth(true);
+
+        // treeGrid.recalculateColumnWidths();
+        // hierarchyColumn.setResizable(true);
+        // hierarchyColumn.setFrozen(true);
 
         VerticalLayout v = new VerticalLayout();
         v.setSizeFull();
@@ -441,9 +450,13 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
             NodeState nodeState,
             LookupService<Node, String> labelService) {
 
+
+
         Column<?> hierarchyColumn;
-        hierarchyColumn = treeGrid.addComponentHierarchyColumn(path -> {
+
+        ValueProvider<Path<Node>, Component> componentProvider = path -> {
             System.out.println("REFRESH");
+
 
             List<Node> segments = path.getSegments();
             int pathLength = path.getNameCount();
@@ -477,14 +490,20 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
 
             VerticalLayout r = new VerticalLayout();
+            r.setWidthFull();
+
+            List<Component> renameComponents = new ArrayList<>();
+            List<Component> suffixComponents = new ArrayList<>();
+
 
             if (isResourcePath) {
                 Node valueNode = path.getFileName().toSegment();
 
                 if (valueNode.isURI()) {
                     Button editIriBtn = new Button(new Icon(VaadinIcon.EDIT));
+                    editIriBtn.addClassName("parent-hover-show");
                     editIriBtn.setThemeName("tertiary-inline");
-                    r.add(editIriBtn);
+                    renameComponents.add(editIriBtn);
 
 
                     // Create the area for changing the IRI
@@ -526,13 +545,17 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 //                ObservableCollection<Node> existingValues = rdfField.getBaseAsSet();
 //                ObservableCollection<Node> addedValues = rdfField.getAddedAsSet();
 
+                HorizontalLayout row = new HorizontalLayout();
+                row.setWidthFull();
+
+                r.add(row);
+
                 RdfTermEditor rdfTermEditor = new RdfTermEditor();
                 rdfTermEditor.setWidthFull();
 
                 // ShaclForm
                 // RdfTermEditor.s
                 // rdfTermEditor.setValue(valueNode);
-                r.add(rdfTermEditor);
 
 
                 if (pathLength >= 3) {
@@ -577,13 +600,13 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                         Button resetValueBtn = new Button(new Icon(VaadinIcon.ROTATE_LEFT));
                         resetValueBtn.getElement().setProperty("title", "Reset this field to its original value");
 
-                        r.add(resetValueBtn);
+                        suffixComponents.add(resetValueBtn);
 
                         Checkbox markAsDeleted = new Checkbox(false);
                         markAsDeleted.getElement().setProperty("title", "Mark the original value as deleted");
                         //target.addFormItem(markAsDeleted, "Delete");
 
-                        r.add(markAsDeleted);
+                        suffixComponents.add(markAsDeleted);
 
                         ObservableValue<Boolean> isDeleted = graphEditorModel.getDeletionGraph().asSet()
                                 .filter(c -> c.equals(t))
@@ -637,20 +660,30 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
                 // Show the filter / paginator controls
                 Button showFilterPanelBtn = new Button(new Icon(VaadinIcon.FILTER));
-                r.add(showFilterPanelBtn);
+                showFilterPanelBtn.addClassName("parent-hover-show");
+                showFilterPanelBtn.getElement().setProperty("title", "Show filter options for the children of this item");
+                showFilterPanelBtn.setThemeName("tertiary-inline");
+
+                row.add(showFilterPanelBtn);
+
+                row.add(rdfTermEditor);
+                row.setFlexGrow(1, rdfTermEditor);
 
 
+                row.add(suffixComponents.toArray(new Component[0]));
+                row.add(renameComponents.toArray(new Component[0]));
 
                 HorizontalLayout filterPanel = new HorizontalLayout();
                 TextField propertyFilter = new TextField();
                 propertyFilter.setPlaceholder("Filter");
                 propertyFilter.setValueChangeMode(ValueChangeMode.LAZY);
+                // propertyFilter.setId(path.toString() + " filter");
 
                 ObservableValue<String> filterField = nodeState.getFilter(path);
-                String filterValue = filterField.get();
-                if (filterValue == null) {
-                    filterField.set("");
-                }
+//                String filterValue = filterField.get();
+//                if (filterValue == null) {
+//                    filterField.set("");
+//                }
                 boolean isFilterSet = !filterField.get().isBlank();
 
                 ShaclForm.bind(propertyFilter, filterField);
@@ -660,7 +693,6 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
                 filterPanel.add(propertyFilter, itemsPerPage);
                 filterPanel.setVisible(treeGrid.isExpanded(path) || isFilterSet);
-                r.add(new Hr());
                 r.add(filterPanel);
 
                 showFilterPanelBtn.addClickListener(ev -> {
@@ -716,7 +748,16 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
             return r;
             // return path.toString();
-        });
+        };
+
+
+        Map<Path<Node>, Component> map = new ConcurrentHashMap<>();
+
+        hierarchyColumn = treeGrid.addComponentHierarchyColumn(
+                path -> {
+                    Component r = map.computeIfAbsent(path, p -> componentProvider.apply(p));
+                    return r;
+                });
 
 //        treeGrid.addExpandListener(ev -> {
 //        	ev.get

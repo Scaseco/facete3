@@ -54,3 +54,8 @@
 *:not(:hover) > .parent-hover-show {
     visibility: hidden;
 }
+
+
+flow-component-renderer {
+  width: 100%
+}
