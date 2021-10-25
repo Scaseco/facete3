@@ -1,9 +1,9 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.FacetCount;
-import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;

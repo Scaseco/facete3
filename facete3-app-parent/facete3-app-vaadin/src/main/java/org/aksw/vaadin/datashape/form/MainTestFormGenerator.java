@@ -1,10 +1,10 @@
 package org.aksw.vaadin.datashape.form;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
-import org.aksw.jena_sparql_api.collection.GraphChange;
-import org.aksw.jena_sparql_api.collection.ObservableGraph;
-import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
-import org.aksw.jena_sparql_api.collection.RdfField;
+import org.aksw.jena_sparql_api.collection.observable.GraphChange;
+import org.aksw.jena_sparql_api.collection.observable.ObservableGraph;
+import org.aksw.jena_sparql_api.collection.observable.ObservableGraphImpl;
+import org.aksw.jena_sparql_api.collection.observable.RdfField;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;

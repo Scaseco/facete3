@@ -19,15 +19,15 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-conjure</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-conjure-core</artifactId>
 		</dependency>
 
 		<!-- Includes prefix.cc snapshots (maybe there are mvn packages on github 
 			via automatic snapshot creation?) -->
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-resources</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-resources-prefixes</artifactId>
 		</dependency>
 	</dependencies>
 

@@ -15,6 +15,7 @@ import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.ext.com.google.common.base.Joiner;
 import org.apache.jena.ext.com.google.common.collect.Maps;

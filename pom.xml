@@ -19,9 +19,8 @@
 	</scm>
 
 	<properties>
-		<jena.version>4.2.0</jena.version>
-		<jena-sparql-api.subversion>1-SNAPSHOT</jena-sparql-api.subversion>
-		<jena-sparql-api.version>${jena.version}-${jena-sparql-api.subversion}</jena-sparql-api.version>
+		<jena.version>4.3.0</jena.version>
+		<jenax.version>4.3.0-1-SNAPSHOT</jenax.version>
 
 		<aksw-commons.version>0.9.1-SNAPSHOT</aksw-commons.version>
 
@@ -108,10 +107,16 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-paths</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-datapaths</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
+
+                        <dependency>
+                                <groupId>org.aksw.jenax</groupId>
+                                <artifactId>jenax-arq-pathfinding</artifactId>
+                                <version>${jenax.version}</version>
+                        </dependency>
 
 
 			<dependency>
@@ -159,83 +164,86 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-core</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-connection-core</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-service-description</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-resources-servicedescription</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
-			<!-- TODO Move to jena-sparql-api-io-hdt once the hdt support is factored 
+			<!-- TODO Move to jenax-io-hdt once the hdt support is factored 
 				out of conjure -->
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-conjure</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-conjure-core</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-resources</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-resources-prefixes</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-path-finding</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-path-finding</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<!-- <dependency> -->
-			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
-			<!-- <artifactId>jena-sparql-api-utils</artifactId> -->
-			<!-- <version>${jena-sparql-api.version}</version> -->
+			<!-- <groupId>org.aksw.jenax</groupId> -->
+			<!-- <artifactId>jenax-utils</artifactId> -->
+			<!-- <version>${jenax.version}</version> -->
 			<!-- </dependency> -->
 
+
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-mapper-core</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-reprogen-core</artifactId>
+				<version>${jenax.version}</version>
+<!--
 				<exclusions>
 					<exclusion>
 						<groupId>org.aksw.spring</groupId>
 						<artifactId>spring-json-core</artifactId>
 					</exclusion>
 				</exclusions>
+-->
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-mapper-proxy</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-mapper-proxy</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-algebra</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-algebra</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-query-containment</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-query-containment</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-server-standalone</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-server-standalone</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-sparql-ext</artifactId>
-				<version>${jena-sparql-api.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-sparql-ext</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
@@ -303,7 +311,6 @@
 				<artifactId>facete3-fsbg-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-
 
 			<dependency>
 				<groupId>org.geotools</groupId>

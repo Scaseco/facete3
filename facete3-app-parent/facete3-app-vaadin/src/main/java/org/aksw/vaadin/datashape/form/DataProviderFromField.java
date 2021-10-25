@@ -2,7 +2,7 @@ package org.aksw.vaadin.datashape.form;
 
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.collection.RdfField;
+import org.aksw.jena_sparql_api.collection.observable.RdfField;
 import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.data.provider.AbstractDataProvider;

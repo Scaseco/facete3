@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.entity.graph.metamodel;
+package org.aksw.jena_sparql_api.metamodel;
 
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -28,6 +28,11 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.ClassRelationModel;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.DatasetMetamodel;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.GraphPredicateStats;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.PredicateStats;
+import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceGraphMetamodel;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.path.core.PathNode;
 import org.aksw.jena_sparql_api.path.core.PathOpsNode;

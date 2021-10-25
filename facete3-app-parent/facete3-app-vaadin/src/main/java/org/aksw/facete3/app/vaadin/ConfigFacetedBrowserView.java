@@ -1,6 +1,5 @@
 package org.aksw.facete3.app.vaadin;
 
-import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
@@ -12,6 +11,7 @@ import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;

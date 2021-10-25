@@ -3,11 +3,11 @@ package org.aksw.facete3.app.vaadin.plugin.view;
 import java.util.Collections;
 import java.util.List;
 
-import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
 import org.aksw.facete3.app.shared.viewselector.ViewTemplateImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;

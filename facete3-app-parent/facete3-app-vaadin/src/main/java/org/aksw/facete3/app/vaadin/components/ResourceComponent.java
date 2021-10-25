@@ -5,8 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;

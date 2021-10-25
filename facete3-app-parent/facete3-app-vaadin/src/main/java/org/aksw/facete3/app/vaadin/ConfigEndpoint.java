@@ -2,7 +2,7 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
+import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;

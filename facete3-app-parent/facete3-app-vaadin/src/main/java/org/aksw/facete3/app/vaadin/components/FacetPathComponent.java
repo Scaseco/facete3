@@ -6,10 +6,10 @@ import java.util.function.Function;
 
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete3.app.shared.label.FaceteLabelUtils;
-import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.providers.FacetProvider;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 

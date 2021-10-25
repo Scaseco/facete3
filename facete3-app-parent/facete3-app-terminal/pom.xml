@@ -30,13 +30,13 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-service-description</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-resources-servicedescription</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-conjure</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-conjure-core</artifactId>
 		</dependency>
 
 <!-- 		<dependency> -->

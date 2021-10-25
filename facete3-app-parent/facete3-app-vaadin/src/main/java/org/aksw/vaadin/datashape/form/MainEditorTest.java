@@ -1,7 +1,7 @@
 package org.aksw.vaadin.datashape.form;
 
 import org.aksw.commons.collection.observable.ObservableValue;
-import org.aksw.jena_sparql_api.collection.GraphChange;
+import org.aksw.jena_sparql_api.collection.observable.GraphChange;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;

@@ -16,13 +16,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.commons.util.string.StringUtils;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionEx;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;

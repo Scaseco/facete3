@@ -1,7 +1,7 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
 import org.aksw.facete3.table.mapping.domain.TableMapping;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.rdf.model.RDFNode;
 
 import com.vaadin.flow.component.grid.Grid;

@@ -5,29 +5,31 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
 import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.commons.collection.observable.ObservableValueImpl;
-import org.aksw.facete3.app.shared.label.LabelUtils;
-import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
-import org.aksw.jena_sparql_api.collection.GraphChange;
-import org.aksw.jena_sparql_api.collection.ObservableGraph;
-import org.aksw.jena_sparql_api.collection.ObservableGraphImpl;
-import org.aksw.jena_sparql_api.collection.RdfField;
+import org.aksw.jena_sparql_api.collection.observable.GraphChange;
+import org.aksw.jena_sparql_api.collection.observable.ObservableGraph;
+import org.aksw.jena_sparql_api.collection.observable.ObservableGraphImpl;
+import org.aksw.jena_sparql_api.collection.observable.RdfField;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
 import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.NodeSchemaImpl;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
+import org.aksw.vaadin.component.rdf_term_editor.RdfTermEditor;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
@@ -68,7 +70,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.SerializablePredicate;
@@ -128,7 +129,7 @@ interface NodeState {
 
 
 
-public class ShaclForm
+public class ShaclFormOld
     extends FormLayout
 {
 //    protected RDFConnection conn;
@@ -138,7 +139,7 @@ public class ShaclForm
 
     int maxCols = 3; // TODO Get this using a method?
 
-    public ShaclForm() {
+    public ShaclFormOld() {
 
 //        setResponsiveSteps(
 //                new ResponsiveStep("25em", 1),
@@ -759,26 +760,5 @@ public class ShaclForm
         return result;
     }
 
-    public static <V> Registration bind(HasValue<?, V> hasValue, ObservableValue<V> store) {
-        V value = store.get();
-        hasValue.setValue(value);
 
-        Runnable deregister1 = store.addPropertyChangeListener(ev -> {
-            V newValue = (V)ev.getNewValue();
-            hasValue.setValue(newValue);
-        });
-
-
-        // Extra variable because of https://stackoverflow.com/questions/55532055/java-casting-java-11-throws-lambdaconversionexception-while-1-8-does-not
-        ValueChangeListener<ValueChangeEvent<V>> listener = ev -> {
-            V newValue = ev.getValue();
-            store.set(newValue);
-        };
-        Registration deregister2 = hasValue.addValueChangeListener(listener);
-
-        return () -> {
-            deregister1.run();
-            deregister2.remove();
-        };
-    }
 }

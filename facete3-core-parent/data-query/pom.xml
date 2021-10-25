@@ -21,18 +21,18 @@
 		<dependency>
 			<!-- <groupId>org.apache.jena</groupId> -->
 			<!-- <artifactId>jena-arq</<artifactId>> -->
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-core</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-arq-connection-core</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-mapper-core</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-reprogen-core</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-algebra</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-arq-algebra</artifactId>
 		</dependency>
 	</dependencies>
 

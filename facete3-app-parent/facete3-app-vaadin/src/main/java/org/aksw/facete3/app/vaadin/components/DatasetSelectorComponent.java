@@ -21,11 +21,9 @@ import org.aksw.commons.collection.observable.ObservableValue;
 import org.aksw.commons.path.core.Path;
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
-import org.aksw.facete3.app.shared.label.LabelUtils;
-import org.aksw.facete3.app.vaadin.components.rdf.editor.RdfTermEditor;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
-import org.aksw.jena_sparql_api.collection.GraphChange;
-import org.aksw.jena_sparql_api.collection.RdfField;
+import org.aksw.jena_sparql_api.collection.observable.GraphChange;
+import org.aksw.jena_sparql_api.collection.observable.RdfField;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
@@ -33,6 +31,7 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceFromList;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.MapServiceFromListService;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePPath;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.schema.NodeSchema;
@@ -43,9 +42,10 @@ import org.aksw.jena_sparql_api.schema.ResourceExplorer;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
-import org.aksw.vaadin.datashape.form.ShaclForm;
+import org.aksw.vaadin.component.rdf_term_editor.RdfTermEditor;
+import org.aksw.vaadin.datashape.form.ShaclFormOld;
 import org.aksw.vaadin.datashape.provider.HierarchicalDataProviderForShacl;
-import org.aksw.vaadin.datashape.provider.HierarchicalDataProviderForShacl.NodeState;
+import org.aksw.vaadin.shacl.ShaclTreeGrid;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -257,7 +257,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 //        datasetCreator.setMinHeight("300px");
 //        datasetCreator.add(new Span("World"));
 
-        ShaclForm shaclForm = new ShaclForm();
+        ShaclFormOld shaclForm = new ShaclFormOld();
 
         Model shaclModel = RDFDataMgr.loadModel("dcat-ap_2.0.0_shacl_shapes.ttl");
         NodeSchema schema = shaclModel.createResource("http://data.europa.eu/r5r#Dataset_Shape").as(NodeSchemaFromNodeShape.class);
@@ -305,8 +305,8 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
                         .map(e -> e.getKey() + " -> " + e.getValue())
                         .collect(Collectors.joining("\n"));
 
-                String str = "Added:\n" + ShaclForm.toString(additions, RDFFormat.TURTLE_BLOCKS) + "\n"
-                        + "Removed:\n" + ShaclForm.toString(deletions, RDFFormat.TURTLE_BLOCKS) + "\n"
+                String str = "Added:\n" + ShaclFormOld.toString(additions, RDFFormat.TURTLE_BLOCKS) + "\n"
+                        + "Removed:\n" + ShaclFormOld.toString(deletions, RDFFormat.TURTLE_BLOCKS) + "\n"
                         + "Renamed:\n" + renameStr + "\n"
                         + "Replaced:\n" + replaceStr + "\n";
 
@@ -332,7 +332,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
         // HierarchicalDataProvider<Path<Node>, String> dataProvider = new HierarchicalDataProviderForShacl(ms, graphEditorModel);
 
-        TreeGrid<Path<Node>> treeGrid = ShaclForm2.createShaclEditor(
+        TreeGrid<Path<Node>> treeGrid = ShaclTreeGrid.createShaclEditor(
                 graphEditorModel, rootNodes, labelService);
 
         // hierarchyColumn.setFlexGrow(1);
@@ -373,7 +373,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         Dialog addCatalogDialog = new Dialog();
 
 
-        ShaclForm addCatalogForm = new ShaclForm();
+        ShaclFormOld addCatalogForm = new ShaclFormOld();
         addCatalogDialog.add(addCatalogForm);
         addCatalogDialog.setSizeFull();
 

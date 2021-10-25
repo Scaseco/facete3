@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.rx.DatasetGraphOpsRx;
 import org.aksw.jena_sparql_api.rx.DatasetGraphQuadsImpl;
+import org.aksw.jena_sparql_api.rx.op.FlowOfQuadsOps;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.query.Dataset;
@@ -57,7 +57,7 @@ public class TestConceptPathFinder {
                 "http://www.example.org/");
 
         Flowable<Dataset> eventStream = Flowable.fromIterable(i)
-                .compose(DatasetGraphOpsRx.groupToList())
+                .compose(FlowOfQuadsOps.groupToList())
                 .map(Entry::getValue)
                 .map(DatasetGraphQuadsImpl::create).map(DatasetFactory::wrap);
 

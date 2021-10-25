@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.aksw.facete3.app.shared.label.LabelUtils;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
-import org.aksw.facete3.app.vaadin.providers.DataProviderWithConversion;
 import org.aksw.facete3.app.vaadin.providers.EnrichedItem;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.facete3.app.vaadin.util.DataProviderUtils;
+import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
+import org.aksw.vaadin.common.provider.util.DataProviderWithConversion;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 
@@ -71,7 +71,7 @@ public class ItemComponent extends VerticalLayout {
         this.viewManager = viewManager;
 
 
-        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrap(
+        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrapWithBulkConvert(
                 itemProvider, this::enrich, ei -> (RDFNode)ei.getItem());
 
 

@@ -2,9 +2,9 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionEx;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sys.JenaSystem;
