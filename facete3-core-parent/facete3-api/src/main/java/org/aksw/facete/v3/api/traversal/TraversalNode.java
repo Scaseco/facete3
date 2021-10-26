@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import org.aksw.facete.v3.api.AliasedPath;
 import org.aksw.facete.v3.api.Direction;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jenax.sparql.path.SimplePath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;

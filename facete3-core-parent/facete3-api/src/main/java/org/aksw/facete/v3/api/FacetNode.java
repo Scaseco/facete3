@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.Directed;
 import org.aksw.facete.v3.api.traversal.TraversalNode;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;

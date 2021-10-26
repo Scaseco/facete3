@@ -1,26 +1,26 @@
 package org.aksw.jena_sparql_api.data_query.api;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
 
 public interface SPath
-	extends Selection
+    extends Selection
 {
-	//ExprVar asExpr();
-	
+    //ExprVar asExpr();
+
 //	SPathNode getSource();
 //	SPathNode getTarget();
-	SPath getParent();
-	
-	
-	String getPredicate();
-	boolean isReverse();
+    SPath getParent();
 
-	SPath get(String predicate, boolean reverse);
-	
-	BinaryRelation getReachingBinaryRelation();
+
+    String getPredicate();
+    boolean isReverse();
+
+    SPath get(String predicate, boolean reverse);
+
+    BinaryRelation getReachingBinaryRelation();
 //	void setParent(Resource source);
 //	void setTarget(Resource target);
 
-	//void setPredicate(Property p);
-	//void setReverse(boolean isReverse);
+    //void setPredicate(Property p);
+    //void setReverse(boolean isReverse);
 }

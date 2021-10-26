@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.data_query.util;
 
 import java.util.Arrays;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jenax.arq.util.syntax.ElementUtils;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Exists;

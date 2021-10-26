@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.aksw.commons.util.range.CountInfo;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
+import org.aksw.jenax.sparql.relation.api.TernaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 

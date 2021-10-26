@@ -3,12 +3,12 @@ package org.aksw.facete.v3.experimental;
 import java.util.Collection;
 
 import org.aksw.facete.v3.api.path.Resolver;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.api.ResolverDirNode;
 import org.aksw.jena_sparql_api.data_query.api.ResolverMultiNode;
 import org.aksw.jena_sparql_api.data_query.api.ResolverNode;
-import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
+import org.aksw.jenax.sparql.relation.query.PartitionedQuery1;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 

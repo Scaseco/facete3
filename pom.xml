@@ -112,11 +112,29 @@
 				<version>${jenax.version}</version>
 			</dependency>
 
-                        <dependency>
-                                <groupId>org.aksw.jenax</groupId>
-                                <artifactId>jenax-arq-pathfinding</artifactId>
-                                <version>${jenax.version}</version>
-                        </dependency>
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-propertypaths</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-pathfinding</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-rx</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-relations</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
 
 
 			<dependency>
@@ -175,8 +193,8 @@
 				<version>${jenax.version}</version>
 			</dependency>
 
-			<!-- TODO Move to jenax-io-hdt once the hdt support is factored 
-				out of conjure -->
+			<!-- TODO Move to jenax-io-hdt once the hdt support is factored out of 
+				conjure -->
 			<dependency>
 				<groupId>org.aksw.jenax</groupId>
 				<artifactId>jenax-conjure-core</artifactId>
@@ -206,14 +224,14 @@
 				<groupId>org.aksw.jenax</groupId>
 				<artifactId>jenax-reprogen-core</artifactId>
 				<version>${jenax.version}</version>
-<!--
-				<exclusions>
-					<exclusion>
-						<groupId>org.aksw.spring</groupId>
-						<artifactId>spring-json-core</artifactId>
-					</exclusion>
-				</exclusions>
--->
+				<!-- <exclusions> <exclusion> <groupId>org.aksw.spring</groupId> <artifactId>spring-json-core</artifactId> 
+					</exclusion> </exclusions> -->
+			</dependency>
+
+			<dependency>
+				<groupId>org.eclipse.persistence</groupId>
+				<artifactId>javax.persistence</artifactId>
+				<version>2.2.0</version>
 			</dependency>
 
 			<dependency>

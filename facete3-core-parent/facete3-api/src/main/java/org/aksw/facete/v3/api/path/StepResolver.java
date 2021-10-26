@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.facete.v3.api.AliasedPathStep;
-import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
+import org.aksw.jenax.sparql.relation.api.Relation;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -35,7 +35,7 @@ import org.jgrapht.graph.DefaultEdge;
 // This implies, that the allocated predicate and target variable names
 // of steps with different names are disjoint. Setting a manual var name is possible though.
 //
-// 
+//
 //
 //
 //
@@ -85,10 +85,10 @@ class AliasedPathResolver {
 
 
 class MappedRelation {
-	// Remapping of variables
-	//BiMap<Var, Var> map;
-	Map<Var, Var> innerToOuter;
-	Relation r;
+    // Remapping of variables
+    //BiMap<Var, Var> map;
+    Map<Var, Var> innerToOuter;
+    Relation r;
 }
 
 //interface Step {
@@ -98,31 +98,31 @@ class MappedRelation {
 interface StepRelation
 //	extends Step
 {
-	Relation getRelation();
+    Relation getRelation();
 }
 
 class StepRelationImpl
-	implements StepRelation {
+    implements StepRelation {
 
-	protected Relation r;
-	
+    protected Relation r;
+
 //	@Override
-	public Relation apply(Relation step) {
-		return r;
-	}
+    public Relation apply(Relation step) {
+        return r;
+    }
 
-	@Override
-	public Relation getRelation() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Relation getRelation() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
 
 
 class OptionalStep {
-	public Relation apply(Relation r) {
-		return new RelationImpl(new ElementOptional(r.getElement()), r.getVars());
-	}
+    public Relation apply(Relation r) {
+        return new RelationImpl(new ElementOptional(r.getElement()), r.getVars());
+    }
 }
 
 
@@ -131,82 +131,82 @@ class OptionalStep {
 //}
 
 class V {
-	protected Relation r;
+    protected Relation r;
 }
 
 class E
-	extends DefaultEdge
+    extends DefaultEdge
 {
-	int type; 
-	List<Integer> srcJoins;
-	List<Integer> tgtJoins;
+    int type;
+    List<Integer> srcJoins;
+    List<Integer> tgtJoins;
 }
 
 public class StepResolver {
-	
-	
-	
-	
-	//Nodelet start;
-	V root;
-	Graph<V, E> joinGraph;
-	//Node startNode;
-	
-	
-	
-	public static Element joinGraphToElement(Graph<V, E> joinGraph, V root) {
-		Map<V, Relation> vToRelation = new HashMap<>();
-		
-		//joinGraph.addV
-		Set<E> edges = joinGraph.outgoingEdgesOf(root);
-		for(E edge : edges) {
-			V src = joinGraph.getEdgeSource(edge);
-			V tgt = joinGraph.getEdgeTarget(edge);
-			
-			
-			switch(edge.type) {
-			case 1: // normal join
-				
-				break;
-			case 2: // Optional
-				ElementOptional elt = new ElementOptional(new ElementGroup());
-				
-				break;
-			}
-			
-		}
-		
-		return null;
-	}
-	
-	//protected Map<>
-	
-	public AliasedPathResolver resolve(AliasedPathStep step) {
-		boolean isOptional = step.isOptional();
-		Relation r = step.getRelation();
 
-		List<Var> vars = r.getVars();
-		String alias = step.getAlias();
-		Element e = r.getElement();
-		//step.isFwd()
 
-		int n = vars.size();
-		
-		Var s, p, o = null;
-		switch(n) {
-		case 2: s = vars.get(0); p = null; o = vars.get(1); break;
-		case 3: s = vars.get(0); p = vars.get(1); o = vars.get(2); break;
-		default: throw new IllegalArgumentException();
-		}		
-		
+
+
+    //Nodelet start;
+    V root;
+    Graph<V, E> joinGraph;
+    //Node startNode;
+
+
+
+    public static Element joinGraphToElement(Graph<V, E> joinGraph, V root) {
+        Map<V, Relation> vToRelation = new HashMap<>();
+
+        //joinGraph.addV
+        Set<E> edges = joinGraph.outgoingEdgesOf(root);
+        for(E edge : edges) {
+            V src = joinGraph.getEdgeSource(edge);
+            V tgt = joinGraph.getEdgeTarget(edge);
+
+
+            switch(edge.type) {
+            case 1: // normal join
+
+                break;
+            case 2: // Optional
+                ElementOptional elt = new ElementOptional(new ElementGroup());
+
+                break;
+            }
+
+        }
+
+        return null;
+    }
+
+    //protected Map<>
+
+    public AliasedPathResolver resolve(AliasedPathStep step) {
+        boolean isOptional = step.isOptional();
+        Relation r = step.getRelation();
+
+        List<Var> vars = r.getVars();
+        String alias = step.getAlias();
+        Element e = r.getElement();
+        //step.isFwd()
+
+        int n = vars.size();
+
+        Var s, p, o = null;
+        switch(n) {
+        case 2: s = vars.get(0); p = null; o = vars.get(1); break;
+        case 3: s = vars.get(0); p = vars.get(1); o = vars.get(2); break;
+        default: throw new IllegalArgumentException();
+        }
+
 //		Containlet c = start.getTriplet().getContainlet();
 //		c.getJoin().of(start.getTriplet()).with()
-		
-		
+
+
 //		step.getAlias()
-		
-		return null;
-	}
-	
-	
+
+        return null;
+    }
+
+
 }

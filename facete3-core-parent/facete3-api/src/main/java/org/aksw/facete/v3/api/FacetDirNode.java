@@ -1,7 +1,7 @@
 package org.aksw.facete.v3.api;
 
 import org.aksw.facete.v3.api.traversal.TraversalDirNode;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
 import org.apache.jena.rdf.model.RDFNode;
 
 public interface FacetDirNode

@@ -1,25 +1,5 @@
 package org.aksw.facete.v3.api.traversal.two;
 
-import static org.aksw.facete.v3.api.Direction.BACKWARD;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Map.Entry;
-
-import org.aksw.facete.v3.api.AliasedPath;
-import org.aksw.facete.v3.api.Direction;
-import org.aksw.facete.v3.api.traversal.TraversalNode;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.sparql.path.P_Link;
-import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.sparql.path.P_ReverseLink;
-import org.apache.jena.sparql.path.P_Seq;
-import org.apache.jena.sparql.path.Path;
-
 /**
  * Simple traversal via predicates.
  * There is no support for aliases.
