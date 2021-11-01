@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sys.JenaSystem;
 
 /**
  *

@@ -206,12 +206,14 @@
 				<groupId>org.topbraid</groupId>
 				<artifactId>shacl</artifactId>
 				<version>1.3.2</version>
+<!--
 				<exclusions>
 					<exclusion>
 						<groupId>org.apache.jena</groupId>
 						<artifactId>jena-arq</artifactId>
 					</exclusion>
 				</exclusions>
+-->
 			</dependency>
 
 			<dependency>
@@ -632,12 +634,15 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.0.0-M1</version>
+					<version>3.0.0-M5</version>
 					<!-- The spring based unit tests presently cannot configure properties 
 						across all containers -->
 					<configuration>
+<!--
 						<forkCount>1</forkCount>
 						<argLine>-Xmx8192m</argLine>
+-->
+		<trimStackTrace>false</trimStackTrace>
 
 						<!-- VHOST no longer has to be set -->
 						<!-- <systemPropertyVariables> -->
