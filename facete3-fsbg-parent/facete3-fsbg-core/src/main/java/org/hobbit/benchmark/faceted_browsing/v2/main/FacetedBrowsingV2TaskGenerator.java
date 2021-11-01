@@ -1,6 +1,6 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
-import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jenax.stmt.core.SparqlStmt;
 import org.apache.jena.rdf.model.ModelFactory;
 
 /**

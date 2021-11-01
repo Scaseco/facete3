@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
+import org.aksw.jenax.reprogen.core.JenaPluginUtils;
+import org.aksw.jenax.stmt.core.SparqlStmtMgr;
 import org.apache.jena.ext.com.google.common.collect.Range;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;

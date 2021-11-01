@@ -9,14 +9,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetNodeResource;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.sparql.path.SimplePath;
 import org.apache.jena.ext.com.google.common.base.Joiner;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Streams;

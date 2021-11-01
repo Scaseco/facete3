@@ -45,29 +45,29 @@ import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
-import org.aksw.jena_sparql_api.collection.rx.utils.views.map.MapFromBinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionEx;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFromRdfDatatype;
-import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystem3;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.NodeHolder;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromMultimap;
 import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
+import org.aksw.jenax.arq.util.expr.ExprListUtils;
+import org.aksw.jenax.arq.util.expr.ExprUtils;
+import org.aksw.jenax.arq.util.node.ComparableNodeValue;
+import org.aksw.jenax.arq.util.syntax.ElementUtils;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.extra.RDFConnectionEx;
+import org.aksw.jenax.dataaccess.rx.MapFromBinaryRelation;
+import org.aksw.jenax.sparql.path.SimplePath;
+import org.aksw.jenax.sparql.query.rx.SparqlRx;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.stmt.core.SparqlStmtMgr;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -1043,7 +1043,7 @@ public class TaskGenerator {
             Node o = fc.getValue();
 
             //fn.step(p, isBwd).one().constraints().eq(o);
-            fn.step(p, dir).one().constraints().nodeRange(Range.singleton(new NodeHolder(o))).activate();
+            fn.step(p, dir).one().constraints().nodeRange(Range.singleton(ComparableNodeValue.wrap(o))).activate();
 
             // Pick one of the facet values
 
@@ -1524,7 +1524,7 @@ public class TaskGenerator {
      * pickConstant: Select only a specific value; ignores upper / lower bound
      */
     //public Cell<FacetNode, Node, Node>
-    public static Entry<FacetNode, Range<NodeHolder>> pickRange(
+    public static Entry<FacetNode, Range<ComparableNodeValue>> pickRange(
             Random rand,
             Random pseudoRandom,
             List<SetSummary> numericProperties,
@@ -1536,7 +1536,7 @@ public class TaskGenerator {
             boolean pickLowerBound,
             boolean pickUpperBound) {
 
-        Entry<FacetNode, Range<NodeHolder>> result = null;
+        Entry<FacetNode, Range<ComparableNodeValue>> result = null;
 
         Map<FacetNode, Map<Node, Long>> cands = selectNumericFacets(
                 conceptPathFinder,
@@ -1572,30 +1572,30 @@ public class TaskGenerator {
 
             // Pick a range
             WeightedSelector<Node> rangeSelector = WeightedSelectorMutable.create(range);
-            NodeHolder nvA = null;
+            ComparableNodeValue nvA = null;
             if (pickLowerBound || pickConstant) {
                 double ia = rand.nextDouble();
                 Node a = rangeSelector.sample(ia);
-                nvA = new NodeHolder(a);
+                nvA = ComparableNodeValue.wrap(a);
             }
 
-            NodeHolder nvB = null;
+            ComparableNodeValue nvB = null;
             if (pickUpperBound && !pickConstant) {
                 double ib = rand.nextDouble();
                 Node b = rangeSelector.sample(ib);
-                nvB = new NodeHolder(b);
+                nvB = ComparableNodeValue.wrap(b);
             }
 
             if (pickLowerBound && pickUpperBound) {
                 int d = nvA.compareTo(nvB);
                 if (d > 0) {
-                    NodeHolder tmp = nvA;
+                    ComparableNodeValue tmp = nvA;
                     nvA = nvB;
                     nvB = tmp;
                 }
             }
 
-            Range<NodeHolder> resultRange;
+            Range<ComparableNodeValue> resultRange;
 
             if (pickConstant) {
                 resultRange = Range.singleton(nvA);
@@ -1624,7 +1624,7 @@ public class TaskGenerator {
     public boolean applyNumericCp(FacetNode fn, Path pathPattern, int minPathLength, int maxPathLength, boolean pickConstant, boolean pickLowerBound, boolean pickUpperBound, boolean allowExisting) {
         boolean result = false;
 
-        Entry<FacetNode, Range<NodeHolder>> r = pickRange(
+        Entry<FacetNode, Range<ComparableNodeValue>> r = pickRange(
                 rand,
                 pseudoRandom,
                 numericProperties,
@@ -1938,7 +1938,7 @@ public class TaskGenerator {
                 Node o = fc.getValue();
 
                 //fn.step(p, isBwd).one().constraints().eq(o);
-                targetFn.constraints().range(Range.singleton(new NodeHolder(o)));
+                targetFn.constraints().range(Range.singleton(ComparableNodeValue.wrap(o)));
 
                 // Pick one of the facet values
 
@@ -1985,7 +1985,7 @@ public class TaskGenerator {
 
         org.apache.jena.sparql.path.Path pathPattern = null ; // not implemented yet. // PathParser.parse("((eg:p|!eg:p)|(^eg:p|!^eg:p))*", PrefixMapping.Extended);
 
-        Entry<FacetNode, Range<NodeHolder>> r = pickRange(rand, pseudoRandom, numericProperties,
+        Entry<FacetNode, Range<ComparableNodeValue>> r = pickRange(rand, pseudoRandom, numericProperties,
                 conceptPathFinder, fn, pathPattern, 1, 3, false, true, true);
 
         logger.debug("Pick: " + r);
@@ -2086,14 +2086,14 @@ public class TaskGenerator {
                 result = false;
             } else {
                 result = true;
-                facetNode.constraints().nodeRange(Range.atMost(new NodeHolder(oldUpper))).activate();
+                facetNode.constraints().nodeRange(Range.atMost(ComparableNodeValue.wrap(oldUpper))).activate();
             }
         } else {
             if (oldLower == null) {
                 result = false;
             } else {
                 result = true;
-                facetNode.constraints().nodeRange(Range.atLeast(new NodeHolder(oldLower))).activate();
+                facetNode.constraints().nodeRange(Range.atLeast(ComparableNodeValue.wrap(oldLower))).activate();
             }
         }
         if (result) {
@@ -2116,10 +2116,10 @@ public class TaskGenerator {
 
         final FacetNode facetNode = constraint.mentionedFacetNodes().values().iterator().next();
 
-        final Entry<FacetNode, Range<NodeHolder>> facetNodeRangeEntry = pickRange(getRandom(), getPseudoRandom(), getNumericProperties(), getConceptPathFinder(),
+        final Entry<FacetNode, Range<ComparableNodeValue>> facetNodeRangeEntry = pickRange(getRandom(), getPseudoRandom(), getNumericProperties(), getConceptPathFinder(),
                 facetNode, null, -1, 0, false, true, true);
         if (facetNodeRangeEntry != null) {
-            final Range<NodeHolder> range = facetNodeRangeEntry.getValue();
+            final Range<ComparableNodeValue> range = facetNodeRangeEntry.getValue();
             Node newLower = null;
             Node newUpper = null;
             final Node xLower = range.lowerEndpoint().getNode();
@@ -2159,13 +2159,13 @@ public class TaskGenerator {
                     facetNode.constraints().eq(newLower).activate();
                     result = true;
                 } else if (pickUpperBound && pickLowerBound){
-                    facetNode.constraints().nodeRange(Range.closed(new NodeHolder(newLower), new NodeHolder(newUpper))).activate();
+                    facetNode.constraints().nodeRange(Range.closed(ComparableNodeValue.wrap(newLower), ComparableNodeValue.wrap(newUpper))).activate();
                     result = true;
                 } else if (pickLowerBound) {
-                    facetNode.constraints().nodeRange(Range.atLeast(new NodeHolder(newLower))).activate();
+                    facetNode.constraints().nodeRange(Range.atLeast(ComparableNodeValue.wrap(newLower))).activate();
                     result = true;
                 } else if (pickUpperBound) {
-                    facetNode.constraints().nodeRange(Range.atMost(new NodeHolder(newUpper))).activate();
+                    facetNode.constraints().nodeRange(Range.atMost(ComparableNodeValue.wrap(newUpper))).activate();
                     result = true;
                 } else {
                     result = false;
@@ -2215,11 +2215,11 @@ public class TaskGenerator {
 
 
         logger.debug("Subclasses: " + subClasses.size());
-        final List<NodeHolder> subClassNodes = subClasses.stream().map(c -> new NodeHolder(c.asNode())).collect(Collectors.toList());
+        final List<ComparableNodeValue> subClassNodes = subClasses.stream().map(c -> ComparableNodeValue.wrap(c.asNode())).collect(Collectors.toList());
         final List<FacetValueCount> fn2_av = fn.parent().fwd().facetValueCounts()
                 .only(RDF.type)
                 .exec()
-                .filter(p -> subClassNodes.contains(new NodeHolder(p.getValue())))
+                .filter(p -> subClassNodes.contains(ComparableNodeValue.wrap(p.getValue())))
                 .toList()
                 .blockingGet();
         //logger.debug("Facet Value Counts: {}", fn2_av);

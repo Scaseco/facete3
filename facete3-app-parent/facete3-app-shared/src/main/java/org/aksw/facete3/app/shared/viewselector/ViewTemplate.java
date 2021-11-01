@@ -1,7 +1,7 @@
 package org.aksw.facete3.app.shared.viewselector;
 
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.rdf.model.Resource;
 
 public interface ViewTemplate

@@ -1,6 +1,6 @@
 package org.aksw.facete3.app.shared.concept;
 
-import org.aksw.jena_sparql_api.mapper.RootedQuery;
+import org.aksw.jenax.analytics.core.RootedQuery;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 

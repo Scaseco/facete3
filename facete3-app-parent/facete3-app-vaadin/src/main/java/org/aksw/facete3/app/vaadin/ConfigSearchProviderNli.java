@@ -103,7 +103,7 @@ public class ConfigSearchProviderNli {
                 // Evaluate 'static' parts of the query - such as operations based on OpTable - directly
 
                 Query tmp = QueryUtils.applyOpTransform(raw,
-                        FixpointIteration.createClosure(op -> Transformer.transform(new TransformDistributeJoinOverUnion(), op)));
+                        FixpointIteration.createClosure(op -> Transformer.applyNodeTransform(new TransformDistributeJoinOverUnion(), op)));
 //                System.out.println("After join-over-union distribution: " + tmp);
 
                 // TODO Due to a virtuoso bug with unions involving VALUES
@@ -111,12 +111,12 @@ public class ConfigSearchProviderNli {
                 // Consider a workaround...
 
                 Query r = QueryUtils.applyOpTransform(tmp,
-                        op -> Transformer.transform(TransformEvalTable.create(), op));
+                        op -> Transformer.applyNodeTransform(TransformEvalTable.create(), op));
 
 //                System.out.println("Before factorization: " + r);
 
                 r = QueryUtils.applyOpTransform(r,
-                        op -> Transformer.transform(new TransformFactorizeTableColumnsToExtend(), op));
+                        op -> Transformer.applyNodeTransform(new TransformFactorizeTableColumnsToExtend(), op));
 
 //                System.out.println("After optimization: " + r);
                 return r;

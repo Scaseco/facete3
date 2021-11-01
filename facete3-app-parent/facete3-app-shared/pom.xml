@@ -23,6 +23,11 @@
 			<artifactId>jenax-conjure-core</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-arq-entityquery</artifactId>
+		</dependency>
+
 		<!-- Includes prefix.cc snapshots (maybe there are mvn packages on github 
 			via automatic snapshot creation?) -->
 		<dependency>

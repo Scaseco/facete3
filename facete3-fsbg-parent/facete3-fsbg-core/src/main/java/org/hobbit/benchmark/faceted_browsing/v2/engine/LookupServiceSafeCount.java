@@ -2,7 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.engine;
 
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.commons.rx.lookup.LookupService;
 
 import com.google.common.collect.Range;
 

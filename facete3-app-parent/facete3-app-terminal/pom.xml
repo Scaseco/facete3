@@ -20,6 +20,11 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-rx-dataaccess</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-app-shared</artifactId>
 		</dependency>

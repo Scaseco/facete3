@@ -3,8 +3,8 @@ package org.hobbit.benchmark.faceted_browsing.v2.engine;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.commons.rx.lookup.LookupService;
+import org.aksw.jenax.sparql.relation.api.BinaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
 

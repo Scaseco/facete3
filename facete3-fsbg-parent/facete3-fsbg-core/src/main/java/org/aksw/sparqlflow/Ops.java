@@ -1,7 +1,7 @@
 package org.aksw.sparqlflow;
 
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionEx;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionMetaData;
+import org.aksw.jenax.connection.extra.RDFConnectionEx;
+import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.update.UpdateRequest;
 

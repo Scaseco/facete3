@@ -20,6 +20,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.rx.lookup.LookupService;
+import org.aksw.commons.util.Directed;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -44,31 +46,29 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.LookupServiceUtils;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.api.QuerySpec;
 import org.aksw.jena_sparql_api.data_query.impl.NodePathletPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
 import org.aksw.jena_sparql_api.pathlet.Path;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
-import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.model.Directed;
-import org.aksw.jena_sparql_api.utils.model.PrefixMapAdapter;
+import org.aksw.jenax.arq.connection.RDFConnectionModular;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
+import org.aksw.jenax.arq.connection.core.SparqlQueryConnectionJsa;
+import org.aksw.jenax.arq.util.syntax.QueryUtils;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.sparql.path.SimplePath;
+import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
+import org.aksw.jenax.sparql.query.rx.SparqlRx;
+import org.aksw.jenax.sparql.relation.api.TernaryRelation;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.stmt.core.SparqlStmtMgr;
+import org.aksw.jenax.stmt.parser.query.SparqlQueryParserImpl;
 import org.apache.jena.JenaRuntime;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Strings;
@@ -89,7 +89,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -97,6 +96,7 @@ import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.PrefixMapAdapter;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -1051,7 +1051,7 @@ public class MainCliFacete3 {
 
                 Node g = NodeFactory.createURI(cm.defaultGraphs.get(0));
 
-                conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
                         q -> {
                             Transform t = new TransformGraphRename(Quad.defaultGraphNodeGenerated, g) ;
 
@@ -1067,13 +1067,13 @@ public class MainCliFacete3 {
             }
 
             if(cm.unionDefaultGraphMode) {
-                conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
                         q -> QueryUtils.applyOpTransform(q, TransformUnionQuery::transform /* Algebra::unionDefaultGraph */));
             }
 
             // expand one-of for use with ontop
             if (true) {
-                conn = RDFConnectionFactoryEx.wrapWithQueryTransform(conn,
+                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
                         q -> QueryUtils.applyOpTransform(q, op -> Transformer.transform(new TransformExpandOneOf(), op)));
             }
 
@@ -1235,7 +1235,7 @@ public class MainCliFacete3 {
         ExprTransformVirtualBnodeUris xform = ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);
 
 
-        RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
+        RDFConnection result = RDFConnectionUtils.wrapWithQueryTransform(conn, xform::rewrite);
         return result;
     }
 

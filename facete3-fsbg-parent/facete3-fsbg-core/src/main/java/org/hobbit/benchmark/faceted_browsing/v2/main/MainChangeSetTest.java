@@ -3,7 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.util.Objects;
 
 import org.aksw.jena_sparql_api.changeset.util.ChangeSetGroupManager;
-import org.aksw.jena_sparql_api.changeset.util.ChangeSetManager;
 import org.aksw.jena_sparql_api.changeset.util.ChangeSetUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

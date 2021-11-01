@@ -3,7 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
+import org.aksw.jenax.arq.util.update.UpdateRequestUtils;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.update.UpdateRequest;
 

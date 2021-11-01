@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.aksw.commons.accessors.SingleValuedAccessorDirect;
-import org.apache.poi.ss.formula.functions.T;
 
 
 /**

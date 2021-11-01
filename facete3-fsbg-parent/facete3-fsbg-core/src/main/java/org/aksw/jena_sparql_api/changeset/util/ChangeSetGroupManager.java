@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.changeset.util;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
 import org.aksw.jena_sparql_api.changeset.ex.api.CSX;
@@ -13,8 +12,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 
 public class ChangeSetGroupManager
 	implements RdfChangeTracker

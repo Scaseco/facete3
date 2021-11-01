@@ -65,16 +65,19 @@
 				<artifactId>jaxb-api</artifactId>
 				<version>${javax.xml.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>com.sun.xml.bind</groupId>
 				<artifactId>jaxb-impl</artifactId>
 				<version>${javax.xml.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>org.glassfish.jaxb</groupId>
 				<artifactId>jaxb-runtime</artifactId>
 				<version>${javax.xml.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>javax.activation</groupId>
 				<artifactId>activation</artifactId>
@@ -114,7 +117,37 @@
 
 			<dependency>
 				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-entityquery</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-connection-virtuoso</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.openlink.virtuoso</groupId>
+				<artifactId>virtjdbc4_1</artifactId>
+				<version>7.2.0_p1-2015-06-25</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-connection-extra</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
 				<artifactId>jenax-arq-propertypaths</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-reprogen-jpa</artifactId>
 				<version>${jenax.version}</version>
 			</dependency>
 
@@ -127,6 +160,18 @@
 			<dependency>
 				<groupId>org.aksw.jenax</groupId>
 				<artifactId>jenax-arq-rx</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-rx-dataaccess</artifactId>
+				<version>${jenax.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-arq-connection-extra</artifactId>
 				<version>${jenax.version}</version>
 			</dependency>
 
@@ -639,11 +684,8 @@
 		</repository>
 		<!-- <repository> <id>Apache Repo</id> <name>Apache Repository</name> <url>https://repository.apache.org/content/repositories/releases/</url> 
 			</repository> -->
-		<repository>
-			<id>in-project-virtjdbc</id>
-			<name>In Project Repo for VirtJDBC</name>
-			<url>file://${project.basedir}/src/main/resources/lib</url>
-		</repository>
+		<!-- <repository> <id>in-project-virtjdbc</id> <name>In Project Repo for 
+			VirtJDBC</name> <url>file://${project.basedir}/repo/lib</url> </repository> -->
 
 
 		<!-- geotools repo from http://docs.geotools.org/latest/userguide/tutorial/quickstart/maven.html -->

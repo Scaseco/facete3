@@ -3,10 +3,10 @@ package org.aksw.facete3.cli.main;
 import java.util.Collection;
 
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jenax.arq.util.syntax.ElementUtils;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.sparql.relation.api.TernaryRelation;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 

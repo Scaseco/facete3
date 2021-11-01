@@ -36,6 +36,21 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-arq-connection-extra</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-arq-connection-virtuoso</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.openlink.virtuoso</groupId>
+			<artifactId>virtjdbc4_1</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>docker-service-api-docker-client</artifactId>
 			<!-- <scope>test</scope> -->

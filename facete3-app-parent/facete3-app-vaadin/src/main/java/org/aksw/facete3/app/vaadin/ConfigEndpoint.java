@@ -101,7 +101,7 @@ public class ConfigEndpoint {
 
         rdfConnection = RDFConnectionFactoryEx.wrapWithQueryTransform(rdfConnection,
                 query -> QueryUtils.applyOpTransform(query,
-                        op -> Transformer.transform(new TransformExpandAggCountDistinct(), op)));
+                        op -> Transformer.applyNodeTransform(new TransformExpandAggCountDistinct(), op)));
 
         return rdfConnection;
     }

@@ -6,12 +6,12 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.rx.DatasetGraphQuadsImpl;
-import org.aksw.jena_sparql_api.rx.op.FlowOfQuadsOps;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jenax.dboe.dataset.impl.DatasetGraphQuadsImpl;
+import org.aksw.jenax.sparql.path.SimplePath;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.rx.op.FlowOfQuadsOps;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;

@@ -18,17 +18,17 @@ import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionEx;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
-import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.NodeHolder;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jenax.arq.util.node.ComparableNodeValue;
+import org.aksw.jenax.arq.util.syntax.ElementUtils;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.extra.RDFConnectionEx;
+import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
+import org.aksw.jenax.sparql.path.SimplePath;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
@@ -461,7 +461,7 @@ public class TestFacetedQuery2 {
 
         final FacetNode node = fq.root();
 
-        Map.Entry<FacetNode, Range<NodeHolder>> r = TaskGenerator.pickRange(taskGenerator.getRandom(), taskGenerator.getPseudoRandom(), taskGenerator.getNumericProperties(),
+        Map.Entry<FacetNode, Range<ComparableNodeValue>> r = TaskGenerator.pickRange(taskGenerator.getRandom(), taskGenerator.getPseudoRandom(), taskGenerator.getNumericProperties(),
                 taskGenerator.getConceptPathFinder(), node, null, 0, 2, false, true, false);
 
         System.out.println("Pick: " + r);
@@ -798,8 +798,8 @@ public class TestFacetedQuery2 {
                 .constraints()
 //				.gt(NodeValue.makeInteger(50000).asNode())
                     .nodeRange(Range.closed(
-                        new NodeHolder(NodeValue.makeInteger(50000).asNode()),
-                        new NodeHolder(NodeValue.makeInteger(80000000).asNode())))
+                        ComparableNodeValue.wrap(NodeValue.makeInteger(50000).asNode()),
+                        ComparableNodeValue.wrap(NodeValue.makeInteger(80000000).asNode())))
                     .activate()
                 .end()
                 .parent()

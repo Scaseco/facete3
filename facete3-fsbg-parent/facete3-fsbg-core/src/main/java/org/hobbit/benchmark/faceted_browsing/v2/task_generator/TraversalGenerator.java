@@ -2,9 +2,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
 import org.apache.jena.sparql.path.Path;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
-
 //class RangeBuilder<T extends Comparable<T>> {
 //	protected T hasLowerBound = true;
 //	protected T hasUpperBound = true;

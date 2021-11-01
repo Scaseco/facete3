@@ -3,9 +3,9 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.util.List;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.core.connection.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
+import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
 import org.apache.jena.rdf.model.Resource;
 
 public interface SparqlDistribution

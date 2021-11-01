@@ -1,12 +1,9 @@
 package org.aksw.jena_sparql_api.changeset.util;
 
 import org.aksw.jena_sparql_api.changeset.api.ChangeSet;
-import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
-import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.impl.ReifierStd;
 
 public class ChangeSetManager {
 	//protected Model changeModel;

@@ -7,7 +7,7 @@ import org.aksw.commons.util.slot.SlottedBuilder;
 import org.aksw.commons.util.slot.SlottedBuilderImpl;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.graph.NodeFactory;
 
 public class ConceptBuilderWithSlots

@@ -1,8 +1,8 @@
 package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.stmt.SparqlStmt;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.aksw.jenax.stmt.core.SparqlStmt;
+import org.aksw.jenax.stmt.core.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Resource;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.BenchmarkVocab;

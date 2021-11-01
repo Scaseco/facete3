@@ -10,7 +10,7 @@ import org.aksw.jena_sparql_api.changeset.ex.impl.ChangeSetGroupStateImpl;
 import org.aksw.jena_sparql_api.changeset.ex.impl.ChangeSetStateImpl;
 import org.aksw.jena_sparql_api.changeset.impl.ChangeSetImpl;
 import org.aksw.jena_sparql_api.changeset.impl.RdfStatementImpl;
-import org.aksw.jena_sparql_api.utils.model.SimpleImplementation;
+import org.aksw.jenax.arq.util.implementation.SimpleImplementation;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.rdf.model.RDFNode;

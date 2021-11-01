@@ -11,7 +11,7 @@ import org.aksw.jena_sparql_api.pathlet.PathletSimple;
 import org.aksw.jena_sparql_api.relationlet.RelationletElementImpl;
 import org.aksw.jena_sparql_api.relationlet.RelationletSimple;
 import org.aksw.jena_sparql_api.relationlet.VarRefStatic;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jenax.arq.util.var.Vars;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.core.Var;
