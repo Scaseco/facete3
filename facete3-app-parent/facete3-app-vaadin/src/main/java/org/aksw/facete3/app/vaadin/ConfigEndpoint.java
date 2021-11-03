@@ -2,8 +2,8 @@ package org.aksw.facete3.app.vaadin;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
-import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
+import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
@@ -93,15 +93,15 @@ public class ConfigEndpoint {
         RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(serviceUrl);
         RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
 
-        rdfConnection = RDFConnectionFactoryEx.wrapWithQueryTransform(rdfConnection,
+        rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
                 query -> {
                     logger.info("Sending query:" + query);
                     return query;
                 });
 
-        rdfConnection = RDFConnectionFactoryEx.wrapWithQueryTransform(rdfConnection,
+        rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
                 query -> QueryUtils.applyOpTransform(query,
-                        op -> Transformer.applyNodeTransform(new TransformExpandAggCountDistinct(), op)));
+                        op -> Transformer.transform(new TransformExpandAggCountDistinct(), op)));
 
         return rdfConnection;
     }

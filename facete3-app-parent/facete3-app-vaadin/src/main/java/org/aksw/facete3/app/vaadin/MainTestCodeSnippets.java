@@ -1,7 +1,7 @@
 package org.aksw.facete3.app.vaadin;
 
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.jenax.dataaccess.LabelUtils;
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

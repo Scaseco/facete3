@@ -2,18 +2,15 @@ package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.ItemDoubleClickEvent;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 
 public class FacetCountComponent extends Grid<FacetCount> {

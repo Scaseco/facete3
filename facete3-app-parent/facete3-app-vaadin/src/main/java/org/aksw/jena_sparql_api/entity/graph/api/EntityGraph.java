@@ -2,13 +2,9 @@ package org.aksw.jena_sparql_api.entity.graph.api;
 
 import java.util.Collection;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.expr.ExprList;
-
-import com.google.common.collect.Multimap;
 
 
 

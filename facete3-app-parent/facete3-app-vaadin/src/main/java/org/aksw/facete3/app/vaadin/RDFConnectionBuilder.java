@@ -7,16 +7,16 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.rx.util.connection.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
+import org.aksw.jenax.arq.connection.RDFConnectionModular;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.connection.core.SparqlQueryConnectionJsa;
+import org.aksw.jenax.stmt.core.SparqlStmtMgr;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
@@ -70,7 +70,7 @@ public class RDFConnectionBuilder {
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =
                 ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);
-        RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
+        RDFConnection result = RDFConnectionUtils.wrapWithQueryTransform(conn, xform::rewrite);
         return result;
     }
 
@@ -81,7 +81,7 @@ public class RDFConnectionBuilder {
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =
                 ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);
-        RDFConnection result = RDFConnectionFactoryEx.wrapWithQueryTransform(conn, xform::rewrite);
+        RDFConnection result = RDFConnectionUtils.wrapWithQueryTransform(conn, xform::rewrite);
         return result;
     }
 }

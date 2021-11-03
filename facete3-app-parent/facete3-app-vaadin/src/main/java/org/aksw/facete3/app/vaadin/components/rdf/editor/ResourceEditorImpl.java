@@ -13,11 +13,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
-import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.update.GraphListenerBatchBase;
-import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jenax.arq.util.triple.TripleUtils;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphListener;

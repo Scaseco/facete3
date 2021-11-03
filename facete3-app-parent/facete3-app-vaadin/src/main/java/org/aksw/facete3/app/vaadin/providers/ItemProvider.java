@@ -2,9 +2,9 @@ package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.function.Function;
 
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
-import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 

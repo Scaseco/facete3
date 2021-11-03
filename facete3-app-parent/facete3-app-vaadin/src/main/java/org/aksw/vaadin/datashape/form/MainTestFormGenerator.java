@@ -24,7 +24,6 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.DCAT;
 import org.topbraid.shacl.model.SHFactory;
-import org.topbraid.shacl.model.SHNodeShape;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -78,7 +77,7 @@ public class MainTestFormGenerator {
         Node sourceNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
 
         GraphChange graphEditorModel = new GraphChange();
-        GraphUtil.addInto(graphEditorModel.getBaseGraph(), graph);
+        // GraphUtil.addInto(graphEditorModel.getBaseGraph(), graph);
 //        ObservableCollection<Node> dists = graphEditorModel.createSetForPredicate(sourceNode, DCAT.distribution.asNode(), true);
 //
 //        dists.addPropertyChangeListener(ev -> System.out.println("Got event: " + ev));

@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<jena.version>4.3.0</jena.version>
+		<jena.version>4.3.0-SNAPSHOT</jena.version>
 		<jenax.version>4.3.0-1-SNAPSHOT</jenax.version>
 
 		<aksw-commons.version>0.9.1-SNAPSHOT</aksw-commons.version>
@@ -47,7 +47,6 @@
 
 	<modules>
 		<module>facete3-resources-test-config</module>
-		<module>facete3-core-parent</module>
 		<module>facete3-fsbg-parent</module>
 
 		<module>facete3-app-parent</module>
@@ -132,7 +131,7 @@
 				<artifactId>virtjdbc4_1</artifactId>
 				<version>7.2.0_p1-2015-06-25</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.aksw.jenax</groupId>
 				<artifactId>jenax-arq-connection-extra</artifactId>
@@ -206,14 +205,12 @@
 				<groupId>org.topbraid</groupId>
 				<artifactId>shacl</artifactId>
 				<version>1.3.2</version>
-<!--
-				<exclusions>
-					<exclusion>
-						<groupId>org.apache.jena</groupId>
-						<artifactId>jena-arq</artifactId>
-					</exclusion>
-				</exclusions>
--->
+				<!-- <exclusions> <exclusion> <groupId>org.apache.jena</groupId> <artifactId>jena-arq</artifactId> 
+					</exclusion> </exclusions> -->
+			</dependency>
+
+			<dependency> <groupId>org.apache.jena</groupId> <artifactId>jena-arq</artifactId> 
+			<version>${jena.version}</version>
 			</dependency>
 
 			<dependency>
@@ -348,21 +345,21 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>facete3-vocab</artifactId>
-				<version>${project.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-facete-vocab</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>facete3-api</artifactId>
-				<version>${project.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-facete-api</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.hobbit</groupId>
-				<artifactId>facete3-impl</artifactId>
-				<version>${project.version}</version>
+				<groupId>org.aksw.jenax</groupId>
+				<artifactId>jenax-facete-impl</artifactId>
+				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
@@ -633,16 +630,21 @@
 
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-failsafe-plugin</artifactId>
+					<version>3.0.0-M5</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M5</version>
 					<!-- The spring based unit tests presently cannot configure properties 
 						across all containers -->
 					<configuration>
-<!--
-						<forkCount>1</forkCount>
-						<argLine>-Xmx8192m</argLine>
--->
-		<trimStackTrace>false</trimStackTrace>
+						<!-- <forkCount>1</forkCount> <argLine>-Xmx8192m</argLine> -->
+						<!-- <forkCount>0</forkCount> -->
+						<trimStackTrace>false</trimStackTrace>
+						<!-- <useSystemClassLoader>false</useSystemClassLoader> -->
 
 						<!-- VHOST no longer has to be set -->
 						<!-- <systemPropertyVariables> -->

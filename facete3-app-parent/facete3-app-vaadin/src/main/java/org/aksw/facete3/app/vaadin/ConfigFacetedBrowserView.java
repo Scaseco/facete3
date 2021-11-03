@@ -1,21 +1,19 @@
 package org.aksw.facete3.app.vaadin;
 
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
+import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
+import org.aksw.jenax.dataaccess.LabelUtils;
 import org.apache.jena.graph.Node;
-import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;

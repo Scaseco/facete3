@@ -1,11 +1,5 @@
 package org.aksw.facete3.app.vaadin.components.rdf.editor;
 
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.button.Button;
-
 //public class RotateButton<K, V>
 //    extends Button
 //{

@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
+import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**

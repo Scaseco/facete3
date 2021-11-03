@@ -1,12 +1,5 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
-import org.aksw.commons.path.trav.api.TravProvider;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravDirection;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravProperty;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
-import org.apache.jena.graph.Node;
-
 //public class TravProviderTripleTransform<W, V, S>
 //    implements TravProviderTriple<V, S>
 //{

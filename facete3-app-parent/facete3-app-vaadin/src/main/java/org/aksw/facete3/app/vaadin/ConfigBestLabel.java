@@ -4,8 +4,8 @@ import java.util.Arrays;
 
 import org.aksw.facete3.app.vaadin.plugin.view.Bibframe;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
-import org.aksw.jena_sparql_api.mapper.BestLiteralConfig;
-import org.aksw.jena_sparql_api.mapper.LiteralPreference;
+import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
+import org.aksw.jenax.arq.aggregation.LiteralPreference;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.context.annotation.Bean;
 

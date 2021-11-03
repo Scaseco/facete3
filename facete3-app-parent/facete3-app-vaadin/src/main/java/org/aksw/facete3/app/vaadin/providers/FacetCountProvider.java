@@ -2,15 +2,14 @@ package org.aksw.facete3.app.vaadin.providers;
 
 import java.util.function.Function;
 
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.graph.Node;
-import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
 import com.vaadin.flow.data.provider.Query;

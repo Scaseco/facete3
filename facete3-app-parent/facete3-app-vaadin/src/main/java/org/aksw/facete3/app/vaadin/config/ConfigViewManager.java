@@ -5,8 +5,8 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewFactoryLabel;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactoryPaper;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManagerImpl;
-import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
+import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.springframework.context.annotation.Bean;
 

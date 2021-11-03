@@ -1,9 +1,9 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.label.FaceteLabelUtils;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.component.grid.Grid;

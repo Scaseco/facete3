@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
-import org.aksw.facete3.app.vaadin.plugin.ManagedComponentWrapper;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;

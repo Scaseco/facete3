@@ -1,34 +1,5 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-
-import org.aksw.facete.v3.impl.FacetedQueryBuilder;
-import org.aksw.facete3.app.shared.time.TimeAgo;
-import org.aksw.facete3.app.vaadin.ServiceStatus;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.data_query.api.DataQuery;
-import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySupplier;
-import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.RDFDataMgr;
-
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
-
 //public class SearchPluginForm extends FormLayout {
 //    protected ComboBox<ServiceStatus> serviceUrl = new ComboBox<>();
 ////    protected TextField lastName =

@@ -14,8 +14,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.hobbit</groupId>
-			<artifactId>facete3-impl</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-facete-impl</artifactId>
 		</dependency>
 
 		<dependency>

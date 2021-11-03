@@ -23,7 +23,7 @@ public class MainEditorTest {
 
 
 
-        Model model = ModelFactory.createModelForGraph(graph.getBaseGraph());
+        Model model = null; //ModelFactory.createModelForGraph(graph.getBaseGraph());
         Resource a = model.createResource("urn:a");
         Resource b = model.createResource("urn:b");
         Resource c = model.createResource("urn:c");
@@ -38,8 +38,8 @@ public class MainEditorTest {
         graph.getRenamedNodes().put(b.asNode(), a.asNode());
         graph.getRenamedNodes().put(a.asNode(), b.asNode());
 
-        Model inferredModel = ModelFactory.createModelForGraph(graph.getSameAsInferredGraphView());
-        Model effectiveModel = ModelFactory.createModelForGraph(graph.getEffectiveGraphView());
+        Model inferredModel = null; //ModelFactory.createModelForGraph(graph.getSameAsInferredGraphView());
+        Model effectiveModel = null; // ModelFactory.createModelForGraph(graph.getEffectiveGraphView());
 
 
         if (false) {

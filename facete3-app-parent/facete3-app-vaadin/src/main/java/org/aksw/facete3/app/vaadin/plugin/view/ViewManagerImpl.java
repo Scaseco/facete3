@@ -11,15 +11,14 @@ import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.shared.viewselector.EntityClassifier;
 import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.lookup.ListServiceEntityQuery;
-import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
-import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRx;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRxBuilder;
 import org.aksw.jena_sparql_api.rx.entity.model.AttributeGraphFragment;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.dataaccess.rx.ListServiceEntityQuery;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
@@ -222,8 +221,8 @@ public class ViewManagerImpl
 
 
         List<RDFNode> entities = EntityQueryRxBuilder.create()
-        			.setQueryExecutionFactory(conn).setQuery(entityQuery)
-        			.build()
+                    .setQueryExecutionFactory(conn).setQuery(entityQuery)
+                    .build()
             .toList().blockingGet();
 
         Map<Node, RDFNode> result = entities.stream()

@@ -1,51 +1,5 @@
 package org.aksw.facete3.app.vaadin;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete.v3.api.FacetNodeResource;
-import org.aksw.facete.v3.api.HLFacetConstraint;
-import org.aksw.facete.v3.bgp.api.BgpNode;
-import org.aksw.facete.v3.bgp.impl.BgpNodeUtils;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.core.LookupServiceUtils;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.util.iri.PrefixUtils;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
-import org.apache.jena.ext.com.google.common.graph.Traverser;
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.impl.Util;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.shared.impl.PrefixMappingImpl;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprFunction;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.vocabulary.RDFS;
-
-import com.github.jsonldjava.shaded.com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Streams;
-
 //public class LabelService {
 //
 //    private RDFConnection connection;

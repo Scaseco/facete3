@@ -2,7 +2,7 @@ package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 
 import com.vaadin.flow.component.checkbox.Checkbox;

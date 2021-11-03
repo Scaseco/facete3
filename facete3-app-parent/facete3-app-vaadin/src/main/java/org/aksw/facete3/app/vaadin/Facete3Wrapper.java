@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.Directed;
 import org.aksw.dcat.jena.plugin.JenaPluginDcat;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
@@ -27,14 +28,13 @@ import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
-import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePPath;
-import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePathNode;
-import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.path.datatype.RDFDatatypePPath;
+import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
+import org.aksw.jenax.reprogen.core.JenaPluginUtils;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.JenaRuntime;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.BuiltinPersonalities;
@@ -115,7 +115,7 @@ public class Facete3Wrapper {
 
         // FIXME Move to separate domain view plugin init method
         BuiltinPersonalities.model.add(DataRefSparqlEndpoint.class,
-                JenaPluginUtils.createImplementation(DataRefSparqlEndpoint.class, DefaultPrefixes.prefixes));
+                JenaPluginUtils.createImplementation(DataRefSparqlEndpoint.class, DefaultPrefixes.get()));
 
         BuiltinPersonalities.model.add(ServiceStatus.class,
                 JenaPluginUtils.createImplementation(ServiceStatus.class, PrefixMapping.Standard));

@@ -2,15 +2,11 @@ package org.aksw.facete3.app.vaadin.components;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
+import org.aksw.commons.rx.lookup.LookupService;
+import org.aksw.commons.util.Directed;
 import org.aksw.facete.v3.api.FacetNode;
-import org.aksw.facete3.app.shared.label.FaceteLabelUtils;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.facete3.app.vaadin.providers.FacetProvider;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
-import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 
 import com.vaadin.flow.component.button.Button;

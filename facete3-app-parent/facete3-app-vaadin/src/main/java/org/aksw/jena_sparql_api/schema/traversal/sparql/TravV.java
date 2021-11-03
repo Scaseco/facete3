@@ -1,12 +1,5 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravDirection;
-import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.rdf.model.Resource;
-
 //public interface TravV<V> {
 //
 //    String reachingAlias();

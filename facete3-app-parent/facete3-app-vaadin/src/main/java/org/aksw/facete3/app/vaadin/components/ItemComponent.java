@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.EnrichedItem;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.jena_sparql_api.mapper.util.LabelUtils;
+import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderWithConversion;
 import org.apache.jena.graph.Node;

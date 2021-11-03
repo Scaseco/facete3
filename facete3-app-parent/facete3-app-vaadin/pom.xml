@@ -14,7 +14,7 @@
 		<spring.version>5.3.1</spring.version>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
 
-
+		<vaadin-jena.version>4.3.0-1-SNAPSHOT</vaadin-jena.version>
 
 		<drivers.dir>${project.basedir}/drivers</drivers.dir>
 		<drivers.downloader.phase>pre-integration-test</drivers.downloader.phase>
@@ -175,13 +175,13 @@
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-rdf-term-editor</artifactId>
-			<version>4.2.0-1-SNAPSHOT</version>
+			<version>${vaadin-jena.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-shacl-editor</artifactId>
-			<version>4.2.0-1-SNAPSHOT</version>
+			<version>${vaadin-jena.version}</version>
 		</dependency>
 
 		<dependency>
@@ -255,8 +255,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.hobbit</groupId>
-			<artifactId>facete3-impl</artifactId>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-facete-impl</artifactId>
 		</dependency>
 
 		<dependency>
@@ -318,8 +318,9 @@
 	</build>
 
 	<profiles>
+
+<!--	
 		<profile>
-			<!-- Production mode is activated using -Pproduction -->
 			<id>production</id>
 			<properties>
 				<vaadin.productionMode>true</vaadin.productionMode>
@@ -375,7 +376,7 @@
 				</plugins>
 			</build>
 		</profile>
-
+ -->
 		<profile>
 			<id>integration-tests</id>
 			<build>
@@ -423,6 +424,7 @@
 						</configuration>
 					</plugin>
 
+<!--
 					<plugin>
 						<groupId>com.lazerycode.selenium</groupId>
 						<artifactId>driver-binary-downloader-maven-plugin</artifactId>
@@ -442,7 +444,7 @@
 						</configuration>
 						<executions>
 							<execution>
-								<!-- use phase "none" to skip download step -->
+								< ! - - use phase "none" to skip download step - - >
 								<phase>${drivers.downloader.phase}</phase>
 								<goals>
 									<goal>selenium</goal>
@@ -450,6 +452,7 @@
 							</execution>
 						</executions>
 					</plugin>
+					 -->
 				</plugins>
 			</build>
 		</profile>

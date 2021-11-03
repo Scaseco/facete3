@@ -7,7 +7,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.aksw.vaadin.datashape.form.ComponentControls.ComponentControlSimple;
-import org.apache.jena.shacl.sys.C;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.shared.Registration;

@@ -1,8 +1,8 @@
 package org.aksw.facete3.app.vaadin;
 
-import org.aksw.jena_sparql_api.path.core.PathNode;
-import org.aksw.jena_sparql_api.path.core.PathOpsNode;
-import org.aksw.jena_sparql_api.path.datatype.RDFDatatypePathNode;
+import org.aksw.jenax.path.core.PathNode;
+import org.aksw.jenax.path.core.PathOpsNode;
+import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
 import org.apache.jena.graph.Node;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

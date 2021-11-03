@@ -11,14 +11,14 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFactorizeTableColumnsToExtend;
 import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
-import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.core.QueryTransform;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jenax.arq.connection.core.RDFConnectionBuilder;
+import org.aksw.jenax.arq.util.syntax.ElementUtils;
+import org.aksw.jenax.arq.util.syntax.QueryUtils;
+import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.sparql.relation.api.TernaryRelation;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -28,9 +28,8 @@ import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.engine.binding.BindingMap;
-import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.Template;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +46,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ConfigSearchProviderNli {
 
-    
+
 
 //    @Bean
 //    @ConfigurationProperties("facete3.nli")
@@ -76,10 +75,10 @@ public class ConfigSearchProviderNli {
                     RDFNode score = ResourceUtils.getPropertyValue(r, SearchProviderNli.score);
                     if (score != null) {
 
-                        BindingMap b = BindingFactory.create();
-                        b.add(Vars.s, r.asNode());
-                        b.add(Vars.o, score.asNode());
-                        table.addBinding(b);
+                        BindingBuilder bb = BindingFactory.builder();
+                        bb.add(Vars.s, r.asNode());
+                        bb.add(Vars.o, score.asNode());
+                        table.addBinding(bb.build());
                     }
                 }
             }
@@ -90,7 +89,7 @@ public class ConfigSearchProviderNli {
             Query view = new Query();
             view.setQueryConstructType();
             view.setConstructTemplate(new Template(bgp));
-            view.setQueryPattern(new ElementData(table.getVars(), Lists.newArrayList(table.rows())));
+            view.setQueryPattern(ElementUtils.createElementData(table.getVars(), Lists.newArrayList(table.rows())));
 
 
             Collection<TernaryRelation> views = VirtualPartitionedQuery.toViews(view);
@@ -103,7 +102,7 @@ public class ConfigSearchProviderNli {
                 // Evaluate 'static' parts of the query - such as operations based on OpTable - directly
 
                 Query tmp = QueryUtils.applyOpTransform(raw,
-                        FixpointIteration.createClosure(op -> Transformer.applyNodeTransform(new TransformDistributeJoinOverUnion(), op)));
+                        FixpointIteration.createClosure(op -> Transformer.transform(new TransformDistributeJoinOverUnion(), op)));
 //                System.out.println("After join-over-union distribution: " + tmp);
 
                 // TODO Due to a virtuoso bug with unions involving VALUES
@@ -111,12 +110,12 @@ public class ConfigSearchProviderNli {
                 // Consider a workaround...
 
                 Query r = QueryUtils.applyOpTransform(tmp,
-                        op -> Transformer.applyNodeTransform(TransformEvalTable.create(), op));
+                        op -> Transformer.transform(TransformEvalTable.create(), op));
 
 //                System.out.println("Before factorization: " + r);
 
                 r = QueryUtils.applyOpTransform(r,
-                        op -> Transformer.applyNodeTransform(new TransformFactorizeTableColumnsToExtend(), op));
+                        op -> Transformer.transform(new TransformFactorizeTableColumnsToExtend(), op));
 
 //                System.out.println("After optimization: " + r);
                 return r;
