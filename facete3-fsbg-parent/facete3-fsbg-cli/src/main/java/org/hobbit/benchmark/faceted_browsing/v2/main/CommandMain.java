@@ -2,8 +2,8 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jenax.annotation.reprogen.Iri;
+import org.aksw.jenax.annotation.reprogen.IriType;
 import org.apache.jena.rdf.model.Resource;
 
 import com.beust.jcommander.Parameter;
@@ -21,67 +21,67 @@ import com.beust.jcommander.Parameters;
 
 @Parameters(separators="=", commandDescription="Parameters")
 public interface CommandMain
-		extends Resource
-{	
-	@Iri("eg:nonOptionArg")
-	List<String> getNonOptionArgs();
-	
-	@Iri("eg:sparqlEndpoint")
-	String getSparqlEndpoint();
+        extends Resource
+{
+    @Iri("eg:nonOptionArg")
+    List<String> getNonOptionArgs();
 
-	@Iri("eg:config")
-	String getConfig();
+    @Iri("eg:sparqlEndpoint")
+    String getSparqlEndpoint();
 
-	@Iri("eg:defaultGraphUris")
-	@IriType
-	List<String> getDefaultGraphUris();
-	
-	@Iri("eg:pathFindingDataSummary")
-	@IriType
-	String getPathFindingDataSummaryUri();
-	
-	@Iri("eg:help")
-	boolean getHelp();// =# false;
-			
-	
-	@Parameter(names={"-h", "--help"}, help=true)
-	CommandMain setHelp(boolean help);
-	
-	@Parameter(description = "Non option args")
-	CommandMain setNonOptionArgs(List<String> args);
+    @Iri("eg:config")
+    String getConfig();
 
-	@Parameter(names="-e", description="SPARQL Endpoint")
-	CommandMain setSparqlEndpoint(String sparqlEndpoint);
+    @Iri("eg:defaultGraphUris")
+    @IriType
+    List<String> getDefaultGraphUris();
 
-	@Parameter(names="-d", description="Default Graph URIs")
-	CommandMain setDefaultGraphUris(List<String> args);
+    @Iri("eg:pathFindingDataSummary")
+    @IriType
+    String getPathFindingDataSummaryUri();
 
-	@Parameter(names="-c", description="Benchmark generator config file")
-	CommandMain setConfig(String config);
+    @Iri("eg:help")
+    boolean getHelp();// =# false;
 
 
-	@Parameter(names="-s", description="Data Summary")
-	CommandMain setPathFindingDataSummaryUri(String file);
+    @Parameter(names={"-h", "--help"}, help=true)
+    CommandMain setHelp(boolean help);
 
-	
-	// TODO Does not belong here
-	@Parameter(names="-t", description="Suffix tag for generated resources")
-	CommandMain setTag(String config);
+    @Parameter(description = "Non option args")
+    CommandMain setNonOptionArgs(List<String> args);
 
-	@Iri("eg:tag")
-	String getTag();
+    @Parameter(names="-e", description="SPARQL Endpoint")
+    CommandMain setSparqlEndpoint(String sparqlEndpoint);
 
-	
-	
+    @Parameter(names="-d", description="Default Graph URIs")
+    CommandMain setDefaultGraphUris(List<String> args);
+
+    @Parameter(names="-c", description="Benchmark generator config file")
+    CommandMain setConfig(String config);
+
+
+    @Parameter(names="-s", description="Data Summary")
+    CommandMain setPathFindingDataSummaryUri(String file);
+
+
+    // TODO Does not belong here
+    @Parameter(names="-t", description="Suffix tag for generated resources")
+    CommandMain setTag(String config);
+
+    @Iri("eg:tag")
+    String getTag();
+
+
+
 //		@Parameter(names={"--r"}, description="Fraction of events to read from input - e.g . 0.5 for half of it")
 //		public Long eventsRatio = null;
 //
 //		@Parameter(names={"--e"}, description="Number of (e)vents to read from input")
 //		public Long numEvents = null;
-//		
+//
 //		@Parameter(names = "--ns", description="Number of scenarios to generate")
 //		public Long numScenarios = 10l;
-//		
+//
 //		@Parameter(names={"--maxScenarioLength"}, description="Maximum length of a scenario")
 //		public Long maxScenarioLength = 10l;
 }

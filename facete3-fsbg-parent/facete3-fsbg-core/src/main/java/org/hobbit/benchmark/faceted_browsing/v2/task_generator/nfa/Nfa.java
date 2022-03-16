@@ -5,28 +5,28 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
+import org.aksw.jenax.annotation.reprogen.Iri;
+import org.aksw.jenax.annotation.reprogen.IriNs;
 import org.apache.jena.rdf.model.Resource;
 
 
 
-public interface Nfa 
-	extends Resource
+public interface Nfa
+    extends Resource
 {
-	@IriNs("eg")
-	NfaState getStartState();
+    @IriNs("eg")
+    NfaState getStartState();
 
-	@Iri("eg:transition")
-	Collection<NfaTransition> getTransitions();
-	
-	default Collection<NfaState> getStates() {
-		Collection<NfaTransition> transitions = getTransitions();
-		Set<NfaState> result = transitions.stream()
-				.flatMap(t -> Stream.of(t.getSource(), t.getTarget()))
-				.distinct()
-				.collect(Collectors.toSet());
-				
-		return result;
-	}
+    @Iri("eg:transition")
+    Collection<NfaTransition> getTransitions();
+
+    default Collection<NfaState> getStates() {
+        Collection<NfaTransition> transitions = getTransitions();
+        Set<NfaState> result = transitions.stream()
+                .flatMap(t -> Stream.of(t.getSource(), t.getTarget()))
+                .distinct()
+                .collect(Collectors.toSet());
+
+        return result;
+    }
 }

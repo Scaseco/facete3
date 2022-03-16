@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.util.Directed;
-import org.aksw.dcat.jena.plugin.JenaPluginDcat;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -31,6 +30,7 @@ import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.model.entityinfo.plugin.JenaPluginEntityInfo;
 import org.aksw.jenax.path.datatype.RDFDatatypePPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
@@ -139,7 +139,7 @@ public class Facete3Wrapper {
 
 
 
-        JenaPluginDcat.init(BuiltinPersonalities.model);
+        JenaPluginEntityInfo.init(BuiltinPersonalities.model);
     }
 
     private void initFacetedQuery(RDFConnection connection) {

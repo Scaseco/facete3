@@ -10,7 +10,6 @@ import org.aksw.jena_sparql_api.schema.NodeSchemaDataFetcher;
 import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
