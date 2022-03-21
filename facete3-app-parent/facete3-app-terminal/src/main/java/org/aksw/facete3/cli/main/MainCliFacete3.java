@@ -22,6 +22,9 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.commons.util.Directed;
+import org.aksw.commons.util.page.Page;
+import org.aksw.commons.util.page.Paginator;
+import org.aksw.commons.util.page.PaginatorImpl;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
