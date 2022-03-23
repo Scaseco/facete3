@@ -197,6 +197,9 @@ public class MainCliFacete3 {
     protected PrefixMapping globalPrefixes = new PrefixMappingImpl();
 
 
+    protected Terminal terminal;
+    protected Screen screen;
+
     protected PrefixMapping iriPrefixes;
     protected PrefixMapping literalPrefixes;
 
@@ -1379,11 +1382,11 @@ public class MainCliFacete3 {
         };
 
         // Setup terminal and screen layers
-        Terminal terminal = new DefaultTerminalFactory()
+        terminal = new DefaultTerminalFactory()
                 .setTerminalEmulatorTitle("Facete III")
                 .setMouseCaptureMode(MouseCaptureMode.CLICK_RELEASE)
                 .createTerminal();
-        Screen screen = new TerminalScreen(terminal);
+        screen = new TerminalScreen(terminal);
         screen.startScreen();
 
         //WindowBasedTextGUI textGUI = new MultiWindowTextGUI(screen);
@@ -1836,7 +1839,8 @@ public class MainCliFacete3 {
                     case Yes:
                         window.close();
                         try {
-                            terminal.close();
+                            // terminal.close();
+                            close();
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -1927,6 +1931,17 @@ public class MainCliFacete3 {
 
     }
 
+    public void close() throws IOException {
+        try {
+            if (screen != null) {
+                screen.close();
+            }
+        } finally {
+            if (terminal != null) {
+                terminal.close();
+            }
+        }
+    }
 
     public void updateAll() {
         updateConstraints(fq);

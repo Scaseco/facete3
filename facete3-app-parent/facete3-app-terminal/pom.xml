@@ -43,10 +43,17 @@
 			<artifactId>facete3-app-shared</artifactId>
 		</dependency>
 
+<!--
 		<dependency>
-			<groupId>com.beust</groupId>
-			<artifactId>jcommander</artifactId>
+			<groupId>org.hobbit</groupId>
+			<artifactId>facete3-resources-metadata</artifactId>
 		</dependency>
+ -->
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.beust</groupId> -->
+<!-- 			<artifactId>jcommander</artifactId> -->
+<!-- 		</dependency> -->
 
 		<dependency>
 			<groupId>org.aksw.jenax</groupId>
