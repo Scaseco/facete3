@@ -1315,12 +1315,16 @@ public class MainCliFacete3 {
 //				Node node = pr.getData();
 
 //				ses.schedule(() -> {
+
+                // Handle the case where backspace is pressed while no node is selected
+                if (node != null) {
                     org.aksw.facete.v3.api.Direction dir = fdn.dir();
                     fq.focus().step(node, dir).one().chFocus();
                     fdn = fq.focus().step(dir);
 
                     updateFacets(fq);
                     updateFacetPathPanel();
+                }
                     return false;
 //				}, 1, TimeUnit.SECONDS);
             }
