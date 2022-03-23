@@ -20,6 +20,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.picocli.CmdUtils;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.commons.util.Directed;
 import org.aksw.commons.util.page.Page;
@@ -120,7 +121,6 @@ import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.JCommander;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
@@ -993,20 +993,24 @@ public class MainCliFacete3 {
         // Turn on legacy mode; ISSUE #8 - https://github.com/hobbit-project/faceted-browsing-benchmark/issues/8
         JenaRuntime.isRDF11 = false;
 
-        CmdFacete3Main cm = new CmdFacete3Main();
+        CmdUtils.execCmd(CmdFacete3Main.class, args);
+    }
+
+    public static void run(CmdFacete3Main cm) {
+        // CmdFacete3Main cm = new CmdFacete3Main();
 
         // CommandCommit commit = new CommandCommit();
-        JCommander jc = JCommander.newBuilder()
-                .addObject(cm)
-                .build();
-
-        jc.parse(args);
-
-        if (cm.help) {
-            jc.usage();
-            return;
-        }
-
+//        JCommander jc = JCommander.newBuilder()
+//                .addObject(cm)
+//                .build();
+//
+//        jc.parse(args);
+//
+//        if (cm.help) {
+//            jc.usage();
+//            return;
+//        }
+//
 
 
 

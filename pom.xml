@@ -23,7 +23,9 @@
 		<jenax.version>4.5.0-1-SNAPSHOT</jenax.version>
 
 		<aksw-commons.version>0.9.3-SNAPSHOT</aksw-commons.version>
-		<log4j.version>2.16.0</log4j.version>
+		<log4j.version>2.17.2</log4j.version>
+		<picocli.version>4.6.2</picocli.version>
+
 
 		<!-- <jackson.version>2.8.8</jackson.version> -->
 		<jackson.version>2.10.3</jackson.version>
@@ -48,6 +50,7 @@
 
 	<modules>
 		<module>facete3-resources-test-config</module>
+		<module>facete3-resources-metadata</module>
 		<module>facete3-fsbg-parent</module>
 
 		<module>facete3-app-parent</module>
@@ -187,6 +190,18 @@
 				<groupId>com.beust</groupId>
 				<artifactId>jcommander</artifactId>
 				<version>1.72</version>
+			</dependency>
+
+			<dependency>
+				<groupId>info.picocli</groupId>
+				<artifactId>picocli</artifactId>
+				<version>${picocli.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-picocli</artifactId>
+				<version>${aksw-commons.version}</version>
 			</dependency>
 
 			<dependency>
@@ -686,7 +701,7 @@
 			<name>University Leipzig, AKSW Maven2 Repository</name>
 			<url>https://maven.aksw.org/repository/snapshots</url>
 		</repository>
-		
+
 		<!-- Repo for latest jena snapshots -->
 		<repository>
 			<id>apache-repo-snapshots</id>
