@@ -95,7 +95,8 @@ public class TestFacetedQuery2 {
     }
 
     static String getQueryPattern(FacetNode node) {
-        return ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString();
+        String result = ((FacetNodeImpl) node).createValueQuery(false).toConstructQuery().getValue().getQueryPattern().toString();
+        return result;
     }
 
     @Test

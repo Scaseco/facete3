@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
+import org.aksw.commons.collection.observable.Registration;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
 import org.aksw.jena_sparql_api.update.GraphListenerBatchBase;
@@ -413,7 +414,7 @@ class CollectionEditorBase
     protected ObservableCollection<Node> collection;
     protected Collection<Node> snapshot;
 
-    protected Runnable unregister;
+    protected Registration unregister;
 
     protected ResourceEditorFactory itemEditorFactory;
 
