@@ -1087,6 +1087,10 @@ public class MainCliFacete3 {
                         q -> QueryUtils.applyOpTransform(q, op -> Transformer.transform(new TransformExpandOneOf(), op)));
             }
 
+            if (true) {
+                conn = RDFConnectionUtils.enableRelativeIrisInQueryResults(conn);
+            }
+
             Iterable<String> prefixSources = Iterables.concat(
                     Collections.singleton("rdf-prefixes/prefix.cc.2019-12-17.jsonld"),
                     cm.prefixSources);
@@ -1187,7 +1191,7 @@ public class MainCliFacete3 {
                 String contentType = in.getContentType();
                 logger.info("Detected content type: " + contentType);
                 Lang lang = RDFLanguages.contentTypeToLang(contentType);
-                RDFDataMgr.read(dataset, in.getInputStream(), in.getBaseURI(), lang);
+                RDFDataMgrEx.readAsGiven(dataset, in.getInputStream(), lang);
 //                } else {
 //
 //                    logger.info("  Attempting to loading " + file);
@@ -1362,7 +1366,7 @@ public class MainCliFacete3 {
 //		});
 
         actualLabelService = LookupServiceUtils
-                .createLookupService(fq.connection(), BinaryRelationImpl.create(RDFS.label))
+                .createLookupService(new QueryExecutionFactorySparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
                 .partition(10)
                 .cache()
                 .mapValues((k, vs) -> vs.isEmpty() ? LabelUtils.deriveLabelFromIri(k.getURI()) : vs.iterator().next())

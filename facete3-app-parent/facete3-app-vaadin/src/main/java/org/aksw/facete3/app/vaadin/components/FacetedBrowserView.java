@@ -29,6 +29,7 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionTransform;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
@@ -113,7 +114,7 @@ public class FacetedBrowserView
         this.facete3 = facete3;
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                baseDataConnection,
+                new QueryExecutionFactorySparqlQueryConnection(baseDataConnection),
                 RDFS.label,
                 prefixMapping);
 

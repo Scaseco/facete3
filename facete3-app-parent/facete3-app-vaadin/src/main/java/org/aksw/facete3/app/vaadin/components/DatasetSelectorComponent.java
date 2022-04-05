@@ -23,7 +23,9 @@ import org.aksw.jena_sparql_api.schema.NodeSchemaFromNodeShape;
 import org.aksw.jena_sparql_api.schema.ResourceCache;
 import org.aksw.jena_sparql_api.schema.ResourceExplorer;
 import org.aksw.jena_sparql_api.schema.ShapedNode;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.util.triple.ModelUtils;
+import org.aksw.jenax.connection.query.QueryExecutionFactoryDataset;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.vaadin.component.rdf_term_editor.RdfTermEditor;
 import org.aksw.vaadin.shacl.ShaclTreeGrid;
@@ -237,6 +239,8 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         Node datasetNode = NodeFactory.createURI("http://dcat.linkedgeodata.org/dataset/osm-bremen-2018-04-04");
         Dataset ds = RDFDataMgr.loadDataset("linkedgeodata-2018-04-04.dcat.ttl");
         ResourceCache resourceCache = new ResourceCache();
+
+        QueryExecutionFactory qef = new QueryExecutionFactoryDataset(ds);
         SparqlQueryConnection conn = RDFConnectionFactory.connect(ds);
         ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
         LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(conn);
@@ -251,7 +255,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
 
         Model prefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.ttl");
         LookupService<Node, String> labelService =
-                LabelUtils.createLookupServiceForLabels(LabelUtils.getLabelLookupService(conn, RDFS.label, prefixes), prefixes, prefixes).cache();
+                LabelUtils.createLookupServiceForLabels(LabelUtils.getLabelLookupService(qef, RDFS.label, prefixes), prefixes, prefixes).cache();
 
 
 

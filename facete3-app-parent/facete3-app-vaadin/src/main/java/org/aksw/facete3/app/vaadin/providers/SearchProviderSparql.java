@@ -15,7 +15,9 @@ import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.sparql.relation.query.PartitionedQuery1;
 import org.aksw.jenax.sparql.relation.query.PartitionedQuery1Impl;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.Template;
 
 public class SearchProviderSparql
     implements SearchProvider
@@ -41,6 +43,7 @@ public class SearchProviderSparql
         Query query = new Query();
         query.setQueryConstructType();
         query.setQueryPattern(elt);
+        query.setConstructTemplate(new Template(new BasicPattern()));
 
         PartitionedQuery1 pq = new PartitionedQuery1Impl(query, concept.getVar());
         RootedQuery rq = new RootedQueryFromPartitionedQuery1(pq);

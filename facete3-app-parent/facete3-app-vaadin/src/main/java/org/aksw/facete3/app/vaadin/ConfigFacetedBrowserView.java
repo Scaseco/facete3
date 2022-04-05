@@ -11,6 +11,7 @@ import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -57,7 +58,7 @@ public class ConfigFacetedBrowserView {
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                baseDataConnection,
+                new QueryExecutionFactorySparqlQueryConnection(baseDataConnection),
                 config.getAlternativeLabel(),
                 prefixMapping);
 
@@ -75,7 +76,7 @@ public class ConfigFacetedBrowserView {
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                baseDataConnection,
+                new QueryExecutionFactorySparqlQueryConnection(baseDataConnection),
                 RDFS.label,
                 prefixMapping);
 
@@ -91,7 +92,7 @@ public class ConfigFacetedBrowserView {
             Config config) {
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                baseDataConnection,
+                new QueryExecutionFactorySparqlQueryConnection(baseDataConnection),
                 RDFS.label,
                 prefixMapping);
 
