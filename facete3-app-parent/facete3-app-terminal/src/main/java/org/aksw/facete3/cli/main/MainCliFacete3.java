@@ -63,6 +63,7 @@ import org.aksw.jenax.arq.connection.RDFConnectionModular;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.connection.core.SparqlQueryConnectionJsa;
+import org.aksw.jenax.arq.util.exception.HttpExceptionUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
@@ -1119,11 +1120,18 @@ public class MainCliFacete3 {
 
 
 
-            new MainCliFacete3().init(conn, prefixes, fq);
+            MainCliFacete3 ui = null;
+            try {
+                ui = new MainCliFacete3();
+                ui.init(conn, prefixes, fq);
+            } finally {
+                if (ui != null) {
+                    ui.close();
+                }
+            }
         } catch(Exception e) {
-            // The exception may not be visible if logging is disabled - so print it out here
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw HttpExceptionUtils.makeHumanFriendly(e);
+            // throw new RuntimeException(e);
         } finally {
             if(conn != null) {
                 conn.close();
