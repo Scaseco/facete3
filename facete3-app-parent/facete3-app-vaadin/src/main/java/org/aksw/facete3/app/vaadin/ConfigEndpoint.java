@@ -1,7 +1,7 @@
 package org.aksw.facete3.app.vaadin;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.apache.jena.query.DatasetFactory;
@@ -62,18 +62,18 @@ public class ConfigEndpoint {
 
     @Bean
     @Autowired
-    public DataRefSparqlEndpoint dataRefEndpoint(EndpointConfig cfg) {
+    public RdfDataRefSparqlEndpoint dataRefEndpoint(EndpointConfig cfg) {
         System.out.println("Created new resource");
         Facete3Wrapper.initJena();
 
-        return ModelFactory.createDefaultModel().createResource().as(DataRefSparqlEndpoint.class)
+        return ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class)
             .setServiceUrl(cfg.getSparqlEndpoint());
     }
 
     @RefreshScope
     @Bean(destroyMethod = "close")
     @Autowired
-    public RDFConnection getConnection(DataRefSparqlEndpoint dataRef) {
+    public RDFConnection getConnection(RdfDataRefSparqlEndpoint dataRef) {
         RDFConnection result;
         if (dataRef.getServiceUrl() == null) {
             result = RDFConnectionFactory.connect(DatasetFactory.create());
@@ -84,7 +84,7 @@ public class ConfigEndpoint {
     }
 
 
-    public static RDFConnection getBaseDataConnection(DataRefSparqlEndpoint dataRef) {
+    public static RDFConnection getBaseDataConnection(RdfDataRefSparqlEndpoint dataRef) {
 //      RdfDataPod dataPod = DataPods.fromDataRef(dataRef);
 //      result = dataPod.openConnection();
 

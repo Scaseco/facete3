@@ -27,7 +27,7 @@ import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationImpl;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.model.entityinfo.plugin.JenaPluginEntityInfo;
@@ -114,8 +114,8 @@ public class Facete3Wrapper {
         MainPlaygroundResourceMetamodel.init();
 
         // FIXME Move to separate domain view plugin init method
-        BuiltinPersonalities.model.add(DataRefSparqlEndpoint.class,
-                JenaPluginUtils.createImplementation(DataRefSparqlEndpoint.class, DefaultPrefixes.get()));
+        BuiltinPersonalities.model.add(RdfDataRefSparqlEndpoint.class,
+                JenaPluginUtils.createImplementation(RdfDataRefSparqlEndpoint.class, DefaultPrefixes.get()));
 
         BuiltinPersonalities.model.add(ServiceStatus.class,
                 JenaPluginUtils.createImplementation(ServiceStatus.class, PrefixMapping.Standard));

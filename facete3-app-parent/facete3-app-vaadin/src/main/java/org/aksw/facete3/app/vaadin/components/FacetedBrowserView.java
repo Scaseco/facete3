@@ -26,7 +26,7 @@ import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
@@ -178,7 +178,7 @@ public class FacetedBrowserView
         layout.add(applyBtn);
         applyBtn.addClickListener(event -> {
             String urlStr = input.getServiceUrl().getValue().getEndpoint();
-            DataRefSparqlEndpoint dataRef = cxt.getBean(DataRefSparqlEndpoint.class);
+            RdfDataRefSparqlEndpoint dataRef = cxt.getBean(RdfDataRefSparqlEndpoint.class);
             dataRef.setServiceUrl(urlStr);
 //            System.out.println("INVOKING REFRESH");
 //            System.out.println("Given cxt:\n" + toString(cxt));
@@ -251,9 +251,9 @@ public class FacetedBrowserView
      */
     @PostConstruct
     public void onRefresh() {
-        DataRefSparqlEndpoint endpoint = cxt.getBean(DataRefSparqlEndpoint.class);
+        RdfDataRefSparqlEndpoint endpoint = cxt.getBean(RdfDataRefSparqlEndpoint.class);
         String url = Optional.ofNullable(endpoint)
-                .map(DataRefSparqlEndpoint::getServiceUrl)
+                .map(RdfDataRefSparqlEndpoint::getServiceUrl)
                 .orElse("unknown connection");
 
         connectionInfo.setText(url);

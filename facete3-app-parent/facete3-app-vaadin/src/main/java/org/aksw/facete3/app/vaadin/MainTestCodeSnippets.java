@@ -1,6 +1,6 @@
 package org.aksw.facete3.app.vaadin;
 
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
 import org.apache.jena.graph.Node;
@@ -34,7 +34,7 @@ public class MainTestCodeSnippets {
 
             cxt.getBean(Runnable.class).run();
 
-            DataRefSparqlEndpoint dataRef = cxt.getBean(DataRefSparqlEndpoint.class);
+            RdfDataRefSparqlEndpoint dataRef = cxt.getBean(RdfDataRefSparqlEndpoint.class);
             dataRef.setServiceUrl("http://cord19.aksw.org/sparql");
 
             System.out.println("Refreshing...");
