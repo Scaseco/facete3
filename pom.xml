@@ -22,7 +22,7 @@
 		<jena.version>4.5.0-SNAPSHOT</jena.version>
 		<jenax.version>4.5.0-1-SNAPSHOT</jenax.version>
 
-		<aksw-commons.version>0.9.3-SNAPSHOT</aksw-commons.version>
+		<aksw-commons.version>0.9.4-SNAPSHOT</aksw-commons.version>
 		<log4j.version>2.17.2</log4j.version>
 		<picocli.version>4.6.2</picocli.version>
 
@@ -57,11 +57,27 @@
 
 		<module>facete3-bundle</module>
 		<module>facete3-dummy</module>
+
+		<module>facete3-pkg-parent</module>
 	</modules>
 
 
 	<dependencyManagement>
+
 		<dependencies>
+
+			<dependency>
+				<groupId>codes.rafael.interceptablehttpclient</groupId>
+				<artifactId>interceptable-http-client</artifactId>
+				<version>1.0</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>facete3-app-terminal</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
 			<!-- java 9+ for server-standalone -->
 			<dependency>
 				<groupId>javax.xml.bind</groupId>
@@ -196,6 +212,12 @@
 				<groupId>info.picocli</groupId>
 				<artifactId>picocli</artifactId>
 				<version>${picocli.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-utils</artifactId>
+				<version>${aksw-commons.version}</version>
 			</dependency>
 
 			<dependency>
@@ -473,6 +495,12 @@
 		<pluginManagement>
 
 			<plugins>
+				<plugin>
+					<groupId>com.google.cloud.tools</groupId>
+					<artifactId>jib-maven-plugin</artifactId>
+					<version>3.2.0</version>
+				</plugin>
+
 				<plugin>
 					<groupId>com.amashchenko.maven.plugin</groupId>
 					<artifactId>gitflow-maven-plugin</artifactId>
