@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.plugin;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.apache.jena.rdf.model.Resource;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.WebApplicationType;
@@ -33,12 +34,12 @@ public class ComponentPlugin {
 
         ConfigurableApplicationContext result = effectiveAppBuilder.run();
 
-        Resource config = result.getBean(Resource.class);
+        ResourceHolder config = result.getBean(ResourceHolder.class);
         Component component = result.getBean(Component.class);
 
         return new ConfigurableComponent<Resource>() {
             @Override public void refresh() { result.getBean(RefreshScope.class).refreshAll(); }
-            @Override public Resource getConfig() { return config; }
+            @Override public Resource getConfig() { return config.get(); }
             @Override public Component getComponent() { return component; }
             @Override public void close() { result.close(); }
         };

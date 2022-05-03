@@ -19,6 +19,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.RDFDataMgr;
 
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
@@ -29,6 +30,8 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 public class SparqlEndpointForm extends FormLayout {
     protected ComboBox<ServiceStatus> serviceUrl = new ComboBox<>();
+    protected Checkbox unionDefaultGraphMode = new Checkbox();
+
 //    protected TextField lastName =
 //            new TextField("Last name");
 //    private ComboBox<Gender> gender =
@@ -36,6 +39,10 @@ public class SparqlEndpointForm extends FormLayout {
 
     public ComboBox<ServiceStatus> getServiceUrl() {
         return serviceUrl;
+    }
+
+    public Checkbox getUnionDefaultGraphMode() {
+        return unionDefaultGraphMode;
     }
 
     public SparqlEndpointForm() {
@@ -142,9 +149,18 @@ public class SparqlEndpointForm extends FormLayout {
             return layout;
         }));
 
-        FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
-        serviceUrl.setWidthFull();
-        setColspan(formItem, 3);
+        {
+            FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
+            serviceUrl.setWidthFull();
+            setColspan(formItem, 3);
+        }
+
+        {
+            FormItem formItem = addFormItem(unionDefaultGraphMode, "Union default graph");
+            unionDefaultGraphMode.setWidthFull();
+            setColspan(formItem, 3);
+        }
+
 //        FormItem formItem = new FormItem();
 //        Label label = new Label("Sparql Endpoint URL");
 //        label.getElement().setAttribute("slot", "label");

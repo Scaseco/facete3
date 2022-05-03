@@ -1,15 +1,32 @@
 package org.aksw.facete3.app.vaadin;
 
+import java.io.IOException;
+import java.util.HashMap;
+
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
+import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPodFactoryAdvancedImpl;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
+import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
-import org.apache.jena.query.DatasetFactory;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
+import org.aksw.jenax.reprogen.core.JenaPluginUtils;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,36 +79,64 @@ public class ConfigEndpoint {
 
     @Bean
     @Autowired
-    public RdfDataRefSparqlEndpoint dataRefEndpoint(EndpointConfig cfg) {
+    public ResourceHolder dataRefEndpoint(EndpointConfig cfg) {
         System.out.println("Created new resource");
         Facete3Wrapper.initJena();
 
-        return ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class)
+        RdfDataRef dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class)
             .setServiceUrl(cfg.getSparqlEndpoint());
+
+        ResourceHolder result = new ResourceHolder();
+        result.set(OpDataRefResource.from(dataRef));
+        return result;
     }
 
     @RefreshScope
     @Bean(destroyMethod = "close")
     @Autowired
-    public RDFConnection getConnection(RdfDataRefSparqlEndpoint dataRef) {
-        RDFConnection result;
-        if (dataRef.getServiceUrl() == null) {
-            result = RDFConnectionFactory.connect(DatasetFactory.create());
-        } else {
-            result = getBaseDataConnection(dataRef);
-        }
+    public RDFConnection getConnection(ResourceHolder opHolder) throws IOException {
+        Resource r = opHolder.get();
+        Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
+        RDFConnection result = getBaseDataConnection(op);
+//        if (dataRef.getServiceUrl() == null) {
+//            result = RDFConnectionFactory.connect(DatasetFactory.create());
+//        } else {
+//            result = getBaseDataConnection(dataRef);
+//        }
         return result;
     }
 
 
-    public static RDFConnection getBaseDataConnection(RdfDataRefSparqlEndpoint dataRef) {
+    public static RDFConnection getBaseDataConnection(Op op) throws IOException {
 //      RdfDataPod dataPod = DataPods.fromDataRef(dataRef);
 //      result = dataPod.openConnection();
 
-        String serviceUrl = dataRef.getServiceUrl();
+//        String serviceUrl = dataRef.getServiceUrl();
+//
+//        RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(serviceUrl);
+//        RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
 
-        RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(serviceUrl);
-        RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
+        HttpResourceRepositoryFromFileSystemImpl httpRepo = HttpResourceRepositoryFromFileSystemImpl.createDefault();
+        TaskContext taskContext = new TaskContext(null, new HashMap<>(), new HashMap<>());
+
+//        Model repoUnionModel = repoDataset.getUnionModel();
+//        taskContext.getCtxModels().put("thisCatalog", repoUnionModel);
+
+        OpVisitor<RdfDataPod> opExecutor = new OpExecutorDefault(
+                null,
+                httpRepo,
+                // httpRepo.getCacheStore(),
+                taskContext,
+                new HashMap<>(),
+                // srcFileNameRes,
+                RDFFormat.TURTLE_BLOCKS);
+        DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
+
+
+        RdfDataSource dataSource = op.accept(opExecutor);
+
+        // RdfDataSource dataSource = DataPods.from(dataRef);
+        RDFConnection rdfConnection = dataSource.getConnection();
 
         rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
                 query -> {
@@ -101,7 +146,7 @@ public class ConfigEndpoint {
 
         rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
                 query -> QueryUtils.applyOpTransform(query,
-                        op -> Transformer.transform(new TransformExpandAggCountDistinct(), op)));
+                        xop -> Transformer.transform(new TransformExpandAggCountDistinct(), xop)));
 
         return rdfConnection;
     }

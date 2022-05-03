@@ -67,12 +67,6 @@
 		<dependencies>
 
 			<dependency>
-				<groupId>codes.rafael.interceptablehttpclient</groupId>
-				<artifactId>interceptable-http-client</artifactId>
-				<version>1.0</version>
-			</dependency>
-			
-			<dependency>
 				<groupId>org.hobbit</groupId>
 				<artifactId>facete3-app-terminal</artifactId>
 				<version>${project.version}</version>

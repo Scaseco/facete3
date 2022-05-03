@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import org.aksw.commons.picocli.HasDebugMode;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -15,6 +16,9 @@ import picocli.CommandLine.Parameters;
 public class CmdFacete3Main
     implements HasDebugMode, Callable<Integer>
 {
+    @Mixin
+    public CmdMixinOAuth oauthOptions = new CmdMixinOAuth();
+
     @Parameters(description="Sources, one or more file names or a single sparql endpoint URL")
     public List<String> nonOptionArgs = new ArrayList<>();
 

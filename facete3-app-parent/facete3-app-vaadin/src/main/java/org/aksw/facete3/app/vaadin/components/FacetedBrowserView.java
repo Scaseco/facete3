@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +17,7 @@ import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
 import org.aksw.facete3.app.vaadin.Config;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
+import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
@@ -27,6 +27,9 @@ import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
@@ -37,7 +40,9 @@ import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
@@ -178,8 +183,20 @@ public class FacetedBrowserView
         layout.add(applyBtn);
         applyBtn.addClickListener(event -> {
             String urlStr = input.getServiceUrl().getValue().getEndpoint();
-            RdfDataRefSparqlEndpoint dataRef = cxt.getBean(RdfDataRefSparqlEndpoint.class);
+
+
+            ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
+
+            RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
             dataRef.setServiceUrl(urlStr);
+
+            Op op = OpDataRefResource.from(dataRef);
+
+            if (input.getUnionDefaultGraphMode().isEnabled()) {
+                op = OpUnionDefaultGraph.create(op);
+            }
+
+            opHolder.set(op);
 //            System.out.println("INVOKING REFRESH");
 //            System.out.println("Given cxt:\n" + toString(cxt));
 //            System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
@@ -251,10 +268,19 @@ public class FacetedBrowserView
      */
     @PostConstruct
     public void onRefresh() {
-        RdfDataRefSparqlEndpoint endpoint = cxt.getBean(RdfDataRefSparqlEndpoint.class);
-        String url = Optional.ofNullable(endpoint)
-                .map(RdfDataRefSparqlEndpoint::getServiceUrl)
-                .orElse("unknown connection");
+        ResourceHolder configHolder = cxt.getBean(ResourceHolder.class);
+        Resource config = configHolder.get();
+
+        String connectionLabel;
+//        if (op != null) {
+//        	if (op instanceof OpDataR)
+//	        String url = Optional.ofNullable(op)
+//	                .map(RdfDataRefSparqlEndpoint::getServiceUrl)
+//	                .orElse("unknown connection");
+//        } else {
+//
+//        }
+        String url = "unknown connection";
 
         connectionInfo.setText(url);
     }

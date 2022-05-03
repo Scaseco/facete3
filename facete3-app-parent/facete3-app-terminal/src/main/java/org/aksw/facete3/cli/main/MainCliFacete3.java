@@ -2,6 +2,7 @@ package org.aksw.facete3.cli.main;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,9 +24,11 @@ import java.util.stream.Stream;
 import org.aksw.commons.picocli.CmdUtils;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.commons.util.Directed;
+import org.aksw.commons.util.derby.DerbyUtils;
 import org.aksw.commons.util.page.Page;
 import org.aksw.commons.util.page.Paginator;
 import org.aksw.commons.util.page.PaginatorImpl;
+import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.facete.v3.api.ConstraintFacade;
 import org.aksw.facete.v3.api.FacetConstraint;
 import org.aksw.facete.v3.api.FacetCount;
@@ -44,6 +47,7 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.facete.v3.impl.HLFacetConstraintImpl;
 import org.aksw.facete3.cli.main.GridLayout2.Alignment;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
+import org.aksw.jena_sparql_api.algebra.transform.TransformUnionQuery2;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -66,6 +70,7 @@ import org.aksw.jenax.arq.connection.core.SparqlQueryConnectionJsa;
 import org.aksw.jenax.arq.util.exception.HttpExceptionUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.sparql.path.SimplePath;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
@@ -81,6 +86,10 @@ import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.http.auth.AuthEnv;
+import org.apache.jena.http.auth.AuthRequestModifier;
+import org.apache.jena.http.sys.HttpRequestModifier;
+import org.apache.jena.http.sys.RegistryRequestModifier;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -95,6 +104,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import org.apache.jena.rdfconnection.RDFConnectionRemoteBuilder;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -107,7 +117,6 @@ import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformGraphRename;
-import org.apache.jena.sparql.algebra.TransformUnionQuery;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.TransformExpandOneOf;
 import org.apache.jena.sparql.core.Quad;
@@ -178,6 +187,10 @@ import io.reactivex.rxjava3.core.Maybe;
  */
 public class MainCliFacete3 {
     private static final Logger logger = LoggerFactory.getLogger(MainCliFacete3.class);
+
+    static {
+        DerbyUtils.disableDerbyLog();
+    }
 
     public static final char CHAR_UPWARDS_ARROW = '\u2191';
     public static final char CHAR_DOWNWARDS_ARROW = '\u2193';
@@ -955,9 +968,9 @@ public class MainCliFacete3 {
     }
 
 
-    public static boolean isSparqlEndpoint(String url) {
+    public static boolean isSparqlEndpoint(RdfDataSource rdfDataSource) {
         boolean result = false;
-        try(RDFConnection conn = RDFConnectionFactory.connect(url)) {
+        try(RDFConnection conn = rdfDataSource.getConnection()) {
             Throwable throwable = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s <http://foo.bar/baz> <http://foo.bar/baz> } LIMIT 1"))
                 .timeout(10, TimeUnit.SECONDS)
                 .take(1)
@@ -993,7 +1006,6 @@ public class MainCliFacete3 {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-
         // Turn on legacy mode; ISSUE #8 - https://github.com/hobbit-project/faceted-browsing-benchmark/issues/8
         JenaRuntime.isRDF11 = false;
 
@@ -1053,7 +1065,9 @@ public class MainCliFacete3 {
 
         RDFConnection conn = null;
         try {
-            conn = createConnectionFromArgs(cm.nonOptionArgs, cm.bnodeProfile);
+            String bearerToken = cm.oauthOptions.bearerToken.getEffectiveBearerToken();
+
+            conn = createConnectionFromArgs(cm.nonOptionArgs, cm.bnodeProfile, bearerToken);
 
             if(!cm.defaultGraphs.isEmpty()) {
                 if(cm.defaultGraphs.size() > 1) {
@@ -1079,7 +1093,7 @@ public class MainCliFacete3 {
 
             if(cm.unionDefaultGraphMode) {
                 conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
-                        q -> QueryUtils.applyOpTransform(q, TransformUnionQuery::transform /* Algebra::unionDefaultGraph */));
+                        q -> QueryUtils.applyOpTransform(q, TransformUnionQuery2::transform /* Algebra::unionDefaultGraph */));
             }
 
             // expand one-of for use with ontop
@@ -1140,9 +1154,40 @@ public class MainCliFacete3 {
     }
 
 
+    public static RdfDataSource configureRdfDataSource(
+            String url,
+            String bearerToken) {
+        RDFConnectionRemoteBuilder builder = RDFConnectionRemote.create();
+
+        if (bearerToken != null) {
+            try {
+                HttpRequestModifier modifier = (params, headers) -> {
+                    headers.put("Authorization", "Bearer " + bearerToken);
+                };
+
+                // serverURL is the HTTP URL for the server or part of the server HTTP space.
+                RegistryRequestModifier.get().add(url, modifier);
+
+//                Method m = AuthEnv.class.getDeclaredMethod("registerAuthModifier", String.class, AuthRequestModifier.class);
+//                AuthRequestModifier mod = rb -> rb.setHeader("Authorization", "Bearer " + bearerToken);
+//                ClassUtils.forceInvoke(AuthEnv.get(), m, url, mod);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        builder
+                //.acceptHeaderGraph(WebContent.contentTypeRDFXML)
+                .acceptHeaderSelectQuery(WebContent.contentTypeResultsXML)
+                .destination(url);
+
+        return () -> builder.build();
+    }
+
     public static RDFConnection createConnectionFromArgs(
             Collection<String> files,
-            String bnodeProfile) {
+            String bnodeProfile,
+            String bearerToken) {
 
         RDFConnection conn = null;
         if(files.size() == 1) {
@@ -1151,16 +1196,14 @@ public class MainCliFacete3 {
             useStdIn = str.equals("-");
 
             logger.info("Probing argument for SPARQL endpoint");
-            boolean isSparql = !useStdIn && isSparqlEndpoint(str);
+            RdfDataSource rdfDataSource = configureRdfDataSource(str, bearerToken);
+
+            boolean isSparql = !useStdIn && isSparqlEndpoint(rdfDataSource);
 
             if(isSparql) {
                 logger.info("Probe query succeeded. Connecting with bnode profile " + bnodeProfile + " ...");
 
-                conn = RDFConnectionRemote.create()
-                        //.acceptHeaderGraph(WebContent.contentTypeRDFXML)
-                        .acceptHeaderSelectQuery(WebContent.contentTypeResultsXML)
-                        .destination(str)
-                        .build();
+                conn = rdfDataSource.getConnection();
 
                 if("auto".equalsIgnoreCase(bnodeProfile)) {
 

@@ -38,10 +38,10 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<configuration>
 					<to>
-						<image>docker.io/aklakan/facete3</image>
+						<image>docker.io/aklakan/facete3${archSuffix}</image>
 					</to>
 					<from>
-						<image>eclipse-temurin:11-jre</image>
+						<image>${dockerJavaBaseImage}</image>
 					</from>
 					<container>
 						<mainClass>${mainClass}</mainClass>
