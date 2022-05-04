@@ -35,15 +35,8 @@ A screenshot of the Facete3 terminal application on [Scholarly Data](http://www.
 ### Docker Images
 
 * **Facete3 terminal app**
-  * amd64
-```bash
-docker run -it aklakan/facete3
-```
-  * arm64
-```bash
-docker run -it aklakan/facete3-arm64
-```
-
+  * amd64: `docker run -it aklakan/facete3`
+  * arm64: `docker run -it aklakan/facete3-arm64`
 
 ### Latest Updates
 
