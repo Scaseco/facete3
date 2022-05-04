@@ -32,11 +32,18 @@ Here are a few teasers to give you an impression of the project before you read 
 
 A screenshot of the Facete3 terminal application on [Scholarly Data](http://www.scholarlydata.org/)'s [SPARQL endpoint](http://www.scholarlydata.org/sparql/):
 
+### Docker Images
+
+* **Facete3 terminal app**
+  * amd64: `docker run -it aklakan/facete3`
+  * arm64: `docker run -it aklakan/facete3-arm64`
 
 ### Latest Updates
 
 * Upcoming
   * Integrated IRI retrieval / download feature
+* 2022-05-04
+  * Docker images available on dockerhub for the terminal application
 * 2020-03-10
   * Support for reading from stdin, can be used like this: `./script-that-ouputs-rdf.sh | facete3 -` (- indicates to read from stdin)
   * Improved scalability by adding paginator to facet values
