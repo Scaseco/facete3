@@ -16,6 +16,7 @@ import org.aksw.jenax.arq.util.var.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
@@ -80,8 +81,8 @@ public class ViewFactoryPaper
 
 
     @Override
-    public Component createComponent(Resource initialData) {
-        PaperViewComponent result = new PaperViewComponent(initialData);
+    public Component createComponent(RDFNode initialData) {
+        PaperViewComponent result = new PaperViewComponent(initialData.asResource());
         return result;
     }
 }

@@ -1,6 +1,7 @@
 package org.aksw.facete3.app.vaadin;
 
-import org.aksw.facete3.app.vaadin.components.DatasetSelectorComponent;
+import javax.annotation.security.PermitAll;
+
 import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @Theme(value = Lumo.class)
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
+@PermitAll
 //@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
 public class MainViewFacete3 extends AppLayout {
 

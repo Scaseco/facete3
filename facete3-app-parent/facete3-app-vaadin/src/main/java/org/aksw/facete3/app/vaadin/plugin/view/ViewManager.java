@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 
@@ -24,7 +25,6 @@ public interface ViewManager {
     Component getComponent(Node node);
     Resource fetchData(Node node, ViewFactory viewFactory);
     List<ViewFactory> getApplicableViewFactories(Node node);
-
 
     /*
      * Bulk operations

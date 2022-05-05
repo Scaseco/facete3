@@ -13,6 +13,7 @@ import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -114,7 +115,8 @@ public class ConfigFacetedBrowserView {
             Config config,
             @FullView ViewManager viewManagerFull,
             @SnippetView ViewManager viewManagerDetail,
-            @DisplayLabelConfig BestLiteralConfig bestLabelConfig
+            @DisplayLabelConfig BestLiteralConfig bestLabelConfig,
+            VaadinRdfLabelMgr labelMgr
     ) {
         return new FacetedBrowserView(
                 baseDataConnection,
@@ -128,7 +130,8 @@ public class ConfigFacetedBrowserView {
                 config,
                 viewManagerFull,
                 viewManagerDetail,
-                bestLabelConfig);
+                bestLabelConfig,
+                labelMgr);
     }
 
     @Bean

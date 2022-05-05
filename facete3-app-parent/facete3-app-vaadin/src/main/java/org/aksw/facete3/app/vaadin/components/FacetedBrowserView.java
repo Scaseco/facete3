@@ -15,11 +15,14 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
+import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
+import org.aksw.facete3.app.shared.viewselector.ViewTemplateImpl;
 import org.aksw.facete3.app.vaadin.Config;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
+import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
@@ -30,12 +33,19 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
+import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionTransform;
+import org.aksw.jenax.arq.util.syntax.ElementUtils;
+import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -45,8 +55,12 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementUnion;
+import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
@@ -99,6 +113,12 @@ public class FacetedBrowserView
     protected ConfigurableApplicationContext cxt;
 
 
+    protected VaadinRdfLabelMgr labelMgr;
+
+    public VaadinRdfLabelMgr getLabelMgr() {
+        return labelMgr;
+    }
+
 
     public FacetedBrowserView(
             RDFConnection baseDataConnection,
@@ -112,7 +132,72 @@ public class FacetedBrowserView
             Config config,
             ViewManager viewManagerFull,
             ViewManager viewManagerDetails,
-            BestLiteralConfig bestLabelConfig) {
+            BestLiteralConfig bestLabelConfig,
+            VaadinRdfLabelMgr labelMgr
+            ) {
+
+        this.labelMgr = labelMgr;
+
+        ViewFactory dftViewFactory = new ViewFactory() {
+
+            @Override
+            public ViewTemplate getViewTemplate() {
+
+                // FIXME The view template should be static;
+                // at present each invocation creates a new one
+
+                EntityQueryImpl attrQuery = new EntityQueryImpl();
+
+
+                /*
+                 * Unfortunately there is no syntax (yet) for entity-centric sparql;
+                 * the following is (roughly)
+                 *
+                 * ENTITY ?x
+                 * CONSTRUCT { }
+                 * WHERE { }
+                 *
+                 */
+                List<Var> vars = Collections.singletonList(Vars.x);
+                EntityGraphFragment fragment = new EntityGraphFragment(
+                        vars,
+                        new EntityTemplateImpl(Collections.<Node>singletonList(Vars.x), new Template(
+                                BasicPattern.wrap(Collections.emptyList()))),
+                        // ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o)
+                        new ElementGroup()
+                        );
+
+                attrQuery.getOptionalJoins().add(new GraphPartitionJoin(fragment));
+
+                ElementUnion union = new ElementUnion();
+                union.addElement(ElementUtils.createElementTriple(Vars.x, Vars.p, Vars.o));
+                union.addElement(ElementUtils.createElementTriple(Vars.s, Vars.x, Vars.o));
+                union.addElement(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.x));
+
+                return new ViewTemplateImpl(
+                        // The id of the view
+                        ModelFactory.createDefaultModel()
+                            .createResource("http://cord19.aksw.org/view/resource-explorer")
+                            .addLiteral(RDFS.label, "Resource"),
+
+                        // The condition for which set of resources the view is applicable
+                        new Concept(union, Vars.x),
+
+                        // The entity-centric construct query for what information to fetch when applying the view
+                        attrQuery
+                        );
+
+            }
+
+            @Override
+            public Component createComponent(RDFNode data) {
+                ResourceComponent result = new ResourceComponent(PrefixMapping.Extended, viewManagerFull, labelMgr);
+                result.setNode(data);
+                return result;
+            }
+        };
+
+
         this.baseDataConnection = baseDataConnection;
         this.searchPluginDataProvider = searchPluginProvider;
         this.activeSearchPlugin = searchPluginDataProvider.fetch(new Query<>()).limit(1).findFirst().orElse(null);
@@ -133,7 +218,7 @@ public class FacetedBrowserView
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
         itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
-        resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction);
+        resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction, dftViewFactory);
         resourceBrowserComponent.setWidthFull();
         resourceBrowserComponent.setHeightFull();
 

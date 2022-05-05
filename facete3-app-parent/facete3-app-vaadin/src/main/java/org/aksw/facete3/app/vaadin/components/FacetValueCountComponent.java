@@ -8,6 +8,7 @@ import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
@@ -51,7 +52,10 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
             .setResizable(true);
 
 
-        Column<FacetValueCount> facetValueColumn = addColumn(LabelUtils::getOrDeriveLabel).setSortProperty("value")
+        Column<FacetValueCount> facetValueColumn =
+                // addColumn(LabelUtils::getOrDeriveLabel).setSortProperty("value")
+                addComponentColumn(item -> mainView.getLabelMgr().forHasText(new Span("" + item.getValue()), item.getValue()))
+                .setSortProperty("value")
                 .setHeader("Facet Value")
                 //.setHeader(getSearchField())
                 .setResizable(true);

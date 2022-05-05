@@ -17,6 +17,7 @@ import org.aksw.jenax.dataaccess.LabelUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
@@ -62,8 +63,8 @@ public class ViewFactoryLabel
     }
 
     @Override
-    public Component createComponent(Resource initialData) {
-        ViewComponentLabel result = new ViewComponentLabel(initialData);
+    public Component createComponent(RDFNode initialData) {
+        ViewComponentLabel result = new ViewComponentLabel(initialData.asResource());
         return result;
     }
 }

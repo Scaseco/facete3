@@ -971,7 +971,7 @@ public class MainCliFacete3 {
     public static boolean isSparqlEndpoint(RdfDataSource rdfDataSource) {
         boolean result = false;
         try(RDFConnection conn = rdfDataSource.getConnection()) {
-            Throwable throwable = SparqlRx.execSelect(() -> conn.query("SELECT ?s { ?s <http://foo.bar/baz> <http://foo.bar/baz> } LIMIT 1"))
+            Throwable throwable = SparqlRx.execSelect(() -> conn.query("SELECT ?o { <http://foo.bar/baz> <http://foo.bar/baz> ?o } LIMIT 1"))
                 .timeout(10, TimeUnit.SECONDS)
                 .take(1)
                 .concatMapMaybe(item -> Maybe.<Throwable>empty())

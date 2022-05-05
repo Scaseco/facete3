@@ -2,7 +2,7 @@ package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 
@@ -11,6 +11,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.ItemDoubleClickEvent;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
 
 public class FacetCountComponent extends Grid<FacetCount> {
@@ -19,7 +20,8 @@ public class FacetCountComponent extends Grid<FacetCount> {
     private FacetCountProvider dataProvider;
     private FacetedBrowserView mainView;
 
-    public FacetCountComponent(FacetedBrowserView mainView, FacetCountProvider dataProvider) {
+    public FacetCountComponent(
+            FacetedBrowserView mainView, FacetCountProvider dataProvider) {
         super(FacetCount.class);
         this.dataProvider = dataProvider;
         this.mainView = mainView;
@@ -34,7 +36,9 @@ public class FacetCountComponent extends Grid<FacetCount> {
 
         grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
         grid.removeAllColumns();
-        Column<FacetCount> facetColumn = grid.addColumn(item -> LabelUtils.getOrDeriveLabel(item))
+        Column<FacetCount> facetColumn = grid
+                .addComponentColumn(item -> mainView.getLabelMgr().forHasText(new Span("" + item.getPredicate()), item.getPredicate()))
+                    // .addColumn(item -> LabelUtils.getOrDeriveLabel(item))
                 .setSortProperty("")
                 .setHeader("Facet")
 //                .setHeader(getSearchComponent())

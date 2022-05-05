@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPodFactoryAdvancedImpl;
-import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
@@ -15,19 +15,23 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
-import org.aksw.jenax.reprogen.core.JenaPluginUtils;
-import org.apache.jena.query.Dataset;
+import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgrImpl;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +95,8 @@ public class ConfigEndpoint {
         return result;
     }
 
+
+
     @RefreshScope
     @Bean(destroyMethod = "close")
     @Autowired
@@ -104,6 +110,16 @@ public class ConfigEndpoint {
 //            result = getBaseDataConnection(dataRef);
 //        }
         return result;
+    }
+
+    @RefreshScope
+    @Bean
+    @Autowired
+    public VaadinRdfLabelMgr labelMgr(RDFConnection conn) {
+        QueryExecutionFactory qef = new QueryExecutionFactorySparqlQueryConnection(conn); // RDFConnection.connect(dataset);
+        Property labelProperty = RDFS.label;// DCTerms.description;
+        VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get()));
+        return labelService;
     }
 
 
@@ -150,7 +166,6 @@ public class ConfigEndpoint {
 
         return rdfConnection;
     }
-
 
 //    @Bean
 //    @Autowired

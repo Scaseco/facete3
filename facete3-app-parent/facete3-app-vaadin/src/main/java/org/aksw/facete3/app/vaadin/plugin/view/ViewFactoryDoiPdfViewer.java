@@ -29,6 +29,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.BasicPattern;
@@ -101,8 +102,8 @@ public class ViewFactoryDoiPdfViewer
 
 
     @Override
-    public Component createComponent(Resource initialData) {
-        PaperViewComponentDoi result = new PaperViewComponentDoi(initialData);
+    public Component createComponent(RDFNode initialData) {
+        PaperViewComponentDoi result = new PaperViewComponentDoi(initialData.asResource());
         return result;
     }
 }

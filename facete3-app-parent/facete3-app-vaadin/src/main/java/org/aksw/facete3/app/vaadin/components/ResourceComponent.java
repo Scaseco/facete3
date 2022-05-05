@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -36,6 +37,8 @@ public class ResourceComponent extends VerticalLayout {
     private RDFNode node;
     private Grid<Row> grid;
     private HashMap<Object,List<Property>> objectToProperty = new HashMap<>();
+
+    protected VaadinRdfLabelMgr labelMgr;
 
     protected boolean enableSummary = false;
 
@@ -74,8 +77,9 @@ public class ResourceComponent extends VerticalLayout {
         return result;
     }
 
-    public ResourceComponent(PrefixMapping prefixMapping, ViewManager viewManager) {
+    public ResourceComponent(PrefixMapping prefixMapping, ViewManager viewManager, VaadinRdfLabelMgr labelMgr) {
         this.viewManager = viewManager;
+        this.labelMgr = labelMgr;
 
         this.prefixMapping = prefixMapping;
 
@@ -104,7 +108,8 @@ public class ResourceComponent extends VerticalLayout {
             Property p = row.getPredicate();
             if (p != null) {
                 Anchor anchor = new Anchor();
-                anchor.setText(toDisplayString(p));
+                labelMgr.forHasText(anchor, p.asNode());
+                // anchor.setText(toDisplayString(p));
                 anchor.setHref(row.getPredicate().getURI());
                 anchor.setTarget("_blank");
                 r = anchor;
@@ -122,7 +127,9 @@ public class ResourceComponent extends VerticalLayout {
             if (row.getObject().isResource()) {
                 Anchor anchor = new Anchor();
                 anchor.setText(displayStr);
-                    anchor.setText(toDisplayString(row.getObject()));
+                    // anchor.setText(toDisplayString(row.getObject()));
+                    labelMgr.forHasText(anchor, row.getObject().asNode());
+
                     anchor.setHref(row.getObject().toString());
                     anchor.setTarget("_blank");
                 r = anchor;

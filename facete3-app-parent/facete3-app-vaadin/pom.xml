@@ -14,7 +14,7 @@
 		<spring.version>5.3.1</spring.version>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
 
-		<vaadin-jena.version>4.3.0-1-SNAPSHOT</vaadin-jena.version>
+		<vaadin-jena.version>4.5.0-1-SNAPSHOT</vaadin-jena.version>
 
 		<drivers.dir>${project.basedir}/drivers</drivers.dir>
 		<drivers.downloader.phase>pre-integration-test</drivers.downloader.phase>
@@ -126,12 +126,12 @@
 			</exclusions>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.springframework.boot</groupId> -->
-<!-- 			<artifactId>spring-boot-devtools</artifactId> -->
-<!-- 			<version>${spring-boot.version}</version> -->
-<!-- 			<optional>true</optional> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.springframework.boot</groupId> -->
+		<!-- <artifactId>spring-boot-devtools</artifactId> -->
+		<!-- <version>${spring-boot.version}</version> -->
+		<!-- <optional>true</optional> -->
+		<!-- </dependency> -->
 
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -166,10 +166,22 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-client</artifactId>
+			<version>${spring-boot.version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
 			<version>2.2.8.RELEASE</version>
 			<!-- <version>${spring-boot.version}</version> -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.scaseco.vaadin</groupId>
+			<artifactId>vaadin-jena-core</artifactId>
+			<version>${vaadin-jena.version}</version>
 		</dependency>
 
 		<dependency>
@@ -319,64 +331,20 @@
 
 	<profiles>
 
-<!--	
-		<profile>
-			<id>production</id>
-			<properties>
-				<vaadin.productionMode>true</vaadin.productionMode>
-				<packaging.type>war</packaging.type>
-			</properties>
-
-			<dependencies>
-				<dependency>
-					<groupId>com.vaadin</groupId>
-					<artifactId>flow-server-production-mode</artifactId>
-				</dependency>
-			</dependencies>
-
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.springframework.boot</groupId>
-						<artifactId>spring-boot-maven-plugin</artifactId>
-						<configuration>
-							<jvmArguments>-Dvaadin.productionMode</jvmArguments>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>com.vaadin</groupId>
-						<artifactId>vaadin-maven-plugin</artifactId>
-						<version>${vaadin.version}</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>build-frontend</goal>
-								</goals>
-								<phase>compile</phase>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-war-plugin</artifactId>
-						<version>3.2.3</version>
-						<configuration>
-							<failOnMissingWebXml>false</failOnMissingWebXml>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.tomcat.maven</groupId>
-						<artifactId>tomcat7-maven-plugin</artifactId>
-						<version>2.2</version>
-						<configuration>
-							<server>TomcatServer</server>
-							<path>/facete3</path>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
- -->
+		<!-- <profile> <id>production</id> <properties> <vaadin.productionMode>true</vaadin.productionMode> 
+			<packaging.type>war</packaging.type> </properties> <dependencies> <dependency> 
+			<groupId>com.vaadin</groupId> <artifactId>flow-server-production-mode</artifactId> 
+			</dependency> </dependencies> <build> <plugins> <plugin> <groupId>org.springframework.boot</groupId> 
+			<artifactId>spring-boot-maven-plugin</artifactId> <configuration> <jvmArguments>-Dvaadin.productionMode</jvmArguments> 
+			</configuration> </plugin> <plugin> <groupId>com.vaadin</groupId> <artifactId>vaadin-maven-plugin</artifactId> 
+			<version>${vaadin.version}</version> <executions> <execution> <goals> <goal>build-frontend</goal> 
+			</goals> <phase>compile</phase> </execution> </executions> </plugin> <plugin> 
+			<groupId>org.apache.maven.plugins</groupId> <artifactId>maven-war-plugin</artifactId> 
+			<version>3.2.3</version> <configuration> <failOnMissingWebXml>false</failOnMissingWebXml> 
+			</configuration> </plugin> <plugin> <groupId>org.apache.tomcat.maven</groupId> 
+			<artifactId>tomcat7-maven-plugin</artifactId> <version>2.2</version> <configuration> 
+			<server>TomcatServer</server> <path>/facete3</path> </configuration> </plugin> 
+			</plugins> </build> </profile> -->
 		<profile>
 			<id>integration-tests</id>
 			<build>
@@ -424,35 +392,14 @@
 						</configuration>
 					</plugin>
 
-<!--
-					<plugin>
-						<groupId>com.lazerycode.selenium</groupId>
-						<artifactId>driver-binary-downloader-maven-plugin</artifactId>
-						<version>1.0.17</version>
-						<configuration>
-							<onlyGetDriversForHostOperatingSystem>true
-							</onlyGetDriversForHostOperatingSystem>
-							<rootStandaloneServerDirectory>
-								${project.basedir}/drivers/driver
-							</rootStandaloneServerDirectory>
-							<downloadedZipFileDirectory>
-								${project.basedir}/drivers/driver_zips
-							</downloadedZipFileDirectory>
-							<customRepositoryMap>
-								${project.basedir}/drivers.xml
-							</customRepositoryMap>
-						</configuration>
-						<executions>
-							<execution>
-								< ! - - use phase "none" to skip download step - - >
-								<phase>${drivers.downloader.phase}</phase>
-								<goals>
-									<goal>selenium</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					 -->
+					<!-- <plugin> <groupId>com.lazerycode.selenium</groupId> <artifactId>driver-binary-downloader-maven-plugin</artifactId> 
+						<version>1.0.17</version> <configuration> <onlyGetDriversForHostOperatingSystem>true 
+						</onlyGetDriversForHostOperatingSystem> <rootStandaloneServerDirectory> ${project.basedir}/drivers/driver 
+						</rootStandaloneServerDirectory> <downloadedZipFileDirectory> ${project.basedir}/drivers/driver_zips 
+						</downloadedZipFileDirectory> <customRepositoryMap> ${project.basedir}/drivers.xml 
+						</customRepositoryMap> </configuration> <executions> <execution> < ! - - 
+						use phase "none" to skip download step - - > <phase>${drivers.downloader.phase}</phase> 
+						<goals> <goal>selenium</goal> </goals> </execution> </executions> </plugin> -->
 				</plugins>
 			</build>
 		</profile>

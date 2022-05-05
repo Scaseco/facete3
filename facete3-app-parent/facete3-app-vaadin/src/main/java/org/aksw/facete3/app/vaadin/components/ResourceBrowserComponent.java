@@ -33,11 +33,16 @@ public class ResourceBrowserComponent
 
     protected RDFNode activeRdfNode = null;
 
+    /** Generic view factory to browse the raw data of a resource */
+    protected ViewFactory defaultViewFactory;
+
     public ResourceBrowserComponent(
             ViewManager viewManager,
-            Function<? super RDFNode, ? extends String> viewMetadataToLabel) {
+            Function<? super RDFNode, ? extends String> viewMetadataToLabel,
+            ViewFactory defaultViewFactory) {
         this.viewManager = viewManager;
         this.viewMetadataToLabel = viewMetadataToLabel;
+        this.defaultViewFactory = defaultViewFactory;
 
         tabs = new PreconfiguredTabs();
 
@@ -57,7 +62,7 @@ public class ResourceBrowserComponent
             dialog.setWidth("calc(100vw - (4*var(--lumo-space-m)))");
             dialog.open();
 
-            ResourceBrowserComponent newBrowser = new ResourceBrowserComponent(viewManager, viewMetadataToLabel);
+            ResourceBrowserComponent newBrowser = new ResourceBrowserComponent(viewManager, viewMetadataToLabel, defaultViewFactory);
             newBrowser.setWidthFull();
             newBrowser.setHeightFull();
 
@@ -88,8 +93,11 @@ public class ResourceBrowserComponent
         if (rdfNode != null) {
 
             Node node = rdfNode.asNode();
-            ResourceComponent tmp = new ResourceComponent(PrefixMapping.Extended, viewManager);
-            tmp.setNode(rdfNode);
+
+            Component tmp = defaultViewFactory.createComponent(rdfNode);
+
+            // ResourceComponent tmp = new ResourceComponent(PrefixMapping.Extended, viewManager);
+            // tmp.setNode(rdfNode);
             tabs.newTab("data", "Data", new ManagedComponentSimple(tmp));
 
             List<ViewFactory> viewFactories = viewManager.getApplicableViewFactories(node);

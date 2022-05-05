@@ -24,6 +24,6 @@ public interface ViewManagerBulk
     }
 
     default List<ViewFactory> getApplicableViewFactories(Node node) {
-        return getApplicableViewFactories(Collections.singleton(node)).get(node);
+        return getApplicableViewFactories(Collections.singleton(node)).getOrDefault(node, Collections.emptyList());
     }
 }

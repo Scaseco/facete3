@@ -243,7 +243,7 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         QueryExecutionFactory qef = new QueryExecutionFactoryDataset(ds);
         SparqlQueryConnection conn = RDFConnectionFactory.connect(ds);
         ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
-        LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(conn);
+        LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(qef);
 
         Multimap<NodeSchema, Node> mm = HashMultimap.create();
         mm.put(schema, datasetNode);
