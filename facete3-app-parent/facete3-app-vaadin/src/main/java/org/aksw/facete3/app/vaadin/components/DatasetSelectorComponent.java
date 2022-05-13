@@ -35,8 +35,6 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDFS;
@@ -241,15 +239,15 @@ public class DatasetSelectorComponent extends PreconfiguredTabs {
         ResourceCache resourceCache = new ResourceCache();
 
         QueryExecutionFactory qef = new QueryExecutionFactoryDataset(ds);
-        SparqlQueryConnection conn = RDFConnectionFactory.connect(ds);
-        ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, conn);
+        // SparqlQueryConnection conn = RDFConnectionFactory.connect(ds);
+        ShapedNode sn = ShapedNode.create(datasetNode, schema, resourceCache, qef);
         LookupService<Node, ResourceMetamodel> metaDataService = ResourceExplorer.createMetamodelLookup(qef);
 
         Multimap<NodeSchema, Node> mm = HashMultimap.create();
         mm.put(schema, datasetNode);
 
         NodeSchemaDataFetcher dataFetcher = new NodeSchemaDataFetcher();
-        dataFetcher.sync(mm, conn, metaDataService, resourceCache);
+        dataFetcher.sync(mm, qef, metaDataService, resourceCache);
 
         List<ShapedNode> rootNodes = Collections.singletonList(sn);
 

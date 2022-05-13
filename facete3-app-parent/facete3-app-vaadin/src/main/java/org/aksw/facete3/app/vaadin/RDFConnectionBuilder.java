@@ -8,7 +8,7 @@ import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnode
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jenax.arq.connection.RDFConnectionModular;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.connection.core.SparqlQueryConnectionJsa;
 import org.aksw.jenax.stmt.core.SparqlStmtMgr;
@@ -48,7 +48,7 @@ public class RDFConnectionBuilder {
     private void connectCache() {
         connection =
                 new RDFConnectionModular(new SparqlQueryConnectionJsa(FluentQueryExecutionFactory
-                        .from(new QueryExecutionFactorySparqlQueryConnection(connection))
+                        .from(new QueryExecutionFactoryOverSparqlQueryConnection(connection))
                         .config()
                         .withCache(new CacheBackendMem())
                         .end()

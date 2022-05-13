@@ -14,7 +14,7 @@ import org.aksw.jena_sparql_api.data_query.impl.FactoryWithModel;
 import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -152,7 +152,7 @@ public class MainFacetedBenchmark2 {
 
 
             System.out.println("Paths: " + ConceptPathFinder.findPaths(
-                new QueryExecutionFactorySparqlQueryConnection(conn),
+                new QueryExecutionFactoryOverSparqlQueryConnection(conn),
                 Concept.create("?s a <http://www.example.org/ThingB>", "s"),
                 //Concept.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
                 Concept.create("?s <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?x ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?y", "s"),
@@ -161,7 +161,7 @@ public class MainFacetedBenchmark2 {
             ));
 
             System.out.println("Paths: " + ConceptPathFinder.findPaths(
-                new QueryExecutionFactorySparqlQueryConnection(conn),
+                new QueryExecutionFactoryOverSparqlQueryConnection(conn),
                 Concept.create("?s a <http://www.example.org/ThingA>", "s"),
                 //Concept.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
                 Concept.create("?s <http://www.opengis.net/ont/geosparql#geometry> ?y", "s"),

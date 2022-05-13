@@ -64,7 +64,7 @@ import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.pathlet.Path;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.arq.connection.RDFConnectionModular;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.connection.core.SparqlQueryConnectionJsa;
 import org.aksw.jenax.arq.util.exception.HttpExceptionUtils;
@@ -1070,25 +1070,31 @@ public class MainCliFacete3 {
             conn = createConnectionFromArgs(cm.nonOptionArgs, cm.bnodeProfile, bearerToken);
 
             if(!cm.defaultGraphs.isEmpty()) {
-                if(cm.defaultGraphs.size() > 1) {
-                    throw new RuntimeException("Only 1 default graph supported with this version");
-                }
-
-                Node g = NodeFactory.createURI(cm.defaultGraphs.get(0));
-
-                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
-                        q -> {
-                            Transform t = new TransformGraphRename(Quad.defaultGraphNodeGenerated, g) ;
-
-                            Query r = QueryUtils.applyOpTransform(q, op -> {
-                                op = Algebra.toQuadForm(op);
-                                op = Transformer.transform(t, op);
-                                //op = AlgebraUtils.createDefaultRewriter().rewrite(op);
-                                return op;
-                            });
-
-                            return r;
-                        });
+//                if(cm.defaultGraphs.size() > 1) {
+//                    throw new RuntimeException("Only 1 default graph supported with this version");
+//                }
+//
+//                Node g = NodeFactory.createURI(cm.defaultGraphs.get(0));
+//
+//                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
+//                        q -> {
+//                            Transform t = new TransformGraphRename(Quad.defaultGraphNodeGenerated, g) ;
+//
+//                            Query r = QueryUtils.applyOpTransform(q, op -> {
+//                                op = Algebra.toQuadForm(op);
+//                                op = Transformer.transform(t, op);
+//                                //op = AlgebraUtils.createDefaultRewriter().rewrite(op);
+//                                return op;
+//                            });
+//
+//                            return r;
+//                        });
+              conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
+              q -> {
+                  Query r = q.cloneQuery();
+                  r.getGraphURIs().addAll(cm.defaultGraphs);
+                  return r;
+              });
             }
 
             if(cm.unionDefaultGraphMode) {
@@ -1122,7 +1128,7 @@ public class MainCliFacete3 {
 
             conn = new RDFConnectionModular(
                     new SparqlQueryConnectionJsa(
-                            FluentQueryExecutionFactory.from(new QueryExecutionFactorySparqlQueryConnection(conn))
+                            FluentQueryExecutionFactory.from(new QueryExecutionFactoryOverSparqlQueryConnection(conn))
                                 .config().withCache(new CacheBackendMem()).end().create()),
                     conn, conn);
 
@@ -1238,7 +1244,7 @@ public class MainCliFacete3 {
             for(String file : files) {
                 logger.info("  Attempting to load dataset from " + (file.equals("-") ? "STDIN" : file));
 
-                TypedInputStream in = RDFDataMgrEx.open(file, Arrays.asList(Lang.NQUADS, Lang.TRIG));
+                TypedInputStream in = RDFDataMgrEx.open(file, RDFDataMgrEx.DEFAULT_PROBE_LANGS);
                 String contentType = in.getContentType();
                 logger.info("Detected content type: " + contentType);
                 Lang lang = RDFLanguages.contentTypeToLang(contentType);
@@ -1417,7 +1423,7 @@ public class MainCliFacete3 {
 //		});
 
         actualLabelService = LookupServiceUtils
-                .createLookupService(new QueryExecutionFactorySparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
+                .createLookupService(new QueryExecutionFactoryOverSparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
                 .partition(10)
                 .cache()
                 .mapValues((k, vs) -> vs.isEmpty() ? LabelUtils.deriveLabelFromIri(k.getURI()) : vs.iterator().next())

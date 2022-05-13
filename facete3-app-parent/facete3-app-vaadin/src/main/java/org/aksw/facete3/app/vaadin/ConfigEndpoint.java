@@ -16,7 +16,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
@@ -116,7 +116,7 @@ public class ConfigEndpoint {
     @Bean
     @Autowired
     public VaadinRdfLabelMgr labelMgr(RDFConnection conn) {
-        QueryExecutionFactory qef = new QueryExecutionFactorySparqlQueryConnection(conn); // RDFConnection.connect(dataset);
+        QueryExecutionFactory qef = new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
         VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get()));
         return labelService;
