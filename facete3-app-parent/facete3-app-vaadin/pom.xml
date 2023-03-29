@@ -14,7 +14,7 @@
 		<spring.version>5.3.1</spring.version>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
 
-		<vaadin-jena.version>4.5.0-1-SNAPSHOT</vaadin-jena.version>
+		<vaadin-jena.version>4.8.0-1-SNAPSHOT</vaadin-jena.version>
 
 		<drivers.dir>${project.basedir}/drivers</drivers.dir>
 		<drivers.downloader.phase>pre-integration-test</drivers.downloader.phase>

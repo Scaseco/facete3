@@ -19,10 +19,10 @@
 	</scm>
 
 	<properties>
-		<jena.version>4.5.0</jena.version>
-		<jenax.version>4.5.0-1-SNAPSHOT</jenax.version>
+		<jena.version>4.8.0-SNAPSHOT</jena.version>
+		<jenax.version>4.8.0-1-SNAPSHOT</jenax.version>
 
-		<aksw-commons.version>0.9.4-SNAPSHOT</aksw-commons.version>
+		<aksw-commons.version>0.9.5-SNAPSHOT</aksw-commons.version>
 		<log4j.version>2.17.2</log4j.version>
 		<picocli.version>4.6.2</picocli.version>
 
@@ -124,20 +124,10 @@
 
 			<dependency>
 				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-datapaths</artifactId>
+				<artifactId>jenax-bom</artifactId>
 				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-entityquery</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-connection-virtuoso</artifactId>
-				<version>${jenax.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 
 			<dependency>
@@ -147,52 +137,9 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-connection-extra</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-propertypaths</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-reprogen-jpa</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-pathfinding</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-rx</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-rx-dataaccess</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-relations</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-
-			<dependency>
 				<groupId>org.aksw.dcat-suite</groupId>
 				<artifactId>dcat-suite-binding-ckan</artifactId>
-				<version>1.1.1-SNAPSHOT</version>
+				<version>1.1.2-SNAPSHOT</version>
 				<!-- <scope>test</scope> -->
 			</dependency>
 
@@ -253,37 +200,8 @@
 				<version>${jena.version}</version>
 			</dependency>
 
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-connection-core</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-resources-servicedescription</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
 			<!-- TODO Move to jenax-io-hdt once the hdt support is factored out of 
 				conjure -->
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-conjure-core</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-resources-prefixes</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-path-finding</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
 
 			<!-- <dependency> -->
 			<!-- <groupId>org.aksw.jenax</groupId> -->
@@ -291,49 +209,10 @@
 			<!-- <version>${jenax.version}</version> -->
 			<!-- </dependency> -->
 
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-reprogen-core</artifactId>
-				<version>${jenax.version}</version>
-				<!-- <exclusions> <exclusion> <groupId>org.aksw.spring</groupId> <artifactId>spring-json-core</artifactId> 
-					</exclusion> </exclusions> -->
-			</dependency>
-
 			<dependency>
 				<groupId>org.eclipse.persistence</groupId>
 				<artifactId>javax.persistence</artifactId>
 				<version>2.2.0</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-mapper-proxy</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-arq-algebra</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-query-containment</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-server-standalone</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-sparql-ext</artifactId>
-				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>
@@ -382,24 +261,6 @@
 				<groupId>org.hobbit</groupId>
 				<artifactId>data-query</artifactId>
 				<version>${project.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-facete-vocab</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-facete-api</artifactId>
-				<version>${jenax.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.aksw.jenax</groupId>
-				<artifactId>jenax-facete-impl</artifactId>
-				<version>${jenax.version}</version>
 			</dependency>
 
 			<dependency>

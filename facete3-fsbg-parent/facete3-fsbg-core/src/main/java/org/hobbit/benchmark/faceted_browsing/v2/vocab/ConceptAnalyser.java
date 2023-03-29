@@ -125,7 +125,7 @@ public class ConceptAnalyser {
             s = groupVars.get(0);
         } else {
             s = Var.alloc("_groupVar__");
-            vel.add(s, new E_BNode());
+            vel.add(s, E_BNode.create());
         }
 
         vel.add(Vars.x, core.allocAggregate(new AggCountVar(es)));

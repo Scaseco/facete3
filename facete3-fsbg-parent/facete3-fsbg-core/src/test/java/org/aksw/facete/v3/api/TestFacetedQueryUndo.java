@@ -17,40 +17,40 @@ import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
 
 public class TestFacetedQueryUndo {
-	@Test
-	public void testFacetedQueryUndo() {
-		Model changeModel = ModelFactory.createDefaultModel();
-		
-		Model dataModel = ModelFactory.createDefaultModel();
-		
-		Model m = RDFDataMgr.loadModel("path-data.ttl");
-		RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));		
+    @Test
+    public void testFacetedQueryUndo() {
+        Model changeModel = ModelFactory.createDefaultModel();
 
-		
-		Resource fqState = dataModel.createResource();
+        Model dataModel = ModelFactory.createDefaultModel();
 
-		// Init
-		FacetedQueryImpl.initResource(fqState);
+        Model m = RDFDataMgr.loadModel("path-data.ttl");
+        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));
 
-		ChangeSetGroupManager csgm = new ChangeSetGroupManager(changeModel, dataModel);
-		
-		ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, model -> {
-			FacetedQuery fq = FacetedQueryImpl.create(fqState.inModel(model), conn);
-			fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class.asNode());
-			
-			
-			List<?> facets = fq.focus().fwd().facets().exec().toList().blockingGet();
-			System.out.println("Facets: " + facets);
-		});
 
-		FacetedQuery fq = FacetedQueryImpl.create(fqState, conn);
-		List<?> facets = fq.focus().fwd().facets().exec().toList().blockingGet();
-		System.out.println("Facets: " + facets);
-		
-		csgm.undo();
-		
-		facets = fq.focus().fwd().facets().exec().toList().blockingGet();
-		System.out.println("Facets: " + facets);
-		
-	}
+        Resource fqState = dataModel.createResource();
+
+        // Init
+        FacetedQueryImpl.initResource(fqState);
+
+        ChangeSetGroupManager csgm = new ChangeSetGroupManager(changeModel, dataModel);
+
+        ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, model -> {
+            FacetedQuery fq = FacetedQueryImpl.create(fqState.inModel(model), conn);
+            fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class.asNode());
+
+
+            List<?> facets = fq.focus().fwd().facets().exec().toList().blockingGet();
+            System.out.println("Facets: " + facets);
+        });
+
+        FacetedQuery fq = FacetedQueryImpl.create(fqState, conn);
+        List<?> facets = fq.focus().fwd().facets().exec().toList().blockingGet();
+        System.out.println("Facets: " + facets);
+
+        csgm.undo();
+
+        facets = fq.focus().fwd().facets().exec().toList().blockingGet();
+        System.out.println("Facets: " + facets);
+
+    }
 }

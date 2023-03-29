@@ -37,6 +37,9 @@ public class CmdFacete3Main
     @Option(names="-g", description="Default graphs (applies to quad based data sources)")
     public List<String> defaultGraphs = new ArrayList<>();
 
+//    @Option(names = { "--same-term" }, description = "Compare by term rather than value")
+//    public boolean compareByTerm = false;
+
     @Option(names = { "-X" }, description = "Debug output such as full stacktraces")
     public boolean debugMode = false;
 
