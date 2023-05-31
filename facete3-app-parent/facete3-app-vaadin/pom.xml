@@ -9,27 +9,21 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<packaging.type>jar</packaging.type>
-
-		<vaadin.version>14.6.1</vaadin.version>
+		<vaadin.version>14.10.0</vaadin.version>
 		<spring.version>5.3.1</spring.version>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
-
 		<vaadin-jena.version>4.8.0-1-SNAPSHOT</vaadin-jena.version>
-
 		<drivers.dir>${project.basedir}/drivers</drivers.dir>
 		<drivers.downloader.phase>pre-integration-test</drivers.downloader.phase>
 	</properties>
-
 	<parent>
 		<groupId>org.hobbit</groupId>
 		<artifactId>facete3-app-parent</artifactId>
 		<version>1.2.0-SNAPSHOT</version>
 	</parent>
-
 	<repositories>
 		<!-- The order of definitions matters. Explicitly defining central here 
 			to make sure it has the highest priority. -->
-
 		<!-- Main Maven repository -->
 		<repository>
 			<id>central</id>
@@ -47,7 +41,6 @@
 			</snapshots>
 		</repository>
 	</repositories>
-
 	<pluginRepositories>
 		<!-- Main Maven repository -->
 		<pluginRepository>
@@ -58,7 +51,6 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
-
 	<dependencyManagement>
 		<dependencies>
 			<!-- <dependency> -->
@@ -75,12 +67,11 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<!-- Replace artifactId with vaadin-core to use only free components -->
-			<artifactId>vaadin</artifactId>
+			<artifactId>vaadin-core</artifactId>
 			<exclusions>
 				<!-- Webjars are only needed when running in Vaadin 13 compatibility 
 					mode -->
@@ -110,6 +101,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-spring-boot-starter</artifactId>
@@ -125,26 +117,22 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
 		<!-- <dependency> -->
 		<!-- <groupId>org.springframework.boot</groupId> -->
 		<!-- <artifactId>spring-boot-devtools</artifactId> -->
 		<!-- <version>${spring-boot.version}</version> -->
 		<!-- <optional>true</optional> -->
 		<!-- </dependency> -->
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
-
 		<!-- <dependency> -->
 		<!-- <groupId>org.springframework</groupId> -->
 		<!-- <artifactId>spring-framework-bom</artifactId> -->
@@ -152,7 +140,6 @@
 		<!-- <type>pom</type> -->
 		<!-- <scope>import</scope> -->
 		<!-- </dependency> -->
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -164,139 +151,136 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-client</artifactId>
 			<version>${spring-boot.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
 			<version>2.2.8.RELEASE</version>
 			<!-- <version>${spring-boot.version}</version> -->
 		</dependency>
-
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-core</artifactId>
 			<version>${vaadin-jena.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-rdf-term-editor</artifactId>
 			<version>${vaadin-jena.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-shacl-editor</artifactId>
 			<version>${vaadin-jena.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-index</artifactId>
 		</dependency>
-
 		<!-- PDFViewer which hower does not seem to work with flow -->
 		<!-- <dependency> -->
 		<!-- <groupId>com.whitestein.vaadin.widgets</groupId> -->
 		<!-- <artifactId>wt-pdf-viewer</artifactId> -->
 		<!-- <version>2.0.1</version> -->
 		<!-- </dependency> -->
-
 		<dependency>
 			<groupId>org.vaadin.alejandro</groupId>
 			<artifactId>pdf-browser</artifactId>
 			<version>3.0.1</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.xdev-software</groupId>
 			<artifactId>vaadin-maps-leaflet-flow</artifactId>
 			<version>1.0.4</version>
+		</dependency>
+		
+		<!-- https://vaadin.com/directory/component/vstepper -->
+		<dependency>
+			<groupId>com.mlottmann.VStepper</groupId>
+			<artifactId>VStepper</artifactId>
+			<version>1.0.9</version>
 		</dependency>
 		<!-- <dependency> -->
 		<!-- <groupId>com.vaadin</groupId> -->
 		<!-- <artifactId>leaflet4vaadin</artifactId> -->
 		<!-- <version>0.3.2</version> -->
 		<!-- </dependency> -->
-
 		<!-- <dependency> -->
 		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->
 		<!-- <artifactId>jackson-core</artifactId> -->
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
-
 		<!-- <dependency> -->
 		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->
 		<!-- <artifactId>jackson-databind</artifactId> -->
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
-
 		<!-- <dependency> -->
 		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->
 		<!-- <artifactId>jackson-annotations</artifactId> -->
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
-
 		<!-- The topbraid implementation is used because it uses jena's polymorphism 
 			system -->
 		<dependency>
 			<groupId>org.topbraid</groupId>
 			<artifactId>shacl</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-shacl</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-app-shared</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.vaadin.gatanaso</groupId>
 			<artifactId>multiselect-combo-box-flow</artifactId>
-			<version>3.0.2</version>
+			<!-- <version>3.0.2</version> -->
+			<version>4.0.0-rc2</version>
+			<!--
+			<exclusions>
+				<exclusion>
+					<groupId>com.vaadin</groupId>
+					<artifactId>vaadin-testbench-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.vaadin</groupId>
+					<artifactId>flow-html-components-testbench</artifactId>
+				</exclusion>
+			</exclusions>
+			-->
 		</dependency>
-
 		<dependency>
 			<groupId>org.aksw.jenax</groupId>
 			<artifactId>jenax-facete-impl</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.aksw.jenax</groupId>
 			<artifactId>jenax-arq-datapaths</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.14</version>
 		</dependency>
-
 		<!-- Overrides an old cglib version of vaadin -->
 		<dependency>
 			<groupId>cglib</groupId>
 			<artifactId>cglib-nodep</artifactId>
 			<version>3.3.0</version>
 		</dependency>
-
-
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-testbench</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<defaultGoal>spring-boot:run</defaultGoal>
 		<plugins>
@@ -311,7 +295,6 @@
 					<maxAttempts>240</maxAttempts>
 				</configuration>
 			</plugin>
-
 			<!-- Take care of synchronizing java dependencies and imports in package.json 
 				and main.js files. It also creates webpack.config.js if not exists yet. -->
 			<plugin>
@@ -328,9 +311,7 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<profiles>
-
 		<!-- <profile> <id>production</id> <properties> <vaadin.productionMode>true</vaadin.productionMode> 
 			<packaging.type>war</packaging.type> </properties> <dependencies> <dependency> 
 			<groupId>com.vaadin</groupId> <artifactId>flow-server-production-mode</artifactId> 
@@ -369,7 +350,6 @@
 							</execution>
 						</executions>
 					</plugin>
-
 					<!-- Runs the integration tests (*IT) after the server is started -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -391,7 +371,6 @@
 							</systemPropertyVariables>
 						</configuration>
 					</plugin>
-
 					<!-- <plugin> <groupId>com.lazerycode.selenium</groupId> <artifactId>driver-binary-downloader-maven-plugin</artifactId> 
 						<version>1.0.17</version> <configuration> <onlyGetDriversForHostOperatingSystem>true 
 						</onlyGetDriversForHostOperatingSystem> <rootStandaloneServerDirectory> ${project.basedir}/drivers/driver 
@@ -403,6 +382,5 @@
 				</plugins>
 			</build>
 		</profile>
-
 	</profiles>
 </project>

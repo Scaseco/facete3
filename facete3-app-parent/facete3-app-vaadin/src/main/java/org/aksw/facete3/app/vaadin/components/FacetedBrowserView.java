@@ -21,6 +21,7 @@ import org.aksw.facete3.app.vaadin.Config;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
+import org.aksw.facete3.app.vaadin.components.sparql.wizard.SparqlConnectionWizard;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
@@ -263,7 +264,38 @@ public class FacetedBrowserView
         SparqlEndpointForm input = new SparqlEndpointForm();
         input.setWidthFull();
 
-        layout.add(input);
+        layout.add(new SparqlConnectionWizard() {
+            public void onSelect() {
+                String urlStr = sparqlEndpointForm.getServiceUrl().getValue().getEndpoint();
+
+                ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
+
+                RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
+                dataRef.setServiceUrl(urlStr);
+
+                List<String> defaultGraphIris = graphGrid.getSelectedItems().stream()
+                    .map(qs -> qs.get("g").asNode().getURI())
+                    .collect(Collectors.toList());
+
+                dataRef.getDefaultGraphs().addAll(defaultGraphIris);
+
+                Op op = OpDataRefResource.from(dataRef);
+
+//                if (input.getUnionDefaultGraphMode().isEnabled()) {
+//                    op = OpUnionDefaultGraph.create(op);
+//                }
+
+                opHolder.set(op);
+//                System.out.println("INVOKING REFRESH");
+//                System.out.println("Given cxt:\n" + toString(cxt));
+//                System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
+                refreshAllNew();
+
+                dialog.close();
+            }
+        });
+
+        // layout.add(input);
         Button applyBtn = new Button("Apply");
         layout.add(applyBtn);
         applyBtn.addClickListener(event -> {

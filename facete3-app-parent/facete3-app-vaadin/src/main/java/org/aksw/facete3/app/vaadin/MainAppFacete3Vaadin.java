@@ -1,9 +1,5 @@
 package org.aksw.facete3.app.vaadin;
 
-import org.aksw.jenax.path.core.PathNode;
-import org.aksw.jenax.path.core.PathOpsNode;
-import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
-import org.apache.jena.graph.Node;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -29,5 +25,4 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
                 .sources(MainAppFacete3Vaadin.class)
                 .run(args);
     }
-
 }

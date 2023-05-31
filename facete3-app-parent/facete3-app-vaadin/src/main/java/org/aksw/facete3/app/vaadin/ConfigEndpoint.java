@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromF
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
+import org.aksw.jenax.arq.datasource.RdfDataSourceWithBnodeRewrite;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
@@ -149,14 +150,16 @@ public class ConfigEndpoint {
         DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
 
 
-        RdfDataSource dataSource = op.accept(opExecutor);
+        RdfDataSource dataSourceRaw = op.accept(opExecutor);
+
+        RdfDataSourceWithBnodeRewrite dataSource = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
 
         // RdfDataSource dataSource = DataPods.from(dataRef);
         RDFConnection rdfConnection = dataSource.getConnection();
 
         rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
                 query -> {
-                    logger.info("Sending query:" + query);
+                    logger.info("Sending query: " + query);
                     return query;
                 });
 
