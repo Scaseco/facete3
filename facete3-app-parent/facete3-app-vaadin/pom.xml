@@ -101,7 +101,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-spring-boot-starter</artifactId>
@@ -197,7 +196,6 @@
 			<artifactId>vaadin-maps-leaflet-flow</artifactId>
 			<version>1.0.4</version>
 		</dependency>
-		
 		<!-- https://vaadin.com/directory/component/vstepper -->
 		<dependency>
 			<groupId>com.mlottmann.VStepper</groupId>
@@ -234,6 +232,13 @@
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-shacl</artifactId>
 		</dependency>
+		
+		<!-- Used for user session - should go to vaadin-jena utils -->
+		<dependency>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-models-foaf</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-app-shared</artifactId>

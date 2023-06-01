@@ -6,26 +6,25 @@ import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.aksw.facete3.app.vaadin.session.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
-import com.vaadin.flow.server.VaadinServletRequest;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 
@@ -100,23 +99,26 @@ public class MainViewFacete3 extends AppLayout {
         navbarLayout.add(themeToggleButton);
 
 
-        Div div = new Div();
-        div.setText("Hello " + userSession.getUser().getFirstName() + " " + userSession.getUser().getLastName());
-        div.getElement().getStyle().set("font-size", "xx-large");
+//        Div div = new Div();
+//        div.setText("Hello " + userSession.getUser().getFirstName() + " " + userSession.getUser().getLastName());
+//        div.getElement().getStyle().set("font-size", "xx-large");
 
-        // Image image = new Image(userSession.getUser().getPicture(), "User Image");
+        String accountName = userSession.getUser().getAccountName();
+        String avatarUrl = userSession.getUser().getOwner().getDepiction();
 
-        String LOGOUT_SUCCESS_URL = "/";
-        Button logoutButton = new Button("Logout", click -> {
-            UI.getCurrent().getPage().setLocation(LOGOUT_SUCCESS_URL);
-            SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
-            logoutHandler.logout(
-                    VaadinServletRequest.getCurrent().getHttpServletRequest(), null,
-                    null);
+        MenuBar menuBar = new MenuBar();
+        menuBar.setOpenOnHover(true);
+
+        Avatar avatar = new Avatar(accountName, avatarUrl);
+        MenuItem userOptions = menuBar.addItem(avatar);
+
+        userOptions.getSubMenu().addItem("Logout", click -> {
+            userSession.logout();
         });
 
+
         // setAlignItems(Alignment.CENTER);
-        navbarLayout.add(div, logoutButton);
+        navbarLayout.add(menuBar);
         //add(div, image, logoutButton);
 
 //        Span item = new Span();
