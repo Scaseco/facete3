@@ -19,6 +19,7 @@ import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.datasource.RdfDataSourceWithBnodeRewrite;
+import org.aksw.jenax.arq.datasource.RdfDataSourceWithLocalCache;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
@@ -152,7 +153,10 @@ public class ConfigEndpoint {
 
         RdfDataSource dataSourceRaw = op.accept(opExecutor);
 
-        RdfDataSourceWithBnodeRewrite dataSource = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
+        RdfDataSourceWithBnodeRewrite dataSourceBnode = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
+        RdfDataSourceWithLocalCache dataSourceCache = new RdfDataSourceWithLocalCache(dataSourceBnode);
+
+        RdfDataSource dataSource = dataSourceCache;
 
         // RdfDataSource dataSource = DataPods.from(dataRef);
         RDFConnection rdfConnection = dataSource.getConnection();
