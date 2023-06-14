@@ -252,10 +252,10 @@
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-app-shared</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.vaadin.gatanaso</groupId>
-			<artifactId>multiselect-combo-box-flow</artifactId>
-			<version>4.0.0-rc2</version>
+<!--		<dependency>-->
+<!--			<groupId>org.vaadin.gatanaso</groupId>-->
+<!--			<artifactId>multiselect-combo-box-flow</artifactId>-->
+<!--			<version>4.0.0-rc2</version>-->
 			<!--
 			<exclusions>
 				<exclusion>
@@ -268,7 +268,7 @@
 				</exclusion>
 			</exclusions>
 			-->
-		</dependency>
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.aksw.jenax</groupId>
 			<artifactId>jenax-facete-impl</artifactId>
