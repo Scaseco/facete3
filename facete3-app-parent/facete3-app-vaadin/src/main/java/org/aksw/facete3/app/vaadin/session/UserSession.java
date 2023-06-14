@@ -39,26 +39,37 @@ public class UserSession implements Serializable {
 
     protected FoafOnlineAccount loadUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        OAuth2AuthenticatedPrincipal principal = (OAuth2AuthenticatedPrincipal) authentication.getPrincipal();
+        Object rawPrincipal = authentication.getPrincipal();
 
         Model model = ModelFactory.createDefaultModel();
+        FoafOnlineAccount result = model.createResource().as(FoafOnlineAccount.class);
+        if (rawPrincipal instanceof OAuth2AuthenticatedPrincipal) {
+            OAuth2AuthenticatedPrincipal principal = (OAuth2AuthenticatedPrincipal)rawPrincipal;
 
-        FoafPerson agent = model.createResource().as(FoafPerson.class)
-            .setFamilyName(principal.getAttribute("family_name"))
-            .setMbox(principal.getAttribute("email"))
-            .setName(principal.getAttribute("username"))
-            .setDepiction(principal.getAttribute("avatar_url"))
-            .asFoafPerson()
-            ;
 
-        FoafOnlineAccount result = model.createResource().as(FoafOnlineAccount.class)
-            .setAccountName(principal.getAttribute("username"))
+            FoafPerson agent = model.createResource().as(FoafPerson.class)
+                .setFamilyName(principal.getAttribute("family_name"))
+                .setMbox(principal.getAttribute("email"))
+                .setName(principal.getAttribute("username"))
+                .setDepiction(principal.getAttribute("avatar_url"))
+                .asFoafPerson()
+                ;
 
-            // Is this a good fit for web_url? Value may be e.g. https://gitlab.com/Aklakan
-            .setAccountServiceHomepage(principal.getAttribute("web_url"))
-            ;
+            result = model.createResource().as(FoafOnlineAccount.class)
+                .setAccountName(principal.getAttribute("username"))
 
-        result.setOwner(agent);
+                // Is this a good fit for web_url? Value may be e.g. https://gitlab.com/Aklakan
+                .setAccountServiceHomepage(principal.getAttribute("web_url"))
+                ;
+            result.setOwner(agent);
+        } else if (rawPrincipal instanceof String) {
+            String principal = (String)rawPrincipal;
+            result.setAccountName(principal);
+        } else if (rawPrincipal == null) {
+            throw new NullPointerException("Principal was null");
+        } else {
+            throw new RuntimeException("Unknown principal type: " + rawPrincipal.getClass());
+        }
 
         return result;
     }

@@ -40,7 +40,8 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
             .authorizeRequests().requestMatchers(ConfigSecurity::isFrameworkInternalRequest).permitAll()
 
             // Restrict access to our application.
-            .and().authorizeRequests().anyRequest().authenticated()
+            .and().authorizeRequests().anyRequest().permitAll()
+            // .and().authorizeRequests().anyRequest().authenticated()
 
             // Not using Spring CSRF here to be able to use plain HTML for the login page
             .and().csrf().disable()

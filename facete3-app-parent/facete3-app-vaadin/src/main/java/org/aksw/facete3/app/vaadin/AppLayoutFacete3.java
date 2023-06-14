@@ -1,10 +1,14 @@
 package org.aksw.facete3.app.vaadin;
 
+import java.util.Optional;
+
 import javax.annotation.security.PermitAll;
 
 import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.aksw.facete3.app.vaadin.session.UserSession;
+import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
+import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.Component;
@@ -103,8 +107,10 @@ public class AppLayoutFacete3 extends AppLayout {
 //        div.setText("Hello " + userSession.getUser().getFirstName() + " " + userSession.getUser().getLastName());
 //        div.getElement().getStyle().set("font-size", "xx-large");
 
-        String accountName = userSession.getUser().getAccountName();
-        String avatarUrl = userSession.getUser().getOwner().getDepiction();
+        Optional<FoafOnlineAccount> user = Optional.ofNullable(userSession.getUser());
+
+        String accountName = user.map(FoafOnlineAccount::getAccountName).orElse("anonymous");
+        String avatarUrl = user.map(FoafOnlineAccount::getOwner).map(FoafAgent::getDepiction).orElse(null);
 
         MenuBar menuBar = new MenuBar();
         menuBar.setOpenOnHover(true);
