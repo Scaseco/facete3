@@ -50,6 +50,7 @@
 					<jvmFlags>
 					      <jvmFlag>-Ddebug=true</jvmFlag>
 					</jvmFlags>
+					<ports><port>8000</port></ports>
 						<mainClass>${mainClass}</mainClass>
 						<!-- <entrypoint>java,-cp,@/app/jib-classpath-file,-Dloader.main=org.aksw.facete3.app.vaadin.MainAppFacete3Vaadin,org.springframework.boot.loader.PropertiesLauncher</entrypoint> -->
 						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
