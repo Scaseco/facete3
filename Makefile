@@ -1,6 +1,6 @@
 CWD = $(shell pwd)
 
-POM = -f sansa-bom/pom.xml
+POM = -f pom.xml
 
 # Maven Clean Install Skip ; skip tests, javadoc, scaladoc, etc
 MS = mvn -DskipTests -Dmaven.javadoc.skip=true -Dskip
