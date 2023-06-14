@@ -24,5 +24,5 @@ vaadin-docker: ## Build vaadin docker image
 	mvn -pl :facete3-pkg-app-docker-web jib:dockerBuild
 
 run-vaadin-docker: ## Run the vaadin docker image
-	docker run -it -p8000:8000 aklakan/facete3-web
+	docker run -it -p8000:8000 --network host aklakan/facete3-web
 
