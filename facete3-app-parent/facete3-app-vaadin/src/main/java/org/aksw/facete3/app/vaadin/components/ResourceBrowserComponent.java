@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
-import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
+import org.aksw.vaadin.common.component.managed.ManagedComponentSimple;
+import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.shared.PrefixMapping;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -28,7 +28,7 @@ public class ResourceBrowserComponent
     extends VerticalLayout
 {
     protected ViewManager viewManager;
-    protected PreconfiguredTabs tabs;
+    protected TabSheet tabs;
     protected Function<? super RDFNode, ? extends String> viewMetadataToLabel;
 
     protected RDFNode activeRdfNode = null;
@@ -44,7 +44,7 @@ public class ResourceBrowserComponent
         this.viewMetadataToLabel = viewMetadataToLabel;
         this.defaultViewFactory = defaultViewFactory;
 
-        tabs = new PreconfiguredTabs();
+        tabs = new TabSheet();
 
 
         Button expand = new Button(new Icon(VaadinIcon.EXPAND_FULL));

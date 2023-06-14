@@ -13,7 +13,6 @@ import org.aksw.commons.path.core.Path;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
-import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
 import org.aksw.jena_sparql_api.collection.observable.GraphChange;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
@@ -27,6 +26,8 @@ import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.util.triple.ModelUtils;
 import org.aksw.jenax.connection.query.QueryExecutionFactoryDataset;
 import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.vaadin.common.component.managed.ManagedComponentSimple;
+import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.aksw.vaadin.component.rdf_term_editor.RdfTermEditor;
 import org.aksw.vaadin.shacl.ShaclTreeGrid;
 import org.apache.jena.graph.Node;
@@ -213,7 +214,7 @@ class DatasetCreatorForm
 }
 
 
-public class DatasetSelectorComponent extends PreconfiguredTabs {
+public class DatasetSelectorComponent extends TabSheet {
 
     public DatasetSelectorComponent() {
         super(new HorizontalLayout());

@@ -4,12 +4,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>facete3-app-vaadin</artifactId>
-	<packaging>${packaging.type}</packaging>
+	<!-- <packaging>${packaging.type}</packaging> -->
+	<packaging>jar</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<packaging.type>jar</packaging.type>
-		<vaadin.version>14.10.0</vaadin.version>
+		<vaadin.version>14.10.1</vaadin.version>
 		<spring.version>5.3.1</spring.version>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
 		<vaadin-jena.version>4.8.0-1-SNAPSHOT</vaadin-jena.version>
@@ -132,6 +133,12 @@
 			<artifactId>spring-web</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
+		<!--https://github.com/GoogleContainerTools/jib/issues/640 -->
+		<!--		<dependency>-->
+		<!--			<groupId>org.apache.tomcat.embed</groupId>-->
+		<!--			<artifactId>tomcat-embed-core</artifactId>-->
+		<!--			<version>9.0.60</version>-->
+		<!--		</dependency>-->
 		<!-- <dependency> -->
 		<!-- <groupId>org.springframework</groupId> -->
 		<!-- <artifactId>spring-framework-bom</artifactId> -->
@@ -232,13 +239,15 @@
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-shacl</artifactId>
 		</dependency>
-		
 		<!-- Used for user session - should go to vaadin-jena utils -->
 		<dependency>
 			<groupId>org.aksw.jenax</groupId>
 			<artifactId>jenax-models-foaf</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>org.aksw.jenax</groupId>
+			<artifactId>jenax-models-table</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-app-shared</artifactId>
@@ -246,7 +255,6 @@
 		<dependency>
 			<groupId>org.vaadin.gatanaso</groupId>
 			<artifactId>multiselect-combo-box-flow</artifactId>
-			<!-- <version>3.0.2</version> -->
 			<version>4.0.0-rc2</version>
 			<!--
 			<exclusions>
@@ -289,6 +297,32 @@
 	<build>
 		<defaultGoal>spring-boot:run</defaultGoal>
 		<plugins>
+			<!-- https://github.com/appreciated/apexcharts-flow/issues/50 -->
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>.</directory>
+							<includes>
+								<include>package.json</include>
+								<include>package-lock.json</include>
+								<include>webpack.config.js</include>
+								<include>webpack.generated.js</include>
+							</includes>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+						<fileset>
+							<directory>./node_modules</directory>
+							<includes>
+								<include>**/**</include>
+							</includes>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -317,20 +351,41 @@
 		</plugins>
 	</build>
 	<profiles>
-		<!-- <profile> <id>production</id> <properties> <vaadin.productionMode>true</vaadin.productionMode> 
-			<packaging.type>war</packaging.type> </properties> <dependencies> <dependency> 
-			<groupId>com.vaadin</groupId> <artifactId>flow-server-production-mode</artifactId> 
-			</dependency> </dependencies> <build> <plugins> <plugin> <groupId>org.springframework.boot</groupId> 
-			<artifactId>spring-boot-maven-plugin</artifactId> <configuration> <jvmArguments>-Dvaadin.productionMode</jvmArguments> 
-			</configuration> </plugin> <plugin> <groupId>com.vaadin</groupId> <artifactId>vaadin-maven-plugin</artifactId> 
-			<version>${vaadin.version}</version> <executions> <execution> <goals> <goal>build-frontend</goal> 
-			</goals> <phase>compile</phase> </execution> </executions> </plugin> <plugin> 
-			<groupId>org.apache.maven.plugins</groupId> <artifactId>maven-war-plugin</artifactId> 
-			<version>3.2.3</version> <configuration> <failOnMissingWebXml>false</failOnMissingWebXml> 
-			</configuration> </plugin> <plugin> <groupId>org.apache.tomcat.maven</groupId> 
-			<artifactId>tomcat7-maven-plugin</artifactId> <version>2.2</version> <configuration> 
-			<server>TomcatServer</server> <path>/facete3</path> </configuration> </plugin> 
-			</plugins> </build> </profile> -->
+		<profile>
+			<id>production</id>
+			<properties>
+				<vaadin.productionMode>true</vaadin.productionMode>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.vaadin</groupId>
+						<artifactId>vaadin-maven-plugin</artifactId>
+						<version>${vaadin.version}</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>build-frontend</goal>
+								</goals>
+								<phase>compile</phase>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<!--			<version>${vaadin.version}</version> <executions> <execution> <goals> <goal>build-frontend</goal> -->
+		<!--			</goals> <phase>compile</phase> </execution> </executions> </plugin> -->
+		<!--		<profile></profile> -->
+		<!--		</configuration> </plugin> <plugin> <groupId>com.vaadin</groupId> <artifactId>vaadin-maven-plugin</artifactId> -->
+		<!--			<version>${vaadin.version}</version> <executions> <execution> <goals> <goal>build-frontend</goal> -->
+		<!--			</goals> <phase>compile</phase> </execution> </executions> </plugin> <plugin> -->
+		<!--			<groupId>org.apache.maven.plugins</groupId> <artifactId>maven-war-plugin</artifactId> -->
+		<!--			<version>3.2.3</version> <configuration> <failOnMissingWebXml>false</failOnMissingWebXml> -->
+		<!--			</configuration> </plugin> <plugin> <groupId>org.apache.tomcat.maven</groupId> -->
+		<!--			<artifactId>tomcat7-maven-plugin</artifactId> <version>2.2</version> <configuration> -->
+		<!--			<server>TomcatServer</server> <path>/facete3</path> </configuration> </plugin> -->
+		<!--			</plugins> </build> </profile> -->
 		<profile>
 			<id>integration-tests</id>
 			<build>

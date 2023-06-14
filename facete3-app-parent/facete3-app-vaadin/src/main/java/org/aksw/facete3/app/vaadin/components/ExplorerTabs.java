@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.aksw.facete3.app.vaadin.plugin.ManagedComponent;
-import org.aksw.facete3.app.vaadin.plugin.ManagedComponentSimple;
+import org.aksw.vaadin.common.component.managed.ManagedComponent;
+import org.aksw.vaadin.common.component.managed.ManagedComponentSimple;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;

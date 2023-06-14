@@ -15,7 +15,7 @@ public class ConfigBestLabel {
     public BestLiteralConfig bestLabelConfig() {
         LiteralPreference preference = new LiteralPreference(
                 Arrays.asList("en", "de", ""),
-                Arrays.asList(RDFS.label.asNode(), Bibframe.title.asNode()),
+                Arrays.asList(RDFS.label.asNode(), Bibframe.title.asNode()), // skos:prefLabel
                 false
         );
 

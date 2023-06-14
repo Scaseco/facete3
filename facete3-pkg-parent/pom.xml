@@ -24,6 +24,7 @@
 
 	<modules>
 		<module>facete3-pkg-docker-app-terminal</module>
+		<module>facete3-pkg-docker-app-web</module>
 		<!-- <module>facete3-pkg-deb-app-terminal</module> -->
 		<!-- <module>rdf-processing-toolkit-pkg-dummy</module> -->
 	</modules>

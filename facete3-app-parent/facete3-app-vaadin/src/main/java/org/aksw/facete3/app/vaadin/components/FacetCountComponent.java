@@ -48,6 +48,7 @@ public class FacetCountComponent extends Grid<FacetCount> {
         grid.asSingleSelect()
                 .addValueChangeListener(this::selectFacetCallback);
         grid.addItemDoubleClickListener(this::addFacetToPathCallback);
+        grid.setPageSize(10000);
 
         HeaderRow filterRow = grid.appendHeaderRow();
         filterRow.getCell(facetColumn).setComponent(getSearchComponent());

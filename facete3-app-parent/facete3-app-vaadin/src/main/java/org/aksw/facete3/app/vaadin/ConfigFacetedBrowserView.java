@@ -97,7 +97,8 @@ public class ConfigFacetedBrowserView {
                 RDFS.label,
                 prefixMapping);
 
-        return new FacetValueCountProvider(facetedQueryConf, labelService);
+        FacetValueCountProvider result = new FacetValueCountProvider(facetedQueryConf, labelService);
+        return result;
     }
 
 

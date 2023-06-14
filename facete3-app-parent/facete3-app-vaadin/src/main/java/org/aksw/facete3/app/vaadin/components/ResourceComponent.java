@@ -33,7 +33,8 @@ public class ResourceComponent extends VerticalLayout {
 
     protected PrefixMapping prefixMapping;
 
-    private Span subject;
+    private Span subjectIdSpan;
+    private Span subjectLabelSpan;
     private RDFNode node;
     private Grid<Row> grid;
     private HashMap<Object,List<Property>> objectToProperty = new HashMap<>();
@@ -83,9 +84,11 @@ public class ResourceComponent extends VerticalLayout {
 
         this.prefixMapping = prefixMapping;
 
-        subject = new Span();
-        add(subject);
+        subjectIdSpan = new Span();
+        add(subjectIdSpan);
 
+        subjectLabelSpan = new Span();
+        add(subjectLabelSpan);
 
         if (enableSummary) {
             summaryArea = new HorizontalLayout();
@@ -201,7 +204,8 @@ public class ResourceComponent extends VerticalLayout {
                 }
             }
 
-            subject.setText("Subject: " + node.toString());
+            subjectIdSpan.setText("Subject: " + node.toString());
+            labelMgr.forHasText(subjectLabelSpan, node.asNode());
         }
         grid.setItems(getRows());
     }

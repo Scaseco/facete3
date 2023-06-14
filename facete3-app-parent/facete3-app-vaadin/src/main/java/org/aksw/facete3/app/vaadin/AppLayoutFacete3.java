@@ -41,11 +41,11 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @CssImport(value = "./styles/flow-component-renderer-styles.css", themeFor = "flow-component-renderer")
 @CssImport(value = "./styles/vaadin-grid-tree-toggle-styles.css", themeFor = "vaadin-grid-tree-toggle")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
-@Theme(value = Lumo.class)
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
+@Theme(value = Lumo.class)
 @PermitAll
 //@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
-public class MainViewFacete3 extends AppLayout {
+public class AppLayoutFacete3 extends AppLayout {
 
     // Ensure Jena plugins are fully loaded before
     // beans are passed to components
@@ -58,7 +58,7 @@ public class MainViewFacete3 extends AppLayout {
 
 
     @Autowired
-    public MainViewFacete3(Config config, UserSession userSession) {
+    public AppLayoutFacete3(Config config, UserSession userSession) {
 //        VaadinSession.getCurrent().setErrorHandler(eh -> {
 //            Notification.show(ExceptionUtils.getRootCauseMessage(eh.getThrowable()));
 //        });

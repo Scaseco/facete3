@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+        <parent>
+                <groupId>org.hobbit</groupId>
+                <artifactId>facete3-pkg-parent</artifactId>
+                <version>1.2.0-SNAPSHOT</version>
+        </parent>
+
+	<artifactId>facete3-pkg-app-docker-web</artifactId>
+	<packaging>jar</packaging>
+	
+	<properties>
+		<mainClass>org.aksw.facete3.app.vaadin.MainAppFacete3Vaadin</mainClass>
+	</properties>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<configuration>
+					<skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<configuration>
+					<to>
+						<image>docker.io/aklakan/facete3-web${archSuffix}</image>
+					</to>
+					<from>
+						<image>${dockerJavaBaseImage}</image>
+					</from>
+					<container>
+					<jvmFlags>
+					      <jvmFlag>-Ddebug=true</jvmFlag>
+					</jvmFlags>
+						<mainClass>${mainClass}</mainClass>
+						<!-- <entrypoint>java,-cp,@/app/jib-classpath-file,-Dloader.main=org.aksw.facete3.app.vaadin.MainAppFacete3Vaadin,org.springframework.boot.loader.PropertiesLauncher</entrypoint> -->
+						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+					</container>
+					<containerizingMode>packaged</containerizingMode>
+					<!-- <format>OCI</format> -->
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>facete3-app-vaadin</artifactId>
+		</dependency>
+	</dependencies>
+</project>
+

@@ -30,6 +30,7 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
     }
 
     private void init() {
+        setPageSize(10000);
 
         setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
 

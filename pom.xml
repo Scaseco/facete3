@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<jena.version>4.8.0-SNAPSHOT</jena.version>
+		<jena.version>4.8.0</jena.version>
 		<jenax.version>4.8.0-3-SNAPSHOT</jenax.version>
 
 		<aksw-commons.version>0.9.6-SNAPSHOT</aksw-commons.version>
@@ -232,6 +232,12 @@
 				<artifactId>facete3-app-shared</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+			<dependency>
+                                <groupId>org.hobbit</groupId>
+                                <artifactId>facete3-app-vaadin</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>
