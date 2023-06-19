@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.components;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
@@ -46,7 +48,9 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
+import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgrImpl;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -81,6 +85,8 @@ import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 import com.vaadin.flow.data.provider.InMemoryDataProvider;
 import com.vaadin.flow.data.provider.Query;
 
+import io.reactivex.rxjava3.core.Flowable;
+
 public class FacetedBrowserView
     extends VerticalLayout {
 
@@ -92,7 +98,10 @@ public class FacetedBrowserView
     protected FacetPathComponent facetPathComponent;
     protected FacetValueCountComponent facetValueCountComponent;
     protected Facete3Wrapper facete3;
-    protected ItemComponent itemComponent;
+    // protected ItemComponent itemComponent;
+
+    protected SparqlGridComponent sparqlGridComponent;
+
     protected Label connectionInfo;
 
 //    protected ResourceComponent resourceComponent;
@@ -218,7 +227,13 @@ public class FacetedBrowserView
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
-        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
+
+        // itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
+
+        // baseConcept
+        sparqlGridComponent = new SparqlGridComponent(query -> baseDataConnection.query(query), ConceptUtils.createSubjectConcept(), labelMgr);
+
+
         resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction, dftViewFactory);
         resourceBrowserComponent.setWidthFull();
         resourceBrowserComponent.setHeightFull();
@@ -335,6 +350,16 @@ public class FacetedBrowserView
         toolbar.add(refreshBtn);
 
 
+        Button toggleLabelsBtn = new Button(VaadinIcon.TEXT_LABEL.create(), ev -> {
+            // LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get());
+            //LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
+
+            //VaadinRdfLabelMgrImpl labelMgr = new VaadinRdfLabelMgrImpl(ls1);
+        });
+        toolbar.add(toggleLabelsBtn);
+
+
+
         Button configBtn = new Button(new Icon(VaadinIcon.COG));
         toolbar.add(configBtn);
 
@@ -404,6 +429,13 @@ public class FacetedBrowserView
 
 
     public void refreshAllNew() {
+
+        if (true) {
+            UnaryRelation baseConcept = facete3.getFacetedQuery().baseConcept();
+            sparqlGridComponent.setBaseConcept(baseConcept);
+            sparqlGridComponent.resetGrid();
+        }
+
         RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
         refreshScope.refreshAll();
     }
@@ -460,7 +492,11 @@ public class FacetedBrowserView
     protected Component getResultsComponent() {
         SplitLayout component = new SplitLayout();
         component.setOrientation(Orientation.HORIZONTAL);
-        component.addToPrimary(itemComponent);
+
+        //component.addToPrimary(itemComponent);
+        component.addToPrimary(sparqlGridComponent);
+
+
         component.addToSecondary(resourceBrowserComponent);
         return component;
     }
