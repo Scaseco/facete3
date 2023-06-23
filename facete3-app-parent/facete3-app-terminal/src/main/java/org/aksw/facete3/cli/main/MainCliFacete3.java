@@ -862,7 +862,7 @@ public class MainCliFacete3 {
             facetValueList.clearItems();
             for(FacetValueCount item : fvcs) {
                 // check whether there is an equals constraint on that value
-                HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().constraints().eq(item.getValue());
+                HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().enterConstraints().eq(item.getValue());
                 boolean checked = tmp.isActive();
 
                 facetValueList.addItem(item, checked);
@@ -1534,7 +1534,7 @@ public class MainCliFacete3 {
             //System.out.println(item);
 
             Node v = item.getValue();
-            HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().constraints().eq(v);
+            HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> tmp = fdn.via(item.getPredicate()).one().enterConstraints().eq(v);
             tmp.setActive(checked);
 
 

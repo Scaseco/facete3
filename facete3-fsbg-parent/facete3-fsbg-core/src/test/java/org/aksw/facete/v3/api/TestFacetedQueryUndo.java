@@ -36,7 +36,7 @@ public class TestFacetedQueryUndo {
 
         ChangeSetUtils.trackChangesInTxn(changeModel, dataModel, model -> {
             FacetedQuery fq = FacetedQueryImpl.create(fqState.inModel(model), conn);
-            fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class.asNode());
+            fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class.asNode());
 
 
             List<?> facets = fq.focus().fwd().facets().exec().toList().blockingGet();

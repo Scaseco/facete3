@@ -40,7 +40,7 @@ public class TestFacetedQueryVariableNamingBug {
     @Test
     public void testToStringConstraintDisjunction() {
         fq.root().fwd("http://www.agtinternational.com/ontologies/IoTCore#valueLiteral").one()
-            .constraints()
+            .enterConstraints()
                 .range(Range.closed(38.47, 69.34)).activate();
         //fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class);
 

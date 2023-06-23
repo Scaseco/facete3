@@ -42,6 +42,7 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.bgp.api.BgpNode;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
+import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
@@ -1043,7 +1044,7 @@ public class TaskGenerator {
             Node o = fc.getValue();
 
             //fn.step(p, isBwd).one().constraints().eq(o);
-            fn.step(p, dir).one().constraints().nodeRange(Range.singleton(ComparableNodeValue.wrap(o))).activate();
+            fn.step(p, dir).one().enterConstraints().nodeRange(Range.singleton(ComparableNodeValue.wrap(o))).activate();
 
             // Pick one of the facet values
 
@@ -1081,7 +1082,7 @@ public class TaskGenerator {
                     .firstElement()
                     .blockingGet();
             if (path != null) {
-                fn.walk(SimplePath.toPropertyPath(path)).constraints().exists().activate();
+                fn.walk(SimplePath.toPropertyPath(path)).enterConstraints().exists().activate();
                 //fn.fwd(node).one().constraints().exists();
 
                 // Pick one of the facet values
@@ -1098,7 +1099,7 @@ public class TaskGenerator {
                     )  && sp.getSteps().size() >= 1 ).toList().blockingGet();
             shuffle(paths, rand);
             if (!paths.isEmpty()) {
-                fn.walk(SimplePath.toPropertyPath(paths.get(0))).constraints().exists().activate();
+                fn.walk(SimplePath.toPropertyPath(paths.get(0))).enterConstraints().exists().activate();
                 //fn.fwd(node).one().constraints().exists();
 
                 // Pick one of the facet values
@@ -1207,13 +1208,13 @@ public class TaskGenerator {
         if (!nodeDoubleMap.isEmpty()) {
             final WeightedSelector<Node> selector = WeightedSelectorImmutable.create(nodeDoubleMap);
             final Node clazz = selector.sample(rand.nextDouble());
-            fn.fwd(RDF.type).one().constraints().eq(clazz).activate();
+            fn.fwd(RDF.type).one().enterConstraints().eq(clazz).activate();
 
             // Pick one of the facet values
             final List<RDFNode> facets = fn.fwd().facets().exclude(RDF.type).randomOrder().pseudoRandom(pseudoRandom).exec().toList().blockingGet();
             if (!facets.isEmpty()) {
                 logger.info("Applying cp4) " + facets.get(0));
-                fn.fwd(facets.get(0).asNode()).one().constraints().exists().activate();
+                fn.fwd(facets.get(0).asNode()).one().enterConstraints().exists().activate();
 
                 result = true;
             }
@@ -1638,9 +1639,9 @@ public class TaskGenerator {
         logger.debug("Pick: " + r);
 
         if (r != null) {
-            if (!r.getKey().root().constraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().values().contains(r.getKey()))
+            if (!r.getKey().root().enterConstraints().listHl().stream().anyMatch(p -> p.mentionedFacetNodes().values().contains(r.getKey()))
                 || allowExisting ) {
-                r.getKey().constraints().nodeRange(r.getValue()).activate();
+                r.getKey().enterConstraints().nodeRange(r.getValue()).activate();
                 result = true;
             }
         }
@@ -1659,9 +1660,9 @@ public class TaskGenerator {
         org.apache.jena.sparql.path.Path pathPattern = null; // TODO: not implemented: // PathParser.parse("(eg:p|^eg:p)*", PrefixMapping.Extended);
 
         Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
-                TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+                TaskGenerator.findExistingNumericConstraints(fn.root().enterConstraints());
         if (!numericConstraints.isEmpty()) {
-            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
+            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().enterConstraints().listHl();
             result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
         } else {
             result = applyNumericCp(fn, pathPattern, 0, 0, false, true, true, true);
@@ -1681,9 +1682,9 @@ public class TaskGenerator {
         boolean result;
 
         Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
-                TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+                TaskGenerator.findExistingNumericConstraints(fn.root().enterConstraints());
         if (!numericConstraints.isEmpty()) {
-            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
+            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().enterConstraints().listHl();
             result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
         } else {
             result = applyNumericCp(fn, pathPattern, 1, 3, false, true, true, true);
@@ -1704,9 +1705,9 @@ public class TaskGenerator {
 //
         boolean result = false;
         Map<? extends HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
-                TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+                TaskGenerator.findExistingNumericConstraints(fn.root().enterConstraints());
         if (numericConstraints.size() >= 2 && rand.nextInt(10) > 2) {
-            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
+            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().enterConstraints().listHl();
             result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
         } else {
             result = applyNumericCp(fn, null, 0, 3, false, true, true, false);
@@ -1724,9 +1725,9 @@ public class TaskGenerator {
 
         boolean result = false;
         Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
-                TaskGenerator.findExistingNumericConstraints(fn.root().constraints());
+                TaskGenerator.findExistingNumericConstraints(fn.root().enterConstraints());
         if (numericConstraints.size() >= 1 && rand.nextInt(10) >= 2) {
-            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().constraints().listHl();
+            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.root().enterConstraints().listHl();
             result = modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, pickLowerBound, pickUpperBound);
 
         } else {
@@ -1844,7 +1845,7 @@ public class TaskGenerator {
                 .timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
                 .blockingGet();
         if (clazzNode != null) {
-            typeNode.constraints().eq(clazzNode).activate();
+            typeNode.enterConstraints().eq(clazzNode).activate();
             result = true;
         }
         return result;
@@ -1966,7 +1967,7 @@ public class TaskGenerator {
                 .blockingGet();
         //System.out.println(objects);
         if (!objects.isEmpty()) {
-            walk.constraints().eq(objects.get(0)).activate();
+            walk.enterConstraints().eq(objects.get(0)).activate();
             result = true;
         }
         return result;
@@ -1991,7 +1992,7 @@ public class TaskGenerator {
         logger.debug("Pick: " + r);
 
         if (r != null) {
-            r.getKey().constraints().nodeRange(r.getValue()).activate();
+            r.getKey().enterConstraints().nodeRange(r.getValue()).activate();
             result = true;
         }
 
@@ -2086,19 +2087,20 @@ public class TaskGenerator {
                 result = false;
             } else {
                 result = true;
-                facetNode.constraints().nodeRange(Range.atMost(ComparableNodeValue.wrap(oldUpper))).activate();
+                facetNode.enterConstraints().nodeRange(Range.atMost(ComparableNodeValue.wrap(oldUpper))).activate();
             }
         } else {
             if (oldLower == null) {
                 result = false;
             } else {
                 result = true;
-                facetNode.constraints().nodeRange(Range.atLeast(ComparableNodeValue.wrap(oldLower))).activate();
+                facetNode.enterConstraints().nodeRange(Range.atLeast(ComparableNodeValue.wrap(oldLower))).activate();
             }
         }
         if (result) {
             //System.out.println(">>>>"+facetNodeRangeEntry);
-            constraint.state().removeProperties();
+            // constraint.state().removeProperties();
+            ((FacetConstraintImpl)constraint.state()).removeProperties();
         } else {
             hlFacetConstraints.add(constraint);
         }
@@ -2156,16 +2158,16 @@ public class TaskGenerator {
                     newUpper = tmp;
                 }
                 if (pickConstant || NodeValue.compare(NodeValue.makeNode(newLower), NodeValue.makeNode(newUpper)) == Expr.CMP_EQUAL) {
-                    facetNode.constraints().eq(newLower).activate();
+                    facetNode.enterConstraints().eq(newLower).activate();
                     result = true;
                 } else if (pickUpperBound && pickLowerBound){
-                    facetNode.constraints().nodeRange(Range.closed(ComparableNodeValue.wrap(newLower), ComparableNodeValue.wrap(newUpper))).activate();
+                    facetNode.enterConstraints().nodeRange(Range.closed(ComparableNodeValue.wrap(newLower), ComparableNodeValue.wrap(newUpper))).activate();
                     result = true;
                 } else if (pickLowerBound) {
-                    facetNode.constraints().nodeRange(Range.atLeast(ComparableNodeValue.wrap(newLower))).activate();
+                    facetNode.enterConstraints().nodeRange(Range.atLeast(ComparableNodeValue.wrap(newLower))).activate();
                     result = true;
                 } else if (pickUpperBound) {
-                    facetNode.constraints().nodeRange(Range.atMost(ComparableNodeValue.wrap(newUpper))).activate();
+                    facetNode.enterConstraints().nodeRange(Range.atMost(ComparableNodeValue.wrap(newUpper))).activate();
                     result = true;
                 } else {
                     result = false;
@@ -2174,7 +2176,8 @@ public class TaskGenerator {
         }
         if (result) {
             //System.out.println(">>>>"+facetNodeRangeEntry);
-            constraint.state().removeProperties();
+            // FIXME This code should not depend on RDF
+            ((FacetConstraintImpl)constraint.state()).removeProperties();
         } else {
             //hlFacetConstraints.add(constraint);
             constraint.activate();
@@ -2227,7 +2230,7 @@ public class TaskGenerator {
             final WeightedSelector<Node> subClassSelector = WeightedSelectorImmutable
                     .create(fn2_av, ge -> ge.getValue(), gw -> 1 + log(gw.getFocusCount().getCount()));
             final Node sampleSubClass = subClassSelector.sample(getRandom().nextDouble());
-            fn.constraints().eq(sampleSubClass).activate();
+            fn.enterConstraints().eq(sampleSubClass).activate();
             result = true;
         }
         if (!result) {
@@ -2243,7 +2246,7 @@ public class TaskGenerator {
 
     public boolean modifyClassConstraintSubClassRandom(FacetNode fn) {
         boolean result = false;
-        final Map<HLFacetConstraint<?>, List<Node>> existingClassConstraints = findExistingClassConstraints(fn.constraints());
+        final Map<HLFacetConstraint<?>, List<Node>> existingClassConstraints = findExistingClassConstraints(fn.enterConstraints());
         final List<Entry<HLFacetConstraint<?>, List<Node>>> classConstraintList = new ArrayList<>(existingClassConstraints.entrySet());
         shuffle(classConstraintList, getRandom());
 
@@ -2253,7 +2256,7 @@ public class TaskGenerator {
             final List<Node> constraintClass = constraintListEntry.getValue();
 
             final HLFacetConstraint<?> hlFacetConstraint = constraintListEntry.getKey();
-            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.constraints().listHl();
+            final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fn.enterConstraints().listHl();
             result = modifyClassConstraintRandomSubClassValue(hlFacetConstraints, constraintClass, hlFacetConstraint);
         }
         return result;

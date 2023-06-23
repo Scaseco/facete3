@@ -24,9 +24,9 @@ public class TestFacetedQueryAbsentFacetValues {
 				.create();
 
 //		fq.baseConcept(Concept.parse("?s | ?s a eg:Foobar", PrefixMapping.Extended));
-		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City").activate();
-		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/Country").activate();
-		fq.focus().fwd("http://www.example.org/contains").one().constraints().absent().activate();
+		fq.focus().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/City").activate();
+		fq.focus().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/Country").activate();
+		fq.focus().fwd("http://www.example.org/contains").one().enterConstraints().absent().activate();
 
 		// We are expecting 2 facet values for the type property:
 		// [Germany, Leipzig]
@@ -55,8 +55,8 @@ public class TestFacetedQueryAbsentFacetValues {
 					.configDataConnection().setSource(RDFDataMgr.loadModel(TestFacetedQuery2.DS_S_L_IN_G)).end()
 				.create();
 
-		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City").activate();
-		fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/Country").activate();
+		fq.focus().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/City").activate();
+		fq.focus().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/Country").activate();
 		//fq.focus().fwd("http://www.example.org/contains").one().constraints().absent().activate();
 
 		// We are expecting 2 facet values for the contains property:
@@ -78,11 +78,11 @@ public class TestFacetedQueryAbsentFacetValues {
 					.configDataConnection().defaultModel().end()
 				.create();
 
-		fq.focus().fwd(RDF.type).one().constraints().eq(OWL.Class).activate();
-		fq.focus().fwd(RDFS.label).one().constraints().eqStr("foo").activate();
-		fq.focus().fwd(RDFS.label).one().constraints().exists().activate();
-		fq.focus().fwd(RDFS.label).one().constraints().absent().activate();
-		fq.focus().fwd(RDFS.label).one().fwd(RDFS.comment).one().constraints().eqStr("foo").activate();
+		fq.focus().fwd(RDF.type).one().enterConstraints().eq(OWL.Class).activate();
+		fq.focus().fwd(RDFS.label).one().enterConstraints().eqStr("foo").activate();
+		fq.focus().fwd(RDFS.label).one().enterConstraints().exists().activate();
+		fq.focus().fwd(RDFS.label).one().enterConstraints().absent().activate();
+		fq.focus().fwd(RDFS.label).one().fwd(RDFS.comment).one().enterConstraints().eqStr("foo").activate();
 
 		
 		// TODO Absence constraints on the focus should be ignored, and it seems this is working
@@ -126,7 +126,7 @@ public class TestFacetedQueryAbsentFacetValues {
 //		System.out.println(fq.focus().availableValues().toConstructQuery());
 //
 		FacetDirNode facetDirNode = fq.root().fwd();
-		facetDirNode.via(RDFS.label).one().constraints().eqStr("test").activate();
+		facetDirNode.via(RDFS.label).one().enterConstraints().eqStr("test").activate();
 		System.out.println("" + facetDirNode.facetValueCountsWithAbsent(true).toConstructQuery());
 //		
 //		System.out.println(str);

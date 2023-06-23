@@ -156,7 +156,7 @@ public class TestFacetedQuery2 {
         //final FacetNode one = fq.root().fwd("http://www.example.org/inhabitants").one();
         fq.focus(one);
 
-        fq.root().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
+        fq.root().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/City");
         //final List<FacetValueCount> facetValueCounts = fq.root().fwd().facetValueCounts().only(RDFS.label).exec().toList().blockingGet();
         final Map<Node, Long> facetValueCounts = fq.root().fwd().facetValueCounts().only("http://www.example.org/inhabitants")
                 .exec()
@@ -178,11 +178,11 @@ public class TestFacetedQuery2 {
     public void testFacetConstraintAccess() {
         load(DS_S_2CTY_4P);
         fq.root();
-        fq.focus().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City");
+        fq.focus().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/City");
 
         System.out.println("FROM CONSTRAINT: " + fq.root().fwd().facetValueCounts().only(RDF.type).exec().toList().blockingGet());
 
-        for (HLFacetConstraint<?> fc : fq.focus().fwd(RDF.type).one().constraints().listHl()) {
+        for (HLFacetConstraint<?> fc : fq.focus().fwd(RDF.type).one().enterConstraints().listHl()) {
             Collection<FacetNode> fns = fc.mentionedFacetNodes().values();
             System.out.println("GOT MENTIONED: " + fns.size());
             for (FacetNode fn : fns) {
@@ -280,7 +280,7 @@ public class TestFacetedQuery2 {
             final boolean c = taskGenerator.applyCp14(node);
             final String qp = getQueryPattern(node);
             solutions.assertSolution(qp);
-            System.out.println(">>>" + TaskGenerator.findExistingNumericConstraints(node.constraints()));
+            System.out.println(">>>" + TaskGenerator.findExistingNumericConstraints(node.enterConstraints()));
             changeTracker.discardChanges();
         }
         solutions.assertAllSeen();
@@ -468,15 +468,15 @@ public class TestFacetedQuery2 {
         System.out.println("Pick: " + r);
 
         if (r != null) {
-            r.getKey().constraints().nodeRange(r.getValue()).activate();
+            r.getKey().enterConstraints().nodeRange(r.getValue()).activate();
         }
 
         System.out.println(node);
 
-        final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fq.root().constraints().listHl();
+        final Collection<? extends HLFacetConstraint<?>> hlFacetConstraints = fq.root().enterConstraints().listHl();
         System.out.println(hlFacetConstraints);
         Map<HLFacetConstraint<?>, Map<Character, Node>> numericConstraints =
-                TaskGenerator.findExistingNumericConstraints(fq.root().constraints());
+                TaskGenerator.findExistingNumericConstraints(fq.root().enterConstraints());
 
         System.out.println(">>>" + numericConstraints);
         if (!numericConstraints.isEmpty()) {
@@ -614,7 +614,7 @@ public class TestFacetedQuery2 {
 
         {
             final Resource world = ResourceFactory.createResource(PLACES_NS + "World");
-            final FacetNode fn = node.fwd(partOf).one().fwd(RDF.type).one().constraints().eq(world).activate().end();
+            final FacetNode fn = node.fwd(partOf).one().fwd(RDF.type).one().enterConstraints().eq(world).activate().end();
         }
 
 
@@ -635,7 +635,7 @@ public class TestFacetedQuery2 {
         //taskGenerator.applyCp12(node);
         System.out.println(getQueryPattern(node));
 
-        final Map<HLFacetConstraint<?>, List<Node>> existingConstraints = TaskGenerator.findExistingEqConstraintsOfType(node.constraints(), partOf);
+        final Map<HLFacetConstraint<?>, List<Node>> existingConstraints = TaskGenerator.findExistingEqConstraintsOfType(node.enterConstraints(), partOf);
 
         System.out.println(existingConstraints);
     }
@@ -796,7 +796,7 @@ public class TestFacetedQuery2 {
         final FacetNode node = fq.root()
                 .fwd("http://www.example.org/population")
                 .one()
-                .constraints()
+                .enterConstraints()
 //				.gt(NodeValue.makeInteger(50000).asNode())
                     .nodeRange(Range.closed(
                         ComparableNodeValue.wrap(NodeValue.makeInteger(50000).asNode()),
@@ -819,7 +819,7 @@ public class TestFacetedQuery2 {
         //
         load(DS_S_L_IN_G);
         final DataQuery<FacetCount> facetCountDataQuery = fq.root()
-                .constraints()
+                .enterConstraints()
                     .eqIri("http://www.example.org/Leipzig").activate()
                     .eqIri("http://www.example.org/Germany").activate()
                 .end()

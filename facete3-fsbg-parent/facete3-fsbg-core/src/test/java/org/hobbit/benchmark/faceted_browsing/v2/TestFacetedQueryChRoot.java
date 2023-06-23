@@ -24,7 +24,7 @@ public class TestFacetedQueryChRoot {
 
         FacetNode distributionFn = fq.root().fwd(DCAT.distribution).one();
 
-        fq.root().fwd(RDF.type).one().constraints().eq(DCAT.Dataset).activate();
+        fq.root().fwd(RDF.type).one().enterConstraints().eq(DCAT.Dataset).activate();
 
 //		System.out.println(distributionFn.availableValues().toConstructQuery());
 
@@ -95,7 +95,7 @@ public class TestFacetedQueryChRoot {
 
         FacetNode root = fq.root();
         FacetNode s = root.fwd(RDF.type).one();
-        FacetNode y = s.bwd(RDF.type).one().constraints().exists().activate().end();
+        FacetNode y = s.bwd(RDF.type).one().enterConstraints().exists().activate().end();
 
         s.chRoot();
 

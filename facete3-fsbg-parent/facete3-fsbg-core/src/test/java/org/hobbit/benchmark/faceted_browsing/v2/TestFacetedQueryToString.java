@@ -45,8 +45,8 @@ public class TestFacetedQueryToString {
 	 */
 	@Test
 	public void testToStringConstraintDisjunction() {
-		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
-		fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class);
+		fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class);
+		fq.root().fwd(RDF.type).one().enterConstraints().eq(RDFS.Class);
 
 		// FacetNode
 		String facetNodeStr = "" + fq.root().fwd(RDF.type).one().fwd(RDFS.label).one();
@@ -58,11 +58,11 @@ public class TestFacetedQueryToString {
 		
 
 		// HLConstraint
-		String constraintStr = "" + fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
+		String constraintStr = "" + fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class);
 		System.out.println("ConstraintStr: " + constraintStr);
 
 		// Constraint
-		String constraintNodeStr = "" + fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class).state();
+		String constraintNodeStr = "" + fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class).state();
 		System.out.println("ConstraintNodeStr: " + constraintNodeStr);
 
 		//System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());

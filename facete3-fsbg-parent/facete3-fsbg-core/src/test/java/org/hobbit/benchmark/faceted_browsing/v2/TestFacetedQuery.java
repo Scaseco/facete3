@@ -57,7 +57,7 @@ public class TestFacetedQuery {
         fq = FacetedQueryImpl.create(facetedQuery, conn);
 
         List<FacetCount> facetCounts = fq
-                .root().fwd(RDF.type).one().constraints().eqIri("http://www.example.org/City").activate().end()
+                .root().fwd(RDF.type).one().enterConstraints().eqIri("http://www.example.org/City").activate().end()
                 .root().fwd()
                     .facetCounts().exclude(RDF.type).exec().toList().blockingGet();
 
@@ -73,8 +73,8 @@ public class TestFacetedQuery {
      */
     @Test
     public void testConstraintDisjunction() {
-        fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class).activate();
-        fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class).activate();
+        fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class).activate();
+        fq.root().fwd(RDF.type).one().enterConstraints().eq(RDFS.Class).activate();
 
         System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 
@@ -91,10 +91,10 @@ public class TestFacetedQuery {
 
     @Test
     public void testMultiDimensionalConstraints() {
-        fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
+        fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class);
         System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 
-        fq.root().fwd(RDFS.label).one().constraints().eqStr("ThingA");
+        fq.root().fwd(RDFS.label).one().enterConstraints().eqStr("ThingA");
         System.out.println("Label Available values: " + fq.root().fwd(RDFS.label).one().availableValues().exec().toList().blockingGet());
     }
 
@@ -105,7 +105,7 @@ public class TestFacetedQuery {
                 // -- Faceted Browsing API
                 fq.root()
                 .fwd(RDF.type).one()
-                    .constraints()
+                    .enterConstraints()
 //					.range(Range.atLeast(0)).activate()
                         .eq(OWL.Class).activate()
                     .end()
@@ -144,10 +144,10 @@ public class TestFacetedQuery {
 
     @Test
     public void testNegatedFacetValues() {
-        fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
+        fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class);
         System.out.println("Available values: " + fq.root().availableValues().exec().toList().blockingGet());
 
-        fq.root().fwd(RDFS.label).one().constraints().eqStr("ThingA");
+        fq.root().fwd(RDFS.label).one().enterConstraints().eqStr("ThingA");
         System.out.println("Label Available values: " + fq.root().fwd(RDFS.label).one().availableValues().exec().toList().blockingGet());
 
 
@@ -165,7 +165,7 @@ public class TestFacetedQuery {
     @Test
     public void testFacetValueApi() {
 
-        fq.focus().fwd(RDF.type).one().constraints().eq(OWL.Class).activate();
+        fq.focus().fwd(RDF.type).one().enterConstraints().eq(OWL.Class).activate();
 
         System.out.println("Got values: " + fq.focus().availableValues().exec().toList().blockingGet());
         System.out.println("Facet values of these values: " + fq.focus().fwd().facetValueCounts().exec().toList().blockingGet());

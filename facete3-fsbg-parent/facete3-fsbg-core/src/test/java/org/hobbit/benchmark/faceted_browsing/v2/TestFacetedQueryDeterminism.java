@@ -47,8 +47,8 @@ public class TestFacetedQueryDeterminism {
 	 */
 	@Test
 	public void testDeterminism() {
-		fq.root().fwd(RDF.type).one().constraints().eq(OWL.Class);
-		fq.root().fwd(RDF.type).one().constraints().eq(RDFS.Class);
+		fq.root().fwd(RDF.type).one().enterConstraints().eq(OWL.Class);
+		fq.root().fwd(RDF.type).one().enterConstraints().eq(RDFS.Class);
 		
 		List<?> before = null;
 		for(int i = 0; i < 10; ++i) {

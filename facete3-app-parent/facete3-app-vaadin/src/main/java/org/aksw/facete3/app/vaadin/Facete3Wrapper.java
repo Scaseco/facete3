@@ -167,7 +167,7 @@ public class Facete3Wrapper {
             FacetValueCount facetValueCount) {
         return getFacetDirNode().via(facetValueCount.getPredicate())
                 .one()
-                .constraints()
+                .enterConstraints()
                 .eq(facetValueCount.getValue());
     }
 
