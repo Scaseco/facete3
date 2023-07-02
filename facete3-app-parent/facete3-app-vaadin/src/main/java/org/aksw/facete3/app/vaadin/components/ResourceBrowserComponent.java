@@ -3,9 +3,9 @@ package org.aksw.facete3.app.vaadin.components;
 import java.util.List;
 import java.util.function.Function;
 
-import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
+import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.vaadin.common.component.managed.ManagedComponentSimple;
 import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.apache.jena.ext.com.google.common.collect.Iterables;

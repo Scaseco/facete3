@@ -9,13 +9,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.facete3.app.shared.viewselector.EntityClassifier;
-import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRxBuilder;
 import org.aksw.jena_sparql_api.rx.entity.model.AttributeGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
+import org.aksw.jenax.arq.datashape.viewselector.EntityClassifier;
+import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.rx.ListServiceEntityQuery;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;

@@ -13,14 +13,14 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
-import org.aksw.facete3.app.shared.viewselector.ViewTemplateImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
+import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
+import org.aksw.jenax.arq.datashape.viewselector.ViewTemplateImpl;
 import org.aksw.jenax.arq.util.expr.ExprUtils;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;

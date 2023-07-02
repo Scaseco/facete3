@@ -3,14 +3,14 @@ package org.aksw.facete3.app.vaadin.plugin.view;
 import java.util.Collections;
 import java.util.List;
 
-import org.aksw.facete3.app.shared.viewselector.ViewTemplate;
-import org.aksw.facete3.app.shared.viewselector.ViewTemplateImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
+import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
+import org.aksw.jenax.arq.datashape.viewselector.ViewTemplateImpl;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
