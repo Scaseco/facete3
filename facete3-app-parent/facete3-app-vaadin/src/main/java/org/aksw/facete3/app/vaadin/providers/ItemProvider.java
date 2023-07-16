@@ -11,8 +11,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import com.vaadin.flow.data.provider.Query;
 
 public class ItemProvider extends FacetProvider<RDFNode> {
-
-    private static final long serialVersionUID = 587055871703757617L;
+    private static final long serialVersionUID = 1;
 
     public ItemProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
         super(facete3, labelService);
@@ -30,5 +29,4 @@ public class ItemProvider extends FacetProvider<RDFNode> {
     protected Function<? super RDFNode, ? extends Node> getNodeForLabelFunction() {
       return RDFNode::asNode;
     }
-
 }

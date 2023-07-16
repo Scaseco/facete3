@@ -27,6 +27,8 @@ import software.xdev.vaadin.maps.leaflet.flow.LMap;
 public class ResourceBrowserComponent
     extends VerticalLayout
 {
+    private static final long serialVersionUID = 1L;
+
     protected ViewManager viewManager;
     protected TabSheet tabs;
     protected Function<? super RDFNode, ? extends String> viewMetadataToLabel;

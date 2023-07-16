@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.history.History;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.dataaccess.LabelUtils;
@@ -18,9 +19,11 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.shared.PrefixMapping;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -39,6 +42,11 @@ public class ResourceComponent extends VerticalLayout {
     private Grid<Row> grid;
     private HashMap<Object,List<Property>> objectToProperty = new HashMap<>();
 
+    private Button backBtn = new Button(VaadinIcon.ARROW_LEFT.create());
+    private Button forwardBtn = new Button(VaadinIcon.ARROW_RIGHT.create());
+
+    private History history = new History();
+
     protected VaadinRdfLabelMgr labelMgr;
 
     protected boolean enableSummary = false;
@@ -49,8 +57,10 @@ public class ResourceComponent extends VerticalLayout {
     protected HorizontalLayout summaryArea = null;
 
     public void setNode(RDFNode node) {
-        this.node = node;
-        refesh();
+        history.addMemento(() -> {
+            this.node = node;
+            refesh();
+        });
     }
 
     public class Row {
@@ -84,6 +94,15 @@ public class ResourceComponent extends VerticalLayout {
 
         this.prefixMapping = prefixMapping;
 
+        HorizontalLayout controlPane = new HorizontalLayout();
+        controlPane.add(backBtn);
+        controlPane.add(forwardBtn);
+
+        add(controlPane);
+
+        backBtn.addClickListener(ev -> history.doBackward());
+        forwardBtn.addClickListener(ev -> history.doFoward());
+
         subjectIdSpan = new Span();
         add(subjectIdSpan);
 
@@ -101,8 +120,10 @@ public class ResourceComponent extends VerticalLayout {
         grid = new Grid<>(Row.class);
         grid.getClassNames().add("compact");
 
+        boolean asExternalLink = false;
+
         grid.setItems(getRows());
-        add(new Span("Paper Data"));
+        // add(new Span("Paper Data"));
         //add(new ComponentRenderer<>(paper -> {
         grid.getColumns()
                 .forEach(grid::removeColumn);
@@ -110,12 +131,20 @@ public class ResourceComponent extends VerticalLayout {
             Component r;
             Property p = row.getPredicate();
             if (p != null) {
-                Anchor anchor = new Anchor();
-                labelMgr.forHasText(anchor, p.asNode());
-                // anchor.setText(toDisplayString(p));
-                anchor.setHref(row.getPredicate().getURI());
-                anchor.setTarget("_blank");
-                r = anchor;
+                Node node = p.asNode();
+                if (asExternalLink) {
+                    Anchor anchor = new Anchor();
+                    labelMgr.forHasText(anchor, node);
+                    // anchor.setText(toDisplayString(p));
+                    anchor.setHref(node.getURI());
+                    anchor.setTarget("_blank");
+                    r = anchor;
+                } else {
+                    Span span = new Span();
+                    labelMgr.forHasText(span, p.asNode());
+                    span.addClickListener(ev -> setNode(p));
+                    r = span;
+                }
             } else {
                 r = new Span("");
             }
@@ -127,15 +156,25 @@ public class ResourceComponent extends VerticalLayout {
         grid.addColumn(new ComponentRenderer<>(row -> {
             Component r;
             String displayStr = toDisplayString(row.getObject());
-            if (row.getObject().isResource()) {
-                Anchor anchor = new Anchor();
-                anchor.setText(displayStr);
-                    // anchor.setText(toDisplayString(row.getObject()));
-                    labelMgr.forHasText(anchor, row.getObject().asNode());
+            RDFNode o = row.getObject();
+            if (o.isResource()) {
 
-                    anchor.setHref(row.getObject().toString());
-                    anchor.setTarget("_blank");
-                r = anchor;
+                Node node = o.asNode();
+                if (asExternalLink) {
+                    Anchor anchor = new Anchor();
+                    anchor.setText(displayStr);
+                        // anchor.setText(toDisplayString(row.getObject()));
+                        labelMgr.forHasText(anchor, node);
+
+                        anchor.setHref(o.toString());
+                        anchor.setTarget("_blank");
+                        r = anchor;
+                } else {
+                    Span span = new Span();
+                    labelMgr.forHasText(span, node);
+                    span.addClickListener(ev -> setNode(o));
+                    r = span;
+                }
             }
             else {
                 Span span = new Span(displayStr);
@@ -192,6 +231,9 @@ public class ResourceComponent extends VerticalLayout {
     }
 
     public void refesh() {
+        backBtn.setEnabled(history.canDoBackward());
+        forwardBtn.setEnabled(history.canDoForward());
+
         if (node != null) {
 
             if (enableSummary && summaryArea != null) {

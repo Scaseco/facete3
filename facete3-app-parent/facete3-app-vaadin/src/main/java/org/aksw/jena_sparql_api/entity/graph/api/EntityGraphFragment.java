@@ -8,7 +8,7 @@ import com.google.common.collect.Multimap;
 
 /**
  * An entity graph fragment corresponds to a set of triple patterns with a designated root.
- * The predicates of these triple patterns may by variables.
+ * The predicates of these triple patterns may be variables.
  * A couple comprised of a sparql relation pattern and a
  * corresponding entity template that maps the bindings to triples.
  * The entity template must designate exactly one node as the root node.

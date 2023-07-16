@@ -17,6 +17,7 @@ import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jenax.arq.datashape.viewselector.EntityClassifier;
 import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.query.QueryExecutionFactoryQuery;
 import org.aksw.jenax.dataaccess.rx.ListServiceEntityQuery;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -28,7 +29,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 
 import com.vaadin.flow.component.Component;
@@ -45,11 +45,11 @@ public class ViewManagerImpl
 {
     protected Map<Node, ViewFactory> viewFactories = new LinkedHashMap<>();
 
-    protected SparqlQueryConnection conn;
+    protected QueryExecutionFactoryQuery qef;
 
-    public ViewManagerImpl(SparqlQueryConnection conn) {
+    public ViewManagerImpl(QueryExecutionFactoryQuery qef) {
         super();
-        this.conn = conn;
+        this.qef = qef;
     }
 
 
@@ -110,7 +110,7 @@ public class ViewManagerImpl
         AttributeGraphFragment attrPart = new AttributeGraphFragment();
         attrPart.getMandatoryJoins().add(new GraphPartitionJoin(entityGraphFragment));
 
-        ListServiceEntityQuery result = new ListServiceEntityQuery(conn::query, attrPart);
+        ListServiceEntityQuery result = new ListServiceEntityQuery(qef, attrPart);
         return result;
     }
 
@@ -191,15 +191,15 @@ public class ViewManagerImpl
         return result;
     }
 
-    public SparqlQueryConnection getConnection() {
-        return conn;
+    public QueryExecutionFactoryQuery getConnection() {
+        return qef;
     }
 
 
     public Map<Node, Resource> fetchData(Collection<Node> nodes, ViewFactory viewFactory) {
         EntityQueryImpl viewEntityQuery = viewFactory.getViewTemplate().getEntityQuery();
 
-        Map<Node, RDFNode> tmp = fetchData(conn, nodes, viewEntityQuery);
+        Map<Node, RDFNode> tmp = fetchData(qef, nodes, viewEntityQuery);
 
         // The RDFNode must be a resource otherwise an exception is raised
         // Resource result = tmp == null ? null : tmp.asResource();
@@ -209,7 +209,7 @@ public class ViewManagerImpl
 
 
 
-    public static Map<Node, RDFNode> fetchData(SparqlQueryConnection conn, Collection<Node> nodes, EntityQueryImpl viewEntityQuery) {
+    public static Map<Node, RDFNode> fetchData(QueryExecutionFactoryQuery qef, Collection<Node> nodes, EntityQueryImpl viewEntityQuery) {
 
 
         Var entityVar = Vars.s;
@@ -221,7 +221,7 @@ public class ViewManagerImpl
 
 
         List<RDFNode> entities = EntityQueryRxBuilder.create()
-                    .setQueryExecutionFactory(conn).setQuery(entityQuery)
+                    .setQueryExecutionFactory(qef).setQuery(entityQuery)
                     .build()
             .toList().blockingGet();
 

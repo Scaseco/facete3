@@ -182,9 +182,6 @@ public class ResourceTraversals {
         Node rootShape = NodeFactory.createURI("http://data.europa.eu/r5r#Catalog_Shape");
         UnaryRelation rootRel = Concept.createNodes(rootShape);
 
-
-
-
         RDFConnection conn = RDFConnectionFactory.connect(m);
 
         Relation shaclRelation = createShaclRelation();

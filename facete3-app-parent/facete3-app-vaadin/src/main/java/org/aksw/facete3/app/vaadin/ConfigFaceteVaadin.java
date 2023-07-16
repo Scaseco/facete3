@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties("facete3")
-public class Config {
+public class ConfigFaceteVaadin {
 
     protected Property alternativeLabelProperty;
 

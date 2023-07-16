@@ -3,7 +3,6 @@ package org.aksw.facete3.app.vaadin.components;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,7 +15,7 @@ import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
-import org.aksw.facete3.app.vaadin.Config;
+import org.aksw.facete3.app.vaadin.ConfigFaceteVaadin;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
@@ -27,7 +26,6 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
@@ -38,6 +36,7 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
+import org.aksw.jena_sparql_api.vaadin.util.VaadinStyleUtils;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
@@ -50,7 +49,7 @@ import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgrImpl;
+import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -76,6 +75,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -84,8 +84,6 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
 import com.vaadin.flow.data.provider.InMemoryDataProvider;
 import com.vaadin.flow.data.provider.Query;
-
-import io.reactivex.rxjava3.core.Flowable;
 
 public class FacetedBrowserView
     extends VerticalLayout {
@@ -97,8 +95,9 @@ public class FacetedBrowserView
     protected FacetCountComponent facetCountComponent;
     protected FacetPathComponent facetPathComponent;
     protected FacetValueCountComponent facetValueCountComponent;
+
     protected Facete3Wrapper facete3;
-    // protected ItemComponent itemComponent;
+    protected ItemComponent itemComponent;
 
     protected SparqlGridComponent sparqlGridComponent;
 
@@ -139,7 +138,7 @@ public class FacetedBrowserView
             FacetCountProvider facetCountProvider,
             FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
-            Config config,
+            ConfigFaceteVaadin config,
             ViewManager viewManagerFull,
             ViewManager viewManagerDetails,
             BestLiteralConfig bestLabelConfig,
@@ -228,7 +227,7 @@ public class FacetedBrowserView
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
         facetPathComponent = new FacetPathComponent(this, facete3, labelService);
 
-        // itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
+        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
 
         // baseConcept
         sparqlGridComponent = new SparqlGridComponent(query -> baseDataConnection.query(query), ConceptUtils.createSubjectConcept(), labelMgr);
@@ -475,26 +474,48 @@ public class FacetedBrowserView
     }
 
     protected Component getFacetComponent() {
-        SplitLayout facetComponent = new SplitLayout();
-        facetComponent.setSizeFull();
-        facetComponent.setOrientation(Orientation.VERTICAL);
-        facetComponent.addToPrimary(facetCountComponent);
-        facetComponent.addToSecondary(facetValueCountComponent);
-        VerticalLayout component = new VerticalLayout();
-        component.add(facetPathComponent);
-//        component.add(constraintsComponent);
-        component.add(facetComponent);
+        // Generic facets
+        // SplitLayout facetComponent = new SplitLayout();
+        VerticalLayout facetComponent = new VerticalLayout();
 
-        facetComponent.setSplitterPosition(20);
-        return component;
+        // facetComponent.setWidthFull();
+        //facetComponent.setHeight("500px");
+//        facetComponent.setSizeFull();
+//        facetComponent.setOrientation(Orientation.VERTICAL);
+//        facetComponent.addToPrimary(facetCountComponent);
+//        facetComponent.addToSecondary(facetValueCountComponent);
+
+        VaadinStyleUtils.setResizeVertical(facetCountComponent.getStyle());
+        VaadinStyleUtils.setResizeVertical(facetValueCountComponent.getStyle());
+
+        facetComponent.add(facetPathComponent);
+        facetComponent.add(facetCountComponent);
+        facetComponent.add(facetValueCountComponent);
+
+        //VerticalLayout component = new VerticalLayout();
+        // component.add(facetPathComponent);
+//        component.add(constraintsComponent);
+        // component.add(facetComponent);
+
+        // facetComponent.setSplitterPosition(20);
+
+
+        TabSheet tabSheet = new TabSheet();
+        // tabSheet.setHeight("500px");
+        tabSheet.add(VaadinIcon.FILE_TREE_SUB.create(), facetComponent);
+
+        tabSheet.add(VaadinIcon.ELLIPSIS_V.create(), new Span("Custom facets"));
+
+
+        return tabSheet;
     }
 
     protected Component getResultsComponent() {
         SplitLayout component = new SplitLayout();
         component.setOrientation(Orientation.HORIZONTAL);
 
-        //component.addToPrimary(itemComponent);
-        component.addToPrimary(sparqlGridComponent);
+        component.addToPrimary(itemComponent);
+        // component.addToPrimary(sparqlGridComponent);
 
 
         component.addToSecondary(resourceBrowserComponent);

@@ -40,9 +40,6 @@ import com.vaadin.flow.data.provider.InMemoryDataProvider;
  */
 public class ConfigFacetedBrowserView {
 
-
-
-
     @Bean
     @Autowired
     public Facete3Wrapper facetedQueryConf(RDFConnection baseDataConnection) {
@@ -55,7 +52,7 @@ public class ConfigFacetedBrowserView {
             SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
-            Config config) {
+            ConfigFaceteVaadin config) {
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
@@ -72,7 +69,7 @@ public class ConfigFacetedBrowserView {
             SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
-            Config config) {
+            ConfigFaceteVaadin config) {
 
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
@@ -90,7 +87,7 @@ public class ConfigFacetedBrowserView {
             SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
-            Config config) {
+            ConfigFaceteVaadin config) {
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
                 new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
@@ -113,7 +110,7 @@ public class ConfigFacetedBrowserView {
             FacetCountProvider facetCountProvider,
             FacetValueCountProvider facetValueCountProvider,
             ItemProvider itemProvider,
-            Config config,
+            ConfigFaceteVaadin config,
             @FullView ViewManager viewManagerFull,
             @SnippetView ViewManager viewManagerDetail,
             @DisplayLabelConfig BestLiteralConfig bestLabelConfig,

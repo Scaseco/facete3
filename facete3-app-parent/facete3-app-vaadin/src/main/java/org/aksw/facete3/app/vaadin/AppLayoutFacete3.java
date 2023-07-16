@@ -62,7 +62,7 @@ public class AppLayoutFacete3 extends AppLayout {
 
 
     @Autowired
-    public AppLayoutFacete3(Config config, UserSession userSession) {
+    public AppLayoutFacete3(ConfigFaceteVaadin config, UserSession userSession) {
 //        VaadinSession.getCurrent().setErrorHandler(eh -> {
 //            Notification.show(ExceptionUtils.getRootCauseMessage(eh.getThrowable()));
 //        });
@@ -154,7 +154,7 @@ public class AppLayoutFacete3 extends AppLayout {
         setContent(getAppContent(config));
     }
 
-    Component getAppContent(Config config) {
+    Component getAppContent(ConfigFaceteVaadin config) {
         ComponentPlugin plugin = ComponentPlugin.createWithDefaultBase(
                 appBuilder -> appBuilder
                 .parent(config.context)

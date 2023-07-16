@@ -7,7 +7,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManagerImpl;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.springframework.context.annotation.Bean;
 
 public class ConfigViewManager
@@ -15,8 +15,8 @@ public class ConfigViewManager
 
     @Bean
     @FullView
-    public ViewManager viewManagerFull(SparqlQueryConnection conn) {
-        ViewManagerImpl result = new ViewManagerImpl(conn);
+    public ViewManager viewManagerFull(RdfDataSource dataSource) {
+        ViewManagerImpl result = new ViewManagerImpl(dataSource.asQef());
 
         result.register(new ViewFactoryPaper());
         result.register(new ViewFactoryDoiPdfViewer());
@@ -27,8 +27,8 @@ public class ConfigViewManager
 
     @Bean
     @SnippetView
-    public ViewManager viewManagerDetail(SparqlQueryConnection conn) {
-        ViewManagerImpl result = new ViewManagerImpl(conn);
+    public ViewManager viewManagerDetail(RdfDataSource dataSource) {
+        ViewManagerImpl result = new ViewManagerImpl(dataSource.asQef());
 
         result.register(new ViewFactoryPaper());
         result.register(new ViewFactoryLabel());

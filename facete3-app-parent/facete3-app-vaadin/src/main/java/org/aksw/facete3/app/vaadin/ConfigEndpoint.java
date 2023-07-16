@@ -98,6 +98,27 @@ public class ConfigEndpoint {
     }
 
 
+    @RefreshScope
+    @Bean //(destroyMethod = "close")
+    @Autowired
+    public RdfDataSource getDataSource(ResourceHolder opHolder) throws IOException {
+        Resource r = opHolder.get();
+        Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
+        RdfDataSource result = () -> {
+            try {
+                return getBaseDataConnection(op);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+//        if (dataRef.getServiceUrl() == null) {
+//            result = RDFConnectionFactory.connect(DatasetFactory.create());
+//        } else {
+//            result = getBaseDataConnection(dataRef);
+//        }
+        return result;
+    }
+
 
     @RefreshScope
     @Bean(destroyMethod = "close")
