@@ -237,7 +237,7 @@ public class FacetedBrowserView
         resourceBrowserComponent.setWidthFull();
         resourceBrowserComponent.setHeightFull();
 
-        constraintsComponent = new ConstraintsComponent(this, facete3, labelService);
+        constraintsComponent = new ConstraintsComponent(this, facete3, labelMgr);
         constraintsComponent.setMaxHeight("40px");
         connectionInfo = new Label();
         connectionInfo.getElement().setAttribute("theme", "badge primary pill");
@@ -434,6 +434,10 @@ public class FacetedBrowserView
             sparqlGridComponent.setBaseConcept(baseConcept);
             sparqlGridComponent.resetGrid();
         }
+
+
+        constraintsComponent.refresh();
+        facetValueCountComponent.refresh();
 
         RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
         refreshScope.refreshAll();

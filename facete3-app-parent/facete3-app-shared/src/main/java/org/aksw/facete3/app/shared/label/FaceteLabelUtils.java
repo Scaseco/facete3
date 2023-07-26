@@ -76,6 +76,21 @@ public class FaceteLabelUtils {
         return nodes;
     }
 
+
+    public static String toString(HLFacetConstraint<?> constraint, Map<Node, String> nodeToLabel) {
+        Expr expr = constraint.expr();
+
+        Map<Node, String> bgpNodeLabels = indexPaths(constraint).entrySet().stream()
+                .collect(Collectors.toMap(Entry::getKey, e -> toString(e.getValue(), nodeToLabel::get)));
+
+        // Combine the maps to get the final label mapping
+        nodeToLabel.putAll(bgpNodeLabels);
+
+        String result = toString(expr, nodeToLabel::get);
+
+        return result;
+    }
+
     public static String toString(HLFacetConstraint<?> constraint,
             LookupService<Node, String> labelService) {
         Expr expr = constraint.expr();

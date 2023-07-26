@@ -23,7 +23,8 @@ public class ConfigSearchPlugin {
     @Bean
     @SearchPluginProvider
     public InMemoryDataProvider<SearchPlugin> searchPluginProvider() {
-        List<Class<?>> cxts = Arrays.asList(ConfigSearchProviderNli.class, ConfigSearchProviderSparql.class);
+        // List<Class<?>> cxts = Arrays.asList(ConfigSearchProviderNli.class, ConfigSearchProviderSparql.class);
+        List<Class<?>> cxts = Arrays.asList(ConfigSearchProviderSparql.class);
 
         Collection<SearchPlugin> searchPlugins = new ArrayList<>();
         for (Class<?> pluginCxt : cxts) {
