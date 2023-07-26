@@ -22,7 +22,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.server.StreamResource;
 
-import software.xdev.vaadin.maps.leaflet.flow.LMap;
+// import software.xdev.vaadin.maps.leaflet.flow.LMap;
 
 public class ResourceBrowserComponent
     extends VerticalLayout
@@ -147,10 +147,10 @@ public class ResourceBrowserComponent
 //            leafletMap.setBaseUrl("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
 //            tabs.newTab("map", "Map", new ManagedComponentSimple(leafletMap));
 
-            LMap map = new LMap(49.675126, 12.160733, 17);
-            map.setWidthFull();
-            map.setHeightFull();
-            tabs.newTab("map", "Map", new ManagedComponentSimple(map));
+            // LMap map = new LMap(49.675126, 12.160733, 17);
+            // map.setWidthFull();
+            // map.setHeightFull();
+            // tabs.newTab("map", "Map", new ManagedComponentSimple(map));
             //add(map);
 
             tabs.setSelectedTabId(selectedTabId);
