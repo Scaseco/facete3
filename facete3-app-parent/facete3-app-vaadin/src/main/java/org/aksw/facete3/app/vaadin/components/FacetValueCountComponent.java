@@ -30,7 +30,8 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
     }
 
     private void init() {
-        setPageSize(1000);
+        // The higher the value the more time is spent on enriching items such as by fetching labels
+        setPageSize(100);
 
         setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
 

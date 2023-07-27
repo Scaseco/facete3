@@ -2,7 +2,9 @@ package org.aksw.facete3.app.vaadin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.util.Directed;
@@ -31,6 +33,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.model.entityinfo.plugin.JenaPluginEntityInfo;
+import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
@@ -56,11 +59,15 @@ public class Facete3Wrapper {
     private FacetDirNode facetDirNode;
     private FacetedQuery facetedQuery;
 
-
+    // The items which to show in the result list - the items in the result list are currently based on the focus node
+    // protected FacetNode resultRoot;
+    protected Map<FacetPath, FacetDirNode> focusToFacetDir = new HashMap<>();
 
 
     // FIXME The selectedFacet is specific to the facet value list component and thus
     // belongs to the view model of that component
+
+    // FIXME This needs to be a FacetNode (a FacetPath would point wherever if there were changes to the root)
     private Node selectedFacet;
 
     public FacetDirNode getFacetDirNode() {
@@ -90,6 +97,10 @@ public class Facete3Wrapper {
 
     public void setBaseConcept(UnaryRelation baseConcept) {
         facetedQuery = facetedQuery.baseConcept(baseConcept);
+    }
+
+    public Map<FacetPath, FacetDirNode> getFocusToFacetDir() {
+        return focusToFacetDir;
     }
 
     public Facete3Wrapper(RDFConnection connection) {

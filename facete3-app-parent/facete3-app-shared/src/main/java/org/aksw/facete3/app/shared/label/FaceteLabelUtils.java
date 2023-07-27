@@ -1,6 +1,7 @@
 package org.aksw.facete3.app.shared.label;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +141,8 @@ public class FaceteLabelUtils {
               symbol = f.getFunctionIRI();
           }
 
+          symbol = prettifySymbol(symbol);
+
           List<String> argStrs = f.getArgs()
                   .stream()
                   .map(e -> toString(e, nodeToLabel))
@@ -154,5 +157,11 @@ public class FaceteLabelUtils {
 
   return result;
 }
+
+    public static String prettifySymbol(String symbol) {
+        Map<String, String> map = new HashMap<>();
+        map.put("eq", "is");
+        return map.getOrDefault(symbol, symbol);
+    }
 
 }

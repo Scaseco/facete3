@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.commons.util.Directed;
+import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.apache.jena.graph.Node;
@@ -67,19 +68,19 @@ public class FacetPathComponent extends HorizontalLayout {
     }
 
     public void addFacetDirectionButton() {
-        org.aksw.facete.v3.api.Direction direction = facete3.getFacetDirNode()
+        Direction direction = facete3.getFacetDirNode()
                 .dir();
         switch (direction) {
             case FORWARD:
                 Icon rightDirButton = new Icon(VaadinIcon.ANGLE_RIGHT);
                 rightDirButton.addClickListener(event -> mainView
-                        .setFacetDirection(org.aksw.facete.v3.api.Direction.BACKWARD));
+                        .setFacetDirection(Direction.BACKWARD));
                 add(rightDirButton);
                 break;
             case BACKWARD:
                 Icon leftDirButton = new Icon(VaadinIcon.ANGLE_LEFT);
                 leftDirButton.addClickListener(event -> mainView
-                        .setFacetDirection(org.aksw.facete.v3.api.Direction.FORWARD));
+                        .setFacetDirection(Direction.FORWARD));
                 add(leftDirButton);
                 break;
         }
