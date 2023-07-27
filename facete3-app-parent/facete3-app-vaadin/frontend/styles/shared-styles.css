@@ -59,3 +59,13 @@
 flow-component-renderer {
   width: 100%
 }
+
+
+/* A 'card' view intended for use as grid rows in order to make rows appear less grid-like */
+.card {
+  background-color: var(--lumo-base-color);
+  border-radius: var(--lumo-border-radius);
+  box-shadow: var(--lumo-box-shadow-xs);
+  padding: calc(var(--lumo-space-s) * 1.5) var(--lumo-space-m);
+}
+

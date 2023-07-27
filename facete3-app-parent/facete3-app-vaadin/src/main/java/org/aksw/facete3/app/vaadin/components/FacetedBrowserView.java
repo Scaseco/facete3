@@ -9,8 +9,10 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.aksw.commons.path.core.Path;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.FacetCount;
+import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
@@ -46,7 +48,10 @@ import org.aksw.jenax.arq.datashape.viewselector.ViewTemplateImpl;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.path.core.FacetPath;
+import org.aksw.jenax.path.core.FacetStep;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.vaadin.component.breadcrumb.Breadcrumb;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.aksw.vaadin.common.component.tab.TabSheet;
@@ -63,6 +68,7 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.RDFS;
@@ -93,7 +99,12 @@ public class FacetedBrowserView
     protected ConstraintsComponent constraintsComponent;
     protected SearchComponent searchComponent;
     protected FacetCountComponent facetCountComponent;
-    protected FacetPathComponent facetPathComponent;
+
+    /** This breadcrumb controls the focus, i.e. what items to show. The focus is also the basis for facet (value) counts.  */
+    protected Breadcrumb<FacetStep> focusBreadcrumb;
+
+    /** The last part of this breadcrumb is a direction toggle for whether to show forward or backward facets */
+    protected FacetPathComponent facetListBreadcrumb;
     protected FacetValueCountComponent facetValueCountComponent;
 
     protected Facete3Wrapper facete3;
@@ -225,9 +236,29 @@ public class FacetedBrowserView
         toolbar = new FacetedBrowserToolbar();
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
         facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
-        facetPathComponent = new FacetPathComponent(this, facete3, labelService);
+        facetListBreadcrumb = new FacetPathComponent(this, facete3, labelService);
+
+        focusBreadcrumb = new Breadcrumb<>(FacetPath.newAbsolutePath(), labelMgr, Breadcrumb.labelAssemblerForFacetPath());
+        focusBreadcrumb.setWidthFull();
+        focusBreadcrumb.getModel().addValueChangeListener(ev -> {
+            Path<FacetStep> path = ev.getNewValue();
+            FacetNode tgt = facete3.getFacetedQuery().root().resolve(path);
+            tgt.chFocus();
+
+            FacetPath focusPath = tgt.facetPath();
+            // Reset the facet counts list
+            FacetDirNode facetDirNode = facete3.getFocusToFacetDir().getOrDefault(focusPath, tgt.fwd());
+            facete3.setFacetDirNode(facetDirNode);
+
+
+            // TODO Reset the facet values to the state for the focus
+
+            refreshAll();
+        });
+
 
         itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
+        itemComponent.setHeightFull();
 
         // baseConcept
         sparqlGridComponent = new SparqlGridComponent(query -> baseDataConnection.query(query), ConceptUtils.createSubjectConcept(), labelMgr);
@@ -303,6 +334,10 @@ public class FacetedBrowserView
 //                System.out.println("INVOKING REFRESH");
 //                System.out.println("Given cxt:\n" + toString(cxt));
 //                System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
+
+                // This line triggers immediate data retrieval on the subsequent refresh
+                setSearchUnconstrained();
+
                 refreshAllNew();
 
                 dialog.close();
@@ -348,16 +383,12 @@ public class FacetedBrowserView
         });
         toolbar.add(refreshBtn);
 
-
         Button toggleLabelsBtn = new Button(VaadinIcon.TEXT_LABEL.create(), ev -> {
             // LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get());
             //LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
-
             //VaadinRdfLabelMgrImpl labelMgr = new VaadinRdfLabelMgrImpl(ls1);
         });
         toolbar.add(toggleLabelsBtn);
-
-
 
         Button configBtn = new Button(new Icon(VaadinIcon.COG));
         toolbar.add(configBtn);
@@ -371,20 +402,12 @@ public class FacetedBrowserView
 //            input.focus();
         });
 
-
         add(toolbar);
-
 //        appContent.add(getNaturalLanguageInterfaceComponent());
-
         add(constraintsComponent);
-
         add(getFacete3Component());
-
-
         // onRefresh();
     }
-
-
 
     public static String toString(ApplicationContext cxt) {
         Iterable<ApplicationContext> ancestors = Traverser.<ApplicationContext>forTree(c ->
@@ -426,6 +449,12 @@ public class FacetedBrowserView
         connectionInfo.setText(url);
     }
 
+    /** Remove constraints from the active search plugin */
+    public void setSearchUnconstrained() {
+        // Search providers do not support null - the empty string means 'unconstrained'.
+        RDFNodeSpec searchResult = activeSearchPlugin.getSearchProvider().search("");
+        handleSearchResponse(searchResult);
+    }
 
     public void refreshAllNew() {
 
@@ -435,6 +464,12 @@ public class FacetedBrowserView
             sparqlGridComponent.resetGrid();
         }
 
+        // Sync the breadcrumb with the focus
+        FacetPath facetPath = facete3.getFacetedQuery().focus().facetPath();
+        // List<Directed<FacetNode>> oldPath = facete3.getFacetedQuery().focus().path();
+
+
+        focusBreadcrumb.setValue(facetPath);
 
         constraintsComponent.refresh();
         facetValueCountComponent.refresh();
@@ -460,8 +495,6 @@ public class FacetedBrowserView
         appContent.add(getFacete3Component());
         return appContent;
     }
-
-
 
     protected Component getFacete3Component() {
         SplitLayout component = new SplitLayout();
@@ -492,7 +525,7 @@ public class FacetedBrowserView
         VaadinStyleUtils.setResizeVertical(facetCountComponent.getStyle());
         VaadinStyleUtils.setResizeVertical(facetValueCountComponent.getStyle());
 
-        facetComponent.add(facetPathComponent);
+        facetComponent.add(facetListBreadcrumb);
         facetComponent.add(facetCountComponent);
         facetComponent.add(facetValueCountComponent);
 
@@ -518,7 +551,15 @@ public class FacetedBrowserView
         SplitLayout component = new SplitLayout();
         component.setOrientation(Orientation.HORIZONTAL);
 
-        component.addToPrimary(itemComponent);
+        VerticalLayout resultViewLayout = new VerticalLayout(focusBreadcrumb, itemComponent);
+        resultViewLayout.setSizeFull();
+        resultViewLayout.setFlexGrow(1, focusBreadcrumb);
+        component.addToPrimary(resultViewLayout);
+        // component.addToPrimary(focusBreadcrumb, itemComponent);
+        // component.addToPrimary(itemComponent);
+
+        // component.addToPrimary(focusBreadcrumb);
+        // component.addToPrimary(itemComponent);
         // component.addToPrimary(sparqlGridComponent);
 
 
@@ -556,25 +597,25 @@ public class FacetedBrowserView
     public void setFacetDirection(org.aksw.facete.v3.api.Direction direction) {
         facete3.setFacetDirection(direction);
         facetCountComponent.refresh();
-        facetPathComponent.refresh();
+        facetListBreadcrumb.refresh();
     }
 
     public void resetPath() {
         facete3.resetPath();
         facetCountComponent.refresh();
-        facetPathComponent.refresh();
+        facetListBreadcrumb.refresh();
     }
 
     public void addFacetToPath(FacetCount facet) {
         facete3.addFacetToPath(facet);
         facetCountComponent.refresh();
-        facetPathComponent.refresh();
+        facetListBreadcrumb.refresh();
     }
 
     public void changeFocus(FacetNode facet) {
         facete3.changeFocus(facet);
         facetCountComponent.refresh();
-        facetPathComponent.refresh();
+        facetListBreadcrumb.refresh();
     }
 
     public void handleSearchResponse(RDFNodeSpec rdfNodeSpec) {
@@ -589,8 +630,15 @@ public class FacetedBrowserView
 
             RootedQuery rq = rdfNodeSpec.getRootedQuery();
             Var var = (Var)rq.getRootNode();
-            Element element = rq.getObjectQuery().getRelation().getElement();
+            Element element = ElementUtils.flatten(rq.getObjectQuery().getRelation().getElement());
             UnaryRelation concept = new Concept(element, var);
+
+            // FIXME We need a strategy when to wrap the base concept as a sub query
+            if (!concept.isSubjectConcept()) {
+                org.apache.jena.query.Query subQuery = concept.toQuery();
+                subQuery.setDistinct(true);
+                concept = new Concept(new ElementSubQuery(subQuery), concept.getVar());
+            }
 
             facete3.setBaseConcept(concept);
 
@@ -641,5 +689,4 @@ public class FacetedBrowserView
 //        resourceComponent.refesh();
 //        constraintsComponent.refresh();
     }
-
 }

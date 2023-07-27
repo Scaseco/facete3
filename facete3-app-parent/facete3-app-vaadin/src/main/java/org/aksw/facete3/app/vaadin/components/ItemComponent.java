@@ -18,10 +18,13 @@ import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.grid.Grid.Column;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -77,8 +80,10 @@ public class ItemComponent extends VerticalLayout {
                 itemProvider, this::enrich, ei -> (RDFNode)ei.getItem());
 
 
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
 
-        grid.getClassNames().add("compact");
+
+        // grid.getClassNames().add("compact");
         grid.getColumns()
                 .forEach(grid::removeColumn);
        // grid.addColumn(new ComponentRenderer<>(item -> {
@@ -88,7 +93,7 @@ public class ItemComponent extends VerticalLayout {
        // 	anchor.setHref("");
        // 	return anchor;
        // 	})).setSortProperty("value").setHeader(searchField);
-        grid.addColumn(
+        Column<?> col = grid.addColumn(
                 new ComponentRenderer<Component, EnrichedItem>(enrichedItem -> {
                     RDFNode item = (RDFNode)enrichedItem.getItem();
                     Node node = item.asNode();
@@ -98,12 +103,26 @@ public class ItemComponent extends VerticalLayout {
                         String str = LabelUtils.getOrDeriveLabel(item);
                         r = new Span(str);
                     }
-                    return r;
+
+                    HorizontalLayout card = new HorizontalLayout();
+                    card.setWidthFull();
+                    card.addClassName("card");
+                    card.setSpacing(false);
+                    card.getThemeList().add("spacing-s");
+                    card.add(r);
+
+                    return card;
                 // item -> FacetProvider.getLabel(item)
                 //item -> LabelUtils.getOrDeriveLabel(item)
                 }))
                 .setSortProperty("value")
-                .setHeader(searchField);
+                .setHeader("Items");
+
+        HeaderRow filterRow = grid.appendHeaderRow();
+        filterRow.getCell(col).setComponent(searchField);
+
+
+
         grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(effectiveDataProvider));
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
@@ -169,7 +188,7 @@ public class ItemComponent extends VerticalLayout {
         // add(btn);
 
 
-        add(new Label("Items"));
+        // add(new Label("Items"));
         searchField.setPlaceholder("Filter Items...");
         searchField.addValueChangeListener(event -> {
             String filter = event.getValue();
