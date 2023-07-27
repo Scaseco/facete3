@@ -26,11 +26,13 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 public class SparqlEndpointForm extends FormLayout {
     protected ComboBox<ServiceStatus> serviceUrl = new ComboBox<>();
     protected Checkbox unionDefaultGraphMode = new Checkbox();
+    protected TextField bearerToken = new TextField("Bearer token");
 
 //    protected TextField lastName =
 //            new TextField("Last name");
@@ -158,6 +160,12 @@ public class SparqlEndpointForm extends FormLayout {
         {
             FormItem formItem = addFormItem(unionDefaultGraphMode, "Union default graph");
             unionDefaultGraphMode.setWidthFull();
+            setColspan(formItem, 3);
+        }
+        
+        {
+            FormItem formItem = addFormItem(bearerToken, "Bearer token");
+            bearerToken.setWidthFull();
             setColspan(formItem, 3);
         }
 
