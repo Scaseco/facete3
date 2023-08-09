@@ -44,7 +44,7 @@ work
 .vim
 
 node
-
+node_modules
 node_modules_bak
 
 tsconfig.json
