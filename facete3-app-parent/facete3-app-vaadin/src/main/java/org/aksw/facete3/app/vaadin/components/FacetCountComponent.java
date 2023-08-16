@@ -32,8 +32,9 @@ public class FacetCountComponent extends Grid<FacetCount> {
         this.mainView = mainView;
 
         GridContextMenu<FacetCount> cxtMenu = this.addContextMenu();
-        GridMenuItem<FacetCount> item = cxtMenu.addItem("Focus on values of this property");
-        item.addMenuItemClickListener(ev -> {
+        GridMenuItem<FacetCount> focusItem = cxtMenu.addItem("Focus on values of this property");
+
+        focusItem.addMenuItemClickListener(ev -> {
             FacetCount fc = ev.getItem().orElse(null);
             Node predicate = fc.getPredicate();
             FacetDirNode facetDirNode = mainView.facete3.getFacetDirNode();
@@ -57,6 +58,17 @@ public class FacetCountComponent extends Grid<FacetCount> {
             // Notification.show("YAY");
         });
 
+
+        GridMenuItem<FacetCount> showSubFacetsMenuItem = cxtMenu.addItem("Show nested facets");
+        showSubFacetsMenuItem.addMenuItemClickListener(ev -> {
+            FacetCount item = ev.getItem().orElse(null);
+            if (item != null) {
+                addFacetToPathCallback(item);
+            }
+        });
+
+
+
         addFacetCountGrid();
     }
 
@@ -78,7 +90,7 @@ public class FacetCountComponent extends Grid<FacetCount> {
                 .setSortProperty("facetCount");
         grid.asSingleSelect()
                 .addValueChangeListener(this::selectFacetCallback);
-        grid.addItemDoubleClickListener(this::addFacetToPathCallback);
+        grid.addItemDoubleClickListener(ev -> addFacetToPathCallback(ev.getItem()));
         grid.setPageSize(1000);
 
         HeaderRow filterRow = grid.appendHeaderRow();
@@ -111,8 +123,8 @@ public class FacetCountComponent extends Grid<FacetCount> {
         }
     }
 
-    private void addFacetToPathCallback(ItemDoubleClickEvent<FacetCount> event) {
-        FacetCount facet = event.getItem();
+    private void addFacetToPathCallback(FacetCount facet) {
+        // FacetCount facet = event.getItem();
         mainView.addFacetToPath(facet);
     }
 

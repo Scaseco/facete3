@@ -32,6 +32,7 @@ import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.model.entityinfo.plugin.JenaPluginEntityInfo;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePPath;
@@ -103,11 +104,12 @@ public class Facete3Wrapper {
         return focusToFacetDir;
     }
 
-    public Facete3Wrapper(RDFConnection connection) {
+    public Facete3Wrapper(RdfDataSource dataSource) {
+    // public Facete3Wrapper(RDFConnection connection) {
         JenaRuntime.isRDF11 = false;
 
         initJena();
-        initFacetedQuery(connection);
+        initFacetedQuery(dataSource);
         setEmptyBaseConcept();
         setFacetDirNode();
         setSelectedFacet(RDF.type.asNode());
@@ -153,12 +155,12 @@ public class Facete3Wrapper {
         JenaPluginEntityInfo.init(BuiltinPersonalities.model);
     }
 
-    private void initFacetedQuery(RDFConnection connection) {
+    private void initFacetedQuery(RdfDataSource rdfDataSource) {
         Model dataModel = ModelFactory.createDefaultModel();
         XFacetedQuery xFacetedQuery = dataModel.createResource()
                 .as(XFacetedQuery.class);
         FacetedQueryImpl.initResource(xFacetedQuery);
-        facetedQuery = FacetedQueryImpl.create(xFacetedQuery, connection);
+        facetedQuery = FacetedQueryImpl.create(xFacetedQuery, rdfDataSource);
     }
 
     private void setEmptyBaseConcept() {

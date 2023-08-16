@@ -10,13 +10,20 @@ import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactories;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,26 +49,53 @@ public class ConfigFacetedBrowserView {
 
     @Bean
     @Autowired
-    public Facete3Wrapper facetedQueryConf(RDFConnection baseDataConnection) {
-        return new Facete3Wrapper(baseDataConnection);
+    public Facete3Wrapper facetedQueryConf(RdfDataSource dataSource) {
+        return new Facete3Wrapper(dataSource);
     }
 
     @Bean
     @Autowired
-    public ItemProvider itemProvider(
-            SparqlQueryConnection baseDataConnection,
+    public DataProviderNodeQuery itemProvider(
+            RdfDataSource dataSource,
+            // SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
-            ConfigFaceteVaadin config) {
+            ConfigFaceteVaadin config,
+            VaadinRdfLabelMgr labelService
+            ) {
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
-        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
-                config.getAlternativeLabel(),
-                prefixMapping);
+//        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
+//                dataSource.asQef(),
+//                // new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
+//                config.getAlternativeLabel(),
+//                prefixMapping);
 
-        return new ItemProvider(facetedQueryConf, labelService);
+        Model shaclModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/rmltk-parent/r2rml-resource-shacl/src/main/resources/r2rml.core.shacl.ttl");
+
+        DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
+        // DataProviderNodeQuery dataProvider = new DataProviderNodeQuery(dataSource, conceptSupplier, dataRetriever);
+
+        // VaadinShaclGridUtils.fromShacl(null)
+        return new DataProviderNodeQuery(dataSource, () ->  facetedQueryConf.getFacetedQuery().focus().availableValues().baseRelation().toUnaryRelation(), dataRetriever);
     }
+
+//    @Bean
+//    @Autowired
+//    public ItemProvider itemProvider(
+//            SparqlQueryConnection baseDataConnection,
+//            PrefixMapping prefixMapping,
+//            Facete3Wrapper facetedQueryConf,
+//            ConfigFaceteVaadin config) {
+////        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
+//
+//        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
+//                new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
+//                config.getAlternativeLabel(),
+//                prefixMapping);
+//
+//        return new ItemProvider(facetedQueryConf, labelService);
+//    }
 
     @Bean
     @Autowired
@@ -109,7 +143,8 @@ public class ConfigFacetedBrowserView {
             Facete3Wrapper facetedQueryConf,
             FacetCountProvider facetCountProvider,
             FacetValueCountProvider facetValueCountProvider,
-            ItemProvider itemProvider,
+            // ItemProvider itemProvider,
+            DataProviderNodeQuery itemProvider,
             ConfigFaceteVaadin config,
             @FullView ViewManager viewManagerFull,
             @SnippetView ViewManager viewManagerDetail,
@@ -141,7 +176,8 @@ public class ConfigFacetedBrowserView {
     public static class RefreshHandler
         implements ApplicationListener<RefreshScopeRefreshedEvent>
     {
-        @Autowired protected ItemProvider itemProvider;
+        // @Autowired protected ItemProvider itemProvider;
+        @Autowired protected DataProviderNodeQuery itemProvider;
         @Autowired protected FacetCountProvider facetCountProvider;
         @Autowired protected FacetCountProvider facetValueCountProvider;
 

@@ -7,10 +7,7 @@ import java.util.stream.Collectors;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.EnrichedItem;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
-import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jenax.dataaccess.LabelUtils;
-import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
-import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderWithConversion;
 import org.apache.jena.graph.Node;
@@ -40,37 +37,55 @@ import com.vaadin.flow.dom.Style;
  * @author raven
  *
  */
-public class ItemComponent extends VerticalLayout {
+public class ItemComponentOld extends VerticalLayout {
+
+    private ItemProvider itemProvider;
     private static final long serialVersionUID = 1848553144669545835L;
 
-    protected DataProviderNodeQuery dataProvider;
-    protected LabelService<Node, String> labelService;
-
     protected ViewManager viewManager;
+
+
     protected TableContext tableContext;
 
 
     protected TextField searchField = new TextField();
     protected FacetedBrowserView facetedBrowserView;
-    protected Grid<RDFNode> grid = new Grid<>(RDFNode.class);
+    protected Grid<EnrichedItem> grid = new Grid<>(EnrichedItem.class);
 
+
+    public List<EnrichedItem> enrich(List<RDFNode> rdfNodes) {
+        List<Node> nodes = rdfNodes.stream().map(RDFNode::asNode).collect(Collectors.toList());
+
+        //Map<Node, ViewFactory> nodeToViewFactory = viewManager.getBestViewFactories(nodes);
+        Map<Node, Component> nodeToComponent = viewManager.getComponents(nodes);
+
+        List<EnrichedItem> result = rdfNodes.stream().map(rdfNode -> {
+            Node node = rdfNode.asNode();
+            Component component = nodeToComponent.get(node);
+//        	ViewFactory viewFactory = nodeToViewFactory.get(node);
+
+            EnrichedItem<RDFNode> r = new EnrichedItem<>(rdfNode);
+            r.getClassToInstanceMap().putInstance(Component.class, component);
+            return r;
+
+        }).collect(Collectors.toList());
+
+
+        return result;
+    }
 
     /** Refresh the grid, especially updating the columns. Also, a cache is used to remember components in cells. */
     public void refreshGrid() {
-//        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrapWithBulkConvert(
-//                itemProvider, this::enrich, ei -> (RDFNode)ei.getItem());
+        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrapWithBulkConvert(
+                itemProvider, this::enrich, ei -> (RDFNode)ei.getItem());
 
 
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
 
 
-        grid.removeAllColumns();
-        VaadinShaclGridUtils.configureGrid(grid, dataProvider, labelService);
-
-
         // grid.getClassNames().add("compact");
-//        grid.getColumns()
-//                .forEach(grid::removeColumn);
+        grid.getColumns()
+                .forEach(grid::removeColumn);
        // grid.addColumn(new ComponentRenderer<>(item -> {
        // 	Anchor anchor = new Anchor();
        // 	anchor.setText(FacetProvider.getLabel(item));
@@ -78,61 +93,58 @@ public class ItemComponent extends VerticalLayout {
        // 	anchor.setHref("");
        // 	return anchor;
        // 	})).setSortProperty("value").setHeader(searchField);
-//        Column<?> col = grid.addColumn(
-//                new ComponentRenderer<Component, EnrichedItem>(enrichedItem -> {
-//                    RDFNode item = (RDFNode)enrichedItem.getItem();
-//                    Node node = item.asNode();
-////                    Component r = viewManager.getComponents(Collections.singleton(node)).get(node);
-//                    Component r = (Component)enrichedItem.getClassToInstanceMap().getInstance(Component.class);
-//                    if (r == null) {
-//                        String str = LabelUtils.getOrDeriveLabel(item);
-//                        r = new Span(str);
-//                    }
-//
-//                    HorizontalLayout card = new HorizontalLayout();
-//                    card.setWidthFull();
-//                    card.addClassName("card");
-//                    card.setSpacing(false);
-//                    card.getThemeList().add("spacing-s");
-//                    card.add(r);
-//
-//                    return card;
-//                // item -> FacetProvider.getLabel(item)
-//                //item -> LabelUtils.getOrDeriveLabel(item)
-//                }))
-//                .setSortProperty("value")
-//                .setHeader("Items");
+        Column<?> col = grid.addColumn(
+                new ComponentRenderer<Component, EnrichedItem>(enrichedItem -> {
+                    RDFNode item = (RDFNode)enrichedItem.getItem();
+                    Node node = item.asNode();
+//                    Component r = viewManager.getComponents(Collections.singleton(node)).get(node);
+                    Component r = (Component)enrichedItem.getClassToInstanceMap().getInstance(Component.class);
+                    if (r == null) {
+                        String str = LabelUtils.getOrDeriveLabel(item);
+                        r = new Span(str);
+                    }
+
+                    HorizontalLayout card = new HorizontalLayout();
+                    card.setWidthFull();
+                    card.addClassName("card");
+                    card.setSpacing(false);
+                    card.getThemeList().add("spacing-s");
+                    card.add(r);
+
+                    return card;
+                // item -> FacetProvider.getLabel(item)
+                //item -> LabelUtils.getOrDeriveLabel(item)
+                }))
+                .setSortProperty("value")
+                .setHeader("Items");
 
         HeaderRow filterRow = grid.appendHeaderRow();
-        // filterRow.getCell(col).setComponent(searchField);
+        filterRow.getCell(col).setComponent(searchField);
 
 
 
-        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
+        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(effectiveDataProvider));
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
 //                    Node node = event.getValue().asNode();
-                    Node node = ((RDFNode)event.getValue()).asNode();
+                    Node node = ((RDFNode)event.getValue().getItem()).asNode();
                     facetedBrowserView.viewNode(node);
                 });
 
     }
 
-    public ItemComponent(
+    public ItemComponentOld(
             FacetedBrowserView facetedBrowserView,
-            DataProviderNodeQuery dataProvider,
-            ViewManager viewManager,
-            LabelService<Node, String> labelService) {
+            ItemProvider dataProvider,
+            ViewManager viewManager) {
 
         this.facetedBrowserView = facetedBrowserView;
-        this.dataProvider = dataProvider;
+        this.itemProvider = dataProvider;
         this.viewManager = viewManager;
-        this.labelService = labelService;
 
         Button btn = new Button(VaadinIcon.COG.create()); //"Available columns");
-
         btn.addClickListener(event -> {
-            List<RDFNode> nodes = facetedBrowserView.getFacetedSearchSession().getFacetedQuery()
+            List<RDFNode> nodes = itemProvider.getFacete3().getFacetedQuery()
                     .focus()
                     .availableValues()
                     .toFacetedQuery()
@@ -175,7 +187,7 @@ public class ItemComponent extends VerticalLayout {
         searchField.setPlaceholder("Filter Items...");
         searchField.addValueChangeListener(event -> {
             String filter = event.getValue();
-            // dataProvider.setFilter(filter);
+            dataProvider.setFilter(filter);
         });
 
         VerticalLayout gridDiv = new VerticalLayout();
@@ -193,6 +205,6 @@ public class ItemComponent extends VerticalLayout {
     }
 
     public void refresh() {
-        dataProvider.refreshAll();
+        itemProvider.refreshAll();
     }
 }

@@ -38,6 +38,7 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinStyleUtils;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
@@ -139,6 +140,9 @@ public class FacetedBrowserView
         return labelMgr;
     }
 
+    public Facete3Wrapper getFacetedSearchSession() {
+        return facete3;
+    }
 
     public FacetedBrowserView(
             RDFConnection baseDataConnection,
@@ -148,7 +152,8 @@ public class FacetedBrowserView
             Facete3Wrapper facete3,
             FacetCountProvider facetCountProvider,
             FacetValueCountProvider facetValueCountProvider,
-            ItemProvider itemProvider,
+            // ItemProvider itemProvider,
+            DataProviderNodeQuery itemProvider,
             ConfigFaceteVaadin config,
             ViewManager viewManagerFull,
             ViewManager viewManagerDetails,
@@ -257,7 +262,7 @@ public class FacetedBrowserView
         });
 
 
-        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails);
+        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails, labelMgr);
         itemComponent.setHeightFull();
 
         // baseConcept
