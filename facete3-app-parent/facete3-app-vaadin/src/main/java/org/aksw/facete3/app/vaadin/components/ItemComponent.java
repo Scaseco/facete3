@@ -1,37 +1,25 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
-import org.aksw.facete3.app.vaadin.providers.EnrichedItem;
-import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
-import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
-import org.aksw.vaadin.common.provider.util.DataProviderWithConversion;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.dom.Style;
 
 /**
@@ -191,6 +179,12 @@ public class ItemComponent extends VerticalLayout {
         gridDiv.add(btn);
         add(gridDiv);
     }
+
+
+    public void showTableMapperDialog() {
+
+    }
+
 
     public void refresh() {
         dataProvider.refreshAll();

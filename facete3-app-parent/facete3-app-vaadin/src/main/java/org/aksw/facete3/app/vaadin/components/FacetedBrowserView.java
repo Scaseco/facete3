@@ -27,7 +27,6 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
@@ -48,6 +47,7 @@ import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.jenax.arq.datashape.viewselector.ViewTemplateImpl;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.core.FacetStep;
@@ -121,7 +121,8 @@ public class FacetedBrowserView
     protected ResourceBrowserComponent resourceBrowserComponent;
 
 //  @Autowired
-    protected RDFConnection baseDataConnection;
+    // protected RDFConnection baseDataConnection;
+    protected RdfDataSource dataSource;
 
 //    protected SearchProvider searchProvider;
     protected InMemoryDataProvider<SearchPlugin> searchPluginDataProvider;
@@ -145,7 +146,8 @@ public class FacetedBrowserView
     }
 
     public FacetedBrowserView(
-            RDFConnection baseDataConnection,
+            // RDFConnection baseDataConnection,
+            RdfDataSource dataSource,
 //            SearchPlugin searchPlugin,
             InMemoryDataProvider<SearchPlugin> searchPluginProvider,
             PrefixMapping prefixMapping,
@@ -223,13 +225,15 @@ public class FacetedBrowserView
         };
 
 
-        this.baseDataConnection = baseDataConnection;
+        // this.baseDataConnection = baseDataConnection;
+        this.dataSource = dataSource;
         this.searchPluginDataProvider = searchPluginProvider;
         this.activeSearchPlugin = searchPluginDataProvider.fetch(new Query<>()).limit(1).findFirst().orElse(null);
         this.facete3 = facete3;
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
+                dataSource.asQef(),
+                // new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
                 RDFS.label,
                 prefixMapping);
 
@@ -266,7 +270,7 @@ public class FacetedBrowserView
         itemComponent.setHeightFull();
 
         // baseConcept
-        sparqlGridComponent = new SparqlGridComponent(query -> baseDataConnection.query(query), ConceptUtils.createSubjectConcept(), labelMgr);
+        sparqlGridComponent = new SparqlGridComponent(dataSource, ConceptUtils.createSubjectConcept(), labelMgr);
 
 
         resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction, dftViewFactory);
@@ -651,14 +655,20 @@ public class FacetedBrowserView
             throw new RuntimeException("Unknown rdfNodeSpec type "  + rdfNodeSpec);
         }
 
-        RDFConnection effectiveDataConnection = baseDataConnection;
-        SearchSensitiveRDFConnectionTransform connectionTransform = activeSearchPlugin.getConnectionTransform();
-        if (connectionTransform != null) {
-            RDFConnectionTransform connXform = connectionTransform.create(rdfNodeSpec);
-            effectiveDataConnection = connXform.apply(effectiveDataConnection);
-        }
+        // RDFConnection effectiveDataConnection = baseDataConnection;
 
-        facete3.getFacetedQuery().connection(effectiveDataConnection);
+        RdfDataSource effectiveDataSource = () -> {
+            RDFConnection effectiveDataConnection = dataSource.getConnection();
+            SearchSensitiveRDFConnectionTransform connectionTransform = activeSearchPlugin.getConnectionTransform();
+            if (connectionTransform != null) {
+                RDFConnectionTransform connXform = connectionTransform.create(rdfNodeSpec);
+                effectiveDataConnection = connXform.apply(effectiveDataConnection);
+            }
+            return effectiveDataConnection;
+        };
+        facete3.getFacetedQuery().dataSource(effectiveDataSource);
+
+        // facete3.getFacetedQuery().connection(effectiveDataConnection);
 
         refreshAll();
     }

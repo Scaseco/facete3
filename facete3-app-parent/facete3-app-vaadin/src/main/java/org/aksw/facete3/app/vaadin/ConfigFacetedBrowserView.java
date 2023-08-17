@@ -6,14 +6,12 @@ import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactories;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
@@ -136,7 +134,8 @@ public class ConfigFacetedBrowserView {
     @Bean
     @Autowired
     public FacetedBrowserView factedBrowserView(
-            RDFConnection baseDataConnection,
+            RdfDataSource dataSource,
+            // RDFConnection baseDataConnection,
 //            SearchPlugin searchPlugin,
             InMemoryDataProvider<SearchPlugin> searchPluginProvider,
             PrefixMapping prefixMapping,
@@ -152,7 +151,7 @@ public class ConfigFacetedBrowserView {
             VaadinRdfLabelMgr labelMgr
     ) {
         return new FacetedBrowserView(
-                baseDataConnection,
+                dataSource,
                 //searchPlugin,
                 searchPluginProvider,
                 prefixMapping,
