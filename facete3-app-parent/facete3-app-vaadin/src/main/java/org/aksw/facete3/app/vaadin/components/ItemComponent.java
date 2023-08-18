@@ -1,10 +1,13 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import java.util.List;
+import java.util.function.Supplier;
 
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
+import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
+import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperComponent;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
@@ -17,7 +20,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.dom.Style;
@@ -41,7 +43,6 @@ public class ItemComponent extends VerticalLayout {
     protected TextField searchField = new TextField();
     protected FacetedBrowserView facetedBrowserView;
     protected Grid<RDFNode> grid = new Grid<>(RDFNode.class);
-
 
     /** Refresh the grid, especially updating the columns. Also, a cache is used to remember components in cells. */
     public void refreshGrid() {
@@ -118,39 +119,42 @@ public class ItemComponent extends VerticalLayout {
         this.labelService = labelService;
 
         Button btn = new Button(VaadinIcon.COG.create()); //"Available columns");
-
-        btn.addClickListener(event -> {
-            List<RDFNode> nodes = facetedBrowserView.getFacetedSearchSession().getFacetedQuery()
-                    .focus()
-                    .availableValues()
-                    .toFacetedQuery()
-                    .focus().fwd().facetCounts()
-                    .exec()
-                    .map(x -> (RDFNode)x)
-                    .toList()
-                    .blockingGet();
-
-            MultiSelectListBox<RDFNode> lb = new MultiSelectListBox<>();
-            lb.setItems(nodes);
-
-            Button acceptBtn = new Button("Accept");
-
-
-            acceptBtn.addClickListener(ev -> {
-                // Refresh the table with the current selection of columns
-                // Note that this may have to recursively refresh all child tables
-
-
-            });
-
-            Dialog dialog = new Dialog();
-            dialog.add(lb);
-            dialog.add(acceptBtn);
-
-
-            dialog.add(new Text("Close me with the esc-key or an outside click"));
-            dialog.open();
+        btn.addClickListener(ev -> {
+            showTableMapperDialog();
         });
+//
+//        btn.addClickListener(event -> {
+//            List<RDFNode> nodes = facetedBrowserView.getFacetedSearchSession().getFacetedQuery()
+//                    .focus()
+//                    .availableValues()
+//                    .toFacetedQuery()
+//                    .focus().fwd().facetCounts()
+//                    .exec()
+//                    .map(x -> (RDFNode)x)
+//                    .toList()
+//                    .blockingGet();
+//
+//            MultiSelectListBox<RDFNode> lb = new MultiSelectListBox<>();
+//            lb.setItems(nodes);
+//
+//            Button acceptBtn = new Button("Accept");
+//
+//
+//            acceptBtn.addClickListener(ev -> {
+//                // Refresh the table with the current selection of columns
+//                // Note that this may have to recursively refresh all child tables
+//
+//
+//            });
+//
+//            Dialog dialog = new Dialog();
+//            dialog.add(lb);
+//            dialog.add(acceptBtn);
+//
+//
+//            dialog.add(new Text("Close me with the esc-key or an outside click"));
+//            dialog.open();
+//        });
         Style tableSettingsStyle = btn.getStyle();
         tableSettingsStyle.set("position", "absolute");
         tableSettingsStyle.set("top", "0");
@@ -182,6 +186,19 @@ public class ItemComponent extends VerticalLayout {
 
 
     public void showTableMapperDialog() {
+        RdfDataSource dataSource = dataProvider.getDataSource();
+        Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
+        System.out.println("Concept: " + conceptSupplier.get());
+        TableMapperComponent tmc = new TableMapperComponent(dataSource, conceptSupplier.get(), labelService);
+
+        Dialog dialog = new Dialog();
+        dialog.setSizeFull();
+        // dialog.add(lb);
+        dialog.add(tmc);
+
+
+        dialog.add(new Text("Close me with the esc-key or an outside click"));
+        dialog.open();
 
     }
 
