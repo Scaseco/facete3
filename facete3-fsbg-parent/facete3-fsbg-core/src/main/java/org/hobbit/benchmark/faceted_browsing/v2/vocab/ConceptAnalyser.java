@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.sparql.relation.api.Relation;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.graph.Node;
@@ -143,7 +144,7 @@ public class ConceptAnalyser {
         bgp.add(new Triple(s, Vocab.max.asNode(), Vars.z));
         Template template = new Template(bgp);
 
-        DataQuery<SetSummary> result = new DataQueryImpl<>(null, new ElementSubQuery(core), s, template, SetSummary.class);
+        DataQuery<SetSummary> result = new DataQueryImpl<>((RdfDataSource)null, new ElementSubQuery(core), s, template, SetSummary.class);
 
         return result;
     }
