@@ -18,7 +18,7 @@ mcis: ## mvn skip clean install (minimal build of all modules) - Passing args:  
 
 
 vaadin-production: ## Build facete-vaadin in production mode
-	$(MS) $(POM) -Pproduction -pl :facete3-app-vaadin clean install
+	$(MS) $(POM) $(ARGS) -Pproduction -pl :facete3-app-vaadin clean install
 
 
 vaadin-docker: ## Build vaadin docker image
