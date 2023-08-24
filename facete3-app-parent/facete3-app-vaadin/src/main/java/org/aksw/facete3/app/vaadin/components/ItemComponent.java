@@ -1,27 +1,43 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import java.io.InputStream;
 import java.util.function.Supplier;
 
+import org.aksw.commons.util.io.in.InputStreamUtils;
+import org.aksw.facete.v4.impl.TreeDataUtils;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
+import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
 import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperComponent;
+import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperState;
 import org.aksw.jenax.vaadin.label.LabelService;
+import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
+import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.sparql.engine.binding.Binding;
 
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.dom.Style;
 
 /**
@@ -30,7 +46,7 @@ import com.vaadin.flow.dom.Style;
  * @author raven
  *
  */
-public class ItemComponent extends VerticalLayout {
+public class ItemComponent extends TabSheet {
     private static final long serialVersionUID = 1848553144669545835L;
 
     protected DataProviderNodeQuery dataProvider;
@@ -39,10 +55,15 @@ public class ItemComponent extends VerticalLayout {
     protected ViewManager viewManager;
     protected TableContext tableContext;
 
-
     protected TextField searchField = new TextField();
     protected FacetedBrowserView facetedBrowserView;
     protected Grid<RDFNode> grid = new Grid<>(RDFNode.class);
+
+    protected VerticalLayout tableDiv = new VerticalLayout();
+
+
+    protected TableMapperState tableMapperState = TableMapperState.ofRoot();
+
 
     /** Refresh the grid, especially updating the columns. Also, a cache is used to remember components in cells. */
     public void refreshGrid() {
@@ -118,8 +139,14 @@ public class ItemComponent extends VerticalLayout {
         this.viewManager = viewManager;
         this.labelService = labelService;
 
-        Button btn = new Button(VaadinIcon.COG.create()); //"Available columns");
-        btn.addClickListener(ev -> {
+        Button configureShaclBtn = new Button(VaadinIcon.COG.create()); //"Available columns");
+        configureShaclBtn.addClickListener(ev -> {
+            showShaclUploadDialog();
+        });
+
+
+        Button configureTableBtn = new Button(VaadinIcon.COG.create()); //"Available columns");
+        configureTableBtn.addClickListener(ev -> {
             showTableMapperDialog();
         });
 //
@@ -155,7 +182,7 @@ public class ItemComponent extends VerticalLayout {
 //            dialog.add(new Text("Close me with the esc-key or an outside click"));
 //            dialog.open();
 //        });
-        Style tableSettingsStyle = btn.getStyle();
+        Style tableSettingsStyle = configureTableBtn.getStyle();
         tableSettingsStyle.set("position", "absolute");
         tableSettingsStyle.set("top", "0");
         tableSettingsStyle.set("right", "0");
@@ -173,6 +200,7 @@ public class ItemComponent extends VerticalLayout {
         VerticalLayout gridDiv = new VerticalLayout();
         gridDiv.setSizeFull();
         gridDiv.getStyle().set("position", "relative");
+        gridDiv.add(configureShaclBtn);
 
         // Grid<EnrichedItem> grid = new Grid<>(EnrichedItem.class);
 
@@ -180,10 +208,26 @@ public class ItemComponent extends VerticalLayout {
 
         // add(grid);
         gridDiv.add(grid);
-        gridDiv.add(btn);
-        add(gridDiv);
+        // gridDiv.add(btn);
+
+        add(VaadinIcon.LIST.create(), gridDiv);
+
+        VerticalLayout tableDivX = new VerticalLayout();
+        tableDivX.setSizeFull();
+        // VerticalLayout tableDivX.setSizeFull();
+        tableDivX.getStyle().set("position", "relative");
+        tableDiv.setSizeFull();
+        tableDivX.add(tableDiv, configureTableBtn);
+
+        // tableDiv.setText("Table");
+        add(VaadinIcon.TABLE.create(), tableDivX);
+
+        // add(gridDiv);
     }
 
+    public void resetTable() {
+
+    }
 
     public void showTableMapperDialog() {
         RdfDataSource dataSource = dataProvider.getDataSource();
@@ -192,14 +236,114 @@ public class ItemComponent extends VerticalLayout {
         TableMapperComponent tmc = new TableMapperComponent(dataSource, conceptSupplier.get(), labelService);
 
         Dialog dialog = new Dialog();
+        dialog.setCloseOnOutsideClick(false);
         dialog.setSizeFull();
         // dialog.add(lb);
         dialog.add(tmc);
 
 
-        dialog.add(new Text("Close me with the esc-key or an outside click"));
-        dialog.open();
+        // dialog.add(new Text("Close me with the esc-key or an outside click"));
+        Button acceptBtn = new Button("OK");
+        Button cancelBtn = new Button("Cancel");
 
+        acceptBtn.addClickListener(ev -> {
+            dialog.close();
+            tableMapperState = tmc.getState();
+            refreshTable();
+
+        });
+        cancelBtn.addClickListener(ev -> dialog.close());
+
+        dialog.add(acceptBtn);
+        dialog.add(cancelBtn);
+
+        dialog.open();
+    }
+
+
+    public void refreshTable() {
+        RdfDataSource dataSource = dataProvider.getDataSource();
+        Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
+        Grid<Binding> table = TableMapperComponent.buildGrid(
+                dataSource, conceptSupplier.get(),
+                TreeDataUtils.toVaadin(tableMapperState.getFacetTree()),
+                TableMapperComponent.toPredicateAbsentAsTrue(tableMapperState.getPathToVisibility()),
+                labelService);
+        tableDiv.removeAll();
+        tableDiv.add(table);
+    }
+
+    public void showShaclUploadDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setCloseOnOutsideClick(false);
+        // dialog.setSizeFull();
+
+        TextField message = new TextField();
+        message.setReadOnly(true);
+
+        MemoryBuffer memoryBuffer = new MemoryBuffer();
+        Upload singleFileUpload = new Upload(memoryBuffer);
+
+        Button acceptBtn = new Button("OK");
+        Model shaclModel = ModelFactory.createDefaultModel();
+
+        acceptBtn.addClickListener(event -> {
+            dialog.close();
+            RdfDataSource dataSource = dataProvider.getDataSource();
+            DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
+            dataProvider.setDataRetriever(dataRetriever);
+            System.out.println("TABLE REFRESH");
+            dataProvider.refreshAll();
+            // Do something with the file data
+            // processFile(fileData, fileName, contentLength, mimeType);
+        });
+
+        acceptBtn.setEnabled(false);
+
+        singleFileUpload.addStartedListener(evenet -> {
+            message.setValue("");
+            acceptBtn.setEnabled(false);
+        });
+
+        singleFileUpload.addSucceededListener(event -> {
+            try {
+                // Get information about the uploaded file
+                InputStream fileData = memoryBuffer.getInputStream();
+                InputStream in = InputStreamUtils.forceMarkSupport(fileData);
+                // String fileName = event.getFileName();
+                // long contentLength = event.getContentLength();
+                // String mimeType = event.getMIMEType();
+
+                shaclModel.removeAll();
+                try (TypedInputStream tin = RDFDataMgrEx.probeLang(in, RDFDataMgrEx.DEFAULT_PROBE_LANGS)) {
+                    Lang lang = RDFLanguages.contentTypeToLang(tin.getContentType());
+                    RDFDataMgr.read(shaclModel, tin, lang);
+                }
+                message.setValue("OK");
+                acceptBtn.setEnabled(true);
+            } catch (Exception e) {
+                message.setValue(e.toString());
+            }
+        });
+
+
+
+        // dialog.add(lb);
+        // dialog.add(tmc);
+
+        dialog.add(singleFileUpload);
+        dialog.add(message);
+
+        // dialog.add(new Text("Close me with the esc-key or an outside click"));
+        Button cancelBtn = new Button("Cancel");
+
+        cancelBtn.addClickListener(ev -> dialog.close());
+
+        dialog.add(acceptBtn);
+        dialog.add(cancelBtn);
+
+
+        dialog.open();
     }
 
 

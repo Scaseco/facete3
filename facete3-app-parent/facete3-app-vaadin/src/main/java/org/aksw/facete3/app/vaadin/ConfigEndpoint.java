@@ -6,7 +6,6 @@ import java.util.HashMap;
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
-import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPodFactoryAdvancedImpl;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
@@ -25,6 +24,7 @@ import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgrImpl;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -169,7 +169,7 @@ public class ConfigEndpoint {
                 new HashMap<>(),
                 // srcFileNameRes,
                 RDFFormat.TURTLE_BLOCKS);
-        DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
+        // DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
 
 
         RdfDataSource dataSourceRaw = op.accept(opExecutor);
@@ -177,7 +177,8 @@ public class ConfigEndpoint {
         RdfDataSourceWithBnodeRewrite dataSourceBnode = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
         RdfDataSourceWithLocalCache dataSourceCache = new RdfDataSourceWithLocalCache(dataSourceBnode);
 
-        RdfDataSource dataSource = dataSourceCache;
+        // RdfDataSource dataSource = dataSourceCache;
+        RdfDataSource dataSource = dataSourceBnode;
 
         // RdfDataSource dataSource = DataPods.from(dataRef);
         RDFConnection rdfConnection = dataSource.getConnection();
@@ -194,7 +195,6 @@ public class ConfigEndpoint {
 
         return rdfConnection;
     }
-
 //    @Bean
 //    @Autowired
     public Runnable testConn(RDFConnection conn) {

@@ -482,6 +482,7 @@ public class FacetedBrowserView
 
         constraintsComponent.refresh();
         facetValueCountComponent.refresh();
+        itemComponent.refreshTable();
 
         RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
         refreshScope.refreshAll();

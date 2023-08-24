@@ -3,8 +3,10 @@ package org.aksw.facete3.app.vaadin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.util.Directed;
@@ -48,22 +50,25 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
 
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
+
 public class Facete3Wrapper {
 
     private FacetDirNode facetDirNode;
     private FacetedQuery facetedQuery;
 
-    // The items which to show in the result list - the items in the result list are currently based on the focus node
-    // protected FacetNode resultRoot;
-    protected Map<FacetPath, FacetDirNode> focusToFacetDir = new HashMap<>();
+    protected Set<FacetDirNode> alwaysVisibleCustomFacets = new LinkedHashSet<>();
+    protected Multimap<FacetPath, FacetDirNode> customFacetsVisibleAtPath = LinkedHashMultimap.create();
 
+    // For which focus path to show facets of which FacetDirNode
+    protected Map<FacetPath, FacetDirNode> focusToFacetDir = new HashMap<>();
 
     // FIXME The selectedFacet is specific to the facet value list component and thus
     // belongs to the view model of that component

@@ -1,6 +1,8 @@
+/*
 :host {
   width: 100%;
 }
+*/
 
 
 /*
@@ -8,3 +10,17 @@ flow-component-renderer {
   width: 100%
 }
 */
+
+/*
+By default, TreeGrid's toggle buttons trigger when clicking on the item text.
+With the following two definitions, clicking on the text of an item now
+selects that item.
+See alse: https://github.com/vaadin/flow-components/issues/1684#issuecomment-536564982
+*/
+:host {
+  pointer-events: none;
+}
+
+[part="toggle"] {
+  pointer-events: auto;
+}

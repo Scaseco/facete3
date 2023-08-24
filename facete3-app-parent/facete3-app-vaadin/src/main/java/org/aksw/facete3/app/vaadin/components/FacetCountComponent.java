@@ -16,6 +16,7 @@ import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.ItemDoubleClickEvent;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.grid.contextmenu.GridMenuItem;
+import com.vaadin.flow.component.grid.contextmenu.GridSubMenu;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
 
@@ -32,44 +33,57 @@ public class FacetCountComponent extends Grid<FacetCount> {
         this.mainView = mainView;
 
         GridContextMenu<FacetCount> cxtMenu = this.addContextMenu();
-        GridMenuItem<FacetCount> focusItem = cxtMenu.addItem("Focus on values of this property");
 
-        focusItem.addMenuItemClickListener(ev -> {
-            FacetCount fc = ev.getItem().orElse(null);
-            Node predicate = fc.getPredicate();
-            FacetDirNode facetDirNode = mainView.facete3.getFacetDirNode();
-            Direction dir = facetDirNode.dir();
-            FacetNode newFocusNode = facetDirNode.parent().step(predicate, dir).one();
-            newFocusNode.chFocus();
-
-            // FacetDirNode newFacetDirNode = newFocusNode.step(dir);
-            FacetPath focusPath = newFocusNode.facetPath();
-            FacetDirNode newFacetDirNode = newFocusNode.step(dir);
-            mainView.facete3.getFocusToFacetDir().computeIfAbsent(focusPath, path -> newFacetDirNode);
-
-            mainView.facete3.setFacetDirNode(newFacetDirNode);
-
-
-            mainView.refreshAll();
-            // mainView.facete3.changeFocus(newFocusNode);
-//        	FacetedQuery facetedQuery = mainView.facete3.getFacetedQuery();
-//        	facetedQuery.focus();
-//            mainView.facete3.changeFocus(null);
-            // Notification.show("YAY");
-        });
-
-
-        GridMenuItem<FacetCount> showSubFacetsMenuItem = cxtMenu.addItem("Show nested facets");
-        showSubFacetsMenuItem.addMenuItemClickListener(ev -> {
-            FacetCount item = ev.getItem().orElse(null);
-            if (item != null) {
-                addFacetToPathCallback(item);
-            }
-        });
-
-
+        addFacetOptions(cxtMenu);
 
         addFacetCountGrid();
+    }
+
+    public void addFacetOptions(GridContextMenu<FacetCount> cxtMenu) {
+        {
+            GridMenuItem<FacetCount> focusItem = cxtMenu.addItem("Focus on values of this property");
+            focusItem.addMenuItemClickListener(ev -> {
+                FacetCount fc = ev.getItem().orElse(null);
+                Node predicate = fc.getPredicate();
+                FacetDirNode facetDirNode = mainView.facete3.getFacetDirNode();
+                Direction dir = facetDirNode.dir();
+                FacetNode newFocusNode = facetDirNode.parent().step(predicate, dir).one();
+                newFocusNode.chFocus();
+
+                // FacetDirNode newFacetDirNode = newFocusNode.step(dir);
+                FacetPath focusPath = newFocusNode.facetPath();
+                FacetDirNode newFacetDirNode = newFocusNode.step(dir);
+                mainView.facete3.getFocusToFacetDir().computeIfAbsent(focusPath, path -> newFacetDirNode);
+
+                mainView.facete3.setFacetDirNode(newFacetDirNode);
+                mainView.refreshAll();
+            });
+        }
+
+        {
+            GridMenuItem<FacetCount> showSubFacetsMenuItem = cxtMenu.addItem("Show nested facets");
+            showSubFacetsMenuItem.addMenuItemClickListener(ev -> {
+                FacetCount item = ev.getItem().orElse(null);
+                if (item != null) {
+                    addFacetToPathCallback(item);
+                }
+            });
+        }
+
+        {
+            GridMenuItem<FacetCount> addToCustomFacets = cxtMenu.addItem("Add to custom facets ... ");
+            GridSubMenu<FacetCount> subMenu = addToCustomFacets.getSubMenu();
+            subMenu.addItem("... visible only at current focus path");
+
+            subMenu.addItem("... always visible");
+
+//            addToCustomFacets.addMenuItemClickListener(ev -> {
+//                FacetCount item = ev.getItem().orElse(null);
+//                if (item != null) {
+//                    // addFacetToPathCallback(item);
+//                }
+//            });
+        }
     }
 
     private void addFacetCountGrid() {
@@ -95,12 +109,6 @@ public class FacetCountComponent extends Grid<FacetCount> {
 
         HeaderRow filterRow = grid.appendHeaderRow();
         filterRow.getCell(facetColumn).setComponent(getSearchComponent());
-
-
-        // add(grid);
-
-
-
     }
 
     private Component getSearchComponent() {

@@ -12,7 +12,10 @@ import com.mlottmann.vstepper.VStepper;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 public class SparqlConnectionWizard
     extends VStepper
@@ -75,10 +78,15 @@ public class SparqlConnectionWizard
 
 
     private Step createStepSelectGraphs(Component header) {
+        VerticalLayout layout = new VerticalLayout();
+        layout.setSizeFull();
+        layout.add(new H3("Query named graphs instead of the default graph?"));
+        layout.add(new Span("The list below shows the named graphs detected in the endpoint. If you proceed with an empty selection then SPARQL queries will be evaluated against the endpoint's default graph. Otherwise, requests will be evaluated over the union of the selected named graphs. Querying across default graph and named graphs is unsupported."));
 
         graphGrid.setWidthFull();
         graphGrid.setSelectionMode(SelectionMode.MULTI);
-        return new Step(header, graphGrid) {
+        layout.add(graphGrid);
+        return new Step(header, layout) {
             @Override
             protected void onEnter() {
                 QueryExecutionFactoryQuery qef = q -> QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), q).build();
