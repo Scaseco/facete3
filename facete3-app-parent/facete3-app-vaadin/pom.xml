@@ -74,7 +74,8 @@
 			<!-- Replace artifactId with vaadin-core to use only free components -->
 			<artifactId>vaadin-core</artifactId>
 			<exclusions>
-				<!-- Webjars are only needed when running in Vaadin 13 compatibility 
+				<!-- Webjars are only needed when running in Vaadin 13
+				compatibility 
 					mode -->
 				<exclusion>
 					<groupId>com.vaadin.webjar</groupId>
@@ -229,7 +230,8 @@
 		<!-- <artifactId>jackson-annotations</artifactId> -->
 		<!-- <version>1.8.0_242</version> -->
 		<!-- </dependency> -->
-		<!-- The topbraid implementation is used because it uses jena's polymorphism 
+		<!-- The topbraid implementation is used because it uses jena's
+		polymorphism 
 			system -->
 		<dependency>
 			<groupId>org.topbraid</groupId>
@@ -252,11 +254,16 @@
 			<groupId>org.hobbit</groupId>
 			<artifactId>facete3-app-shared</artifactId>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.vaadin.gatanaso</groupId>-->
-<!--			<artifactId>multiselect-combo-box-flow</artifactId>-->
-<!--			<version>4.0.0-rc2</version>-->
-			<!--
+		<dependency>
+			<groupId>org.aksw.rmltk</groupId>
+			<artifactId>rmltk-parent</artifactId>
+		</dependency>
+		
+		<!--		<dependency>-->
+		<!--			<groupId>org.vaadin.gatanaso</groupId>-->
+		<!--			<artifactId>multiselect-combo-box-flow</artifactId>-->
+		<!--			<version>4.0.0-rc2</version>-->
+		<!--
 			<exclusions>
 				<exclusion>
 					<groupId>com.vaadin</groupId>
@@ -268,7 +275,7 @@
 				</exclusion>
 			</exclusions>
 			-->
-<!--		</dependency>-->
+		<!--		</dependency>-->
 		<dependency>
 			<groupId>org.aksw.jenax</groupId>
 			<artifactId>jenax-facete-impl</artifactId>
@@ -327,14 +334,16 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<version>2.2.6.RELEASE</version>
-				<!-- Clean build and startup time for Vaadin apps sometimes may exceed 
+				<!-- Clean build and startup time for Vaadin apps sometimes may
+				exceed 
 					the default Spring Boot's 30sec timeout. -->
 				<configuration>
 					<wait>500</wait>
 					<maxAttempts>240</maxAttempts>
 				</configuration>
 			</plugin>
-			<!-- Take care of synchronizing java dependencies and imports in package.json 
+			<!-- Take care of synchronizing java dependencies and imports in
+			package.json 
 				and main.js files. It also creates webpack.config.js if not exists yet. -->
 			<plugin>
 				<groupId>com.vaadin</groupId>
@@ -374,17 +383,27 @@
 				</plugins>
 			</build>
 		</profile>
-		<!--			<version>${vaadin.version}</version> <executions> <execution> <goals> <goal>build-frontend</goal> -->
-		<!--			</goals> <phase>compile</phase> </execution> </executions> </plugin> -->
+		<!--			<version>${vaadin.version}</version> <executions> <execution>
+		<goals> <goal>build-frontend</goal> -->
+		<!--			</goals> <phase>compile</phase> </execution> </executions>
+		</plugin> -->
 		<!--		<profile></profile> -->
-		<!--		</configuration> </plugin> <plugin> <groupId>com.vaadin</groupId> <artifactId>vaadin-maven-plugin</artifactId> -->
-		<!--			<version>${vaadin.version}</version> <executions> <execution> <goals> <goal>build-frontend</goal> -->
-		<!--			</goals> <phase>compile</phase> </execution> </executions> </plugin> <plugin> -->
-		<!--			<groupId>org.apache.maven.plugins</groupId> <artifactId>maven-war-plugin</artifactId> -->
-		<!--			<version>3.2.3</version> <configuration> <failOnMissingWebXml>false</failOnMissingWebXml> -->
-		<!--			</configuration> </plugin> <plugin> <groupId>org.apache.tomcat.maven</groupId> -->
-		<!--			<artifactId>tomcat7-maven-plugin</artifactId> <version>2.2</version> <configuration> -->
-		<!--			<server>TomcatServer</server> <path>/facete3</path> </configuration> </plugin> -->
+		<!--		</configuration> </plugin> <plugin> <groupId>com.vaadin</groupId>
+		<artifactId>vaadin-maven-plugin</artifactId> -->
+		<!--			<version>${vaadin.version}</version> <executions> <execution>
+		<goals> <goal>build-frontend</goal> -->
+		<!--			</goals> <phase>compile</phase> </execution> </executions>
+		</plugin> <plugin> -->
+		<!--			<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-war-plugin</artifactId> -->
+		<!--			<version>3.2.3</version> <configuration>
+		<failOnMissingWebXml>false</failOnMissingWebXml> -->
+		<!--			</configuration> </plugin> <plugin>
+		<groupId>org.apache.tomcat.maven</groupId> -->
+		<!--			<artifactId>tomcat7-maven-plugin</artifactId>
+		<version>2.2</version> <configuration> -->
+		<!--			<server>TomcatServer</server> <path>/facete3</path>
+		</configuration> </plugin> -->
 		<!--			</plugins> </build> </profile> -->
 		<profile>
 			<id>integration-tests</id>
@@ -410,7 +429,8 @@
 							</execution>
 						</executions>
 					</plugin>
-					<!-- Runs the integration tests (*IT) after the server is started -->
+					<!-- Runs the integration tests (*IT) after the server is
+					started -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-failsafe-plugin</artifactId>
@@ -426,18 +446,26 @@
 							<trimStackTrace>false</trimStackTrace>
 							<enableAssertions>true</enableAssertions>
 							<systemPropertyVariables>
-								<!-- Pass location of downloaded webdrivers to the tests -->
-								<webdriver.chrome.driver>${webdriver.chrome.driver}</webdriver.chrome.driver>
+								<!-- Pass location of downloaded webdrivers to
+								the tests -->
+								<webdriver.chrome.driver>
+									${webdriver.chrome.driver}</webdriver.chrome.driver>
 							</systemPropertyVariables>
 						</configuration>
 					</plugin>
-					<!-- <plugin> <groupId>com.lazerycode.selenium</groupId> <artifactId>driver-binary-downloader-maven-plugin</artifactId> 
-						<version>1.0.17</version> <configuration> <onlyGetDriversForHostOperatingSystem>true 
-						</onlyGetDriversForHostOperatingSystem> <rootStandaloneServerDirectory> ${project.basedir}/drivers/driver 
-						</rootStandaloneServerDirectory> <downloadedZipFileDirectory> ${project.basedir}/drivers/driver_zips 
-						</downloadedZipFileDirectory> <customRepositoryMap> ${project.basedir}/drivers.xml 
+					<!-- <plugin> <groupId>com.lazerycode.selenium</groupId>
+					<artifactId>driver-binary-downloader-maven-plugin</artifactId> 
+						<version>1.0.17</version> <configuration>
+					<onlyGetDriversForHostOperatingSystem>true 
+						</onlyGetDriversForHostOperatingSystem> <rootStandaloneServerDirectory>
+					${project.basedir}/drivers/driver 
+						</rootStandaloneServerDirectory> <downloadedZipFileDirectory>
+					${project.basedir}/drivers/driver_zips 
+						</downloadedZipFileDirectory> <customRepositoryMap>
+					${project.basedir}/drivers.xml 
 						</customRepositoryMap> </configuration> <executions> <execution> < ! - - 
-						use phase "none" to skip download step - - > <phase>${drivers.downloader.phase}</phase> 
+						use phase "none" to skip download step - - >
+					<phase>${drivers.downloader.phase}</phase> 
 						<goals> <goal>selenium</goal> </goals> </execution> </executions> </plugin> -->
 				</plugins>
 			</build>
