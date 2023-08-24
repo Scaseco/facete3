@@ -69,7 +69,7 @@ public class ConfigFacetedBrowserView {
 //                config.getAlternativeLabel(),
 //                prefixMapping);
 
-        Model shaclModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/rmltk-parent/r2rml-resource-shacl/src/main/resources/r2rml.core.shacl.ttl");
+        Model shaclModel = RDFDataMgr.loadModel("r2rml.core.shacl.ttl");
 
         DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
         // DataProviderNodeQuery dataProvider = new DataProviderNodeQuery(dataSource, conceptSupplier, dataRetriever);
