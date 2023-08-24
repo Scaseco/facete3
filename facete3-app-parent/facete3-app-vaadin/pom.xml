@@ -256,7 +256,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.rmltk</groupId>
-			<artifactId>rmltk-parent</artifactId>
+			<artifactId>r2rml-resource-shacl</artifactId>
 		</dependency>
 		
 		<!--		<dependency>-->
