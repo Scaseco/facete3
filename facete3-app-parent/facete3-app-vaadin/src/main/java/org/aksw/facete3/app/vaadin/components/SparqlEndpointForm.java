@@ -8,16 +8,24 @@ import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.aksw.facete3.app.shared.time.TimeAgo;
 import org.aksw.facete3.app.vaadin.ServiceStatus;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySupplier;
+import org.aksw.jenax.arq.util.node.NodeUtils;
+import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.syntax.ElementFilter;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -71,11 +79,17 @@ public class SparqlEndpointForm extends FormLayout {
                     }
                 });
 
-        serviceUrl.setDataProvider(new DataProviderFromDataQuerySupplier<ServiceStatus>() {
+        serviceUrl.setDataProvider(DataProviderUtils.wrapWithErrorHandler(new DataProviderFromDataQuerySupplier<ServiceStatus>() {
             @Override
             protected void applyFilter(DataQuery<ServiceStatus> dataQuery, String filterText) {
-                UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexLabelOnly(
-                        BinaryRelationImpl.create(ResourceFactory.createProperty("http://www.w3.org/ns/sparql-service-description#endpoint")), filterText);
+                Node node = NodeFactory.createURI(filterText);
+                UnaryRelation filter;
+                if (!NodeUtils.isValid(node)) {
+                    filter = new Concept(new ElementFilter(NodeValue.FALSE), Vars.s);
+                } else {
+                    filter = KeywordSearchUtils.createConceptExistsStrConstainsLabelOnly(
+                            BinaryRelationImpl.create(ResourceFactory.createProperty("http://www.w3.org/ns/sparql-service-description#endpoint")), filterText);
+                }
                 dataQuery.filter(filter);
             }
 
@@ -96,7 +110,7 @@ public class SparqlEndpointForm extends FormLayout {
                         ;
                 return dq;
             }
-        });
+        }));
 
         serviceUrl.setItemLabelGenerator(s -> Optional.ofNullable(s.getEndpoint()).orElse("(null)"));
         serviceUrl.setRenderer(new ComponentRenderer<>(serviceStatus -> {
@@ -162,7 +176,7 @@ public class SparqlEndpointForm extends FormLayout {
             unionDefaultGraphMode.setWidthFull();
             setColspan(formItem, 3);
         }
-        
+
         {
             FormItem formItem = addFormItem(bearerToken, "Bearer token");
             bearerToken.setWidthFull();

@@ -3,6 +3,7 @@ package org.aksw.facete3.app.vaadin.components.sparql.wizard;
 import org.aksw.facete3.app.vaadin.components.SparqlEndpointForm;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
 import org.aksw.jenax.connection.query.QueryExecutionFactoryQuery;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
@@ -90,7 +91,8 @@ public class SparqlConnectionWizard
             @Override
             protected void onEnter() {
                 QueryExecutionFactoryQuery qef = q -> QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), q).build();
-                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, qef, QueryFactory.create("SELECT ?g { GRAPH ?g { } }"));
+                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, qef, QueryFactory.create("SELECT ?g { GRAPH ?g { } }"), DataProviderUtils::wrapWithErrorHandler);
+                DataProviderUtils.wrapWithErrorHandler(graphGrid);
                 graphGrid.recalculateColumnWidths();
             }
 

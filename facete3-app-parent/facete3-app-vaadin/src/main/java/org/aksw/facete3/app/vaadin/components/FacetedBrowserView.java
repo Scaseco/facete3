@@ -56,6 +56,7 @@ import org.aksw.jenax.vaadin.component.breadcrumb.Breadcrumb;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.aksw.vaadin.common.component.tab.TabSheet;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -89,6 +90,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.InMemoryDataProvider;
 import com.vaadin.flow.data.provider.Query;
 

@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
@@ -33,6 +34,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.op.OpDatasetNames;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,11 +91,15 @@ public class ConfigEndpoint {
         System.out.println("Created new resource");
         Facete3Wrapper.initJena();
 
-        RdfDataRef dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class)
-            .setServiceUrl(cfg.getSparqlEndpoint());
-
+        String sparqlEndpoint = cfg.getSparqlEndpoint();
         ResourceHolder result = new ResourceHolder();
-        result.set(OpDataRefResource.from(dataRef));
+
+        if (sparqlEndpoint != null) {
+            RdfDataRef dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class)
+                    .setServiceUrl(cfg.getSparqlEndpoint());
+
+            result.set(OpDataRefResource.from(dataRef));
+        }
         return result;
     }
 
@@ -147,6 +153,9 @@ public class ConfigEndpoint {
 
 
     public static RDFConnection getBaseDataConnection(Op op) throws IOException {
+        if (op == null) {
+            op = OpData.create(ModelFactory.createDefaultModel());
+        }
 //      RdfDataPod dataPod = DataPods.fromDataRef(dataRef);
 //      result = dataPod.openConnection();
 

@@ -32,7 +32,6 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -44,7 +43,6 @@ import com.vaadin.flow.dom.Style;
  * The view component for values matching the given facet constraints
  *
  * @author raven
- *
  */
 public class ItemComponent extends TabSheet {
     private static final long serialVersionUID = 1848553144669545835L;
@@ -76,6 +74,7 @@ public class ItemComponent extends TabSheet {
 
         grid.removeAllColumns();
         VaadinShaclGridUtils.configureGrid(grid, dataProvider, labelService);
+        // DataProviderUtils.wrapWithErrorHandler(grid);
 
 
         // grid.getClassNames().add("compact");
@@ -269,6 +268,7 @@ public class ItemComponent extends TabSheet {
                 TreeDataUtils.toVaadin(tableMapperState.getFacetTree()),
                 TableMapperComponent.toPredicateAbsentAsTrue(tableMapperState.getPathToVisibility()),
                 labelService);
+        DataProviderUtils.wrapWithErrorHandler(table);
         tableDiv.removeAll();
         tableDiv.add(table);
     }

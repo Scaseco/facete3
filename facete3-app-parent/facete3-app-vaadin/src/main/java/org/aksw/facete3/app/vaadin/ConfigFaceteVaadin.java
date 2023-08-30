@@ -35,9 +35,11 @@ public class ConfigFaceteVaadin {
     @Bean
     public PrefixMapping globalPrefixMapping() {
         PrefixMapping result = new PrefixMappingImpl();
-        for (String prefixSource : prefixSources) {
-            Model model = RDFDataMgr.loadModel(prefixSource);
-            result.setNsPrefixes(model);
+        if (prefixSources != null) {
+            for (String prefixSource : prefixSources) {
+                Model model = RDFDataMgr.loadModel(prefixSource);
+                result.setNsPrefixes(model);
+            }
         }
         return result;
     }
