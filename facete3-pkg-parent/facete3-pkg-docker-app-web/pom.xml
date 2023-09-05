@@ -41,7 +41,7 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<configuration>
 					<to>
-						<image>docker.io/aklakan/facete3-web${archSuffix}</image>
+						<image>docker.io/aksw/facete3-web${archSuffix}</image>
 					</to>
 					<from>
 						<image>${dockerJavaBaseImage}</image>

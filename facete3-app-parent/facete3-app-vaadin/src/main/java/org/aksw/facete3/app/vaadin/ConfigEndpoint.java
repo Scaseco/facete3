@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
@@ -18,6 +19,7 @@ import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromF
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
+import org.aksw.jenax.arq.datasource.RdfDataEngines;
 import org.aksw.jenax.arq.datasource.RdfDataSourceWithBnodeRewrite;
 import org.aksw.jenax.arq.datasource.RdfDataSourceWithLocalCache;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
@@ -25,7 +27,6 @@ import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgrImpl;
-import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -34,7 +35,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Transformer;
-import org.apache.jena.sparql.algebra.op.OpDatasetNames;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,16 +178,21 @@ public class ConfigEndpoint {
                 new HashMap<>(),
                 // srcFileNameRes,
                 RDFFormat.TURTLE_BLOCKS);
+
         // DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
-
-
         RdfDataSource dataSourceRaw = op.accept(opExecutor);
 
         RdfDataSourceWithBnodeRewrite dataSourceBnode = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
         RdfDataSourceWithLocalCache dataSourceCache = new RdfDataSourceWithLocalCache(dataSourceBnode);
 
+        QueryExecutionFactory qef = new QueryExecutionFactoryCompare(dataSourceCache.asQef(), dataSourceBnode.asQef());
+        RdfDataSource comparingDataSource = RdfDataEngines.adapt(qef);
+
+
         // RdfDataSource dataSource = dataSourceCache;
         RdfDataSource dataSource = dataSourceBnode;
+        // RdfDataSource dataSource = comparingDataSource;
+
 
         // RdfDataSource dataSource = DataPods.from(dataRef);
         RDFConnection rdfConnection = dataSource.getConnection();

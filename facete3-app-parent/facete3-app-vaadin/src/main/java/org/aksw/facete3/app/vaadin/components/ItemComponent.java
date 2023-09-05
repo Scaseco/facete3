@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.function.Supplier;
 
 import org.aksw.commons.util.io.in.InputStreamUtils;
+import org.aksw.commons.util.obj.Enriched;
 import org.aksw.facete.v4.impl.TreeDataUtils;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
@@ -55,7 +56,7 @@ public class ItemComponent extends TabSheet {
 
     protected TextField searchField = new TextField();
     protected FacetedBrowserView facetedBrowserView;
-    protected Grid<RDFNode> grid = new Grid<>(RDFNode.class);
+    protected Grid<Enriched<RDFNode>> grid = new Grid<>();
 
     protected VerticalLayout tableDiv = new VerticalLayout();
 
@@ -325,9 +326,6 @@ public class ItemComponent extends TabSheet {
                 message.setValue(e.toString());
             }
         });
-
-
-
         // dialog.add(lb);
         // dialog.add(tmc);
 
@@ -342,10 +340,8 @@ public class ItemComponent extends TabSheet {
         dialog.add(acceptBtn);
         dialog.add(cancelBtn);
 
-
         dialog.open();
     }
-
 
     public void refresh() {
         dataProvider.refreshAll();

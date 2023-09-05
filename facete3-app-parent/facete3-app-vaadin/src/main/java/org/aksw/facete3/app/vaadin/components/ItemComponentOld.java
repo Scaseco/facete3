@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.obj.Enriched;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
-import org.aksw.facete3.app.vaadin.providers.EnrichedItem;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
@@ -50,21 +50,21 @@ public class ItemComponentOld extends VerticalLayout {
 
     protected TextField searchField = new TextField();
     protected FacetedBrowserView facetedBrowserView;
-    protected Grid<EnrichedItem> grid = new Grid<>(EnrichedItem.class);
+    protected Grid<Enriched> grid = new Grid<>(Enriched.class);
 
 
-    public List<EnrichedItem> enrich(List<RDFNode> rdfNodes) {
+    public List<Enriched> enrich(List<RDFNode> rdfNodes) {
         List<Node> nodes = rdfNodes.stream().map(RDFNode::asNode).collect(Collectors.toList());
 
         //Map<Node, ViewFactory> nodeToViewFactory = viewManager.getBestViewFactories(nodes);
         Map<Node, Component> nodeToComponent = viewManager.getComponents(nodes);
 
-        List<EnrichedItem> result = rdfNodes.stream().map(rdfNode -> {
+        List<Enriched> result = rdfNodes.stream().map(rdfNode -> {
             Node node = rdfNode.asNode();
             Component component = nodeToComponent.get(node);
 //        	ViewFactory viewFactory = nodeToViewFactory.get(node);
 
-            EnrichedItem<RDFNode> r = new EnrichedItem<>(rdfNode);
+            Enriched<RDFNode> r = new Enriched<>(rdfNode);
             r.getClassToInstanceMap().putInstance(Component.class, component);
             return r;
 
@@ -76,7 +76,7 @@ public class ItemComponentOld extends VerticalLayout {
 
     /** Refresh the grid, especially updating the columns. Also, a cache is used to remember components in cells. */
     public void refreshGrid() {
-        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrapWithBulkConvert(
+        DataProvider<Enriched, Void> effectiveDataProvider = DataProviderWithConversion.wrapWithBulkConvert(
                 itemProvider, this::enrich, ei -> (RDFNode)ei.getItem());
 
 
@@ -94,7 +94,7 @@ public class ItemComponentOld extends VerticalLayout {
        // 	return anchor;
        // 	})).setSortProperty("value").setHeader(searchField);
         Column<?> col = grid.addColumn(
-                new ComponentRenderer<Component, EnrichedItem>(enrichedItem -> {
+                new ComponentRenderer<Component, Enriched>(enrichedItem -> {
                     RDFNode item = (RDFNode)enrichedItem.getItem();
                     Node node = item.asNode();
 //                    Component r = viewManager.getComponents(Collections.singleton(node)).get(node);
