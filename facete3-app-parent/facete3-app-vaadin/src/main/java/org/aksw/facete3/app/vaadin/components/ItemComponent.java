@@ -127,7 +127,7 @@ public class ItemComponent extends TabSheet {
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
 //                    Node node = event.getValue().asNode();
-                    Node node = ((RDFNode)event.getValue()).asNode();
+                    Node node = ((Enriched<RDFNode>)event.getValue()).getItem().asNode();
                     facetedBrowserView.viewNode(node);
                 });
 
