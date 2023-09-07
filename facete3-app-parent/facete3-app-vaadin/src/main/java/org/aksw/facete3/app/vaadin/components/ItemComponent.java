@@ -10,6 +10,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
+import org.aksw.jenax.model.shacl.util.ShTemplateRegistry;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
@@ -23,6 +24,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -63,6 +65,7 @@ public class ItemComponent extends TabSheet {
 
     protected TableMapperState tableMapperState = TableMapperState.ofRoot();
 
+    protected ShTemplateRegistry templates = new ShTemplateRegistry();
 
     /** Refresh the grid, especially updating the columns. Also, a cache is used to remember components in cells. */
     public void refreshGrid() {
@@ -74,7 +77,9 @@ public class ItemComponent extends TabSheet {
 
 
         grid.removeAllColumns();
-        VaadinShaclGridUtils.configureGrid(grid, dataProvider, labelService);
+
+        // Load templates
+        VaadinShaclGridUtils.configureGrid(grid, dataProvider, templates, labelService);
         // DataProviderUtils.wrapWithErrorHandler(grid);
 
 
@@ -232,7 +237,7 @@ public class ItemComponent extends TabSheet {
     public void showTableMapperDialog() {
         RdfDataSource dataSource = dataProvider.getDataSource();
         Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
-        System.out.println("Concept: " + conceptSupplier.get());
+        // System.out.println("Concept: " + conceptSupplier.get());
         TableMapperComponent tmc = new TableMapperComponent(dataSource, conceptSupplier.get(), labelService);
 
         Dialog dialog = new Dialog();
@@ -294,13 +299,21 @@ public class ItemComponent extends TabSheet {
             DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
             dataProvider.setDataRetriever(dataRetriever);
             System.out.println("TABLE REFRESH");
+
+            ShTemplateRegistry newTemplates = VaadinShaclGridUtils.loadTemplates(shaclModel);
+            templates.clear();
+            templates.addAll(newTemplates);
+            // Reset the grid with the updated renderer (pro)
+            // grid.removeAllColumns();
+            // Load templates
+            // VaadinShaclGridUtils.configureGrid(grid, dataProvider, templates, labelService);
+
             dataProvider.refreshAll();
             // Do something with the file data
             // processFile(fileData, fileName, contentLength, mimeType);
         });
 
         acceptBtn.setEnabled(false);
-
         singleFileUpload.addStartedListener(evenet -> {
             message.setValue("");
             acceptBtn.setEnabled(false);
