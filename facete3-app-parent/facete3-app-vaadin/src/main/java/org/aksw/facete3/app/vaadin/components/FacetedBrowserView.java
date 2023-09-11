@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.shared.concept.RDFNodeSpec;
 import org.aksw.facete3.app.vaadin.ConfigFaceteVaadin;
+import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
@@ -41,7 +43,6 @@ import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinStyleUtils;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionTransform;
 import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.jenax.arq.datashape.viewselector.ViewTemplateImpl;
@@ -56,7 +57,6 @@ import org.aksw.jenax.vaadin.component.breadcrumb.Breadcrumb;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.aksw.vaadin.common.component.tab.TabSheet;
-import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
@@ -90,7 +90,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.InMemoryDataProvider;
 import com.vaadin.flow.data.provider.Query;
 
@@ -237,7 +236,8 @@ public class FacetedBrowserView
                 dataSource.asQef(),
                 // new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
                 RDFS.label,
-                prefixMapping);
+                prefixMapping,
+                ConfigFacetedBrowserView.DFT_LOOKUPSIZE);
 
 //        TransformService transformService = new TransformService(config.getPrefixFile());
 
@@ -273,7 +273,7 @@ public class FacetedBrowserView
 
         // baseConcept
         sparqlGridComponent = new SparqlGridComponent(dataSource, ConceptUtils.createSubjectConcept(), labelMgr);
-
+        sparqlGridComponent.setPageSize(ConfigFacetedBrowserView.DFT_GRID_PAGESIZE);
 
         resourceBrowserComponent = new ResourceBrowserComponent(viewManagerFull, labelFunction, dftViewFactory);
         resourceBrowserComponent.setWidthFull();
@@ -321,17 +321,15 @@ public class FacetedBrowserView
         input.setWidthFull();
 
         layout.add(new SparqlConnectionWizard() {
-            public void onSelect() {
-                String urlStr = sparqlEndpointForm.getServiceUrl().getValue().getEndpoint();
+            public void onWizardCompleted() {
+                String urlStr = getEndpointUrl();
 
                 ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
 
                 RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
                 dataRef.setServiceUrl(urlStr);
 
-                List<String> defaultGraphIris = graphGrid.getSelectedItems().stream()
-                    .map(qs -> qs.get("g").asNode().getURI())
-                    .collect(Collectors.toList());
+                Set<String> defaultGraphIris = getSelectedDefaultGraphIris();
 
                 dataRef.getDefaultGraphs().addAll(defaultGraphIris);
 
@@ -346,10 +344,21 @@ public class FacetedBrowserView
 //                System.out.println("Given cxt:\n" + toString(cxt));
 //                System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
 
+
+                Set<Node> selectedTypes = getSelectedTypes();
+
+                UnaryRelation initialConcept = selectedTypes.isEmpty()
+                        ? ConceptUtils.createSubjectConcept()
+                        : Concept.createForTypes(selectedTypes);
+                System.err.println("Base concept restricted to types: " + selectedTypes);
+                // facete3.getFacetedQuery().baseConcept(baseConcept);
+                facete3.setInitialConcept(initialConcept);
+
                 // This line triggers immediate data retrieval on the subsequent refresh
                 setSearchUnconstrained();
 
                 refreshAllNew();
+
 
                 dialog.close();
             }
@@ -632,9 +641,9 @@ public class FacetedBrowserView
 
     public void handleSearchResponse(RDFNodeSpec rdfNodeSpec) {
 
+        UnaryRelation searchConcept;
         if (rdfNodeSpec.isCollection()) {
-            UnaryRelation baseConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
-            facete3.setBaseConcept(baseConcept);
+            searchConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
         } else if (rdfNodeSpec.isRootedQuery()) {
 
             // FIXME Not all possible cases are handled here
@@ -643,20 +652,24 @@ public class FacetedBrowserView
             RootedQuery rq = rdfNodeSpec.getRootedQuery();
             Var var = (Var)rq.getRootNode();
             Element element = ElementUtils.flatten(rq.getObjectQuery().getRelation().getElement());
-            UnaryRelation concept = new Concept(element, var);
+            searchConcept = new Concept(element, var);
 
             // FIXME We need a strategy when to wrap the base concept as a sub query
-            if (!concept.isSubjectConcept()) {
-                org.apache.jena.query.Query subQuery = concept.toQuery();
+            if (!searchConcept.isSubjectConcept()) {
+                org.apache.jena.query.Query subQuery = searchConcept.toQuery();
                 subQuery.setDistinct(true);
-                concept = new Concept(new ElementSubQuery(subQuery), concept.getVar());
+                searchConcept = new Concept(new ElementSubQuery(subQuery), searchConcept.getVar());
             }
-
-            facete3.setBaseConcept(concept);
-
         } else {
             throw new RuntimeException("Unknown rdfNodeSpec type "  + rdfNodeSpec);
         }
+
+        UnaryRelation initialConcept = facete3.getInitialConcept();
+
+        UnaryRelation baseConcept = initialConcept.joinOn(initialConcept.getVar()).with(searchConcept).toUnaryRelation();
+        System.err.println("Base concept: " + baseConcept);
+        facete3.setBaseConcept(baseConcept);
+
 
         // RDFConnection effectiveDataConnection = baseDataConnection;
 

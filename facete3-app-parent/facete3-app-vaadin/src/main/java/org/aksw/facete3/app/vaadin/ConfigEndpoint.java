@@ -147,7 +147,7 @@ public class ConfigEndpoint {
     public VaadinRdfLabelMgr labelMgr(RDFConnection conn) {
         QueryExecutionFactory qef = new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
-        VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get()));
+        VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50));
         return labelService;
     }
 
@@ -190,8 +190,8 @@ public class ConfigEndpoint {
 
 
         // RdfDataSource dataSource = dataSourceCache;
-        RdfDataSource dataSource = dataSourceBnode;
-        // RdfDataSource dataSource = comparingDataSource;
+        // RdfDataSource dataSource = dataSourceBnode;
+        RdfDataSource dataSource = comparingDataSource;
 
 
         // RdfDataSource dataSource = DataPods.from(dataRef);

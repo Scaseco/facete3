@@ -13,6 +13,7 @@ import org.aksw.commons.path.core.Path;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.MavenEntity;
+import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.jena_sparql_api.collection.observable.GraphChange;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ResourceMetamodel;
@@ -254,7 +255,7 @@ public class DatasetSelectorComponent extends TabSheet {
 
         Model prefixes = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.ttl");
         LookupService<Node, String> labelService =
-                LabelUtils.createLookupServiceForLabels(LabelUtils.getLabelLookupService(qef, RDFS.label, prefixes), prefixes, prefixes).cache();
+                LabelUtils.createLookupServiceForLabels(LabelUtils.getLabelLookupService(qef, RDFS.label, prefixes, ConfigFacetedBrowserView.DFT_LOOKUPSIZE), prefixes, prefixes).cache();
 
 
 

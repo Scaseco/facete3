@@ -1,5 +1,6 @@
 package org.aksw.facete3.app.vaadin;
 
+import org.apache.jena.JenaRuntime;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -15,6 +16,7 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 //    static { JenaSystem.init(); }
 
     public static void main(String[] args) {
+        JenaRuntime.isRDF11 = false;
 
         // Interestingly wrapping the cxt in a try-with-resources block to ensure
         // auto-closing of it causes application start up to fail -

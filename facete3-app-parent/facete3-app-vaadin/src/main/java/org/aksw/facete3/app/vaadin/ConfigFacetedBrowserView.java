@@ -45,6 +45,10 @@ import com.vaadin.flow.data.provider.InMemoryDataProvider;
  */
 public class ConfigFacetedBrowserView {
 
+    public static final int DFT_LOOKUPSIZE = 50;
+
+    public static final int DFT_GRID_PAGESIZE = 50;
+
     @Bean
     @Autowired
     public Facete3Wrapper facetedQueryConf(RdfDataSource dataSource) {
@@ -108,7 +112,8 @@ public class ConfigFacetedBrowserView {
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
                 new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
                 RDFS.label,
-                prefixMapping);
+                prefixMapping,
+                DFT_LOOKUPSIZE);
 
         return new FacetCountProvider(facetedQueryConf, labelService);
     }
@@ -124,7 +129,8 @@ public class ConfigFacetedBrowserView {
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
                 new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
                 RDFS.label,
-                prefixMapping);
+                prefixMapping,
+                DFT_LOOKUPSIZE);
 
         FacetValueCountProvider result = new FacetValueCountProvider(facetedQueryConf, labelService);
         return result;

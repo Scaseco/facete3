@@ -41,7 +41,6 @@ import org.aksw.jenax.path.datatype.RDFDatatypePPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
-import org.apache.jena.JenaRuntime;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.graph.Node;
@@ -64,6 +63,9 @@ public class Facete3Wrapper {
     private FacetDirNode facetDirNode;
     private FacetedQuery facetedQuery;
 
+    /** Base concept = Initial concept + search restriction */
+    private UnaryRelation initialConcept;
+
     protected Set<FacetDirNode> alwaysVisibleCustomFacets = new LinkedHashSet<>();
     protected Multimap<FacetPath, FacetDirNode> customFacetsVisibleAtPath = LinkedHashMultimap.create();
 
@@ -75,6 +77,14 @@ public class Facete3Wrapper {
 
     // FIXME This needs to be a FacetNode (a FacetPath would point wherever if there were changes to the root)
     private Node selectedFacet;
+
+    public UnaryRelation getInitialConcept() {
+        return initialConcept;
+    }
+
+    public void setInitialConcept(UnaryRelation initialConcept) {
+        this.initialConcept = initialConcept;
+    }
 
     public FacetDirNode getFacetDirNode() {
         return facetDirNode;
@@ -111,8 +121,6 @@ public class Facete3Wrapper {
 
     public Facete3Wrapper(RdfDataSource dataSource) {
     // public Facete3Wrapper(RDFConnection connection) {
-        JenaRuntime.isRDF11 = false;
-
         initJena();
         initFacetedQuery(dataSource);
         setEmptyBaseConcept();

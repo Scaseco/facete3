@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import org.aksw.commons.util.io.in.InputStreamUtils;
 import org.aksw.commons.util.obj.Enriched;
 import org.aksw.facete.v4.impl.TreeDataUtils;
+import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
@@ -24,12 +25,12 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.engine.binding.Binding;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -41,6 +42,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.dom.Style;
+import com.vaadin.flow.shared.Registration;
 
 /**
  * The view component for values matching the given facet constraints
@@ -48,6 +50,29 @@ import com.vaadin.flow.dom.Style;
  * @author raven
  */
 public class ItemComponent extends TabSheet {
+
+
+    public void handleResize() {
+
+        Registration unregisterBrowserWindowResizeListener = UI.getCurrent().getPage().addBrowserWindowResizeListener(event -> {
+            int width = event.getWidth();
+
+            if (width <= 599) {
+                grid.removeClassName("medium-device");
+                grid.removeClassName("large-device");
+                grid.addClassName("small-device");
+            } else if (width <= 899) {
+                grid.removeClassName("small-device");
+                grid.removeClassName("large-device");
+                grid.addClassName("medium-device");
+            } else {
+                grid.removeClassName("small-device");
+                grid.removeClassName("medium-device");
+                grid.addClassName("large-device");
+            }
+        });
+    }
+
     private static final long serialVersionUID = 1848553144669545835L;
 
     protected DataProviderNodeQuery dataProvider;
@@ -67,6 +92,8 @@ public class ItemComponent extends TabSheet {
 
     protected ShTemplateRegistry templates = new ShTemplateRegistry();
 
+    public static final int pageSize = ConfigFacetedBrowserView.DFT_GRID_PAGESIZE;
+
     /** Refresh the grid, especially updating the columns. Also, a cache is used to remember components in cells. */
     public void refreshGrid() {
 //        DataProvider<EnrichedItem, Void> effectiveDataProvider = DataProviderWithConversion.wrapWithBulkConvert(
@@ -75,10 +102,10 @@ public class ItemComponent extends TabSheet {
 
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
 
-
         grid.removeAllColumns();
 
         // Load templates
+        grid.setPageSize(pageSize);
         VaadinShaclGridUtils.configureGrid(grid, dataProvider, templates, labelService);
         // DataProviderUtils.wrapWithErrorHandler(grid);
 
@@ -274,6 +301,7 @@ public class ItemComponent extends TabSheet {
                 TreeDataUtils.toVaadin(tableMapperState.getFacetTree()),
                 TableMapperComponent.toPredicateAbsentAsTrue(tableMapperState.getPathToVisibility()),
                 labelService);
+        table.setPageSize(pageSize);
         DataProviderUtils.wrapWithErrorHandler(table);
         tableDiv.removeAll();
         tableDiv.add(table);

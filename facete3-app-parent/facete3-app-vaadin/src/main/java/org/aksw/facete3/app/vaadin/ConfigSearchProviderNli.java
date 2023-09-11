@@ -3,13 +3,13 @@ package org.aksw.facete3.app.vaadin;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.aksw.commons.util.function.FixpointIteration;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPluginImpl;
 import org.aksw.facete3.app.vaadin.providers.SearchProviderNli;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFactorizeTableColumnsToExtend;
-import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.core.QueryTransform;
