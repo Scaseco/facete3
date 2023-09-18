@@ -322,18 +322,9 @@ public class FacetedBrowserView
 
         layout.add(new SparqlConnectionWizard() {
             public void onWizardCompleted() {
-                String urlStr = getEndpointUrl();
-
                 ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
 
-                RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
-                dataRef.setServiceUrl(urlStr);
-
-                Set<String> defaultGraphIris = getSelectedDefaultGraphIris();
-
-                dataRef.getDefaultGraphs().addAll(defaultGraphIris);
-
-                Op op = OpDataRefResource.from(dataRef);
+                Op op = getConjureSpecification(true);
 
 //                if (input.getUnionDefaultGraphMode().isEnabled()) {
 //                    op = OpUnionDefaultGraph.create(op);

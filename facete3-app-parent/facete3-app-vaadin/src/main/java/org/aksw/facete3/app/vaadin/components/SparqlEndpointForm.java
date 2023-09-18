@@ -2,6 +2,8 @@ package org.aksw.facete3.app.vaadin.components;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
@@ -10,6 +12,8 @@ import org.aksw.facete3.app.vaadin.ServiceStatus;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBasic;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySupplier;
@@ -27,6 +31,9 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementFilter;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -34,25 +41,61 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 public class SparqlEndpointForm extends FormLayout {
     protected ComboBox<ServiceStatus> serviceUrl = new ComboBox<>();
     protected Checkbox unionDefaultGraphMode = new Checkbox();
-    protected TextField bearerToken = new TextField("Bearer token");
 
-//    protected TextField lastName =
-//            new TextField("Last name");
-//    private ComboBox<Gender> gender =
-//            new ComboBox<>("Gender");
+    protected Select<AuthMode> authModeSelect = new Select<>();
+
+    protected TextField usernameInput = new TextField("User Name");
+    protected TextField passwordInput = new TextField("Password");
+
+    protected TextField bearerTokenInput = new TextField("Bearer token");
+
+    protected Multimap<AuthMode, Component> authComponents = ArrayListMultimap.create();
 
     public ComboBox<ServiceStatus> getServiceUrl() {
         return serviceUrl;
     }
 
+    public AuthMode getAuthMode() {
+        return authModeSelect.getValue();
+    }
+
+    public String getBearerToken() {
+        return bearerTokenInput.getValue();
+    }
+
+    public String getPassword() {
+        return passwordInput.getValue();
+    }
+
+    public String getUsername() {
+        return usernameInput.getValue();
+    }
+
     public Checkbox getUnionDefaultGraphMode() {
         return unionDefaultGraphMode;
+    }
+
+    public RdfAuth getAuth() {
+        AuthMode authMode = getAuthMode();
+        RdfAuth result = null;
+        switch (authMode) {
+        case BASIC:
+            RdfAuthBasic basic = ModelFactory.createDefaultModel().createResource().as(RdfAuthBasic.class);
+            basic.setUsername(getUsername());
+            basic.setPassword(getPassword());
+            result = basic;
+            break;
+        case BEARER_TOKEN:
+        default:
+        }
+        return result;
     }
 
     public SparqlEndpointForm() {
@@ -178,26 +221,50 @@ public class SparqlEndpointForm extends FormLayout {
         }
 
         {
-            FormItem formItem = addFormItem(bearerToken, "Bearer token");
-            bearerToken.setWidthFull();
+            authModeSelect.setEmptySelectionAllowed(false);
+            authModeSelect.setItems(AuthMode.NONE, AuthMode.BASIC, AuthMode.BEARER_TOKEN);
+            authModeSelect.setValue(AuthMode.NONE);
+            authModeSelect.setTextRenderer(AuthMode::getName);
+            FormItem formItem = addFormItem(authModeSelect, "Authentication Type");
+
+            authModeSelect.addValueChangeListener(ev -> {
+                updateAuthDialog(ev.getValue());
+            });
+
+            bearerTokenInput.setWidthFull();
             setColspan(formItem, 3);
         }
 
-//        FormItem formItem = new FormItem();
-//        Label label = new Label("Sparql Endpoint URL");
-//        label.getElement().setAttribute("slot", "label");
-//        formItem.add(label);
-//        formItem.add(serviceUrl);
-//        add(formItem, 3);
+        {
+            FormItem formItem = addFormItem(usernameInput, "User Name");
+            usernameInput.setWidthFull();
+            setColspan(formItem, 3);
+            authComponents.put(AuthMode.BASIC, formItem);
+        }
 
-//        add(serviceUrl, 3);
+        {
+            FormItem formItem = addFormItem(passwordInput, "Password");
+            passwordInput.setWidthFull();
+            setColspan(formItem, 3);
+            authComponents.put(AuthMode.BASIC, formItem);
+        }
 
-//        DataRefSparqlEndpoint bean = ModelFactory.createDefaultModel().createResource().as(DataRefSparqlEndpoint.class);
-//        bean.setServiceUrl("http://");
+        {
+            FormItem formItem = addFormItem(bearerTokenInput, "Bearer token");
+            bearerTokenInput.setWidthFull();
+            setColspan(formItem, 3);
+            authComponents.put(AuthMode.BEARER_TOKEN, formItem);
+        }
 
-//        Binder<PlainDataRefSparqlEndpoint> binder = new Binder<>(PlainDataRefSparqlEndpoint.class);
-//        binder.setBean(bean);
-//        binder.bindInstanceFields(this);
+        updateAuthDialog(AuthMode.NONE);
+    }
+
+    public void updateAuthDialog(AuthMode authType) {
+        for (Entry<AuthMode, Collection<Component>> e : authComponents.asMap().entrySet()) {
+            boolean setVisible = e.getKey().equals(authType);
+            for (Component component : e.getValue()) {
+                component.setVisible(setVisible);
+            }
+        }
     }
 }
-

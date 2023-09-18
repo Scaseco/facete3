@@ -107,6 +107,8 @@ public class ItemComponent extends TabSheet {
         // Load templates
         grid.setPageSize(pageSize);
         VaadinShaclGridUtils.configureGrid(grid, dataProvider, templates, labelService);
+        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
+
         // DataProviderUtils.wrapWithErrorHandler(grid);
 
 
@@ -150,7 +152,6 @@ public class ItemComponent extends TabSheet {
 
 
 
-        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
         grid.asSingleSelect()
                 .addValueChangeListener(event -> {
 //                    Node node = event.getValue().asNode();

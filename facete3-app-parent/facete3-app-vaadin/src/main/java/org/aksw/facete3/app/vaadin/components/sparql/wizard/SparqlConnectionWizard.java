@@ -1,25 +1,34 @@
 package org.aksw.facete3.app.vaadin.components.sparql.wizard;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.facete3.app.vaadin.ConfigEndpoint;
 import org.aksw.facete3.app.vaadin.components.SparqlEndpointForm;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
+import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.connection.query.QueryExecutionFactoryQuery;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.core.Var;
 
 import com.mlottmann.vstepper.Step;
 import com.mlottmann.vstepper.VStepper;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
@@ -40,6 +49,33 @@ public class SparqlConnectionWizard
     public void onWizardCompleted() {
 
     }
+
+    public Op getConjureSpecification(boolean applyGraphs) {
+        String urlStr = getEndpointUrl();
+
+        RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
+        dataRef.setServiceUrl(urlStr);
+
+        RdfAuth auth = sparqlEndpointForm.getAuth();
+        if (auth != null) {
+            dataRef.getModel().add(auth.getModel());
+            dataRef.setAuth(auth);
+        }
+
+        Set<String> defaultGraphIris = getSelectedDefaultGraphIris();
+
+        if (applyGraphs) {
+            dataRef.getDefaultGraphs().addAll(defaultGraphIris);
+        }
+
+        Op result = OpDataRefResource.from(dataRef);
+
+        return result;
+    }
+
+//    public RdfDataSource newDataSource(Op op) {
+//
+//    }
 
     public String getEndpointUrl() {
         String result = sparqlEndpointForm.getServiceUrl().getValue().getEndpoint();
@@ -110,7 +146,10 @@ public class SparqlConnectionWizard
         return new Step(header, layout) {
             @Override
             protected void onEnter() {
-                QueryExecutionFactoryQuery qef = q -> QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), q).build();
+                // QueryExecutionFactoryQuery qef = q -> QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), q).build();
+                Op dsOp = getConjureSpecification(false);
+                QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
+
                 VaadinSparqlUtils.setQueryForGridSolution(graphGrid, qef, QueryFactory.create("SELECT ?g { GRAPH ?g { } }"), DataProviderUtils::wrapWithErrorHandler);
                 DataProviderUtils.wrapWithErrorHandler(graphGrid);
                 graphGrid.recalculateColumnWidths();
@@ -136,11 +175,26 @@ public class SparqlConnectionWizard
             protected void onEnter() {
                 Set<String> graphNames = getSelectedDefaultGraphIris();
                 //Query query = QueryFactory.create("SELECT DISTINCT ?p { ?s ?p ?o }");
+                Var resultVar = Vars.t;
                 Query query = QueryFactory.create("SELECT DISTINCT ?t { ?s a ?t }");
                 graphNames.forEach(query::addGraphURI);
 
-                QueryExecutionFactoryQuery qef = q -> QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), q).build();
+//                QueryExecutionFactoryQuery qef = q -> {
+//                    Query clone = q.cloneQuery();
+//                    Set<String> presentGraphs = new LinkedHashSet<>(clone.getGraphURIs());
+//                    Set<String> missingGraphs = new LinkedHashSet<>(Sets.difference(graphNames, presentGraphs));
+//                    missingGraphs.forEach(clone::addGraphURI);
+//                    QueryExecution r = QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), clone).build();
+//                    return r;
+//                };
+
+                Op dsOp = getConjureSpecification(true);
+                QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
+
                 VaadinSparqlUtils.setQueryForGridSolution(typeGrid, qef, query, DataProviderUtils::wrapWithErrorHandler);
+                HeaderRow filterRow = typeGrid.appendHeaderRow();
+                VaadinSparqlUtils.configureGridFilter(typeGrid, filterRow, List.of(resultVar), var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
+
                 DataProviderUtils.wrapWithErrorHandler(typeGrid);
                 typeGrid.recalculateColumnWidths();
             }

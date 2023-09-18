@@ -1,6 +1,8 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete3.app.vaadin.ConfigEndpoint;
+import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
@@ -31,7 +33,7 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
     private void init() {
         // The higher the value the more time is spent on enriching items such as by fetching labels
-        setPageSize(100);
+        setPageSize(ConfigFacetedBrowserView.DFT_GRID_PAGESIZE);
 
         setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
 
