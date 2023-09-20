@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import org.aksw.commons.util.time.TimeAgo;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
-import org.aksw.facete3.app.shared.time.TimeAgo;
 import org.aksw.facete3.app.vaadin.ServiceStatus;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -42,24 +42,32 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.Autocomplete;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.dom.Element;
 
 public class SparqlEndpointForm extends FormLayout {
-    protected ComboBox<ServiceStatus> serviceUrl = new ComboBox<>();
+    protected ComboBox<ServiceStatus> serviceUrlOld = new ComboBox<>();
+
+
+    protected TextField serviceUrl = new TextField("Endpoint URL");
+
     protected Checkbox unionDefaultGraphMode = new Checkbox();
 
     protected Select<AuthMode> authModeSelect = new Select<>();
 
     protected TextField usernameInput = new TextField("User Name");
-    protected TextField passwordInput = new TextField("Password");
+    protected PasswordField passwordInput = new PasswordField("Password");
 
     protected TextField bearerTokenInput = new TextField("Bearer token");
 
     protected Multimap<AuthMode, Component> authComponents = ArrayListMultimap.create();
 
-    public ComboBox<ServiceStatus> getServiceUrl() {
-        return serviceUrl;
+    // public ComboBox<ServiceStatus> getServiceUrl() {
+    public String getServiceUrl() {
+        return serviceUrl.getValue();
     }
 
     public AuthMode getAuthMode() {
@@ -108,7 +116,7 @@ public class SparqlEndpointForm extends FormLayout {
         Model model = RDFDataMgr.loadModel("https://raw.githubusercontent.com/SmartDataAnalytics/lodservatory/master/latest-status.ttl");
         RDFDataMgr.read(model, "extra-endpoints.ttl");
 
-        serviceUrl.addCustomValueSetListener(
+        serviceUrlOld.addCustomValueSetListener(
                 event -> {
                     String value = event.getDetail();
                     System.out.println("TRIGGER WITH VALUE " + value);
@@ -118,11 +126,11 @@ public class SparqlEndpointForm extends FormLayout {
                         ServiceStatus bean = ModelFactory.createDefaultModel().createResource(iri).as(ServiceStatus.class);
                         bean.setEndpoint(value);
 
-                        serviceUrl.setValue(bean);
+                        serviceUrlOld.setValue(bean);
                     }
                 });
 
-        serviceUrl.setDataProvider(DataProviderUtils.wrapWithErrorHandler(new DataProviderFromDataQuerySupplier<ServiceStatus>() {
+        serviceUrlOld.setDataProvider(DataProviderUtils.wrapWithErrorHandler(new DataProviderFromDataQuerySupplier<ServiceStatus>() {
             @Override
             protected void applyFilter(DataQuery<ServiceStatus> dataQuery, String filterText) {
                 Node node = NodeFactory.createURI(filterText);
@@ -155,8 +163,8 @@ public class SparqlEndpointForm extends FormLayout {
             }
         }));
 
-        serviceUrl.setItemLabelGenerator(s -> Optional.ofNullable(s.getEndpoint()).orElse("(null)"));
-        serviceUrl.setRenderer(new ComponentRenderer<>(serviceStatus -> {
+        serviceUrlOld.setItemLabelGenerator(s -> Optional.ofNullable(s.getEndpoint()).orElse("(null)"));
+        serviceUrlOld.setRenderer(new ComponentRenderer<>(serviceStatus -> {
             HorizontalLayout layout = new HorizontalLayout();
 
             XSDDateTime timestamp = serviceStatus.getDateModified();
@@ -208,7 +216,10 @@ public class SparqlEndpointForm extends FormLayout {
             return layout;
         }));
 
+
         {
+            serviceUrl.setAutocomplete(Autocomplete.URL);
+            serviceUrl.getElement().setAttribute("name", "endpointUrl");
             FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
             serviceUrl.setWidthFull();
             setColspan(formItem, 3);
@@ -236,6 +247,13 @@ public class SparqlEndpointForm extends FormLayout {
         }
 
         {
+            // https://vaadin.com/forum/thread/17399734/leverage-browser-save-password-feature
+            usernameInput.setAutocomplete(Autocomplete.USERNAME);
+            usernameInput.getElement().setAttribute("name", "username");
+            Element dummy = new Element("input");
+            dummy.setAttribute("type", "text");
+            dummy.setAttribute("slot", "input");
+            usernameInput.getElement().appendChild(dummy);
             FormItem formItem = addFormItem(usernameInput, "User Name");
             usernameInput.setWidthFull();
             setColspan(formItem, 3);
@@ -243,6 +261,12 @@ public class SparqlEndpointForm extends FormLayout {
         }
 
         {
+            passwordInput.setAutocomplete(Autocomplete.CURRENT_PASSWORD);
+            passwordInput.getElement().setAttribute("name", "current-password");
+            Element dummy = new Element("input");
+            dummy.setAttribute("type", "text");
+            dummy.setAttribute("slot", "input");
+            passwordInput.getElement().appendChild(dummy);
             FormItem formItem = addFormItem(passwordInput, "Password");
             passwordInput.setWidthFull();
             setColspan(formItem, 3);

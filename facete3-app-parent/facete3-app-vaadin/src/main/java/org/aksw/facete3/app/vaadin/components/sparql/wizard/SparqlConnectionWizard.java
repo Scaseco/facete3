@@ -78,7 +78,7 @@ public class SparqlConnectionWizard
 //    }
 
     public String getEndpointUrl() {
-        String result = sparqlEndpointForm.getServiceUrl().getValue().getEndpoint();
+        String result = sparqlEndpointForm.getServiceUrl();
         return result;
     }
 
@@ -150,8 +150,16 @@ public class SparqlConnectionWizard
                 Op dsOp = getConjureSpecification(false);
                 QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
 
-                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, qef, QueryFactory.create("SELECT ?g { GRAPH ?g { } }"), DataProviderUtils::wrapWithErrorHandler);
-                DataProviderUtils.wrapWithErrorHandler(graphGrid);
+                Var resultVar = Vars.t;
+                Query query = QueryFactory.create("SELECT ?g { GRAPH ?g { } }");
+
+                VaadinSparqlUtils.setQueryForGridSolution(typeGrid, qef, query, DataProviderUtils::wrapWithErrorHandler);
+                HeaderRow filterRow = typeGrid.appendHeaderRow();
+                VaadinSparqlUtils.configureGridFilter(typeGrid, filterRow, List.of(resultVar), var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
+                DataProviderUtils.wrapWithErrorHandler(typeGrid);
+//
+//                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, qef, QueryFactory.create("SELECT ?g { GRAPH ?g { } }"), DataProviderUtils::wrapWithErrorHandler);
+//                DataProviderUtils.wrapWithErrorHandler(graphGrid);
                 graphGrid.recalculateColumnWidths();
             }
 
@@ -194,7 +202,6 @@ public class SparqlConnectionWizard
                 VaadinSparqlUtils.setQueryForGridSolution(typeGrid, qef, query, DataProviderUtils::wrapWithErrorHandler);
                 HeaderRow filterRow = typeGrid.appendHeaderRow();
                 VaadinSparqlUtils.configureGridFilter(typeGrid, filterRow, List.of(resultVar), var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
-
                 DataProviderUtils.wrapWithErrorHandler(typeGrid);
                 typeGrid.recalculateColumnWidths();
             }

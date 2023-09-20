@@ -359,7 +359,7 @@ public class FacetedBrowserView
         Button applyBtn = new Button("Apply");
         layout.add(applyBtn);
         applyBtn.addClickListener(event -> {
-            String urlStr = input.getServiceUrl().getValue().getEndpoint();
+            String urlStr = input.getServiceUrl();
 
 
             ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
