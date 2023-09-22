@@ -10,6 +10,7 @@ import org.aksw.facete3.app.vaadin.session.UserSession;
 import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
 import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -26,9 +27,11 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
+import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 
@@ -48,6 +51,8 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
 @Theme(value = Lumo.class)
 @PermitAll
+@Push(PushMode.AUTOMATIC)
+@EnableAsync
 //@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
 public class AppLayoutFacete3 extends AppLayout {
 

@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBasic;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBearerToken;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySupplier;
@@ -101,6 +102,8 @@ public class SparqlEndpointForm extends FormLayout {
             result = basic;
             break;
         case BEARER_TOKEN:
+            RdfAuthBearerToken bearer = ModelFactory.createDefaultModel().createResource().as(RdfAuthBearerToken.class);
+            bearer.setBearerToken(getBearerToken());
         default:
         }
         return result;

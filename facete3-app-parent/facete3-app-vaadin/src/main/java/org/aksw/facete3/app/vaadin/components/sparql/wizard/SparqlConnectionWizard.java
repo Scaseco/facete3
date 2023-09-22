@@ -1,8 +1,10 @@
 package org.aksw.facete3.app.vaadin.components.sparql.wizard;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import org.aksw.facete3.app.vaadin.ConfigEndpoint;
@@ -12,7 +14,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
-import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactories;
 import org.aksw.jenax.connection.query.QueryExecutionFactoryQuery;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
@@ -23,6 +25,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 
+import com.jcraft.jsch.Logger;
 import com.mlottmann.vstepper.Step;
 import com.mlottmann.vstepper.VStepper;
 import com.vaadin.flow.component.Component;
@@ -41,7 +44,16 @@ public class SparqlConnectionWizard
     protected Grid<QuerySolution> graphGrid;
     protected Grid<QuerySolution> typeGrid;
 
-    public SparqlConnectionWizard() {
+    // protected Set<Node> selectedGraphs = Collections.emptySet();
+
+    protected ExecutorService executorService;
+
+
+    Var GRAPH_VAR = Var.alloc("Graph");
+    Var TYPE_VAR = Var.alloc("Type");
+
+    public SparqlConnectionWizard(ExecutorService executorService) {
+        this.executorService = executorService;
         init();
     }
 
@@ -73,17 +85,13 @@ public class SparqlConnectionWizard
         return result;
     }
 
-//    public RdfDataSource newDataSource(Op op) {
-//
-//    }
-
     public String getEndpointUrl() {
         String result = sparqlEndpointForm.getServiceUrl();
         return result;
     }
 
     public Set<String> getSelectedDefaultGraphIris() {
-        Set<String> result = graphGrid.getSelectedItems().stream().map(qs -> qs.get("g"))
+        Set<String> result = graphGrid.getSelectedItems().stream().map(qs -> qs.get(GRAPH_VAR.getName()))
                 .map(RDFNode::asNode)
                 .filter(Node::isURI)
                 .map(Node::getURI)
@@ -92,7 +100,7 @@ public class SparqlConnectionWizard
     }
 
     public Set<Node> getSelectedTypes() {
-        Set<Node> result = typeGrid.getSelectedItems().stream().map(qs -> qs.get("t"))
+        Set<Node> result = typeGrid.getSelectedItems().stream().map(qs -> qs.get(TYPE_VAR.getName()))
                 .map(RDFNode::asNode)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         return result;
@@ -139,27 +147,25 @@ public class SparqlConnectionWizard
         layout.setSizeFull();
         layout.add(new H3("Query named graphs instead of the default graph?"));
         layout.add(new Span("The list below shows the named graphs detected in the endpoint. If you proceed with an empty selection then SPARQL queries will be evaluated against the endpoint's default graph. Otherwise, requests will be evaluated over the union of the selected named graphs. Querying across default graph and named graphs is unsupported."));
-
-        graphGrid.setWidthFull();
         graphGrid.setSelectionMode(SelectionMode.MULTI);
+        graphGrid.setWidthFull();
+        graphGrid.getDataCommunicator().enablePushUpdates(executorService);
+        Query query = QueryFactory.create("SELECT ?Graph { GRAPH ?Graph { } }");
+
+        HeaderRow headerRow = graphGrid.appendHeaderRow();
+        HeaderRow filterRow = graphGrid.appendHeaderRow();
+
         layout.add(graphGrid);
         return new Step(header, layout) {
             @Override
             protected void onEnter() {
-                // QueryExecutionFactoryQuery qef = q -> QueryExecutionFactory.createServiceRequest(sparqlEndpointForm.getServiceUrl().getValue().getEndpoint(), q).build();
                 Op dsOp = getConjureSpecification(false);
                 QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
 
-                Var resultVar = Vars.t;
-                Query query = QueryFactory.create("SELECT ?g { GRAPH ?g { } }");
+                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, headerRow, qef, query, DataProviderUtils::wrapWithErrorHandler);
+                VaadinSparqlUtils.configureGridFilter(graphGrid, filterRow, List.of(GRAPH_VAR)); // , var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
+                DataProviderUtils.wrapWithErrorHandler(graphGrid);
 
-                VaadinSparqlUtils.setQueryForGridSolution(typeGrid, qef, query, DataProviderUtils::wrapWithErrorHandler);
-                HeaderRow filterRow = typeGrid.appendHeaderRow();
-                VaadinSparqlUtils.configureGridFilter(typeGrid, filterRow, List.of(resultVar), var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
-                DataProviderUtils.wrapWithErrorHandler(typeGrid);
-//
-//                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, qef, QueryFactory.create("SELECT ?g { GRAPH ?g { } }"), DataProviderUtils::wrapWithErrorHandler);
-//                DataProviderUtils.wrapWithErrorHandler(graphGrid);
                 graphGrid.recalculateColumnWidths();
             }
 
@@ -176,15 +182,22 @@ public class SparqlConnectionWizard
         layout.add(new Span("The list below shows the classes (aka types) available in the configured default graph of the specified SPARQL endpoint. The initial set of items can be restricted by selecting items for the list below."));
 
         typeGrid.setWidthFull();
+        typeGrid.getDataCommunicator().enablePushUpdates(executorService);
         typeGrid.setSelectionMode(SelectionMode.MULTI);
+        Query baseQuery = QueryFactory.create("SELECT DISTINCT ?Type { ?s a ?Type }");
+
+        HeaderRow headerRow = typeGrid.appendHeaderRow();
+        HeaderRow filterRow = typeGrid.appendHeaderRow();
+
         layout.add(typeGrid);
+
         return new Step(header, layout) {
             @Override
             protected void onEnter() {
                 Set<String> graphNames = getSelectedDefaultGraphIris();
-                //Query query = QueryFactory.create("SELECT DISTINCT ?p { ?s ?p ?o }");
-                Var resultVar = Vars.t;
-                Query query = QueryFactory.create("SELECT DISTINCT ?t { ?s a ?t }");
+                // System.err.println("Selected graph names: " + graphNames);
+
+                Query query = baseQuery.cloneQuery();
                 graphNames.forEach(query::addGraphURI);
 
 //                QueryExecutionFactoryQuery qef = q -> {
@@ -199,9 +212,8 @@ public class SparqlConnectionWizard
                 Op dsOp = getConjureSpecification(true);
                 QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
 
-                VaadinSparqlUtils.setQueryForGridSolution(typeGrid, qef, query, DataProviderUtils::wrapWithErrorHandler);
-                HeaderRow filterRow = typeGrid.appendHeaderRow();
-                VaadinSparqlUtils.configureGridFilter(typeGrid, filterRow, List.of(resultVar), var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
+                VaadinSparqlUtils.setQueryForGridSolution(typeGrid, headerRow, qef, query, DataProviderUtils::wrapWithErrorHandler);
+                VaadinSparqlUtils.configureGridFilter(typeGrid, filterRow, List.of(TYPE_VAR), var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
                 DataProviderUtils.wrapWithErrorHandler(typeGrid);
                 typeGrid.recalculateColumnWidths();
             }

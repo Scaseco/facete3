@@ -131,26 +131,26 @@ public class ConfigEndpoint {
     }
 
 
-    @RefreshScope
-    @Bean(destroyMethod = "close")
-    @Autowired
-    public RDFConnection getConnection(ResourceHolder opHolder) throws IOException {
-        Resource r = opHolder.get();
-        Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
-        RDFConnection result = getBaseDataConnection(op);
-//        if (dataRef.getServiceUrl() == null) {
-//            result = RDFConnectionFactory.connect(DatasetFactory.create());
-//        } else {
-//            result = getBaseDataConnection(dataRef);
-//        }
-        return result;
-    }
+//    @RefreshScope
+//    @Bean(destroyMethod = "close")
+//    @Autowired
+//    public RDFConnection getConnection(ResourceHolder opHolder) throws IOException {
+//        Resource r = opHolder.get();
+//        Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
+//        RDFConnection result = getBaseDataConnection(op);
+////        if (dataRef.getServiceUrl() == null) {
+////            result = RDFConnectionFactory.connect(DatasetFactory.create());
+////        } else {
+////            result = getBaseDataConnection(dataRef);
+////        }
+//        return result;
+//    }
 
     @RefreshScope
     @Bean
     @Autowired
-    public VaadinRdfLabelMgr labelMgr(RDFConnection conn) {
-        QueryExecutionFactory qef = new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
+    public VaadinRdfLabelMgr labelMgr(RdfDataSource dataSource) {
+        QueryExecutionFactory qef = dataSource.asQef(); // new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
         VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50));
         return labelService;
@@ -195,8 +195,8 @@ public class ConfigEndpoint {
 
 
         // RdfDataSource dataSource = dataSourceCache;
-        // RdfDataSource dataSource = dataSourceBnode;
-        RdfDataSource dataSource = comparingDataSource;
+        RdfDataSource dataSource = dataSourceBnode;
+        // RdfDataSource dataSource = comparingDataSource;
 
 
         // RdfDataSource dataSource = DataPods.from(dataRef);

@@ -6,11 +6,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * The entry point of the Spring Boot application.
  */
 @SpringBootApplication
+@EnableAsync // for long running tasks, see https://vaadin.com/docs/latest/advanced/long-running-tasks
 public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 
 //    static { JenaSystem.init(); }

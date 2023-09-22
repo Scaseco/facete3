@@ -1,5 +1,7 @@
 package org.aksw.facete3.app.vaadin;
 
+import java.util.concurrent.ExecutorService;
+
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
@@ -12,16 +14,14 @@ import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +73,10 @@ public class ConfigFacetedBrowserView {
 //                config.getAlternativeLabel(),
 //                prefixMapping);
 
-        Model shaclModel = RDFDataMgr.loadModel("r2rml.core.shacl.ttl");
+        // Model shaclModel = RDFDataMgr.loadModel("r2rml.core.shacl.ttl");
+
+        // Initialize with an empty shacl model
+        Model shaclModel = ModelFactory.createDefaultModel();
 
         DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
         // DataProviderNodeQuery dataProvider = new DataProviderNodeQuery(dataSource, conceptSupplier, dataRetriever);
@@ -102,7 +105,8 @@ public class ConfigFacetedBrowserView {
     @Bean
     @Autowired
     public FacetCountProvider facetCountProvider(
-            SparqlQueryConnection baseDataConnection,
+            // SparqlQueryConnection baseDataConnection,
+            RdfDataSource dataSource,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             ConfigFaceteVaadin config) {
@@ -110,7 +114,8 @@ public class ConfigFacetedBrowserView {
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
+                // new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
+                dataSource.asQef(),
                 RDFS.label,
                 prefixMapping,
                 DFT_LOOKUPSIZE);
@@ -121,13 +126,14 @@ public class ConfigFacetedBrowserView {
     @Bean
     @Autowired
     public FacetValueCountProvider facetValueCountProvider(
-            SparqlQueryConnection baseDataConnection,
+            RdfDataSource dataSource,
+            // SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             ConfigFaceteVaadin config) {
 
         LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
-                new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
+                dataSource.asQef(), // new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
                 RDFS.label,
                 prefixMapping,
                 DFT_LOOKUPSIZE);
@@ -154,7 +160,8 @@ public class ConfigFacetedBrowserView {
             @FullView ViewManager viewManagerFull,
             @SnippetView ViewManager viewManagerDetail,
             @DisplayLabelConfig BestLiteralConfig bestLabelConfig,
-            VaadinRdfLabelMgr labelMgr
+            VaadinRdfLabelMgr labelMgr,
+            ExecutorService executorService
     ) {
         return new FacetedBrowserView(
                 dataSource,
@@ -169,7 +176,8 @@ public class ConfigFacetedBrowserView {
                 viewManagerFull,
                 viewManagerDetail,
                 bestLabelConfig,
-                labelMgr);
+                labelMgr,
+                executorService);
     }
 
     @Bean

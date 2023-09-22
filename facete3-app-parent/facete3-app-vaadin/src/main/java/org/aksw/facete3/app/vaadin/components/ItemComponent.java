@@ -1,6 +1,8 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.aksw.commons.util.io.in.InputStreamUtils;
@@ -12,6 +14,7 @@ import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.model.shacl.util.ShTemplateRegistry;
+import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
@@ -84,6 +87,9 @@ public class ItemComponent extends TabSheet {
     protected TextField searchField = new TextField();
     protected FacetedBrowserView facetedBrowserView;
     protected Grid<Enriched<RDFNode>> grid = new Grid<>();
+
+    // Table is re-created after changes
+    protected Grid<Binding> tableGrid = null;
 
     protected VerticalLayout tableDiv = new VerticalLayout();
 
@@ -267,6 +273,8 @@ public class ItemComponent extends TabSheet {
         Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
         // System.out.println("Concept: " + conceptSupplier.get());
         TableMapperComponent tmc = new TableMapperComponent(dataSource, conceptSupplier.get(), labelService);
+        tmc.setState(tableMapperState);
+        tmc.getPropertyTreeGrid().expandRecursively(Set.of(FacetPath.newAbsolutePath()), Integer.MAX_VALUE);
 
         Dialog dialog = new Dialog();
         dialog.setCloseOnOutsideClick(false);
@@ -293,19 +301,18 @@ public class ItemComponent extends TabSheet {
         dialog.open();
     }
 
-
     public void refreshTable() {
         RdfDataSource dataSource = dataProvider.getDataSource();
         Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
-        Grid<Binding> table = TableMapperComponent.buildGrid(
+        tableGrid = TableMapperComponent.buildGrid(
                 dataSource, conceptSupplier.get(),
                 TreeDataUtils.toVaadin(tableMapperState.getFacetTree()),
                 TableMapperComponent.toPredicateAbsentAsTrue(tableMapperState.getPathToVisibility()),
                 labelService);
-        table.setPageSize(pageSize);
-        DataProviderUtils.wrapWithErrorHandler(table);
+        tableGrid.setPageSize(pageSize);
+        DataProviderUtils.wrapWithErrorHandler(tableGrid);
         tableDiv.removeAll();
-        tableDiv.add(table);
+        tableDiv.add(tableGrid);
     }
 
     public void showShaclUploadDialog() {

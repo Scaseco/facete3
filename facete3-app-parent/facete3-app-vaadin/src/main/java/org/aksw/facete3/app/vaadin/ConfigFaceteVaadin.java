@@ -1,5 +1,8 @@
 package org.aksw.facete3.app.vaadin;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -52,4 +55,10 @@ public class ConfigFaceteVaadin {
         return prefixSources;
     }
 
+    /** Executor for async processing */
+    @Bean(destroyMethod = "shutdown")
+    public ExecutorService executorService() {
+        ExecutorService result = Executors.newCachedThreadPool();
+        return result;
+    }
 }

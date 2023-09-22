@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,6 +69,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
@@ -82,6 +84,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -161,7 +164,8 @@ public class FacetedBrowserView
             ViewManager viewManagerFull,
             ViewManager viewManagerDetails,
             BestLiteralConfig bestLabelConfig,
-            VaadinRdfLabelMgr labelMgr
+            VaadinRdfLabelMgr labelMgr,
+            ExecutorService executorService
             ) {
 
         this.labelMgr = labelMgr;
@@ -268,7 +272,25 @@ public class FacetedBrowserView
         });
 
 
-        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails, labelMgr);
+        itemComponent = new ItemComponent(this, itemProvider, viewManagerDetails, labelMgr) {
+            // Whenever refreshing the sparql-table add a listener for viewing the details
+            // of the focused node
+            public void refreshTable() {
+                super.refreshTable();
+
+                tableGrid.addCellFocusListener(ev -> {
+                    Column<?> column = ev.getColumn().orElse(null);
+                    Binding binding = ev.getItem().orElse(null);
+
+                    String columnKey = column.getKey();
+                    Node node = binding.get(columnKey);
+
+                    if (node != null) {
+                        viewNode(node);
+                    }
+                });
+            };
+        };
         itemComponent.setHeightFull();
 
         // baseConcept
@@ -320,7 +342,7 @@ public class FacetedBrowserView
         SparqlEndpointForm input = new SparqlEndpointForm();
         input.setWidthFull();
 
-        layout.add(new SparqlConnectionWizard() {
+        layout.add(new SparqlConnectionWizard(executorService) {
             public void onWizardCompleted() {
                 ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
 
