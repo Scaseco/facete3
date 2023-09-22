@@ -18,7 +18,7 @@ public class ItemProvider extends FacetProvider<RDFNode> {
     }
 
     @Override
-    protected DataQuery<RDFNode> translateQuery(Query<RDFNode, Void> query) {
+    public DataQuery<RDFNode> translateQuery(Query<RDFNode, Void> query) {
         DataQuery<RDFNode> dataQuery = facete3.getFacetedQuery()
                 .focus()
                 .availableValues();

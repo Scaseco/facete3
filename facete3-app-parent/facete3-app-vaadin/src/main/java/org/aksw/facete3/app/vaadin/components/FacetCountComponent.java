@@ -1,13 +1,19 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import org.aksw.commons.util.delegate.Unwrappable;
+import org.aksw.commons.util.obj.Enriched;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jenax.path.core.FacetPath;
+import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.RDFNode;
+import org.claspina.confirmdialog.ConfirmDialog;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.Component;
@@ -19,6 +25,7 @@ import com.vaadin.flow.component.grid.contextmenu.GridMenuItem;
 import com.vaadin.flow.component.grid.contextmenu.GridSubMenu;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.Query;
 
 public class FacetCountComponent extends Grid<FacetCount> {
 
@@ -83,6 +90,16 @@ public class FacetCountComponent extends Grid<FacetCount> {
 //                    // addFacetToPathCallback(item);
 //                }
 //            });
+        }
+
+        {
+            cxtMenu.addItem("Show Query", ev -> {
+                String queryStr = dataProvider.translateQuery(new Query<>()).baseRelation().toQuery().toString();
+                ConfirmDialog dlg = ConfirmDialogUtils.info("Query" , queryStr, "Ok");
+                dlg.setWidth("50%");
+                dlg.setHeight("50%");
+                dlg.open();
+            });
         }
     }
 

@@ -1,16 +1,17 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.aksw.commons.util.delegate.Unwrappable;
 import org.aksw.commons.util.io.in.InputStreamUtils;
 import org.aksw.commons.util.obj.Enriched;
 import org.aksw.facete.v4.impl.TreeDataUtils;
 import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBinding;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.connection.datasource.RdfDataSource;
 import org.aksw.jenax.model.shacl.util.ShTemplateRegistry;
@@ -22,6 +23,7 @@ import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperComponent;
 import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperState;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.vaadin.common.component.tab.TabSheet;
+import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Node;
@@ -32,6 +34,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.claspina.confirmdialog.ConfirmDialog;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -39,6 +42,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -165,6 +169,14 @@ public class ItemComponent extends TabSheet {
                     facetedBrowserView.viewNode(node);
                 });
 
+        GridContextMenu<Enriched<RDFNode>> cxtMenu = grid.addContextMenu();
+        cxtMenu.addItem("Show Query", ev -> {
+            String queryStr = Unwrappable.unwrap(grid.getDataProvider(), DataProviderNodeQuery.class, true).get().getConceptSupplier().get().toQuery().toString();
+            ConfirmDialog dlg = ConfirmDialogUtils.info("Query" , queryStr, "Ok");
+            dlg.setWidth("50%");
+            dlg.setHeight("50%");
+            dlg.open();
+        });
     }
 
     public ItemComponent(
@@ -310,6 +322,17 @@ public class ItemComponent extends TabSheet {
                 TableMapperComponent.toPredicateAbsentAsTrue(tableMapperState.getPathToVisibility()),
                 labelService);
         tableGrid.setPageSize(pageSize);
+
+        GridContextMenu<Binding> cxtMenu = tableGrid.addContextMenu();
+
+        cxtMenu.addItem("Show Query", ev -> {
+            String queryStr = Unwrappable.unwrap(tableGrid.getDataProvider(), DataProviderSparqlBinding.class, true).get().getRelation().toQuery().toString();
+            ConfirmDialog dlg = ConfirmDialogUtils.info("Query" , queryStr, "Ok");
+            dlg.setWidth("50%");
+            dlg.setHeight("50%");
+            dlg.open();
+        });
+
         DataProviderUtils.wrapWithErrorHandler(tableGrid);
         tableDiv.removeAll();
         tableDiv.add(tableGrid);

@@ -24,7 +24,7 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
     }
 
     @Override
-    protected DataQuery<FacetValueCount> translateQuery(Query<FacetValueCount, Void> query) {
+    public DataQuery<FacetValueCount> translateQuery(Query<FacetValueCount, Void> query) {
         DataQuery<FacetValueCount> dataQuery = facete3.getFacetDirNode()
                 .facetValueCountsWithAbsent(false)
                 .only(facete3.getSelectedFacet());

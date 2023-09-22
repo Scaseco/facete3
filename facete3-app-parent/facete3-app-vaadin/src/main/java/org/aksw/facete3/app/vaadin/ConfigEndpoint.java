@@ -17,7 +17,6 @@ import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.arq.connection.core.RDFConnectionUtils;
 import org.aksw.jenax.arq.datasource.RdfDataEngines;
 import org.aksw.jenax.arq.datasource.RdfDataSourceWithBnodeRewrite;
@@ -119,16 +118,16 @@ public class ConfigEndpoint {
         return result;
     }
 
-    public static RdfDataSource createDataSource(Op op) {
-        RdfDataSource result = () -> {
-            try {
-                return getBaseDataConnection(op);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        };
-        return result;
-    }
+//    public static RdfDataSource createDataSource(Op op) {
+//        RdfDataSource result = () -> {
+//            try {
+//                return getBaseDataConnection(op);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        };
+//        return result;
+//    }
 
 
 //    @RefreshScope
@@ -157,7 +156,7 @@ public class ConfigEndpoint {
     }
 
 
-    public static RDFConnection getBaseDataConnection(Op op) throws IOException {
+    public static RdfDataSource createDataSource(Op op) {
         if (op == null) {
             op = OpData.create(ModelFactory.createDefaultModel());
         }
@@ -169,7 +168,13 @@ public class ConfigEndpoint {
 //        RDFConnectionBuilder rdfConnectionBuilder = new RDFConnectionBuilder(serviceUrl);
 //        RDFConnection rdfConnection = rdfConnectionBuilder.getRDFConnection();
 
-        HttpResourceRepositoryFromFileSystemImpl httpRepo = HttpResourceRepositoryFromFileSystemImpl.createDefault();
+
+        HttpResourceRepositoryFromFileSystemImpl httpRepo;
+        try {
+            httpRepo = HttpResourceRepositoryFromFileSystemImpl.createDefault();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         TaskContext taskContext = new TaskContext(null, new HashMap<>(), new HashMap<>());
 
 //        Model repoUnionModel = repoDataset.getUnionModel();
@@ -200,19 +205,23 @@ public class ConfigEndpoint {
 
 
         // RdfDataSource dataSource = DataPods.from(dataRef);
-        RDFConnection rdfConnection = dataSource.getConnection();
+        // RDFConnection rdfConnection = dataSource.getConnection();
 
-        rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
-                query -> {
-                    logger.info("Sending query: " + query);
-                    return query;
-                });
+        RdfDataSource result = () -> {
+                RDFConnection conn = dataSource.getConnection();
+                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
+                    query -> {
+                        logger.info("Sending query: " + query);
+                        return query;
+                    });
 
-        rdfConnection = RDFConnectionUtils.wrapWithQueryTransform(rdfConnection,
-                query -> QueryUtils.applyOpTransform(query,
-                        xop -> Transformer.transform(new TransformExpandAggCountDistinct(), xop)));
+                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
+                        query -> QueryUtils.applyOpTransform(query,
+                                xop -> Transformer.transform(new TransformExpandAggCountDistinct(), xop)));
 
-        return rdfConnection;
+                return conn;
+            };
+        return result;
     }
 //    @Bean
 //    @Autowired

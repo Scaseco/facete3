@@ -57,7 +57,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         this.labelService = labelService;
     }
 
-    protected abstract DataQuery<T> translateQuery(Query<T, Void> query);
+    public abstract DataQuery<T> translateQuery(Query<T, Void> query);
 
     /**
      * Labels of an RDFNode item may be indirectly related to it.

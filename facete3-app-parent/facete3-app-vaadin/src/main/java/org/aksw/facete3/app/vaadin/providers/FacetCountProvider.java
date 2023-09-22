@@ -24,13 +24,14 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
 
 
     @Override
-    protected DataQuery<FacetCount> translateQuery(Query<FacetCount, Void> query) {
+    public DataQuery<FacetCount> translateQuery(Query<FacetCount, Void> query) {
         DataQuery<FacetCount> dataQuery = facete3.getFacetDirNode()
                 .facetCounts();
 //                .exclude(RDF.type);
 
         String filterText = getFilter();
         if (!filterText.isEmpty()) {
+            // FIXME Make keyword search strategy configurable
             UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
                     BinaryRelationImpl.create(RDFS.label), filterText);
             dataQuery.filter(filter);

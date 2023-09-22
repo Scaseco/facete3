@@ -5,13 +5,17 @@ import org.aksw.facete3.app.vaadin.ConfigEndpoint;
 import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
 import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
+import org.claspina.confirmdialog.ConfirmDialog;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 public class FacetValueCountComponent extends Grid<FacetValueCount> {
@@ -75,6 +79,18 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
 
         addItemClickListener(event -> mainView.viewNode(event.getItem()));
+
+        GridContextMenu<FacetValueCount> cxtMenu = addContextMenu();
+        {
+            cxtMenu.addItem("Show Query", ev -> {
+                String queryStr = dataProvider.translateQuery(new Query<>()).baseRelation().toQuery().toString();
+                ConfirmDialog dlg = ConfirmDialogUtils.info("Query" , queryStr, "Ok");
+                dlg.setWidth("50%");
+                dlg.setHeight("50%");
+                dlg.open();
+            });
+        }
+
     }
 
     private TextField getSearchField() {
