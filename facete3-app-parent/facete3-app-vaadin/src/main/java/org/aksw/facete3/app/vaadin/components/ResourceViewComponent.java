@@ -45,7 +45,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 
 
-public class ResourceComponentNew extends VerticalLayout {
+public class ResourceViewComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -6150238480758268911L;
 
@@ -76,6 +76,7 @@ public class ResourceComponentNew extends VerticalLayout {
 
 
     private void setNodeCore(Node node, QueryExecutionFactoryQuery qef) {
+        subjectNode = node;
         Relation relation = RelationUtils.fromQuery("SELECT ?Predicate ?Object { ?s ?Predicate ?Object }");
 
         if (node == null) {
@@ -125,7 +126,7 @@ public class ResourceComponentNew extends VerticalLayout {
         return result;
     }
 
-    public ResourceComponentNew(PrefixMapping prefixMapping, ViewManager viewManager, LabelService<Node, String> labelMgr) {
+    public ResourceViewComponent(PrefixMapping prefixMapping, ViewManager viewManager, LabelService<Node, String> labelMgr) {
         this.viewManager = viewManager;
         this.labelMgr = labelMgr;
 
@@ -241,7 +242,10 @@ public class ResourceComponentNew extends VerticalLayout {
         .setSortable(true)
         .setFlexGrow(1);
 
-        grid.sort(Arrays.asList(new GridSortOrder<>(predicateColumn, SortDirection.ASCENDING), new GridSortOrder<>(objectColumn, SortDirection.ASCENDING)));
+        grid.sort(Arrays.asList(
+            // new GridSortOrder<>(objectColumn, SortDirection.ASCENDING),
+            new GridSortOrder<>(predicateColumn, SortDirection.ASCENDING)
+        ));
 
         HeaderRow filterRow = grid.appendHeaderRow();
 

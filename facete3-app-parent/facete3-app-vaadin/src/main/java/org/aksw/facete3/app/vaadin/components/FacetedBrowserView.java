@@ -224,7 +224,7 @@ public class FacetedBrowserView
             @Override
             public Component createComponent(RDFNode data) {
                 // ResourceComponentOld result = new ResourceComponentOld(PrefixMapping.Extended, viewManagerFull, labelMgr);
-                ResourceComponentNew result = new ResourceComponentNew(PrefixMapping.Extended, viewManagerFull, labelMgr);
+                ResourceViewComponent result = new ResourceViewComponent(PrefixMapping.Extended, viewManagerFull, labelMgr);
                 result.setNode(data == null ? null : data.asNode(), dataSource.asQef());
                 return result;
             }
