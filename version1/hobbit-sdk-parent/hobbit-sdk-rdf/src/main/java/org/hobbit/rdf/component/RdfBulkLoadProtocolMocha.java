@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.ext.com.google.common.io.Files;
+import com.google.common.io.Files;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.hobbit.core.component.DataProtocol;

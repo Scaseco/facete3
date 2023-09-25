@@ -30,7 +30,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 
 
-public class ResourceComponent extends VerticalLayout {
+public class ResourceComponentOld extends VerticalLayout {
 
     private static final long serialVersionUID = -6150238480758268911L;
 
@@ -88,7 +88,7 @@ public class ResourceComponent extends VerticalLayout {
         return result;
     }
 
-    public ResourceComponent(PrefixMapping prefixMapping, ViewManager viewManager, VaadinRdfLabelMgr labelMgr) {
+    public ResourceComponentOld(PrefixMapping prefixMapping, ViewManager viewManager, VaadinRdfLabelMgr labelMgr) {
         this.viewManager = viewManager;
         this.labelMgr = labelMgr;
 

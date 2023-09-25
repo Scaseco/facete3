@@ -5,9 +5,9 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-import org.apache.jena.ext.com.google.common.base.Strings;
-import org.apache.jena.ext.com.google.common.collect.Iterators;
-import org.apache.jena.ext.com.google.common.collect.Streams;
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Streams;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

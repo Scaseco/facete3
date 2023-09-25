@@ -7,7 +7,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import com.google.common.collect.Iterables;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;

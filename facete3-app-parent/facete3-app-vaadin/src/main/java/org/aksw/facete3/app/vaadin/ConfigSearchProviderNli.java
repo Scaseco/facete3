@@ -19,7 +19,7 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.sparql.relation.api.TernaryRelation;
-import org.apache.jena.ext.com.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.RDFNode;

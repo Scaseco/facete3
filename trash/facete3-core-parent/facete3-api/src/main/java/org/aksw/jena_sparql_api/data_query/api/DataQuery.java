@@ -18,7 +18,7 @@ import org.aksw.jenax.arq.util.expr.ExprListUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.sparql.relation.api.Relation;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;

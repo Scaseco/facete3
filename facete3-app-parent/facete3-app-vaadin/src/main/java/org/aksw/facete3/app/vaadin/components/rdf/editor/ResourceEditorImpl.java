@@ -19,7 +19,7 @@ import org.aksw.jena_sparql_api.update.GraphListenerBatchBase;
 import org.aksw.jenax.annotation.reprogen.ResourceView;
 import org.aksw.jenax.arq.util.triple.TripleUtils;
 import org.aksw.vaadin.common.component.managed.ManagedComponent;
-import org.apache.jena.ext.com.google.common.collect.Streams;
+import com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphListener;
 import org.apache.jena.graph.Node;

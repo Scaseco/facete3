@@ -58,8 +58,6 @@ import org.aksw.jenax.vaadin.component.breadcrumb.Breadcrumb;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
 import org.aksw.vaadin.common.component.tab.TabSheet;
-import org.apache.jena.ext.com.google.common.collect.Streams;
-import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -81,6 +79,8 @@ import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -223,8 +223,9 @@ public class FacetedBrowserView
 
             @Override
             public Component createComponent(RDFNode data) {
-                ResourceComponent result = new ResourceComponent(PrefixMapping.Extended, viewManagerFull, labelMgr);
-                result.setNode(data);
+                // ResourceComponentOld result = new ResourceComponentOld(PrefixMapping.Extended, viewManagerFull, labelMgr);
+                ResourceComponentNew result = new ResourceComponentNew(PrefixMapping.Extended, viewManagerFull, labelMgr);
+                result.setNode(data == null ? null : data.asNode(), dataSource.asQef());
                 return result;
             }
         };

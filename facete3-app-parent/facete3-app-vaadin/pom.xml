@@ -13,7 +13,6 @@
 		<vaadin.version>14.10.1</vaadin.version>
 		<spring.version>5.3.1</spring.version>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
-		<vaadin-jena.version>4.8.0-1-SNAPSHOT</vaadin-jena.version>
 		<drivers.dir>${project.basedir}/drivers</drivers.dir>
 		<drivers.downloader.phase>pre-integration-test</drivers.downloader.phase>
 	</properties>
@@ -172,17 +171,18 @@
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-core</artifactId>
-			<version>${vaadin-jena.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.aksw.scaseco.vaadin</groupId>
+			<artifactId>vaadin-commons</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-rdf-term-editor</artifactId>
-			<version>${vaadin-jena.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-shacl-editor</artifactId>
-			<version>${vaadin-jena.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.commons</groupId>

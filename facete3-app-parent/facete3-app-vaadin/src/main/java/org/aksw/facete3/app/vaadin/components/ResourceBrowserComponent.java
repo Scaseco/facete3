@@ -8,7 +8,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.vaadin.common.component.managed.ManagedComponentSimple;
 import org.aksw.vaadin.common.component.tab.TabSheet;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;

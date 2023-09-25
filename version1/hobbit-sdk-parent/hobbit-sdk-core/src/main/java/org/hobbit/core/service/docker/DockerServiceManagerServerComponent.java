@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.apache.jena.ext.com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.hobbit.core.Commands;
 import org.hobbit.core.config.SimpleReplyableMessage;
 import org.hobbit.core.data.StartCommandData;

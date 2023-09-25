@@ -19,9 +19,10 @@
 	</scm>
 
 	<properties>
-		<jena.version>4.8.0</jena.version>
-		<jenax.version>4.8.0-3-SNAPSHOT</jenax.version>
-		<rmltk.version>4.8.0-3-SNAPSHOT</rmltk.version>
+		<jena.version>4.9.0</jena.version>
+		<jenax.version>4.9.0-1-SNAPSHOT</jenax.version>
+		<vaadin-jena.version>4.9.0-1-SNAPSHOT</vaadin-jena.version>
+		<rmltk.version>4.9.0-1-SNAPSHOT</rmltk.version>
 
 		<aksw-commons.version>0.9.7-SNAPSHOT</aksw-commons.version>
 		<log4j.version>2.17.2</log4j.version>
@@ -246,6 +247,14 @@
                                 <groupId>org.hobbit</groupId>
                                 <artifactId>facete3-app-vaadin</artifactId>
                                 <version>${project.version}</version>
+                        </dependency>
+
+			<dependency>
+                                <groupId>org.aksw.scaseco.vaadin</groupId>
+                                <artifactId>vaadin-jena-bom</artifactId>
+                                <version>${vaadin-jena.version}</version>
+                                <type>pom</type>
+                                <scope>import</scope>
                         </dependency>
 
 			<dependency>

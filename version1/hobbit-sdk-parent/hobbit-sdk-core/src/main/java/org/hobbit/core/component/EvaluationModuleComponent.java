@@ -13,7 +13,7 @@ import java.util.function.Function;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 
-import org.apache.jena.ext.com.google.common.primitives.Bytes;
+import com.google.common.primitives.Bytes;
 import org.apache.jena.rdf.model.Model;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractEvaluationStorage;

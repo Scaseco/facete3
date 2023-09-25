@@ -14,7 +14,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
-import org.apache.jena.ext.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;

@@ -2,7 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.config;
 
 import java.io.ByteArrayInputStream;
 
-import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;

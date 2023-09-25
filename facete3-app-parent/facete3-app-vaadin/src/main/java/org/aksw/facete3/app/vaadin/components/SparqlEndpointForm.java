@@ -52,11 +52,9 @@ import com.vaadin.flow.dom.Element;
 public class SparqlEndpointForm extends FormLayout {
     protected ComboBox<ServiceStatus> serviceUrlOld = new ComboBox<>();
 
-
     protected TextField serviceUrl = new TextField("Endpoint URL");
 
     protected Checkbox unionDefaultGraphMode = new Checkbox();
-
     protected Select<AuthMode> authModeSelect = new Select<>();
 
     protected TextField usernameInput = new TextField("User Name");
@@ -117,6 +115,7 @@ public class SparqlEndpointForm extends FormLayout {
                    new ResponsiveStep("40em", 3));
 
         Model model = RDFDataMgr.loadModel("https://raw.githubusercontent.com/SmartDataAnalytics/lodservatory/master/latest-status.ttl");
+
         RDFDataMgr.read(model, "extra-endpoints.ttl");
 
         serviceUrlOld.addCustomValueSetListener(

@@ -21,7 +21,7 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.triple.DeltaWithFixedIterator;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.sparql.relation.api.UnaryRelation;
-import org.apache.jena.ext.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;

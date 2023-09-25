@@ -8,7 +8,7 @@ import java.util.function.BiFunction;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedService;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.ext.com.google.common.base.Strings;
+import com.google.common.base.Strings;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.apache.jena.ext.com.google.common.primitives.Bytes;
+import com.google.common.primitives.Bytes;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetFormatter;

@@ -10,7 +10,7 @@ import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.jena.enhanced.EnhGraph;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
