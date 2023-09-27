@@ -29,7 +29,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 
-
+/** Not used anymore; can be eventually deleted, but keeping it as reference for now */
 public class ResourceComponentOld extends VerticalLayout {
 
     private static final long serialVersionUID = -6150238480758268911L;

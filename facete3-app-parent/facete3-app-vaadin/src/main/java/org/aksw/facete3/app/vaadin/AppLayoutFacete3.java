@@ -18,11 +18,14 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -66,11 +69,15 @@ public class AppLayoutFacete3 extends AppLayout {
 //    protected Config config;
 
 
+    protected MenuBar menuBar;
+    protected UserSession userSession;
+
     @Autowired
     public AppLayoutFacete3(ConfigFaceteVaadin config, UserSession userSession) {
 //        VaadinSession.getCurrent().setErrorHandler(eh -> {
 //            Notification.show(ExceptionUtils.getRootCauseMessage(eh.getThrowable()));
 //        });
+        this.userSession = userSession;
 
         Facete3Wrapper.initJena();
 
@@ -112,21 +119,9 @@ public class AppLayoutFacete3 extends AppLayout {
 //        div.setText("Hello " + userSession.getUser().getFirstName() + " " + userSession.getUser().getLastName());
 //        div.getElement().getStyle().set("font-size", "xx-large");
 
-        Optional<FoafOnlineAccount> user = Optional.ofNullable(userSession.getUser());
+        menuBar = new MenuBar();
 
-        String accountName = user.map(FoafOnlineAccount::getAccountName).orElse("anonymous");
-        String avatarUrl = user.map(FoafOnlineAccount::getOwner).map(FoafAgent::getDepiction).orElse(null);
-
-        MenuBar menuBar = new MenuBar();
-        menuBar.setOpenOnHover(true);
-
-        Avatar avatar = new Avatar(accountName, avatarUrl);
-        MenuItem userOptions = menuBar.addItem(avatar);
-
-        userOptions.getSubMenu().addItem("Logout", click -> {
-            userSession.logout();
-        });
-
+        refreshMenuBar();
 
         // setAlignItems(Alignment.CENTER);
         navbarLayout.add(menuBar);
@@ -159,7 +154,46 @@ public class AppLayoutFacete3 extends AppLayout {
         setContent(getAppContent(config));
     }
 
-    Component getAppContent(ConfigFaceteVaadin config) {
+    protected void refreshMenuBar() {
+        menuBar.removeAll();
+        menuBar.setOpenOnHover(true);
+
+        Optional<FoafOnlineAccount> user = Optional.ofNullable(userSession.getUser());
+
+        String accountName = user.map(FoafOnlineAccount::getAccountName).orElse("anonymous");
+        String avatarUrl = user.map(FoafOnlineAccount::getOwner).map(FoafAgent::getDepiction).orElse(null);
+
+        Avatar avatar = new Avatar(accountName, avatarUrl);
+        MenuItem userOptions = menuBar.addItem(avatar);
+
+        SubMenu subMenu = userOptions.getSubMenu();
+        subMenu.removeAll();
+
+        if (user.isPresent()) { //
+            subMenu.addItem("Logged in as: " + user.get().getAccountName()).setEnabled(false);
+            subMenu.add(new Hr());
+        }
+
+        subMenu.addItem("Login", click -> {
+            LoginForm loginForm = new LoginForm();
+            Dialog dlg = new Dialog(loginForm);
+            dlg.open();
+        });
+
+        subMenu.addItem("Create Account", click -> {
+//          Dialog dlg = new Dialog(new LoginForm());
+          Dialog dlg = new Dialog(new RegistrationForm());
+          dlg.open();
+      });
+
+        if (user.isPresent()) { //
+            subMenu.addItem("Logout", click -> {
+                userSession.logout();
+            });
+        }
+    }
+
+    public Component getAppContent(ConfigFaceteVaadin config) {
         ComponentPlugin plugin = ComponentPlugin.createWithDefaultBase(
                 appBuilder -> appBuilder
                 .parent(config.context)

@@ -278,14 +278,11 @@ public class FacetedBrowserView
             // of the focused node
             public void refreshTable() {
                 super.refreshTable();
-
                 tableGrid.addCellFocusListener(ev -> {
                     Column<?> column = ev.getColumn().orElse(null);
                     Binding binding = ev.getItem().orElse(null);
-
                     String columnKey = column.getKey();
                     Node node = binding.get(columnKey);
-
                     if (node != null) {
                         viewNode(node);
                     }
