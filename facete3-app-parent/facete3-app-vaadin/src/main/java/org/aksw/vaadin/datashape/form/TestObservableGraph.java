@@ -9,7 +9,7 @@ import org.aksw.jena_sparql_api.collection.observable.ObservableGraphImpl;
 import org.aksw.jena_sparql_api.collection.observable.ObservableSetFromGraph;
 import org.aksw.jena_sparql_api.collection.observable.ObservableSubGraph;
 import org.aksw.jena_sparql_api.collection.observable.SetOfNodesFromGraph;
-import org.aksw.jena_sparql_api.relation.TripleConstraintImpl;
+import org.aksw.jenax.arq.util.triple.TripleConstraintImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;

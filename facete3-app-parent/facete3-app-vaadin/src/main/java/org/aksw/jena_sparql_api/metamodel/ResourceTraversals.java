@@ -47,7 +47,6 @@ import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleVisitorSparql;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.path.core.PathNode;
 import org.aksw.jenax.path.core.PathOpsNode;
-import org.aksw.jenax.path.core.PathOpsPE;
 import org.aksw.jenax.path.core.PathPE;
 import org.aksw.jenax.path.relgen.RelationGeneratorSimple;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
@@ -201,7 +200,7 @@ public class ResourceTraversals {
 
 
 
-        PathNode path = PathOpsNode.newAbsolutePath();
+        PathNode path = PathNode.newAbsolutePath();
         PathNode tgt = path.resolve(RDF.first).resolve(RDF.rest).resolve(RDFS.label).resolve(RDF.type).resolve(OWL.hasValue);
 
         XRelationTree tree = new XRelationTree();
@@ -243,7 +242,7 @@ public class ResourceTraversals {
 
 
 
-        PathPE exprs = PathOpsPE.newAbsolutePath()
+        PathPE exprs = PathPE.newAbsolutePath()
                 .resolve(rootShape)
                 .resolveSegment("<urn:fwd>")
                 .resolve(DCAT.dataset)
@@ -324,7 +323,7 @@ public class ResourceTraversals {
 
         @Override
         public XRelationNode mkRoot() {
-            return new XRelationNode(PathOpsNode.newAbsolutePath(), this, null, RelationUtils.SPO);
+            return new XRelationNode(PathNode.newAbsolutePath(), this, null, RelationUtils.SPO);
         }
 
         @Override
@@ -406,7 +405,7 @@ public class ResourceTraversals {
         System.out.println( Paths.get("/tmp").relativize(Paths.get("/tmp/foo")) );
         System.out.println( Paths.get("/tmp/foo").relativize(Paths.get("/tmp")) );
 
-        PathNode r = PathOpsNode.get().newRoot();
+        PathNode r = PathNode.newAbsolutePath();
 
         PathNode path = r.resolve(RDF.type).resolve(RDF.first).resolve(NodeValue.makeInteger(1).asNode());
 
@@ -461,7 +460,7 @@ public class ResourceTraversals {
 
 
         Trav3Provider<Node, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>, Set<RDFNode>> myProvider = createSimpleShaclTraverser3(sourceNode);
-        dfs(myProvider.newRoot(PathOpsNode.get().newRoot()), 0, 9);
+        dfs(myProvider.newRoot(PathNode.newAbsolutePath()), 0, 9);
 
     }
 

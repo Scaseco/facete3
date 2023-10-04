@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravProp
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleStateComputer;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleStateComputerAlwaysNull;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
+import org.aksw.jenax.path.core.PathNode;
 import org.aksw.jenax.path.core.PathOpsNode;
 import org.apache.jena.graph.Node;
 
@@ -45,7 +46,7 @@ public class TravProviderTripleImpl<S>
 
     @Override
     public TravValues<S> root() {
-        Path<Node> rootPath = PathOpsNode.get().newRoot();
+        Path<Node> rootPath = PathNode.newAbsolutePath();
         S rootState = rootStateSupp.get();
         return new TravValues<>(this, rootPath, null, rootState);
     }
