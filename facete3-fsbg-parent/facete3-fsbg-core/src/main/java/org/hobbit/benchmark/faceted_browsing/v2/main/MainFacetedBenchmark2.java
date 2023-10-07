@@ -14,7 +14,7 @@ import org.aksw.jena_sparql_api.data_query.impl.FactoryWithModel;
 import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactoryOverSparqlQueryConnection;
+import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
