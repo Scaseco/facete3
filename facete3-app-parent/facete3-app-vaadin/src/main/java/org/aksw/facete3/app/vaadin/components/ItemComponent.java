@@ -326,6 +326,7 @@ public class ItemComponent extends TabSheet {
         GridContextMenu<Binding> cxtMenu = tableGrid.addContextMenu();
 
         cxtMenu.addItem("Show Query", ev -> {
+            // Extract the query from the underlying DataProviderSparqlBinding
             String queryStr = Unwrappable.unwrap(tableGrid.getDataProvider(), DataProviderSparqlBinding.class, true).get().getRelation().toQuery().toString();
             ConfirmDialog dlg = ConfirmDialogUtils.info("Query" , queryStr, "Ok");
             dlg.setWidth("50%");
@@ -333,7 +334,7 @@ public class ItemComponent extends TabSheet {
             dlg.open();
         });
 
-        DataProviderUtils.wrapWithErrorHandler(tableGrid);
+        // DataProviderUtils.wrapWithErrorHandler(tableGrid);
         tableDiv.removeAll();
         tableDiv.add(tableGrid);
     }
@@ -357,7 +358,7 @@ public class ItemComponent extends TabSheet {
             RdfDataSource dataSource = dataProvider.getDataSource();
             DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
             dataProvider.setDataRetriever(dataRetriever);
-            System.out.println("TABLE REFRESH");
+            // System.out.println("TABLE REFRESH");
 
             ShTemplateRegistry newTemplates = VaadinShaclGridUtils.loadTemplates(shaclModel);
             templates.clear();
