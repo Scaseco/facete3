@@ -13,14 +13,15 @@ import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroup;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetGroupState;
 import org.aksw.jena_sparql_api.changeset.ex.api.ChangeSetState;
 import org.aksw.jena_sparql_api.changeset.vocab.CS;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.triple.DeltaWithFixedIterator;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.sparql.connection.query.SparqlQueryConnectionJsa;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+
 import com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -61,7 +62,7 @@ public class ChangeSetUtils {
 
     public static ChangeSetGroup getSuccessor(ChangeSetGroup csg) {
         Model model = csg.getModel();
-        UnaryRelation concept = new Concept(
+        Fragment1 concept = new Concept(
                 ElementUtils.createElementTriple(Vars.s, CSX.precedingChangeSetGroup.asNode(), csg.asNode()),
                 Vars.s);
 
@@ -80,7 +81,7 @@ public class ChangeSetUtils {
 
     public static ChangeSet getSuccessor(ChangeSet cs) {
         Model model = cs.getModel();
-        UnaryRelation concept = new Concept(
+        Fragment1 concept = new Concept(
                 ElementUtils.createElementTriple(Vars.s, CS.precedingChangeSet.asNode(), cs.asNode()),
                 Vars.s);
 

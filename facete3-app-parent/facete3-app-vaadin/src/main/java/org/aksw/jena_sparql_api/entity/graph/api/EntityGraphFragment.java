@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.entity.graph.api;
 
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
-import org.aksw.jenax.sparql.relation.api.Relation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
 import org.apache.jena.graph.Node;
 
 import com.google.common.collect.Multimap;
@@ -45,7 +45,7 @@ public interface EntityGraphFragment {
      *
      * @return
      */
-    Relation getEffectiveRelation();
+    Fragment getEffectiveRelation();
 
     /**
      * The entity template. This is similar to a construct querie's template with the

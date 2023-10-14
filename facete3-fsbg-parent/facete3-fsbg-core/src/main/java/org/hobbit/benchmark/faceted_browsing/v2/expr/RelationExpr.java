@@ -3,14 +3,14 @@ package org.hobbit.benchmark.faceted_browsing.v2.expr;
 import java.util.List;
 import java.util.Optional;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jenax.sparql.relation.api.BinaryRelation;
-import org.aksw.jenax.sparql.relation.api.Relation;
-import org.aksw.jenax.sparql.relation.api.TernaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
+import org.aksw.jenax.sparql.fragment.api.Fragment2;
+import org.aksw.jenax.sparql.fragment.api.Fragment3;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.jena.sparql.core.Var;
 
 public interface RelationExpr {
-    Relation eval();
+    Fragment eval();
 
 
 
@@ -29,12 +29,12 @@ public interface RelationExpr {
         return null;
     }
 
-    default Optional<BinaryRelation> asBinaryRelation() {
+    default Optional<Fragment2> asBinaryRelation() {
         return null;
     }
 
 
-    default Optional<TernaryRelation> asTernaryRelation() {
+    default Optional<Fragment3> asTernaryRelation() {
         return null;
     }
 }

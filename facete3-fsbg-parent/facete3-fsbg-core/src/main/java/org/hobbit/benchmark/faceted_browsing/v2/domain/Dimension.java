@@ -2,9 +2,9 @@ package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
-import org.aksw.jenax.sparql.relation.api.BinaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment2;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -46,8 +46,8 @@ public interface Dimension
      *
      * @return
      */
-    Map<String, BinaryRelation> getOutgoingFacets();
-    Map<String, BinaryRelation> getIncomingFacets();
+    Map<String, Fragment2> getOutgoingFacets();
+    Map<String, Fragment2> getIncomingFacets();
 
     /** The concept for the set of outgoing predicates
      * may be restricted to a subset of the value's predicates or may introduce virtual predicates */
@@ -78,7 +78,7 @@ public interface Dimension
 
 
     /** Obtain a binary (SPARQL) relation, whose target are the values of this dimension */
-    BinaryRelation getReachingBinaryRelation();
+    Fragment2 getReachingBinaryRelation();
     boolean isReverse();
 
     /**

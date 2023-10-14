@@ -5,10 +5,10 @@ import java.util.function.Function;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.vocabulary.RDFS;
 
@@ -32,8 +32,8 @@ public class FacetCountProvider extends FacetProvider<FacetCount> {
         String filterText = getFilter();
         if (!filterText.isEmpty()) {
             // FIXME Make keyword search strategy configurable
-            UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
-                    BinaryRelationImpl.create(RDFS.label), filterText);
+            Fragment1 filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
+                    Fragment2Impl.create(RDFS.label), filterText);
             dataQuery.filter(filter);
         }
         return dataQuery;

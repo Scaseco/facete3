@@ -1,12 +1,12 @@
 package org.hobbit.benchmark.faceted_browsing.v2.task_generator;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jenax.arq.util.expr.ExprUtils;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.sparql.relation.api.BinaryRelation;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.api.Fragment2;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.TriplePath;
@@ -37,8 +37,8 @@ public class HierarchyCoreOnDemand
     }
 
     @Override
-    public UnaryRelation roots() {
-        UnaryRelation result = createConceptForRoots(path);
+    public Fragment1 roots() {
+        Fragment1 result = createConceptForRoots(path);
         return result;
     }
 
@@ -76,7 +76,7 @@ public class HierarchyCoreOnDemand
      *   { { [] path ?root } UNION { concept(?root) } FILTER(NOT EXISTS ....) }
      * i.e. nodes that are not part of the hierarchy become roots
      */
-    public static UnaryRelation createConceptForRoots(Path path) {
+    public static Fragment1 createConceptForRoots(Path path) {
         Element e = ElementUtils.createElementGroup(
             ElementUtils.createElement(new TriplePath(NodeFactory.createBlankNode(), path, root)),
             new ElementFilter(new E_NotExists(
@@ -87,15 +87,15 @@ public class HierarchyCoreOnDemand
 
 //		System.out.println(e);
 
-        UnaryRelation result = new Concept(e, root);
+        Fragment1 result = new Concept(e, root);
         return result;
     }
 
 
-    public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path relation) {
-        UnaryRelation targets = new Concept(ElementUtils.createElement(new TriplePath(Vars.s, relation, Vars.o)), Vars.s);
+    public static Fragment1 createConceptForDirectlyRelatedItems(Fragment1 baseConcept, Path relation) {
+        Fragment1 targets = new Concept(ElementUtils.createElement(new TriplePath(Vars.s, relation, Vars.o)), Vars.s);
 
-        UnaryRelation result = targets
+        Fragment1 result = targets
                 .joinOn(Vars.o)
                 .filterRelationFirst(true)
                 .with(baseConcept)
@@ -113,8 +113,8 @@ public class HierarchyCoreOnDemand
      * @param path
      * @return
      */
-    public static BinaryRelation createRelationForStrictDirectRelation(Path path) {
-        BinaryRelation result = new BinaryRelationImpl(ElementUtils.groupIfNeeded(
+    public static Fragment2 createRelationForStrictDirectRelation(Path path) {
+        Fragment2 result = new Fragment2Impl(ElementUtils.groupIfNeeded(
                 // Result is all ?s path ?o ...
                 ElementUtils.createElementPath(Vars.s, path, Vars.o),
                 // where there is no ?x in between
@@ -132,19 +132,19 @@ public class HierarchyCoreOnDemand
         return result;
     }
 
-    public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path path, UnaryRelation availableValues) {
+    public static Fragment1 createConceptForDirectlyRelatedItems(Fragment1 baseConcept, Path path, Fragment1 availableValues) {
         return createConceptForDirectlyRelatedItems(baseConcept, path, availableValues, true);
     }
 
-    public static UnaryRelation createConceptForDirectlyRelatedItems(UnaryRelation baseConcept, Path path, UnaryRelation availableValues, boolean directOnly) {
-        BinaryRelation br;
+    public static Fragment1 createConceptForDirectlyRelatedItems(Fragment1 baseConcept, Path path, Fragment1 availableValues, boolean directOnly) {
+        Fragment2 br;
         if (directOnly) {
             br = createRelationForStrictDirectRelation(path);
         } else {
-            br = BinaryRelationImpl.create(path);
+            br = Fragment2Impl.create(path);
         }
 
-        UnaryRelation result = br
+        Fragment1 result = br
             .joinOn(br.getTargetVar())
             .with(baseConcept)
             .joinOn(br.getSourceVar())
@@ -162,22 +162,22 @@ public class HierarchyCoreOnDemand
      * -> so effective children are all direct children that did not already appear as an ancestor
      */
     @Override
-    public UnaryRelation children(UnaryRelation nodes) {
+    public Fragment1 children(Fragment1 nodes) {
         throw new NotImplementedException();
     }
 
     @Override
-    public UnaryRelation parents(UnaryRelation nodes) {
+    public Fragment1 parents(Fragment1 nodes) {
         throw new NotImplementedException();
     }
 
     @Override
-    public UnaryRelation descendents() {
+    public Fragment1 descendents() {
         throw new NotImplementedException();
     }
 
     @Override
-    public UnaryRelation ancestors() {
+    public Fragment1 ancestors() {
         throw new NotImplementedException();
     }
 }

@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.aksw.commons.util.delegate.Unwrappable;
 import org.aksw.commons.util.history.History;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBase;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBinding;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
@@ -16,7 +15,8 @@ import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactories;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryQuery;
-import org.aksw.jenax.sparql.relation.api.Relation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
+import org.aksw.jenax.sparql.fragment.impl.FragmentUtils;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.aksw.vaadin.common.provider.util.DataProviderReduce;
@@ -77,7 +77,7 @@ public class ResourceViewComponent extends VerticalLayout {
 
     private void setNodeCore(Node node, QueryExecutionFactoryQuery qef) {
         subjectNode = node;
-        Relation relation = RelationUtils.fromQuery("SELECT ?Predicate ?Object { ?s ?Predicate ?Object }");
+        Fragment relation = FragmentUtils.fromQuery("SELECT ?Predicate ?Object { ?s ?Predicate ?Object }");
 
         if (node == null) {
             node = NodeValue.FALSE.asNode();

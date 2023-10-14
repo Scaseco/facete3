@@ -1,35 +1,35 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravAlias;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravDirection;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravProperty;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravTripleVisitor;
 import org.aksw.jena_sparql_api.schema.traversal.sparql.TravTripleViews.TravValues;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.sparql.relation.api.Relation;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.FragmentUtils;
 import org.apache.jena.graph.Node;
 
 public class TravTripleVisitorSparql
     // extends TravProviderTripleBase<Void>
     implements TravTripleVisitor<QueryBuilder>
 {
-    protected UnaryRelation rootConcept;
+    protected Fragment1 rootConcept;
 
-    public TravTripleVisitorSparql(UnaryRelation rootConcept) {
+    public TravTripleVisitorSparql(Fragment1 rootConcept) {
         // super(PathOpsNode.get().newRoot());
         this.rootConcept = rootConcept;
     }
 
-    public static TravTripleVisitor<QueryBuilder> create(UnaryRelation rootConcept) {
+    public static TravTripleVisitor<QueryBuilder> create(Fragment1 rootConcept) {
         return new TravTripleVisitorSparql(rootConcept);
     }
 
     @Override
     public QueryBuilder visit(TravValues<?> node) {
-        UnaryRelation rel;
+        Fragment1 rel;
         if (node.path().getNameCount() == 0) {
             rel = rootConcept;
         } else {
@@ -41,8 +41,8 @@ public class TravTripleVisitorSparql
             // TODO The alias should affect variable naming
 
             rel = isFwd
-                    ? RelationUtils.createTernaryRelation(s, p, Node.ANY).project(Vars.o).toUnaryRelation()
-                    : RelationUtils.createTernaryRelation(Node.ANY, p, s).project(Vars.o).toUnaryRelation();
+                    ? FragmentUtils.createTernaryRelation(s, p, Node.ANY).project(Vars.o).toUnaryRelation()
+                    : FragmentUtils.createTernaryRelation(Node.ANY, p, s).project(Vars.o).toUnaryRelation();
 
         }
 
@@ -53,7 +53,7 @@ public class TravTripleVisitorSparql
 
     @Override
     public QueryBuilder visit(TravDirection<?> node) {
-        Relation tmp = Concept.parse("?s { VALUES ?s { <urn:fwd> <urn:bwd> } }");
+        Fragment tmp = Concept.parse("?s { VALUES ?s { <urn:fwd> <urn:bwd> } }");
         QueryBuilder result = new QueryBuilderImpl(tmp);
         return result;
 //
@@ -77,12 +77,12 @@ public class TravTripleVisitorSparql
 //
 //        Node p = Iterables.getLast(node.getParent().getPath().getSegments());
 //
-        UnaryRelation ur2;
+        Fragment1 ur2;
 
         if (isFwd) {
-            ur2 = RelationUtils.createTernaryRelation(s, Node.ANY, Node.ANY).project(Vars.p).toUnaryRelation();
+            ur2 = FragmentUtils.createTernaryRelation(s, Node.ANY, Node.ANY).project(Vars.p).toUnaryRelation();
         } else {
-            ur2 = RelationUtils.createTernaryRelation(Node.ANY, Node.ANY, s).project(Vars.p).toUnaryRelation();
+            ur2 = FragmentUtils.createTernaryRelation(Node.ANY, Node.ANY, s).project(Vars.p).toUnaryRelation();
         }
 
 
@@ -91,7 +91,7 @@ public class TravTripleVisitorSparql
 
     @Override
     public QueryBuilder visit(TravAlias<?> node) {
-        UnaryRelation tmp = Concept.parse("?s { VALUES ?s { '' } }");
+        Fragment1 tmp = Concept.parse("?s { VALUES ?s { '' } }");
         return new QueryBuilderImpl(tmp);
     }
 

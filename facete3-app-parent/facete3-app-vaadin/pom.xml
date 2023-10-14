@@ -202,7 +202,7 @@
 		<dependency>
 			<groupId>com.xdev-software</groupId>
 			<artifactId>vaadin-maps-leaflet-flow</artifactId>
-			<version>1.0.4</version>
+			<version>1.1.0</version>
 		</dependency>
 		<!-- https://vaadin.com/directory/component/vstepper -->
 		<dependency>

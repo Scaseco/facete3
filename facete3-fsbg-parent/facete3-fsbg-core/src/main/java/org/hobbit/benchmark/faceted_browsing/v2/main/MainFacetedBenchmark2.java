@@ -3,9 +3,6 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedBrowsingSessionImpl;
@@ -15,6 +12,9 @@ import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryOverSparqlQueryConnection;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -138,7 +138,7 @@ public class MainFacetedBenchmark2 {
 
         //RDFDataMgr.write(new FileOutputStream("/tmp/wtf.nt"), m, RDFFormat.NTRIPLES_ASCII);
 
-        Concept k = KeywordSearchUtils.createConceptBifContains(BinaryRelationImpl.create(new P_Link(RDFS.label.asNode())), "test");
+        Concept k = KeywordSearchUtils.createConceptBifContains(Fragment2Impl.create(new P_Link(RDFS.label.asNode())), "test");
 
         //ConceptUtils.createFilterConcept(nodes)
         System.out.println("Keyword search: " + k);

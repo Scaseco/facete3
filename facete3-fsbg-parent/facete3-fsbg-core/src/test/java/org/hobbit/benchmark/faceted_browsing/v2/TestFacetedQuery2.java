@@ -17,7 +17,6 @@ import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete.v3.impl.FacetNodeImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -27,8 +26,9 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.path.SimplePath;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
@@ -106,8 +106,8 @@ public class TestFacetedQuery2 {
         //Path path = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
         Path path = new P_Link(NodeFactory.createURI(PLACES_NS + "narrowerThan"));
 
-        UnaryRelation classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
-        UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+        Fragment1 classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+        Fragment1 subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
                 classes,
                 path);
 
@@ -115,7 +115,7 @@ public class TestFacetedQuery2 {
         System.out.println("Subclasses: " + dq.exec().toList().blockingGet());
 
 
-        UnaryRelation subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+        Fragment1 subClasses2 = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
                 Concept.parse("?s { VALUES(?s) { (<" + PLACES_NS + "FederalState>) } }", PrefixMapping.Extended),
                 path,
                 classes
@@ -133,10 +133,10 @@ public class TestFacetedQuery2 {
 
         Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
 
-        UnaryRelation broadClases = Concept.parse("?s { VALUES(?s) { (eg:Foobar) } }", PrefixMapping.Extended);
+        Fragment1 broadClases = Concept.parse("?s { VALUES(?s) { (eg:Foobar) } }", PrefixMapping.Extended);
 
-        UnaryRelation availableClasses = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
-        UnaryRelation subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
+        Fragment1 availableClasses = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+        Fragment1 subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
                 broadClases,
                 narrowingRelation,
                 availableClasses);
@@ -373,7 +373,7 @@ public class TestFacetedQuery2 {
         final DataQuery<RDFNode> rdfNodeDataQuery = node.remainingValues();
         System.out.println(rdfNodeDataQuery.exec().toList().blockingGet());
 
-        final UnaryRelation sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
+        final Fragment1 sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
         final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
                 sourceConcept, targetConcept);
 

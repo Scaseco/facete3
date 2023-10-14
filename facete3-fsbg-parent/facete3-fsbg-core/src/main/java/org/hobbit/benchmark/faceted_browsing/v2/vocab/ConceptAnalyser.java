@@ -3,15 +3,15 @@ package org.hobbit.benchmark.faceted_browsing.v2.vocab;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
-import org.aksw.jenax.sparql.relation.api.Relation;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -43,7 +43,7 @@ public class ConceptAnalyser {
      *
      * @param model
      */
-    public UnaryRelation analyzeEventGraphs(Model model) {
+    public Fragment1 analyzeEventGraphs(Model model) {
         Query query = null;
         QueryExecutionFactory.create(query, model).execSelect();
 
@@ -60,9 +60,9 @@ public class ConceptAnalyser {
         return null;
     }
 
-    public static UnaryRelation createConceptTemporalProperties() {
+    public static Fragment1 createConceptTemporalProperties() {
 
-        UnaryRelation result = new Concept(
+        Fragment1 result = new Concept(
                 ElementUtils.createElementGroup(
                     ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
                     new ElementFilter(new E_Datatype(new ExprVar(Vars.o)))),
@@ -90,7 +90,7 @@ public class ConceptAnalyser {
      *
      * @param c
      */
-    public static DataQuery<SetSummary> checkDatatypes(Relation c) {
+    public static DataQuery<SetSummary> checkDatatypes(Fragment c) {
         List<Var> vars = c.getVars();
         Var targetVar = vars.get(vars.size() - 1);
 

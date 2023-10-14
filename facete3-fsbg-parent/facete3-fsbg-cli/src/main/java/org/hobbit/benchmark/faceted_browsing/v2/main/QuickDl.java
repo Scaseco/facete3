@@ -10,8 +10,8 @@ import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
@@ -90,8 +90,8 @@ public class QuickDl {
             .configDataConnection().setSource(m).end().create();
 
 
-        UnaryRelation posConcept = ConceptUtils.createConceptFromRdfNodes(pos);
-        UnaryRelation negConcept = ConceptUtils.createConceptFromRdfNodes(neg);
+        Fragment1 posConcept = ConceptUtils.createConceptFromRdfNodes(pos);
+        Fragment1 negConcept = ConceptUtils.createConceptFromRdfNodes(neg);
 
         //System.out.println();
         // Facet counts correspond to all available predicates and are the basis for creating

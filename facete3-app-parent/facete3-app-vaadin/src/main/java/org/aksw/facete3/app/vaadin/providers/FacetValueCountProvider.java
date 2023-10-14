@@ -6,10 +6,10 @@ import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.vocabulary.RDFS;
 
@@ -30,8 +30,8 @@ public class FacetValueCountProvider extends FacetProvider<FacetValueCount> {
                 .only(facete3.getSelectedFacet());
         String filterText = getFilter();
         if (!filterText.isEmpty()) {
-            UnaryRelation filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
-                    BinaryRelationImpl.create(RDFS.label), filterText);
+            Fragment1 filter = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
+                    Fragment2Impl.create(RDFS.label), filterText);
             dataQuery.filterUsing(filter, FacetValueCountImpl_.VALUE);
         }
         return dataQuery;

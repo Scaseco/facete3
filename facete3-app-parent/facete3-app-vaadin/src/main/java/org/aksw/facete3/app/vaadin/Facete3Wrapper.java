@@ -28,9 +28,6 @@ import org.aksw.facete.v3.plugin.JenaPluginFacete3;
 import org.aksw.facete3.table.mapping.domain.ColumnMapping;
 import org.aksw.facete3.table.mapping.domain.TableMapping;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.RelationImpl;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jenax.arq.util.var.Vars;
@@ -40,7 +37,10 @@ import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
+import org.aksw.jenax.sparql.fragment.impl.FragmentImpl;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.graph.Node;
@@ -64,7 +64,7 @@ public class Facete3Wrapper {
     private FacetedQuery facetedQuery;
 
     /** Base concept = Initial concept + search restriction */
-    private UnaryRelation initialConcept;
+    private Fragment1 initialConcept;
 
     protected Set<FacetDirNode> alwaysVisibleCustomFacets = new LinkedHashSet<>();
     protected Multimap<FacetPath, FacetDirNode> customFacetsVisibleAtPath = LinkedHashMultimap.create();
@@ -78,11 +78,11 @@ public class Facete3Wrapper {
     // FIXME This needs to be a FacetNode (a FacetPath would point wherever if there were changes to the root)
     private Node selectedFacet;
 
-    public UnaryRelation getInitialConcept() {
+    public Fragment1 getInitialConcept() {
         return initialConcept;
     }
 
-    public void setInitialConcept(UnaryRelation initialConcept) {
+    public void setInitialConcept(Fragment1 initialConcept) {
         this.initialConcept = initialConcept;
     }
 
@@ -111,7 +111,7 @@ public class Facete3Wrapper {
         selectedFacet = facet;
     }
 
-    public void setBaseConcept(UnaryRelation baseConcept) {
+    public void setBaseConcept(Fragment1 baseConcept) {
         facetedQuery = facetedQuery.baseConcept(baseConcept);
     }
 
@@ -279,8 +279,8 @@ public class Facete3Wrapper {
     // TODO Should not be here
     public RDFNode fetchIfResource(Node node) {
         Query query = QueryFactory.create("CONSTRUCT WHERE { ?s ?p ?o }");
-        UnaryRelation filter = ConceptUtils.createFilterConcept(node);
-        query.setQueryPattern(RelationImpl.create(query.getQueryPattern(), Vars.s)
+        Fragment1 filter = ConceptUtils.createFilterConcept(node);
+        query.setQueryPattern(FragmentImpl.create(query.getQueryPattern(), Vars.s)
                 .joinOn(Vars.s)
                 .with(filter)
                 .getElement());

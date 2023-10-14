@@ -50,11 +50,6 @@ import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnode
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionQuery2;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.RelationImpl;
-import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.LookupServiceUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
@@ -72,11 +67,16 @@ import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.query.SparqlQueryConnectionJsa;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryOverSparqlQueryConnection;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.api.Fragment3;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
+import org.aksw.jenax.sparql.fragment.impl.Fragment3Impl;
+import org.aksw.jenax.sparql.fragment.impl.FragmentImpl;
 import org.aksw.jenax.sparql.path.SimplePath;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
 import org.aksw.jenax.sparql.query.rx.SparqlRx;
-import org.aksw.jenax.sparql.relation.api.TernaryRelation;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.stmt.core.SparqlStmtMgr;
 import org.aksw.jenax.stmt.parser.query.SparqlQueryParserImpl;
 import org.apache.jena.JenaRuntime;
@@ -239,7 +239,7 @@ public class MainCliFacete3 {
         return queryStr;
     }
 
-    public static UnaryRelation parseConcept(String queryStr, PrefixMapping prefixes) {
+    public static Fragment1 parseConcept(String queryStr, PrefixMapping prefixes) {
         Query query = SparqlQueryParserImpl.create(prefixes)
                 .apply(queryStr);
 
@@ -255,7 +255,7 @@ public class MainCliFacete3 {
         Element el = query.getQueryPattern();
         Var v = Var.alloc(resultVars.get(0));
 
-        UnaryRelation result = new Concept(el, v);
+        Fragment1 result = new Concept(el, v);
         return result;
     }
 
@@ -765,7 +765,7 @@ public class MainCliFacete3 {
 
 
     public DataQuery<FacetValueCount> facetValuesDataQuery() {
-        UnaryRelation filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptExistsRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetValueFilter);
+        Fragment1 filter = Strings.isNullOrEmpty(facetValueFilter) ? null : KeywordSearchUtils.createConceptExistsRegexIncludeSubject(Fragment2Impl.create(RDFS.label), facetValueFilter);
 
         DataQuery<FacetValueCount> base = fdn
                 .facetValueCountsWithAbsent(includeAbsent)
@@ -902,7 +902,7 @@ public class MainCliFacete3 {
     }
 
     public DataQuery<FacetCount> facetDataQuery(FacetedQuery fq) {
-        UnaryRelation filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptExistsRegexIncludeSubject(BinaryRelationImpl.create(RDFS.label), facetFilter);
+        Fragment1 filter = Strings.isNullOrEmpty(facetFilter) ? null : KeywordSearchUtils.createConceptExistsRegexIncludeSubject(Fragment2Impl.create(RDFS.label), facetFilter);
 
         DataQuery<FacetCount> base = fdn.facetCounts(includeAbsent)
                 .filter(filter);
@@ -987,8 +987,8 @@ public class MainCliFacete3 {
 
 
     public static Query rewriteUnionDefaultGraph(Query q) {
-        List<TernaryRelation> views = Arrays.asList(
-                new TernaryRelationImpl(Concept.parseElement(
+        List<Fragment3> views = Arrays.asList(
+                new Fragment3Impl(Concept.parseElement(
                         "{ GRAPH ?g { ?s ?p ?o } }", null), Vars.s, Vars.p, Vars.o)
             );
         Query result = VirtualPartitionedQuery.rewrite(
@@ -1122,7 +1122,7 @@ public class MainCliFacete3 {
                 prefixes.setNsPrefixes(tmp);
             }
 
-            UnaryRelation baseConcept = Strings.isNullOrEmpty(cm.baseConcept)
+            Fragment1 baseConcept = Strings.isNullOrEmpty(cm.baseConcept)
                     ? null
                     : parseConcept(cm.baseConcept, prefixes);
 
@@ -1282,8 +1282,8 @@ public class MainCliFacete3 {
 
     public RDFNode fetchIfResource(Node node) {
         Query q = QueryFactory.create("CONSTRUCT WHERE { ?s ?p ?o }");
-        UnaryRelation filter = ConceptUtils.createFilterConcept(node);
-        q.setQueryPattern(RelationImpl.create(q.getQueryPattern(), Vars.s).joinOn(Vars.s)
+        Fragment1 filter = ConceptUtils.createFilterConcept(node);
+        q.setQueryPattern(FragmentImpl.create(q.getQueryPattern(), Vars.s).joinOn(Vars.s)
                 .with(filter).getElement());
 
 
@@ -1423,7 +1423,7 @@ public class MainCliFacete3 {
 //		});
 
         actualLabelService = LookupServiceUtils
-                .createLookupService(new QueryExecutionFactoryOverSparqlQueryConnection(fq.connection()), BinaryRelationImpl.create(RDFS.label))
+                .createLookupService(new QueryExecutionFactoryOverSparqlQueryConnection(fq.connection()), Fragment2Impl.create(RDFS.label))
                 .partition(10)
                 .cache()
                 .mapValues((k, vs) -> vs.isEmpty() ? LabelUtils.deriveLabelFromIri(k.getURI()) : vs.iterator().next())

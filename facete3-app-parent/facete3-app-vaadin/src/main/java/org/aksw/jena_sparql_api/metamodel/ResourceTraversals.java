@@ -24,8 +24,6 @@ import org.aksw.commons.path.trav.l3.Trav3.Trav3C;
 import org.aksw.commons.path.trav.l3.Trav3Provider;
 import org.aksw.commons.path.trav.l5.Traversals5.Traversal5A;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.ClassRelationModel;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.DatasetMetamodel;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.GraphPredicateStats;
@@ -50,8 +48,10 @@ import org.aksw.jenax.path.core.PathOpsNode;
 import org.aksw.jenax.path.core.PathPE;
 import org.aksw.jenax.path.relgen.RelationGeneratorSimple;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
-import org.aksw.jenax.sparql.relation.api.Relation;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.FragmentUtils;
 import org.aksw.jenax.stmt.core.SparqlStmtMgr;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -179,11 +179,11 @@ public class ResourceTraversals {
 
         Dataset m = RDFDataMgr.loadDataset("dcat-ap_2.0.0_shacl_shapes.ttl");
         Node rootShape = NodeFactory.createURI("http://data.europa.eu/r5r#Catalog_Shape");
-        UnaryRelation rootRel = Concept.createNodes(rootShape);
+        Fragment1 rootRel = Concept.createNodes(rootShape);
 
         RDFConnection conn = RDFConnectionFactory.connect(m);
 
-        Relation shaclRelation = createShaclRelation();
+        Fragment shaclRelation = createShaclRelation();
         Table<Boolean, Node, Set<Resource>> pToDirToTgtShape = getShaclTransitions(rootRel, conn);
 
 
@@ -236,7 +236,7 @@ public class ResourceTraversals {
 
 
 
-        Relation r = createShaclRelation();
+        Fragment r = createShaclRelation();
         System.out.println(r);
 
 
@@ -281,12 +281,12 @@ public class ResourceTraversals {
      * @param conn
      * @return
      */
-    public static Table<Boolean, Node, Set<Resource>> getShaclTransitions(UnaryRelation rootRel, RDFConnection conn) {
+    public static Table<Boolean, Node, Set<Resource>> getShaclTransitions(Fragment1 rootRel, RDFConnection conn) {
 
-        Relation shaclRelation = createShaclRelation();
+        Fragment shaclRelation = createShaclRelation();
 
         List<Var> vars = shaclRelation.getVars();
-        Relation filtered = shaclRelation.prependOn(vars.get(0)).with(rootRel);
+        Fragment filtered = shaclRelation.prependOn(vars.get(0)).with(rootRel);
 
         System.out.println("Filtered: " + filtered);
 
@@ -307,10 +307,10 @@ public class ResourceTraversals {
     }
 
 
-    public static Relation createShaclRelation() {
+    public static Fragment createShaclRelation() {
 
         Query query = SparqlStmtMgr.loadQuery("shacl-relation.rq");
-        Relation result = RelationUtils.fromQuery(query);
+        Fragment result = FragmentUtils.fromQuery(query);
 
         return result;
     }
@@ -323,7 +323,7 @@ public class ResourceTraversals {
 
         @Override
         public XRelationNode mkRoot() {
-            return new XRelationNode(PathNode.newAbsolutePath(), this, null, RelationUtils.SPO);
+            return new XRelationNode(PathNode.newAbsolutePath(), this, null, FragmentUtils.SPO);
         }
 
         @Override
@@ -334,7 +334,7 @@ public class ResourceTraversals {
 
         @Override
         public XRelationNode toA(XAliasNode b, Node segment) {
-            return new XRelationNode(b.path().resolve(segment), this, b, RelationUtils.SPO);
+            return new XRelationNode(b.path().resolve(segment), this, b, FragmentUtils.SPO);
         }
     }
 
@@ -362,15 +362,15 @@ public class ResourceTraversals {
     static class XRelationNode
         extends TreeNode2A<Node, XRelationNode, XAliasNode>
     {
-        protected Relation relation;
+        protected Fragment relation;
 
         public XRelationNode(Path<Node> path, TreeNode2Provider<Node, XRelationNode, XAliasNode> provider,
-                XAliasNode parent, Relation relation) {
+                XAliasNode parent, Fragment relation) {
             super(path, provider, parent);
             this.relation = relation;
         }
 
-        public Relation getRelation() {
+        public Fragment getRelation() {
             return relation;
         }
 
@@ -425,7 +425,7 @@ public class ResourceTraversals {
         path = path.resolve(PathOpsNode.PARENT).normalize();
         System.out.println(path);
 
-        UnaryRelation ur = Concept.parse("?s { ?s a <urn:Person> }");
+        Fragment1 ur = Concept.parse("?s { ?s a <urn:Person> }");
         // TravProviderTriple<QueryBuilder> provider = new TravProviderTripleSparql(ur);
 
         TravProviderTriple<Void> provider = TravProviderTripleImpl.create();

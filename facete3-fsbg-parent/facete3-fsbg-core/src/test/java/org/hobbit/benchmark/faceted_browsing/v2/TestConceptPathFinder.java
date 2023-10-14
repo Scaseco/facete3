@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jenax.dboe.dataset.impl.DatasetGraphQuadsImpl;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.path.SimplePath;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.sparql.rx.op.FlowOfQuadsOps;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -88,8 +88,8 @@ public class TestConceptPathFinder {
 
         // The source concept denotes the set of resources matching the facet
         // constraints
-        UnaryRelation src = Concept.create("VALUES (?s) { (eg:a) }", "s", PrefixMapping.Extended);
-        UnaryRelation target = Concept.create("?s eg:p3 ?o", "s", PrefixMapping.Extended);
+        Fragment1 src = Concept.create("VALUES (?s) { (eg:a) }", "s", PrefixMapping.Extended);
+        Fragment1 target = Concept.create("?s eg:p3 ?o", "s", PrefixMapping.Extended);
 
         // The target concept denotes the set of resources carrying numeric properties
 

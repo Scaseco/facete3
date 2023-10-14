@@ -1,21 +1,21 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
-import org.aksw.jenax.sparql.relation.api.Relation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
 
 public class QueryBuilderImpl
     implements QueryBuilder
 {
-    protected Relation baseRelation;
+    protected Fragment baseRelation;
 
 
-    public QueryBuilderImpl(Relation baseRelation) {
+    public QueryBuilderImpl(Fragment baseRelation) {
         super();
         this.baseRelation = baseRelation;
     }
 
 
     @Override
-    public Relation getBaseRelation() {
+    public Fragment getBaseRelation() {
         return baseRelation;
     }
 

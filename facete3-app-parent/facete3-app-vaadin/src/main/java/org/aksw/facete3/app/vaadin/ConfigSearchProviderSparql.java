@@ -3,10 +3,10 @@ package org.aksw.facete3.app.vaadin;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPluginImpl;
 import org.aksw.facete3.app.vaadin.providers.SearchProviderSparql;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.context.annotation.Bean;
@@ -20,13 +20,13 @@ public class ConfigSearchProviderSparql {
 
         return new SearchPluginImpl(
                 new SearchProviderSparql(searchString -> {
-                    UnaryRelation r;
+                    Fragment1 r;
 
                     if ("".equals(searchString)) {
                         r = ConceptUtils.createSubjectConcept();
                     } else {
                         r = KeywordSearchUtils.createConceptExistsRegexIncludeSubject(
-                                BinaryRelationImpl.create(property), searchString);
+                                Fragment2Impl.create(property), searchString);
                     }
 
                     return r;

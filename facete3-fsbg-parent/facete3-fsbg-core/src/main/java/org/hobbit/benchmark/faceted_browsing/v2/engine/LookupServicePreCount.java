@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.commons.rx.lookup.LookupService;
-import org.aksw.jenax.sparql.relation.api.BinaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
 
@@ -16,10 +16,10 @@ public class LookupServicePreCount
     implements LookupService<Node, Range<Long>>
 {
     protected RDFConnection conn;
-    protected Map<Node, BinaryRelation> facetRelationIndex;
+    protected Map<Node, Fragment2> facetRelationIndex;
     protected long rowLimit = 10000;
 
-    public LookupServicePreCount(RDFConnection conn, Map<Node, BinaryRelation> facetRelationIndex, long rowLimit) {
+    public LookupServicePreCount(RDFConnection conn, Map<Node, Fragment2> facetRelationIndex, long rowLimit) {
         super();
         this.conn = conn;
         this.facetRelationIndex = facetRelationIndex;

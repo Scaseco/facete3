@@ -2,7 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.expr;
 
 import java.util.List;
 
-import org.aksw.jenax.sparql.relation.api.Relation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
 import org.apache.jena.sparql.core.Var;
 
 /**
@@ -30,7 +30,7 @@ public interface RelationOps {
      * @param relation
      * @param vars
      */
-    public static void project(Relation relation, List<Var> vars) {
+    public static void project(Fragment relation, List<Var> vars) {
 
     }
 

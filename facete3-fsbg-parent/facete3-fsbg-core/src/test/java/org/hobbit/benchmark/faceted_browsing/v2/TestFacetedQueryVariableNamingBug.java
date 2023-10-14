@@ -3,7 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.bgp.api.XFacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

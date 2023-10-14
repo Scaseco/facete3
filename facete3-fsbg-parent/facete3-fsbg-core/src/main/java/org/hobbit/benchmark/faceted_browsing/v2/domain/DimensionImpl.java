@@ -2,9 +2,9 @@ package org.hobbit.benchmark.faceted_browsing.v2.domain;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
-import org.aksw.jenax.sparql.relation.api.BinaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment2;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 
@@ -17,7 +17,7 @@ public class DimensionImpl
     }
 
     protected Dimension parent;
-    protected BinaryRelation relation;
+    protected Fragment2 relation;
     protected String alias;
 
 
@@ -51,7 +51,7 @@ public class DimensionImpl
     }
 
     @Override
-    public BinaryRelation getReachingBinaryRelation() {
+    public Fragment2 getReachingBinaryRelation() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -92,13 +92,13 @@ public class DimensionImpl
     }
 
     @Override
-    public Map<String, BinaryRelation> getOutgoingFacets() {
+    public Map<String, Fragment2> getOutgoingFacets() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Map<String, BinaryRelation> getIncomingFacets() {
+    public Map<String, Fragment2> getIncomingFacets() {
         // TODO Auto-generated method stub
         return null;
     }

@@ -19,7 +19,8 @@ import org.aksw.jenax.arq.datashape.viewselector.ViewTemplate;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.rx.ListServiceEntityQuery;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryQuery;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -72,7 +73,7 @@ public class ViewManagerImpl
 //            Resource metadata = viewTemplate.getMetadata();
             //Node node = metadata.asNode();
 
-            UnaryRelation condition = viewTemplate.getCondition();
+            Fragment1 condition = viewTemplate.getCondition();
 
             result.addCondition(node, condition);
         }

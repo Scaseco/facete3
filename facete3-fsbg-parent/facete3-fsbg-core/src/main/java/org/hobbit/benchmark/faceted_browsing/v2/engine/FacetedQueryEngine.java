@@ -2,7 +2,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.engine;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 

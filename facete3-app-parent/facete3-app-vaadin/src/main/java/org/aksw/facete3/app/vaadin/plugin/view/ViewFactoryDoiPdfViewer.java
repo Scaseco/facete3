@@ -13,7 +13,6 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
@@ -24,6 +23,7 @@ import org.aksw.jenax.arq.datashape.viewselector.ViewTemplateImpl;
 import org.aksw.jenax.arq.util.expr.ExprUtils;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;

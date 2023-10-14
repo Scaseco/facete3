@@ -46,9 +46,6 @@ import org.aksw.facete.v3.impl.FacetConstraintImpl;
 import org.aksw.facete.v3.impl.FacetValueCountImpl_;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.changeset.util.RdfChangeTrackerWrapper;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFromRdfDatatype;
@@ -65,9 +62,12 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.dataaccess.rx.MapFromBinaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.aksw.jenax.sparql.path.SimplePath;
 import org.aksw.jenax.sparql.query.rx.SparqlRx;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.stmt.core.SparqlStmtMgr;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -618,7 +618,7 @@ public class TaskGenerator {
 
 
     public static Map<RDFNode, RDFNode> viewResourceAsMap(Resource s) {
-        Map<RDFNode, Collection<RDFNode>> multimap = new MapFromBinaryRelation(s.getModel(), new BinaryRelationImpl(
+        Map<RDFNode, Collection<RDFNode>> multimap = new MapFromBinaryRelation(s.getModel(), new Fragment2Impl(
                 ElementUtils.createElementGroup(
                         ElementUtils.createElementTriple(
                                 new Triple(s.asNode(), RDFS.member.asNode(), Vars.e),
@@ -1282,8 +1282,8 @@ public class TaskGenerator {
     }
 
 
-    public static UnaryRelation createConcept(Collection<? extends RDFNode> nodes) {
-        UnaryRelation result = new Concept(
+    public static Fragment1 createConcept(Collection<? extends RDFNode> nodes) {
+        Fragment1 result = new Concept(
                 new ElementFilter(new E_OneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(nodes.stream().map(RDFNode::asNode).collect(Collectors.toSet())))),
                 Vars.p);
 
@@ -1299,10 +1299,10 @@ public class TaskGenerator {
         //SparqlQueryConnection conn = fn.query().connection();
 
         // The source concept denotes the set of resources matching the facet constraints
-        UnaryRelation valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
+        Fragment1 valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
 
         // The target concept denotes the set of resources carrying numeric properties
-        UnaryRelation numericValuesConcept = new Concept(
+        Fragment1 numericValuesConcept = new Concept(
                 ElementUtils.createElementGroup(
                         ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
                         createConcept(numericProperties).getElement()),
@@ -1371,7 +1371,7 @@ public class TaskGenerator {
 
 
             if (target != null) {
-                UnaryRelation numProps = createConcept(numericProperties);
+                Fragment1 numProps = createConcept(numericProperties);
 
                 List<Node> ps;
                 if (minPathLength == -1){
@@ -1461,7 +1461,7 @@ public class TaskGenerator {
         }
 
         if (target != null) {
-            UnaryRelation numProps = createConcept(numericProperties);
+            Fragment1 numProps = createConcept(numericProperties);
 
             Node p;
             if (minPathLength == -1){
@@ -1802,7 +1802,7 @@ public class TaskGenerator {
         final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, property.asNode(), Vars.o), Vars.s);
         final DataQuery<RDFNode> rdfNodeDataQuery = fn.remainingValues();
 
-        final UnaryRelation sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
+        final Fragment1 sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
         final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
                 sourceConcept, targetConcept);
 
@@ -2208,9 +2208,9 @@ public class TaskGenerator {
             //hlFacetConstraints.remove(hlFacetConstraint);
             hlFacetConstraint.deactivate();
         }
-        UnaryRelation availableClasses = fn.availableValues().baseRelation().toUnaryRelation();
+        Fragment1 availableClasses = fn.availableValues().baseRelation().toUnaryRelation();
 
-        final UnaryRelation subClassesRelation = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses, false);
+        final Fragment1 subClassesRelation = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses, false);
 
         DataQuery<Resource> dq = new DataQueryImpl<>(conn, subClassesRelation, null, Resource.class);
 

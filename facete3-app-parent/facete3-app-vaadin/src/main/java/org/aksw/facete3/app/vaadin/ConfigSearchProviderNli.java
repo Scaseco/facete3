@@ -11,14 +11,15 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUni
 import org.aksw.jena_sparql_api.algebra.transform.TransformEvalTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFactorizeTableColumnsToExtend;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
-import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.arq.util.query.QueryTransform;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionBuilder;
-import org.aksw.jenax.sparql.relation.api.TernaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment3;
+import org.aksw.jenax.sparql.fragment.impl.Fragment3Impl;
+
 import com.google.common.collect.Lists;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -92,8 +93,8 @@ public class ConfigSearchProviderNli {
             view.setQueryPattern(ElementUtils.createElementData(table.getVars(), Lists.newArrayList(table.rows())));
 
 
-            Collection<TernaryRelation> views = VirtualPartitionedQuery.toViews(view);
-            views.add(new TernaryRelationImpl(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s, Vars.p, Vars.o));
+            Collection<Fragment3> views = VirtualPartitionedQuery.toViews(view);
+            views.add(new Fragment3Impl(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s, Vars.p, Vars.o));
 
             QueryTransform queryTransform = query -> {
 //                System.out.println("Before rewrite: " + query);

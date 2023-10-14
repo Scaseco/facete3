@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.schema.traversal.sparql;
 
-import org.aksw.jenax.sparql.relation.api.Relation;
+import org.aksw.jenax.sparql.fragment.api.Fragment;
 
 public interface QueryBuilder {
-    Relation getBaseRelation();
+    Fragment getBaseRelation();
 }

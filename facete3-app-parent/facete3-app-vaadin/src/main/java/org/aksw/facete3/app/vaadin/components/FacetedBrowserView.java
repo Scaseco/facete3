@@ -30,8 +30,6 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
@@ -53,7 +51,9 @@ import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionTransform
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.core.FacetStep;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.aksw.jenax.vaadin.component.breadcrumb.Breadcrumb;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
@@ -358,7 +358,7 @@ public class FacetedBrowserView
 
                 Set<Node> selectedTypes = getSelectedTypes();
 
-                UnaryRelation initialConcept = selectedTypes.isEmpty()
+                Fragment1 initialConcept = selectedTypes.isEmpty()
                         ? ConceptUtils.createSubjectConcept()
                         : Concept.createForTypes(selectedTypes);
                 System.err.println("Base concept restricted to types: " + selectedTypes);
@@ -490,7 +490,7 @@ public class FacetedBrowserView
     public void refreshAllNew() {
 
         if (true) {
-            UnaryRelation baseConcept = facete3.getFacetedQuery().baseConcept();
+            Fragment1 baseConcept = facete3.getFacetedQuery().baseConcept();
             sparqlGridComponent.setBaseConcept(baseConcept);
             sparqlGridComponent.resetGrid();
         }
@@ -652,7 +652,7 @@ public class FacetedBrowserView
 
     public void handleSearchResponse(RDFNodeSpec rdfNodeSpec) {
 
-        UnaryRelation searchConcept;
+        Fragment1 searchConcept;
         if (rdfNodeSpec.isCollection()) {
             searchConcept = ConceptUtils.createConceptFromRdfNodes(rdfNodeSpec.getCollection());
         } else if (rdfNodeSpec.isRootedQuery()) {
@@ -675,9 +675,9 @@ public class FacetedBrowserView
             throw new RuntimeException("Unknown rdfNodeSpec type "  + rdfNodeSpec);
         }
 
-        UnaryRelation initialConcept = facete3.getInitialConcept();
+        Fragment1 initialConcept = facete3.getInitialConcept();
 
-        UnaryRelation baseConcept = initialConcept.joinOn(initialConcept.getVar()).with(searchConcept).toUnaryRelation();
+        Fragment1 baseConcept = initialConcept.joinOn(initialConcept.getVar()).with(searchConcept).toUnaryRelation();
         System.err.println("Base concept: " + baseConcept);
         facete3.setBaseConcept(baseConcept);
 

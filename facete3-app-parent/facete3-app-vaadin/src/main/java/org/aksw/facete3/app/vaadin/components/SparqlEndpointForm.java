@@ -9,9 +9,6 @@ import java.util.Optional;
 import org.aksw.commons.util.time.TimeAgo;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.aksw.facete3.app.vaadin.ServiceStatus;
-import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBasic;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBearerToken;
@@ -20,7 +17,10 @@ import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySupplier;
 import org.aksw.jenax.arq.util.node.NodeUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
+import org.aksw.jenax.sparql.fragment.impl.Concept;
+import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
+import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Node;
@@ -136,12 +136,12 @@ public class SparqlEndpointForm extends FormLayout {
             @Override
             protected void applyFilter(DataQuery<ServiceStatus> dataQuery, String filterText) {
                 Node node = NodeFactory.createURI(filterText);
-                UnaryRelation filter;
+                Fragment1 filter;
                 if (!NodeUtils.isValid(node)) {
                     filter = new Concept(new ElementFilter(NodeValue.FALSE), Vars.s);
                 } else {
                     filter = KeywordSearchUtils.createConceptExistsStrConstainsLabelOnly(
-                            BinaryRelationImpl.create(ResourceFactory.createProperty("http://www.w3.org/ns/sparql-service-description#endpoint")), filterText);
+                            Fragment2Impl.create(ResourceFactory.createProperty("http://www.w3.org/ns/sparql-service-description#endpoint")), filterText);
                 }
                 dataQuery.filter(filter);
             }

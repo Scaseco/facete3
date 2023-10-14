@@ -15,8 +15,8 @@ import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.model.shacl.util.ShTemplateRegistry;
 import org.aksw.jenax.path.core.FacetPath;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrEx;
-import org.aksw.jenax.sparql.relation.api.UnaryRelation;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
 import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperComponent;
 import org.aksw.jenax.vaadin.component.grid.sparql.TableMapperState;
@@ -282,7 +282,7 @@ public class ItemComponent extends TabSheet {
 
     public void showTableMapperDialog() {
         RdfDataSource dataSource = dataProvider.getDataSource();
-        Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
+        Supplier<Fragment1> conceptSupplier = dataProvider.getConceptSupplier();
         // System.out.println("Concept: " + conceptSupplier.get());
         TableMapperComponent tmc = new TableMapperComponent(dataSource, conceptSupplier.get(), labelService);
         tmc.setState(tableMapperState);
@@ -315,7 +315,7 @@ public class ItemComponent extends TabSheet {
 
     public void refreshTable() {
         RdfDataSource dataSource = dataProvider.getDataSource();
-        Supplier<UnaryRelation> conceptSupplier = dataProvider.getConceptSupplier();
+        Supplier<Fragment1> conceptSupplier = dataProvider.getConceptSupplier();
         tableGrid = TableMapperComponent.buildGrid(
                 dataSource, conceptSupplier.get(),
                 TreeDataUtils.toVaadin(tableMapperState.getFacetTree()),

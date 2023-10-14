@@ -24,7 +24,6 @@ import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
 import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.impl.bidirectional.ConceptPathFinderSystem3;
@@ -37,6 +36,7 @@ import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
+import org.aksw.jenax.sparql.fragment.impl.FragmentUtils;
 import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -515,7 +515,7 @@ public class MainCliDiceBenchmark {
 
         Query view = toQuery(chosen);
 //		GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery("SELECT ?s ?p ?o { ?s ?p ?o FILTER(!STRSTARTS(STR(?p), 'http://dbpedia.org/property/') )}"));
-        GenericLayer layer = GenericLayer.create(RelationUtils.fromQuery(view));
+        GenericLayer layer = GenericLayer.create(FragmentUtils.fromQuery(view));
 
 
         Query query = QueryFactory.create("SELECT (COUNT(*) AS ?c) { ?x ?y ?z }");
