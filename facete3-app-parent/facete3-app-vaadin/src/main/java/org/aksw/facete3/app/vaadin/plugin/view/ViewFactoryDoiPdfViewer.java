@@ -38,7 +38,6 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDFS;
-import org.vaadin.alejandro.PdfBrowserViewer;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -230,11 +229,11 @@ class PaperViewComponentDoi
                     }
                 });
 
-                PdfBrowserViewer pdfViewer = new PdfBrowserViewer(streamResource);
-                pdfViewer.setHeight("100%");
-                pdfViewer.setWidth("100%");
-
-                add(pdfViewer);
+//                PdfBrowserViewer pdfViewer = new PdfBrowserViewer(streamResource);
+//                pdfViewer.setHeight("100%");
+//                pdfViewer.setWidth("100%");
+//
+//                add(pdfViewer);
             }
         });
 

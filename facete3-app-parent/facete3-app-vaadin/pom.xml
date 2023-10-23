@@ -194,11 +194,15 @@
 		<!-- <artifactId>wt-pdf-viewer</artifactId> -->
 		<!-- <version>2.0.1</version> -->
 		<!-- </dependency> -->
+
+		<!-- pdf-browser seems to break the vaadin ui -->
+		<!--
 		<dependency>
 			<groupId>org.vaadin.alejandro</groupId>
 			<artifactId>pdf-browser</artifactId>
 			<version>3.2.0</version>
-		</dependency>
+			</dependency>
+		-->
 		<!--		<dependency>-->
 		<!--			<groupId>com.xdev-software</groupId>-->
 		<!--			<artifactId>vaadin-maps-leaflet-flow</artifactId>-->
@@ -216,7 +220,8 @@
 			<artifactId>leaflet4vaadin</artifactId>
 			<version>0.5.0</version>
 			<exclusions>
-				<!-- Should use 'vaadin-core'; 'vaadin' includes commercial components -->
+				<!-- Should use 'vaadin-core'; 'vaadin' includes commercial
+				components -->
 				<exclusion>
 					<groupId>com.vaadin</groupId>
 					<artifactId>vaadin</artifactId>
