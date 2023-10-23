@@ -82,7 +82,7 @@ public class ConfigFacetedBrowserView {
         // DataProviderNodeQuery dataProvider = new DataProviderNodeQuery(dataSource, conceptSupplier, dataRetriever);
 
         // VaadinShaclGridUtils.fromShacl(null)
-        return new DataProviderNodeQuery(dataSource, () ->  facetedQueryConf.getFacetedQuery().focus().availableValues().baseRelation().toUnaryRelation(), dataRetriever);
+        return new DataProviderNodeQuery(dataSource, () ->  facetedQueryConf.getFacetedQuery().focus().availableValues().baseRelation().toFragment1(), dataRetriever);
     }
 
 //    @Bean

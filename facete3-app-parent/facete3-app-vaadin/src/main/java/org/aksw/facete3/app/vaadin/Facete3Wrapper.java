@@ -38,7 +38,6 @@ import org.aksw.jenax.path.datatype.RDFDatatypePPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePathNode;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
-import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.aksw.jenax.sparql.fragment.impl.FragmentImpl;
 import org.apache.jena.datatypes.TypeMapper;
@@ -177,7 +176,7 @@ public class Facete3Wrapper {
     }
 
     private void setEmptyBaseConcept() {
-        Concept emptyConcept = ConceptUtils.createConcept();
+        Fragment1 emptyConcept = ConceptUtils.createConcept();
         facetedQuery = facetedQuery.baseConcept(emptyConcept);
     }
 

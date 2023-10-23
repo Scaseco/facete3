@@ -95,7 +95,7 @@ public class TestConceptPathFinder {
 
         // TODO We need to wire up pathPattern with the path finder
         List<SimplePath> paths = ConceptPathFinder.findPaths(FluentQueryExecutionFactory.from(model).create(), src,
-                target, 100, 100);
+                target, 100l, 100l);
 
         System.out.println(paths);
         // return paths;

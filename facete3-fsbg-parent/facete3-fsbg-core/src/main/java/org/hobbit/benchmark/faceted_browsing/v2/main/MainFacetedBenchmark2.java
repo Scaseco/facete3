@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.data_query.impl.PathAccessorSPath;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryOverSparqlQueryConnection;
+import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
@@ -106,7 +107,7 @@ public class MainFacetedBenchmark2 {
             System.out.println("equals? " + Objects.equals(a, b));
         }
 
-//		Concept c = Concept.create("?s a <http://example.org/Person>", "s");
+//		Fragment1 c = Fragment1.create("?s a <http://example.org/Person>", "s");
 //		Query q = ConceptAnalyser.checkDatatypes(c);
 //		System.out.println(q);
 
@@ -138,7 +139,7 @@ public class MainFacetedBenchmark2 {
 
         //RDFDataMgr.write(new FileOutputStream("/tmp/wtf.nt"), m, RDFFormat.NTRIPLES_ASCII);
 
-        Concept k = KeywordSearchUtils.createConceptBifContains(Fragment2Impl.create(new P_Link(RDFS.label.asNode())), "test");
+        Fragment1 k = KeywordSearchUtils.createConceptBifContains(Fragment2Impl.create(new P_Link(RDFS.label.asNode())), "test");
 
         //ConceptUtils.createFilterConcept(nodes)
         System.out.println("Keyword search: " + k);
@@ -154,19 +155,19 @@ public class MainFacetedBenchmark2 {
             System.out.println("Paths: " + ConceptPathFinder.findPaths(
                 new QueryExecutionFactoryOverSparqlQueryConnection(conn),
                 Concept.create("?s a <http://www.example.org/ThingB>", "s"),
-                //Concept.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
+                //Fragment1.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
                 Concept.create("?s <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?x ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?y", "s"),
-                100,
-                100
+                100l,
+                100l
             ));
 
             System.out.println("Paths: " + ConceptPathFinder.findPaths(
                 new QueryExecutionFactoryOverSparqlQueryConnection(conn),
                 Concept.create("?s a <http://www.example.org/ThingA>", "s"),
-                //Concept.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
+                //Fragment1.create("?s <http://www.opengis.net/ont/geosparql#asWKT> ?o ", "s"),
                 Concept.create("?s <http://www.opengis.net/ont/geosparql#geometry> ?y", "s"),
-                100,
-                100
+                100l,
+                100l
             ));
 
         }
@@ -179,7 +180,7 @@ public class MainFacetedBenchmark2 {
         SPath rootPath = session.getRoot();//session.getRoot().get(RDF.type.getURI(), false);
         SPath typePath = rootPath.get(RDF.type.getURI(), false);
 
-        Concept pFilter = ConceptUtils.createFilterConcept(RDF.type.asNode(), RDFS.label.asNode());;
+        Fragment1 pFilter = ConceptUtils.createFilterConcept(RDF.type.asNode(), RDFS.label.asNode());;
 
 //		Map<Node, Range<Long>> facets = new HashMap<>();
 //		Map<Node, Range<Long>> facets = session.getFacetsAndCounts(rootPath, false, pFilter)

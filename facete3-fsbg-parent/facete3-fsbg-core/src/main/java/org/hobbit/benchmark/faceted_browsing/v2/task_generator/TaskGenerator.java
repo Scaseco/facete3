@@ -1069,7 +1069,7 @@ public class TaskGenerator {
         final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
         //new Concept()
         final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
-        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toFragment1(), targetConcept);
 
         boolean useNewPathFinder = true;
         pathSearch.setMaxPathLength(3);
@@ -1131,7 +1131,7 @@ public class TaskGenerator {
         final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
 
         final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
-        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toFragment1(), targetConcept);
         pathSearch.setMaxPathLength(3);
 
         boolean useNewPathFinder = true;
@@ -1299,7 +1299,7 @@ public class TaskGenerator {
         //SparqlQueryConnection conn = fn.query().connection();
 
         // The source concept denotes the set of resources matching the facet constraints
-        Fragment1 valuesConcept = fn.remainingValues().baseRelation().toUnaryRelation();
+        Fragment1 valuesConcept = fn.remainingValues().baseRelation().toFragment1();
 
         // The target concept denotes the set of resources carrying numeric properties
         Fragment1 numericValuesConcept = new Concept(
@@ -1802,7 +1802,7 @@ public class TaskGenerator {
         final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, property.asNode(), Vars.o), Vars.s);
         final DataQuery<RDFNode> rdfNodeDataQuery = fn.remainingValues();
 
-        final Fragment1 sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
+        final Fragment1 sourceConcept = rdfNodeDataQuery.baseRelation().toFragment1();
         final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
                 sourceConcept, targetConcept);
 
@@ -1866,7 +1866,7 @@ public class TaskGenerator {
         final ConceptPathFinder conceptPathFinder = getConceptPathFinder();
 
         final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
-        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fn.remainingValues().baseRelation().toFragment1(), targetConcept);
 
         pathSearch.setMaxPathLength(desiredPathLength);
 
@@ -2201,14 +2201,14 @@ public class TaskGenerator {
         final Path narrowingRelation = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
         ///Path narrowingRelation = new P_Link(RDFS.subClassOf.asNode());
         boolean result = false;
-        final Concept broaderClasses = ConceptUtils.createConcept(constraintClasses);
+        final Fragment1 broaderClasses = ConceptUtils.createConcept(constraintClasses);
         final FacetNode fn = hlFacetConstraint.mentionedFacetNodes().values().iterator().next();
         logger.debug("fn="+fn);
         {
             //hlFacetConstraints.remove(hlFacetConstraint);
             hlFacetConstraint.deactivate();
         }
-        Fragment1 availableClasses = fn.availableValues().baseRelation().toUnaryRelation();
+        Fragment1 availableClasses = fn.availableValues().baseRelation().toFragment1();
 
         final Fragment1 subClassesRelation = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(broaderClasses, narrowingRelation, availableClasses, false);
 

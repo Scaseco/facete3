@@ -41,8 +41,8 @@ public class TravTripleVisitorSparql
             // TODO The alias should affect variable naming
 
             rel = isFwd
-                    ? FragmentUtils.createTernaryRelation(s, p, Node.ANY).project(Vars.o).toUnaryRelation()
-                    : FragmentUtils.createTernaryRelation(Node.ANY, p, s).project(Vars.o).toUnaryRelation();
+                    ? FragmentUtils.createTernaryRelation(s, p, Node.ANY).project(Vars.o).toFragment1()
+                    : FragmentUtils.createTernaryRelation(Node.ANY, p, s).project(Vars.o).toFragment1();
 
         }
 
@@ -80,9 +80,9 @@ public class TravTripleVisitorSparql
         Fragment1 ur2;
 
         if (isFwd) {
-            ur2 = FragmentUtils.createTernaryRelation(s, Node.ANY, Node.ANY).project(Vars.p).toUnaryRelation();
+            ur2 = FragmentUtils.createTernaryRelation(s, Node.ANY, Node.ANY).project(Vars.p).toFragment1();
         } else {
-            ur2 = FragmentUtils.createTernaryRelation(Node.ANY, Node.ANY, s).project(Vars.p).toUnaryRelation();
+            ur2 = FragmentUtils.createTernaryRelation(Node.ANY, Node.ANY, s).project(Vars.p).toFragment1();
         }
 
 

@@ -59,6 +59,7 @@ import com.vaadin.flow.shared.Registration;
 public class ItemComponent extends TabSheet {
 
 
+    /** Unfinished method. Idea is to have the grid dynamically adjust the number of columns on resize. */
     public void handleResize() {
 
         Registration unregisterBrowserWindowResizeListener = UI.getCurrent().getPage().addBrowserWindowResizeListener(event -> {

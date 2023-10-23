@@ -119,6 +119,8 @@ public class FacetedBrowserView
 
     protected Label connectionInfo;
 
+    protected MapComponent mapComponent = new MapComponent();
+
 //    protected ResourceComponent resourceComponent;
 
     /** The resource browser should eventually supersede the resourceComponent */
@@ -595,7 +597,13 @@ public class FacetedBrowserView
         // component.addToPrimary(sparqlGridComponent);
 
 
-        component.addToSecondary(resourceBrowserComponent);
+
+        VerticalLayout detailsPanel = new VerticalLayout();
+        detailsPanel.setSizeFull();
+        detailsPanel.add(mapComponent);
+        detailsPanel.add(resourceBrowserComponent);
+
+        component.addToSecondary(detailsPanel);
         return component;
     }
 
@@ -677,7 +685,7 @@ public class FacetedBrowserView
 
         Fragment1 initialConcept = facete3.getInitialConcept();
 
-        Fragment1 baseConcept = initialConcept.joinOn(initialConcept.getVar()).with(searchConcept).toUnaryRelation();
+        Fragment1 baseConcept = initialConcept.joinOn(initialConcept.getVar()).with(searchConcept).toFragment1();
         System.err.println("Base concept: " + baseConcept);
         facete3.setBaseConcept(baseConcept);
 
@@ -714,7 +722,7 @@ public class FacetedBrowserView
 //        return ids;
 //    }
 
-    private Concept createConcept(List<String> ids) {
+    private Fragment1 createConcept(List<String> ids) {
         List<Node> baseConcepts = new LinkedList<Node>();
         for (String id : ids) {
             Node baseConcept = NodeFactory.createURI(id);

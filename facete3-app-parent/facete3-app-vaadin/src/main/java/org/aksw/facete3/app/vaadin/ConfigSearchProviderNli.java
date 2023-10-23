@@ -19,8 +19,6 @@ import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionBuilder;
 import org.aksw.jenax.sparql.fragment.api.Fragment3;
 import org.aksw.jenax.sparql.fragment.impl.Fragment3Impl;
-
-import com.google.common.collect.Lists;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.RDFNode;
@@ -32,9 +30,13 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.syntax.Template;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.google.common.collect.Lists;
 
 /**
  * The config class sets up a connection to the aksw/cord natural language interface (nli)
@@ -46,7 +48,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ConfigSearchProviderNli {
-
+    private static final Logger logger = LoggerFactory.getLogger(ConfigSearchProviderNli.class);
 
 
 //    @Bean
@@ -67,7 +69,7 @@ public class ConfigSearchProviderNli {
 
 
     public static SearchSensitiveRDFConnectionTransform createConnectionTransformer(NliConfig nliConfig) {
-        System.out.println("NLI SERVICE: " + nliConfig.getEndpoint());
+        logger.info("Natural Language Interface (NLI) Service: " + nliConfig.getEndpoint());
         return rdfNodeSpec -> {
             Table table = TableFactory.create(Arrays.asList(Vars.s, Vars.o));
             for(RDFNode rdfNode : rdfNodeSpec.getCollection()) {

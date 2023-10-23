@@ -106,7 +106,7 @@ public class TestFacetedQuery2 {
         //Path path = PathParser.parse("!eg:x|eg:x", PrefixMapping.Extended);
         Path path = new P_Link(NodeFactory.createURI(PLACES_NS + "narrowerThan"));
 
-        Fragment1 classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+        Fragment1 classes = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toFragment1();
         Fragment1 subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
                 classes,
                 path);
@@ -135,7 +135,7 @@ public class TestFacetedQuery2 {
 
         Fragment1 broadClases = Concept.parse("?s { VALUES(?s) { (eg:Foobar) } }", PrefixMapping.Extended);
 
-        Fragment1 availableClasses = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toUnaryRelation();
+        Fragment1 availableClasses = fq.root().fwd(RDF.type).one().availableValues().baseRelation().toFragment1();
         Fragment1 subClasses = HierarchyCoreOnDemand.createConceptForDirectlyRelatedItems(
                 broadClases,
                 narrowingRelation,
@@ -197,7 +197,7 @@ public class TestFacetedQuery2 {
         final ConceptPathFinder conceptPathFinder = taskGenerator.getConceptPathFinder();
         //new Concept()
         final Concept targetConcept = new Concept(ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o), Vars.s);
-        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toUnaryRelation(), targetConcept);
+        final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(fq.root().remainingValues().baseRelation().toFragment1(), targetConcept);
 
         pathSearch.setMaxPathLength(2);
         final List<SimplePath> paths = pathSearch.exec().filter(x -> x.getSteps().stream().noneMatch(p ->
@@ -373,7 +373,7 @@ public class TestFacetedQuery2 {
         final DataQuery<RDFNode> rdfNodeDataQuery = node.remainingValues();
         System.out.println(rdfNodeDataQuery.exec().toList().blockingGet());
 
-        final Fragment1 sourceConcept = rdfNodeDataQuery.baseRelation().toUnaryRelation();
+        final Fragment1 sourceConcept = rdfNodeDataQuery.baseRelation().toFragment1();
         final PathSearch<SimplePath> pathSearch = conceptPathFinder.createSearch(
                 sourceConcept, targetConcept);
 

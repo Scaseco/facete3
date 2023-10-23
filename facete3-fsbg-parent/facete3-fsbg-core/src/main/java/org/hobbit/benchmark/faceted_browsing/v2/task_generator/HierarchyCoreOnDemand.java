@@ -99,7 +99,7 @@ public class HierarchyCoreOnDemand
                 .joinOn(Vars.o)
                 .filterRelationFirst(true)
                 .with(baseConcept)
-                .toUnaryRelation();
+                .toFragment1();
 
         return result;
     }
@@ -150,7 +150,7 @@ public class HierarchyCoreOnDemand
             .joinOn(br.getSourceVar())
             .with(availableValues)
             .project(br.getSourceVar())
-            .toUnaryRelation();
+            .toFragment1();
 
         return result;
     }

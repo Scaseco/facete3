@@ -197,24 +197,32 @@
 		<dependency>
 			<groupId>org.vaadin.alejandro</groupId>
 			<artifactId>pdf-browser</artifactId>
-			<version>3.0.1</version>
+			<version>3.2.0</version>
 		</dependency>
-		<dependency>
-			<groupId>com.xdev-software</groupId>
-			<artifactId>vaadin-maps-leaflet-flow</artifactId>
-			<version>1.1.0</version>
-		</dependency>
+		<!--		<dependency>-->
+		<!--			<groupId>com.xdev-software</groupId>-->
+		<!--			<artifactId>vaadin-maps-leaflet-flow</artifactId>-->
+		<!--			<version>1.1.0</version>-->
+		<!--		</dependency>-->
 		<!-- https://vaadin.com/directory/component/vstepper -->
 		<dependency>
 			<groupId>com.mlottmann.VStepper</groupId>
 			<artifactId>VStepper</artifactId>
 			<version>1.0.9</version>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>com.vaadin</groupId> -->
-		<!-- <artifactId>leaflet4vaadin</artifactId> -->
-		<!-- <version>0.3.2</version> -->
-		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>leaflet4vaadin</artifactId>
+			<version>0.5.0</version>
+			<exclusions>
+				<!-- Should use 'vaadin-core'; 'vaadin' includes commercial components -->
+				<exclusion>
+					<groupId>com.vaadin</groupId>
+					<artifactId>vaadin</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<!-- <dependency> -->
 		<!-- <groupId>com.fasterxml.jackson.core</groupId> -->
 		<!-- <artifactId>jackson-core</artifactId> -->
@@ -258,7 +266,7 @@
 			<groupId>org.aksw.rmltk</groupId>
 			<artifactId>r2rml-resource-shacl</artifactId>
 		</dependency>
-		
+
 		<!--		<dependency>-->
 		<!--			<groupId>org.vaadin.gatanaso</groupId>-->
 		<!--			<artifactId>multiselect-combo-box-flow</artifactId>-->
@@ -295,11 +303,13 @@
 			<artifactId>cglib-nodep</artifactId>
 			<version>3.3.0</version>
 		</dependency>
+		<!--
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-testbench</artifactId>
 			<scope>test</scope>
 		</dependency>
+		-->
 	</dependencies>
 	<build>
 		<defaultGoal>spring-boot:run</defaultGoal>
@@ -383,8 +393,9 @@
 				</plugins>
 			</build>
 		</profile>
-		
-		<!-- Profile for creating a bundle - mainly for debugging and analysis - e.g. which log files are packaged -->
+
+		<!-- Profile for creating a bundle - mainly for debugging and analysis -
+		e.g. which log files are packaged -->
 		<profile>
 			<id>bundle</id>
 			<build>
@@ -402,17 +413,18 @@
 								</goals>
 								<configuration>
 									<filters>
-									<filter>
-										<artifact>*:*</artifact>
-										<excludes>
-											<exclude>META-INF/*.SF</exclude>
-											<exclude>META-INF/*.DSA</exclude>
-											<exclude>META-INF/*.RSA</exclude>
-										</excludes>
-									</filter>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
 									</filters>
 									<transformers>
-										<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+										<transformer
+											implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
 									</transformers>
 								</configuration>
 							</execution>
