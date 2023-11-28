@@ -6,67 +6,67 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
 
-import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
+import com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.AbstractDataProvider;
 import com.vaadin.flow.data.provider.Query;
 
 public class DataProviderFromObservableCollection<T, F>
-	extends AbstractDataProvider<T, F>
+    extends AbstractDataProvider<T, F>
 {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-	protected ObservableCollection<T> observableCollection;
-	protected BiPredicate<T, F> matches;
-	
-	public DataProviderFromObservableCollection(
-			ObservableCollection<T> observableCollection,
-			BiPredicate<T, F> matches) {
-		super();
-		this.observableCollection = observableCollection;
-		this.matches = matches;
+    protected ObservableCollection<T> observableCollection;
+    protected BiPredicate<T, F> matches;
 
-		observableCollection.addPropertyChangeListener(event -> {
-			this.refreshAll();
-		});
-	}
+    public DataProviderFromObservableCollection(
+            ObservableCollection<T> observableCollection,
+            BiPredicate<T, F> matches) {
+        super();
+        this.observableCollection = observableCollection;
+        this.matches = matches;
 
-	
-	@Override
-	public int size(Query<T, F> query) {
-		Optional<F> optFilter = query.getFilter();
-		F filter = optFilter.orElse(null);
+        observableCollection.addPropertyChangeListener(event -> {
+            this.refreshAll();
+        });
+    }
 
-		int result = optFilter.isPresent()
-				? Ints.saturatedCast(observableCollection.stream()
-						.filter(item -> matches.test(item, filter)).count())
-				: observableCollection.size();
-	
-		return result;
-	}
 
-	@Override
-	public Stream<T> fetch(Query<T, F> query) {
-		Stream<T> result = observableCollection.stream();
-		
-		Optional<F> optFilter = query.getFilter();
-		if (optFilter.isPresent()) {
-			F filter = optFilter.get();
-			
-			result = result.filter(item -> matches.test(item, filter));
-		}
+    @Override
+    public int size(Query<T, F> query) {
+        Optional<F> optFilter = query.getFilter();
+        F filter = optFilter.orElse(null);
 
-		result
-			.skip(query.getOffset())
-			.limit(query.getLimit());
-		
-		return result;
-	}
+        int result = optFilter.isPresent()
+                ? Ints.saturatedCast(observableCollection.stream()
+                        .filter(item -> matches.test(item, filter)).count())
+                : observableCollection.size();
 
-	@Override
-	public boolean isInMemory() {
-		return true;
-	}
+        return result;
+    }
+
+    @Override
+    public Stream<T> fetch(Query<T, F> query) {
+        Stream<T> result = observableCollection.stream();
+
+        Optional<F> optFilter = query.getFilter();
+        if (optFilter.isPresent()) {
+            F filter = optFilter.get();
+
+            result = result.filter(item -> matches.test(item, filter));
+        }
+
+        result
+            .skip(query.getOffset())
+            .limit(query.getLimit());
+
+        return result;
+    }
+
+    @Override
+    public boolean isInMemory() {
+        return true;
+    }
 }

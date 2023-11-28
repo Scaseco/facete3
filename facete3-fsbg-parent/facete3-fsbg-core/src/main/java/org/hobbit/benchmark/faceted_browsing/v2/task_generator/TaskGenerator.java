@@ -103,7 +103,7 @@ import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.util.NodeUtils;
+import org.apache.jena.sparql.util.NodeCmp;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
@@ -621,9 +621,9 @@ public class TaskGenerator {
         Map<RDFNode, Collection<RDFNode>> multimap = new MapFromBinaryRelation(s.getModel(), new Fragment2Impl(
                 ElementUtils.createElementGroup(
                         ElementUtils.createElementTriple(
-                                new Triple(s.asNode(), RDFS.member.asNode(), Vars.e),
-                                new Triple(Vars.e, MapVocab.key.asNode(), Vars.k),
-                                new Triple(Vars.e, MapVocab.value.asNode(), Vars.v))),
+                                Triple.create(s.asNode(), RDFS.member.asNode(), Vars.e),
+                                Triple.create(Vars.e, MapVocab.key.asNode(), Vars.k),
+                                Triple.create(Vars.e, MapVocab.value.asNode(), Vars.v))),
                 Vars.k, Vars.v));
 
         Map<RDFNode, RDFNode> result = MapFromMultimap.createView(multimap);
@@ -1389,7 +1389,7 @@ public class TaskGenerator {
                             //.pseudoRandom(pseudoRandom)
                             .exec()
                             .map(RDFNode::asNode)
-                            .toSortedList(NodeUtils::compareRDFTerms)
+                            .toSortedList(NodeCmp::compareRDFTerms)
                             .timeout(cpTimeout.getSeconds(), TimeUnit.SECONDS)
                             .blockingGet();
                 }

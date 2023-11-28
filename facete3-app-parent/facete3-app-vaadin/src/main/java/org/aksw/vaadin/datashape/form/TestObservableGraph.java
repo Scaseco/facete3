@@ -44,16 +44,16 @@ public class TestObservableGraph {
         });
 
 
-        graph.add(new Triple(RDF.Nodes.type, RDFS.Nodes.label, NodeFactory.createLiteral("type")));
+        graph.add(Triple.create(RDF.Nodes.type, RDFS.Nodes.label, NodeFactory.createLiteral("type")));
 
-        graph.add(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
-        graph.add(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
-        graph.delete(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
-        graph.delete(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
+        graph.add(Triple.create(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
+        graph.add(Triple.create(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
+        graph.delete(Triple.create(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
+        graph.delete(Triple.create(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("World")));
 
-        graph.add(new Triple(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("Cheers")));
+        graph.add(Triple.create(RDF.Nodes.first, RDFS.Nodes.label, NodeFactory.createLiteral("Cheers")));
 
-        graph.add(new Triple(RDF.Nodes.rest, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
+        graph.add(Triple.create(RDF.Nodes.rest, RDFS.Nodes.label, NodeFactory.createLiteral("Hello")));
 
 
         System.out.println("Items: " + test);

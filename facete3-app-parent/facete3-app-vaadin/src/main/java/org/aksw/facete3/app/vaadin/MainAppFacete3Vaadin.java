@@ -18,7 +18,7 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 //    static { JenaSystem.init(); }
 
     public static void main(String[] args) {
-        JenaRuntime.isRDF11 = false;
+        // JenaRuntime.isRDF11 = false;
 
         // Interestingly wrapping the cxt in a try-with-resources block to ensure
         // auto-closing of it causes application start up to fail -

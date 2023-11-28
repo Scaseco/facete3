@@ -50,7 +50,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.util.NodeUtils;
+import org.apache.jena.sparql.util.NodeCmp;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.nfa.ScenarioConfig;
 import org.slf4j.Logger;
@@ -504,7 +504,7 @@ public class MainCliDiceBenchmark {
 
         // Split the properties into bins based on their frequency
         int numPicks = 10;
-        Chooser<Entry<Node, Node>> chooser = new Chooser<>(entryComparator(NodeUtils::compareRDFTerms, NodeUtils::compareRDFTerms), new Random(0), numPicks);
+        Chooser<Entry<Node, Node>> chooser = new Chooser<>(entryComparator(NodeCmp::compareRDFTerms, NodeCmp::compareRDFTerms), new Random(0), numPicks);
         Set<Entry<Node, Node>> chosen = chooser.choose(freqencies);
 
 

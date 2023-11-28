@@ -6,7 +6,7 @@
 
 	<groupId>org.hobbit</groupId>
 	<artifactId>facete3-parent</artifactId>
-	<version>1.2.0-SNAPSHOT</version>
+	<version>1.3.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<!-- facete3-bundle has a copy of the scm section due to github-release-plugin; 
@@ -19,13 +19,14 @@
 	</scm>
 
 	<properties>
-		<jena.version>4.9.0</jena.version>
-		<jenax.version>4.9.0-1-SNAPSHOT</jenax.version>
-		<vaadin-jena.version>4.9.0-1-SNAPSHOT</vaadin-jena.version>
-		<rmltk.version>4.9.0-1-SNAPSHOT</rmltk.version>
+		<jena.version>5.0.0-SNAPSHOT</jena.version>
+		<jenax.version>5.0.0-1-SNAPSHOT</jenax.version>
+		<vaadin-jena.version>5.0.0-1-SNAPSHOT</vaadin-jena.version>
+		<rmltk.version>5.0.0-1-SNAPSHOT</rmltk.version>
 
-		<aksw-commons.version>0.9.7-SNAPSHOT</aksw-commons.version>
-		<log4j.version>2.17.2</log4j.version>
+		<aksw-commons.version>0.9.8-SNAPSHOT</aksw-commons.version>
+		<slf4j.version>2.0.9</slf4j.version>
+		<log4j.version>2.21.0</log4j.version>
 		<picocli.version>4.6.2</picocli.version>
 
 
@@ -40,7 +41,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- <maven.compiler.source>1.8</maven.compiler.source> <maven.compiler.target>1.8</maven.compiler.target> -->
 
-		<maven.compiler.release>11</maven.compiler.release>
+		<maven.compiler.release>17</maven.compiler.release>
 		<!-- <maven.compiler.source>9</maven.compiler.source> -->
 		<!-- <maven.compiler.target>9</maven.compiler.target> -->
 		<!-- <maven.compiler.release>9</maven.compiler.release> -->
@@ -67,6 +68,20 @@
 	<dependencyManagement>
 
 		<dependencies>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-bom</artifactId>
+				<version>${slf4j.version}</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-bom</artifactId>
+				<version>${log4j.version}</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>
@@ -176,13 +191,6 @@
 				<artifactId>aksw-commons-picocli</artifactId>
 				<version>${aksw-commons.version}</version>
 			</dependency>
-
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-slf4j18-impl</artifactId>
-				<version>${log4j.version}</version>
-			</dependency>
-
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
@@ -394,7 +402,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.0</version>
+					<version>3.11.0</version>
 					<configuration>
 						<!-- <source>${maven.compiler.source}</source> <target>${maven.compiler.target}</target> -->
 						<release>${maven.compiler.release}</release>

@@ -87,7 +87,7 @@ public class ConfigSearchProviderNli {
             }
 
             BasicPattern bgp = new BasicPattern();
-            bgp.add(new Triple(Vars.s, SearchProviderNli.score.asNode(), Vars.o));
+            bgp.add(Triple.create(Vars.s, SearchProviderNli.score.asNode(), Vars.o));
 
             Query view = new Query();
             view.setQueryConstructType();

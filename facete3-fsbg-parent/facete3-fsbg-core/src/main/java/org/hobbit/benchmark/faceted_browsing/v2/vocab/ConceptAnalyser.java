@@ -136,12 +136,12 @@ public class ConceptAnalyser {
 
         BasicPattern bgp = new BasicPattern();
 
-        groupVars.forEach(gv -> bgp.add(new Triple(s, Vocab.groupKey.asNode(), gv)));
+        groupVars.forEach(gv -> bgp.add(Triple.create(s, Vocab.groupKey.asNode(), gv)));
 
-        bgp.add(new Triple(s, Vocab.totalValueCount.asNode(), Vars.x));
-        bgp.add(new Triple(s, Vocab.distinctValueCount.asNode(), Vars.a));
-        bgp.add(new Triple(s, Vocab.min.asNode(), Vars.y));
-        bgp.add(new Triple(s, Vocab.max.asNode(), Vars.z));
+        bgp.add(Triple.create(s, Vocab.totalValueCount.asNode(), Vars.x));
+        bgp.add(Triple.create(s, Vocab.distinctValueCount.asNode(), Vars.a));
+        bgp.add(Triple.create(s, Vocab.min.asNode(), Vars.y));
+        bgp.add(Triple.create(s, Vocab.max.asNode(), Vars.z));
         Template template = new Template(bgp);
 
         DataQuery<SetSummary> result = new DataQueryImpl<>((RdfDataSource)null, new ElementSubQuery(core), s, template, SetSummary.class);

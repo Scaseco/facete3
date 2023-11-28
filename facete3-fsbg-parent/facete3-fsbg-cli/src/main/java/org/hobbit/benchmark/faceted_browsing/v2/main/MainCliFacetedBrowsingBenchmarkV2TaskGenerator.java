@@ -425,7 +425,8 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
         // The task generation is not complete without the reference result
         // TODO Reference result should be computed against TDB
         try(QueryExecution qe = refConn.query(queryStr)) {
-            qe.setTimeout(30, TimeUnit.SECONDS);
+            // FIXME Timeout was removed with jena 5
+            // qe.setTimeout(30, TimeUnit.SECONDS);
 
 //        	if(task.getURI().equals("http://example.org/Scenario_10-1")) {
 //        		System.out.println("DEBUG POINT REACHED");

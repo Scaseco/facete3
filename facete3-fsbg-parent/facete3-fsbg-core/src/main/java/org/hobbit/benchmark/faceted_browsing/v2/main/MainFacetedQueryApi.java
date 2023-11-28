@@ -36,7 +36,7 @@ import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDe
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.FacetedBrowsingVocab;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.Maps;
 
 public class MainFacetedQueryApi {
 

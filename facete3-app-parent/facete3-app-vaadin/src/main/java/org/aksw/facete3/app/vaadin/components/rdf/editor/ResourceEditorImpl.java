@@ -19,7 +19,6 @@ import org.aksw.jena_sparql_api.update.GraphListenerBatchBase;
 import org.aksw.jenax.annotation.reprogen.ResourceView;
 import org.aksw.jenax.arq.util.triple.TripleUtils;
 import org.aksw.vaadin.common.component.managed.ManagedComponent;
-import com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphListener;
 import org.apache.jena.graph.Node;
@@ -33,12 +32,11 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
-import org.apache.jena.sparql.core.DatasetChanges;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphMonitor;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.update.UpdateRequest;
 
+import com.google.common.collect.Streams;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasValue;
@@ -592,8 +590,8 @@ public class ResourceEditorImpl
     public void test() {
         Resource x;
         Model m;
-        DatasetChanges dc;
-        DatasetGraphMonitor dgm;
+        // DatasetChanges dc;
+        // DatasetGraphMonitor dgm;
 
 
     }

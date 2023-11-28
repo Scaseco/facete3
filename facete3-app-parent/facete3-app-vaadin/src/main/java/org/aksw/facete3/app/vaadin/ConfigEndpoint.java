@@ -77,12 +77,12 @@ public class ConfigEndpoint {
         }
 
         public void setSparqlEndpoint(String sparqlEndpoint) {
-            System.out.println("SPARQL ENDPOINT SET TO " + sparqlEndpoint);
+            if (logger.isInfoEnabled()) {
+                logger.info("Sparql endpoint set to: " + sparqlEndpoint);
+            }
             this.sparqlEndpoint = sparqlEndpoint;
         }
     }
-
-
 
     @Bean
     @Autowired
@@ -101,7 +101,6 @@ public class ConfigEndpoint {
         }
         return result;
     }
-
 
     @RefreshScope
     @Bean //(destroyMethod = "close")
@@ -200,8 +199,8 @@ public class ConfigEndpoint {
 
 
         // RdfDataSource dataSource = dataSourceCache;
-        RdfDataSource dataSource = dataSourceBnode;
-        // RdfDataSource dataSource = comparingDataSource;
+        // RdfDataSource dataSource = dataSourceBnode;
+        RdfDataSource dataSource = comparingDataSource;
 
 
         // RdfDataSource dataSource = DataPods.from(dataRef);

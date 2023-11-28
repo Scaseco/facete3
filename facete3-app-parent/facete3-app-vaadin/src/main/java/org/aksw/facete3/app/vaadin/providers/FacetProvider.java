@@ -17,7 +17,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
+import com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;

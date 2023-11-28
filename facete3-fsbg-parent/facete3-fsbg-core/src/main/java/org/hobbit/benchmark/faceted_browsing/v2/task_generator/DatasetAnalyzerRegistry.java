@@ -153,7 +153,7 @@ public class DatasetAnalyzerRegistry {
         model.add(conn.queryConstruct(propertyLiteralRangeQueryStr));
 
 
-        Fragment r = new Fragment2Impl(ElementUtils.createElement(new Triple(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
+        Fragment r = new Fragment2Impl(ElementUtils.createElement(Triple.create(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
         model.add(ConceptAnalyser.checkDatatypes(r).connection(conn).execConstruct().blockingGet());
 
 
@@ -179,7 +179,7 @@ public class DatasetAnalyzerRegistry {
 //		datasetMetadata.obtain(PropertyJoinSummary.class);
 
 
-        Fragment2 br = new Fragment2Impl(ElementUtils.createElement(new Triple(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
+        Fragment2 br = new Fragment2Impl(ElementUtils.createElement(Triple.create(Vars.s, Vars.p, Vars.o)), Vars.p, Vars.o);
         System.out.println("Analysis: " + ConceptAnalyser.checkDatatypes(br).connection(conn).exec().toList().blockingGet());
 
         return null;

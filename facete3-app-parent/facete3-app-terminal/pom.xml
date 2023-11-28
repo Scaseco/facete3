@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>org.hobbit</groupId>
 		<artifactId>facete3-app-parent</artifactId>
-		<version>1.2.0-SNAPSHOT</version>
+		<version>1.3.0-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
@@ -30,7 +30,7 @@
 
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j18-impl</artifactId>
+			<artifactId>log4j-slf4j2-impl</artifactId>
 		</dependency>
 
 		<dependency>

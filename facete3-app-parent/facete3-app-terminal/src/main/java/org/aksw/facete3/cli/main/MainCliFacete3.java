@@ -1007,7 +1007,8 @@ public class MainCliFacete3 {
      */
     public static void main(String[] args) throws Exception {
         // Turn on legacy mode; ISSUE #8 - https://github.com/hobbit-project/faceted-browsing-benchmark/issues/8
-        JenaRuntime.isRDF11 = false;
+        // isRDF11 was removed in jena 5
+        // JenaRuntime.isRDF11 = false;
 
         CmdUtils.execCmd(CmdFacete3Main.class, args);
     }

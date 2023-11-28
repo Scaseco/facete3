@@ -15,7 +15,7 @@ import org.aksw.jenax.sparql.path.SimplePath;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
 
 public class SimplePathMatcher {
     public interface NfaMatcher<X> {
