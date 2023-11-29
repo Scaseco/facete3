@@ -1,6 +1,5 @@
 package org.aksw.facete3.app.vaadin;
 
-import org.apache.jena.JenaRuntime;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -18,6 +17,11 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 //    static { JenaSystem.init(); }
 
     public static void main(String[] args) {
+        System.setProperty("spring.cloud.config.import-check.enabled", "false");
+
+        // FIXME Spring complains about a cycle in ConfigEndpoint but I haven't figured out where and why
+        System.setProperty("spring.main.allow-circular-references", "true");
+
         // JenaRuntime.isRDF11 = false;
 
         // Interestingly wrapping the cxt in a try-with-resources block to ensure

@@ -2,6 +2,7 @@ package org.aksw.facete3.app.vaadin;
 
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.cloud.context.refresh.ContextRefresher;
+import org.springframework.cloud.context.refresh.LegacyContextRefresher;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +17,8 @@ public class ConfigRefresh {
 
     @Bean
     public ContextRefresher contextRefresher(ConfigurableApplicationContext context, RefreshScope scope) {
-        return new ContextRefresher(context, scope);
+        return new LegacyContextRefresher(context, scope);
+        // return new ContextRefresher(context, scope);
     }
 
     @Bean

@@ -9,12 +9,15 @@
 	<version>1.3.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<!-- facete3-bundle has a copy of the scm section due to github-release-plugin; 
+	<!-- facete3-bundle has a copy of the scm section due to
+	github-release-plugin; 
 		see https://github.com/jutzig/github-release-plugin/issues/14 -->
 	<scm>
 		<url>https://github.com/hobbit-project/faceted-browsing-benchmark</url>
-		<connection>scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</connection>
-		<developerConnection>scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</developerConnection>
+		<connection>
+			scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</connection>
+		<developerConnection>
+			scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -29,26 +32,29 @@
 		<log4j.version>2.21.0</log4j.version>
 		<picocli.version>4.6.2</picocli.version>
 
-
 		<!-- <jackson.version>2.8.8</jackson.version> -->
 		<jackson.version>2.13.2</jackson.version>
 		<jmh.version>1.25.2</jmh.version>
 
-
 		<javax.xml.version>2.3.1</javax.xml.version>
-		<!-- <docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass> -->
+		<!--
+		<docker.mainClass>org.hobbit.sdk.main.MainDockerServiceLauncher</docker.mainClass> -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- <maven.compiler.source>1.8</maven.compiler.source> <maven.compiler.target>1.8</maven.compiler.target> -->
+		<!-- <maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target> -->
 
 		<maven.compiler.release>17</maven.compiler.release>
 		<!-- <maven.compiler.source>9</maven.compiler.source> -->
 		<!-- <maven.compiler.target>9</maven.compiler.target> -->
 		<!-- <maven.compiler.release>9</maven.compiler.release> -->
 
-		<!-- <task-generator.docker.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</benchmark-controller.docker.repository> -->
-		<!-- <benchmark-controller.docker.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</benchmark-controller.docker.repository> -->
-		<!-- <benchmark-controller.docker.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</benchmark-controller.docker.repository> -->
+		<!--
+		<task-generator.docker.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</benchmark-controller.docker.repository> -->
+		<!--
+		<benchmark-controller.docker.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</benchmark-controller.docker.repository> -->
+		<!--
+		<benchmark-controller.docker.repository>git.project-hobbit.eu:4567/gkatsibras/facetedbenchmarkcontroller</benchmark-controller.docker.repository> -->
 	</properties>
 
 	<modules>
@@ -202,7 +208,8 @@
 				<groupId>org.topbraid</groupId>
 				<artifactId>shacl</artifactId>
 				<version>1.3.2</version>
-				<!-- <exclusions> <exclusion> <groupId>org.apache.jena</groupId> <artifactId>jena-arq</artifactId> 
+				<!-- <exclusions> <exclusion> <groupId>org.apache.jena</groupId>
+				<artifactId>jena-arq</artifactId> 
 					</exclusion> </exclusions> -->
 			</dependency>
 
@@ -218,7 +225,8 @@
 				<version>${jena.version}</version>
 			</dependency>
 
-			<!-- TODO Move to jenax-io-hdt once the hdt support is factored out of 
+			<!-- TODO Move to jenax-io-hdt once the hdt support is factored out
+			of 
 				conjure -->
 
 			<!-- <dependency> -->
@@ -252,18 +260,18 @@
 			</dependency>
 
 			<dependency>
-                                <groupId>org.hobbit</groupId>
-                                <artifactId>facete3-app-vaadin</artifactId>
-                                <version>${project.version}</version>
-                        </dependency>
+				<groupId>org.hobbit</groupId>
+				<artifactId>facete3-app-vaadin</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
-                                <groupId>org.aksw.scaseco.vaadin</groupId>
-                                <artifactId>vaadin-jena-bom</artifactId>
-                                <version>${vaadin-jena.version}</version>
-                                <type>pom</type>
-                                <scope>import</scope>
-                        </dependency>
+				<groupId>org.aksw.scaseco.vaadin</groupId>
+				<artifactId>vaadin-jena-bom</artifactId>
+				<version>${vaadin-jena.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hobbit</groupId>
@@ -326,9 +334,12 @@
 			</dependency>
 
 
-			<!-- <dependency> <groupId>org.hobbit</groupId> <artifactId>hobbit-sdk-rdf</artifactId> 
-				<version>${hobbit-sdk.version}</version> </dependency> <dependency> <groupId>org.hobbit</groupId> 
-				<artifactId>hobbit-sdk-qpid7</artifactId> <version>${hobbit-sdk.version}</version> 
+			<!-- <dependency> <groupId>org.hobbit</groupId>
+			<artifactId>hobbit-sdk-rdf</artifactId> 
+				<version>${hobbit-sdk.version}</version> </dependency> <dependency>
+			<groupId>org.hobbit</groupId> 
+				<artifactId>hobbit-sdk-qpid7</artifactId>
+			<version>${hobbit-sdk.version}</version> 
 				</dependency> -->
 			<dependency>
 				<groupId>junit</groupId>
@@ -404,10 +415,12 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.11.0</version>
 					<configuration>
-						<!-- <source>${maven.compiler.source}</source> <target>${maven.compiler.target}</target> -->
+						<!-- <source>${maven.compiler.source}</source>
+						<target>${maven.compiler.target}</target> -->
 						<release>${maven.compiler.release}</release>
 						<compilerArgument>-proc:none</compilerArgument>
-						<!-- https://discourse.hibernate.org/t/metamodel-usage-with-maven-and-intellij/487 -->
+						<!--
+						https://discourse.hibernate.org/t/metamodel-usage-with-maven-and-intellij/487 -->
 						<annotationProcessorPaths>
 							<path>
 								<groupId>org.hibernate</groupId>
@@ -424,13 +437,15 @@
 								<artifactId>javax.annotation-api</artifactId>
 								<version>1.3.1</version>
 							</path>
-							<!-- <path> <groupId>com.sun.xml.bind</groupId> <artifactId>jaxb-impl</artifactId> 
+							<!-- <path> <groupId>com.sun.xml.bind</groupId>
+							<artifactId>jaxb-impl</artifactId> 
 								<version>2.3.1</version> </path> -->
 
 
 							<!-- <path> -->
 							<!-- <groupId>org.openjdk.jmh</groupId> -->
-							<!-- <artifactId>jmh-generator-annprocess</artifactId> -->
+							<!--
+							<artifactId>jmh-generator-annprocess</artifactId> -->
 							<!-- <version>${jmh.version}</version> -->
 							<!-- </path> -->
 						</annotationProcessorPaths>
@@ -451,7 +466,8 @@
 							<phase>generate-sources</phase>
 							<configuration>
 								<processors>
-									<processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor>
+									<processor>
+										org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor>
 								</processors>
 							</configuration>
 						</execution>
@@ -536,11 +552,14 @@
 								<goal>shade</goal>
 							</goals>
 							<configuration>
-								<!-- TODO Shading is currently needed for the debian packages, which 
+								<!-- TODO Shading is currently needed for the
+								debian packages, which 
 									is slow and causes huge deployments -->
-								<!-- The deb packaging should be modified to work similar to the 
+								<!-- The deb packaging should be modified to
+								work similar to the 
 									dockerfile maven plugin: -->
-								<!-- Use the resource plugin to copy deps to a lib folder and adjust 
+								<!-- Use the resource plugin to copy deps to a
+								lib folder and adjust 
 									the bash scripts -->
 								<shadedArtifactAttached>true</shadedArtifactAttached>
 								<shadedClassifierName>jar-with-dependencies</shadedClassifierName>
@@ -558,8 +577,10 @@
 									<transformer
 										implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
 									<!-- add Main-Class to manifest file -->
-									<!-- <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> -->
-									<!-- <mainClass>com.mkyong.core.utils.App</mainClass> -->
+									<!-- <transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> -->
+									<!--
+									<mainClass>com.mkyong.core.utils.App</mainClass> -->
 									<!-- </transformer> -->
 								</transformers>
 							</configuration>
@@ -577,10 +598,12 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M5</version>
-					<!-- The spring based unit tests presently cannot configure properties 
+					<!-- The spring based unit tests presently cannot configure
+					properties 
 						across all containers -->
 					<configuration>
-						<!-- <forkCount>1</forkCount> <argLine>-Xmx8192m</argLine> -->
+						<!-- <forkCount>1</forkCount>
+						<argLine>-Xmx8192m</argLine> -->
 						<!-- <forkCount>0</forkCount> -->
 						<trimStackTrace>false</trimStackTrace>
 						<!-- <useSystemClassLoader>false</useSystemClassLoader> -->
@@ -635,19 +658,25 @@
 			</snapshots>
 		</repository>
 
-		<!-- <repository> <id>Apache Repo</id> <name>Apache Repository</name> <url>https://repository.apache.org/content/repositories/releases/</url> 
+		<!-- <repository> <id>Apache Repo</id> <name>Apache Repository</name>
+		<url>https://repository.apache.org/content/repositories/releases/</url> 
 			</repository> -->
 		<!-- <repository> <id>in-project-virtjdbc</id> <name>In Project Repo for 
 			VirtJDBC</name> <url>file://${project.basedir}/repo/lib</url> </repository> -->
 
 
-		<!-- geotools repo from http://docs.geotools.org/latest/userguide/tutorial/quickstart/maven.html -->
+		<!-- geotools repo from
+		http://docs.geotools.org/latest/userguide/tutorial/quickstart/maven.html -->
 		<!-- <repository> <id>maven2-repository.dev.java.net</id> <name>Java.net 
 			repository</name> <url>http://download.java.net/maven/2</url> </repository> 
-			<repository> <id>osgeo</id> <name>Open Source Geospatial Foundation Repository</name> 
-			<url>http://download.osgeo.org/webdav/geotools/</url> </repository> <repository> 
-			<snapshots> <enabled>true</enabled> </snapshots> <id>boundless</id> <name>Boundless 
-			Maven Repository</name> <url>http://repo.boundlessgeo.com/main</url> </repository> -->
+			<repository> <id>osgeo</id> <name>Open Source Geospatial Foundation
+		Repository</name> 
+			<url>http://download.osgeo.org/webdav/geotools/</url> </repository>
+		<repository> 
+			<snapshots> <enabled>true</enabled> </snapshots> <id>boundless</id>
+		<name>Boundless 
+			Maven Repository</name> <url>http://repo.boundlessgeo.com/main</url>
+		</repository> -->
 	</repositories>
 
 </project>

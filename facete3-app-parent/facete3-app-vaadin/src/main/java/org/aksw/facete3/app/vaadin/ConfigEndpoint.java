@@ -38,10 +38,8 @@ import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * A configuration that features beans for configuring a connection to a SPARQL endpoint as
@@ -67,27 +65,12 @@ public class ConfigEndpoint {
 //    }
 
 
-    @Configuration
-    @ConfigurationProperties("facete3")
-    public static class EndpointConfig {
-        protected String sparqlEndpoint;
-
-        public String getSparqlEndpoint() {
-            return sparqlEndpoint;
-        }
-
-        public void setSparqlEndpoint(String sparqlEndpoint) {
-            if (logger.isInfoEnabled()) {
-                logger.info("Sparql endpoint set to: " + sparqlEndpoint);
-            }
-            this.sparqlEndpoint = sparqlEndpoint;
-        }
-    }
-
     @Bean
     @Autowired
     public ResourceHolder dataRefEndpoint(EndpointConfig cfg) {
-        System.out.println("Created new resource");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Created new resource");
+        }
         Facete3Wrapper.initJena();
 
         String sparqlEndpoint = cfg.getSparqlEndpoint();
