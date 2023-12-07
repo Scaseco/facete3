@@ -13,9 +13,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableAsync // for long running tasks, see https://vaadin.com/docs/latest/advanced/long-running-tasks
 public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
-
 //    static { JenaSystem.init(); }
-
     public static void main(String[] args) {
         System.setProperty("spring.cloud.config.import-check.enabled", "false");
 
@@ -23,7 +21,6 @@ public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
         System.setProperty("spring.main.allow-circular-references", "true");
 
         // JenaRuntime.isRDF11 = false;
-
         // Interestingly wrapping the cxt in a try-with-resources block to ensure
         // auto-closing of it causes application start up to fail -
         // probably this is due to the app running in a separate
