@@ -425,7 +425,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>2.2.6.RELEASE</version>
+				<version>3.2.0</version>
 				<!-- Clean build and startup time for Vaadin apps sometimes may
 				exceed 
 					the default Spring Boot's 30sec timeout. -->
