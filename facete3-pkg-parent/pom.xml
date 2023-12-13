@@ -36,14 +36,14 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<dockerJavaBaseImage>eclipse-temurin:11-jre</dockerJavaBaseImage>
+				<dockerJavaBaseImage>eclipse-temurin:17-jre</dockerJavaBaseImage>
 				<archSuffix></archSuffix>
 			</properties>
 		</profile>
 		<profile>
 			<id>arm64</id>
 			<properties>
-				<dockerJavaBaseImage>arm64v8/openjdk:11-slim</dockerJavaBaseImage>
+				<dockerJavaBaseImage>arm64v8/openjdk:17-slim</dockerJavaBaseImage>
 				<archSuffix>-arm64</archSuffix>
 			</properties>
 		</profile>
