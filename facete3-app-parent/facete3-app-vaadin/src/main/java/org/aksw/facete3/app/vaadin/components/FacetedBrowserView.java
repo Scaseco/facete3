@@ -379,7 +379,11 @@ public class FacetedBrowserView
 
         // layout.add(input);
         Button applyBtn = new Button("Apply");
-        layout.add(applyBtn);
+        // TODO fix or remove apply button
+        // Hack to disable the apply button
+        if (System.getProperty("UI.DISABLE.APPLY.BUTTON") == null) {
+            layout.add(applyBtn);
+        }
         applyBtn.addClickListener(event -> {
             String urlStr = input.getServiceUrl();
 
