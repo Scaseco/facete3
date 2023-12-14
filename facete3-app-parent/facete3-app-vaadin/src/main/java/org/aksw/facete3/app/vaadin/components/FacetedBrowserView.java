@@ -604,7 +604,9 @@ public class FacetedBrowserView
 
         VerticalLayout detailsPanel = new VerticalLayout();
         detailsPanel.setSizeFull();
-        detailsPanel.add(mapComponent);
+        if (System.getProperty("UI.DISABLE.MAPCOMPONENT") == null) {
+            detailsPanel.add(mapComponent);
+        }
         detailsPanel.add(resourceBrowserComponent);
 
         component.addToSecondary(detailsPanel);
