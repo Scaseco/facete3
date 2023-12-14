@@ -152,6 +152,9 @@ public class AppLayoutFacete3 extends AppLayout {
 
         addToNavbar(navbarLayout);
         setContent(getAppContent(config));
+        if (System.getProperty("UI.DISABLE.NAVBAR") != null){
+            navbarLayout.setVisible(false);
+        }
     }
 
     protected void refreshMenuBar() {
