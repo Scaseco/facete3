@@ -424,6 +424,9 @@ public class FacetedBrowserView
         refreshBtn.addClickListener(event -> {
             refreshAllNew();
         });
+        if(System.getProperty("UI.DISABLE.REFRESH.BUTTON") != null) {
+            refreshBtn.setVisible(false);
+        }
         toolbar.add(refreshBtn);
 
         Button toggleLabelsBtn = new Button(VaadinIcon.TEXT_LABEL.create(), ev -> {
