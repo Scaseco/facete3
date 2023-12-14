@@ -324,6 +324,9 @@ public class FacetedBrowserView
         toolbar.add(searchPluginSelect);
 
         Button changeConnectionBtn = new Button(connectionInfo);
+        if (System.getProperty("UI.DISABLE.CONNECTIONINFO") != null) {
+            changeConnectionBtn.setVisible(false);
+        }
         toolbar.add(changeConnectionBtn);
 
         connectionInfo.addClassName("no-wrap");
