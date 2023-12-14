@@ -318,6 +318,9 @@ public class FacetedBrowserView
             System.out.println("Active search plugin: " + activeSearchPlugin);
         });
 
+        if(System.getProperty("UI.DISABLE.SEARCH.PLUGIN.SELECT") != null) {
+            searchPluginSelect.setVisible(false);
+        }
         toolbar.add(searchPluginSelect);
 
         Button changeConnectionBtn = new Button(connectionInfo);
