@@ -434,6 +434,9 @@ public class FacetedBrowserView
             //LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
             //VaadinRdfLabelMgrImpl labelMgr = new VaadinRdfLabelMgrImpl(ls1);
         });
+        if(System.getProperty("UI.DISABLE.TOGGLE.LABELS.BUTTON") != null) {
+            toggleLabelsBtn.setVisible(false);
+        }
         toolbar.add(toggleLabelsBtn);
 
         Button configBtn = new Button(new Icon(VaadinIcon.COG));
