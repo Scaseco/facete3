@@ -222,6 +222,9 @@ public class SparqlEndpointForm extends FormLayout {
         {
             serviceUrl.setAutocomplete(Autocomplete.URL);
             serviceUrl.getElement().setAttribute("name", "endpointUrl");
+            if (System.getProperty("endpointUrl") != null) {
+                serviceUrl.setValue(System.getProperty("endpointUrl"));
+            }
             FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
             serviceUrl.setWidthFull();
             setColspan(formItem, 3);
