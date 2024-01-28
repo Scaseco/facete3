@@ -39,6 +39,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -151,14 +152,16 @@ public class ConfigEndpoint {
         QueryExecutionFactory qef = dataSource.asQef(); // new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
 
-        LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50);
-        LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
+        PrefixMapping prefixes = DefaultPrefixes.get();
+        LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, prefixes, 50);
+        LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, LabelUtils.deriveLabelFromNode(k, prefixes, prefixes)));
+        LookupService<Node, String> ls3 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
 
         // VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50));
         VaadinLabelMgr<Node, String> labelMgr = new VaadinLabelMgr<>(ls1);
 
         LabelServiceSwitchable<Node, String> result = new LabelServiceSwitchableImpl<>(labelMgr);
-        result.getLookupServices().addAll(Arrays.asList(ls1, ls2));
+        result.getLookupServices().addAll(Arrays.asList(ls1, ls2, ls3));
 
         return result;
     }
