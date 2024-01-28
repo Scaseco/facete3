@@ -3,7 +3,7 @@ package org.aksw.facete3.app.vaadin;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
 import org.aksw.facete3.app.vaadin.providers.ItemProvider;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
@@ -23,7 +23,7 @@ public class FacetedSearchSession {
     protected PrefixMapping prefixMapping;
     protected Facete3Wrapper facetedQueryConf;
     protected FacetCountProvider facetCountProvider;
-    protected FacetValueCountProvider facetValueCountProvider;
+    protected FacetValueCountDataProvider facetValueCountProvider;
     protected ItemProvider itemProvider;
     protected ConfigFaceteVaadin config;
     protected @FullView ViewManager viewManagerFull;

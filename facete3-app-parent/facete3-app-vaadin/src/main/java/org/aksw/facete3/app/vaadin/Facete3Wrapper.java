@@ -75,7 +75,7 @@ public class Facete3Wrapper {
     // belongs to the view model of that component
 
     // FIXME This needs to be a FacetNode (a FacetPath would point wherever if there were changes to the root)
-    private Node selectedFacet;
+    // private Node selectedFacet;
 
     public Fragment1 getInitialConcept() {
         return initialConcept;
@@ -102,13 +102,13 @@ public class Facete3Wrapper {
         return facetedQuery;
     }
 
-    public Node getSelectedFacet() {
-        return selectedFacet;
-    }
-
-    public void setSelectedFacet(Node facet) {
-        selectedFacet = facet;
-    }
+//    public Node getSelectedFacet() {
+//        return selectedFacet;
+//    }
+//
+//    public void setSelectedFacet(Node facet) {
+//        selectedFacet = facet;
+//    }
 
     public void setBaseConcept(Fragment1 baseConcept) {
         facetedQuery = facetedQuery.baseConcept(baseConcept);
@@ -124,7 +124,7 @@ public class Facete3Wrapper {
         initFacetedQuery(dataSource);
         setEmptyBaseConcept();
         setFacetDirNode();
-        setSelectedFacet(RDF.type.asNode());
+        // setSelectedFacet(RDF.type.asNode());
     }
 
     public static void initJena() {

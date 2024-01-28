@@ -67,5 +67,6 @@ flow-component-renderer {
   border-radius: var(--lumo-border-radius);
   box-shadow: var(--lumo-box-shadow-xs);
   padding: calc(var(--lumo-space-s) * 1.5) var(--lumo-space-m);
+  overflow: scroll;
 }
 

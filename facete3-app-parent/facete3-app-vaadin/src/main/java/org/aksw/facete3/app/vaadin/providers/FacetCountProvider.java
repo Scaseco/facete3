@@ -14,7 +14,7 @@ import org.apache.jena.vocabulary.RDFS;
 
 import com.vaadin.flow.data.provider.Query;
 
-public class FacetCountProvider extends FacetProvider<FacetCount> {
+public class FacetCountProvider extends FacetDataProvider<FacetCount> {
 
     private static final long serialVersionUID = 12L;
 

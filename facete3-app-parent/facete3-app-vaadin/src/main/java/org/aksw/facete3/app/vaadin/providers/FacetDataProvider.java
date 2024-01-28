@@ -24,10 +24,10 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 
-public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDataProvider<T, Void>
+public abstract class FacetDataProvider<T extends RDFNode> extends AbstractBackEndDataProvider<T, Void>
        implements ConfigurableFilterDataProvider<T, Void, String> {
 
-    private static final Logger logger = LoggerFactory.getLogger(FacetProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(FacetDataProvider.class);
 
     private static final long serialVersionUID = 1L;
     private LookupService<Node, String> labelService;
@@ -52,7 +52,7 @@ public abstract class FacetProvider<T extends RDFNode> extends AbstractBackEndDa
         return facete3;
     }
 
-    public FacetProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
+    public FacetDataProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
         this.facete3 = facete3;
         this.labelService = labelService;
     }

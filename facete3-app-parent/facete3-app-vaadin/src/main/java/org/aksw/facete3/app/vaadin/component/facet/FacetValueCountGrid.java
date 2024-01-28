@@ -1,8 +1,10 @@
-package org.aksw.facete3.app.vaadin.components;
+package org.aksw.facete3.app.vaadin.component.facet;
 
+import org.aksw.commons.util.delegate.Unwrappable;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
-import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
 import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
@@ -17,17 +19,22 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
-public class FacetValueCountComponent extends Grid<FacetValueCount> {
+public class FacetValueCountGrid extends Grid<FacetValueCount> {
 
-    private FacetValueCountProvider dataProvider;
+    private FacetValueCountDataProvider dataProvider;
     private FacetedBrowserView mainView;
     private static final long serialVersionUID = 6326933457620254296L;
 
-    public FacetValueCountComponent(FacetedBrowserView mainView, FacetValueCountProvider dataProvider) {
+    public FacetValueCountGrid(FacetedBrowserView mainView, FacetValueCountDataProvider dataProvider) {
         super(FacetValueCount.class);
         this.dataProvider = dataProvider;
         this.mainView = mainView;
         init();
+    }
+
+    @Override
+    public FacetValueCountDataProvider getDataProvider() {
+        return Unwrappable.unwrap(super.getDataProvider(), FacetValueCountDataProvider.class, true).orElseThrow();
     }
 
     public void refresh() {

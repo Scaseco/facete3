@@ -7,7 +7,7 @@ import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
@@ -125,7 +125,7 @@ public class ConfigFacetedBrowserView {
 
     @Bean
     @Autowired
-    public FacetValueCountProvider facetValueCountProvider(
+    public FacetValueCountDataProvider facetValueCountProvider(
             RdfDataSource dataSource,
             // SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
@@ -138,7 +138,7 @@ public class ConfigFacetedBrowserView {
                 prefixMapping,
                 DFT_LOOKUPSIZE);
 
-        FacetValueCountProvider result = new FacetValueCountProvider(facetedQueryConf, labelService);
+        FacetValueCountDataProvider result = new FacetValueCountDataProvider(facetedQueryConf, labelService);
         return result;
     }
 
@@ -153,7 +153,7 @@ public class ConfigFacetedBrowserView {
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             FacetCountProvider facetCountProvider,
-            FacetValueCountProvider facetValueCountProvider,
+            FacetValueCountDataProvider facetValueCountProvider,
             // ItemProvider itemProvider,
             DataProviderNodeQuery itemProvider,
             ConfigFaceteVaadin config,

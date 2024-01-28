@@ -24,12 +24,13 @@ import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
+import org.aksw.facete3.app.vaadin.component.facet.FacetValueCountBox;
 import org.aksw.facete3.app.vaadin.components.sparql.wizard.SparqlConnectionWizard;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
+import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
@@ -111,7 +112,7 @@ public class FacetedBrowserView
 
     /** The last part of this breadcrumb is a direction toggle for whether to show forward or backward facets */
     protected FacetPathComponent facetListBreadcrumb;
-    protected FacetValueCountComponent facetValueCountComponent;
+    protected FacetValueCountBox facetValueCountComponent;
 
     protected Facete3Wrapper facete3;
     protected ItemComponent itemComponent;
@@ -160,7 +161,7 @@ public class FacetedBrowserView
             PrefixMapping prefixMapping,
             Facete3Wrapper facete3,
             FacetCountProvider facetCountProvider,
-            FacetValueCountProvider facetValueCountProvider,
+            FacetValueCountDataProvider facetValueCountProvider,
             // ItemProvider itemProvider,
             DataProviderNodeQuery itemProvider,
             ConfigFaceteVaadin config,
@@ -254,7 +255,7 @@ public class FacetedBrowserView
 
         toolbar = new FacetedBrowserToolbar();
         facetCountComponent = new FacetCountComponent(this, facetCountProvider);
-        facetValueCountComponent = new FacetValueCountComponent(this, facetValueCountProvider);
+        facetValueCountComponent = new FacetValueCountBox(this, facetValueCountProvider);
         facetListBreadcrumb = new FacetPathComponent(this, facete3, labelService);
 
         focusBreadcrumb = new Breadcrumb<>(FacetPath.newAbsolutePath(), labelMgr, Breadcrumb.labelAssemblerForFacetPath());
@@ -527,7 +528,7 @@ public class FacetedBrowserView
         focusBreadcrumb.setValue(facetPath);
 
         constraintsComponent.refresh();
-        facetValueCountComponent.refresh();
+        facetValueCountComponent.getDataProvider().refreshAll();
         itemComponent.refreshTable();
 
         RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
@@ -643,8 +644,9 @@ public class FacetedBrowserView
     }
 
     public void selectFacet(Node node) {
-        facete3.setSelectedFacet(node);
-        facetValueCountComponent.refresh();
+        facetValueCountComponent.getDataProvider().setSelectedFacet(node);
+        facetValueCountComponent.getDataProvider().setFacetDirNode(facete3.getFacetDirNode());
+        facetValueCountComponent.getDataProvider().refreshAll(); // .refresh();
     }
 
     public void activateConstraint(FacetValueCount facetValueCount) {

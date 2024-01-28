@@ -10,7 +10,7 @@ import org.apache.jena.rdf.model.RDFNode;
 
 import com.vaadin.flow.data.provider.Query;
 
-public class ItemProvider extends FacetProvider<RDFNode> {
+public class ItemProvider extends FacetDataProvider<RDFNode> {
     private static final long serialVersionUID = 1;
 
     public ItemProvider(Facete3Wrapper facete3, LookupService<Node, String> labelService) {
