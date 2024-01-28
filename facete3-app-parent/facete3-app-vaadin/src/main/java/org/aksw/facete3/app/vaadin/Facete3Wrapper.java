@@ -189,11 +189,21 @@ public class Facete3Wrapper {
     }
 
     public HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> getHLFacetConstraint(
+            FacetDirNode fdn,
             FacetValueCount facetValueCount) {
-        return getFacetDirNode().via(facetValueCount.getPredicate())
+        return fdn.via(facetValueCount.getPredicate())
                 .one()
                 .enterConstraints()
                 .eq(facetValueCount.getValue());
+    }
+
+    public HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> getHLFacetConstraint(
+            FacetValueCount facetValueCount) {
+        return getHLFacetConstraint(getFacetDirNode(), facetValueCount);
+//        return getFacetDirNode().via(facetValueCount.getPredicate())
+//                .one()
+//                .enterConstraints()
+//                .eq(facetValueCount.getValue());
     }
 
     public void setFacetDirection(org.aksw.facete.v3.api.Direction direction) {

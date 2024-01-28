@@ -1,7 +1,11 @@
 package org.aksw.facete3.app.vaadin.component.facet;
 
 import org.aksw.commons.util.delegate.Unwrappable;
+import org.aksw.facete.v3.api.ConstraintFacade;
+import org.aksw.facete.v3.api.FacetDirNode;
+import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetValueCount;
+import org.aksw.facete.v3.api.HLFacetConstraint;
 import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
@@ -53,17 +57,27 @@ public class FacetValueCountGrid extends Grid<FacetValueCount> {
         addColumn(new ComponentRenderer<>(facetValueCount -> {
             Checkbox checkbox = new Checkbox();
             checkbox.setValue(dataProvider.isActive(facetValueCount));
+
             checkbox.addValueChangeListener(event -> {
-                if (event.getValue()) {
-                    mainView.activateConstraint(facetValueCount);
-                } else {
-                    mainView.deactivateConstraint(facetValueCount);
-                }
+                boolean doActivate = event.getValue();
+                FacetDirNode facetDirNode = getDataProvider().getFacetDirNode();
+                HLFacetConstraint<? extends ConstraintFacade<? extends FacetNode>> constraint = mainView.getFacetedSearchSession().getHLFacetConstraint(facetDirNode, facetValueCount);
+                constraint.setActive(doActivate);
+                mainView.refreshAllNew();
+//                        .enterConstraints()
+//                        .eq(facetValueCount.getValue());
+
+
+//                if (event.getValue()) {
+//                    mainView.activateConstraint(facetValueCount);
+//                } else {
+//                    mainView.deactivateConstraint(facetValueCount);
+//                }
             });
             return checkbox;
         }))
-            .setHeader("Filter")
-            .setResizable(true);
+        .setHeader("Filter")
+        .setResizable(true);
 
 
         Column<FacetValueCount> facetValueColumn =

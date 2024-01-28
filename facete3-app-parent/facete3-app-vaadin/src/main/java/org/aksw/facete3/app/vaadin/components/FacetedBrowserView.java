@@ -1,5 +1,6 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,7 +76,10 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.VOID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ApplicationContext;
@@ -143,7 +147,11 @@ public class FacetedBrowserView
     protected ConfigurableApplicationContext cxt;
 
 
+    // TODO Get rid of labelService in favor of LabelMgr
+    protected LookupService<Node, String> labelService;
     protected LabelService<Node, String> labelMgr;
+
+    protected List<FacetValueCountBox> customFacetValueBoxes = new ArrayList<>();
 
     public LabelService<Node, String> getLabelMgr() {
         return labelMgr;
@@ -241,7 +249,7 @@ public class FacetedBrowserView
         this.activeSearchPlugin = searchPluginDataProvider.fetch(new Query<>()).limit(1).findFirst().orElse(null);
         this.facete3 = facete3;
 
-        LookupService<Node, String> labelService = LabelUtils.getLabelLookupService(
+        labelService = LabelUtils.getLabelLookupService(
                 dataSource.asQef(),
                 // new QueryExecutionFactoryOverSparqlQueryConnection(baseDataConnection),
                 RDFS.label,
@@ -531,6 +539,11 @@ public class FacetedBrowserView
         facetValueCountComponent.getDataProvider().refreshAll();
         itemComponent.refreshTable();
 
+        for (FacetValueCountBox box : customFacetValueBoxes) {
+            box.getDataProvider().refreshAll();
+        }
+
+
         RefreshScope refreshScope = cxt.getBean(RefreshScope.class);
         refreshScope.refreshAll();
     }
@@ -598,7 +611,26 @@ public class FacetedBrowserView
         // tabSheet.setHeight("500px");
         tabSheet.add(VaadinIcon.FILE_TREE_SUB.create(), facetComponent);
 
-        tabSheet.add(VaadinIcon.ELLIPSIS_V.create(), new Span("Custom facets"));
+
+        // Custom facets
+        VerticalLayout customFacetsPanel = new VerticalLayout();
+        customFacetsPanel.add(new Span("Custom facets"));
+
+        FacetValueCountDataProvider box1Data = new FacetValueCountDataProvider(facete3, labelService);
+        FacetValueCountBox box1 = new FacetValueCountBox(this, box1Data);
+        box1Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd());
+        box1Data.setSelectedFacet(RDF.type.asNode());
+        customFacetsPanel.add(box1);
+        customFacetValueBoxes.add(box1);
+
+        FacetValueCountDataProvider box2Data = new FacetValueCountDataProvider(facete3, labelService);
+        FacetValueCountBox box2 = new FacetValueCountBox(this, box2Data);
+        box2Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd(OWL.sameAs).one().fwd(VOID.classPartition).one().fwd());
+        box2Data.setSelectedFacet(VOID._class.asNode());
+        customFacetsPanel.add(box2);
+        customFacetValueBoxes.add(box2);
+
+        tabSheet.add(VaadinIcon.ELLIPSIS_V.create(), customFacetsPanel);
 
 
         return tabSheet;
