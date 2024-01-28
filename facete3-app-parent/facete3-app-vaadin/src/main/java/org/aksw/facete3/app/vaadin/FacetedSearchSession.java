@@ -9,7 +9,8 @@ import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
+import org.aksw.jenax.vaadin.label.LabelService;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
 
@@ -28,5 +29,5 @@ public class FacetedSearchSession {
     protected @FullView ViewManager viewManagerFull;
     protected @SnippetView ViewManager viewManagerDetail;
     protected @DisplayLabelConfig BestLiteralConfig bestLabelConfig;
-    protected VaadinRdfLabelMgr labelMgr;
+    protected LabelService<Node, String> labelMgr;
 }

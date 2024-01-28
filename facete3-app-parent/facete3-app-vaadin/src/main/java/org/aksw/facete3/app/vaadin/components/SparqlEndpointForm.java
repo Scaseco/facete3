@@ -189,7 +189,7 @@ public class SparqlEndpointForm extends FormLayout {
 
             String endpointStr = Optional.ofNullable(serviceStatus.getEndpoint()).orElse("(null)");
 
-            // Note: Marking potentially offline endpoints as grey looks better than in rede
+            // Note: Marking potentially offline endpoints as grey looks better than in red
             // Also, the endpoint may be online after all; the server state is just an indicator
             String styleStr = isOnline == null
                     ? "var(--lumo-tertiary-text-color)"

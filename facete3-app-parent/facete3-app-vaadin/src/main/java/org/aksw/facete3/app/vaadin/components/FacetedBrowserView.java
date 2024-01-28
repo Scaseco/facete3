@@ -56,7 +56,8 @@ import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.aksw.jenax.vaadin.component.breadcrumb.Breadcrumb;
 import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
+import org.aksw.jenax.vaadin.label.LabelService;
+import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
 import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -141,9 +142,9 @@ public class FacetedBrowserView
     protected ConfigurableApplicationContext cxt;
 
 
-    protected VaadinRdfLabelMgr labelMgr;
+    protected LabelService<Node, String> labelMgr;
 
-    public VaadinRdfLabelMgr getLabelMgr() {
+    public LabelService<Node, String> getLabelMgr() {
         return labelMgr;
     }
 
@@ -166,7 +167,7 @@ public class FacetedBrowserView
             ViewManager viewManagerFull,
             ViewManager viewManagerDetails,
             BestLiteralConfig bestLabelConfig,
-            VaadinRdfLabelMgr labelMgr,
+            LabelService<Node, String> labelMgr,
             ExecutorService executorService
             ) {
 
@@ -349,10 +350,12 @@ public class FacetedBrowserView
         input.setWidthFull();
 
         layout.add(new SparqlConnectionWizard(executorService) {
+            @Override
             public void onWizardCompleted() {
                 ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
 
-                Op op = getConjureSpecification(true);
+                Boolean unionDefaultGraphMode = sparqlEndpointForm.getUnionDefaultGraphMode().getValue();
+                Op op = getConjureSpecification(true, unionDefaultGraphMode);
 
 //                if (input.getUnionDefaultGraphMode().isEnabled()) {
 //                    op = OpUnionDefaultGraph.create(op);
@@ -430,6 +433,9 @@ public class FacetedBrowserView
         toolbar.add(refreshBtn);
 
         Button toggleLabelsBtn = new Button(VaadinIcon.TEXT_LABEL.create(), ev -> {
+            LabelServiceSwitchable<Node, String> switchable = (LabelServiceSwitchable<Node, String>)labelMgr;
+            switchable.next();
+            switchable.refreshAll();
             // LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get());
             //LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
             //VaadinRdfLabelMgrImpl labelMgr = new VaadinRdfLabelMgrImpl(ls1);

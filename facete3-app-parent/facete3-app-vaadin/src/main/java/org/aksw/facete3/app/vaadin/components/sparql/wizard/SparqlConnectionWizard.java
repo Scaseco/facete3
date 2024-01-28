@@ -13,7 +13,9 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
+import org.aksw.jenax.arq.uniondefaultgraph.assembler.UnionDefaultGraphVocab;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactories;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryQuery;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
@@ -62,7 +64,13 @@ public class SparqlConnectionWizard
 
     }
 
-    public Op getConjureSpecification(boolean applyGraphs) {
+    /**
+     *
+     * @param applyGraphs Whether to restrict queries to the specified graphs.
+     * @param unionDefaultGraph Whether to apply union default graph transform.
+     * @return
+     */
+    public Op getConjureSpecification(boolean applyGraphs, Boolean unionDefaultGraphMode) {
         String urlStr = getEndpointUrl();
 
         RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
@@ -81,6 +89,10 @@ public class SparqlConnectionWizard
         }
 
         Op result = OpDataRefResource.from(dataRef);
+
+        if (Boolean.TRUE.equals(unionDefaultGraphMode)) {
+            result = OpUnionDefaultGraph.create(result);
+        }
 
         return result;
     }
@@ -147,6 +159,10 @@ public class SparqlConnectionWizard
         layout.setSizeFull();
         layout.add(new H3("Query named graphs instead of the default graph?"));
         layout.add(new Span("The list below shows the named graphs detected in the endpoint. If you proceed with an empty selection then SPARQL queries will be evaluated against the endpoint's default graph. Otherwise, requests will be evaluated over the union of the selected named graphs. Querying across default graph and named graphs is unsupported."));
+
+        Span disabledInfo = new Span("This option does apply if union default graph is specified");
+        layout.add(disabledInfo);
+
         graphGrid.setSelectionMode(SelectionMode.MULTI);
         graphGrid.setWidthFull();
         graphGrid.getDataCommunicator().enablePushUpdates(executorService);
@@ -159,13 +175,17 @@ public class SparqlConnectionWizard
         return new Step(header, layout) {
             @Override
             protected void onEnter() {
-                Op dsOp = getConjureSpecification(false);
-                QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
+                Boolean unionDefaultGraphMode = sparqlEndpointForm.getUnionDefaultGraphMode().getValue();
+                disabledInfo.setVisible(unionDefaultGraphMode);
+                graphGrid.setEnabled(!unionDefaultGraphMode);
+                if (!unionDefaultGraphMode) {
+                    Op dsOp = getConjureSpecification(false, unionDefaultGraphMode);
+                    QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
 
-                VaadinSparqlUtils.setQueryForGridSolution(graphGrid, headerRow, qef, query, DataProviderUtils::wrapWithErrorHandler);
-                VaadinSparqlUtils.configureGridFilter(graphGrid, filterRow, List.of(GRAPH_VAR)); // , var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
-                DataProviderUtils.wrapWithErrorHandler(graphGrid);
-
+                    VaadinSparqlUtils.setQueryForGridSolution(graphGrid, headerRow, qef, query, DataProviderUtils::wrapWithErrorHandler);
+                    VaadinSparqlUtils.configureGridFilter(graphGrid, filterRow, List.of(GRAPH_VAR)); // , var -> str -> VaadinSparqlUtils.createFilterExpr(var, str).orElse(null));
+                    DataProviderUtils.wrapWithErrorHandler(graphGrid);
+                }
                 graphGrid.recalculateColumnWidths();
             }
 
@@ -209,7 +229,8 @@ public class SparqlConnectionWizard
 //                    return r;
 //                };
 
-                Op dsOp = getConjureSpecification(true);
+                Boolean unionDefaultGraphMode = sparqlEndpointForm.getUnionDefaultGraphMode().getValue();
+                Op dsOp = getConjureSpecification(true, unionDefaultGraphMode);
                 QueryExecutionFactoryQuery qef = ConfigEndpoint.createDataSource(dsOp).asQef();
 
                 VaadinSparqlUtils.setQueryForGridSolution(typeGrid, headerRow, qef, query, DataProviderUtils::wrapWithErrorHandler);

@@ -9,7 +9,8 @@ import org.aksw.commons.util.history.History;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.dataaccess.LabelUtils;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
+import org.aksw.jenax.vaadin.label.LabelService;
+import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -47,7 +48,7 @@ public class ResourceComponentOld extends VerticalLayout {
 
     private History history = new History();
 
-    protected VaadinRdfLabelMgr labelMgr;
+    protected LabelService<Node, String> labelMgr;
 
     protected boolean enableSummary = false;
 
@@ -88,7 +89,7 @@ public class ResourceComponentOld extends VerticalLayout {
         return result;
     }
 
-    public ResourceComponentOld(PrefixMapping prefixMapping, ViewManager viewManager, VaadinRdfLabelMgr labelMgr) {
+    public ResourceComponentOld(PrefixMapping prefixMapping, ViewManager viewManager, LabelService<Node, String> labelMgr) {
         this.viewManager = viewManager;
         this.labelMgr = labelMgr;
 
@@ -134,14 +135,14 @@ public class ResourceComponentOld extends VerticalLayout {
                 Node node = p.asNode();
                 if (asExternalLink) {
                     Anchor anchor = new Anchor();
-                    labelMgr.forHasText(anchor, node);
+                    VaadinLabelMgr.forHasText(labelMgr, anchor, node);
                     // anchor.setText(toDisplayString(p));
                     anchor.setHref(node.getURI());
                     anchor.setTarget("_blank");
                     r = anchor;
                 } else {
                     Span span = new Span();
-                    labelMgr.forHasText(span, p.asNode());
+                    VaadinLabelMgr.forHasText(labelMgr, span, p.asNode());
                     span.addClickListener(ev -> setNode(p));
                     r = span;
                 }
@@ -164,14 +165,14 @@ public class ResourceComponentOld extends VerticalLayout {
                     Anchor anchor = new Anchor();
                     anchor.setText(displayStr);
                         // anchor.setText(toDisplayString(row.getObject()));
-                        labelMgr.forHasText(anchor, node);
+                        VaadinLabelMgr.forHasText(labelMgr, anchor, node);
 
                         anchor.setHref(o.toString());
                         anchor.setTarget("_blank");
                         r = anchor;
                 } else {
                     Span span = new Span();
-                    labelMgr.forHasText(span, node);
+                    VaadinLabelMgr.forHasText(labelMgr, span, node);
                     span.addClickListener(ev -> setNode(o));
                     r = span;
                 }
@@ -247,7 +248,7 @@ public class ResourceComponentOld extends VerticalLayout {
             }
 
             subjectIdSpan.setText("Subject: " + node.toString());
-            labelMgr.forHasText(subjectLabelSpan, node.asNode());
+            VaadinLabelMgr.forHasText(labelMgr, subjectLabelSpan, node.asNode());
         }
         grid.setItems(getRows());
     }

@@ -17,7 +17,7 @@ import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
+import org.aksw.jenax.vaadin.label.LabelService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -63,7 +63,7 @@ public class ConfigFacetedBrowserView {
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             ConfigFaceteVaadin config,
-            VaadinRdfLabelMgr labelService
+            LabelService<Node, String> labelService
             ) {
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
@@ -160,7 +160,7 @@ public class ConfigFacetedBrowserView {
             @FullView ViewManager viewManagerFull,
             @SnippetView ViewManager viewManagerDetail,
             @DisplayLabelConfig BestLiteralConfig bestLabelConfig,
-            VaadinRdfLabelMgr labelMgr,
+            LabelService<Node, String> labelMgr,
             ExecutorService executorService
     ) {
         return new FacetedBrowserView(

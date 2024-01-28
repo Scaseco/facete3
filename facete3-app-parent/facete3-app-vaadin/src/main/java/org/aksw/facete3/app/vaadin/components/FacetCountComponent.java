@@ -1,25 +1,21 @@
 package org.aksw.facete3.app.vaadin.components;
 
-import org.aksw.commons.util.delegate.Unwrappable;
-import org.aksw.commons.util.obj.Enriched;
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
-import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jenax.path.core.FacetPath;
+import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.RDFNode;
 import org.claspina.confirmdialog.ConfirmDialog;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.grid.ItemDoubleClickEvent;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.grid.contextmenu.GridMenuItem;
 import com.vaadin.flow.component.grid.contextmenu.GridSubMenu;
@@ -111,7 +107,7 @@ public class FacetCountComponent extends Grid<FacetCount> {
         grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
         grid.removeAllColumns();
         Column<FacetCount> facetColumn = grid
-                .addComponentColumn(item -> mainView.getLabelMgr().forHasText(new Span("" + item.getPredicate()), item.getPredicate()))
+                .addComponentColumn(item -> VaadinLabelMgr.forHasText(mainView.getLabelMgr(), new Span("" + item.getPredicate()), item.getPredicate()))
                     // .addColumn(item -> LabelUtils.getOrDeriveLabel(item))
                 .setSortProperty("")
                 .setHeader("Facet")

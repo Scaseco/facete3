@@ -1,10 +1,9 @@
 package org.aksw.facete3.app.vaadin.components;
 
 import org.aksw.facete.v3.api.FacetValueCount;
-import org.aksw.facete3.app.vaadin.ConfigEndpoint;
 import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountProvider;
-import org.aksw.jenax.dataaccess.LabelUtils;
+import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.claspina.confirmdialog.ConfirmDialog;
@@ -62,7 +61,7 @@ public class FacetValueCountComponent extends Grid<FacetValueCount> {
 
         Column<FacetValueCount> facetValueColumn =
                 // addColumn(LabelUtils::getOrDeriveLabel).setSortProperty("value")
-                addComponentColumn(item -> mainView.getLabelMgr().forHasText(new Span("" + item.getValue()), item.getValue()))
+                addComponentColumn(item -> VaadinLabelMgr.forHasText(mainView.getLabelMgr(), new Span("" + item.getValue()), item.getValue()))
                 .setSortProperty("value")
                 .setHeader("Facet Value")
                 //.setHeader(getSearchField())

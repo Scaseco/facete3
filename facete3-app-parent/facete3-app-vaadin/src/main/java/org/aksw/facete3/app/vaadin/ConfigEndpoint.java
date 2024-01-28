@@ -1,8 +1,12 @@
 package org.aksw.facete3.app.vaadin;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
+import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
@@ -24,8 +28,10 @@ import org.aksw.jenax.dataaccess.sparql.factory.dataengine.RdfDataEngines;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactory;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithBnodeRewrite;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithLocalCache;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgr;
-import org.aksw.jenax.vaadin.label.VaadinRdfLabelMgrImpl;
+import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
+import org.aksw.jenax.vaadin.label.LabelServiceSwitchableImpl;
+import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -40,6 +46,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * A configuration that features beans for configuring a connection to a SPARQL endpoint as
@@ -127,14 +135,32 @@ public class ConfigEndpoint {
 //        return result;
 //    }
 
+    /**
+     *
+     * @implNote
+     *   The return type must be LabelServiceSwitchable rather than LabelService.
+     *   Otherwise, the returned proxy (due to @RefreshScope) won't implement the LabelServiceSwitchable interface,
+     *   which e.g. the label switcher needs.
+     * @param dataSource
+     * @return
+     */
     @RefreshScope
     @Bean
     @Autowired
-    public VaadinRdfLabelMgr labelMgr(RdfDataSource dataSource) {
+    public LabelServiceSwitchable<Node, String> labelMgr(RdfDataSource dataSource) {
         QueryExecutionFactory qef = dataSource.asQef(); // new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
-        VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50));
-        return labelService;
+
+        LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50);
+        LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
+
+        // VaadinRdfLabelMgr labelService = new VaadinRdfLabelMgrImpl(LabelUtils.getLabelLookupService(qef, labelProperty, DefaultPrefixes.get(), 50));
+        VaadinLabelMgr<Node, String> labelMgr = new VaadinLabelMgr<>(ls1);
+
+        LabelServiceSwitchable<Node, String> result = new LabelServiceSwitchableImpl<>(labelMgr);
+        result.getLookupServices().addAll(Arrays.asList(ls1, ls2));
+
+        return result;
     }
 
 
