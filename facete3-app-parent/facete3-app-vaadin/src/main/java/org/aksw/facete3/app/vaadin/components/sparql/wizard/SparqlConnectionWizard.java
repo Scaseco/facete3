@@ -1,6 +1,5 @@
 package org.aksw.facete3.app.vaadin.components.sparql.wizard;
 
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,8 +14,8 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
-import org.aksw.jenax.arq.uniondefaultgraph.assembler.UnionDefaultGraphVocab;
-import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactories;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryQuery;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
@@ -27,7 +26,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Var;
 
-import com.jcraft.jsch.Logger;
 import com.mlottmann.vstepper.Step;
 import com.mlottmann.vstepper.VStepper;
 import com.vaadin.flow.component.Component;
@@ -42,6 +40,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 public class SparqlConnectionWizard
     extends VStepper
 {
+    private static final long serialVersionUID = 1L;
+
     protected SparqlEndpointForm sparqlEndpointForm;
     protected Grid<QuerySolution> graphGrid;
     protected Grid<QuerySolution> typeGrid;
@@ -126,6 +126,7 @@ public class SparqlConnectionWizard
 
         this.addStep(createStepSelectEndpoint(new Label("Sparql Endpoint"), sparqlEndpointForm));
         this.addStep(createStepSelectGraphs(new Label("Graphs")));
+        this.addStep(createStepSelectDatasetId(new Label("DatasetId")));
         this.addStep(createStepSelectTypes(new Label("Types")));
         // this.addStep(createStep(new Label("Step 3"), new Label("Step 3")));
         // return customSteps;
@@ -153,6 +154,30 @@ public class SparqlConnectionWizard
         };
     }
 
+    private Step createStepSelectDatasetId(Component header) {
+        VerticalLayout layout = new VerticalLayout();
+        layout.add(new Span("The following dataset ids have been recorded for the given configuration."));
+
+        layout.add("Current hash: ");
+        Span datasetId = new Span();
+        layout.add(datasetId);
+        return new Step(header, layout) {
+            @Override
+            protected void onEnter() {
+                Boolean unionDefaultGraphMode = sparqlEndpointForm.getUnionDefaultGraphMode().getValue();
+                Op dsOp = getConjureSpecification(true, unionDefaultGraphMode);
+                RdfDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
+                String datasetHashId = RdfDataSources.fetchDatasetHash(dataSource);
+                datasetId.setText(datasetHashId);
+
+                // RdfDataSources.fetchDatasetHash(dataSource)
+            }
+
+            @Override protected void onAbort() {}
+            @Override protected void onComplete() { }
+            @Override public boolean isValid() { return true; }
+        };
+    }
 
     private Step createStepSelectGraphs(Component header) {
         VerticalLayout layout = new VerticalLayout();

@@ -76,7 +76,11 @@ public class FacetCountComponent extends Grid<FacetCount> {
         {
             GridMenuItem<FacetCount> addToCustomFacets = cxtMenu.addItem("Add to custom facets ... ");
             GridSubMenu<FacetCount> subMenu = addToCustomFacets.getSubMenu();
-            subMenu.addItem("... visible only at current focus path");
+            subMenu.addItem("... visible only at current focus path", ev -> {
+                FacetDirNode facetDirNode = mainView.facete3.getFacetDirNode();
+                Node predicate = ev.getItem().get().getPredicate();
+                mainView.addCustomFacet(facetDirNode, predicate);
+            });
 
             subMenu.addItem("... always visible");
 

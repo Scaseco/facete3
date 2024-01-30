@@ -252,6 +252,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
+			<artifactId>vaadin-jena-geo</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-commons</artifactId>
 		</dependency>
 		<dependency>

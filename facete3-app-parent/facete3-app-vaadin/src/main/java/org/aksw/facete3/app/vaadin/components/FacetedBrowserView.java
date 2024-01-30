@@ -76,10 +76,7 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.Template;
-import org.apache.jena.vocabulary.OWL;
-import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.VOID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ApplicationContext;
@@ -125,7 +122,7 @@ public class FacetedBrowserView
 
     protected Label connectionInfo;
 
-    protected MapComponent mapComponent = new MapComponent();
+    protected MapComponent mapComponent = new MapComponent(this);
 
 //    protected ResourceComponent resourceComponent;
 
@@ -152,6 +149,8 @@ public class FacetedBrowserView
     protected LabelService<Node, String> labelMgr;
 
     protected List<FacetValueCountBox> customFacetValueBoxes = new ArrayList<>();
+
+    protected VerticalLayout customFacetsPanel;
 
     public LabelService<Node, String> getLabelMgr() {
         return labelMgr;
@@ -613,27 +612,62 @@ public class FacetedBrowserView
 
 
         // Custom facets
-        VerticalLayout customFacetsPanel = new VerticalLayout();
+        customFacetsPanel = new VerticalLayout();
         customFacetsPanel.add(new Span("Custom facets"));
 
-        FacetValueCountDataProvider box1Data = new FacetValueCountDataProvider(facete3, labelService);
-        FacetValueCountBox box1 = new FacetValueCountBox(this, box1Data);
-        box1Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd());
-        box1Data.setSelectedFacet(RDF.type.asNode());
-        customFacetsPanel.add(box1);
-        customFacetValueBoxes.add(box1);
-
-        FacetValueCountDataProvider box2Data = new FacetValueCountDataProvider(facete3, labelService);
-        FacetValueCountBox box2 = new FacetValueCountBox(this, box2Data);
-        box2Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd(OWL.sameAs).one().fwd(VOID.classPartition).one().fwd());
-        box2Data.setSelectedFacet(VOID._class.asNode());
-        customFacetsPanel.add(box2);
-        customFacetValueBoxes.add(box2);
+//        {
+//            FacetValueCountDataProvider box2Data = new FacetValueCountDataProvider(facete3, labelService);
+//            FacetValueCountBox box2 = new FacetValueCountBox(this, box2Data);
+//            box2Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd());
+//            box2Data.setSelectedFacet(NodeFactory.createURI("http://www.example.org/groupId"));
+//            customFacetsPanel.add(box2);
+//            customFacetValueBoxes.add(box2);
+//        }
+//
+//        {
+//            FacetValueCountDataProvider box2Data = new FacetValueCountDataProvider(facete3, labelService);
+//            FacetValueCountBox box2 = new FacetValueCountBox(this, box2Data);
+//            box2Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd(OWL.sameAs).one().fwd(VOID.classPartition).one().fwd());
+//            box2Data.setSelectedFacet(VOID._class.asNode());
+//            customFacetsPanel.add(box2);
+//            customFacetValueBoxes.add(box2);
+//        }
+//
+//        {
+//            FacetValueCountDataProvider box1Data = new FacetValueCountDataProvider(facete3, labelService);
+//            FacetValueCountBox box1 = new FacetValueCountBox(this, box1Data);
+//            box1Data.setFacetDirNode(facete3.getFacetedQuery().root().fwd());
+//            box1Data.setSelectedFacet(RDF.type.asNode());
+//            customFacetsPanel.add(box1);
+//            customFacetValueBoxes.add(box1);
+//        }
 
         tabSheet.add(VaadinIcon.ELLIPSIS_V.create(), customFacetsPanel);
 
 
         return tabSheet;
+    }
+
+    /**
+     * Adds a new box for facet value counts to the custom facets panel.
+     *
+     * @param facetDirNode
+     * @param facet
+     */
+    // TODO We need to make it possible to save the custom facet configuration
+    public void addCustomFacet(FacetDirNode facetDirNode, Node facet) {
+        FacetValueCountDataProvider boxData = new FacetValueCountDataProvider(facete3, labelService);
+        FacetValueCountBox box = new FacetValueCountBox(this, boxData);
+        boxData.setFacetDirNode(facetDirNode);
+        boxData.setSelectedFacet(facet);
+        customFacetsPanel.add(box);
+        customFacetValueBoxes.add(box);
+
+        box.addComponentAsFirst(new Button(VaadinIcon.CLOSE.create(), ev -> {
+            customFacetsPanel.remove(box);
+            customFacetValueBoxes.remove(box);
+        }));
+        boxData.refreshAll();
     }
 
     protected Component getResultsComponent() {
