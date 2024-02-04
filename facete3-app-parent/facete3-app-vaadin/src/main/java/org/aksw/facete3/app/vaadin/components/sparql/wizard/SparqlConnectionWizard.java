@@ -15,8 +15,11 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSourceTransform;
 import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryQuery;
+import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourcePolyfill;
+import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.Suggestion;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -24,11 +27,13 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.Var;
 
 import com.mlottmann.vstepper.Step;
 import com.mlottmann.vstepper.VStepper;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.grid.HeaderRow;
@@ -88,6 +93,11 @@ public class SparqlConnectionWizard
             dataRef.getDefaultGraphs().addAll(defaultGraphIris);
         }
 
+        if (true) {
+            // Virtuoso incorrectly returns an empty json on empty result sets which breaks with jena
+            dataRef.setAcceptHeaderSelectQuery(WebContent.contentTypeResultsXML);
+        }
+
         Op result = OpDataRefResource.from(dataRef);
 
         if (Boolean.TRUE.equals(unionDefaultGraphMode)) {
@@ -125,6 +135,7 @@ public class SparqlConnectionWizard
         typeGrid = new Grid<>(QuerySolution.class);
 
         this.addStep(createStepSelectEndpoint(new Label("Sparql Endpoint"), sparqlEndpointForm));
+        this.addStep(createStepPolyfills(new Label("Polyfills")));
         this.addStep(createStepSelectGraphs(new Label("Graphs")));
         this.addStep(createStepSelectDatasetId(new Label("DatasetId")));
         this.addStep(createStepSelectTypes(new Label("Types")));
@@ -144,6 +155,35 @@ public class SparqlConnectionWizard
 //    {
 //
 //    }
+
+    private Step createStepPolyfills(Component header) {
+        VerticalLayout layout = new VerticalLayout();
+        layout.add(new Span("SPARQL polyfill is a query rewriting middleware that abstracts away vendor-specific differences."));
+        Grid<Suggestion<RdfDataSourceTransform>> grid = new Grid<>();
+
+        grid.addComponentColumn(row -> {
+            return new Checkbox(row.isEnabled());
+        }).setKey("isEnabled");
+
+        grid.addComponentColumn(row -> {
+            return new Span(row.getName());
+        }).setKey("name");
+
+
+        layout.add(grid);
+
+        return new Step(header, layout) {
+            @Override protected void onEnter() {
+                Op dsOp = getConjureSpecification(true, false);
+                RdfDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
+                List<Suggestion<RdfDataSourceTransform>> suggestions = RdfDataSourcePolyfill.suggestPolyfills(dataSource);
+                grid.setItems(suggestions);
+            }
+            @Override protected void onAbort() { }
+            @Override protected void onComplete() { }
+            @Override public boolean isValid() { return true; }
+        };
+    }
 
     private Step createStepSelectEndpoint(Component header, Component content) {
         return new Step(header, content) {

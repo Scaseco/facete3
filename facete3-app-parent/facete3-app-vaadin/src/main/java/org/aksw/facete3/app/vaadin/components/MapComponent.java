@@ -12,33 +12,33 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
 import org.aksw.jena_sparql_api.sparql.ext.geosparql.DataServiceBBoxCache;
 import org.aksw.jena_sparql_api.sparql.ext.geosparql.GeoConstraintFactory;
 import org.aksw.jena_sparql_api.sparql.ext.geosparql.GeoConstraintFactoryGeoSparql;
+import org.aksw.jena_sparql_api.sparql.ext.geosparql.GeometryWrapperUtils;
 import org.aksw.jena_sparql_api.sparql.ext.geosparql.MapServiceBBox;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinderSystemBasic;
-import org.aksw.jenax.arq.util.triple.TripleUtils;
+import org.aksw.jenax.arq.util.node.PathUtils;
+import org.aksw.jenax.arq.util.node.ReverseRenameUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.api.Fragment2;
 import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.aksw.jenax.sparql.path.SimplePath;
+import org.aksw.vaadin.common.component.util.NotificationUtils;
 import org.aksw.vaadin.jena.geo.Leaflet4VaadinJtsUtils;
 import org.aksw.vaadin.jena.geo.Leaflet4VaadinUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.BasicPattern;
-import org.apache.jena.sparql.core.PathBlock;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.graph.NodeTransformLib;
-import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathCompiler;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.locationtech.jts.geom.Envelope;
@@ -67,11 +67,12 @@ public class MapComponent
 
     protected SimplePath path;
 
+    protected Node spatialProperty;
+
     public MapComponent(FacetedBrowserView mainView) {
         this.mainView = mainView;
 
-
-
+        spatialProperty = NodeFactory.createURI("http://www.w3.org/ns/locn#geometry");
         setSizeFull();
 //		// Create the registry which is needed so that components can be reused and their methods invoked
 //		// Note: You normally don't need to invoke any methods of the registry and just hand it over to the components
@@ -101,12 +102,9 @@ public class MapComponent
         geoPathComboBox.setRenderer(new ComponentRenderer<>(path -> new Span("" + path)));
         geoPathComboBox.setWidthFull();
 
-        Button searchForGeoPathsBtn = new Button("Search");
+        Button searchForGeoPathsBtn = new Button("Search spatial relations");
         geoPathComboBox.addValueChangeListener(ev -> {
             path = ev.getValue();
-
-
-
             refresh();
         });
 
@@ -121,12 +119,14 @@ public class MapComponent
                 .build();
 
             Fragment1 sourceConcept = mainView.getFacetedSearchSession().getFacetedQuery().root().availableValues().baseRelation().toFragment1();
-            Fragment2 f = GeoConstraintFactoryGeoSparql.create("http://www.w3.org/ns/locn#geometry").getFragment();
+            Fragment2 f = GeoConstraintFactoryGeoSparql.create(spatialProperty).getFragment();
+            // Fragment2 f = GeoConstraintFactoryGeoSparql.create("http://www.w3.org/ns/locn#geometry").getFragment();
             Fragment1 targetConcept = f.project(f.getSourceVar()).toFragment1();
 
             List<SimplePath> paths = pathFinder.createSearch(sourceConcept, targetConcept).exec().toList().blockingGet();
 
-            System.out.println("GeoPaths:");
+            NotificationUtils.success("Found " + paths.size() + " paths");
+            // System.out.println("GeoPaths:");
             geoPathComboBox.setItems(paths);
             // geoPathComboBox.setItems();
 
@@ -161,36 +161,34 @@ public class MapComponent
       // tabs.newTab("map", "Map", new ManagedComponentSimple(leafletMap));
     }
 
+
     /** Update the map */
     public void refresh() {
 
         Fragment1 concept = mainView.getFacetedSearchSession().getFacetedQuery().root().availableValues().baseRelation().toFragment1();
-        Node spatialProperty = NodeFactory.createURI("http://www.w3.org/ns/locn#geometry");
+
         RdfDataSource dataSource = mainView.getFacetedSearchSession().getFacetedQuery().dataSource();
 
-        // Create a binary relation from the source concept to the spatial data
         Path pp = SimplePath.toPropertyPath(path);
         Path fullPath = PathFactory.pathSeq(pp, PathFactory.pathLink(spatialProperty));
-        PathCompiler pathCompiler = new PathCompiler();
-        PathBlock block = pathCompiler.reduce(Vars.s, fullPath, Vars.o);
 
-        BasicPattern bgp = new BasicPattern();
-        for (TriplePath tp : block) {
-            Path path = tp.getPath();
-            if (path instanceof P_Path0) {
-                P_Path0 p0 = (P_Path0)path;
-                Triple t = TripleUtils.create(tp.getSubject(), p0.getNode(), tp.getObject(), p0.isForward());
-                bgp.add(t);
-            } else {
-                break;
-            }
-        }
-        bgp = NodeTransformLib.transform(v -> v.isVariable() ? Var.alloc(v.getName().replaceAll("\\?", "")) : v, bgp);
+        // Create a binary relation from the source concept to the spatial data
+        TriplePath triplePath = new TriplePath(Vars.s, fullPath, Vars.o);
 
-        System.out.println(block);
+        BasicPattern bgp = PathUtils.flattenOrNull(triplePath);
+        // bgp = NodeTransformLib.transform(ReverseRenameUtils::effectiveNode, bgp);
+
+        // Turn blank node vars into ordinary vars
+        // (Real blank nodes conflict with union default graph rewriting because it results in
+        // GRAPH ?v1 { _:b0 ...}) GRAPH ?v2 { :_b0 ... } # Error because same bnode id used in different scopes
+        // Note, this could be resolved at a different layer but it seems easier to handle it here where
+        // the issue occurs
+        bgp = NodeTransformLib.transform(n -> Var.isBlankNodeVar(n)
+                ? Var.alloc("__" + ReverseRenameUtils.plainVarName(n))
+                : n , bgp);
 
         // Fragment2 relation = Fragment2Impl.create(fullPath);
-        Fragment2 relation = new Fragment2Impl(new ElementTriplesBlock(bgp), Vars.s, Vars.o);
+        Fragment2 relation = new Fragment2Impl(new ElementTriplesBlock(bgp), (Var)triplePath.getSubject(), (Var)triplePath.getObject());
         GeoConstraintFactory gcf = GeoConstraintFactoryGeoSparql.of(relation);
 
 
@@ -210,21 +208,28 @@ public class MapComponent
 
         leafletMap.getBounds().whenComplete((bounds, throwable) -> {
             Envelope envelope = Leaflet4VaadinJtsUtils.convert(bounds);
-            service.runWorkflow(envelope).forEach(x -> {
-                Set<Node> nodes = x.getData();
+            service.runWorkflow(envelope).forEach(cell -> {
+                if (cell.isLoaded()) {
+                    Set<Node> nodes = cell.getData();
 
-                Map<Node, Table> map = lookupService.fetchMap(nodes);
-                Collection<Binding> bindings = map.values().stream().flatMap(t -> Streams.stream(t.rows())).collect(Collectors.toList());
-                Leaflet4VaadinUtils.addAndFly(leafletMap, group, bindings);
-
+                    Map<Node, Table> map = lookupService.fetchMap(nodes);
+                    Collection<Binding> bindings = map.values().stream().flatMap(t -> Streams.stream(t.rows())).collect(Collectors.toList());
+                    // Leaflet4VaadinUtils.addAndFly(leafletMap, group, bindings);
+                    Leaflet4VaadinUtils.addBindingsToLayer(leafletMap, group, bindings);
+                } else {
+                    Envelope cellBounds = cell.getBounds();
+                    Node node = GeometryWrapperUtils.toWrapperWkt(cellBounds).asNode();
+                    Binding cellBinding = BindingFactory.binding(Vars.x, node);
+                    Leaflet4VaadinUtils.addBindingsToLayer(leafletMap, group, cellBinding);
+                }
                 // System.out.println(map);
                 // leafletMap.add();
 //                for (Entry<Node, Table> e : map.entrySet()) {
 //                    Leaflet4VaadinUtils.addAndFly(leafletMap, group, bindings);
 //                }
 
-                System.out.println(x);
-                System.out.println(x.getData());
+                System.out.println(cell);
+                System.out.println(cell.getData());
             });
 
         });

@@ -687,12 +687,15 @@ public class FacetedBrowserView
 
 
 
-        VerticalLayout detailsPanel = new VerticalLayout();
+        // VerticalLayout detailsPanel = new VerticalLayout();
+        SplitLayout detailsPanel = new SplitLayout();
+        detailsPanel.setOrientation(Orientation.VERTICAL);
+
         detailsPanel.setSizeFull();
         if (System.getProperty("UI.DISABLE.MAPCOMPONENT") == null) {
-            detailsPanel.add(mapComponent);
+            detailsPanel.addToPrimary(mapComponent);
         }
-        detailsPanel.add(resourceBrowserComponent);
+        detailsPanel.addToSecondary(resourceBrowserComponent);
 
         component.addToSecondary(detailsPanel);
         return component;

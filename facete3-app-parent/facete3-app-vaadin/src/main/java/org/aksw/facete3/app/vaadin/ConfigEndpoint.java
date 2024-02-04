@@ -25,7 +25,9 @@ import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionUtils;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.dataaccess.sparql.factory.dataengine.RdfDataEngines;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactory;
+import org.aksw.jenax.dataaccess.sparql.link.common.RDFLinkUtils;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithBnodeRewrite;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithLocalCache;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
@@ -41,6 +43,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.optimize.TransformOpDatasetNamesToOpGraph;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +66,6 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class ConfigEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(ConfigEndpoint.class);
-
 
 //    @Bean
 //    public CustomScopeConfigurer servletCustomScopeConfigurer(org.springframework.cloud.context.scope.refresh.RefreshScope refreshScope) {
@@ -153,7 +155,7 @@ public class ConfigEndpoint {
         Property labelProperty = RDFS.label;// DCTerms.description;
 
         PrefixMapping prefixes = DefaultPrefixes.get();
-        LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, prefixes, 50);
+        LookupService<Node, String> ls1 = LabelUtils.getLabelLookupService(qef, labelProperty, prefixes, ConfigFacetedBrowserView.DFT_LOOKUPSIZE);
         LookupService<Node, String> ls2 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, LabelUtils.deriveLabelFromNode(k, prefixes, prefixes)));
         LookupService<Node, String> ls3 = keys -> Flowable.fromIterable(keys).map(k -> Map.entry(k, Objects.toString(k)));
 
@@ -203,6 +205,11 @@ public class ConfigEndpoint {
         // DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
         RdfDataSource dataSourceRaw = op.accept(opExecutor);
 
+        dataSourceRaw = RdfDataSources.wrapWithLinkTransform(dataSourceRaw,
+            linkx -> RDFLinkUtils.wrapWithQueryTransform(linkx,
+                queryx -> QueryUtils.applyOpTransform(queryx, opx -> Transformer.transform(new TransformOpDatasetNamesToOpGraph(), opx)),
+                null));
+
         RdfDataSourceWithBnodeRewrite dataSourceBnode = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
         RdfDataSourceWithLocalCache dataSourceCache = new RdfDataSourceWithLocalCache(dataSourceBnode);
 
@@ -210,9 +217,9 @@ public class ConfigEndpoint {
         RdfDataSource comparingDataSource = RdfDataEngines.adapt(qef);
 
 
-        // RdfDataSource dataSource = dataSourceCache;
+        RdfDataSource dataSource = dataSourceCache;
         // RdfDataSource dataSource = dataSourceBnode;
-        RdfDataSource dataSource = comparingDataSource;
+        // RdfDataSource dataSource = comparingDataSource;
 
 
         // RdfDataSource dataSource = DataPods.from(dataRef);

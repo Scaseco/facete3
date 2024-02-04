@@ -1,5 +1,6 @@
 package org.aksw.facete3.app.vaadin;
 
+import org.apache.jena.sys.JenaSystem;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -15,6 +16,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class MainAppFacete3Vaadin extends SpringBootServletInitializer {
 //    static { JenaSystem.init(); }
     public static void main(String[] args) {
+        JenaSystem.init();
+
         System.setProperty("spring.cloud.config.import-check.enabled", "false");
 
         // FIXME Spring complains about a cycle in ConfigEndpoint but I haven't figured out where and why

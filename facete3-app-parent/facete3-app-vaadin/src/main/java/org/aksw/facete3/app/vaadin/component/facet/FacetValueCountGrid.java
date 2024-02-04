@@ -79,7 +79,6 @@ public class FacetValueCountGrid extends Grid<FacetValueCount> {
         .setHeader("Filter")
         .setResizable(true);
 
-
         Column<FacetValueCount> facetValueColumn =
                 // addColumn(LabelUtils::getOrDeriveLabel).setSortProperty("value")
                 addComponentColumn(item -> VaadinLabelMgr.forHasText(mainView.getLabelMgr(), new Span("" + item.getValue()), item.getValue()))
@@ -93,10 +92,8 @@ public class FacetValueCountGrid extends Grid<FacetValueCount> {
             .setResizable(true)
             .setSortProperty("facetCount");
 
-
         HeaderRow filterRow = appendHeaderRow();
         filterRow.getCell(facetValueColumn).setComponent(getSearchField());
-
 
         addItemClickListener(event -> mainView.viewNode(event.getItem()));
 
@@ -110,7 +107,6 @@ public class FacetValueCountGrid extends Grid<FacetValueCount> {
                 dlg.open();
             });
         }
-
     }
 
     private TextField getSearchField() {

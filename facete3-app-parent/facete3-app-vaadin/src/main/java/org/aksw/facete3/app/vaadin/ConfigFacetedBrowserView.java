@@ -45,9 +45,9 @@ import com.vaadin.flow.data.provider.InMemoryDataProvider;
  */
 public class ConfigFacetedBrowserView {
 
-    public static final int DFT_LOOKUPSIZE = 50;
+    public static final int DFT_LOOKUPSIZE = 10;
 
-    public static final int DFT_GRID_PAGESIZE = 50;
+    public static final int DFT_GRID_PAGESIZE = 10;
 
     @Bean
     @Autowired
