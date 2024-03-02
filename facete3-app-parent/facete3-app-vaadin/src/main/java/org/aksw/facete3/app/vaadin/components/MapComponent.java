@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.rx.lookup.LookupService;
@@ -26,8 +27,8 @@ import org.aksw.jenax.sparql.fragment.api.Fragment2;
 import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
 import org.aksw.jenax.sparql.path.SimplePath;
 import org.aksw.vaadin.common.component.util.NotificationUtils;
-import org.aksw.vaadin.jena.geo.Leaflet4VaadinJtsUtils;
-import org.aksw.vaadin.jena.geo.Leaflet4VaadinUtils;
+import org.aksw.vaadin.jena.geo.leafletflow.JtsToLMapConverter;
+import org.aksw.vaadin.jena.geo.leafletflow.ResultSetMapRendererL;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -41,38 +42,53 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 
 import com.google.common.collect.Streams;
-import com.vaadin.addon.leaflet4vaadin.LeafletMap;
-import com.vaadin.addon.leaflet4vaadin.layer.events.types.DragEventType;
-import com.vaadin.addon.leaflet4vaadin.layer.groups.FeatureGroup;
-import com.vaadin.addon.leaflet4vaadin.layer.groups.LayerGroup;
-import com.vaadin.addon.leaflet4vaadin.layer.map.options.DefaultMapOptions;
-import com.vaadin.addon.leaflet4vaadin.layer.map.options.MapOptions;
-import com.vaadin.addon.leaflet4vaadin.types.LatLng;
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
+import elemental.json.JsonObject;
+import software.xdev.vaadin.maps.leaflet.MapContainer;
+import software.xdev.vaadin.maps.leaflet.basictypes.LIcon;
+import software.xdev.vaadin.maps.leaflet.basictypes.LIconOptions;
+import software.xdev.vaadin.maps.leaflet.basictypes.LLatLng;
+import software.xdev.vaadin.maps.leaflet.layer.LLayerGroup;
+import software.xdev.vaadin.maps.leaflet.layer.raster.LTileLayer;
+import software.xdev.vaadin.maps.leaflet.layer.ui.LMarker;
+import software.xdev.vaadin.maps.leaflet.map.LMap;
+import software.xdev.vaadin.maps.leaflet.registry.LComponentManagementRegistry;
+import software.xdev.vaadin.maps.leaflet.registry.LDefaultComponentManagementRegistry;
+
 public class MapComponent
     extends VerticalLayout
 {
     protected FacetedBrowserView mainView;
-    protected LeafletMap leafletMap;
+    protected LMap leafletMap;
+    protected JtsToLMapConverter converter;
+    protected Envelope mapBounds;
+
     protected DataServiceBBoxCache<Node, Node> service;
-    protected LayerGroup group;
+    protected LLayerGroup group;
+
+    protected LComponentManagementRegistry reg = new LDefaultComponentManagementRegistry(this);
+
 
     protected SimplePath path;
 
     protected Node spatialProperty;
 
+
     public MapComponent(FacetedBrowserView mainView) {
         this.mainView = mainView;
 
         spatialProperty = NodeFactory.createURI("http://www.w3.org/ns/locn#geometry");
+        // spatialProperty = Geo.AS_WKT_NODE;
         setSizeFull();
 //		// Create the registry which is needed so that components can be reused and their methods invoked
 //		// Note: You normally don't need to invoke any methods of the registry and just hand it over to the components
@@ -142,22 +158,62 @@ public class MapComponent
         this.add(geoPathComboBox);
 
 
+        MapContainer mapContainer = new MapContainer(reg);
+        converter = new JtsToLMapConverter(reg) {
+            @Override
+            public LMarker convertPoint(org.locationtech.jts.geom.Point point) {
+                LMarker r = super.convertPoint(point);
+                r.setIcon(new LIcon(reg, new LIconOptions()
+                        .withIconUrl("/marker-icon.png")));
+                return r;
+            };
+        };
 
+        mapContainer.setSizeFull();
 
-        MapOptions options = new DefaultMapOptions();
-        options.setCenter(new LatLng(47.070121823, 19.204101562500004));
-        options.setZoom(7);
-        leafletMap = new LeafletMap(options);
-        leafletMap.setBaseUrl("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
+        LMap map = mapContainer.getlMap();
+        group = new LLayerGroup(reg);
+        // Add a (default) TileLayer so that we can see something on the map
+        map.addLayer(LTileLayer.createDefaultForOpenStreetMapTileServer(reg));
+        group.addTo(map);
 
-        group = new FeatureGroup();
-        group.addTo(leafletMap);
+        // Set what part of the world should be shown
+        map.setView(new LLatLng(reg, 49.6751, 12.1607), 17);
 
-        leafletMap.addEventListener(DragEventType.dragend, ev -> {
-            refresh();
-        });
+        this.add(mapContainer);
 
-        this.add(leafletMap);
+        String moveUpdateFunction = """
+                function updateBoundingBox() {
+                    document.getElementById('%s').$server.updateBoundingBox(%s.getBounds());
+                }
+            """;
+        this.setId("facete-dynId-" + UUID.randomUUID());
+        map.on("moveend", String.format(moveUpdateFunction, this.getId().orElseThrow(), map.clientComponentJsAccessor()));
+
+        // Create a new marker
+//        new LMarker(reg, new LLatLng(reg, 49.6756, 12.1610))
+//            // Bind a popup which is displayed when clicking the marker
+//            .bindPopup("XDEV Software")
+//            // Add it to the map
+//            .addTo(map);
+
+        // map.
+
+//
+//        MapOptions options = new DefaultMapOptions();
+//        options.setCenter(new LatLng(47.070121823, 19.204101562500004));
+//        options.setZoom(7);
+//        leafletMap = new LeafletMap(options);
+//        leafletMap.setBaseUrl("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
+//
+//        group = new FeatureGroup();
+//        group.addTo(leafletMap);
+//
+//        leafletMap.addEventListener(DragEventType.dragend, ev -> {
+//            refresh();
+//        });
+//
+//        this.add(leafletMap);
       // tabs.newTab("map", "Map", new ManagedComponentSimple(leafletMap));
     }
 
@@ -198,29 +254,33 @@ public class MapComponent
 
         Fragment2 f = gcf.getFragment().toFragment2();
 
-        LookupService<Node, Table> lookupService = new LookupServiceSparqlQuery(dataSource.asQef(), f.toQuery(), f.getSourceVar())
-                // .mapValues(t -> t.rows().next())
-                //.mapValues(b -> b.get(f.getTargetVar()))
-                //.mapValues(n -> GeometryWrapper.extract(n))
-                ;
+//        leafletMap.getBounds().whenComplete((bounds, throwable) -> {
+//            Envelope envelope = Leaflet4VaadinJtsUtils.convert(bounds);
+//
+//        });
 
-        group.clearLayers();
+        if (mapBounds != null) {
+            LookupService<Node, Table> lookupService = new LookupServiceSparqlQuery(dataSource.asQef(), f.toQuery(), f.getSourceVar())
+                    // .mapValues(t -> t.rows().next())
+                    //.mapValues(b -> b.get(f.getTargetVar()))
+                    //.mapValues(n -> GeometryWrapper.extract(n))
+                    ;
 
-        leafletMap.getBounds().whenComplete((bounds, throwable) -> {
-            Envelope envelope = Leaflet4VaadinJtsUtils.convert(bounds);
-            service.runWorkflow(envelope).forEach(cell -> {
+            group.clearLayers();
+
+            service.runWorkflow(mapBounds).forEach(cell -> {
                 if (cell.isLoaded()) {
                     Set<Node> nodes = cell.getData();
 
                     Map<Node, Table> map = lookupService.fetchMap(nodes);
                     Collection<Binding> bindings = map.values().stream().flatMap(t -> Streams.stream(t.rows())).collect(Collectors.toList());
                     // Leaflet4VaadinUtils.addAndFly(leafletMap, group, bindings);
-                    Leaflet4VaadinUtils.addBindingsToLayer(leafletMap, group, bindings);
+                    ResultSetMapRendererL.addBindingsToLayer(converter, group, bindings);
                 } else {
                     Envelope cellBounds = cell.getBounds();
                     Node node = GeometryWrapperUtils.toWrapperWkt(cellBounds).asNode();
                     Binding cellBinding = BindingFactory.binding(Vars.x, node);
-                    Leaflet4VaadinUtils.addBindingsToLayer(leafletMap, group, cellBinding);
+                    ResultSetMapRendererL.addBindingsToLayer(converter, group, cellBinding);
                 }
                 // System.out.println(map);
                 // leafletMap.add();
@@ -230,9 +290,8 @@ public class MapComponent
 
                 System.out.println(cell);
                 System.out.println(cell.getData());
-            });
+            });        }
 
-        });
         // Envelope bounds = new Envelope(1, 65, 1, 75);
 //        MapPaginator<Node, Node> paginator = mapService.createPaginator(bounds);
 //        System.out.println("Count: " + paginator.fetchCount(null, null).blockingGet());
@@ -243,5 +302,24 @@ public class MapComponent
 //        System.out.println("Item count: " + map.keySet().size());
 
 
+    }
+
+
+    @ClientCallable
+    public void updateBoundingBox(JsonObject json) {
+        // {"_southWest":{"lat":49.67390472450039,"lng":12.158346176147463},"_northEast":{"lat":49.67648051949675,"lng":12.165791988372803}}
+        Coordinate sw = parse(json.get("_southWest"));
+        Coordinate ne = parse(json.get("_northEast"));
+
+        this.mapBounds = new Envelope(sw, ne);
+        refresh();
+        // System.out.println(json);
+        // this.boundingBox = parseBoundingBoxJson(json.toJson());
+    }
+
+    public static Coordinate parse(JsonObject json) {
+        double lat = json.getNumber("lat");
+        double lng = json.getNumber("lng");
+        return new Coordinate(lng, lat);
     }
 }

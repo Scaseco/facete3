@@ -15,6 +15,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.vaadin.flow.component.UI;
+
 @Configuration
 @ConfigurationProperties("facete3")
 public class ConfigFaceteVaadin {
@@ -53,6 +55,11 @@ public class ConfigFaceteVaadin {
 
     public String[] getPrefixSources(){
         return prefixSources;
+    }
+
+    @Bean
+    public TaskControlRegistryImpl taskControlRegistry() {
+    	return new TaskControlRegistryImpl();
     }
 
     /** Executor for async processing */

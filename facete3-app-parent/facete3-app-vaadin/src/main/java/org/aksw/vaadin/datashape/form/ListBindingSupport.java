@@ -68,7 +68,7 @@ public class ListBindingSupport<T> {
             DataProvider<T, ?> dataProvider,
             Function<? super T, ? extends ManagedComponent> itemToComponent,
             Function<? super T, ?> itemToKey,
-            HasOrderedComponents<?> targetLayout) {
+            HasOrderedComponents targetLayout) {
 
         return new ListBindingSupport<T>(dataProvider, itemToKey, itemToComponent, targetLayout);
     }
@@ -77,7 +77,7 @@ public class ListBindingSupport<T> {
     public static <T> ListBindingSupport<T> create(
             DataProvider<T, ?> dataProvider,
             Function<? super T, ? extends ManagedComponent> itemToComponent,
-            HasOrderedComponents<?> targetLayout) {
+            HasOrderedComponents targetLayout) {
 
         return create(dataProvider, itemToComponent, item -> item, targetLayout);
     }

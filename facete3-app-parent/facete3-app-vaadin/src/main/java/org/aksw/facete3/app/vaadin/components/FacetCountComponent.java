@@ -1,20 +1,27 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import java.util.concurrent.ExecutorService;
+
 import org.aksw.facete.v3.api.Direction;
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetDirNode;
 import org.aksw.facete.v3.api.FacetNode;
+import org.aksw.facete3.app.vaadin.TaskControlRegistryImpl;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
+import org.aksw.jena_sparql_api.vaadin.util.GridEx;
+import org.aksw.jena_sparql_api.vaadin.util.GridLike;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
 import org.aksw.vaadin.common.provider.util.DataProviderUtils;
+import org.aksw.vaadin.common.provider.util.DataProviderWithTaskControl;
 import org.apache.jena.graph.Node;
 import org.claspina.confirmdialog.ConfirmDialog;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.grid.contextmenu.GridMenuItem;
@@ -23,12 +30,12 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.Query;
 
-public class FacetCountComponent extends Grid<FacetCount> {
+public class FacetCountComponent extends GridEx<FacetCount> {
 
     private static final long serialVersionUID = -331380480912293631L;
-    private FacetCountProvider dataProvider;
-    private FacetedBrowserView mainView;
-
+    protected FacetCountProvider dataProvider;
+    protected FacetedBrowserView mainView;
+    
     public FacetCountComponent(
             FacetedBrowserView mainView, FacetCountProvider dataProvider) {
         super(FacetCount.class);
@@ -105,10 +112,13 @@ public class FacetCountComponent extends Grid<FacetCount> {
 
     private void addFacetCountGrid() {
 //        Grid<FacetCount> grid = new Grid<>(FacetCount.class);
-        Grid<FacetCount> grid = this;
+        GridLike<FacetCount> grid = this;
         grid.getClassNames().add("compact");
 
-        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
+        mainView.setDataProvider(grid, dataProvider);
+//        grid.setDataProvider(DataProviderWithTaskControl.wrap(DataProviderUtils.wrapWithErrorHandler(dataProvider), mainView.getTaskControlRegistry()));
+//        grid.getDataCommunicator().enablePushUpdates(mainView.getExecutorService());
+        
         grid.removeAllColumns();
         Column<FacetCount> facetColumn = grid
                 .addComponentColumn(item -> VaadinLabelMgr.forHasText(mainView.getLabelMgr(), new Span("" + item.getPredicate()), item.getPredicate()))
@@ -122,7 +132,11 @@ public class FacetCountComponent extends Grid<FacetCount> {
         grid.asSingleSelect()
                 .addValueChangeListener(this::selectFacetCallback);
         grid.addItemDoubleClickListener(ev -> addFacetToPathCallback(ev.getItem()));
+        
+        // As there are usually only a small number of distinct properties (facets)
+        // we try to fetch them with a larger page size
         grid.setPageSize(1000);
+        // grid.setPageSize(ConfigFacetedBrowserView.DFT_GRID_PAGESIZE);
 
         HeaderRow filterRow = grid.appendHeaderRow();
         filterRow.getCell(facetColumn).setComponent(getSearchComponent());

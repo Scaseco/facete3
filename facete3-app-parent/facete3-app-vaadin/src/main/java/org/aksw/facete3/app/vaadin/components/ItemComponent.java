@@ -118,7 +118,8 @@ public class ItemComponent extends TabSheet {
         // Load templates
         grid.setPageSize(pageSize);
         VaadinShaclGridUtils.configureGrid(grid, dataProvider, templates, labelService);
-        grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
+        // grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
+        facetedBrowserView.setDataProvider(grid, dataProvider);
 
         // DataProviderUtils.wrapWithErrorHandler(grid);
 

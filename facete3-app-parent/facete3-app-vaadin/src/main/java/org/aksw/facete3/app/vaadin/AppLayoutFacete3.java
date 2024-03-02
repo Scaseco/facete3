@@ -9,6 +9,7 @@ import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.aksw.facete3.app.vaadin.session.UserSession;
 import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
 import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
+import org.aksw.vaadin.common.provider.util.TaskControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 
@@ -22,7 +23,9 @@ import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.login.LoginForm;
@@ -31,6 +34,12 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Push;
+import com.vaadin.flow.component.progressbar.ProgressBar;
+import com.vaadin.flow.component.progressbar.ProgressBarVariant;
+import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
+import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
@@ -40,7 +49,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 
 @Route("")
 @PWA(name = "Facete3 Vaadin Application", shortName = "Facete3",
-        description = "This is an example Vaadin application.", enableInstallPrompt = true)
+        description = "This is an example Vaadin application.") // , enableInstallPrompt = true)
 @CssImport(value = "./styles/shared-styles.css", include = "lumo-badge")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 @CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
@@ -52,6 +61,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @CssImport(value = "./styles/vaadin-grid-tree-toggle-styles.css", themeFor = "vaadin-grid-tree-toggle")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
+//@Theme(themeClass = Lumo.class)
 @Theme(value = Lumo.class)
 @PermitAll
 @Push(PushMode.AUTOMATIC)
@@ -64,21 +74,25 @@ public class AppLayoutFacete3 extends AppLayout {
 //    static { JenaSystem.init(); }
 
 
-
     protected static final long serialVersionUID = 7851055480070074549L;
 //    protected Config config;
 
 
     protected MenuBar menuBar;
     protected UserSession userSession;
+    protected TaskControlRegistryImpl taskControlRegistry;
 
     @Autowired
-    public AppLayoutFacete3(ConfigFaceteVaadin config, UserSession userSession) {
+    public AppLayoutFacete3(ConfigFaceteVaadin config, UserSession userSession, TaskControlRegistryImpl taskControlRegistry) {
 //        VaadinSession.getCurrent().setErrorHandler(eh -> {
 //            Notification.show(ExceptionUtils.getRootCauseMessage(eh.getThrowable()));
 //        });
         this.userSession = userSession;
+        this.taskControlRegistry = taskControlRegistry;
 
+        UI ui = UI.getCurrent();
+        taskControlRegistry.setUi(ui);
+        
         Facete3Wrapper.initJena();
 
         HorizontalLayout navbarLayout = new HorizontalLayout();
@@ -89,27 +103,24 @@ public class AppLayoutFacete3 extends AppLayout {
         navbarLayout.add(appSettingsBtn);
 
 
+        Dialog dialog = new Dialog();
+        // DatasetSelectorComponent datasetManager = new DatasetSelectorComponent();
 
-      Dialog dialog = new Dialog();
-      // DatasetSelectorComponent datasetManager = new DatasetSelectorComponent();
+        // dialog.add(datasetManager);
+        dialog.setSizeFull();
 
-      // dialog.add(datasetManager);
-      dialog.setSizeFull();
-
-      appSettingsBtn.addClickListener(event -> {
-          dialog.open();
+        appSettingsBtn.addClickListener(event -> {
+            dialog.open();
 //          input.focus();
-      });
-
-
+        });
 
 
         Button themeToggleButton = new Button(new Icon(VaadinIcon.LIGHTBULB), click -> {
             ThemeList themeList = UI.getCurrent().getElement().getThemeList();
             if (themeList.contains(Lumo.DARK)) {
-              themeList.remove(Lumo.DARK);
+                themeList.remove(Lumo.DARK);
             } else {
-              themeList.add(Lumo.DARK);
+                themeList.add(Lumo.DARK);
             }
         });
         navbarLayout.add(themeToggleButton);
@@ -152,7 +163,7 @@ public class AppLayoutFacete3 extends AppLayout {
 
         addToNavbar(navbarLayout);
         setContent(getAppContent(config));
-        if (System.getProperty("UI.DISABLE.NAVBAR") != null){
+        if (System.getProperty("UI.DISABLE.NAVBAR") != null) {
             navbarLayout.setVisible(false);
         }
     }
@@ -160,6 +171,79 @@ public class AppLayoutFacete3 extends AppLayout {
     protected void refreshMenuBar() {
         menuBar.removeAll();
         menuBar.setOpenOnHover(true);
+
+        Span actionMenuArea = new Span();
+        actionMenuArea.add(new Button(VaadinIcon.PROGRESSBAR.create()));
+        
+        Span activeActionSpan = new Span();
+        activeActionSpan.getElement().getThemeList().add("badge pill");
+        actionMenuArea.add(activeActionSpan);
+
+        MenuItem actionMenu = menuBar.addItem(actionMenuArea);
+        SubMenu actionSubMenu = actionMenu.getSubMenu();
+
+        HierarchicalDataProvider<TaskControl<?>, ?> actionTdp = taskControlRegistry.getTreeDataProvider();
+
+        TreeGrid<TaskControl<?>> actionGrid = new TreeGrid<>();
+        actionGrid.setWidth("300px");
+        actionGrid.setAllRowsVisible(true);
+
+		actionGrid.addComponentColumn(o -> {
+
+			Div progressBarLabel = new Div();
+			progressBarLabel.setText("Task [" + o.getName() + "]");
+
+			ProgressBar progressBar = new ProgressBar();
+
+			Div progressBarWrapper = new Div(progressBarLabel, progressBar);
+			progressBarWrapper.setWidthFull();
+
+			HorizontalLayout r = new HorizontalLayout();
+			r.add(progressBarWrapper);
+			r.setFlexGrow(1, progressBarWrapper);
+
+			if (o.isComplete()) {
+				Throwable throwable = o.getThrowable();
+				boolean isSuccess = throwable == null;
+
+				progressBar.setMin(0f);
+				progressBar.setMax(1f);
+				progressBar.setValue(1f);
+				if (isSuccess) {
+					progressBar.addThemeVariants(ProgressBarVariant.LUMO_SUCCESS);
+					Icon icon = VaadinIcon.CHECK_CIRCLE_O.create();
+					icon.getElement().getThemeList().add("badge success pill");
+					r.add(icon);
+				} else {
+					progressBar.addThemeVariants(ProgressBarVariant.LUMO_ERROR);
+					Icon icon = VaadinIcon.CLOSE_CIRCLE_O.create();
+					icon.getElement().getThemeList().add("badge error pill");
+					r.add(icon);
+				}
+			} else {
+				progressBar.setIndeterminate(true);
+				Icon icon = VaadinIcon.STOP.create();
+				icon.getElement().getThemeList().add("badge error pill");
+				Button cancelBtn = new Button(icon);
+				r.add(cancelBtn);
+				cancelBtn.addClickListener(ev -> {
+					o.abort();
+				});
+			}
+
+			return r;
+		}).setKey("value");
+        
+        actionGrid.setDataProvider(actionTdp);
+        actionTdp.addDataProviderListener(ev -> {
+        	int count = actionTdp.getChildCount(new HierarchicalQuery<>(null, null));
+        	activeActionSpan.setText("" + count);
+        });
+        
+
+        actionSubMenu.add(actionGrid);
+
+        //actionList.add(new HorizontalLayout(new Span("Action 1"), new Button(VaadinIcon.STOP.create())));
 
         Optional<FoafOnlineAccount> user = Optional.ofNullable(userSession.getUser());
 
@@ -185,9 +269,9 @@ public class AppLayoutFacete3 extends AppLayout {
 
         subMenu.addItem("Create Account", click -> {
 //          Dialog dlg = new Dialog(new LoginForm());
-          Dialog dlg = new Dialog(new RegistrationForm());
-          dlg.open();
-      });
+            Dialog dlg = new Dialog(new RegistrationForm());
+            dlg.open();
+        });
 
         if (user.isPresent()) { //
             subMenu.addItem("Logout", click -> {
@@ -199,11 +283,11 @@ public class AppLayoutFacete3 extends AppLayout {
     public Component getAppContent(ConfigFaceteVaadin config) {
         ComponentPlugin plugin = ComponentPlugin.createWithDefaultBase(
                 appBuilder -> appBuilder
-                .parent(config.context)
-                .sources(ConfigRefresh.class)
+                        .parent(config.context)
+                        .sources(ConfigRefresh.class)
 //                .sources(ConfigSearchProviderNli.class)
 //                .sources(ConfigSearchProviderSparql.class)
-                .sources(ConfigFacetedBrowserViewCord.class));
+                        .sources(ConfigFacetedBrowserViewCord.class));
 
         VerticalLayout appContent = new VerticalLayout();
         ExplorerTabs tabs = new ExplorerTabs(plugin::newComponent);

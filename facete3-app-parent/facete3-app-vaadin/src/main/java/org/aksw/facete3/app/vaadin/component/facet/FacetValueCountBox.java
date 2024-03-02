@@ -42,7 +42,8 @@ public class FacetValueCountBox
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        grid.setDataProvider(dataProvider);
+        // grid.setDataProvider(dataProvider);
+    	mainView.setDataProvider(grid, dataProvider);
         dataProviderListenerRegistration = dataProvider.addDataProviderListener(ev -> {
             onChangeSelectedFacet();
         });

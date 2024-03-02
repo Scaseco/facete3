@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
-import com.vaadin.flow.server.ServletHelper;
+import com.vaadin.flow.server.HandlerHelper;
 import com.vaadin.flow.shared.ApplicationConstants;
 
 /**
@@ -86,7 +86,7 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
         final String parameterValue = request
                 .getParameter(ApplicationConstants.REQUEST_TYPE_PARAMETER);
         return parameterValue != null
-                && Stream.of(ServletHelper.RequestType.values()).anyMatch(
+                && Stream.of(HandlerHelper.RequestType.values()).anyMatch(
                         r -> r.getIdentifier().equals(parameterValue));
     }
 }

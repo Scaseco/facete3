@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.aksw.commons.util.time.TimeAgo;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.aksw.facete3.app.vaadin.ServiceStatus;
+import org.aksw.facete3.app.vaadin.components.sparql.wizard.SparqlConnectionWizard.GraphMode;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBasic;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBearerToken;
@@ -52,15 +53,17 @@ import com.vaadin.flow.dom.Element;
 public class SparqlEndpointForm extends FormLayout {
     protected ComboBox<ServiceStatus> serviceUrlOld = new ComboBox<>();
 
-    protected TextField serviceUrl = new TextField("Endpoint URL");
+    protected TextField serviceUrl = new TextField(); //"Endpoint URL");
 
-    protected Checkbox unionDefaultGraphMode = new Checkbox();
+    // protected Checkbox unionDefaultGraphMode = new Checkbox();
+    // protected Select<GraphMode> unionDefaultGraphMode = new Select<>();
+
     protected Select<AuthMode> authModeSelect = new Select<>();
 
-    protected TextField usernameInput = new TextField("User Name");
-    protected PasswordField passwordInput = new PasswordField("Password");
+    protected TextField usernameInput = new TextField(); //"User Name");
+    protected PasswordField passwordInput = new PasswordField(); // "Password");
 
-    protected TextField bearerTokenInput = new TextField("Bearer token");
+    protected TextField bearerTokenInput = new TextField(); //"Bearer token");
 
     protected Multimap<AuthMode, Component> authComponents = ArrayListMultimap.create();
 
@@ -85,9 +88,9 @@ public class SparqlEndpointForm extends FormLayout {
         return usernameInput.getValue();
     }
 
-    public Checkbox getUnionDefaultGraphMode() {
-        return unionDefaultGraphMode;
-    }
+//    public Checkbox getUnionDefaultGraphMode() {
+//        return unionDefaultGraphMode;
+//    }
 
     public RdfAuth getAuth() {
         AuthMode authMode = getAuthMode();
@@ -102,7 +105,11 @@ public class SparqlEndpointForm extends FormLayout {
         case BEARER_TOKEN:
             RdfAuthBearerToken bearer = ModelFactory.createDefaultModel().createResource().as(RdfAuthBearerToken.class);
             bearer.setBearerToken(getBearerToken());
+            break;
+        case NONE:
+            break;
         default:
+            // Exception?
         }
         return result;
     }
@@ -230,11 +237,11 @@ public class SparqlEndpointForm extends FormLayout {
             setColspan(formItem, 3);
         }
 
-        {
-            FormItem formItem = addFormItem(unionDefaultGraphMode, "Union default graph");
-            unionDefaultGraphMode.setWidthFull();
-            setColspan(formItem, 3);
-        }
+//        {
+//            FormItem formItem = addFormItem(unionDefaultGraphMode, "Union default graph");
+//            unionDefaultGraphMode.setWidthFull();
+//            setColspan(formItem, 3);
+//        }
 
         {
             authModeSelect.setEmptySelectionAllowed(false);

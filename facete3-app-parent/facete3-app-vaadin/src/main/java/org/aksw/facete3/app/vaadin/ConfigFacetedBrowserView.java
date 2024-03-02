@@ -21,7 +21,6 @@ import org.aksw.jenax.vaadin.label.LabelService;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +37,7 @@ import com.vaadin.flow.data.provider.InMemoryDataProvider;
  * The context also features built-in support for refreshing the data providers
  * by listening to {@link RefreshScopeRefreshedEvent} events
  *
- * The context requires an {@link RDFConnection} to function.
+ * The context requires an {@link RdfDataSource} to function.
  *
  * @author raven
  *
@@ -109,7 +108,9 @@ public class ConfigFacetedBrowserView {
             RdfDataSource dataSource,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
-            ConfigFaceteVaadin config) {
+            ConfigFaceteVaadin config,
+            TaskControlRegistryImpl taskControlRegistry
+    		) {
 
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
@@ -161,7 +162,8 @@ public class ConfigFacetedBrowserView {
             @SnippetView ViewManager viewManagerDetail,
             @DisplayLabelConfig BestLiteralConfig bestLabelConfig,
             LabelService<Node, String> labelMgr,
-            ExecutorService executorService
+            ExecutorService executorService,
+            TaskControlRegistryImpl taskControlRegistry
     ) {
         return new FacetedBrowserView(
                 dataSource,
@@ -177,7 +179,8 @@ public class ConfigFacetedBrowserView {
                 viewManagerDetail,
                 bestLabelConfig,
                 labelMgr,
-                executorService);
+                executorService,
+                taskControlRegistry);
     }
 
     @Bean

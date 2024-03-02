@@ -3,11 +3,13 @@ package org.aksw.facete3.app.vaadin;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
+import org.aksw.jena_sparql_api.algebra.transform.TransformOpDatasetNamesToOpGraph;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
@@ -19,8 +21,10 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
+import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionUtils;
 import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
@@ -34,7 +38,9 @@ import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchableImpl;
 import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -42,8 +48,8 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Transformer;
-import org.apache.jena.sparql.algebra.optimize.TransformOpDatasetNamesToOpGraph;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +109,20 @@ public class ConfigEndpoint {
         Resource r = opHolder.get();
         Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
         RdfDataSource result = createDataSource(op);
+
+        if (false) {
+            Query q = QueryFactory.create("SELECT ?g { GRAPH ?g { } }");
+            org.apache.jena.sparql.algebra.Op algebra = Algebra.compile(q);
+            org.apache.jena.sparql.algebra.Op quad = Algebra.toQuadForm(algebra);
+            System.err.println(quad);
+
+            RdfDataSources.compute(result, conn -> {
+                List<Node> list = ServiceUtils.fetchList(conn.query("SELECT ?g { GRAPH ?g { } }"), Vars.g);
+                System.err.println(list);
+                return null;
+            });
+        }
+
 //        if (dataRef.getServiceUrl() == null) {
 //            result = RDFConnectionFactory.connect(DatasetFactory.create());
 //        } else {
@@ -232,11 +252,6 @@ public class ConfigEndpoint {
                         logger.info("Sending query: " + query);
                         return query;
                     });
-
-                conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
-                        query -> QueryUtils.applyOpTransform(query,
-                                xop -> Transformer.transform(new TransformExpandAggCountDistinct(), xop)));
-
                 return conn;
             };
         return result;

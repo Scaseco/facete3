@@ -25,6 +25,7 @@ import org.aksw.facete3.app.vaadin.ConfigFacetedBrowserView;
 import org.aksw.facete3.app.vaadin.Facete3Wrapper;
 import org.aksw.facete3.app.vaadin.ResourceHolder;
 import org.aksw.facete3.app.vaadin.SearchSensitiveRDFConnectionTransform;
+import org.aksw.facete3.app.vaadin.TaskControlRegistryImpl;
 import org.aksw.facete3.app.vaadin.component.facet.FacetValueCountBox;
 import org.aksw.facete3.app.vaadin.components.sparql.wizard.SparqlConnectionWizard;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
@@ -32,15 +33,14 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewFactory;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.providers.FacetCountProvider;
 import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
-import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
-import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
+import org.aksw.jena_sparql_api.vaadin.util.GridLike;
+import org.aksw.jena_sparql_api.vaadin.util.GridWrapperBase;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinStyleUtils;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
@@ -61,6 +61,8 @@ import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
 import org.aksw.vaadin.common.component.tab.TabSheet;
+import org.aksw.vaadin.common.provider.util.DataProviderUtils;
+import org.aksw.vaadin.common.provider.util.DataProviderWithTaskControl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -87,6 +89,7 @@ import com.google.common.graph.Traverser;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
@@ -96,6 +99,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.InMemoryDataProvider;
 import com.vaadin.flow.data.provider.Query;
 
@@ -137,6 +141,8 @@ public class FacetedBrowserView
     protected InMemoryDataProvider<SearchPlugin> searchPluginDataProvider;
     protected SearchPlugin activeSearchPlugin;
 
+    protected ExecutorService executorService;
+    protected TaskControlRegistryImpl taskControlRegistry;
 //    @Autowired(required = false)
 //    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform = null;
 
@@ -159,6 +165,14 @@ public class FacetedBrowserView
     public Facete3Wrapper getFacetedSearchSession() {
         return facete3;
     }
+    
+    public ExecutorService getExecutorService() {
+    	return executorService;
+    }
+    
+    public TaskControlRegistryImpl getTaskControlRegistry() {
+    	return taskControlRegistry;
+    }
 
     public FacetedBrowserView(
             // RDFConnection baseDataConnection,
@@ -176,10 +190,13 @@ public class FacetedBrowserView
             ViewManager viewManagerDetails,
             BestLiteralConfig bestLabelConfig,
             LabelService<Node, String> labelMgr,
-            ExecutorService executorService
+            ExecutorService executorService,
+            TaskControlRegistryImpl taskControlRegistry
             ) {
 
         this.labelMgr = labelMgr;
+        this.executorService = executorService;
+        this.taskControlRegistry = taskControlRegistry;
 
         ViewFactory dftViewFactory = new ViewFactory() {
 
@@ -362,8 +379,8 @@ public class FacetedBrowserView
             public void onWizardCompleted() {
                 ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
 
-                Boolean unionDefaultGraphMode = sparqlEndpointForm.getUnionDefaultGraphMode().getValue();
-                Op op = getConjureSpecification(true, unionDefaultGraphMode);
+                Boolean unionDefaultGraphMode = isUnionDefaultGraphMode(); // sparqlEndpointForm.getUnionDefaultGraphMode().getValue();
+                Op op = getConjureSpecification(true, unionDefaultGraphMode, true);
 
 //                if (input.getUnionDefaultGraphMode().isEnabled()) {
 //                    op = OpUnionDefaultGraph.create(op);
@@ -395,36 +412,36 @@ public class FacetedBrowserView
         });
 
         // layout.add(input);
-        Button applyBtn = new Button("Apply");
-        // TODO fix or remove apply button
-        // Hack to disable the apply button
-        if (System.getProperty("UI.DISABLE.APPLY.BUTTON") == null) {
-            layout.add(applyBtn);
-        }
-        applyBtn.addClickListener(event -> {
-            String urlStr = input.getServiceUrl();
-
-
-            ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
-
-            RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
-            dataRef.setServiceUrl(urlStr);
-
-            Op op = OpDataRefResource.from(dataRef);
-
-            if (input.getUnionDefaultGraphMode().isEnabled()) {
-                op = OpUnionDefaultGraph.create(op);
-            }
-
-            opHolder.set(op);
-//            System.out.println("INVOKING REFRESH");
-//            System.out.println("Given cxt:\n" + toString(cxt));
-//            System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
-            refreshAllNew();
-
-            // TODO Now all dataProviders need to refresh
-            dialog.close();
-        });
+//        Button applyBtn = new Button("Apply");
+//        // TODO fix or remove apply button
+//        // Hack to disable the apply button
+//        if (System.getProperty("UI.DISABLE.APPLY.BUTTON") == null) {
+//            layout.add(applyBtn);
+//        }
+//        applyBtn.addClickListener(event -> {
+//            String urlStr = input.getServiceUrl();
+//
+//
+//            ResourceHolder opHolder = cxt.getBean(ResourceHolder.class);
+//
+//            RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
+//            dataRef.setServiceUrl(urlStr);
+//
+//            Op op = OpDataRefResource.from(dataRef);
+//
+//            if (input.getUnionDefaultGraphMode().isEnabled()) {
+//                op = OpUnionDefaultGraph.create(op);
+//            }
+//
+//            opHolder.set(op);
+////            System.out.println("INVOKING REFRESH");
+////            System.out.println("Given cxt:\n" + toString(cxt));
+////            System.out.println("Updated dataRef " + System.identityHashCode(dataRef));
+//            refreshAllNew();
+//
+//            // TODO Now all dataProviders need to refresh
+//            dialog.close();
+//        });
 
 
         dialog.add(layout);
@@ -658,6 +675,8 @@ public class FacetedBrowserView
     public void addCustomFacet(FacetDirNode facetDirNode, Node facet) {
         FacetValueCountDataProvider boxData = new FacetValueCountDataProvider(facete3, labelService);
         FacetValueCountBox box = new FacetValueCountBox(this, boxData);
+        VaadinStyleUtils.setResizeVertical(box.getStyle());
+
         boxData.setFacetDirNode(facetDirNode);
         boxData.setSelectedFacet(facet);
         customFacetsPanel.add(box);
@@ -833,5 +852,14 @@ public class FacetedBrowserView
 //        itemComponent.refresh();
 //        resourceComponent.refesh();
 //        constraintsComponent.refresh();
+    }
+    
+    public <T> void setDataProvider(Grid<T> grid, DataProvider<T, ?> dataProvider) {
+    	setDataProvider(new GridWrapperBase<>(grid), dataProvider);
+    }
+
+    public <T> void setDataProvider(GridLike<T> grid, DataProvider<T, ?> dataProvider) {
+        grid.setDataProvider(DataProviderWithTaskControl.wrap(DataProviderUtils.wrapWithErrorHandler(dataProvider), getTaskControlRegistry()));
+        grid.getDataCommunicator().enablePushUpdates(executorService);
     }
 }

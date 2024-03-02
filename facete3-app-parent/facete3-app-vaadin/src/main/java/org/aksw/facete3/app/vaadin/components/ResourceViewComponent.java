@@ -10,6 +10,7 @@ import org.aksw.commons.util.history.History;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBase;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBinding;
+import org.aksw.jena_sparql_api.vaadin.util.Grid2;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
@@ -57,7 +58,7 @@ public class ResourceViewComponent extends VerticalLayout {
     private Span subjectIdSpan;
     private Span subjectLabelSpan;
     private Node subjectNode;
-    private Grid<Entry<Binding, Binding>> grid;
+    private Grid2<Entry<Binding, Binding>> grid;
     // private HashMap<Object,List<Property>> objectToProperty = new HashMap<>();
 
     private Button backBtn = new Button(VaadinIcon.ARROW_LEFT.create());
@@ -158,7 +159,7 @@ public class ResourceViewComponent extends VerticalLayout {
         DataProvider<Binding, Expr> tmpProvider = VaadinSparqlUtils.wrapDataProviderWithFilter(coreProvider);
 
 
-        grid = new Grid<>();
+        grid = new Grid2<>();
         // grid.setSortableColumns(PREDICATE_VAR.getName(), OBJECT_VAR.getName());
         grid.setMultiSort(true);
         grid.setDataProvider(DataProviderReduce.of(tmpProvider));
