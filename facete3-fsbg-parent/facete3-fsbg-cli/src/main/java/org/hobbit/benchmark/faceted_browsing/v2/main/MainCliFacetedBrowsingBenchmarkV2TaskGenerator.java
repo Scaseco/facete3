@@ -19,9 +19,10 @@ import java.util.stream.Collectors;
 import org.aksw.commons.util.string.StringUtils;
 import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactory;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -32,7 +33,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -135,7 +135,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
             ScenarioConfig config = TaskGenerator.extractScenarioConfig(configUri);
 
 
-            RDFConnectionEx rawConnEx;
+            RdfDataSource rdfDataSource;
 
             List<String> nonOptionArgs = cmMain.getNonOptionArgs();
             String sparqEndpoint = cmMain.getSparqlEndpoint();
@@ -256,16 +256,14 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
                 @SuppressWarnings("resource")
                 RDFConnection rawConn = RDFConnectionFactoryEx.connect(sparqlEndpoint, datasetDescription);
 
-                rawConnEx = RDFConnectionFactoryEx.wrap(
-                        rawConn,
-                        metadata);
+                rdfDataSource = () -> RDFConnectionFactoryEx.wrap(rawConn, metadata);
 
             } else {
 
                 DatasetDescription datasetDescription = new DatasetDescription();
                 datasetDescription.addAllDefaultGraphURIs(cmMain.getDefaultGraphUris());
 
-                rawConnEx = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription);
+                rdfDataSource = () -> RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription);
             }
 
             String dataSummaryUri = cmMain.getPathFindingDataSummaryUri();
@@ -277,17 +275,17 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
             }
 
 
-            RDFConnectionEx conn = rawConnEx;
+            // RDFConnectionEx conn = rawConnEx;
 
 
             Random random = new Random(0);
 
             // One time auto config based on available data
-            TaskGenerator taskGenerator = TaskGenerator.autoConfigure(config, random, conn, dataSummaryModel, true);
+            TaskGenerator taskGenerator = TaskGenerator.autoConfigure(config, random, rdfDataSource, dataSummaryModel, true);
 
             // Now wrap the scenario supplier with the injection of sparql update statements
 
-            taskGenerator.setTaskPostProcessor(task -> annotateTaskWithReferenceResult(task, conn));
+            taskGenerator.setTaskPostProcessor(task -> annotateTaskWithReferenceResult(task, rdfDataSource.asQef()));
 
             Callable<SparqlTaskResource> querySupplier = taskGenerator.createScenarioQuerySupplier();
             // TODO How can we simplify the interleaves of updates?
@@ -360,7 +358,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 
 
                     try {
-                        annotateTaskWithReferenceResult(tmp, conn);
+                        annotateTaskWithReferenceResult(tmp, rdfDataSource.asQef());
                     } catch (QueryExceptionHTTP exceptionHTTP) {
                         logger.warn("Query execution failed: {}", exceptionHTTP.toString());
                     }
@@ -416,7 +414,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
     }
 
 
-    public static Resource annotateTaskWithReferenceResult(Resource task, SparqlQueryConnection refConn) {
+    public static Resource annotateTaskWithReferenceResult(Resource task, QueryExecutionFactory refConn) {
 
         //logger.info("Generated task: " + task);
 
@@ -424,7 +422,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
 
         // The task generation is not complete without the reference result
         // TODO Reference result should be computed against TDB
-        try(QueryExecution qe = refConn.query(queryStr)) {
+        try(QueryExecution qe = refConn.createQueryExecution(queryStr)) {
             // FIXME Timeout was removed with jena 5
             // qe.setTimeout(30, TimeUnit.SECONDS);
 

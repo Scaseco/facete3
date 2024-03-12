@@ -32,9 +32,9 @@ import org.aksw.jenax.arq.util.expr.ExprUtils;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.aksw.jenax.sparql.fragment.impl.FragmentUtils;
 import org.apache.commons.math3.analysis.function.Gaussian;
@@ -100,9 +100,8 @@ public class MainCliDiceBenchmark {
         datasetDescription.addAllDefaultGraphURIs(cmMain.getDefaultGraphUris());
 
 
-        try(RDFConnectionEx conn = RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription)) {
-            allocateAllowedPredicates(conn);
-        }
+        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription);
+        allocateAllowedPredicates(dataSource);
     }
 
 
@@ -394,7 +393,7 @@ public class MainCliDiceBenchmark {
     }
 
 
-    public static void allocateAllowedPredicates(RDFConnectionEx conn) throws Exception {
+    public static void allocateAllowedPredicates(RdfDataSource dataSource) throws Exception {
 
 //		double f = 1000.0;
 //		Function<Double, Double> pmf = new Gaussian(1, 5000, 500)::value;
@@ -414,12 +413,12 @@ public class MainCliDiceBenchmark {
 
 
 
-        FacetedQuery fq = FacetedQueryImpl.create(conn);
+        FacetedQuery fq = FacetedQueryImpl.create(dataSource.getConnection());
 
         Entry<Node, Query> facetFocusCountQuery = fq.focus().fwd().facetFocusCounts(false).toConstructQuery();
         System.out.println("Facetcount query: " + facetFocusCountQuery);
         List<FacetCount> facetFocusCounts = new RdfWorkflowSpec()
-                .execFlowable(conn, facetFocusCountQuery)
+                .execFlowable(dataSource, facetFocusCountQuery)
                 .cache(true)
                 .getModel()
                 .map(r -> r.as(FacetCount.class))
@@ -431,7 +430,7 @@ public class MainCliDiceBenchmark {
         Entry<Node, Query> fcq = fq.focus().fwd().facetCounts().toConstructQuery();
         logger.debug("Facetcount query: " + fcq);
         Flowable<FacetCount> facetCounts = new RdfWorkflowSpec()
-                .execFlowable(conn,fcq)
+                .execFlowable(dataSource,fcq)
                 .cache(true)
                 .getModel()
                 .map(r -> r.as(FacetCount.class));
@@ -449,7 +448,7 @@ public class MainCliDiceBenchmark {
         logger.info("Computing facet value counts");
 
         List<FacetValueCount> facetValueCounts = new RdfWorkflowSpec()
-            .execFlowable(conn, facetValueCountQuery)
+            .execFlowable(dataSource, facetValueCountQuery)
             .cache(true)
             .getModel()
             .map(r -> r.as(FacetValueCount.class))
@@ -531,7 +530,7 @@ public class MainCliDiceBenchmark {
         q = QueryUtils.rewrite(q, AlgebraUtils.createDefaultRewriter()::rewrite);
 
         System.out.println(q);
-        Integer count = ServiceUtils.fetchInteger(conn.query(q), Vars.c);
+        Integer count = ServiceUtils.fetchInteger(dataSource.asQef().createQueryExecution(q), Vars.c);
         System.out.println("Counted: " + count);
 
     //	for(Entry<Long, Collectio> e : ipc.entrySet()) {

@@ -24,8 +24,8 @@ import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jenax.arq.util.node.ComparableNodeValue;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.path.SimplePath;
@@ -79,12 +79,12 @@ public class TestFacetedQuery2 {
 
     protected void load(String uri) {
         Model model = RDFDataMgr.loadModel(uri);
-        RDFConnectionEx conn = RDFConnectionFactoryEx.wrap(
+        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(
             RDFConnectionFactory.connect(DatasetFactory.create(model)), null);
 
         try {
             Random random = new Random(0);
-            taskGenerator = TaskGenerator.autoConfigure(null, random, conn, false);
+            taskGenerator = TaskGenerator.autoConfigure(null, random, dataSource, false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -450,8 +450,8 @@ public class TestFacetedQuery2 {
                 "        <http://www.example.org/population>  ?v_3 ;\n" +
                 "        <http://www.example.org/inhabitants>  ?v_4 .\n" +
                 "  ?v_4  <http://xmlns.com/foaf/0.1/age>  ?v_5\n" +
-                "  FILTER ( ?v_3 >= 543825 )\n" +
                 "  FILTER ( ?v_5 <= 33 )\n" +
+                "  FILTER ( ?v_3 >= 543825 )\n" +
                 "}", getQueryPattern(node));
     }
 
@@ -483,8 +483,8 @@ public class TestFacetedQuery2 {
             taskGenerator.modifyNumericConstraintRandom(hlFacetConstraints, numericConstraints, false, true, true);
         }
         assertEquals("{ ?v_1  <http://www.example.org/population>  ?v_2\n" +
-                "  FILTER ( ?v_2 >= 543825 )\n" +
                 "  FILTER ( ?v_2 <= 80000000 )\n" +
+                "  FILTER ( ?v_2 >= 543825 )\n" +
                 "}", getQueryPattern(fq.root()));
 
     }
@@ -512,8 +512,8 @@ public class TestFacetedQuery2 {
                 "  ?v_4  <http://www.example.org/inhabitants>  ?v_3 .\n" +
                 "  ?v_5  <http://xmlns.com/foaf/0.1/based_near>  ?v_4 ;\n" +
                 "        <http://xmlns.com/foaf/0.1/age>  ?v_6\n" +
-                "  FILTER ( ?v_6 >= 47 )\n" +
                 "  FILTER ( ?v_6 <= 60 )\n" +
+                "  FILTER ( ?v_6 >= 47 )\n" +
                 "}", getQueryPattern(node));
         final boolean appliedCp8 = taskGenerator.applyCp8(node);
 
@@ -522,8 +522,8 @@ public class TestFacetedQuery2 {
                 "  ?v_4  <http://www.example.org/inhabitants>  ?v_3 .\n" +
                 "  ?v_5  <http://xmlns.com/foaf/0.1/based_near>  ?v_4 ;\n" +
                 "        <http://xmlns.com/foaf/0.1/age>  ?v_6\n" +
-                "  FILTER ( ?v_6 >= 47 )\n" +
                 "  FILTER ( ?v_6 <= 60 )\n" +
+                "  FILTER ( ?v_6 >= 47 )\n" +
                 "}", getQueryPattern(node));
 
     }
@@ -565,15 +565,15 @@ public class TestFacetedQuery2 {
         taskGenerator.applyCp6(node);
 
         assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2\n" +
-                "  FILTER ( ?v_2 >= 47 )\n" +
                 "  FILTER ( ?v_2 <= 60 )\n" +
+                "  FILTER ( ?v_2 >= 47 )\n" +
                 "}", getQueryPattern(node));
 
         taskGenerator.applyCp6(node);
 
         assertEquals("{ ?v_1  <http://xmlns.com/foaf/0.1/age>  ?v_2\n" +
-                "  FILTER ( ?v_2 <= 47 )\n" +
                 "  FILTER ( ?v_2 >= 33 )\n" +
+                "  FILTER ( ?v_2 <= 47 )\n" +
                 "}", getQueryPattern(node));
 
         taskGenerator.applyCp6(node);

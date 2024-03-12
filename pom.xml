@@ -344,7 +344,7 @@
 			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
-				<version>4.12</version>
+				<version>4.13.2</version>
 			</dependency>
 
 			<dependency>
@@ -418,6 +418,7 @@
 						<!-- <source>${maven.compiler.source}</source>
 						<target>${maven.compiler.target}</target> -->
 						<release>${maven.compiler.release}</release>
+						<encoding>${project.build.sourceEncoding}</encoding>
 						<compilerArgument>-proc:none</compilerArgument>
 						<!--
 						https://discourse.hibernate.org/t/metamodel-usage-with-maven-and-intellij/487 -->

@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.accessors.SingleValuedAccessor;
 import org.aksw.facete3.app.vaadin.ConfigEndpoint;
 import org.aksw.facete3.app.vaadin.components.SparqlEndpointForm;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
@@ -34,9 +33,11 @@ import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.exec.http.QuerySendMode;
 
+import com.mlottmann.vstepper.DefaultStepHeader;
 import com.mlottmann.vstepper.Step;
 import com.mlottmann.vstepper.VStepper;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
@@ -44,7 +45,6 @@ import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -64,7 +64,6 @@ public class SparqlConnectionWizard
 
     protected ExecutorService executorService;
 
-
     Var GRAPH_VAR = Var.alloc("Graph");
     Var TYPE_VAR = Var.alloc("Type");
 
@@ -75,7 +74,6 @@ public class SparqlConnectionWizard
 
     /** Implement this method to handle completion of the wizard */
     public void onWizardCompleted() {
-
     }
 
     /**
@@ -149,11 +147,11 @@ public class SparqlConnectionWizard
         graphGrid = new Grid2<>(QuerySolution.class);
         typeGrid = new Grid2<>(QuerySolution.class);
 
-        this.addStep(createStepSelectEndpoint(new Label("Sparql Endpoint"), sparqlEndpointForm));
-        this.addStep(createStepPolyfills(new Label("Polyfills")));
-        this.addStep(createStepSelectGraphs(new Label("Graphs")));
-        this.addStep(createStepSelectDatasetId(new Label("DatasetId")));
-        this.addStep(createStepSelectTypes(new Label("Types")));
+        this.addStep(createStepSelectEndpoint(new DefaultStepHeader(1, "Sparql Endpoint"), sparqlEndpointForm));
+        this.addStep(createStepPolyfills(new DefaultStepHeader(2, "Polyfills")));
+        this.addStep(createStepSelectGraphs(new DefaultStepHeader(3, "Graphs")));
+        this.addStep(createStepSelectDatasetId(new DefaultStepHeader(4, "DatasetId")));
+        this.addStep(createStepSelectTypes(new DefaultStepHeader(5, "Types")));
         // this.addStep(createStep(new Label("Step 3"), new Label("Step 3")));
         // return customSteps;
     }
@@ -229,6 +227,12 @@ public class SparqlConnectionWizard
 
         return new Step(header, layout) {
             @Override protected void onEnter() {
+            	UI ui = UI.getCurrent();
+
+            	// TODO Validate the endpoint
+            	// Show a running task action. If cancelled, show a button to retry.
+            	
+            	
                 Op dsOp = getConjureSpecification(true, false, false);
                 RdfDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
                 List<Selectable<Suggestion<String>>> suggestions = RdfDataSourcePolyfill.suggestPolyfills(dataSource).stream()

@@ -17,12 +17,15 @@ import com.vaadin.flow.shared.Registration;
 public class TaskControlRegistryImpl
 	implements TaskControlRegistry
 {
+	public static long DFT_AUTO_CLEANUP_DELAY = 10_000;
+	
 	// protected TreeData<TaskControl<?>> taskTree = new TreeData<>();
 	protected TreeDataProvider<TaskControl<?>> treeDataProvider =  new TreeDataProvider<>(new TreeData<>());
 	protected List<Consumer<TaskControl<?>>> errorListeners = new ArrayList<>(); 
 	
 	protected UI ui;
 	
+	protected long autoCleanUpDelay = DFT_AUTO_CLEANUP_DELAY;
 	protected Timer timer = new Timer(true);
 	
 	/** Return the tree data of the task tree */
@@ -37,6 +40,11 @@ public class TaskControlRegistryImpl
 		this.ui = ui;
 	}
 	
+	/** Delay after which to auto-remove completed tasks */
+	public void setAutoCleanUpDelay(long autoCleanUpDelay) {
+		this.autoCleanUpDelay = autoCleanUpDelay;
+	}
+	
 	@Override
 	public void register(TaskControl<?> taskControl) {
 		if (ui != null) {
@@ -45,6 +53,12 @@ public class TaskControlRegistryImpl
 				// NotificationUtils.success("Added a task: " + taskControl.getName());
 				treeDataProvider.refreshAll();
 				taskControl.whenComplete(throwable -> {
+					// Refresh status
+					ui.access(() -> {
+						treeDataProvider.refreshAll();
+					});
+					
+					// Schedule removal
 					timer.schedule(new TimerTask() {
 						@Override
 						public void run() {
@@ -53,7 +67,7 @@ public class TaskControlRegistryImpl
 								treeDataProvider.refreshAll();
 							});
 						}
-					}, 5000);
+					}, autoCleanUpDelay);
 					//if (throwable != null) {
 						// XXX Schedule removal after e.g. 5 seconds
 					// }

@@ -1,6 +1,9 @@
 package org.aksw.facete3.app.vaadin;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.security.PermitAll;
 
@@ -9,6 +12,7 @@ import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.aksw.facete3.app.vaadin.session.UserSession;
 import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
 import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
+import org.aksw.vaadin.common.component.tab.RouteTabs;
 import org.aksw.vaadin.common.provider.util.TaskControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -16,6 +20,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
@@ -36,10 +41,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.progressbar.ProgressBarVariant;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
-import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
@@ -61,6 +66,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @CssImport(value = "./styles/vaadin-grid-tree-toggle-styles.css", themeFor = "vaadin-grid-tree-toggle")
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
+// @CssImport(value = "./styles/vstepper-styles.css", themeFor = "v-stepper")
 //@Theme(themeClass = Lumo.class)
 @Theme(value = Lumo.class)
 @PermitAll
@@ -73,10 +79,10 @@ public class AppLayoutFacete3 extends AppLayout {
     // beans are passed to components
 //    static { JenaSystem.init(); }
 
-
-    protected static final long serialVersionUID = 7851055480070074549L;
+    protected static final long serialVersionUID = 1;
 //    protected Config config;
 
+    protected DrawerToggle drawerToggle;
 
     protected MenuBar menuBar;
     protected UserSession userSession;
@@ -96,6 +102,10 @@ public class AppLayoutFacete3 extends AppLayout {
         Facete3Wrapper.initJena();
 
         HorizontalLayout navbarLayout = new HorizontalLayout();
+        
+        drawerToggle = new DrawerToggle();
+        // navbarLayout.add(drawerToggle);
+        
         navbarLayout.setWidthFull();
         navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
@@ -161,25 +171,58 @@ public class AppLayoutFacete3 extends AppLayout {
 ////            input.focus();
 //        });
 
-        addToNavbar(navbarLayout);
+        addToNavbar(drawerToggle, navbarLayout);
         setContent(getAppContent(config));
         if (System.getProperty("UI.DISABLE.NAVBAR") != null) {
             navbarLayout.setVisible(false);
         }
+        
+        addToDrawer(getTabs());
+        setDrawerOpened(false);
     }
 
+    private Tabs getTabs() {
+
+        RouteTabs tabs = new RouteTabs();
+        tabs.add(
+                RouteTabs.newTab(VaadinIcon.HOME, "Home", AppLayoutFacete3.class)
+//                createTab(VaadinIcon.EYE, "Browse", BrowseRepoView.class),
+//                createTab(VaadinIcon.CONNECT, "Connections", ConnectionMgmtView.class),
+//                createTab(VaadinIcon.DATABASE, "Catalogs", CatalogMgmtView.class)
+        );
+        tabs.setOrientation(Tabs.Orientation.VERTICAL);
+    //  Tabs tabs = new Tabs();
+    //  tabs.add(
+    //    createTab(VaadinIcon.HOME, "Home", DmanLandingPageView.class),
+    //    createTab(VaadinIcon.FOLDER_ADD, "New Data Project", NewDataProjectView.class),
+    //    createTab(VaadinIcon.EYE, "Browse", BrowseRepoView.class),
+    //    createTab(VaadinIcon.CONNECT, "Connections", ConnectionMgmtView.class)
+    //  );
+    //  tabs.setOrientation(Tabs.Orientation.VERTICAL);
+      return tabs;
+    }
+    
+    
     protected void refreshMenuBar() {
         menuBar.removeAll();
         menuBar.setOpenOnHover(true);
 
         Span actionMenuArea = new Span();
-        actionMenuArea.add(new Button(VaadinIcon.PROGRESSBAR.create()));
+        Button progressBarBtn = new Button(VaadinIcon.PROGRESSBAR.create());
         
-        Span activeActionSpan = new Span();
-        activeActionSpan.getElement().getThemeList().add("badge pill");
-        actionMenuArea.add(activeActionSpan);
+        Span taskCountPendingSpan = new Span();
+        taskCountPendingSpan.getElement().getThemeList().add("badge pill");
+
+        Span taskCountSuccessSpan = new Span();
+        taskCountSuccessSpan.getElement().getThemeList().add("badge success pill");
+
+        Span taskCountErrorSpan = new Span();
+        taskCountErrorSpan.getElement().getThemeList().add("badge error pill");
+
+        actionMenuArea.add(progressBarBtn, taskCountPendingSpan, taskCountSuccessSpan, taskCountErrorSpan);
 
         MenuItem actionMenu = menuBar.addItem(actionMenuArea);
+        
         SubMenu actionSubMenu = actionMenu.getSubMenu();
 
         HierarchicalDataProvider<TaskControl<?>, ?> actionTdp = taskControlRegistry.getTreeDataProvider();
@@ -236,8 +279,25 @@ public class AppLayoutFacete3 extends AppLayout {
         
         actionGrid.setDataProvider(actionTdp);
         actionTdp.addDataProviderListener(ev -> {
-        	int count = actionTdp.getChildCount(new HierarchicalQuery<>(null, null));
-        	activeActionSpan.setText("" + count);
+        	// pending success error
+        	long[] pse = {0, 0, 0};
+        	
+        	try (Stream<TaskControl<?>> stream = actionTdp.fetchChildren(new HierarchicalQuery<>(null, null))) {        		
+        		List<TaskControl<?>> tasks = stream.collect(Collectors.toList());
+        		for (TaskControl<?> task: tasks) {
+        			int classify = !task.isComplete() ? 0 : task.getThrowable() == null ? 1 : 2;
+        			++pse[classify];
+        		}
+        	}
+        	
+        	taskCountPendingSpan.setVisible(pse[0] != 0);
+        	taskCountPendingSpan.setText(Long.toString(pse[0]));
+
+        	taskCountSuccessSpan.setVisible(pse[1] != 0);
+        	taskCountSuccessSpan.setText(Long.toString(pse[1]));
+
+        	taskCountErrorSpan.setVisible(pse[2] != 0);
+        	taskCountErrorSpan.setText(Long.toString(pse[2]));
         });
         
 

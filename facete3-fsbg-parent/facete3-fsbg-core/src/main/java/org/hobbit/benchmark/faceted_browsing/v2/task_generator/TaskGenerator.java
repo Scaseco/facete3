@@ -62,6 +62,7 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.dataaccess.rx.MapFromBinaryRelation;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
@@ -135,7 +136,7 @@ public class TaskGenerator {
 
     protected List<SetSummary> numericProperties;
 
-    protected RDFConnection conn;
+    protected RdfDataSource conn;
     protected ConceptPathFinder conceptPathFinder;
     protected Random rand;
     protected Random pseudoRandom;
@@ -154,7 +155,7 @@ public class TaskGenerator {
 
     protected static Duration cpTimeout = Duration.ofSeconds(30);
 
-    public TaskGenerator(ScenarioConfig scenarioTemplate, Random random, RDFConnection conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
+    public TaskGenerator(ScenarioConfig scenarioTemplate, Random random, RdfDataSource conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
         this.scenarioTemplate = scenarioTemplate;
         this.conn = conn;
         this.numericProperties = numericProperties;
@@ -309,8 +310,8 @@ public class TaskGenerator {
         return querySupplier;
     }
 
-    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RDFConnectionEx conn, boolean useCache) throws Exception {
-        TaskGenerator result = autoConfigure(config, random, conn, null, useCache);
+    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RdfDataSource dataSource, boolean useCache) throws Exception {
+        TaskGenerator result = autoConfigure(config, random, dataSource, null, useCache);
         return result;
     }
 
@@ -358,7 +359,7 @@ public class TaskGenerator {
      * @param dataSummary
      * @return
      */
-    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RDFConnectionEx conn, Model dataSummary, boolean useCache) throws Exception {
+    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RdfDataSource dataSource, Model dataSummary, boolean useCache) throws Exception {
 
         if(config == null) {
             config = extractScenarioConfig("config-all.ttl");
@@ -366,7 +367,7 @@ public class TaskGenerator {
 
         logger.info("Starting analyzing numeric properties...");
         Model model = new RdfWorkflowSpec()
-                .deriveDatasetWithSparql(conn, "analyze-numeric-properties.sparql")
+                .deriveDatasetWithSparql(dataSource, "analyze-numeric-properties.sparql")
                 .cache(useCache)
                 .getModel();
 
@@ -400,8 +401,8 @@ public class TaskGenerator {
 
             logger.info("Creating path finding data summary");
 
-             dataSummary = new RdfWorkflowSpec()
-                .deriveDatasetWithFunction(conn, "path-finding-summary", () -> system.computeDataSummary(conn).blockingGet())
+            dataSummary = new RdfWorkflowSpec()
+                .deriveDatasetWithFunction(dataSource, "path-finding-summary", () -> system.computeDataSummary(dataSource).blockingGet())
                 .cache(useCache)
                 .getModel();
                 logger.info("Created path finding data summary");
@@ -428,7 +429,7 @@ public class TaskGenerator {
         // set its attributes and eventually build the path finder.
         ConceptPathFinder pathFinder = system.newPathFinderBuilder()
                 .setDataSummary(dataSummary)
-                .setDataConnection(conn)
+                .setDataSource(dataSource)
                 .setShortestPathsOnly(false)
                 // Skip path with immediate forward / backward traversals (or vice versa) on the same node
                 .addPathValidator(TaskGenerator::rejectZigZagPath)
@@ -438,7 +439,7 @@ public class TaskGenerator {
 //		System.out.println("Properties: " + DatasetAnalyzerRegistry.analyzeNumericProperties(conn).toList().blockingGet());
         //Model configModel = RDFDataMgr.loadModel(config);
 
-        TaskGenerator result = new TaskGenerator(config, random, conn, numericProperties, pathFinder);
+        TaskGenerator result = new TaskGenerator(config, random, dataSource, numericProperties, pathFinder);
         return result;
     }
 

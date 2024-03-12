@@ -16,8 +16,8 @@ import org.aksw.facete.v3.impl.FacetedQueryImpl;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.arq.util.triple.DeltaWithFixedIterator;
-import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.aksw.jenax.sparql.query.rx.SparqlRx;
@@ -109,11 +109,11 @@ public class MainFacetedQueryApi {
 //						.create()
 //						), null, null);
 
-        RDFConnectionEx conn = RDFConnectionFactoryEx.wrap(coreConn, null);
+        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(coreConn, null);
 
         Delta delta = new DeltaWithFixedIterator(m.getGraph());
         Model model = ModelFactory.createModelForGraph(delta);
-        FacetedQueryResource fq = FacetedQueryImpl.create(model, conn);
+        FacetedQueryResource fq = FacetedQueryImpl.create(model, dataSource.getConnection());
 
         if(false) {
 
@@ -144,7 +144,7 @@ public class MainFacetedQueryApi {
         }
 
         SparqlRx.execSelectRaw(() ->
-            conn.query("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
+            dataSource.asQef().createQueryExecution("" + ConceptUtils.createQueryList(HierarchyCoreOnDemand.createConceptForRoots(PathFactory.pathLink(RDFS.subClassOf.asNode())))))
             .toList().blockingGet().forEach(x -> System.out.println("Reverse Root: " + x));
 
 
@@ -152,12 +152,12 @@ public class MainFacetedQueryApi {
 
         System.out.println("Done listing roots");
         fq
-            .connection(conn)
+            .dataSource(dataSource)
             .baseConcept(Concept.create("?s a <http://www.example.org/ThingA>", "s"));
 
         // One time auto config based on available data
         Random random = new Random(0);
-        TaskGenerator taskGenerator = TaskGenerator.autoConfigure(null, random, conn, false);
+        TaskGenerator taskGenerator = TaskGenerator.autoConfigure(null, random, dataSource, false);
 
         // Now wrap the scenario supplier with the injection of sparql update statements
 

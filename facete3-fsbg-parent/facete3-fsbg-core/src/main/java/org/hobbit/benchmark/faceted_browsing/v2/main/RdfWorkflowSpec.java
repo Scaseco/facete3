@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrRx;
 import org.aksw.jenax.sparql.query.rx.SparqlRx;
 import org.aksw.jenax.stmt.core.SparqlStmtMgr;
@@ -144,8 +145,12 @@ class ModelCreationImpl<T>
      * @param conn
      * @return
      */
-    public static String deriveDatasetIri(RDFConnectionEx conn) {
-        RDFConnectionMetaData metadata = conn.getMetaData();
+    public static String deriveDatasetIri(RdfDataSource dataSource) {
+        RDFConnectionMetaData metadata;
+        try (RDFConnection conn = dataSource.getConnection()) {
+            RDFConnectionEx connEx = (RDFConnectionEx)conn;
+            metadata = connEx.getMetaData();
+        }
 
         Resource dataset = Iterables.getFirst(metadata.getDatasets(), null);
 //				.orElseThrow(() -> new RuntimeException("RDFConnection must be configured with a dataset identifier"));
@@ -324,41 +329,41 @@ public class RdfWorkflowSpec {
 
     // This creates an operator instance
     public ModelCreation<Model> deriveDatasetWithSparql(SparqlServiceReference ssr, String filenameOrUri) {
-        RDFConnectionEx conn = RDFConnectionFactoryEx.connect(ssr);
+        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.connect(ssr);
         //return new ModelCreationImpl(ssr, filenameOrUri, rdfConnectionFactoryRegistory);
-        ModelCreation<Model> result = deriveDatasetWithSparql(conn, filenameOrUri);
+        ModelCreation<Model> result = deriveDatasetWithSparql(dataSource, filenameOrUri);
         return result;
     }
 
 
-    public ModelCreationImpl<Flowable<Resource>> execFlowable(RDFConnectionEx conn, Entry<Node, Query> partitionedQuery) {
+    public ModelCreationImpl<Flowable<Resource>> execFlowable(RdfDataSource dataSource, Entry<Node, Query> partitionedQuery) {
         String cacheId = "sparql-query/flowable/" + StringUtils.md5Hash("" + partitionedQuery);
 
         return new ModelCreationImpl<Flowable<Resource>>(
-                () -> ModelCreationImpl.deriveDatasetIri(conn),
+                () -> ModelCreationImpl.deriveDatasetIri(dataSource),
                 cacheId,
-                () -> SparqlRx.execPartitioned(conn, partitionedQuery).map(RDFNode::asResource),
+                () -> SparqlRx.execPartitioned(dataSource.asQef(), partitionedQuery).map(RDFNode::asResource),
                 (cacheFile, result) -> RDFDataMgrRx.writeResources(result, cacheFile, RDFFormat.TRIG),
                 cacheFile -> RDFDataMgrRx.createFlowableResources(() -> new FileInputStream(cacheFile.toFile()), Lang.TRIG, cacheFile.toAbsolutePath().toString())
             );
     }
 
 
-    public ModelCreation<Model> execConstruct(RDFConnectionEx conn, String queryStr) {
+    public ModelCreation<Model> execConstruct(RdfDataSource dataSource, String queryStr) {
         String cacheId = "sparql-query/construct/" + StringUtils.md5Hash(queryStr);
 
         //return new ModelCreationImpl(conn, cacheId, () -> conn.queryConstruct(queryStr));
         return new ModelCreationImpl<Model>(
-                () -> ModelCreationImpl.deriveDatasetIri(conn),
+                () -> ModelCreationImpl.deriveDatasetIri(dataSource),
                 cacheId,
-                () -> conn.queryConstruct(queryStr),
+                () -> dataSource.getConnection().queryConstruct(queryStr),
                 (cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),
                 cacheFile -> RDFDataMgr.loadModel(cacheFile.toUri().toString())
             );
     }
 
 
-    public ModelCreation<Model> deriveDatasetWithSparql(RDFConnectionEx conn, String sparqlFilenameOrUri) {
+    public ModelCreation<Model> deriveDatasetWithSparql(RdfDataSource dataSource, String sparqlFilenameOrUri) {
         String cacheId;
         try {
             cacheId = ModelCreationImpl.createHashForSparqlQueryFile(PrefixMapping.Extended, sparqlFilenameOrUri);
@@ -369,9 +374,9 @@ public class RdfWorkflowSpec {
         //String datasetIri = ModelCreationImpl.deriveDatasetIri(conn);
 
         return new ModelCreationImpl<Model>(
-                () -> ModelCreationImpl.deriveDatasetIri(conn),
+                () -> ModelCreationImpl.deriveDatasetIri(dataSource),
                 cacheId,
-                () -> SparqlStmtMgr.execConstruct(conn, sparqlFilenameOrUri),
+                () -> SparqlStmtMgr.execConstruct(dataSource::getConnection, sparqlFilenameOrUri),
                 (cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),
                 cacheFile -> RDFDataMgr.loadModel(cacheFile.toUri().toString())
             );
@@ -381,9 +386,9 @@ public class RdfWorkflowSpec {
 //		});
     }
 
-    public ModelCreation<Model> deriveDatasetWithFunction(RDFConnectionEx conn, String cacheId, Supplier<? extends Model> modelSupplier) {//Function<? super RDFConnectionEx, ? extends Model> modelSupplier) {
+    public ModelCreation<Model> deriveDatasetWithFunction(RdfDataSource dataSource, String cacheId, Supplier<? extends Model> modelSupplier) {//Function<? super RDFConnectionEx, ? extends Model> modelSupplier) {
         return new ModelCreationImpl<Model>(
-                () -> ModelCreationImpl.deriveDatasetIri(conn),
+                () -> ModelCreationImpl.deriveDatasetIri(dataSource),
                 cacheId,
                 modelSupplier,
                 (cacheFile, result) -> RDFDataMgr.write(new FileOutputStream(cacheFile.toFile()), result, RDFFormat.TURTLE),

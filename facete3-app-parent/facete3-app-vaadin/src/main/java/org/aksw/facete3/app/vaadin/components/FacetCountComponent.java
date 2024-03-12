@@ -35,7 +35,7 @@ public class FacetCountComponent extends GridEx<FacetCount> {
     private static final long serialVersionUID = -331380480912293631L;
     protected FacetCountProvider dataProvider;
     protected FacetedBrowserView mainView;
-    
+
     public FacetCountComponent(
             FacetedBrowserView mainView, FacetCountProvider dataProvider) {
         super(FacetCount.class);
@@ -50,6 +50,23 @@ public class FacetCountComponent extends GridEx<FacetCount> {
     }
 
     public void addFacetOptions(GridContextMenu<FacetCount> cxtMenu) {
+        {
+            GridMenuItem<FacetCount> sortItem = cxtMenu.addItem("Sort...");
+            GridSubMenu<FacetCount> sortSubMenu = sortItem.getSubMenu();
+            GridMenuItem<FacetCount> ascItem = sortSubMenu.addItem("ascending");
+            GridMenuItem<FacetCount> descItem = sortSubMenu.addItem("descending");
+
+            ascItem.addMenuItemClickListener(ev -> {
+//                FacetCount fc = ev.getItem().orElse(null);
+//                Node predicate = fc.getPredicate();
+//                FacetDirNode facetDirNode = mainView.facete3.getFacetDirNode();
+//                mainView.facete3.sor
+//                Direction dir = facetDirNode.dir();
+//                FacetNode newFocusNode = facetDirNode.parent().step(predicate, dir).one();
+//                newFocusNode.chFocus();
+            });
+         }
+
         {
             GridMenuItem<FacetCount> focusItem = cxtMenu.addItem("Focus on values of this property");
             focusItem.addMenuItemClickListener(ev -> {
@@ -118,7 +135,7 @@ public class FacetCountComponent extends GridEx<FacetCount> {
         mainView.setDataProvider(grid, dataProvider);
 //        grid.setDataProvider(DataProviderWithTaskControl.wrap(DataProviderUtils.wrapWithErrorHandler(dataProvider), mainView.getTaskControlRegistry()));
 //        grid.getDataCommunicator().enablePushUpdates(mainView.getExecutorService());
-        
+
         grid.removeAllColumns();
         Column<FacetCount> facetColumn = grid
                 .addComponentColumn(item -> VaadinLabelMgr.forHasText(mainView.getLabelMgr(), new Span("" + item.getPredicate()), item.getPredicate()))
@@ -132,7 +149,7 @@ public class FacetCountComponent extends GridEx<FacetCount> {
         grid.asSingleSelect()
                 .addValueChangeListener(this::selectFacetCallback);
         grid.addItemDoubleClickListener(ev -> addFacetToPathCallback(ev.getItem()));
-        
+
         // As there are usually only a small number of distinct properties (facets)
         // we try to fetch them with a larger page size
         grid.setPageSize(1000);
