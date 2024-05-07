@@ -11,6 +11,7 @@ import org.aksw.facete3.app.vaadin.providers.FacetValueCountDataProvider;
 import org.aksw.facete3.app.vaadin.qualifier.DisplayLabelConfig;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderConnector;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
@@ -110,7 +111,7 @@ public class ConfigFacetedBrowserView {
             Facete3Wrapper facetedQueryConf,
             ConfigFaceteVaadin config,
             TaskControlRegistryImpl taskControlRegistry
-    		) {
+            ) {
 
 //        baseDataConnection = RDFConnectionFactory.connect(DatasetFactory.create());
 
@@ -163,7 +164,8 @@ public class ConfigFacetedBrowserView {
             @DisplayLabelConfig BestLiteralConfig bestLabelConfig,
             LabelService<Node, String> labelMgr,
             ExecutorService executorService,
-            TaskControlRegistryImpl taskControlRegistry
+            TaskControlRegistryImpl taskControlRegistry,
+            DataProviderConnector dataProviderConnector
     ) {
         return new FacetedBrowserView(
                 dataSource,
@@ -180,7 +182,8 @@ public class ConfigFacetedBrowserView {
                 bestLabelConfig,
                 labelMgr,
                 executorService,
-                taskControlRegistry);
+                taskControlRegistry,
+                dataProviderConnector);
     }
 
     @Bean

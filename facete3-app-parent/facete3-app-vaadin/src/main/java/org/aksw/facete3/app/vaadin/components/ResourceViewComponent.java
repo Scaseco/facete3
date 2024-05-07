@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.aksw.commons.util.delegate.Unwrappable;
 import org.aksw.commons.util.history.History;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderConnector;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBase;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBinding;
 import org.aksw.jena_sparql_api.vaadin.util.Grid2;
@@ -31,7 +32,6 @@ import org.apache.jena.sparql.expr.NodeValue;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.component.grid.HeaderRow;
@@ -52,6 +52,8 @@ public class ResourceViewComponent extends VerticalLayout {
 
     public static final Var PREDICATE_VAR = Var.alloc("Predicate");
     public static final Var OBJECT_VAR = Var.alloc("Object");
+
+    protected DataProviderConnector dataProviderConnector;
 
     protected PrefixMapping prefixMapping;
 
@@ -76,58 +78,13 @@ public class ResourceViewComponent extends VerticalLayout {
     protected HorizontalLayout summaryArea = null;
 
 
-    private void setNodeCore(Node node, QueryExecutionFactoryQuery qef) {
-        subjectNode = node;
-        Fragment relation = FragmentUtils.fromQuery("SELECT ?Predicate ?Object { ?s ?Predicate ?Object }");
-
-        if (node == null) {
-            node = NodeValue.FALSE.asNode();
-        }
-
-        if (qef == null) {
-            qef = QueryExecutionFactories.empty();
-        }
-
-        relation = relation.filter(Vars.s, node);
-        DataProviderSparqlBase<?> dataProvider = Unwrappable.unwrap(grid.getDataProvider(), DataProviderSparqlBase.class, true).orElse(null);
-        dataProvider.setRelation(relation);
-        dataProvider.setQueryExecutionFactory(qef);
-        dataProvider.refreshAll();
-    }
-
-//    public void setQueryExecutionFactory(QueryExecutionFactoryQuery qef) {
-//        DataProviderSparqlBase<?> dataProvider = Unwrappable.unwrap(grid.getDataProvider(), DataProviderSparqlBase.class, true).orElse(null);
-//        dataProvider.setQueryExecutionFactory(qef);
-//        dataProvider.refreshAll();
-//    }
-
-    private void setNode(Node node) {
-        DataProviderSparqlBase<?> dataProvider = Unwrappable.unwrap(grid.getDataProvider(), DataProviderSparqlBase.class, true).orElse(null);
-        QueryExecutionFactoryQuery qef = dataProvider.getQueryExecutionFactory();
-        setNode(node, qef);
-    }
-
-    public void setNode(Node node, QueryExecutionFactoryQuery qef) {
-        history.addMemento(() -> {
-            setNodeCore(node, qef);
-            refesh();
-        });
-    }
-
-//    public void setNode(RDFNode node, QueryExecutionFactoryQuery qef) {
-//        history.addMemento(() -> {
-//            this.subjectNode = node.asNode();
-//            refesh();
-//        });
-//    }
-
-    protected String toDisplayString(Node node) {
-        // Node node = rdfNode == null ? null : node;
-        String result = LabelUtils.str(node, prefixMapping);
-        return result;
-    }
-
-    public ResourceViewComponent(PrefixMapping prefixMapping, ViewManager viewManager, LabelService<Node, String> labelMgr) {
+    public ResourceViewComponent(
+            DataProviderConnector dataProviderConnector,
+            PrefixMapping prefixMapping,
+            ViewManager viewManager,
+            LabelService<Node, String> labelMgr)
+    {
+        this.dataProviderConnector = dataProviderConnector;
         this.viewManager = viewManager;
         this.labelMgr = labelMgr;
 
@@ -162,7 +119,8 @@ public class ResourceViewComponent extends VerticalLayout {
         grid = new Grid2<>();
         // grid.setSortableColumns(PREDICATE_VAR.getName(), OBJECT_VAR.getName());
         grid.setMultiSort(true);
-        grid.setDataProvider(DataProviderReduce.of(tmpProvider));
+        dataProviderConnector.connect(grid, DataProviderReduce.of(tmpProvider), "Resource description retrieval");
+
         grid.getClassNames().add("compact");
 
         setNodeCore(null, null);
@@ -256,6 +214,58 @@ public class ResourceViewComponent extends VerticalLayout {
         add(grid);
         refesh();
     }
+
+    private void setNodeCore(Node node, QueryExecutionFactoryQuery qef) {
+        subjectNode = node;
+        Fragment relation = FragmentUtils.fromQuery("SELECT ?Predicate ?Object { ?s ?Predicate ?Object }");
+
+        if (node == null) {
+            node = NodeValue.FALSE.asNode();
+        }
+
+        if (qef == null) {
+            qef = QueryExecutionFactories.empty();
+        }
+
+        relation = relation.filter(Vars.s, node);
+        DataProviderSparqlBase<?> dataProvider = Unwrappable.unwrap(grid.getDataProvider(), DataProviderSparqlBase.class, true).orElse(null);
+        dataProvider.setRelation(relation);
+        dataProvider.setQueryExecutionFactory(qef);
+        dataProvider.refreshAll();
+    }
+
+//    public void setQueryExecutionFactory(QueryExecutionFactoryQuery qef) {
+//        DataProviderSparqlBase<?> dataProvider = Unwrappable.unwrap(grid.getDataProvider(), DataProviderSparqlBase.class, true).orElse(null);
+//        dataProvider.setQueryExecutionFactory(qef);
+//        dataProvider.refreshAll();
+//    }
+
+    private void setNode(Node node) {
+        DataProviderSparqlBase<?> dataProvider = Unwrappable.unwrap(grid.getDataProvider(), DataProviderSparqlBase.class, true).orElse(null);
+        QueryExecutionFactoryQuery qef = dataProvider.getQueryExecutionFactory();
+        setNode(node, qef);
+    }
+
+    public void setNode(Node node, QueryExecutionFactoryQuery qef) {
+        history.addMemento(() -> {
+            setNodeCore(node, qef);
+            refesh();
+        });
+    }
+
+//    public void setNode(RDFNode node, QueryExecutionFactoryQuery qef) {
+//        history.addMemento(() -> {
+//            this.subjectNode = node.asNode();
+//            refesh();
+//        });
+//    }
+
+    protected String toDisplayString(Node node) {
+        // Node node = rdfNode == null ? null : node;
+        String result = LabelUtils.str(node, prefixMapping);
+        return result;
+    }
+
 
 
 //

@@ -10,6 +10,8 @@ import javax.annotation.security.PermitAll;
 import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
 import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
 import org.aksw.facete3.app.vaadin.session.UserSession;
+import org.aksw.jena_sparql_api.vaadin.util.GridEx;
+import org.aksw.jena_sparql_api.vaadin.util.TreeGridEx;
 import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
 import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
 import org.aksw.vaadin.common.component.tab.RouteTabs;
@@ -42,7 +44,6 @@ import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.progressbar.ProgressBarVariant;
 import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
 import com.vaadin.flow.dom.ThemeList;
@@ -98,14 +99,14 @@ public class AppLayoutFacete3 extends AppLayout {
 
         UI ui = UI.getCurrent();
         taskControlRegistry.setUi(ui);
-        
+
         Facete3Wrapper.initJena();
 
         HorizontalLayout navbarLayout = new HorizontalLayout();
-        
+
         drawerToggle = new DrawerToggle();
         // navbarLayout.add(drawerToggle);
-        
+
         navbarLayout.setWidthFull();
         navbarLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
@@ -176,7 +177,7 @@ public class AppLayoutFacete3 extends AppLayout {
         if (System.getProperty("UI.DISABLE.NAVBAR") != null) {
             navbarLayout.setVisible(false);
         }
-        
+
         addToDrawer(getTabs());
         setDrawerOpened(false);
     }
@@ -201,15 +202,11 @@ public class AppLayoutFacete3 extends AppLayout {
     //  tabs.setOrientation(Tabs.Orientation.VERTICAL);
       return tabs;
     }
-    
-    
-    protected void refreshMenuBar() {
-        menuBar.removeAll();
-        menuBar.setOpenOnHover(true);
 
+    protected void setupActionGrid() {
         Span actionMenuArea = new Span();
         Button progressBarBtn = new Button(VaadinIcon.PROGRESSBAR.create());
-        
+
         Span taskCountPendingSpan = new Span();
         taskCountPendingSpan.getElement().getThemeList().add("badge pill");
 
@@ -222,86 +219,89 @@ public class AppLayoutFacete3 extends AppLayout {
         actionMenuArea.add(progressBarBtn, taskCountPendingSpan, taskCountSuccessSpan, taskCountErrorSpan);
 
         MenuItem actionMenu = menuBar.addItem(actionMenuArea);
-        
+
         SubMenu actionSubMenu = actionMenu.getSubMenu();
+
 
         HierarchicalDataProvider<TaskControl<?>, ?> actionTdp = taskControlRegistry.getTreeDataProvider();
 
-        TreeGrid<TaskControl<?>> actionGrid = new TreeGrid<>();
+        GridEx<TaskControl<?>> actionGrid = new TreeGridEx<>();
         actionGrid.setWidth("300px");
         actionGrid.setAllRowsVisible(true);
 
-		actionGrid.addComponentColumn(o -> {
+        actionGrid.addComponentColumn(o -> {
 
-			Div progressBarLabel = new Div();
-			progressBarLabel.setText("Task [" + o.getName() + "]");
+            Div progressBarLabel = new Div();
+            progressBarLabel.setText("Task [" + o.getLabel() + "]");
 
-			ProgressBar progressBar = new ProgressBar();
+            ProgressBar progressBar = new ProgressBar();
 
-			Div progressBarWrapper = new Div(progressBarLabel, progressBar);
-			progressBarWrapper.setWidthFull();
+            Div progressBarWrapper = new Div(progressBarLabel, progressBar);
+            progressBarWrapper.setWidthFull();
 
-			HorizontalLayout r = new HorizontalLayout();
-			r.add(progressBarWrapper);
-			r.setFlexGrow(1, progressBarWrapper);
+            HorizontalLayout r = new HorizontalLayout();
+            r.add(progressBarWrapper);
+            r.setFlexGrow(1, progressBarWrapper);
 
-			if (o.isComplete()) {
-				Throwable throwable = o.getThrowable();
-				boolean isSuccess = throwable == null;
+            if (o.isComplete()) {
+                Throwable throwable = o.getThrowable();
+                boolean isSuccess = throwable == null;
 
-				progressBar.setMin(0f);
-				progressBar.setMax(1f);
-				progressBar.setValue(1f);
-				if (isSuccess) {
-					progressBar.addThemeVariants(ProgressBarVariant.LUMO_SUCCESS);
-					Icon icon = VaadinIcon.CHECK_CIRCLE_O.create();
-					icon.getElement().getThemeList().add("badge success pill");
-					r.add(icon);
-				} else {
-					progressBar.addThemeVariants(ProgressBarVariant.LUMO_ERROR);
-					Icon icon = VaadinIcon.CLOSE_CIRCLE_O.create();
-					icon.getElement().getThemeList().add("badge error pill");
-					r.add(icon);
-				}
-			} else {
-				progressBar.setIndeterminate(true);
-				Icon icon = VaadinIcon.STOP.create();
-				icon.getElement().getThemeList().add("badge error pill");
-				Button cancelBtn = new Button(icon);
-				r.add(cancelBtn);
-				cancelBtn.addClickListener(ev -> {
-					o.abort();
-				});
-			}
+                progressBar.setMin(0f);
+                progressBar.setMax(1f);
+                progressBar.setValue(1f);
+                if (isSuccess) {
+                    progressBar.addThemeVariants(ProgressBarVariant.LUMO_SUCCESS);
+                    Icon icon = VaadinIcon.CHECK_CIRCLE_O.create();
+                    icon.getElement().getThemeList().add("badge success pill");
+                    r.add(icon);
+                } else {
+                    progressBar.addThemeVariants(ProgressBarVariant.LUMO_ERROR);
+                    Icon icon = VaadinIcon.CLOSE_CIRCLE_O.create();
+                    icon.getElement().getThemeList().add("badge error pill");
+                    r.add(icon);
+                }
+            } else {
+                progressBar.setIndeterminate(true);
+                Icon icon = VaadinIcon.STOP.create();
+                icon.getElement().getThemeList().add("badge error pill");
+                Button cancelBtn = new Button(icon);
+                r.add(cancelBtn);
+                cancelBtn.addClickListener(ev -> {
+                    o.abort();
+                });
+            }
 
-			return r;
-		}).setKey("value");
-        
+            return r;
+        }).setKey("value");
+
         actionGrid.setDataProvider(actionTdp);
         actionTdp.addDataProviderListener(ev -> {
-        	// pending success error
-        	long[] pse = {0, 0, 0};
-        	
-        	try (Stream<TaskControl<?>> stream = actionTdp.fetchChildren(new HierarchicalQuery<>(null, null))) {        		
-        		List<TaskControl<?>> tasks = stream.collect(Collectors.toList());
-        		for (TaskControl<?> task: tasks) {
-        			int classify = !task.isComplete() ? 0 : task.getThrowable() == null ? 1 : 2;
-        			++pse[classify];
-        		}
-        	}
-        	
-        	taskCountPendingSpan.setVisible(pse[0] != 0);
-        	taskCountPendingSpan.setText(Long.toString(pse[0]));
+            // pending success error
+            long[] pse = {0, 0, 0};
 
-        	taskCountSuccessSpan.setVisible(pse[1] != 0);
-        	taskCountSuccessSpan.setText(Long.toString(pse[1]));
+            try (Stream<TaskControl<?>> stream = actionTdp.fetchChildren(new HierarchicalQuery<>(null, null))) {
+                List<TaskControl<?>> tasks = stream.collect(Collectors.toList());
+                for (TaskControl<?> task: tasks) {
+                    int classify = !task.isComplete() ? 0 : task.getThrowable() == null ? 1 : 2;
+                    ++pse[classify];
+                }
+            }
 
-        	taskCountErrorSpan.setVisible(pse[2] != 0);
-        	taskCountErrorSpan.setText(Long.toString(pse[2]));
+            taskCountPendingSpan.setVisible(pse[0] != 0);
+            taskCountPendingSpan.setText(Long.toString(pse[0]));
+
+            taskCountSuccessSpan.setVisible(pse[1] != 0);
+            taskCountSuccessSpan.setText(Long.toString(pse[1]));
+
+            taskCountErrorSpan.setVisible(pse[2] != 0);
+            taskCountErrorSpan.setText(Long.toString(pse[2]));
         });
-        
 
         actionSubMenu.add(actionGrid);
+    }
+
+    protected void setupAccount() {
 
         //actionList.add(new HorizontalLayout(new Span("Action 1"), new Button(VaadinIcon.STOP.create())));
 
@@ -338,6 +338,14 @@ public class AppLayoutFacete3 extends AppLayout {
                 userSession.logout();
             });
         }
+    }
+
+    protected void refreshMenuBar() {
+        menuBar.removeAll();
+        menuBar.setOpenOnHover(true);
+
+        setupActionGrid();
+        setupAccount();
     }
 
     public Component getAppContent(ConfigFaceteVaadin config) {

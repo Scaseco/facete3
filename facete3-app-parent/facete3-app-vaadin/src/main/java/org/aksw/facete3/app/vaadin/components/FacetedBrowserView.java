@@ -38,9 +38,8 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderConnector;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
-import org.aksw.jena_sparql_api.vaadin.util.GridLike;
-import org.aksw.jena_sparql_api.vaadin.util.GridWrapperBase;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinStyleUtils;
 import org.aksw.jenax.analytics.core.RootedQuery;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
@@ -61,8 +60,7 @@ import org.aksw.jenax.vaadin.component.grid.sparql.SparqlGridComponent;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
 import org.aksw.vaadin.common.component.tab.TabSheet;
-import org.aksw.vaadin.common.provider.util.DataProviderUtils;
-import org.aksw.vaadin.common.provider.util.DataProviderWithTaskControl;
+import org.aksw.vaadin.common.provider.util.TaskControlRegistry;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -89,7 +87,6 @@ import com.google.common.graph.Traverser;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.Column;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
@@ -99,7 +96,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.InMemoryDataProvider;
 import com.vaadin.flow.data.provider.Query;
 
@@ -142,7 +138,10 @@ public class FacetedBrowserView
     protected SearchPlugin activeSearchPlugin;
 
     protected ExecutorService executorService;
-    protected TaskControlRegistryImpl taskControlRegistry;
+    protected TaskControlRegistry taskControlRegistry;
+
+    protected DataProviderConnector dataProviderConnector;
+
 //    @Autowired(required = false)
 //    protected SearchSensitiveRDFConnectionTransform searchSensitiveRdfConnectionTransform = null;
 
@@ -165,14 +164,19 @@ public class FacetedBrowserView
     public Facete3Wrapper getFacetedSearchSession() {
         return facete3;
     }
-    
+
+    public DataProviderConnector getDataProviderConnector() {
+        return dataProviderConnector;
+    }
+
     public ExecutorService getExecutorService() {
-    	return executorService;
+        return executorService;
     }
-    
-    public TaskControlRegistryImpl getTaskControlRegistry() {
-    	return taskControlRegistry;
+
+    public TaskControlRegistry getTaskControlRegistry() {
+        return taskControlRegistry;
     }
+
 
     public FacetedBrowserView(
             // RDFConnection baseDataConnection,
@@ -191,12 +195,15 @@ public class FacetedBrowserView
             BestLiteralConfig bestLabelConfig,
             LabelService<Node, String> labelMgr,
             ExecutorService executorService,
-            TaskControlRegistryImpl taskControlRegistry
+            TaskControlRegistryImpl taskControlRegistry,
+            DataProviderConnector dataProviderConnector
             ) {
 
         this.labelMgr = labelMgr;
+
         this.executorService = executorService;
         this.taskControlRegistry = taskControlRegistry;
+        this.dataProviderConnector = dataProviderConnector;
 
         ViewFactory dftViewFactory = new ViewFactory() {
 
@@ -252,7 +259,7 @@ public class FacetedBrowserView
             @Override
             public Component createComponent(RDFNode data) {
                 // ResourceComponentOld result = new ResourceComponentOld(PrefixMapping.Extended, viewManagerFull, labelMgr);
-                ResourceViewComponent result = new ResourceViewComponent(PrefixMapping.Extended, viewManagerFull, labelMgr);
+                ResourceViewComponent result = new ResourceViewComponent(dataProviderConnector, PrefixMapping.Extended, viewManagerFull, labelMgr);
                 result.setNode(data == null ? null : data.asNode(), dataSource.asQef());
                 return result;
             }
@@ -853,13 +860,13 @@ public class FacetedBrowserView
 //        resourceComponent.refesh();
 //        constraintsComponent.refresh();
     }
-    
-    public <T> void setDataProvider(Grid<T> grid, DataProvider<T, ?> dataProvider) {
-    	setDataProvider(new GridWrapperBase<>(grid), dataProvider);
-    }
 
-    public <T> void setDataProvider(GridLike<T> grid, DataProvider<T, ?> dataProvider) {
-        grid.setDataProvider(DataProviderWithTaskControl.wrap(DataProviderUtils.wrapWithErrorHandler(dataProvider), getTaskControlRegistry()));
-        grid.getDataCommunicator().enablePushUpdates(executorService);
-    }
+//    public <T> void setDataProvider(Grid<T> grid, DataProvider<T, ?> dataProvider) {
+//        setDataProvider(new GridWrapperBase<>(grid), dataProvider);
+//    }
+//
+//    public <T> void setDataProvider(GridLike<T> grid, DataProvider<T, ?> dataProvider) {
+//        grid.setDataProvider(DataProviderWithTaskControl.wrap(DataProviderUtils.wrapWithErrorHandler(dataProvider), getTaskControlRegistry()));
+//        grid.getDataCommunicator().enablePushUpdates(executorService);
+//    }
 }

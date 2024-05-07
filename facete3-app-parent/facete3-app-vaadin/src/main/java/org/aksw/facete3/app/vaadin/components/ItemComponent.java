@@ -24,7 +24,6 @@ import org.aksw.jenax.vaadin.component.grid.sparql.TreeDataUtils;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.aksw.vaadin.common.component.tab.TabSheet;
 import org.aksw.vaadin.common.component.util.ConfirmDialogUtils;
-import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
@@ -43,11 +42,13 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.shared.Registration;
 
@@ -119,7 +120,7 @@ public class ItemComponent extends TabSheet {
         grid.setPageSize(pageSize);
         VaadinShaclGridUtils.configureGrid(grid, dataProvider, templates, labelService);
         // grid.setDataProvider(DataProviderUtils.wrapWithErrorHandler(dataProvider));
-        facetedBrowserView.setDataProvider(grid, dataProvider);
+        facetedBrowserView.getDataProviderConnector().connectGrid(grid, dataProvider, "Matching items retrieval");
 
         // DataProviderUtils.wrapWithErrorHandler(grid);
 
@@ -258,6 +259,17 @@ public class ItemComponent extends TabSheet {
         // Grid<EnrichedItem> grid = new Grid<>(EnrichedItem.class);
 
         refreshGrid();
+
+        VerticalLayout gridStats = new VerticalLayout();
+        Span gridRowCountSpan = new Span();
+        gridStats.add(gridRowCountSpan);
+        gridDiv.add(gridStats);
+
+        dataProvider.addDataProviderListener(ev -> {
+            int count = dataProvider.size(new Query<>());
+            gridRowCountSpan.setText(count + " items");
+        });
+
 
         // add(grid);
         gridDiv.add(grid);

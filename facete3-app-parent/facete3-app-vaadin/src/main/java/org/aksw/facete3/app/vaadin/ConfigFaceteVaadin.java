@@ -3,6 +3,9 @@ package org.aksw.facete3.app.vaadin;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.aksw.facete3.app.vaadin.components.DataProviderConnectorImpl;
+import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderConnector;
+import org.aksw.vaadin.common.provider.util.TaskControlRegistry;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -14,8 +17,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.vaadin.flow.component.UI;
 
 @Configuration
 @ConfigurationProperties("facete3")
@@ -59,7 +60,7 @@ public class ConfigFaceteVaadin {
 
     @Bean
     public TaskControlRegistryImpl taskControlRegistry() {
-    	return new TaskControlRegistryImpl();
+        return new TaskControlRegistryImpl();
     }
 
     /** Executor for async processing */
@@ -67,5 +68,14 @@ public class ConfigFaceteVaadin {
     public ExecutorService executorService() {
         ExecutorService result = Executors.newCachedThreadPool();
         return result;
+    }
+
+    /**
+     * The dataProviderConnector. Registers requests to the data provider with the taskControlRegistry.
+     * Enables showing pending requests in the UI.
+     */
+    @Bean
+    public DataProviderConnector dataProviderConnector(TaskControlRegistry taskControlRegistry, ExecutorService executorService) {
+        return new DataProviderConnectorImpl(taskControlRegistry, executorService);
     }
 }

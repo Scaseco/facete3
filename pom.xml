@@ -22,12 +22,12 @@
 	</scm>
 
 	<properties>
-		<jena.version>5.0.0-SNAPSHOT</jena.version>
-		<jenax.version>5.0.0-1-SNAPSHOT</jenax.version>
-		<vaadin-jena.version>5.0.0-1-SNAPSHOT</vaadin-jena.version>
-		<rmltk.version>5.0.0-1-SNAPSHOT</rmltk.version>
+		<jena.version>5.1.0-SNAPSHOT</jena.version>
+		<jenax.version>5.1.0-1-SNAPSHOT</jenax.version>
+		<vaadin-jena.version>5.1.0-1-SNAPSHOT</vaadin-jena.version>
+		<rmltk.version>5.1.0-1-SNAPSHOT</rmltk.version>
 
-		<aksw-commons.version>0.9.8-SNAPSHOT</aksw-commons.version>
+		<aksw-commons.version>0.9.9-SNAPSHOT</aksw-commons.version>
 		<slf4j.version>2.0.9</slf4j.version>
 		<log4j.version>2.21.0</log4j.version>
 		<picocli.version>4.6.2</picocli.version>

@@ -132,7 +132,7 @@ public class FacetCountComponent extends GridEx<FacetCount> {
         GridLike<FacetCount> grid = this;
         grid.getClassNames().add("compact");
 
-        mainView.setDataProvider(grid, dataProvider);
+        mainView.getDataProviderConnector().connect(grid, dataProvider, "Facet count retrieval");
 //        grid.setDataProvider(DataProviderWithTaskControl.wrap(DataProviderUtils.wrapWithErrorHandler(dataProvider), mainView.getTaskControlRegistry()));
 //        grid.getDataCommunicator().enablePushUpdates(mainView.getExecutorService());
 
