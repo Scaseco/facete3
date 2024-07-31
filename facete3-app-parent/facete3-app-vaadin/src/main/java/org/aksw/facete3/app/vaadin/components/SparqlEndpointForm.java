@@ -1,7 +1,10 @@
 package org.aksw.facete3.app.vaadin.components;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -9,7 +12,6 @@ import java.util.Optional;
 import org.aksw.commons.util.time.TimeAgo;
 import org.aksw.facete.v3.impl.FacetedQueryBuilder;
 import org.aksw.facete3.app.vaadin.ServiceStatus;
-import org.aksw.facete3.app.vaadin.components.sparql.wizard.SparqlConnectionWizard.GraphMode;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuth;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBasic;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfAuthBearerToken;
@@ -17,7 +19,11 @@ import org.aksw.jena_sparql_api.data_query.api.DataQuery;
 import org.aksw.jena_sparql_api.data_query.util.KeywordSearchUtils;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySupplier;
 import org.aksw.jenax.arq.util.node.NodeUtils;
+import org.aksw.jenax.arq.util.triple.ModelUtils;
 import org.aksw.jenax.arq.util.var.Vars;
+import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSourceMulti;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
@@ -26,23 +32,27 @@ import org.aksw.vaadin.common.provider.util.DataProviderUtils;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.Autocomplete;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -53,7 +63,7 @@ import com.vaadin.flow.dom.Element;
 public class SparqlEndpointForm extends FormLayout {
     protected ComboBox<ServiceStatus> serviceUrlOld = new ComboBox<>();
 
-    protected TextField serviceUrl = new TextField(); //"Endpoint URL");
+    // protected TextField serviceUrl = new TextField(); //"Endpoint URL");
 
     // protected Checkbox unionDefaultGraphMode = new Checkbox();
     // protected Select<GraphMode> unionDefaultGraphMode = new Select<>();
@@ -67,9 +77,13 @@ public class SparqlEndpointForm extends FormLayout {
 
     protected Multimap<AuthMode, Component> authComponents = ArrayListMultimap.create();
 
+    // protected Gson gson = new Gson();
+    // protected Map<String, String> endpointUrlSuggestions = new ConcurrentHashMap<>();
+    protected Model endpointUrlSuggestions = ModelFactory.createDefaultModel();
+
     // public ComboBox<ServiceStatus> getServiceUrl() {
     public String getServiceUrl() {
-        return serviceUrl.getValue();
+        return serviceUrlOld.getValue().getEndpoint();
     }
 
     public AuthMode getAuthMode() {
@@ -125,6 +139,19 @@ public class SparqlEndpointForm extends FormLayout {
 
         RDFDataMgr.read(model, "extra-endpoints.ttl");
 
+        WebStorage.getItem("sparqlEndpointForm.urls", value -> {
+            if (value != null) {
+                try (ByteArrayInputStream in = new ByteArrayInputStream(value.getBytes())) {
+                    RDFDataMgr.read(endpointUrlSuggestions, in, Lang.TURTLE);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            // List<String> urls = gson.fromJson(value, new TypeToken<List<String>>() {}.getType());
+            // urls.forEach(x -> endpointUrlSuggestions.put(x, ""));
+            // endpointUrlSuggestions.addAll(urls);
+        });
+
         serviceUrlOld.addCustomValueSetListener(
                 event -> {
                     String value = event.getDetail();
@@ -132,10 +159,16 @@ public class SparqlEndpointForm extends FormLayout {
                     if (value != null) {
                         String iri = value + "#service";
 
-                        ServiceStatus bean = ModelFactory.createDefaultModel().createResource(iri).as(ServiceStatus.class);
+                        ServiceStatus bean = endpointUrlSuggestions.createResource(iri)
+                                .addProperty(RDF.type, ResourceFactory.createResource("http://www.w3.org/ns/sparql-service-description#Service"))
+                                .as(ServiceStatus.class);
                         bean.setEndpoint(value);
 
                         serviceUrlOld.setValue(bean);
+
+                        // endpointUrlSuggestions.put(value, "");
+                        // WebStorage.setItem("sparqlEndpointForm.urls", gson.toJson(endpointUrlSuggestions));
+                        WebStorage.setItem("sparqlEndpointForm.urls", ModelUtils.toString(endpointUrlSuggestions, RDFFormat.TURTLE));
                     }
                 });
 
@@ -155,9 +188,13 @@ public class SparqlEndpointForm extends FormLayout {
 
             @Override
             protected DataQuery<ServiceStatus> getDataQuery() {
+                RdfDataSource ds1 = RdfDataSources.of(DatasetFactory.wrap(endpointUrlSuggestions));
+                RdfDataSource ds2 = RdfDataSources.of(DatasetFactory.wrap(model));
+                RdfDataSource ds = new RdfDataSourceMulti(Arrays.asList(ds1, ds2));
+
                 DataQuery<ServiceStatus> dq = FacetedQueryBuilder.builder()
                         .configDataConnection()
-                            .setSource(model)
+                            .setSource(ds.getConnection())
                         .end()
                         .create()
                         .baseConcept(ConceptUtils.createForRdfType("http://www.w3.org/ns/sparql-service-description#Service"))
@@ -170,7 +207,7 @@ public class SparqlEndpointForm extends FormLayout {
                         ;
                 return dq;
             }
-        }));
+        }), filterText -> filterText);
 
         serviceUrlOld.setItemLabelGenerator(s -> Optional.ofNullable(s.getEndpoint()).orElse("(null)"));
         serviceUrlOld.setRenderer(new ComponentRenderer<>(serviceStatus -> {
@@ -227,15 +264,26 @@ public class SparqlEndpointForm extends FormLayout {
 
 
         {
-            serviceUrl.setAutocomplete(Autocomplete.URL);
-            serviceUrl.getElement().setAttribute("name", "endpointUrl");
+            // serviceUrlOld.setAutocomplete(Autocomplete.URL);
+            serviceUrlOld.getElement().setAttribute("name", "endpointUrl");
             if (System.getProperty("endpointUrl") != null) {
-                serviceUrl.setValue(System.getProperty("endpointUrl"));
+                // serviceUrlOld.setValue(System.getProperty("endpointUrl"));
             }
-            FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
-            serviceUrl.setWidthFull();
+            FormItem formItem = addFormItem(serviceUrlOld, "Sparql Endpoint URL");
+            serviceUrlOld.setWidthFull();
             setColspan(formItem, 3);
         }
+
+//        {
+//            serviceUrl.setAutocomplete(Autocomplete.URL);
+//            serviceUrl.getElement().setAttribute("name", "endpointUrl");
+//            if (System.getProperty("endpointUrl") != null) {
+//                serviceUrl.setValue(System.getProperty("endpointUrl"));
+//            }
+//            FormItem formItem = addFormItem(serviceUrl, "Sparql Endpoint URL");
+//            serviceUrl.setWidthFull();
+//            setColspan(formItem, 3);
+//        }
 
 //        {
 //            FormItem formItem = addFormItem(unionDefaultGraphMode, "Union default graph");

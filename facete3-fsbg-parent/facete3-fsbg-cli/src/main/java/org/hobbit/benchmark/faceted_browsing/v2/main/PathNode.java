@@ -2,9 +2,9 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 
 import java.util.Map;
 
+import org.aksw.commons.collections.maps.MapFromValueConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromResourceUnmanaged;
-import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.aksw.jenax.annotation.reprogen.IriNs;
 import org.aksw.jenax.annotation.reprogen.IriType;
 import org.apache.jena.rdf.model.Property;

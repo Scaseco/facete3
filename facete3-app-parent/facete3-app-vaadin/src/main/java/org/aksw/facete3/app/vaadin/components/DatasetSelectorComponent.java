@@ -161,7 +161,7 @@ class DatasetCreatorForm
 //        rdf.setReadOnly(true);
         add(new Icon(VaadinIcon.PLUS_SQUARE_O));
         distributionType.setWidthFull();
-        distributionType.setDataProvider(new ListDataProvider<>(Arrays.asList("Download", "Git", "DCAT Link")));
+        distributionType.setDataProvider(new ListDataProvider<>(Arrays.asList("Download", "Git", "DCAT Link")), filterText -> (item -> item.contains(filterText)));
         FormItem formItem1 = addFormItem(distributionType, "DistributionType");
 
 

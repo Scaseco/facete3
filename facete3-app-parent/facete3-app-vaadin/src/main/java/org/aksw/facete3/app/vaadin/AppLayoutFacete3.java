@@ -54,8 +54,6 @@ import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 
 @Route("")
-@PWA(name = "Facete3 Vaadin Application", shortName = "Facete3",
-        description = "This is an example Vaadin application.") // , enableInstallPrompt = true)
 @CssImport(value = "./styles/shared-styles.css", include = "lumo-badge")
 @CssImport(value = "./styles/vaadin-text-field-styles.css", themeFor = "vaadin-text-field")
 @CssImport(value = "./styles/vaadin-grid-styles.css", themeFor = "vaadin-grid")
@@ -68,11 +66,8 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @JsModule("@vaadin/vaadin-lumo-styles/badge.js")
 // @CssImport(value = "./styles/vstepper-styles.css", themeFor = "v-stepper")
-//@Theme(themeClass = Lumo.class)
-@Theme(value = Lumo.class)
+// @Theme(value = Lumo.class)
 @PermitAll
-@Push(PushMode.AUTOMATIC)
-@EnableAsync
 //@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
 public class AppLayoutFacete3 extends AppLayout {
 

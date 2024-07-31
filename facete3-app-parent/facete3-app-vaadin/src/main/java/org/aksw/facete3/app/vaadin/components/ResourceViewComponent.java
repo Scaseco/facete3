@@ -46,6 +46,10 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 
 
+/**
+ * A component for viewing an RDFNode's properties and values.
+ */
+// XXX Consider renaming to RDFNodeViewComponent because subjects need not be Resources but could also be literals
 public class ResourceViewComponent extends VerticalLayout {
 
     private static final long serialVersionUID = -6150238480758268911L;

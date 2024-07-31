@@ -12,16 +12,7 @@
 		<packaging.type>jar</packaging.type>
 
 <!--		<vaadin.version>23.3.33</vaadin.version>-->
-<!--        <spring-boot.version>3.2.1</spring-boot.version>-->
-
-
-		<vaadin.version>14.10.10</vaadin.version>
-		<spring-boot.version>2.7.18</spring-boot.version>
-		<spring.version>5.3.31</spring.version>
-		
-		<spring-cloud.version>3.1.8</spring-cloud.version>
-		
-		
+<!--        <spring-boot.version>3.2.1</spring-boot.version>-->		
 <!--		<spring-cloud.version>2.2.8.RELEASE</spring-cloud.version>-->
 		<!--		<spring-cloud.version>4.0.4</spring-cloud.version>-->
 		<!--		<spring.version>6.1.1</spring.version>-->
@@ -72,13 +63,14 @@
 			<!-- <version>2.2.0.RELEASE</version> -->
 			<!-- </dependency> -->
 
+<!--
 			<dependency>
 				<groupId>com.vaadin</groupId>
 				<artifactId>vaadin-bom</artifactId>
-				<version>${vaadin.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+-->
 
 <!--			<dependency>-->
 <!--				<groupId>org.springframework.boot</groupId>-->
@@ -88,20 +80,21 @@
 <!--				<scope>import</scope>-->
 <!--			</dependency>-->
 
+<!--
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-framework-bom</artifactId>
-				<version>${spring.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-
+-->
+<!--
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
 				<artifactId>jakarta.servlet-api</artifactId>
 				<version>6.0.0</version>
 			</dependency>
-
+-->
 		</dependencies>
 	</dependencyManagement>
 
@@ -185,7 +178,6 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
-			<version>${spring-cloud.version}</version>
 		</dependency>
 
 		<!--					<dependency>-->
@@ -200,7 +192,7 @@
 		
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j-impl</artifactId>
+			<artifactId>log4j-slf4j2-impl</artifactId>
 		</dependency>
 
 		<!--		<dependency>-->
@@ -308,10 +300,18 @@
 		<!--			<version>1.1.0</version>-->
 		<!--		</dependency>-->
 		<!-- https://vaadin.com/directory/component/vstepper -->
+		<!--
 		<dependency>
 			<groupId>com.mlottmann.VStepper</groupId>
 			<artifactId>VStepper</artifactId>
 			<version>1.0.9</version>
+		</dependency>
+		-->
+
+		<dependency>
+			<groupId>org.aksw.thirdparty.com.mlottmann.VStepper</groupId>
+			<artifactId>VStepper</artifactId>
+			<version>1.1.0-SNAPSHOT</version>
 		</dependency>
 
 <!--		<dependency>-->
@@ -398,13 +398,11 @@
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
-			<version>1.14</version>
 		</dependency>
 		<!-- Overrides an old cglib version of vaadin -->
 		<dependency>
 			<groupId>cglib</groupId>
 			<artifactId>cglib-nodep</artifactId>
-			<version>3.3.0</version>
 		</dependency>
 		<!--
 		<dependency>

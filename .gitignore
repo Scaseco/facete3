@@ -52,6 +52,12 @@ types.d.ts
 package-lock.json
 package.json
 webpack.config.js
+index.html
+vite.config.ts
+vite.generated.ts
+generated
+bundles
+webpack.config.js
 
 .vscode
 extra-endpoints.ttl

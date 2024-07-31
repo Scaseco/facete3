@@ -1,6 +1,7 @@
 package org.aksw.facete3.app.vaadin.components.sparql.wizard;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,6 +57,7 @@ public class SparqlConnectionWizard
 
     protected SparqlEndpointForm sparqlEndpointForm;
     protected Grid2<QuerySolution> graphGrid;
+    protected Grid<Selectable<Suggestion<String>>> polyfillGrid;
     protected Grid2<QuerySolution> typeGrid;
 
     protected Select<GraphMode> graphModeSelect = new Select<>();
@@ -67,6 +69,10 @@ public class SparqlConnectionWizard
     Var GRAPH_VAR = Var.alloc("Graph");
     Var TYPE_VAR = Var.alloc("Type");
 
+    /**
+     *
+     * @param executorService ExecutorService to be used for async requests.
+     */
     public SparqlConnectionWizard(ExecutorService executorService) {
         this.executorService = executorService;
         init();
@@ -76,16 +82,15 @@ public class SparqlConnectionWizard
     public void onWizardCompleted() {
     }
 
-    /**
-     *
-     * @param applyGraphs Whether to restrict queries to the specified graphs.
-     * @param unionDefaultGraph Whether to apply union default graph transform.
-     * @return
-     */
-    public Op getConjureSpecification(boolean applyGraphs, Boolean unionDefaultGraphMode, boolean applyPolyfills) {
+    public RdfDataRefSparqlEndpoint getDataRef(boolean applyGraphs) {
+        RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
+        getDataRef(dataRef, applyGraphs);
+        return dataRef;
+    }
+
+    public RdfDataRefSparqlEndpoint getDataRef(RdfDataRefSparqlEndpoint dataRef, boolean applyGraphs) {
         String urlStr = getEndpointUrl();
 
-        RdfDataRefSparqlEndpoint dataRef = ModelFactory.createDefaultModel().createResource().as(RdfDataRefSparqlEndpoint.class);
         dataRef.setServiceUrl(urlStr);
 
         RdfAuth auth = sparqlEndpointForm.getAuth();
@@ -106,6 +111,25 @@ public class SparqlConnectionWizard
 
             dataRef.setSendModeQuery(QuerySendMode.asGetWithLimitForm.name());
         }
+
+        if (true) {
+            // Virtuoso incorrectly returns an empty json on empty result sets which breaks with jena
+            dataRef.setAcceptHeaderSelectQuery(WebContent.contentTypeResultsXML);
+
+            dataRef.setSendModeQuery(QuerySendMode.asGetWithLimitForm.name());
+        }
+
+        return dataRef;
+    }
+
+    /**
+     *
+     * @param applyGraphs Whether to restrict queries to the specified graphs.
+     * @param unionDefaultGraph Whether to apply union default graph transform.
+     * @return
+     */
+    public Op getConjureSpecification(boolean applyGraphs, Boolean unionDefaultGraphMode, boolean applyPolyfills) {
+        RdfDataRefSparqlEndpoint dataRef = getDataRef(applyGraphs);
 
         Op result = OpDataRefResource.from(dataRef);
 
@@ -141,10 +165,26 @@ public class SparqlConnectionWizard
         return result;
     }
 
+    public void setPolyfillClasses(Collection<Selectable<Suggestion<String>>> polyfills) {
+        // DataProviders.
+        // polyfillGrid.asMultiSelect().select(gridItems);
+        // polyfillGrid.asMultiSelect()
+    }
+
+    public List<String> getPolyfillClasses() {
+        List<String> result = polyfillGrid.getSelectedItems().stream()
+                .map(item -> item.getValue().getValue())
+                .toList();
+                // .map(RDFNode::asNode)
+                // .collect(Collectors.toCollection(LinkedHashSet::new));
+        return result;
+    }
+
     private void init() {
         this.setWidthFull();
         sparqlEndpointForm = new SparqlEndpointForm();
         graphGrid = new Grid2<>(QuerySolution.class);
+        polyfillGrid = new Grid<>();
         typeGrid = new Grid2<>(QuerySolution.class);
 
         this.addStep(createStepSelectEndpoint(new DefaultStepHeader(1, "Sparql Endpoint"), sparqlEndpointForm));
@@ -185,9 +225,8 @@ public class SparqlConnectionWizard
     private Step createStepPolyfills(Component header) {
         VerticalLayout layout = new VerticalLayout();
         layout.add(new Span("SPARQL polyfill is a query rewriting middleware that abstracts away vendor-specific differences."));
-        Grid<Selectable<Suggestion<String>>> grid = new Grid<>();
-        grid.setItems(gridItems);
-        grid.addComponentColumn(row -> {
+        polyfillGrid.setItems(gridItems);
+        polyfillGrid.addComponentColumn(row -> {
             Checkbox cb = new Checkbox(row.isSelected());
             cb.addValueChangeListener(ev -> {
                 row.setSelected(Boolean.TRUE.equals(cb.getValue()));
@@ -195,23 +234,23 @@ public class SparqlConnectionWizard
             return cb;
         }).setKey("isEnabled");
 
-        grid.addComponentColumn(row -> {
+        polyfillGrid.addComponentColumn(row -> {
             return new Span(row.getValue().getName());
         }).setKey("name");
 
-        grid.setRowsDraggable(true);
+        polyfillGrid.setRowsDraggable(true);
 
-        grid.addDragStartListener(event -> {
+        polyfillGrid.addDragStartListener(event -> {
             draggedItem = event.getDraggedItems().get(0);
-            grid.setDropMode(GridDropMode.BETWEEN);
+            polyfillGrid.setDropMode(GridDropMode.BETWEEN);
         });
 
-        grid.addDragEndListener(event -> {
+        polyfillGrid.addDragEndListener(event -> {
             draggedItem = null;
-            grid.setDropMode(null);
+            polyfillGrid.setDropMode(null);
         });
 
-        grid.addDropListener(event -> {
+        polyfillGrid.addDropListener(event -> {
             Selectable<Suggestion<String>> dropOverItem = event.getDropTargetItem().get();
             if (!dropOverItem.equals(draggedItem)) {
                 // reorder dragged item the backing gridItems container
@@ -219,20 +258,20 @@ public class SparqlConnectionWizard
                 // calculate drop index based on the dropOverItem
                 int dropIndex = gridItems.indexOf(dropOverItem) + (event.getDropLocation() == GridDropLocation.BELOW ? 1 : 0);
                 gridItems.add(dropIndex, draggedItem);
-                grid.getDataProvider().refreshAll();
+                polyfillGrid.getDataProvider().refreshAll();
             }
         });
 
-        layout.add(grid);
+        layout.add(polyfillGrid);
 
         return new Step(header, layout) {
             @Override protected void onEnter() {
-            	UI ui = UI.getCurrent();
+                UI ui = UI.getCurrent();
 
-            	// TODO Validate the endpoint
-            	// Show a running task action. If cancelled, show a button to retry.
-            	
-            	
+                // TODO Validate the endpoint
+                // Show a running task action. If cancelled, show a button to retry.
+
+
                 Op dsOp = getConjureSpecification(true, false, false);
                 RdfDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
                 List<Selectable<Suggestion<String>>> suggestions = RdfDataSourcePolyfill.suggestPolyfills(dataSource).stream()
@@ -290,7 +329,7 @@ public class SparqlConnectionWizard
 
     public static enum GraphMode {
         CUSTOM("Custom"),
-        UNION_DEFAULT_GRAPH("Default Graph Mode");
+        UNION_DEFAULT_GRAPH("Union Graph Mode");
 
         protected String label;
 

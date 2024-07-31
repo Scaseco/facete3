@@ -2,16 +2,17 @@ package org.aksw.facete3.app.vaadin;
 
 import java.util.stream.Stream;
 
-import javax.servlet.http.HttpServletRequest;
-
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.web.SecurityFilterChain;
 
 import com.vaadin.flow.server.HandlerHelper;
 import com.vaadin.flow.shared.ApplicationConstants;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Configures Spring Security, doing the following:
@@ -19,9 +20,9 @@ import com.vaadin.flow.shared.ApplicationConstants;
  * <li>Restrict access to the application, allowing only logged in users,</li>
  * <li>Set up the login form,</li>
  */
-@EnableWebSecurity
+// @EnableWebSecurity
 @Configuration
-public class ConfigSecurity extends WebSecurityConfigurerAdapter {
+public class ConfigSecurity { // extends WebSecurityConfigurerAdapter {
 
     private static final String LOGIN_URL = "/login";
     private static final String LOGOUT_URL = "/logout";
@@ -31,35 +32,42 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
      * Registers our UserDetailsService and the password encoder to be used on
      * login attempts.
      */
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    //@Override
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return
         // @formatter:off
         http
-
+            .authorizeHttpRequests(requests -> requests
+                .requestMatchers(ConfigSecurity::isFrameworkInternalRequest).permitAll()
+                .anyRequest().permitAll()
+                //.anyRequest().authenticated()
+            )
             // Allow all flow internal requests.
-            .authorizeRequests().requestMatchers(ConfigSecurity::isFrameworkInternalRequest).permitAll()
+            // .authorizeRequests().requestMatchers(ConfigSecurity::isFrameworkInternalRequest).permitAll()
 
             // Restrict access to our application.
-            .and().authorizeRequests().anyRequest().permitAll()
+            // .authorizeRequests().anyRequest().permitAll()
             // .and().authorizeRequests().anyRequest().authenticated()
 
             // Not using Spring CSRF here to be able to use plain HTML for the login page
-            .and().csrf().disable()
+            .csrf(csrf -> csrf.disable())
 
             // Configure logout
-            .logout().logoutUrl(LOGOUT_URL).logoutSuccessUrl(LOGOUT_SUCCESS_URL)
+            .logout(logout -> logout.logoutUrl(LOGOUT_URL).logoutSuccessUrl(LOGOUT_SUCCESS_URL))
 
             // Configure the login page.
-            .and().oauth2Login().loginPage(LOGIN_URL).permitAll();
+            .oauth2Login(login -> login.loginPage(LOGIN_URL).permitAll())
+            .build();
         // @formatter:on
     }
 
     /**
      * Allows access to static resources, bypassing Spring Security.
      */
-    @Override
-    public void configure(WebSecurity web) {
-        web.ignoring().antMatchers(
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers(
                 // client-side JS code
                 "/VAADIN/**",
 
@@ -82,9 +90,9 @@ public class ConfigSecurity extends WebSecurityConfigurerAdapter {
      *            {@link HttpServletRequest}
      * @return true if is an internal framework request. False otherwise.
      */
-    static boolean isFrameworkInternalRequest(HttpServletRequest request) {
-        final String parameterValue = request
-                .getParameter(ApplicationConstants.REQUEST_TYPE_PARAMETER);
+    public static boolean isFrameworkInternalRequest(HttpServletRequest request) {
+        String parameterValue = request.getParameter(ApplicationConstants.REQUEST_TYPE_PARAMETER);
+
         return parameterValue != null
                 && Stream.of(HandlerHelper.RequestType.values()).anyMatch(
                         r -> r.getIdentifier().equals(parameterValue));
