@@ -220,9 +220,7 @@ public class MapComponent
 
     /** Update the map */
     public void refresh() {
-
         Fragment1 concept = mainView.getFacetedSearchSession().getFacetedQuery().root().availableValues().baseRelation().toFragment1();
-
         RdfDataSource dataSource = mainView.getFacetedSearchSession().getFacetedQuery().dataSource();
 
         Path pp = SimplePath.toPropertyPath(path);
@@ -290,7 +288,8 @@ public class MapComponent
 
                 System.out.println(cell);
                 System.out.println(cell.getData());
-            });        }
+            });
+        }
 
         // Envelope bounds = new Envelope(1, 65, 1, 75);
 //        MapPaginator<Node, Node> paginator = mapService.createPaginator(bounds);

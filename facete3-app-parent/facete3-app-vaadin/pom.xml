@@ -262,6 +262,17 @@
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
 			<artifactId>vaadin-jena-leafletflow</artifactId>
+			<!-- These exclusions should no longer be needed with jenax > 5.2.0-1 -->
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.scaseco.vaadin</groupId>
@@ -311,7 +322,7 @@
 		<dependency>
 			<groupId>org.aksw.thirdparty.com.mlottmann.VStepper</groupId>
 			<artifactId>VStepper</artifactId>
-			<version>1.1.0-SNAPSHOT</version>
+			<version>1.1.0</version>
 		</dependency>
 
 <!--		<dependency>-->

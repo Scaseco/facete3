@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -190,7 +189,7 @@ public class SparqlEndpointForm extends FormLayout {
             protected DataQuery<ServiceStatus> getDataQuery() {
                 RdfDataSource ds1 = RdfDataSources.of(DatasetFactory.wrap(endpointUrlSuggestions));
                 RdfDataSource ds2 = RdfDataSources.of(DatasetFactory.wrap(model));
-                RdfDataSource ds = new RdfDataSourceMulti(Arrays.asList(ds1, ds2));
+                RdfDataSource ds = RdfDataSourceMulti.newBuilder().add(ds1).add(ds2).build();
 
                 DataQuery<ServiceStatus> dq = FacetedQueryBuilder.builder()
                         .configDataConnection()
