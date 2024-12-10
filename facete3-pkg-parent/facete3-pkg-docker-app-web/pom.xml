@@ -15,6 +15,9 @@
 	
 	<properties>
 		<mainClass>org.aksw.facete3.app.vaadin.MainAppFacete3Vaadin</mainClass>
+
+                <docker.tag.prefix></docker.tag.prefix>
+                <docker.tag>${docker.tag.prefix}${project.version}</docker.tag>
 	</properties>
 
 	<build>
@@ -41,7 +44,9 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<configuration>
 					<to>
-						<image>docker.io/aksw/facete3-web${archSuffix}</image>
+						<image>docker.io/aksw/facete3-web${archSuffix}:${docker.tag}</image>
+						<tags>
+						</tags>
 					</to>
 					<from>
 						<image>${dockerJavaBaseImage}</image>
@@ -49,6 +54,7 @@
 					<container>
 					<jvmFlags>
 					      <jvmFlag>-Ddebug=true</jvmFlag>
+                                              <jvmFlag>-Dvaadin.launch-browser=false</jvmFlag>
 					</jvmFlags>
 					<ports><port>8000</port></ports>
 						<mainClass>${mainClass}</mainClass>

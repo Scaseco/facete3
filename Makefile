@@ -16,15 +16,18 @@ help:  ## Show these help instructions
 mcis: ## mvn skip clean install (minimal build of all modules) - Passing args:  make mcis ARGS="-X"
 	$(MCIS) $(POM) $(ARGS)
 
-
 vaadin-production: ## Build facete-vaadin in production mode
-	$(MS) $(POM) $(ARGS) -Pproduction -pl :facete3-app-vaadin clean install
+	$(MS) $(POM) $(ARGS) -Pproduction -pl :facete3-app-vaadin -am clean install
 
 docker-deploy-web: ## Run mvn jib:build for the web app (run after vaadin-production)
-	$(MVN) -pl :facete3-pkg-app-docker-web jib:build
+	$(MVN) $(POM) $(ARGS) -Pproduction -pl :facete3-pkg-app-docker-web -am clean install
+	# $(MVN) $(POM) $(ARGS) -Pproduction -pl :facete3-pkg-app-docker-web -am clean package jib:build
+	# cd facete3-pkg-parent/facete3-pkg-docker-app-web && $(MVN) $(ARGS) jib:build && cd ../..
+	$(MVN) $(POM) $(ARGS) -pl :facete3-pkg-app-docker-web jib:build
 
 vaadin-docker-web: ## Build vaadin docker image
-	$(MVN) $(POM) -pl :facete3-pkg-app-docker-web jib:dockerBuild
+	$(MVN) $(ARGS) $(POM) -pl :facete3-pkg-app-docker-web jib:dockerBuild
+	# cd facete3-pkg-parent/facete3-pkg-docker-app-web && $(MS) $(ARGS) jib:dockerBuild && cd ../..
 
 run-vaadin-boot: ## Run with maven and spring boot
 	$(MVN) $(POM) -pl :facete3-app-vaadin spring-boot:run
