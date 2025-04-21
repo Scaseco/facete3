@@ -16,7 +16,7 @@ import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
 import org.aksw.jenax.arq.aggregation.BestLiteralConfig;
 import org.aksw.jenax.dataaccess.LabelUtils;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.vaadin.component.grid.shacl.VaadinShaclGridUtils;
 import org.aksw.jenax.vaadin.label.LabelService;
 import org.apache.jena.graph.Node;
@@ -51,14 +51,14 @@ public class ConfigFacetedBrowserView {
 
     @Bean
     @Autowired
-    public Facete3Wrapper facetedQueryConf(RdfDataSource dataSource) {
+    public Facete3Wrapper facetedQueryConf(RDFDataSource dataSource) {
         return new Facete3Wrapper(dataSource);
     }
 
     @Bean
     @Autowired
     public DataProviderNodeQuery itemProvider(
-            RdfDataSource dataSource,
+            RDFDataSource dataSource,
             // SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
@@ -106,7 +106,7 @@ public class ConfigFacetedBrowserView {
     @Autowired
     public FacetCountProvider facetCountProvider(
             // SparqlQueryConnection baseDataConnection,
-            RdfDataSource dataSource,
+            RDFDataSource dataSource,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
             ConfigFaceteVaadin config,
@@ -128,7 +128,7 @@ public class ConfigFacetedBrowserView {
     @Bean
     @Autowired
     public FacetValueCountDataProvider facetValueCountProvider(
-            RdfDataSource dataSource,
+            RDFDataSource dataSource,
             // SparqlQueryConnection baseDataConnection,
             PrefixMapping prefixMapping,
             Facete3Wrapper facetedQueryConf,
@@ -148,7 +148,7 @@ public class ConfigFacetedBrowserView {
     @Bean
     @Autowired
     public FacetedBrowserView factedBrowserView(
-            RdfDataSource dataSource,
+            RDFDataSource dataSource,
             // RDFConnection baseDataConnection,
 //            SearchPlugin searchPlugin,
             InMemoryDataProvider<SearchPlugin> searchPluginProvider,

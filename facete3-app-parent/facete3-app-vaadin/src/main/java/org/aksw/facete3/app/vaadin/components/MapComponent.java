@@ -21,7 +21,7 @@ import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinderSyst
 import org.aksw.jenax.arq.util.node.PathUtils;
 import org.aksw.jenax.arq.util.node.ReverseRenameUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.api.Fragment2;
 import org.aksw.jenax.sparql.fragment.impl.Fragment2Impl;
@@ -125,7 +125,7 @@ public class MapComponent
         });
 
         searchForGeoPathsBtn.addClickListener(ev -> {
-            RdfDataSource dataSource = mainView.getFacetedSearchSession().getFacetedQuery().dataSource();
+            RDFDataSource dataSource = mainView.getFacetedSearchSession().getFacetedQuery().dataSource();
 
             ConceptPathFinderSystem sys = new ConceptPathFinderSystemBasic();
             Model dataSummary = sys.computeDataSummary(dataSource).blockingGet();
@@ -221,7 +221,7 @@ public class MapComponent
     /** Update the map */
     public void refresh() {
         Fragment1 concept = mainView.getFacetedSearchSession().getFacetedQuery().root().availableValues().baseRelation().toFragment1();
-        RdfDataSource dataSource = mainView.getFacetedSearchSession().getFacetedQuery().dataSource();
+        RDFDataSource dataSource = mainView.getFacetedSearchSession().getFacetedQuery().dataSource();
 
         Path pp = SimplePath.toPropertyPath(path);
         Path fullPath = PathFactory.pathSeq(pp, PathFactory.pathLink(spatialProperty));

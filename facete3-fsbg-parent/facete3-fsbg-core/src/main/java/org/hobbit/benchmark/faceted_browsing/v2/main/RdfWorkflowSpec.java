@@ -20,7 +20,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.sparql.query.rx.RDFDataMgrRx;
 import org.aksw.jenax.sparql.query.rx.SparqlRx;
 import org.aksw.jenax.stmt.core.SparqlStmtMgr;
@@ -145,7 +145,7 @@ class ModelCreationImpl<T>
      * @param conn
      * @return
      */
-    public static String deriveDatasetIri(RdfDataSource dataSource) {
+    public static String deriveDatasetIri(RDFDataSource dataSource) {
         RDFConnectionMetaData metadata;
         try (RDFConnection conn = dataSource.getConnection()) {
             RDFConnectionEx connEx = (RDFConnectionEx)conn;
@@ -329,14 +329,14 @@ public class RdfWorkflowSpec {
 
     // This creates an operator instance
     public ModelCreation<Model> deriveDatasetWithSparql(SparqlServiceReference ssr, String filenameOrUri) {
-        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.connect(ssr);
+        RDFDataSource dataSource = () -> RDFConnectionFactoryEx.connect(ssr);
         //return new ModelCreationImpl(ssr, filenameOrUri, rdfConnectionFactoryRegistory);
         ModelCreation<Model> result = deriveDatasetWithSparql(dataSource, filenameOrUri);
         return result;
     }
 
 
-    public ModelCreationImpl<Flowable<Resource>> execFlowable(RdfDataSource dataSource, Entry<Node, Query> partitionedQuery) {
+    public ModelCreationImpl<Flowable<Resource>> execFlowable(RDFDataSource dataSource, Entry<Node, Query> partitionedQuery) {
         String cacheId = "sparql-query/flowable/" + StringUtils.md5Hash("" + partitionedQuery);
 
         return new ModelCreationImpl<Flowable<Resource>>(
@@ -349,7 +349,7 @@ public class RdfWorkflowSpec {
     }
 
 
-    public ModelCreation<Model> execConstruct(RdfDataSource dataSource, String queryStr) {
+    public ModelCreation<Model> execConstruct(RDFDataSource dataSource, String queryStr) {
         String cacheId = "sparql-query/construct/" + StringUtils.md5Hash(queryStr);
 
         //return new ModelCreationImpl(conn, cacheId, () -> conn.queryConstruct(queryStr));
@@ -363,7 +363,7 @@ public class RdfWorkflowSpec {
     }
 
 
-    public ModelCreation<Model> deriveDatasetWithSparql(RdfDataSource dataSource, String sparqlFilenameOrUri) {
+    public ModelCreation<Model> deriveDatasetWithSparql(RDFDataSource dataSource, String sparqlFilenameOrUri) {
         String cacheId;
         try {
             cacheId = ModelCreationImpl.createHashForSparqlQueryFile(PrefixMapping.Extended, sparqlFilenameOrUri);
@@ -386,7 +386,7 @@ public class RdfWorkflowSpec {
 //		});
     }
 
-    public ModelCreation<Model> deriveDatasetWithFunction(RdfDataSource dataSource, String cacheId, Supplier<? extends Model> modelSupplier) {//Function<? super RDFConnectionEx, ? extends Model> modelSupplier) {
+    public ModelCreation<Model> deriveDatasetWithFunction(RDFDataSource dataSource, String cacheId, Supplier<? extends Model> modelSupplier) {//Function<? super RDFConnectionEx, ? extends Model> modelSupplier) {
         return new ModelCreationImpl<Model>(
                 () -> ModelCreationImpl.deriveDatasetIri(dataSource),
                 cacheId,

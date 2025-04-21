@@ -7,7 +7,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.facete3.app.vaadin.plugin.view.ViewManagerImpl;
 import org.aksw.facete3.app.vaadin.qualifier.FullView;
 import org.aksw.facete3.app.vaadin.qualifier.SnippetView;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.springframework.context.annotation.Bean;
 
 public class ConfigViewManager
@@ -15,7 +15,7 @@ public class ConfigViewManager
 
     @Bean
     @FullView
-    public ViewManager viewManagerFull(RdfDataSource dataSource) {
+    public ViewManager viewManagerFull(RDFDataSource dataSource) {
         ViewManagerImpl result = new ViewManagerImpl(dataSource.asQef());
 
         result.register(new ViewFactoryPaper());
@@ -27,7 +27,7 @@ public class ConfigViewManager
 
     @Bean
     @SnippetView
-    public ViewManager viewManagerDetail(RdfDataSource dataSource) {
+    public ViewManager viewManagerDetail(RDFDataSource dataSource) {
         ViewManagerImpl result = new ViewManagerImpl(dataSource.asQef());
 
         result.register(new ViewFactoryPaper());

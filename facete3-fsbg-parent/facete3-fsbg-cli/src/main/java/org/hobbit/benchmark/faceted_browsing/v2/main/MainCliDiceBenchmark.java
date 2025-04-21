@@ -34,7 +34,7 @@ import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.aksw.jenax.sparql.fragment.impl.FragmentUtils;
 import org.apache.commons.math3.analysis.function.Gaussian;
@@ -100,7 +100,7 @@ public class MainCliDiceBenchmark {
         datasetDescription.addAllDefaultGraphURIs(cmMain.getDefaultGraphUris());
 
 
-        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription);
+        RDFDataSource dataSource = () -> RDFConnectionFactoryEx.connect(sparqEndpoint, datasetDescription);
         allocateAllowedPredicates(dataSource);
     }
 
@@ -393,7 +393,7 @@ public class MainCliDiceBenchmark {
     }
 
 
-    public static void allocateAllowedPredicates(RdfDataSource dataSource) throws Exception {
+    public static void allocateAllowedPredicates(RDFDataSource dataSource) throws Exception {
 
 //		double f = 1000.0;
 //		Function<Double, Double> pmf = new Gaussian(1, 5000, 500)::value;

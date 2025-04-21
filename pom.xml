@@ -22,9 +22,9 @@
 	</scm>
 
 	<properties>
-		<jena.version>5.2.0-SNAPSHOT</jena.version>
-		<jenax.version>5.2.0-1-SNAPSHOT</jenax.version>
-		<vaadin-jena.version>5.2.0-1-SNAPSHOT</vaadin-jena.version>
+		<jena.version>5.5.0-SNAPSHOT</jena.version>
+		<jenax.version>5.5.0-1-SNAPSHOT</jenax.version>
+		<vaadin-jena.version>5.5.0-1-SNAPSHOT</vaadin-jena.version>
 		<rmltk.version>5.2.0-1-SNAPSHOT</rmltk.version>
 
 		<aksw-commons.version>0.9.9-SNAPSHOT</aksw-commons.version>

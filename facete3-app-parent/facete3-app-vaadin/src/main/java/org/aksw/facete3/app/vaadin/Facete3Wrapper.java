@@ -31,7 +31,7 @@ import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.RdfDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.entity.graph.metamodel.MainPlaygroundResourceMetamodel;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.model.entityinfo.plugin.JenaPluginEntityInfo;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.datatype.RDFDatatypePPath;
@@ -52,7 +52,6 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
-import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
@@ -118,7 +117,7 @@ public class Facete3Wrapper {
         return focusToFacetDir;
     }
 
-    public Facete3Wrapper(RdfDataSource dataSource) {
+    public Facete3Wrapper(RDFDataSource dataSource) {
     // public Facete3Wrapper(RDFConnection connection) {
         initJena();
         initFacetedQuery(dataSource);
@@ -167,7 +166,7 @@ public class Facete3Wrapper {
         JenaPluginEntityInfo.init(BuiltinPersonalities.model);
     }
 
-    private void initFacetedQuery(RdfDataSource rdfDataSource) {
+    private void initFacetedQuery(RDFDataSource rdfDataSource) {
         Model dataModel = ModelFactory.createDefaultModel();
         XFacetedQuery xFacetedQuery = dataModel.createResource()
                 .as(XFacetedQuery.class);

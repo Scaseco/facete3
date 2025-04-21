@@ -49,7 +49,7 @@ import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionTransform;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.path.core.FacetStep;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
@@ -131,7 +131,7 @@ public class FacetedBrowserView
 
 //  @Autowired
     // protected RDFConnection baseDataConnection;
-    protected RdfDataSource dataSource;
+    protected RDFDataSource dataSource;
 
 //    protected SearchProvider searchProvider;
     protected InMemoryDataProvider<SearchPlugin> searchPluginDataProvider;
@@ -180,7 +180,7 @@ public class FacetedBrowserView
 
     public FacetedBrowserView(
             // RDFConnection baseDataConnection,
-            RdfDataSource dataSource,
+            RDFDataSource dataSource,
 //            SearchPlugin searchPlugin,
             InMemoryDataProvider<SearchPlugin> searchPluginProvider,
             PrefixMapping prefixMapping,
@@ -813,7 +813,7 @@ public class FacetedBrowserView
 
         // RDFConnection effectiveDataConnection = baseDataConnection;
 
-        RdfDataSource effectiveDataSource = () -> {
+        RDFDataSource effectiveDataSource = () -> {
             RDFConnection effectiveDataConnection = dataSource.getConnection();
             SearchSensitiveRDFConnectionTransform connectionTransform = activeSearchPlugin.getConnectionTransform();
             if (connectionTransform != null) {

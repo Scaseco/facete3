@@ -25,7 +25,7 @@ import org.aksw.jenax.arq.util.node.ComparableNodeValue;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.path.SimplePath;
@@ -79,7 +79,7 @@ public class TestFacetedQuery2 {
 
     protected void load(String uri) {
         Model model = RDFDataMgr.loadModel(uri);
-        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(
+        RDFDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(
             RDFConnectionFactory.connect(DatasetFactory.create(model)), null);
 
         try {

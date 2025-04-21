@@ -21,7 +21,7 @@ import org.aksw.jena_sparql_api.ext.virtuoso.VirtuosoBulkLoad;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactory;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.apache.jena.query.Dataset;
@@ -135,7 +135,7 @@ public class MainCliFacetedBrowsingBenchmarkV2TaskGenerator {
             ScenarioConfig config = TaskGenerator.extractScenarioConfig(configUri);
 
 
-            RdfDataSource rdfDataSource;
+            RDFDataSource rdfDataSource;
 
             List<String> nonOptionArgs = cmMain.getNonOptionArgs();
             String sparqEndpoint = cmMain.getSparqlEndpoint();

@@ -63,7 +63,7 @@ import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionModular;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.query.SparqlQueryConnectionJsa;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryOverSparqlQueryConnection;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.api.Fragment3;
@@ -958,7 +958,7 @@ public class MainCliFacete3 {
     }
 
 
-    public static boolean isSparqlEndpoint(RdfDataSource rdfDataSource) {
+    public static boolean isSparqlEndpoint(RDFDataSource rdfDataSource) {
         boolean result = false;
         try(RDFConnection conn = rdfDataSource.getConnection()) {
             Throwable throwable = SparqlRx.execSelect(() -> conn.query("SELECT ?o { <http://foo.bar/baz> <http://foo.bar/baz> ?o } LIMIT 1"))
@@ -1151,7 +1151,7 @@ public class MainCliFacete3 {
     }
 
 
-    public static RdfDataSource configureRdfDataSource(
+    public static RDFDataSource configureRdfDataSource(
             String url,
             String bearerToken) {
         RDFConnectionRemoteBuilder builder = RDFConnectionRemote.create();
@@ -1193,7 +1193,7 @@ public class MainCliFacete3 {
             useStdIn = str.equals("-");
 
             logger.info("Probing argument for SPARQL endpoint");
-            RdfDataSource rdfDataSource = configureRdfDataSource(str, bearerToken);
+            RDFDataSource rdfDataSource = configureRdfDataSource(str, bearerToken);
 
             boolean isSparql = !useStdIn && isSparqlEndpoint(rdfDataSource);
 

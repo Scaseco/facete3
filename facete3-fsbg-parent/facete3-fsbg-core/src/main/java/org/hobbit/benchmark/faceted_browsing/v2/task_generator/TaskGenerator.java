@@ -60,9 +60,8 @@ import org.aksw.jenax.arq.util.expr.ExprUtils;
 import org.aksw.jenax.arq.util.node.ComparableNodeValue;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.connection.extra.RDFConnectionEx;
 import org.aksw.jenax.dataaccess.rx.MapFromBinaryRelation;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
@@ -83,7 +82,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -136,7 +134,7 @@ public class TaskGenerator {
 
     protected List<SetSummary> numericProperties;
 
-    protected RdfDataSource conn;
+    protected RDFDataSource conn;
     protected ConceptPathFinder conceptPathFinder;
     protected Random rand;
     protected Random pseudoRandom;
@@ -155,7 +153,7 @@ public class TaskGenerator {
 
     protected static Duration cpTimeout = Duration.ofSeconds(30);
 
-    public TaskGenerator(ScenarioConfig scenarioTemplate, Random random, RdfDataSource conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
+    public TaskGenerator(ScenarioConfig scenarioTemplate, Random random, RDFDataSource conn, List<SetSummary> numericProperties, ConceptPathFinder conceptPathFinder) {
         this.scenarioTemplate = scenarioTemplate;
         this.conn = conn;
         this.numericProperties = numericProperties;
@@ -310,7 +308,7 @@ public class TaskGenerator {
         return querySupplier;
     }
 
-    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RdfDataSource dataSource, boolean useCache) throws Exception {
+    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RDFDataSource dataSource, boolean useCache) throws Exception {
         TaskGenerator result = autoConfigure(config, random, dataSource, null, useCache);
         return result;
     }
@@ -359,7 +357,7 @@ public class TaskGenerator {
      * @param dataSummary
      * @return
      */
-    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RdfDataSource dataSource, Model dataSummary, boolean useCache) throws Exception {
+    public static TaskGenerator autoConfigure(ScenarioConfig config, Random random, RDFDataSource dataSource, Model dataSummary, boolean useCache) throws Exception {
 
         if(config == null) {
             config = extractScenarioConfig("config-all.ttl");

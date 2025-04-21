@@ -20,9 +20,9 @@ import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderFromDataQuerySu
 import org.aksw.jenax.arq.util.node.NodeUtils;
 import org.aksw.jenax.arq.util.triple.ModelUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RDFDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSourceMulti;
-import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
@@ -187,9 +187,9 @@ public class SparqlEndpointForm extends FormLayout {
 
             @Override
             protected DataQuery<ServiceStatus> getDataQuery() {
-                RdfDataSource ds1 = RdfDataSources.of(DatasetFactory.wrap(endpointUrlSuggestions));
-                RdfDataSource ds2 = RdfDataSources.of(DatasetFactory.wrap(model));
-                RdfDataSource ds = RdfDataSourceMulti.newBuilder().add(ds1).add(ds2).build();
+                RDFDataSource ds1 = RDFDataSources.of(DatasetFactory.wrap(endpointUrlSuggestions));
+                RDFDataSource ds2 = RDFDataSources.of(DatasetFactory.wrap(model));
+                RDFDataSource ds = RdfDataSourceMulti.newBuilder().add(ds1).add(ds2).build();
 
                 DataQuery<ServiceStatus> dq = FacetedQueryBuilder.builder()
                         .configDataConnection()

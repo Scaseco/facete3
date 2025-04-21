@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.aksw.commons.rx.lookup.LookupService;
-import org.aksw.jena_sparql_api.algebra.transform.TransformExpandAggCountDistinct;
 import org.aksw.jena_sparql_api.algebra.transform.TransformOpDatasetNamesToOpGraph;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
@@ -23,15 +22,14 @@ import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
-import org.aksw.jenax.arq.util.syntax.QueryUtils;
 import org.aksw.jenax.arq.util.var.Vars;
 import org.aksw.jenax.dataaccess.LabelUtils;
 import org.aksw.jenax.dataaccess.sparql.connection.common.RDFConnectionUtils;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
-import org.aksw.jenax.dataaccess.sparql.factory.dataengine.RdfDataEngines;
-import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
+import org.aksw.jenax.dataaccess.sparql.factory.dataengine.RDFDataEngines;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RDFDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactory;
-import org.aksw.jenax.dataaccess.sparql.link.common.RDFLinkUtils;
+import org.aksw.jenax.dataaccess.sparql.link.transform.RDFLinkTransforms;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithBnodeRewrite;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithLocalCache;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
@@ -50,6 +48,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,10 +104,10 @@ public class ConfigEndpoint {
     @RefreshScope
     @Bean //(destroyMethod = "close")
     @Autowired
-    public RdfDataSource getDataSource(ResourceHolder opHolder) {
+    public RDFDataSource getDataSource(ResourceHolder opHolder) {
         Resource r = opHolder.get();
         Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
-        RdfDataSource result = createDataSource(op);
+        RDFDataSource result = createDataSource(op);
 
         if (false) {
             Query q = QueryFactory.create("SELECT ?g { GRAPH ?g { } }");
@@ -116,7 +115,7 @@ public class ConfigEndpoint {
             org.apache.jena.sparql.algebra.Op quad = Algebra.toQuadForm(algebra);
             System.err.println(quad);
 
-            RdfDataSources.compute(result, conn -> {
+            RDFDataSources.compute(result, conn -> {
                 List<Node> list = ServiceUtils.fetchList(conn.query("SELECT ?g { GRAPH ?g { } }"), Vars.g);
                 System.err.println(list);
                 return null;
@@ -170,7 +169,7 @@ public class ConfigEndpoint {
     @RefreshScope
     @Bean
     @Autowired
-    public LabelServiceSwitchable<Node, String> labelMgr(RdfDataSource dataSource) {
+    public LabelServiceSwitchable<Node, String> labelMgr(RDFDataSource dataSource) {
         QueryExecutionFactory qef = dataSource.asQef(); // new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
 
@@ -189,7 +188,7 @@ public class ConfigEndpoint {
     }
 
 
-    public static RdfDataSource createDataSource(Op op) {
+    public static RDFDataSource createDataSource(Op op) {
         if (op == null) {
             op = OpData.create(ModelFactory.createDefaultModel());
         }
@@ -223,21 +222,23 @@ public class ConfigEndpoint {
                 RDFFormat.TURTLE_BLOCKS);
 
         // DataPodFactoryAdvancedImpl dataPodFactory = new DataPodFactoryAdvancedImpl(null, opExecutor, httpRepo);
-        RdfDataSource dataSourceRaw = op.accept(opExecutor);
+        RDFDataSource dataSourceRaw = op.accept(opExecutor).getDataSource();
 
-        dataSourceRaw = RdfDataSources.wrapWithLinkTransform(dataSourceRaw,
-            linkx -> RDFLinkUtils.wrapWithQueryTransform(linkx,
-                queryx -> QueryUtils.applyOpTransform(queryx, opx -> Transformer.transform(new TransformOpDatasetNamesToOpGraph(), opx)),
-                null));
+        Rewrite rewrite = (org.apache.jena.sparql.algebra.Op opx) -> Transformer.transform(new TransformOpDatasetNamesToOpGraph(), opx);
+        dataSourceRaw = RDFDataSources.decorate(dataSourceRaw, RDFLinkTransforms.of(rewrite));
+
+//        dataSourceRaw = RDFDataSources.wrapWithLinkTransform(dataSourceRaw,
+//            linkx -> RDFLinkUtils.wrapWithQueryTransform(linkx,
+//                queryx -> QueryUtils.applyOpTransform(queryx, opx -> Transformer.transform(new TransformOpDatasetNamesToOpGraph(), opx)),
+//                null));
 
         RdfDataSourceWithBnodeRewrite dataSourceBnode = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
         RdfDataSourceWithLocalCache dataSourceCache = new RdfDataSourceWithLocalCache(dataSourceBnode);
 
         QueryExecutionFactory qef = new QueryExecutionFactoryCompare(dataSourceCache.asQef(), dataSourceBnode.asQef());
-        RdfDataSource comparingDataSource = RdfDataEngines.adapt(qef);
+        RDFDataSource comparingDataSource = RDFDataEngines.adapt(qef).getLinkSource().asDataSource();
 
-
-        RdfDataSource dataSource = dataSourceCache;
+        RDFDataSource dataSource = dataSourceCache;
         // RdfDataSource dataSource = dataSourceBnode;
         // RdfDataSource dataSource = comparingDataSource;
 
@@ -245,7 +246,7 @@ public class ConfigEndpoint {
         // RdfDataSource dataSource = DataPods.from(dataRef);
         // RDFConnection rdfConnection = dataSource.getConnection();
 
-        RdfDataSource result = () -> {
+        RDFDataSource result = () -> {
                 RDFConnection conn = dataSource.getConnection();
                 conn = RDFConnectionUtils.wrapWithQueryTransform(conn,
                     query -> {

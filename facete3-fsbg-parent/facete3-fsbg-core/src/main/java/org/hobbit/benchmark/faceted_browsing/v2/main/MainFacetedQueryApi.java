@@ -17,7 +17,7 @@ import org.aksw.jena_sparql_api.data_query.impl.FacetedQueryGenerator;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jenax.arq.util.triple.DeltaWithFixedIterator;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
 import org.aksw.jenax.sparql.fragment.impl.ConceptUtils;
 import org.aksw.jenax.sparql.query.rx.SparqlRx;
@@ -109,7 +109,7 @@ public class MainFacetedQueryApi {
 //						.create()
 //						), null, null);
 
-        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(coreConn, null);
+        RDFDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(coreConn, null);
 
         Delta delta = new DeltaWithFixedIterator(m.getGraph());
         Model model = ModelFactory.createModelForGraph(delta);

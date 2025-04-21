@@ -3,7 +3,7 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jenax.connection.extra.RDFConnectionFactoryEx;
 import org.aksw.jenax.connection.extra.RDFConnectionMetaData;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.reprogen.core.JenaPluginUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -27,7 +27,7 @@ public class DatasetCache {
 
         SparqlServiceReference ssr = new SparqlServiceReference(serviceUrl, dd);
 
-        RdfDataSource dataSource = () -> RDFConnectionFactoryEx.connect(ssr);
+        RDFDataSource dataSource = () -> RDFConnectionFactoryEx.connect(ssr);
 
         Model model = new RdfWorkflowSpec()
             //.setDefaultConnectionFactory(FluentQueryExecutionFactory::connect)

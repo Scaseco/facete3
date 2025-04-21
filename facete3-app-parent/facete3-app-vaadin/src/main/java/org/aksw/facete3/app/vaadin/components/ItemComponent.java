@@ -12,7 +12,7 @@ import org.aksw.facete3.app.vaadin.plugin.view.ViewManager;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderNodeQuery;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataProviderSparqlBinding;
 import org.aksw.jena_sparql_api.vaadin.data.provider.DataRetriever;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.model.shacl.util.ShTemplateRegistry;
 import org.aksw.jenax.path.core.FacetPath;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
@@ -295,7 +295,7 @@ public class ItemComponent extends TabSheet {
     }
 
     public void showTableMapperDialog() {
-        RdfDataSource dataSource = dataProvider.getDataSource();
+        RDFDataSource dataSource = dataProvider.getDataSource();
         Supplier<Fragment1> conceptSupplier = dataProvider.getConceptSupplier();
         // System.out.println("Concept: " + conceptSupplier.get());
         TableMapperComponent tmc = new TableMapperComponent(dataSource, conceptSupplier.get(), labelService);
@@ -328,7 +328,7 @@ public class ItemComponent extends TabSheet {
     }
 
     public void refreshTable() {
-        RdfDataSource dataSource = dataProvider.getDataSource();
+        RDFDataSource dataSource = dataProvider.getDataSource();
         Supplier<Fragment1> conceptSupplier = dataProvider.getConceptSupplier();
         tableGrid = TableMapperComponent.buildGrid(
                 dataSource, conceptSupplier.get(),
@@ -369,7 +369,7 @@ public class ItemComponent extends TabSheet {
 
         acceptBtn.addClickListener(event -> {
             dialog.close();
-            RdfDataSource dataSource = dataProvider.getDataSource();
+            RDFDataSource dataSource = dataProvider.getDataSource();
             DataRetriever dataRetriever = VaadinShaclGridUtils.setupRetriever(dataSource, shaclModel);
             dataProvider.setDataRetriever(dataRetriever);
             // System.out.println("TABLE REFRESH");

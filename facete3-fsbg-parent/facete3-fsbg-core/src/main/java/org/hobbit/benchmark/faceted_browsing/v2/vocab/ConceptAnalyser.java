@@ -8,7 +8,7 @@ import org.aksw.jena_sparql_api.data_query.impl.DataQueryImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jenax.arq.util.syntax.ElementUtils;
 import org.aksw.jenax.arq.util.var.Vars;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
 import org.aksw.jenax.sparql.fragment.api.Fragment;
 import org.aksw.jenax.sparql.fragment.api.Fragment1;
 import org.aksw.jenax.sparql.fragment.impl.Concept;
@@ -144,7 +144,7 @@ public class ConceptAnalyser {
         bgp.add(Triple.create(s, Vocab.max.asNode(), Vars.z));
         Template template = new Template(bgp);
 
-        DataQuery<SetSummary> result = new DataQueryImpl<>((RdfDataSource)null, new ElementSubQuery(core), s, template, SetSummary.class);
+        DataQuery<SetSummary> result = new DataQueryImpl<>((RDFDataSource)null, new ElementSubQuery(core), s, template, SetSummary.class);
 
         return result;
     }

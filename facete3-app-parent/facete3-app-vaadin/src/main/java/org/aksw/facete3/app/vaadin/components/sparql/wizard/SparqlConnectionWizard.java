@@ -18,8 +18,8 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpJavaRewrite;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnionDefaultGraph;
 import org.aksw.jena_sparql_api.vaadin.util.Grid2;
 import org.aksw.jena_sparql_api.vaadin.util.VaadinSparqlUtils;
-import org.aksw.jenax.dataaccess.sparql.datasource.RdfDataSource;
-import org.aksw.jenax.dataaccess.sparql.factory.datasource.RdfDataSources;
+import org.aksw.jenax.dataaccess.sparql.datasource.RDFDataSource;
+import org.aksw.jenax.dataaccess.sparql.factory.datasource.RDFDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactoryQuery;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourcePolyfill;
 import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.Suggestion;
@@ -273,7 +273,7 @@ public class SparqlConnectionWizard
 
 
                 Op dsOp = getConjureSpecification(true, false, false);
-                RdfDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
+                RDFDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
                 List<Selectable<Suggestion<String>>> suggestions = RdfDataSourcePolyfill.suggestPolyfills(dataSource).stream()
                         .map(Selectable::of)
                         .collect(Collectors.toList());
@@ -309,8 +309,8 @@ public class SparqlConnectionWizard
             protected void onEnter() {
                 Boolean unionDefaultGraphMode = isUnionDefaultGraphMode();
                 Op dsOp = getConjureSpecification(true, unionDefaultGraphMode, true);
-                RdfDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
-                String datasetHashId = RdfDataSources.fetchDatasetHash(dataSource);
+                RDFDataSource dataSource = ConfigEndpoint.createDataSource(dsOp);
+                String datasetHashId = RDFDataSources.fetchDatasetHash(dataSource);
                 datasetId.setText(datasetHashId);
 
                 // RdfDataSources.fetchDatasetHash(dataSource)
