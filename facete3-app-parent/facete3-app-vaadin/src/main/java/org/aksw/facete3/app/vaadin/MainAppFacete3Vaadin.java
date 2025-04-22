@@ -15,7 +15,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 /**
  * The entry point of the Spring Boot application.
  */
-@SpringBootApplication
+// @SpringBootApplication
 @PWA(name = "Facete3 Vaadin Application", shortName = "Facete3",
 description = "This is an example Vaadin application.") // , enableInstallPrompt = true)
 @Theme(themeClass = Lumo.class)
