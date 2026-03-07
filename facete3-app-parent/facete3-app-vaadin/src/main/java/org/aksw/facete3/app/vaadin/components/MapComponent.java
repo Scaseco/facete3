@@ -7,6 +7,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Streams;
+import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.commons.rx.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
@@ -45,15 +53,6 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 
-import com.google.common.collect.Streams;
-import com.vaadin.flow.component.ClientCallable;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
-
-import elemental.json.JsonObject;
 import software.xdev.vaadin.maps.leaflet.MapContainer;
 import software.xdev.vaadin.maps.leaflet.basictypes.LIcon;
 import software.xdev.vaadin.maps.leaflet.basictypes.LIconOptions;
@@ -64,6 +63,7 @@ import software.xdev.vaadin.maps.leaflet.layer.ui.LMarker;
 import software.xdev.vaadin.maps.leaflet.map.LMap;
 import software.xdev.vaadin.maps.leaflet.registry.LComponentManagementRegistry;
 import software.xdev.vaadin.maps.leaflet.registry.LDefaultComponentManagementRegistry;
+import tools.jackson.databind.node.ObjectNode;
 
 public class MapComponent
     extends VerticalLayout
@@ -305,10 +305,10 @@ public class MapComponent
 
 
     @ClientCallable
-    public void updateBoundingBox(JsonObject json) {
+    public void updateBoundingBox(ObjectNode json) {
         // {"_southWest":{"lat":49.67390472450039,"lng":12.158346176147463},"_northEast":{"lat":49.67648051949675,"lng":12.165791988372803}}
-        Coordinate sw = parse(json.get("_southWest"));
-        Coordinate ne = parse(json.get("_northEast"));
+        Coordinate sw = parse((ObjectNode)json.get("_southWest"));
+        Coordinate ne = parse((ObjectNode)json.get("_northEast"));
 
         this.mapBounds = new Envelope(sw, ne);
         refresh();
@@ -316,9 +316,9 @@ public class MapComponent
         // this.boundingBox = parseBoundingBoxJson(json.toJson());
     }
 
-    public static Coordinate parse(JsonObject json) {
-        double lat = json.getNumber("lat");
-        double lng = json.getNumber("lng");
+    public static Coordinate parse(ObjectNode json) {
+        double lat = json.get("lat").asDouble();
+        double lng = json.get("lng").asDouble();
         return new Coordinate(lng, lat);
     }
 }

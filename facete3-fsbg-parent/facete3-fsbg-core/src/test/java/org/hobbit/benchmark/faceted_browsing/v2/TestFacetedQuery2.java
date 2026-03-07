@@ -11,6 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Range;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetNode;
 import org.aksw.facete.v3.api.FacetedQuery;
@@ -38,7 +44,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -48,11 +54,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Range;
 
 public class TestFacetedQuery2 {
 
@@ -80,7 +81,7 @@ public class TestFacetedQuery2 {
     protected void load(String uri) {
         Model model = RDFDataMgr.loadModel(uri);
         RDFDataSource dataSource = () -> RDFConnectionFactoryEx.wrap(
-            RDFConnectionFactory.connect(DatasetFactory.create(model)), null);
+            RDFConnection.connect(DatasetFactory.create(model)), null);
 
         try {
             Random random = new Random(0);

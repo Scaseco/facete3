@@ -16,7 +16,6 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
@@ -59,13 +58,13 @@ public class RDFConnectionBuilder {
         Dataset dataset = DatasetFactory.create();
         RDFDataMgr.read(dataset,
                 "/home/beavis/cloud/repositories/link-discovery-and-data-fusion/fusion/fused.nt");
-        RDFConnection conn = RDFConnectionFactory.connect(dataset);
+        RDFConnection conn = RDFConnection.connect(dataset);
         connection = wrapWithVirtualBnodeUris(conn, "jena");
     }
 
     public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String profile) {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.rq");
         Set<String> activeProfiles =
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =
@@ -76,7 +75,7 @@ public class RDFConnectionBuilder {
 
     public static RDFConnection wrapWithFilter(RDFConnection conn, String profile) {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.rq");
         Set<String> activeProfiles =
                 new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform =

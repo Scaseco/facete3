@@ -3,6 +3,8 @@ package org.aksw.facete3.app.vaadin;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.google.common.collect.Lists;
+
 import org.aksw.commons.util.function.FixpointIteration;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPluginImpl;
@@ -32,11 +34,8 @@ import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.google.common.collect.Lists;
 
 /**
  * The config class sets up a connection to the aksw/cord natural language interface (nli)
@@ -58,7 +57,7 @@ public class ConfigSearchProviderNli {
 //    }
 
     @Bean
-    @Autowired
+    // @Autowired
     public SearchPlugin searchPlugin(NliConfig nliConfig) {
         SearchPlugin result = new SearchPluginImpl(
                 new SearchProviderNli(nliConfig),

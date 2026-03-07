@@ -7,6 +7,8 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 
+import com.google.common.collect.Maps;
+
 import org.aksw.commons.collections.selector.WeightedSelectorMutable;
 import org.aksw.facete.v3.api.FacetNodeResource;
 import org.aksw.facete.v3.api.FacetedQueryResource;
@@ -26,7 +28,6 @@ import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.path.PathFactory;
@@ -35,8 +36,6 @@ import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.HierarchyCoreOnDemand;
 import org.hobbit.benchmark.faceted_browsing.v2.task_generator.TaskGenerator;
 import org.hobbit.benchmark.faceted_browsing.v2.vocab.FacetedBrowsingVocab;
-
-import com.google.common.collect.Maps;
 
 public class MainFacetedQueryApi {
 
@@ -93,7 +92,7 @@ public class MainFacetedQueryApi {
         }
 
         Model m = RDFDataMgr.loadModel("path-data-simple.ttl");
-        RDFConnection coreConn = RDFConnectionFactory.connect(DatasetFactory.create(m));
+        RDFConnection coreConn = RDFConnection.connect(DatasetFactory.create(m));
 //
 //		RDFConnection conn =
 //			new RDFConnectionModular(new SparqlQueryConnectionJsa(

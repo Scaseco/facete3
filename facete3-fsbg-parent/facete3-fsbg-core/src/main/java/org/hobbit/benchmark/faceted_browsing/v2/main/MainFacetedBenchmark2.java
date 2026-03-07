@@ -3,6 +3,11 @@ package org.hobbit.benchmark.faceted_browsing.v2.main;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Range;
+import com.google.common.collect.Table;
+import com.google.common.collect.Table.Cell;
+
 import org.aksw.jena_sparql_api.data_query.api.PathAccessor;
 import org.aksw.jena_sparql_api.data_query.api.SPath;
 import org.aksw.jena_sparql_api.data_query.impl.FacetedBrowsingSessionImpl;
@@ -28,7 +33,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -42,11 +46,6 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.ExprPath;
-
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Range;
-import com.google.common.collect.Table;
-import com.google.common.collect.Table.Cell;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -149,7 +148,7 @@ public class MainFacetedBenchmark2 {
         //RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
 
         {
-            RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(RDFDataMgr.loadModel("path-data.ttl")));
+            RDFConnection conn = RDFConnection.connect(DatasetFactory.create(RDFDataMgr.loadModel("path-data.ttl")));
 
 
             System.out.println("Paths: " + ConceptPathFinder.findPaths(
@@ -172,7 +171,7 @@ public class MainFacetedBenchmark2 {
 
         }
 
-        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m));
+        RDFConnection conn = RDFConnection.connect(DatasetFactory.create(m));
 
 
         FacetedBrowsingSessionImpl session = new FacetedBrowsingSessionImpl(conn);

@@ -1,5 +1,8 @@
 package org.aksw.vaadin.datashape.form;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import org.aksw.commons.collection.observable.ObservableCollection;
 import org.aksw.jena_sparql_api.collection.observable.GraphChange;
 import org.aksw.jena_sparql_api.collection.observable.ObservableGraph;
@@ -16,16 +19,12 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.DCAT;
 import org.topbraid.shacl.model.SHFactory;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 public class MainTestFormGenerator {
 
@@ -59,7 +58,7 @@ public class MainTestFormGenerator {
 //        RDFDataMgr.write(System.out, ds, RDFFormat.TRIG);
 
 
-        RDFConnection conn = RDFConnectionFactory.connect(ds);
+        RDFConnection conn = RDFConnection.connect(ds);
 
         Graph graph = null;
         for (int i = 0; i < 1; ++i) {

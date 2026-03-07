@@ -359,7 +359,7 @@ public class TravTripleViews {
     public static class TravAlias<S>
         extends TravTripleBase<S>
     {
-        public static final Node DEFAULT_ALIAS = NodeFactory.createLiteral(""); // NodeValue.TRUE.asNode();
+        public static final Node DEFAULT_ALIAS = NodeFactory.createLiteralString(""); // NodeValue.TRUE.asNode();
 
         protected TravProperty<S> parent;
 
@@ -392,7 +392,7 @@ public class TravTripleViews {
         }
 
         public TravValues<S> alias(String alias) {
-            return traverse(NodeFactory.createLiteral(alias));
+            return traverse(NodeFactory.createLiteralString(alias));
         }
 
         @Override

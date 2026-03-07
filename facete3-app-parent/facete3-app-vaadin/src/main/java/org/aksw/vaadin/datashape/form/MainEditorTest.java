@@ -64,7 +64,7 @@ public class MainEditorTest {
             System.out.println("Got event: " + ev);
         });
         System.out.println(test.get());
-        test.set(NodeFactory.createLiteral("yay"));
+        test.set(NodeFactory.createLiteralString("yay"));
         System.out.println(test.get());
 
 

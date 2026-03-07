@@ -14,40 +14,40 @@
 		see https://github.com/jutzig/github-release-plugin/issues/14 -->
 	<scm>
 		<url>https://github.com/hobbit-project/faceted-browsing-benchmark</url>
-		<connection>
-			scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</connection>
-		<developerConnection>
-			scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</developerConnection>
+		<connection>scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</connection>
+		<developerConnection>scm:git:git@github.com:hobbit-project/faceted-browsing-benchmark.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
 	<properties>
-		<jena.version>5.5.0-SNAPSHOT</jena.version>
-		<jenax.version>5.5.0-1-SNAPSHOT</jenax.version>
-		<vaadin-jena.version>5.5.0-1-SNAPSHOT</vaadin-jena.version>
-		<rmltk.version>5.2.0-1-SNAPSHOT</rmltk.version>
+		<jena.version>6.1.0-SNAPSHOT</jena.version>
+		<jenax.version>6.1.0-1-SNAPSHOT</jenax.version>
+		<vaadin-jena.version>6.1.0-1-SNAPSHOT</vaadin-jena.version>
+		<rmltk.version>6.1.0-1-SNAPSHOT</rmltk.version>
 
-		<aksw-commons.version>0.9.9-SNAPSHOT</aksw-commons.version>
-		<slf4j.version>2.0.13</slf4j.version>
-		<log4j.version>2.23.0</log4j.version>
-		<picocli.version>4.6.2</picocli.version>
+		<aksw-commons.version>0.9.12-SNAPSHOT</aksw-commons.version>
+		<slf4j.version>2.0.17</slf4j.version>
+		<log4j.version>2.25.3</log4j.version>
+		<picocli.version>4.7.7</picocli.version>
 
-
-        <!--
+		<!--
 		<vaadin.version>14.10.10</vaadin.version> 
 		<spring-boot.version>2.7.18</spring-boot.version>				
 		<spring.version>5.3.31</spring.version>		
 		<spring-cloud.version>3.1.8</spring-cloud.version>
 		-->
-		
-		<vaadin.version>24.4.10</vaadin.version>
-		<spring-boot.version>3.3.1</spring-boot.version>
-		<spring.version>6.1.0</spring.version>
-		<spring-cloud.version>4.1.3</spring-cloud.version>
 
+		<vaadin.version>25.0.6</vaadin.version>
+<!--		<spring-boot.version>4.1.0-M2</spring-boot.version>-->
+		<!-- Must ensure that spring-cloud is compatible with spring-boot! -->
+		<spring-boot.version>4.0.3</spring-boot.version>
+
+		<spring.version>6.1.0</spring.version>
+		<spring-cloud.version>5.0.1</spring-cloud.version>
 
 		<!-- <jackson.version>2.8.8</jackson.version> -->
-		<jackson.version>2.14.2</jackson.version>
+		<jackson.version>2.21.1</jackson.version>
+		<jackson-annotations.version>3.0-rc5</jackson-annotations.version>
 		<jmh.version>1.25.2</jmh.version>
 
 		<javax.xml.version>2.3.1</javax.xml.version>
@@ -58,7 +58,7 @@
 		<!-- <maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target> -->
 
-		<maven.compiler.release>17</maven.compiler.release>
+		<maven.compiler.release>21</maven.compiler.release>
 		<!-- <maven.compiler.source>9</maven.compiler.source> -->
 		<!-- <maven.compiler.target>9</maven.compiler.target> -->
 		<!-- <maven.compiler.release>9</maven.compiler.release> -->
@@ -116,23 +116,23 @@
 				<artifactId>jakarta.servlet-api</artifactId>
 				<version>6.0.0</version>
 			</dependency>
-					<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-config</artifactId>
-			<version>${spring-cloud.version}</version>
-		</dependency>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-starter-config</artifactId>
+				<version>${spring-cloud.version}</version>
+			</dependency>
 
-		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>1.14</version>
-		</dependency>
-		<!-- Overrides an old cglib version of vaadin -->
-		<dependency>
-			<groupId>cglib</groupId>
-			<artifactId>cglib-nodep</artifactId>
-			<version>3.3.0</version>
-		</dependency>
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>1.14</version>
+			</dependency>
+			<!-- Overrides an old cglib version of vaadin -->
+			<dependency>
+				<groupId>cglib</groupId>
+				<artifactId>cglib-nodep</artifactId>
+				<version>3.3.0</version>
+			</dependency>
 
 			<dependency>
 				<groupId>com.vaadin</groupId>
@@ -188,7 +188,7 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-annotations</artifactId>
-				<version>${jackson.version}</version>
+				<version>${jackson-annotations.version}</version>
 			</dependency>
 
 
@@ -412,13 +412,13 @@
 				<version>${jmh.version}</version>
 			</dependency>
 
-<!--			<dependency>-->
-<!--				<groupId>org.springframework.boot</groupId>-->
-<!--				<artifactId>spring-boot-dependencies</artifactId>-->
-<!--				<version>${spring-boot.version}</version>-->
-<!--				<type>pom</type>-->
-<!--				<scope>import</scope>-->
-<!--			</dependency>-->
+			<!--			<dependency>-->
+			<!--				<groupId>org.springframework.boot</groupId>-->
+			<!--				<artifactId>spring-boot-dependencies</artifactId>-->
+			<!--				<version>${spring-boot.version}</version>-->
+			<!--				<type>pom</type>-->
+			<!--				<scope>import</scope>-->
+			<!--			</dependency>-->
 
 		</dependencies>
 	</dependencyManagement>

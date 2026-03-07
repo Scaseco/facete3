@@ -10,6 +10,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+
 import org.aksw.commons.path.core.Path;
 import org.aksw.commons.path.trav.api.Trav;
 import org.aksw.commons.path.trav.l2.Trav2Trees.TreeNode2;
@@ -62,7 +65,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shacl.vocabulary.SHACLM;
 import org.apache.jena.sparql.core.Var;
@@ -77,9 +79,6 @@ import org.topbraid.shacl.model.SHFactory;
 import org.topbraid.shacl.model.SHNodeShape;
 import org.topbraid.shacl.model.SHPropertyShape;
 import org.topbraid.shacl.vocabulary.SH;
-
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -181,7 +180,7 @@ public class ResourceTraversals {
         Node rootShape = NodeFactory.createURI("http://data.europa.eu/r5r#Catalog_Shape");
         Fragment1 rootRel = Concept.createNodes(rootShape);
 
-        RDFConnection conn = RDFConnectionFactory.connect(m);
+        RDFConnection conn = RDFConnection.connect(m);
 
         Fragment shaclRelation = createShaclRelation();
         Table<Boolean, Node, Set<Resource>> pToDirToTgtShape = getShaclTransitions(rootRel, conn);

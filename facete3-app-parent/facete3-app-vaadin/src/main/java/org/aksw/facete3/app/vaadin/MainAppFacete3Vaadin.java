@@ -1,24 +1,24 @@
 package org.aksw.facete3.app.vaadin;
 
+import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Push;
+import com.vaadin.flow.server.PWA;
+import com.vaadin.flow.shared.communication.PushMode;
+import com.vaadin.flow.theme.lumo.Lumo;
+
 import org.apache.jena.sys.JenaSystem;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import com.vaadin.flow.component.page.AppShellConfigurator;
-import com.vaadin.flow.component.page.Push;
-import com.vaadin.flow.server.PWA;
-import com.vaadin.flow.shared.communication.PushMode;
-import com.vaadin.flow.theme.Theme;
-import com.vaadin.flow.theme.lumo.Lumo;
-
 /**
  * The entry point of the Spring Boot application.
  */
-// @SpringBootApplication
+@SpringBootApplication
 @PWA(name = "Facete3 Vaadin Application", shortName = "Facete3",
 description = "This is an example Vaadin application.") // , enableInstallPrompt = true)
-@Theme(themeClass = Lumo.class)
+@StyleSheet(Lumo.COMPACT_STYLESHEET)
 @Push(PushMode.AUTOMATIC)
 @EnableAsync
 // @EnableAsync // for long running tasks, see https://vaadin.com/docs/latest/advanced/long-running-tasks

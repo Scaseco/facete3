@@ -256,11 +256,11 @@ public class ChangeSetUtils {
             css.setLatestChangeSet(cs);
 
             List<Statement> addStmts = addGraph.find(s, Node.ANY, Node.ANY)
-                    .mapWith(t -> ModelUtils.tripleToStatement(dataModel, t))
+                    .mapWith(t -> dataModel.asStatement(t))
                     .toList();
 
             List<Statement> delStmts = delGraph.find(s, Node.ANY, Node.ANY)
-                    .mapWith(t -> ModelUtils.tripleToStatement(dataModel, t))
+                    .mapWith(t -> dataModel.asStatement(t))
                     .toList();
 
 

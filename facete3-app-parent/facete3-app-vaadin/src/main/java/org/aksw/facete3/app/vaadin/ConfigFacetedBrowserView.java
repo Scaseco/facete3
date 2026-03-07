@@ -2,6 +2,8 @@ package org.aksw.facete3.app.vaadin;
 
 import java.util.concurrent.ExecutorService;
 
+import com.vaadin.flow.data.provider.InMemoryDataProvider;
+
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete3.app.vaadin.components.FacetedBrowserView;
 import org.aksw.facete3.app.vaadin.plugin.search.SearchPlugin;
@@ -29,8 +31,6 @@ import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEven
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 
-import com.vaadin.flow.data.provider.InMemoryDataProvider;
-
 /**
  * This is a generic context configuration which declares all DataProviders
  * used by the {@link FacetedBrowserView} Vaadin component.
@@ -50,13 +50,11 @@ public class ConfigFacetedBrowserView {
     public static final int DFT_GRID_PAGESIZE = 10;
 
     @Bean
-    @Autowired
     public Facete3Wrapper facetedQueryConf(RDFDataSource dataSource) {
         return new Facete3Wrapper(dataSource);
     }
 
     @Bean
-    @Autowired
     public DataProviderNodeQuery itemProvider(
             RDFDataSource dataSource,
             // SparqlQueryConnection baseDataConnection,
@@ -103,7 +101,6 @@ public class ConfigFacetedBrowserView {
 //    }
 
     @Bean
-    @Autowired
     public FacetCountProvider facetCountProvider(
             // SparqlQueryConnection baseDataConnection,
             RDFDataSource dataSource,
@@ -126,7 +123,6 @@ public class ConfigFacetedBrowserView {
     }
 
     @Bean
-    @Autowired
     public FacetValueCountDataProvider facetValueCountProvider(
             RDFDataSource dataSource,
             // SparqlQueryConnection baseDataConnection,
@@ -146,7 +142,6 @@ public class ConfigFacetedBrowserView {
 
 
     @Bean
-    @Autowired
     public FacetedBrowserView factedBrowserView(
             RDFDataSource dataSource,
             // RDFConnection baseDataConnection,
@@ -187,7 +182,6 @@ public class ConfigFacetedBrowserView {
     }
 
     @Bean
-    @Autowired
     public RefreshHandler refreshHandler () {
         return new RefreshHandler();
     }

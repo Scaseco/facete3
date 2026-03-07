@@ -183,9 +183,9 @@ public class SparqlConnectionWizard
     private void init() {
         this.setWidthFull();
         sparqlEndpointForm = new SparqlEndpointForm();
-        graphGrid = new Grid2<>(QuerySolution.class);
+        graphGrid = new Grid2<>(QuerySolution.class, false); // FIXME Migration Vaadin 25 - perhaps true?
         polyfillGrid = new Grid<>();
-        typeGrid = new Grid2<>(QuerySolution.class);
+        typeGrid = new Grid2<>(QuerySolution.class, false); // FIXME Migration Vaadin 25 - perhaps true?
 
         this.addStep(createStepSelectEndpoint(new DefaultStepHeader(1, "Sparql Endpoint"), sparqlEndpointForm));
         this.addStep(createStepPolyfills(new DefaultStepHeader(2, "Polyfills")));

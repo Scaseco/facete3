@@ -25,7 +25,6 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
@@ -101,7 +100,7 @@ public class QueryGroupExecutor {
 
     public static void main(String[] args) {
         Model m = RDFDataMgr.loadModel("path-data.ttl");
-        try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(m))) {
+        try(RDFConnection conn = RDFConnection.connect(DatasetFactory.create(m))) {
 
             //Query baseQuery = QueryFactory.create("SELECT ?g1 ?g2 (COUNT(DISTINCT ?g3) AS ?g4) { ?g1 ?g2 ?g3 } GROUP BY ?g1 ?g2");
             Query baseQuery = QueryFactory.create("SELECT ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?p");

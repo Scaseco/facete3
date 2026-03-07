@@ -12,6 +12,23 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import com.google.common.collect.Streams;
+import com.google.common.graph.Traverser;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.Grid.Column;
+import com.vaadin.flow.component.html.NativeLabel;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
+import com.vaadin.flow.data.provider.InMemoryDataProvider;
+import com.vaadin.flow.data.provider.Query;
+
 import org.aksw.commons.path.core.Path;
 import org.aksw.commons.rx.lookup.LookupService;
 import org.aksw.facete.v3.api.FacetCount;
@@ -82,23 +99,6 @@ import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 
-import com.google.common.collect.Streams;
-import com.google.common.graph.Traverser;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.Grid.Column;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout.Orientation;
-import com.vaadin.flow.data.provider.InMemoryDataProvider;
-import com.vaadin.flow.data.provider.Query;
-
 public class FacetedBrowserView
     extends VerticalLayout {
 
@@ -120,7 +120,7 @@ public class FacetedBrowserView
 
     protected SparqlGridComponent sparqlGridComponent;
 
-    protected Label connectionInfo;
+    protected NativeLabel connectionInfo;
 
     protected MapComponent mapComponent = new MapComponent(this);
 
@@ -336,7 +336,7 @@ public class FacetedBrowserView
 
         constraintsComponent = new ConstraintsComponent(this, facete3, labelMgr);
         constraintsComponent.setMaxHeight("40px");
-        connectionInfo = new Label();
+        connectionInfo = new NativeLabel();
         connectionInfo.getElement().setAttribute("theme", "badge primary pill");
 
         searchComponent = new SearchComponent(this, () -> activeSearchPlugin.getSearchProvider());

@@ -46,7 +46,7 @@ public class MainTestCodeSnippets {
     }
 
     public static void main2(String[] args) {
-        Node node = NodeFactory.createLiteral("\"hello\nworld\"");
+        Node node = NodeFactory.createLiteralString("\"hello\nworld\"");
         System.out.println(LabelUtils.deriveLabelFromNode(node, null, null));
         if (true) { return; }
 

@@ -7,18 +7,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.security.PermitAll;
 
-import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
-import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
-import org.aksw.facete3.app.vaadin.session.UserSession;
-import org.aksw.jena_sparql_api.vaadin.util.GridEx;
-import org.aksw.jena_sparql_api.vaadin.util.TreeGridEx;
-import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
-import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
-import org.aksw.vaadin.common.component.tab.RouteTabs;
-import org.aksw.vaadin.common.provider.util.TaskControl;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableAsync;
-
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -28,7 +16,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
@@ -40,7 +28,6 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.progressbar.ProgressBarVariant;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -48,10 +35,18 @@ import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.PWA;
-import com.vaadin.flow.shared.communication.PushMode;
-import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
+
+import org.aksw.facete3.app.vaadin.components.ExplorerTabs;
+import org.aksw.facete3.app.vaadin.plugin.ComponentPlugin;
+import org.aksw.facete3.app.vaadin.session.UserSession;
+import org.aksw.jena_sparql_api.vaadin.util.GridEx;
+import org.aksw.jena_sparql_api.vaadin.util.TreeGridEx;
+import org.aksw.jenax.model.foaf.domain.api.FoafAgent;
+import org.aksw.jenax.model.foaf.domain.api.FoafOnlineAccount;
+import org.aksw.vaadin.common.component.tab.RouteTabs;
+import org.aksw.vaadin.common.provider.util.TaskControl;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("")
 @CssImport(value = "./styles/shared-styles.css", include = "lumo-badge")
@@ -63,12 +58,9 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @CssImport(value = "./styles/vaadin-text-area-styles.css", themeFor = "vaadin-text-area")
 @CssImport(value = "./styles/flow-component-renderer-styles.css", themeFor = "flow-component-renderer")
 @CssImport(value = "./styles/vaadin-grid-tree-toggle-styles.css", themeFor = "vaadin-grid-tree-toggle")
-@JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
-@JsModule("@vaadin/vaadin-lumo-styles/badge.js")
-// @CssImport(value = "./styles/vstepper-styles.css", themeFor = "v-stepper")
-// @Theme(value = Lumo.class)
+// @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
+@StyleSheet("@vaadin/vaadin-lumo-styles/badge.css")
 @PermitAll
-//@HtmlImport(value="frontend://bower_components/vaadin-lumo-styles/badge.html")
 public class AppLayoutFacete3 extends AppLayout {
 
     // Ensure Jena plugins are fully loaded before
@@ -293,7 +285,7 @@ public class AppLayoutFacete3 extends AppLayout {
             taskCountErrorSpan.setText(Long.toString(pse[2]));
         });
 
-        actionSubMenu.add(actionGrid);
+        actionSubMenu.addComponent(actionGrid);
     }
 
     protected void setupAccount() {
@@ -313,7 +305,7 @@ public class AppLayoutFacete3 extends AppLayout {
 
         if (user.isPresent()) { //
             subMenu.addItem("Logged in as: " + user.get().getAccountName()).setEnabled(false);
-            subMenu.add(new Hr());
+            subMenu.addComponent(new Hr());
         }
 
         subMenu.addItem("Login", click -> {

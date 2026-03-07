@@ -3,12 +3,14 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Quad;
@@ -16,8 +18,6 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFactory;
 import org.hobbit.benchmark.faceted_browsing.v2.main.SimpleSparqlInsertRequestFactoryWindowedInMemory;
-import org.junit.Assert;
-import org.junit.Test;
 
 import io.reactivex.rxjava3.processors.PublishProcessor;
 
@@ -29,7 +29,7 @@ public class TestSparqlWindowedInsert {
     public void testSparqlWindowedInsert() {
         // Set up a connection to a triple store
         // (for the sake of the demo this is in memory, but the factory also supports remote sparql access)
-        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create());
+        RDFConnection conn = RDFConnection.connect(DatasetFactory.create());
 
         // Set up a flow that transform insert requests of a collection of quads into
         // corresponding update requests

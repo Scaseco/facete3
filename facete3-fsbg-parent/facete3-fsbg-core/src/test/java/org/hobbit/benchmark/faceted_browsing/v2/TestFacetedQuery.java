@@ -3,6 +3,9 @@ package org.hobbit.benchmark.faceted_browsing.v2;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import org.aksw.facete.v3.api.FacetCount;
 import org.aksw.facete.v3.api.FacetValueCount;
 import org.aksw.facete.v3.api.FacetedQuery;
@@ -18,14 +21,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hobbit.benchmark.faceted_browsing.v2.domain.Vocab;
-import org.junit.Before;
-import org.junit.Test;
 
 public class TestFacetedQuery {
 
@@ -34,7 +34,7 @@ public class TestFacetedQuery {
     @Before
     public void beforeTest() {
         Model model = RDFDataMgr.loadModel("path-data.ttl");
-        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));
+        RDFConnection conn = RDFConnection.connect(DatasetFactory.create(model));
 
         Model dataModel = ModelFactory.createDefaultModel();
         XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);
@@ -48,7 +48,7 @@ public class TestFacetedQuery {
     @Test
     public void testNaming() {
         Model model = RDFDataMgr.loadModel("path-data-simple.ttl");
-        RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create(model));
+        RDFConnection conn = RDFConnection.connect(DatasetFactory.create(model));
 
         Model dataModel = ModelFactory.createDefaultModel();
         XFacetedQuery facetedQuery = dataModel.createResource().as(XFacetedQuery.class);

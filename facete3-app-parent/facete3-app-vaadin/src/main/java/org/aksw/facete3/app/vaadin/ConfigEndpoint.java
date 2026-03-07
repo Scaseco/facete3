@@ -30,8 +30,8 @@ import org.aksw.jenax.dataaccess.sparql.factory.dataengine.RDFDataEngines;
 import org.aksw.jenax.dataaccess.sparql.factory.datasource.RDFDataSources;
 import org.aksw.jenax.dataaccess.sparql.factory.execution.query.QueryExecutionFactory;
 import org.aksw.jenax.dataaccess.sparql.link.transform.RDFLinkTransforms;
-import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithBnodeRewrite;
-import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RdfDataSourceWithLocalCache;
+import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RDFDataSourceWithBnodeRewrite;
+import org.aksw.jenax.dataaccess.sparql.polyfill.datasource.RDFDataSourceWithLocalCache;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchable;
 import org.aksw.jenax.vaadin.label.LabelServiceSwitchableImpl;
 import org.aksw.jenax.vaadin.label.VaadinLabelMgr;
@@ -52,7 +52,6 @@ import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 
@@ -82,7 +81,6 @@ public class ConfigEndpoint {
 
 
     @Bean
-    @Autowired
     public ResourceHolder dataRefEndpoint(EndpointConfig cfg) {
         if (logger.isDebugEnabled()) {
             logger.debug("Created new resource");
@@ -103,7 +101,6 @@ public class ConfigEndpoint {
 
     @RefreshScope
     @Bean //(destroyMethod = "close")
-    @Autowired
     public RDFDataSource getDataSource(ResourceHolder opHolder) {
         Resource r = opHolder.get();
         Op op = (Op)r;// JenaPluginUtils.polymorphicCast(r);
@@ -168,7 +165,6 @@ public class ConfigEndpoint {
      */
     @RefreshScope
     @Bean
-    @Autowired
     public LabelServiceSwitchable<Node, String> labelMgr(RDFDataSource dataSource) {
         QueryExecutionFactory qef = dataSource.asQef(); // new QueryExecutionFactoryOverSparqlQueryConnection(conn); // RDFConnection.connect(dataset);
         Property labelProperty = RDFS.label;// DCTerms.description;
@@ -232,8 +228,8 @@ public class ConfigEndpoint {
 //                queryx -> QueryUtils.applyOpTransform(queryx, opx -> Transformer.transform(new TransformOpDatasetNamesToOpGraph(), opx)),
 //                null));
 
-        RdfDataSourceWithBnodeRewrite dataSourceBnode = RdfDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
-        RdfDataSourceWithLocalCache dataSourceCache = new RdfDataSourceWithLocalCache(dataSourceBnode);
+        RDFDataSourceWithBnodeRewrite dataSourceBnode = RDFDataSourceWithBnodeRewrite.wrapWithAutoBnodeProfileDetection(dataSourceRaw);
+        RDFDataSourceWithLocalCache dataSourceCache = new RDFDataSourceWithLocalCache(dataSourceBnode);
 
         QueryExecutionFactory qef = new QueryExecutionFactoryCompare(dataSourceCache.asQef(), dataSourceBnode.asQef());
         RDFDataSource comparingDataSource = RDFDataEngines.adapt(qef).getLinkSource().asDataSource();
